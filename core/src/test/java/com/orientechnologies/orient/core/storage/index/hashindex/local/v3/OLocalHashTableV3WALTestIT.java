@@ -339,7 +339,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
 
               OCacheEntry cacheEntry =
                   expectedReadCache.loadForWrite(
-                      fileId, pageIndex, true, expectedWriteCache, false, null);
+                      fileId, pageIndex, expectedWriteCache, false, null);
               if (cacheEntry == null) {
                 do {
                   if (cacheEntry != null) {

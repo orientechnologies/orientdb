@@ -1350,6 +1350,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Integer.class,
       20000),
 
+  @Deprecated
   QUERY_SCAN_PREFETCH_PAGES(
       "query.scanPrefetchPages",
       "Pages to prefetch during scan. Setting this value higher makes scans faster, because it reduces the number of I/O operations, though it consumes more memory. (Use 0 to disable)",

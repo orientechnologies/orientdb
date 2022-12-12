@@ -79,7 +79,7 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
       cacheEntry = addPage(atomicOperation, fileId);
       clear = true;
     } else {
-      cacheEntry = loadPageForWrite(atomicOperation, fileId, lastPage, false, true);
+      cacheEntry = loadPageForWrite(atomicOperation, fileId, lastPage, true);
     }
 
     try {
@@ -111,7 +111,7 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
       cacheEntry = addPage(atomicOperation, fileId);
       clear = true;
     } else {
-      cacheEntry = loadPageForWrite(atomicOperation, fileId, lastPage, false, true);
+      cacheEntry = loadPageForWrite(atomicOperation, fileId, lastPage, true);
     }
     try {
       OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
@@ -155,15 +155,14 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
     }
 
     try (final OCacheEntry cacheEntry =
-        loadPageForWrite(atomicOperation, fileId, pageIndex, false, true)) {
+        loadPageForWrite(atomicOperation, fileId, pageIndex, true)) {
       final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
       bucket.set(index, entry);
     }
   }
 
   public OClusterPositionMapBucket.PositionEntry get(
-      final long clusterPosition, final int pageCount, final OAtomicOperation atomicOperation)
-      throws IOException {
+      final long clusterPosition, final OAtomicOperation atomicOperation) throws IOException {
     final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
     final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
@@ -171,8 +170,7 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
       return null;
     }
 
-    try (final OCacheEntry cacheEntry =
-        loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount)) {
+    try (final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
       final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
       return bucket.get(index);
     }
@@ -184,7 +182,7 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
     final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
     try (final OCacheEntry cacheEntry =
-        loadPageForWrite(atomicOperation, fileId, pageIndex, false, true)) {
+        loadPageForWrite(atomicOperation, fileId, pageIndex, true)) {
       final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
 
       bucket.remove(index);
@@ -222,8 +220,7 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
 
     OClusterPositionEntry[] result = null;
     do {
-      try (final OCacheEntry cacheEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false, 1)) {
+      try (final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
 
         final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
         final int resultSize = bucket.getSize() - index;
@@ -284,8 +281,7 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
 
     long[] result = null;
     do {
-      try (final OCacheEntry cacheEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false, 1)) {
+      try (final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
 
         final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
         final int resultSize = bucket.getSize() - index;
@@ -355,8 +351,7 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
     }
 
     do {
-      try (final OCacheEntry cacheEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false, 1)) {
+      try (final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
 
         final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
         if (index == Integer.MIN_VALUE) {
@@ -397,8 +392,7 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
   long getFirstPosition(final OAtomicOperation atomicOperation) throws IOException {
     final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
     for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-      try (final OCacheEntry cacheEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false, 1)) {
+      try (final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
         final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
         final int bucketSize = bucket.getSize();
 
@@ -422,8 +416,7 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
       return OClusterPositionMapBucket.NOT_EXISTENT;
     }
 
-    try (final OCacheEntry cacheEntry =
-        loadPageForRead(atomicOperation, fileId, pageIndex, false, 1)) {
+    try (final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
       final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
 
       return bucket.getStatus(index);
@@ -434,8 +427,7 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
     final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
 
     for (long pageIndex = filledUpTo - 1; pageIndex >= 0; pageIndex--) {
-      try (final OCacheEntry cacheEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false, 1)) {
+      try (final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
         final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
         final int bucketSize = bucket.getSize();
 
@@ -456,8 +448,7 @@ public class OClusterPositionMapV0 extends OClusterPositionMap {
 
     final long pageIndex = filledUpTo - 1;
 
-    try (final OCacheEntry cacheEntry =
-        loadPageForRead(atomicOperation, fileId, pageIndex, false, 1)) {
+    try (final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
       final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
       final int bucketSize = bucket.getSize();
       return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + bucketSize;

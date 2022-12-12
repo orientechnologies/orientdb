@@ -195,14 +195,14 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
           final long pageIndex = bucketSearchResult.pageIndex;
 
           try (final OCacheEntry keyBucketCacheEntry =
-              loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+              loadPageForRead(atomicOperation, fileId, pageIndex)) {
             final CellBTreeBucketSingleValueV1<K> keyBucket =
                 new CellBTreeBucketSingleValueV1<>(keyBucketCacheEntry);
             return keyBucket.getValue(bucketSearchResult.itemIndex, encryption, keySerializer);
           }
         } else {
           try (final OCacheEntry nullBucketCacheEntry =
-              loadPageForRead(atomicOperation, nullBucketFileId, 0, false)) {
+              loadPageForRead(atomicOperation, nullBucketFileId, 0)) {
             final CellBTreeNullBucketSingleValueV1 nullBucket =
                 new CellBTreeNullBucketSingleValueV1(nullBucketCacheEntry);
             return nullBucket.getValue();
@@ -265,7 +265,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
 
               OCacheEntry keyBucketCacheEntry =
                   loadPageForWrite(
-                      atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false, true);
+                      atomicOperation, fileId, bucketSearchResult.getLastPathItem(), true);
               CellBTreeBucketSingleValueV1<K> keyBucket =
                   new CellBTreeBucketSingleValueV1<>(keyBucketCacheEntry);
 
@@ -354,8 +354,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
                 if (pageIndex != keyBucketCacheEntry.getPageIndex()) {
                   keyBucketCacheEntry.close();
 
-                  keyBucketCacheEntry =
-                      loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+                  keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true);
                 }
 
                 //noinspection ObjectAllocationInLoop
@@ -372,7 +371,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
               int sizeDiff = 0;
               final ORID oldValue;
               try (final OCacheEntry cacheEntry =
-                  loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true)) {
+                  loadPageForWrite(atomicOperation, nullBucketFileId, 0, true)) {
                 final CellBTreeNullBucketSingleValueV1 nullBucket =
                     new CellBTreeNullBucketSingleValueV1(cacheEntry);
                 oldValue = nullBucket.getValue();
@@ -472,7 +471,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         try (final OCacheEntry entryPointCacheEntry =
-            loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false)) {
+            loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX)) {
           final CellBTreeSingleValueEntryPointV1 entryPoint =
               new CellBTreeSingleValueEntryPointV1(entryPointCacheEntry);
           return entryPoint.getTreeSize();
@@ -511,8 +510,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
               final byte[] rawKey = serializeKey(key);
 
               try (final OCacheEntry keyBucketCacheEntry =
-                  loadPageForWrite(
-                      atomicOperation, fileId, bucketSearchResult.pageIndex, false, true)) {
+                  loadPageForWrite(atomicOperation, fileId, bucketSearchResult.pageIndex, true)) {
                 final CellBTreeBucketSingleValueV1<K> keyBucket =
                     new CellBTreeBucketSingleValueV1<>(keyBucketCacheEntry);
                 final byte[] rawRemovedValue =
@@ -546,7 +544,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
   private ORID removeNullBucket(final OAtomicOperation atomicOperation) throws IOException {
     ORID removedValue;
     try (final OCacheEntry nullCacheEntry =
-        loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true)) {
+        loadPageForWrite(atomicOperation, nullBucketFileId, 0, true)) {
       final CellBTreeNullBucketSingleValueV1 nullBucket =
           new CellBTreeNullBucketSingleValueV1(nullCacheEntry);
       removedValue = nullBucket.getValue();
@@ -617,7 +615,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
         }
 
         try (final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, searchResult.pageIndex, false)) {
+            loadPageForRead(atomicOperation, fileId, searchResult.pageIndex)) {
           final CellBTreeBucketSingleValueV1<K> bucket =
               new CellBTreeBucketSingleValueV1<>(cacheEntry);
           return bucket.getKey(searchResult.itemIndex, encryption, keySerializer);
@@ -649,7 +647,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
         }
 
         try (final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, searchResult.pageIndex, false)) {
+            loadPageForRead(atomicOperation, fileId, searchResult.pageIndex)) {
           final CellBTreeBucketSingleValueV1<K> bucket =
               new CellBTreeBucketSingleValueV1<>(cacheEntry);
           return bucket.getKey(searchResult.itemIndex, encryption, keySerializer);
@@ -750,7 +748,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
   private void updateSize(final long diffSize, final OAtomicOperation atomicOperation)
       throws IOException {
     try (final OCacheEntry entryPointCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true)) {
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, true)) {
       final CellBTreeSingleValueEntryPointV1 entryPoint =
           new CellBTreeSingleValueEntryPointV1(entryPointCacheEntry);
       entryPoint.setTreeSize(entryPoint.getTreeSize() + diffSize);
@@ -844,7 +842,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
 
     long bucketIndex = ROOT_INDEX;
 
-    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
     int itemIndex = 0;
     try {
       CellBTreeBucketSingleValueV1<K> bucket = new CellBTreeBucketSingleValueV1<>(cacheEntry);
@@ -889,7 +887,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
 
         cacheEntry.close();
 
-        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
 
         //noinspection ObjectAllocationInLoop
         bucket = new CellBTreeBucketSingleValueV1<>(cacheEntry);
@@ -904,7 +902,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
 
     long bucketIndex = ROOT_INDEX;
 
-    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
 
     CellBTreeBucketSingleValueV1<K> bucket = new CellBTreeBucketSingleValueV1<>(cacheEntry);
 
@@ -950,7 +948,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
 
         cacheEntry.close();
 
-        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
 
         bucket = new CellBTreeBucketSingleValueV1<>(cacheEntry);
         if (itemIndex == CellBTreeBucketSingleValueV1.MAX_PAGE_SIZE_BYTES + 1) {
@@ -1093,14 +1091,14 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
 
     final OCacheEntry rightBucketEntry;
     try (final OCacheEntry entryPointCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true)) {
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, true)) {
       final CellBTreeSingleValueEntryPointV1 entryPoint =
           new CellBTreeSingleValueEntryPointV1(entryPointCacheEntry);
       int pageSize = entryPoint.getPagesSize();
 
       if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
         pageSize++;
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false);
         entryPoint.setPagesSize(pageSize);
       } else {
         assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
@@ -1130,7 +1128,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
         if (rightSiblingPageIndex >= 0) {
 
           try (final OCacheEntry rightSiblingBucketEntry =
-              loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, false, true)) {
+              loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, true)) {
             final CellBTreeBucketSingleValueV1<K> rightSiblingBucket =
                 new CellBTreeBucketSingleValueV1<>(rightSiblingBucketEntry);
             rightSiblingBucket.setLeftSibling(rightBucketEntry.getPageIndex());
@@ -1139,8 +1137,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
       }
 
       long parentIndex = path.get(path.size() - 2);
-      OCacheEntry parentCacheEntry =
-          loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
+      OCacheEntry parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, true);
       try {
         CellBTreeBucketSingleValueV1<K> parentBucket =
             new CellBTreeBucketSingleValueV1<>(parentCacheEntry);
@@ -1166,7 +1163,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
           if (parentIndex != parentCacheEntry.getPageIndex()) {
             parentCacheEntry.close();
 
-            parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
+            parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, true);
           }
 
           //noinspection ObjectAllocationInLoop
@@ -1241,7 +1238,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
     final OCacheEntry rightBucketEntry;
 
     try (final OCacheEntry entryPointCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true)) {
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, true)) {
       final CellBTreeSingleValueEntryPointV1 entryPoint =
           new CellBTreeSingleValueEntryPointV1(entryPointCacheEntry);
       int pagesSize = entryPoint.getPagesSize();
@@ -1250,7 +1247,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
 
       if (pagesSize < filledUpTo - 1) {
         pagesSize++;
-        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pagesSize, false, false);
+        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pagesSize, false);
       } else {
         assert pagesSize == filledUpTo - 1;
         leftBucketEntry = addPage(atomicOperation, fileId);
@@ -1259,7 +1256,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
 
       if (pagesSize < filledUpTo) {
         pagesSize++;
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pagesSize, false, false);
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pagesSize, false);
       } else {
         assert pagesSize == filledUpTo;
         rightBucketEntry = addPage(atomicOperation, fileId);
@@ -1349,8 +1346,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
             this);
       }
 
-      try (final OCacheEntry bucketEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+      try (final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
         @SuppressWarnings("ObjectAllocationInLoop")
         final CellBTreeBucketSingleValueV1<K> keyBucket =
             new CellBTreeBucketSingleValueV1<>(bucketEntry);
@@ -1389,8 +1385,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
       }
 
       path.add(pageIndex);
-      try (final OCacheEntry bucketEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+      try (final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
         @SuppressWarnings("ObjectAllocationInLoop")
         final CellBTreeBucketSingleValueV1<K> keyBucket =
             new CellBTreeBucketSingleValueV1<>(bucketEntry);
@@ -1548,7 +1543,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
             }
 
             try (final OCacheEntry entryPointCacheEntry =
-                loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false); ) {
+                loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX); ) {
               @SuppressWarnings("ObjectAllocationInLoop")
               final CellBTreeSingleValueEntryPointV1 entryPoint =
                   new CellBTreeSingleValueEntryPointV1(entryPointCacheEntry);
@@ -1559,7 +1554,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
             }
 
             try (final OCacheEntry cacheEntry =
-                loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+                loadPageForRead(atomicOperation, fileId, pageIndex)) {
               @SuppressWarnings("ObjectAllocationInLoop")
               final CellBTreeBucketSingleValueV1<K> bucket =
                   new CellBTreeBucketSingleValueV1<>(cacheEntry);
@@ -1705,7 +1700,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
             }
 
             try (final OCacheEntry cacheEntry =
-                loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+                loadPageForRead(atomicOperation, fileId, pageIndex)) {
               @SuppressWarnings("ObjectAllocationInLoop")
               final CellBTreeBucketSingleValueV1<K> bucket =
                   new CellBTreeBucketSingleValueV1<>(cacheEntry);
@@ -1875,7 +1870,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
             }
 
             try (final OCacheEntry cacheEntry =
-                loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+                loadPageForRead(atomicOperation, fileId, pageIndex)) {
               @SuppressWarnings("ObjectAllocationInLoop")
               final CellBTreeBucketSingleValueV1<K> bucket =
                   new CellBTreeBucketSingleValueV1<>(cacheEntry);

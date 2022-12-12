@@ -96,7 +96,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
             final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
             final int pageIndex = calculatePageIndex(startPositionWithOffset);
             try (final OCacheEntry cacheEntry =
-                loadPageForWrite(atomicOperation, fileId, pageIndex, false, true)) {
+                loadPageForWrite(atomicOperation, fileId, pageIndex, true)) {
               final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
               bucket.incrementVersion(hash);
             }
@@ -114,8 +114,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     try {
       final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-      try (final OCacheEntry cacheEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+      try (final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
         final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
         return bucket.getVersion(hash);
       }
@@ -179,8 +178,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         addInitializedPage(atomicOperation);
       }
     } else {
-      try (final OCacheEntry cacheEntry =
-          loadPageForWrite(atomicOperation, fileId, 0, false, false)) {
+      try (final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, 0, false)) {
         final MapEntryPoint mapEntryPoint = new MapEntryPoint(cacheEntry);
         mapEntryPoint.setFileSize(0);
       }

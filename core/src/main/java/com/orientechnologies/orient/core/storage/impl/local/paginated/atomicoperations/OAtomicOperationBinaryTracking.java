@@ -93,11 +93,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
   @Override
   public OCacheEntry loadPageForWrite(
-      long fileId,
-      final long pageIndex,
-      final boolean checkPinnedPages,
-      final int pageCount,
-      final boolean verifyChecksum)
+      long fileId, final long pageIndex, final int pageCount, final boolean verifyChecksum)
       throws IOException {
     assert pageCount > 0;
     fileId = checkFileIdCompatibility(fileId, storageId);
@@ -119,8 +115,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
       if (checkChangesFilledUpTo(changesContainer, pageIndex)) {
         if (pageChangesContainer == null) {
           final OCacheEntry delegate =
-              readCache.loadForRead(
-                  fileId, pageIndex, checkPinnedPages, writeCache, verifyChecksum);
+              readCache.loadForRead(fileId, pageIndex, writeCache, verifyChecksum);
           if (delegate != null) {
             pageChangesContainer = new OCacheEntryChanges(verifyChecksum, this);
             changesContainer.pageChangesMap.put(pageIndex, pageChangesContainer);
@@ -133,8 +128,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
           } else {
             // Need to load the page again from cache for locking reasons
             pageChangesContainer.delegate =
-                readCache.loadForRead(
-                    fileId, pageIndex, checkPinnedPages, writeCache, verifyChecksum);
+                readCache.loadForRead(fileId, pageIndex, writeCache, verifyChecksum);
             return pageChangesContainer;
           }
         }
@@ -144,10 +138,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
   }
 
   @Override
-  public OCacheEntry loadPageForRead(
-      long fileId, final long pageIndex, final boolean checkPinnedPages, final int pageCount)
-      throws IOException {
-    assert pageCount > 0;
+  public OCacheEntry loadPageForRead(long fileId, final long pageIndex) throws IOException {
 
     fileId = checkFileIdCompatibility(fileId, storageId);
 
@@ -157,7 +148,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
     final FileChanges changesContainer = fileChanges.get(fileId);
     if (changesContainer == null) {
-      return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
+      return readCache.loadForRead(fileId, pageIndex, writeCache, true);
     }
 
     if (changesContainer.isNew) {
@@ -172,14 +163,14 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
       if (checkChangesFilledUpTo(changesContainer, pageIndex)) {
         if (pageChangesContainer == null) {
-          return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
+          return readCache.loadForRead(fileId, pageIndex, writeCache, true);
         } else {
           if (pageChangesContainer.isNew) {
             return pageChangesContainer;
           } else {
             // Need to load the page again from cache for locking reasons
             pageChangesContainer.delegate =
-                readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
+                readCache.loadForRead(fileId, pageIndex, writeCache, true);
             return pageChangesContainer;
           }
         }
@@ -525,7 +516,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
             OCacheEntry cacheEntry =
                 readCache.loadForWrite(
-                    fileId, pageIndex, true, writeCache, filePageChanges.verifyCheckSum, startLSN);
+                    fileId, pageIndex, writeCache, filePageChanges.verifyCheckSum, startLSN);
             if (cacheEntry == null) {
               assert filePageChanges.isNew;
               do {
@@ -576,7 +567,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
           final long pageIndex = filePageChangesEntry.getKey();
 
           OCacheEntry cacheEntry =
-              readCache.loadForWrite(fileId, pageIndex, true, writeCache, true, null);
+              readCache.loadForWrite(fileId, pageIndex, writeCache, true, null);
           if (cacheEntry == null) {
             assert filePageChanges.isNew;
             do {

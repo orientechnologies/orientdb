@@ -102,7 +102,7 @@ public final class BTree extends ODurableComponent {
         final long pageIndex = bucketSearchResult.getPageIndex();
 
         try (final OCacheEntry keyBucketCacheEntry =
-            loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+            loadPageForRead(atomicOperation, fileId, pageIndex)) {
           final Bucket keyBucket = new Bucket(keyBucketCacheEntry);
           return keyBucket.getValue(bucketSearchResult.getItemIndex());
         }
@@ -132,7 +132,7 @@ public final class BTree extends ODurableComponent {
 
             OCacheEntry keyBucketCacheEntry =
                 loadPageForWrite(
-                    atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false, true);
+                    atomicOperation, fileId, bucketSearchResult.getLastPathItem(), true);
             Bucket keyBucket = new Bucket(keyBucketCacheEntry);
             final byte[] oldRawValue;
 
@@ -185,8 +185,7 @@ public final class BTree extends ODurableComponent {
               if (pageIndex != keyBucketCacheEntry.getPageIndex()) {
                 keyBucketCacheEntry.close();
 
-                keyBucketCacheEntry =
-                    loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+                keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true);
               }
 
               //noinspection ObjectAllocationInLoop
@@ -221,7 +220,7 @@ public final class BTree extends ODurableComponent {
         final BucketSearchResult result = searchResult.get();
 
         try (final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, result.getPageIndex(), false)) {
+            loadPageForRead(atomicOperation, fileId, result.getPageIndex())) {
           final Bucket bucket = new Bucket(cacheEntry);
           return bucket.getKey(result.getItemIndex());
         }
@@ -242,7 +241,7 @@ public final class BTree extends ODurableComponent {
 
     long bucketIndex = ROOT_INDEX;
 
-    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
     int itemIndex = 0;
     try {
       Bucket bucket = new Bucket(cacheEntry);
@@ -287,7 +286,7 @@ public final class BTree extends ODurableComponent {
 
         cacheEntry.close();
 
-        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
         //noinspection ObjectAllocationInLoop
         bucket = new Bucket(cacheEntry);
       }
@@ -311,7 +310,7 @@ public final class BTree extends ODurableComponent {
         final BucketSearchResult result = searchResult.get();
 
         try (final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, result.getPageIndex(), false)) {
+            loadPageForRead(atomicOperation, fileId, result.getPageIndex())) {
           final Bucket bucket = new Bucket(cacheEntry);
           return bucket.getKey(result.getItemIndex());
         }
@@ -332,7 +331,7 @@ public final class BTree extends ODurableComponent {
 
     long bucketIndex = ROOT_INDEX;
 
-    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
 
     Bucket bucket = new Bucket(cacheEntry);
 
@@ -378,7 +377,7 @@ public final class BTree extends ODurableComponent {
 
         cacheEntry.close();
 
-        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
 
         //noinspection ObjectAllocationInLoop
         bucket = new Bucket(cacheEntry);
@@ -452,13 +451,13 @@ public final class BTree extends ODurableComponent {
 
     final OCacheEntry rightBucketEntry;
     try (final OCacheEntry entryPointCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true)) {
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, true)) {
       final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
       int pageSize = entryPoint.getPagesSize();
 
       if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
         pageSize++;
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false);
         entryPoint.setPagesSize(pageSize);
       } else {
         assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
@@ -486,7 +485,7 @@ public final class BTree extends ODurableComponent {
         if (rightSiblingPageIndex >= 0) {
 
           try (final OCacheEntry rightSiblingBucketEntry =
-              loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, false, true)) {
+              loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, true)) {
             final Bucket rightSiblingBucket = new Bucket(rightSiblingBucketEntry);
             rightSiblingBucket.setLeftSibling(rightBucketEntry.getPageIndex());
           }
@@ -494,8 +493,7 @@ public final class BTree extends ODurableComponent {
       }
 
       long parentIndex = path.get(path.size() - 2);
-      OCacheEntry parentCacheEntry =
-          loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
+      OCacheEntry parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, true);
       try {
         Bucket parentBucket = new Bucket(parentCacheEntry);
         int insertionIndex = itemPointers.get(itemPointers.size() - 2);
@@ -520,7 +518,7 @@ public final class BTree extends ODurableComponent {
           if (parentIndex != parentCacheEntry.getPageIndex()) {
             parentCacheEntry.close();
 
-            parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
+            parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, true);
           }
 
           //noinspection ObjectAllocationInLoop
@@ -580,7 +578,7 @@ public final class BTree extends ODurableComponent {
     final OCacheEntry rightBucketEntry;
 
     try (final OCacheEntry entryPointCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true)) {
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, true)) {
       final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
       int pageSize = entryPoint.getPagesSize();
 
@@ -588,7 +586,7 @@ public final class BTree extends ODurableComponent {
 
       if (pageSize < filledUpTo - 1) {
         pageSize++;
-        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
+        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false);
       } else {
         assert pageSize == filledUpTo - 1;
         leftBucketEntry = addPage(atomicOperation, fileId);
@@ -597,7 +595,7 @@ public final class BTree extends ODurableComponent {
 
       if (pageSize < filledUpTo) {
         pageSize++;
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false);
       } else {
         assert pageSize == filledUpTo;
         rightBucketEntry = addPage(atomicOperation, fileId);
@@ -673,7 +671,7 @@ public final class BTree extends ODurableComponent {
   private void updateSize(final long diffSize, final OAtomicOperation atomicOperation)
       throws IOException {
     try (final OCacheEntry entryPointCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true)) {
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, true)) {
       final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
       entryPoint.setTreeSize(entryPoint.getTreeSize() + diffSize);
     }
@@ -694,8 +692,7 @@ public final class BTree extends ODurableComponent {
 
       path.add(pageIndex);
 
-      try (final OCacheEntry bucketEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+      try (final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
         final Bucket keyBucket = new Bucket(bucketEntry);
         final int index = keyBucket.find(key);
 
@@ -734,8 +731,7 @@ public final class BTree extends ODurableComponent {
             "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.");
       }
 
-      try (final OCacheEntry bucketEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+      try (final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
         final Bucket keyBucket = new Bucket(bucketEntry);
         final int index = keyBucket.find(key);
 
@@ -774,7 +770,7 @@ public final class BTree extends ODurableComponent {
             final byte[] rawValue;
             try (final OCacheEntry keyBucketCacheEntry =
                 loadPageForWrite(
-                    atomicOperation, fileId, bucketSearchResult.getPageIndex(), false, true)) {
+                    atomicOperation, fileId, bucketSearchResult.getPageIndex(), true)) {
               final Bucket keyBucket = new Bucket(keyBucketCacheEntry);
               rawValue = keyBucket.getRawValue(bucketSearchResult.getItemIndex());
               keyBucket.removeLeafEntry(
@@ -959,7 +955,7 @@ public final class BTree extends ODurableComponent {
 
   private boolean readKeysFromBucketsForward(
       SpliteratorForward iter, OAtomicOperation atomicOperation) throws IOException {
-    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex(), false);
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex());
     try {
       Bucket bucket = new Bucket(cacheEntry);
       if (iter.getLastLSN() == null
@@ -976,7 +972,7 @@ public final class BTree extends ODurableComponent {
             iter.setItemIndex(0);
             cacheEntry.close();
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex(), false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex());
             bucket = new Bucket(cacheEntry);
 
             bucketSize = bucket.size();
@@ -1092,7 +1088,7 @@ public final class BTree extends ODurableComponent {
 
   private boolean readKeysFromBucketsBackward(
       SpliteratorBackward iter, OAtomicOperation atomicOperation) throws IOException {
-    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex(), false);
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex());
     try {
       Bucket bucket = new Bucket(cacheEntry);
       if (iter.getLastLSN() == null
@@ -1107,7 +1103,7 @@ public final class BTree extends ODurableComponent {
 
             cacheEntry.close();
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex(), false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex());
             bucket = new Bucket(cacheEntry);
             final int bucketSize = bucket.size();
             iter.setItemIndex(bucketSize - 1);

@@ -47,7 +47,7 @@ public final class FreeSpaceMap extends ODurableComponent {
     final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     final int localSecondLevelPageIndex;
 
-    try (final OCacheEntry firstLevelEntry = loadPageForRead(atomicOperation, fileId, 0, true)) {
+    try (final OCacheEntry firstLevelEntry = loadPageForRead(atomicOperation, fileId, 0)) {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(firstLevelEntry);
       localSecondLevelPageIndex = page.findPage(normalizedSize);
       if (localSecondLevelPageIndex < 0) {
@@ -57,7 +57,7 @@ public final class FreeSpaceMap extends ODurableComponent {
 
     final int secondLevelPageIndex = localSecondLevelPageIndex + 1;
     try (final OCacheEntry leafEntry =
-        loadPageForRead(atomicOperation, fileId, secondLevelPageIndex, true)) {
+        loadPageForRead(atomicOperation, fileId, secondLevelPageIndex)) {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(leafEntry);
       return page.findPage(normalizedSize)
           + localSecondLevelPageIndex * FreeSpaceMapPage.CELLS_PER_PAGE;
@@ -86,7 +86,7 @@ public final class FreeSpaceMap extends ODurableComponent {
     final int maxFreeSpaceSecondLevel;
     final int localSecondLevelPageIndex = pageIndex % FreeSpaceMapPage.CELLS_PER_PAGE;
     try (final OCacheEntry leafEntry =
-        loadPageForWrite(atomicOperation, fileId, secondLevelPageIndex, true, true)) {
+        loadPageForWrite(atomicOperation, fileId, secondLevelPageIndex, true)) {
 
       final FreeSpaceMapPage page = new FreeSpaceMapPage(leafEntry);
       maxFreeSpaceSecondLevel =
@@ -94,7 +94,7 @@ public final class FreeSpaceMap extends ODurableComponent {
     }
 
     try (final OCacheEntry firstLevelCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, 0, true, true); ) {
+        loadPageForWrite(atomicOperation, fileId, 0, true); ) {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(firstLevelCacheEntry);
       page.updatePageMaxFreeSpace(secondLevelPageIndex - 1, maxFreeSpaceSecondLevel);
     }

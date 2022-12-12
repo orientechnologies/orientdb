@@ -118,21 +118,18 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       final OAtomicOperation atomicOperation,
       final long fileId,
       final long pageIndex,
-      final boolean checkPinnedPages,
       final boolean verifyCheckSum)
       throws IOException {
-    return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1, verifyCheckSum);
+    return atomicOperation.loadPageForWrite(fileId, pageIndex, 1, verifyCheckSum);
   }
 
   protected OCacheEntry loadOrAddPageForWrite(
       final OAtomicOperation atomicOperation,
       final long fileId,
       final long pageIndex,
-      final boolean checkPinnedPages,
       final boolean verifyCheckSum)
       throws IOException {
-    OCacheEntry entry =
-        atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1, verifyCheckSum);
+    OCacheEntry entry = atomicOperation.loadPageForWrite(fileId, pageIndex, 1, verifyCheckSum);
     if (entry == null) {
       entry = addPage(atomicOperation, fileId);
     }
@@ -140,25 +137,12 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OCacheEntry loadPageForRead(
-      final OAtomicOperation atomicOperation,
-      final long fileId,
-      final long pageIndex,
-      final boolean checkPinnedPages)
-      throws IOException {
-    return loadPageForRead(atomicOperation, fileId, pageIndex, checkPinnedPages, 1);
-  }
-
-  protected OCacheEntry loadPageForRead(
-      final OAtomicOperation atomicOperation,
-      final long fileId,
-      final long pageIndex,
-      final boolean checkPinnedPages,
-      final int pageCount)
+      final OAtomicOperation atomicOperation, final long fileId, final long pageIndex)
       throws IOException {
     if (atomicOperation == null) {
-      return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
+      return readCache.loadForRead(fileId, pageIndex, writeCache, true);
     }
-    return atomicOperation.loadPageForRead(fileId, pageIndex, checkPinnedPages, pageCount);
+    return atomicOperation.loadPageForRead(fileId, pageIndex);
   }
 
   protected OCacheEntry addPage(final OAtomicOperation atomicOperation, final long fileId)

@@ -322,7 +322,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
 
               OCacheEntry cacheEntry =
                   expectedReadCache.loadForWrite(
-                      fileId, pageIndex, true, expectedWriteCache, false, null);
+                      fileId, pageIndex, expectedWriteCache, false, null);
               if (cacheEntry == null) {
                 do {
                   if (cacheEntry != null) {

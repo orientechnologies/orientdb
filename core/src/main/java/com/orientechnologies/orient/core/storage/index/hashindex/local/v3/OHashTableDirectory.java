@@ -58,7 +58,7 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   private void init(final OAtomicOperation atomicOperation) throws IOException {
-    OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
+    OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true);
 
     if (firstEntry == null) {
       firstEntry = addPage(atomicOperation, fileId);
@@ -81,7 +81,7 @@ public class OHashTableDirectory extends ODurableComponent {
     final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
     for (int i = 0; i < filledUpTo; i++) {
-      try (final OCacheEntry entry = loadPageForRead(atomicOperation, fileId, i, true)) {
+      try (final OCacheEntry entry = loadPageForRead(atomicOperation, fileId, i)) {
         assert entry != null;
       }
     }
@@ -111,7 +111,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throws IOException {
     int nodeIndex;
     try (final OCacheEntry firstEntry =
-        loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true)) {
+        loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true)) {
       final ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
 
       final int tombstone = firstPage.getTombstone();
@@ -143,7 +143,7 @@ public class OHashTableDirectory extends ODurableComponent {
         final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
         final int localLevel = nodeIndex % ODirectoryPage.NODES_PER_PAGE;
 
-        OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true, true);
+        OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true);
         while (cacheEntry == null || cacheEntry.getPageIndex() < pageIndex) {
           if (cacheEntry != null) {
             cacheEntry.close();
@@ -178,7 +178,7 @@ public class OHashTableDirectory extends ODurableComponent {
 
   void deleteNode(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
     try (final OCacheEntry firstEntry =
-        loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true)) {
+        loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true)) {
       final ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
       if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
         firstPage.setPointer(nodeIndex, 0, firstPage.getTombstone());
@@ -188,7 +188,7 @@ public class OHashTableDirectory extends ODurableComponent {
         final int localNodeIndex = nodeIndex % ODirectoryPage.NODES_PER_PAGE;
 
         try (final OCacheEntry cacheEntry =
-            loadPageForWrite(atomicOperation, fileId, pageIndex, true, true)) {
+            loadPageForWrite(atomicOperation, fileId, pageIndex, true)) {
           final ODirectoryPage page = new ODirectoryPage(cacheEntry, cacheEntry);
 
           page.setPointer(localNodeIndex, 0, firstPage.getTombstone());
@@ -331,9 +331,9 @@ public class OHashTableDirectory extends ODurableComponent {
       final OCacheEntry cacheEntry;
 
       if (exclusiveLock) {
-        cacheEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
+        cacheEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true);
       } else {
-        cacheEntry = loadPageForRead(atomicOperation, fileId, firstEntryIndex, true);
+        cacheEntry = loadPageForRead(atomicOperation, fileId, firstEntryIndex);
       }
 
       return new ODirectoryFirstPage(cacheEntry, cacheEntry);
@@ -344,9 +344,9 @@ public class OHashTableDirectory extends ODurableComponent {
     final OCacheEntry cacheEntry;
 
     if (exclusiveLock) {
-      cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true, true);
+      cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true);
     } else {
-      cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, true);
+      cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
     }
 
     return new ODirectoryPage(cacheEntry, cacheEntry);

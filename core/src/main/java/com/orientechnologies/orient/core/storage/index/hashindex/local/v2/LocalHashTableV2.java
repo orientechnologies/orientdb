@@ -210,7 +210,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           V result;
 
           try (final OCacheEntry cacheEntry =
-              loadPageForRead(atomicOperation, nullBucketFileId, 0, false)) {
+              loadPageForRead(atomicOperation, nullBucketFileId, 0)) {
             final HashIndexNullBucketV2<V> nullBucket = new HashIndexNullBucketV2<>(cacheEntry);
             result = nullBucket.getValue(valueSerializer);
           }
@@ -234,8 +234,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
           final long pageIndex = getPageIndex(bucketPointer);
 
-          try (final OCacheEntry cacheEntry =
-              loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+          try (final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
             final HashIndexBucketV2<K, V> bucket = new HashIndexBucketV2<>(cacheEntry);
 
             final Entry<K, V> entry =
@@ -311,7 +310,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
               final boolean found;
 
               try (final OCacheEntry cacheEntry =
-                  loadPageForWrite(atomicOperation, fileId, pageIndex, false, true)) {
+                  loadPageForWrite(atomicOperation, fileId, pageIndex, true)) {
                 final HashIndexBucketV2<K, V> bucket = new HashIndexBucketV2<>(cacheEntry);
                 final int positionIndex = bucket.getIndex(hashCode, key, encryption, keySerializer);
                 found = positionIndex >= 0;
@@ -351,8 +350,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
               V removed;
 
-              OCacheEntry cacheEntry =
-                  loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
+              OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, true);
               if (cacheEntry == null) {
                 cacheEntry = addPage(atomicOperation, nullBucketFileId);
               }
@@ -404,7 +402,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       throws IOException {
     if (sizeDiff != 0) {
       try (final OCacheEntry hashStateEntry =
-          loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true)) {
+          loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true)) {
         final HashIndexMetadataPageV2 page = new HashIndexMetadataPageV2(hashStateEntry);
 
         page.setRecordsCount(page.getRecordsCount() + sizeDiff);
@@ -437,7 +435,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           HashIndexBucketV2<K, V> bucket = new HashIndexBucketV2<>(cacheEntry);
 
@@ -461,7 +459,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
             pageIndex = getPageIndex(nextPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
             bucket = new HashIndexBucketV2<>(cacheEntry);
           }
 
@@ -528,8 +526,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       directory = new HashTableDirectory(treeStateFileExtension, name, getFullName(), storage);
       directory.open(atomicOperation);
 
-      try (final OCacheEntry hashStateEntry =
-          loadPageForRead(atomicOperation, fileStateId, 0, true)) {
+      try (final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, 0)) {
         hashStateEntryIndex = hashStateEntry.getPageIndex();
       }
 
@@ -742,7 +739,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           HashIndexBucketV2<K, V> bucket = new HashIndexBucketV2<>(cacheEntry);
           while (bucket.size() == 0) {
@@ -761,7 +758,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
             pageIndex = getPageIndex(nextPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
             bucket = new HashIndexBucketV2<>(cacheEntry);
           }
 
@@ -803,7 +800,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           HashIndexBucketV2<K, V> bucket = new HashIndexBucketV2<>(cacheEntry);
 
@@ -822,7 +819,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
             pageIndex = getPageIndex(nextPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
             bucket = new HashIndexBucketV2<>(cacheEntry);
           }
 
@@ -858,7 +855,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           HashIndexBucketV2<K, V> bucket = new HashIndexBucketV2<>(cacheEntry);
 
@@ -879,7 +876,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
             pageIndex = getPageIndex(prevPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
 
             bucket = new HashIndexBucketV2<>(cacheEntry);
 
@@ -922,7 +919,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           HashIndexBucketV2<K, V> bucket = new HashIndexBucketV2<>(cacheEntry);
           while (bucket.size() == 0
@@ -944,7 +941,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
             pageIndex = getPageIndex(prevPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
             bucket = new HashIndexBucketV2<>(cacheEntry);
 
             bucketPath = prevBucketPath;
@@ -995,7 +992,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           HashIndexBucketV2<K, V> bucket = new HashIndexBucketV2<>(cacheEntry);
           while (bucket.size() == 0) {
@@ -1016,7 +1013,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
             pageIndex = getPageIndex(prevPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
 
             bucket = new HashIndexBucketV2<>(cacheEntry);
 
@@ -1198,7 +1195,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       try {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         try (final OCacheEntry hashStateEntry =
-            loadPageForRead(atomicOperation, fileStateId, hashStateEntryIndex, true)) {
+            loadPageForRead(atomicOperation, fileStateId, hashStateEntryIndex)) {
           final HashIndexMetadataPageV2 metadataPage = new HashIndexMetadataPageV2(hashStateEntry);
           return metadataPage.getRecordsCount();
         }
@@ -1375,7 +1372,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
         cacheEntry = addPage(atomicOperation, nullBucketFileId);
         isNew = true;
       } else {
-        cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
+        cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, true);
         isNew = false;
       }
 
@@ -1432,8 +1429,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
       final long pageIndex = getPageIndex(bucketPointer);
 
-      final OCacheEntry cacheEntry =
-          loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+      final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true);
       try {
         final HashIndexBucketV2<K, V> bucket = new HashIndexBucketV2<>(cacheEntry);
         final int index = bucket.getIndex(hashCode, key, encryption, keySerializer);
@@ -2083,7 +2079,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
     directory.addNewNode((byte) 0, (byte) 0, (byte) MAX_LEVEL_DEPTH, rootTree, atomicOperation);
 
     try (final OCacheEntry hashStateEntry =
-        loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true)) {
+        loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true)) {
       final HashIndexMetadataPageV2 metadataPage = new HashIndexMetadataPageV2(hashStateEntry);
       metadataPage.setRecordsCount(0);
     }

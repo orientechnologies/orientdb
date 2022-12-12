@@ -5979,11 +5979,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             } else {
               final OCacheEntry cacheEntry =
                   readCache.loadForRead(
-                      triple.first.getFileId(),
-                      triple.first.getPageIndex(),
-                      true,
-                      writeCache,
-                      true);
+                      triple.first.getFileId(), triple.first.getPageIndex(), writeCache, true);
               // page doest not exist at all
               if (cacheEntry == null) {
                 integrityCheckPassed = false;
@@ -6024,7 +6020,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (writeCache.exists(triple.first.getFileId())) {
           final OCacheEntry cacheEntry =
               readCache.loadForRead(
-                  triple.first.getFileId(), triple.first.getPageIndex(), true, writeCache, true);
+                  triple.first.getFileId(), triple.first.getPageIndex(), writeCache, true);
           if (cacheEntry != null) {
             try {
               final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
@@ -6090,8 +6086,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
 
-        OCacheEntry cacheEntry =
-            readCache.loadForWrite(fileId, pageIndex, true, writeCache, true, null);
+        OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, writeCache, true, null);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null) {

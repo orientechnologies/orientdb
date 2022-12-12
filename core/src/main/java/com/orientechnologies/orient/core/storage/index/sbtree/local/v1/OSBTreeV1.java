@@ -201,7 +201,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
           final long pageIndex = bucketSearchResult.getLastPathItem();
 
           try (final OCacheEntry keyBucketCacheEntry =
-              loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+              loadPageForRead(atomicOperation, fileId, pageIndex)) {
             final OSBTreeBucketV1<K, V> keyBucket = new OSBTreeBucketV1<>(keyBucketCacheEntry);
 
             final OSBTreeBucketV1.SBTreeEntry<K, V> treeEntry =
@@ -215,7 +215,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
           }
 
           try (final OCacheEntry nullBucketCacheEntry =
-              loadPageForRead(atomicOperation, nullBucketFileId, 0, false)) {
+              loadPageForRead(atomicOperation, nullBucketFileId, 0)) {
             final OSBTreeNullBucketV1<V> nullBucket =
                 new OSBTreeNullBucketV1<>(nullBucketCacheEntry);
             final OSBTreeValue<V> treeValue = nullBucket.getValue(valueSerializer);
@@ -292,7 +292,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
 
               OCacheEntry keyBucketCacheEntry =
                   loadPageForWrite(
-                      atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false, true);
+                      atomicOperation, fileId, bucketSearchResult.getLastPathItem(), true);
               OSBTreeBucketV1<K, V> keyBucket = new OSBTreeBucketV1<>(keyBucketCacheEntry);
 
               final byte[] oldRawValue;
@@ -377,11 +377,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
 
                   keyBucketCacheEntry =
                       loadPageForWrite(
-                          atomicOperation,
-                          fileId,
-                          bucketSearchResult.getLastPathItem(),
-                          false,
-                          true);
+                          atomicOperation, fileId, bucketSearchResult.getLastPathItem(), true);
 
                   //noinspection ObjectAllocationInLoop
                   keyBucket = new OSBTreeBucketV1<>(keyBucketCacheEntry);
@@ -408,7 +404,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
                 cacheEntry = addPage(atomicOperation, nullBucketFileId);
                 isNew = true;
               } else {
-                cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
+                cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, true);
               }
 
               int sizeDiff = 0;
@@ -576,7 +572,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         try (final OCacheEntry rootCacheEntry =
-            loadPageForRead(atomicOperation, fileId, ROOT_INDEX, false)) {
+            loadPageForRead(atomicOperation, fileId, ROOT_INDEX)) {
           final OSBTreeBucketV1<K, V> rootBucket = new OSBTreeBucketV1<>(rootCacheEntry);
           return rootBucket.getTreeSize();
         }
@@ -629,7 +625,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
   private V removeNullBucket(final OAtomicOperation atomicOperation) throws IOException {
     V removedValue;
     try (final OCacheEntry nullCacheEntry =
-        loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true)) {
+        loadPageForWrite(atomicOperation, nullBucketFileId, 0, true)) {
       final OSBTreeNullBucketV1<V> nullBucket = new OSBTreeNullBucketV1<>(nullCacheEntry);
       final OSBTreeValue<V> treeValue = nullBucket.getValue(valueSerializer);
 
@@ -654,8 +650,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
       throws IOException {
     byte[] removedValue;
     try (final OCacheEntry keyBucketCacheEntry =
-        loadPageForWrite(
-            atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false, true)) {
+        loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), true)) {
       final OSBTreeBucketV1<K, V> keyBucket = new OSBTreeBucketV1<>(keyBucketCacheEntry);
 
       removedValue =
@@ -704,7 +699,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
         }
 
         try (final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, searchResult.getLastPathItem(), false)) {
+            loadPageForRead(atomicOperation, fileId, searchResult.getLastPathItem())) {
           final OSBTreeBucketV1<K, V> bucket = new OSBTreeBucketV1<>(cacheEntry);
           return bucket.getKey(searchResult.itemIndex, encryption, keySerializer);
         }
@@ -735,7 +730,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
         }
 
         try (final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, searchResult.getLastPathItem(), false)) {
+            loadPageForRead(atomicOperation, fileId, searchResult.getLastPathItem())) {
           final OSBTreeBucketV1<K, V> bucket = new OSBTreeBucketV1<>(cacheEntry);
           return bucket.getKey(searchResult.itemIndex, encryption, keySerializer);
         }
@@ -829,7 +824,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
       throws IOException {
 
     try (final OCacheEntry rootCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, false, true)) {
+        loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, true)) {
       final OSBTreeBucketV1<K, V> rootBucket = new OSBTreeBucketV1<>(rootCacheEntry);
       rootBucket.setTreeSize(rootBucket.getTreeSize() + diffSize);
     }
@@ -916,7 +911,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
 
     long bucketIndex = ROOT_INDEX;
 
-    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
     int itemIndex = 0;
     try {
       OSBTreeBucketV1<K, V> bucket = new OSBTreeBucketV1<>(cacheEntry);
@@ -973,7 +968,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
 
         cacheEntry.close();
 
-        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
 
         //noinspection ObjectAllocationInLoop
         bucket = new OSBTreeBucketV1<>(cacheEntry);
@@ -988,7 +983,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
 
     long bucketIndex = ROOT_INDEX;
 
-    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
 
     OSBTreeBucketV1<K, V> bucket = new OSBTreeBucketV1<>(cacheEntry);
 
@@ -1047,7 +1042,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
 
         cacheEntry.close();
 
-        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
+        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex);
 
         //noinspection ObjectAllocationInLoop
         bucket = new OSBTreeBucketV1<>(cacheEntry);
@@ -1139,7 +1134,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
     final long pageIndex = path.get(path.size() - 1);
 
     try (final OCacheEntry bucketEntry =
-        loadPageForWrite(atomicOperation, fileId, pageIndex, false, true)) {
+        loadPageForWrite(atomicOperation, fileId, pageIndex, true)) {
       final OSBTreeBucketV1<K, V> bucketToSplit = new OSBTreeBucketV1<>(bucketEntry);
 
       final boolean splitLeaf = bucketToSplit.isLeaf();
@@ -1216,7 +1211,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
         if (rightSiblingPageIndex >= 0) {
 
           try (final OCacheEntry rightSiblingBucketEntry =
-              loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, false, true)) {
+              loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, true)) {
             final OSBTreeBucketV1<K, V> rightSiblingBucket =
                 new OSBTreeBucketV1<>(rightSiblingBucketEntry);
             rightSiblingBucket.setLeftSibling(rightBucketEntry.getPageIndex());
@@ -1225,8 +1220,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
       }
 
       long parentIndex = path.get(path.size() - 2);
-      OCacheEntry parentCacheEntry =
-          loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
+      OCacheEntry parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, true);
       try {
         OSBTreeBucketV1<K, V> parentBucket = new OSBTreeBucketV1<>(parentCacheEntry);
         int insertionIndex = parentBucket.find(separationKey, encryption, keySerializer);
@@ -1242,7 +1236,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
                   path.subList(0, path.size() - 1), insertionIndex, separationKey, atomicOperation);
 
           parentIndex = bucketSearchResult.getLastPathItem();
-          parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
+          parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, true);
 
           insertionIndex = bucketSearchResult.itemIndex;
 
@@ -1361,8 +1355,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
 
       final OSBTreeBucketV1.SBTreeEntry<K, V> entry;
 
-      try (final OCacheEntry bucketEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+      try (final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
         @SuppressWarnings("ObjectAllocationInLoop")
         final OSBTreeBucketV1<K, V> keyBucket = new OSBTreeBucketV1<>(bucketEntry);
         final int index = keyBucket.find(key, encryption, keySerializer);
@@ -1514,7 +1507,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
             }
 
             try (final OCacheEntry cacheEntry =
-                loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+                loadPageForRead(atomicOperation, fileId, pageIndex)) {
               @SuppressWarnings("ObjectAllocationInLoop")
               final OSBTreeBucketV1<K, V> bucket = new OSBTreeBucketV1<>(cacheEntry);
 
@@ -1657,7 +1650,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
             }
 
             try (final OCacheEntry cacheEntry =
-                loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+                loadPageForRead(atomicOperation, fileId, pageIndex)) {
               @SuppressWarnings("ObjectAllocationInLoop")
               final OSBTreeBucketV1<K, V> bucket = new OSBTreeBucketV1<>(cacheEntry);
 
@@ -1821,7 +1814,7 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
             }
 
             try (final OCacheEntry cacheEntry =
-                loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+                loadPageForRead(atomicOperation, fileId, pageIndex)) {
               @SuppressWarnings("ObjectAllocationInLoop")
               final OSBTreeBucketV1<K, V> bucket = new OSBTreeBucketV1<>(cacheEntry);
 

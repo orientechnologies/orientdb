@@ -104,7 +104,6 @@ public final class AsyncReadCache implements OReadCache {
   public final OCacheEntry loadForWrite(
       final long fileId,
       final long pageIndex,
-      final boolean checkPinnedPages,
       final OWriteCache writeCache,
       final boolean verifyChecksums,
       final OLogSequenceNumber startLSN) {
@@ -122,7 +121,6 @@ public final class AsyncReadCache implements OReadCache {
   public final OCacheEntry loadForRead(
       final long fileId,
       final long pageIndex,
-      final boolean checkPinnedPages,
       final OWriteCache writeCache,
       final boolean verifyChecksums) {
     return doLoad(fileId, (int) pageIndex, writeCache, verifyChecksums);

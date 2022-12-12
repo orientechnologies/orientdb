@@ -199,7 +199,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
           V result;
 
           try (final OCacheEntry cacheEntry =
-              loadPageForRead(atomicOperation, nullBucketFileId, 0, false)) {
+              loadPageForRead(atomicOperation, nullBucketFileId, 0)) {
             final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, false);
             result = nullBucket.getValue();
           }
@@ -223,8 +223,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
           final long pageIndex = getPageIndex(bucketPointer);
 
-          try (final OCacheEntry cacheEntry =
-              loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+          try (final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {
             final OHashIndexBucket<K, V> bucket =
                 new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
 
@@ -298,7 +297,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
               final boolean found;
 
               try (final OCacheEntry cacheEntry =
-                  loadPageForWrite(atomicOperation, fileId, pageIndex, false, true); ) {
+                  loadPageForWrite(atomicOperation, fileId, pageIndex, true); ) {
                 final OHashIndexBucket<K, V> bucket =
                     new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
                 final int positionIndex = bucket.getIndex(hashCode, key);
@@ -336,7 +335,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
               V removed;
 
               try (OCacheEntry cacheEntry =
-                  loadOrAddPageForWrite(atomicOperation, nullBucketFileId, 0, false, true); ) {
+                  loadOrAddPageForWrite(atomicOperation, nullBucketFileId, 0, true); ) {
                 final ONullBucket<V> nullBucket =
                     new ONullBucket<>(cacheEntry, valueSerializer, false);
 
@@ -361,7 +360,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       throws IOException {
     if (sizeDiff != 0) {
       try (final OCacheEntry hashStateEntry =
-          loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true)) {
+          loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true)) {
         final OHashIndexFileLevelMetadataPage page =
             new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
 
@@ -394,7 +393,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           OHashIndexBucket<K, V> bucket =
               new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
@@ -417,7 +416,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
             pageIndex = getPageIndex(nextPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
             bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
           }
 
@@ -481,8 +480,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       directory = new OHashTableDirectory(treeStateFileExtension, name, getFullName(), storage);
       directory.open(atomicOperation);
 
-      try (final OCacheEntry hashStateEntry =
-          loadPageForRead(atomicOperation, fileStateId, 0, true)) {
+      try (final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, 0)) {
         hashStateEntryIndex = hashStateEntry.getPageIndex();
       }
 
@@ -688,7 +686,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           OHashIndexBucket<K, V> bucket =
               new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
@@ -708,7 +706,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
             pageIndex = getPageIndex(nextPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
             bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
           }
 
@@ -750,7 +748,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           OHashIndexBucket<K, V> bucket =
               new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
@@ -770,7 +768,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
             pageIndex = getPageIndex(nextPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
             bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
           }
 
@@ -806,7 +804,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           OHashIndexBucket<K, V> bucket =
               new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
@@ -827,7 +825,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
             pageIndex = getPageIndex(prevPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
 
             bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
 
@@ -870,7 +868,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           OHashIndexBucket<K, V> bucket =
               new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
@@ -892,7 +890,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
             pageIndex = getPageIndex(prevPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
             bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
 
             bucketPath = prevBucketPath;
@@ -943,7 +941,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
         long pageIndex = getPageIndex(bucketPointer);
 
-        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
         try {
           OHashIndexBucket<K, V> bucket =
               new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
@@ -965,7 +963,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
             pageIndex = getPageIndex(prevPointer);
 
-            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex);
 
             bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
 
@@ -1144,7 +1142,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         try (final OCacheEntry hashStateEntry =
-            loadPageForRead(atomicOperation, fileStateId, hashStateEntryIndex, true)) {
+            loadPageForRead(atomicOperation, fileStateId, hashStateEntryIndex)) {
           final OHashIndexFileLevelMetadataPage metadataPage =
               new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
           return metadataPage.getRecordsCount();
@@ -1307,7 +1305,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
         cacheEntry = addPage(atomicOperation, nullBucketFileId);
         isNew = true;
       } else {
-        cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
+        cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, true);
         isNew = false;
       }
 
@@ -1354,8 +1352,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
       final long pageIndex = getPageIndex(bucketPointer);
 
-      final OCacheEntry cacheEntry =
-          loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+      final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true);
       try {
         final OHashIndexBucket<K, V> bucket =
             new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
@@ -1976,7 +1973,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     directory.addNewNode((byte) 0, (byte) 0, (byte) MAX_LEVEL_DEPTH, rootTree, atomicOperation);
 
     try (final OCacheEntry hashStateEntry =
-        loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true)) {
+        loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true)) {
       final OHashIndexFileLevelMetadataPage metadataPage =
           new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
       metadataPage.setRecordsCount(0);

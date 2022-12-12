@@ -180,7 +180,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   public final OCacheEntry loadForWrite(
       final long fileId,
       final long pageIndex,
-      final boolean checkPinnedPages,
       final OWriteCache writeCache,
       final boolean verifyChecksums,
       final OLogSequenceNumber startLSN) {
@@ -199,7 +198,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   public final OCacheEntry loadForRead(
       final long fileId,
       final long pageIndex,
-      final boolean checkPinnedPages,
       final OWriteCache writeCache,
       final boolean verifyChecksums) {
 
@@ -217,7 +215,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   @Override
   public OCacheEntry silentLoadForRead(
       long extFileId, int pageIndex, OWriteCache writeCache, boolean verifyChecksums) {
-    return loadForRead(extFileId, pageIndex, false, writeCache, verifyChecksums);
+    return loadForRead(extFileId, pageIndex, writeCache, verifyChecksums);
   }
 
   private OCacheEntry doLoad(final long fileId, final long pageIndex) {
