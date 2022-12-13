@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
-import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -111,15 +111,23 @@ public class OSchemaDistributed extends OSchemaEmbedded {
           }
           cmd.append(", properties:{");
           boolean firstProp = true;
-          for (OPair<String, OType> property : index.getProperties()) {
+          for (OTriple<String, OType, OType> property : index.getProperties()) {
             if (!firstProp) {
               cmd.append(", ");
             }
             cmd.append("\"");
             cmd.append(property.key);
-            cmd.append("\":\"");
-            cmd.append(property.value);
-            cmd.append("\"");
+            if (property.value.value != null) {
+              cmd.append("\":[\"");
+              cmd.append(property.value.key);
+              cmd.append("\", \"");
+              cmd.append(property.value.value);
+              cmd.append("\"]");
+            } else {
+              cmd.append("\":\"");
+              cmd.append(property.value.key);
+              cmd.append("\"");
+            }
             firstProp = false;
           }
           cmd.append("  }");

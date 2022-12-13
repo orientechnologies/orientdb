@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.db.viewmanager;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -452,14 +452,17 @@ public class ViewManager {
   }
 
   private OIndexDefinition createIndexDefinition(
-      String viewName, List<OPair<String, OType>> requiredIndexesInfo) {
+      String viewName, List<OTriple<String, OType, OType>> requiredIndexesInfo) {
     if (requiredIndexesInfo.size() == 1) {
       return new OPropertyIndexDefinition(
-          viewName, requiredIndexesInfo.get(0).getKey(), requiredIndexesInfo.get(0).getValue());
+          viewName,
+          requiredIndexesInfo.get(0).getKey(),
+          requiredIndexesInfo.get(0).getValue().getKey());
     }
     OCompositeIndexDefinition result = new OCompositeIndexDefinition(viewName);
-    for (OPair<String, OType> pair : requiredIndexesInfo) {
-      result.addIndex(new OPropertyIndexDefinition(viewName, pair.getKey(), pair.getValue()));
+    for (OTriple<String, OType, OType> pair : requiredIndexesInfo) {
+      result.addIndex(
+          new OPropertyIndexDefinition(viewName, pair.getKey(), pair.getValue().getKey()));
     }
     return result;
   }

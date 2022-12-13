@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
@@ -42,9 +42,24 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       String type = (String) idx.get("type");
       String engine = (String) idx.get("engine");
       OViewConfig.OViewIndexConfig indexConfig = this.cfg.addIndex(type, engine);
-      for (Map.Entry<String, String> prop :
-          ((Map<String, String>) idx.get("properties")).entrySet()) {
-        indexConfig.addProperty(prop.getKey(), OType.valueOf(prop.getValue()));
+      for (Map.Entry<String, Object> prop :
+          ((Map<String, Object>) idx.get("properties")).entrySet()) {
+        OType proType = null;
+        OType linkedType = null;
+        if (prop.getValue() instanceof List) {
+          List<String> value = (List<String>) prop.getValue();
+          if (value.size() > 0 && value.get(0) != null) {
+            proType = OType.valueOf(value.get(0).toString());
+          }
+          if (value.size() > 1 && value.get(1) != null) {
+            linkedType = OType.valueOf(value.get(1).toString());
+          }
+        } else {
+          if (prop.getValue() != null) {
+            proType = OType.valueOf(prop.getValue().toString());
+          }
+        }
+        indexConfig.addProperty(prop.getKey(), proType, linkedType);
       }
     }
     if (document.getProperty("updateIntervalSeconds") instanceof Integer) {
@@ -81,9 +96,16 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       Map<String, Object> indexDescriptor = new HashMap<>();
       indexDescriptor.put("type", idx.type);
       indexDescriptor.put("engine", idx.engine);
-      Map<String, String> properties = new HashMap<>();
-      for (OPair<String, OType> s : idx.props) {
-        properties.put(s.key, s.value.toString());
+      Map<String, Object> properties = new HashMap<>();
+      for (OTriple<String, OType, OType> s : idx.props) {
+        if (s.getValue().getValue() != null) {
+          List<String> entry = new ArrayList<>();
+          entry.add(s.getValue().getKey().toString());
+          entry.add(s.getValue().getValue().toString());
+          properties.put(s.key, entry);
+        } else {
+          properties.put(s.key, s.value.getKey().toString());
+        }
       }
       indexDescriptor.put("properties", properties);
       indexes.add(indexDescriptor);
@@ -109,11 +131,17 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       Map<String, Object> indexDescriptor = new HashMap<>();
       indexDescriptor.put("type", idx.type);
       indexDescriptor.put("engine", idx.engine);
-      Map<String, String> properties = new HashMap<>();
-      for (OPair<String, OType> s : idx.props) {
-        properties.put(s.key, s.value.toString());
+      Map<String, Object> properties = new HashMap<>();
+      for (OTriple<String, OType, OType> s : idx.props) {
+        if (s.getValue().getValue() != null) {
+          List<String> entry = new ArrayList<>();
+          entry.add(s.getValue().getKey().toString());
+          entry.add(s.getValue().getValue().toString());
+          properties.put(s.key, entry);
+        } else {
+          properties.put(s.key, s.value.getKey().toString());
+        }
       }
-      indexDescriptor.put("properties", properties);
       indexes.add(indexDescriptor);
     }
     result.setProperty("indexes", indexes);

@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.common.util.OTriple;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,18 +14,18 @@ public class OViewConfig {
 
     protected final String type;
     protected final String engine;
-    protected List<OPair<String, OType>> props = new ArrayList<>();
+    protected List<OTriple<String, OType, OType>> props = new ArrayList<>();
 
     OViewIndexConfig(String type, String engine) {
       this.type = type;
       this.engine = engine;
     }
 
-    public void addProperty(String name, OType type) {
-      this.props.add(new OPair<>(name, type));
+    public void addProperty(String name, OType type, OType linkedType) {
+      this.props.add(new OTriple<>(name, type, linkedType));
     }
 
-    public List<OPair<String, OType>> getProperties() {
+    public List<OTriple<String, OType, OType>> getProperties() {
       return props;
     }
 
@@ -58,7 +58,7 @@ public class OViewConfig {
     result.updatable = this.updatable;
     for (OViewIndexConfig index : indexes) {
       OViewIndexConfig idx = result.addIndex(index.type, index.engine);
-      index.props.forEach(x -> idx.addProperty(x.key, x.value));
+      index.props.forEach(x -> idx.addProperty(x.key, x.value.key, x.value.value));
     }
     result.updateStrategy = this.updateStrategy;
     result.watchClasses = this.watchClasses == null ? null : new ArrayList<>(this.watchClasses);
