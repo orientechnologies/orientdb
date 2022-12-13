@@ -152,9 +152,7 @@ public class OWALPageChangesPortion implements OWALChanges {
         if (pageChunk != null) {
           for (int j = 0; j < PORTION_SIZE; j++) {
             if (pageChunk[j] != null) {
-              offset += OByteSerializer.BYTE_SIZE;
-              offset += OByteSerializer.BYTE_SIZE;
-              offset += 2 * CHUNK_SIZE;
+              offset += 2 * OByteSerializer.BYTE_SIZE + CHUNK_SIZE;
             }
           }
         }
