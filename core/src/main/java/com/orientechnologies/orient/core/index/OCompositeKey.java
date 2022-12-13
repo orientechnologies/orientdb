@@ -68,6 +68,10 @@ public class OCompositeKey
     this.keys = new ArrayList<>();
   }
 
+  public OCompositeKey(final int size) {
+    this.keys = new ArrayList<>(size);
+  }
+
   /** Clears the keys array for reuse of the object */
   public void reset() {
     if (this.keys != null) {

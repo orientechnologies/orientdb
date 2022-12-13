@@ -162,19 +162,19 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
     buffer.position(buffer.position() + OIntegerSerializer.INT_SIZE);
 
     final int keyLen = buffer.getInt();
-    final List<Object> keys = new ArrayList<>(keyLen);
+    OCompositeKey keys = new OCompositeKey(keyLen);
     for (int i = 0; i < keyLen; i++) {
       final byte typeId = buffer.get();
       if (typeId < 0) {
-        keys.add(null);
+        keys.addKey(null);
       } else {
         final OType type = OType.getById(typeId);
         assert type != null;
-        keys.add(deserializeKeyFromByteBuffer(buffer, type));
+        keys.addKey(deserializeKeyFromByteBuffer(buffer, type));
       }
     }
 
-    return new OCompositeKey(keys);
+    return keys;
   }
 
   private static Object deserializeKeyFromByteBuffer(final ByteBuffer buffer, final OType type) {
