@@ -590,4 +590,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     hashTable.acquireAtomicExclusiveLock();
     return true;
   }
+
+  public boolean hasRidBagTreesSupport() {
+    return true;
+  }
 }

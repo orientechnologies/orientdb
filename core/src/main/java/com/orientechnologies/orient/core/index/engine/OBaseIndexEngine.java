@@ -95,6 +95,10 @@ public interface OBaseIndexEngine {
 
   int getUniqueIndexVersion(Object key);
 
+  default boolean hasRidBagTreesSupport() {
+    return false;
+  }
+
   interface ValuesTransformer {
     Collection<ORID> transformFromValue(Object value);
   }

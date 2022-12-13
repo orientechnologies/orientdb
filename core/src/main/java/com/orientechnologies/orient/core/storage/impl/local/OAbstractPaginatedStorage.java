@@ -2737,10 +2737,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               ((OClusterBasedStorageConfiguration) configuration)
                   .addIndexEngine(atomicOperation, engineName, engineData);
 
-              if (multivalue
-                      && (engine instanceof OSBTreeIndexEngine
-                          || engine instanceof OHashTableIndexEngine)
-                  || engine instanceof OAutoShardingIndexEngine) {
+              if (multivalue && engine.hasRidBagTreesSupport()) {
                 final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree =
                     new OSBTreeBonsaiLocal<>(
                         engineName, OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
@@ -2901,10 +2898,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               ((OClusterBasedStorageConfiguration) configuration)
                   .deleteIndexEngine(atomicOperation, engineName);
 
-              if (engineData.isMultivalue()
-                  && (engine instanceof OSBTreeIndexEngine
-                      || engine instanceof OHashTableIndexEngine
-                      || engine instanceof OAutoShardingIndexEngine)) {
+              if (engineData.isMultivalue() && engine.hasRidBagTreesSupport()) {
                 final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree =
                     new OSBTreeBonsaiLocal<>(
                         engineName, OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
@@ -6232,10 +6226,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     for (final Map.Entry<String, OTransactionIndexChanges> entry : indexes.entrySet()) {
       final String indexName = entry.getKey();
       final OIndexInternal index = entry.getValue().resolveAssociatedIndex(indexName, manager, db);
+      try {
+        OBaseIndexEngine engine = getIndexEngine(index.getIndexId());
 
-      if (!index.isUnique()) {
-        atomicOperationsManager.acquireExclusiveLockTillOperationComplete(
-            atomicOperation, OIndexRIDContainerSBTree.generateLockName(indexName));
+        if (!index.isUnique() && engine.hasRidBagTreesSupport()) {
+          atomicOperationsManager.acquireExclusiveLockTillOperationComplete(
+              atomicOperation, OIndexRIDContainerSBTree.generateLockName(indexName));
+        }
+      } catch (OInvalidIndexEngineIdException e) {
+        throw logAndPrepareForRethrow(e, false);
       }
     }
   }

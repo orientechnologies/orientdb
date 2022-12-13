@@ -370,4 +370,8 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     final int keyHash = versionPositionMap.getKeyHash(key);
     return versionPositionMap.getVersion(keyHash);
   }
+
+  public boolean hasRidBagTreesSupport() {
+    return true;
+  }
 }

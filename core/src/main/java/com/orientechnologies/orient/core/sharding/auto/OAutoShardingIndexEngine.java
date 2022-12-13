@@ -603,4 +603,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       return NONNULL;
     }
   }
+
+  public boolean hasRidBagTreesSupport() {
+    return true;
+  }
 }
