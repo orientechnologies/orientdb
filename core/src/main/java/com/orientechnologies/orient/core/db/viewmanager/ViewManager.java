@@ -13,11 +13,13 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.index.OClassIndexManager;
+import com.orientechnologies.orient.core.index.OClassIndexManager.IndexChange;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -412,21 +414,11 @@ public class ViewManager {
       newRow.setProperty("@view", viewName);
     }
     db.save(newRow, clusterName);
-
-    indexes.forEach(idx -> idx.put(indexedKeyFor(idx, newRow), newRow));
+    List<IndexChange> ops = new ArrayList<>();
+    OClassIndexManager.addIndexesEntries(
+        (ODatabaseDocumentInternal) db, (ODocument) newRow, indexes, ops);
+    OClassIndexManager.applyChanges(ops);
     db.commit();
-  }
-
-  private Object indexedKeyFor(OIndex idx, OElement newRow) {
-    List<String> fieldsToIndex = idx.getDefinition().getFieldsToIndex();
-    if (fieldsToIndex.size() == 1) {
-      return idx.getDefinition().createValue((Object) newRow.getProperty(fieldsToIndex.get(0)));
-    }
-    Object[] vals = new Object[fieldsToIndex.size()];
-    for (int i = 0; i < fieldsToIndex.size(); i++) {
-      vals[i] = newRow.getProperty(fieldsToIndex.get(i));
-    }
-    return idx.getDefinition().createValue(vals);
   }
 
   private List<OIndex> createNewIndexesForView(
@@ -454,15 +446,21 @@ public class ViewManager {
   private OIndexDefinition createIndexDefinition(
       String viewName, List<OTriple<String, OType, OType>> requiredIndexesInfo) {
     if (requiredIndexesInfo.size() == 1) {
-      return new OPropertyIndexDefinition(
-          viewName,
-          requiredIndexesInfo.get(0).getKey(),
-          requiredIndexesInfo.get(0).getValue().getKey());
+      String fieldName = requiredIndexesInfo.get(0).getKey();
+      OType fieldType = requiredIndexesInfo.get(0).getValue().getKey();
+      OType linkedType = requiredIndexesInfo.get(0).getValue().getValue();
+      return OIndexDefinitionFactory.createSingleFieldIndexDefinition(
+          viewName, fieldName, fieldType, linkedType, null, null, null);
     }
     OCompositeIndexDefinition result = new OCompositeIndexDefinition(viewName);
     for (OTriple<String, OType, OType> pair : requiredIndexesInfo) {
-      result.addIndex(
-          new OPropertyIndexDefinition(viewName, pair.getKey(), pair.getValue().getKey()));
+      String fieldName = pair.getKey();
+      OType fieldType = pair.getValue().getKey();
+      OType linkedType = pair.getValue().getValue();
+      OIndexDefinition definition =
+          OIndexDefinitionFactory.createSingleFieldIndexDefinition(
+              viewName, fieldName, fieldType, linkedType, null, null, null);
+      result.addIndex(definition);
     }
     return result;
   }

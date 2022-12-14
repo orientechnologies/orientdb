@@ -70,8 +70,10 @@ public class OIndexDefinitionFactory {
       OType linkedType = null;
       OType type = types.get(0);
       String field = fieldNames.get(0);
+      final String fieldName =
+          OClassImpl.decodeClassName(adjustFieldName(oClass, extractFieldName(field)));
       if (collates != null) collate = collates.get(0);
-      OProperty property = oClass.getProperty(field);
+      OProperty property = oClass.getProperty(fieldName);
       if (property != null) {
         if (collate == null) {
           collate = property.getCollate();
@@ -80,10 +82,8 @@ public class OIndexDefinitionFactory {
       }
 
       final OPropertyMapIndexDefinition.INDEX_BY indexBy = extractMapIndexSpecifier(field);
-      final String fieldName =
-          OClassImpl.decodeClassName(adjustFieldName(oClass, extractFieldName(field)));
       return createSingleFieldIndexDefinition(
-          oClass.getName(), fieldName, type, linkedType, collate, indexKind, algorithm, indexBy);
+          oClass.getName(), fieldName, type, linkedType, collate, indexKind, indexBy);
     } else {
       return createMultipleFieldIndexDefinition(
           oClass, fieldNames, types, collates, indexKind, algorithm);
@@ -134,20 +134,21 @@ public class OIndexDefinitionFactory {
       OType linkedType = null;
       OType type = types.get(i);
       if (collates != null) collate = collates.get(i);
-      OProperty property = oClass.getProperty(fieldsToIndex.get(i));
+      String field = fieldsToIndex.get(i);
+      final String fieldName =
+          OClassImpl.decodeClassName(adjustFieldName(oClass, extractFieldName(field)));
+      OProperty property = oClass.getProperty(fieldName);
       if (property != null) {
         if (collate == null) {
           collate = property.getCollate();
         }
         linkedType = property.getLinkedType();
       }
-      String field = fieldsToIndex.get(i);
       final OPropertyMapIndexDefinition.INDEX_BY indexBy = extractMapIndexSpecifier(field);
-      final String fieldName =
-          OClassImpl.decodeClassName(adjustFieldName(oClass, extractFieldName(field)));
+
       compositeIndex.addIndex(
           createSingleFieldIndexDefinition(
-              className, fieldName, type, linkedType, collate, indexKind, algorithm, indexBy));
+              className, fieldName, type, linkedType, collate, indexKind, indexBy));
     }
     return compositeIndex;
   }
@@ -173,14 +174,13 @@ public class OIndexDefinitionFactory {
     }
   }
 
-  private static OIndexDefinition createSingleFieldIndexDefinition(
+  public static OIndexDefinition createSingleFieldIndexDefinition(
       final String className,
       final String fieldName,
       final OType type,
       final OType linkedType,
       OCollate collate,
       final String indexKind,
-      final String algorithm,
       final OPropertyMapIndexDefinition.INDEX_BY indexBy) {
     // TODO: let index implementations name their preferences_
     if (type.equals(OType.EMBEDDED)) {

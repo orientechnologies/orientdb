@@ -251,7 +251,7 @@ public class OSchemaEmbedded extends OSchemaShared {
                   val = OType.valueOf(listVal.get(0).toUpperCase(Locale.ENGLISH));
                 }
                 if (listVal.size() > 1) {
-                  linkedType = OType.valueOf(listVal.get(0).toUpperCase(Locale.ENGLISH));
+                  linkedType = OType.valueOf(listVal.get(1).toUpperCase(Locale.ENGLISH));
                 }
               } else {
                 val = OType.valueOf(entry.getValue().toString().toUpperCase(Locale.ENGLISH));

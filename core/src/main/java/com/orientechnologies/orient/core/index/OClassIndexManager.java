@@ -422,7 +422,7 @@ public class OClassIndexManager {
     else processSingleIndexUpdate(index, dirtyFields, iDocument, changes);
   }
 
-  private static void addIndexesEntries(
+  public static void addIndexesEntries(
       ODatabaseDocumentInternal database,
       ODocument document,
       final Collection<OIndex> indexes,
@@ -496,7 +496,7 @@ public class OClassIndexManager {
     changes.add(new IndexChange(index, OTransactionIndexChanges.OPERATION.REMOVE, key, value));
   }
 
-  private static void applyChanges(List<IndexChange> changes) {
+  public static void applyChanges(List<IndexChange> changes) {
     for (IndexChange op : changes) {
       if (op.operation == OTransactionIndexChanges.OPERATION.PUT) {
         putInIndex(op.index, op.key, op.value);

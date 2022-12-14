@@ -8,8 +8,13 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.record.OElement;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCreateViewStatementExecutionTest {
@@ -125,6 +130,38 @@ public class OCreateViewStatementExecutionTest {
     String statement =
         "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
     statement += "indexes: [{type:'NOTUNIQUE', properties:{name:'STRING', surname:'STRING'}}]";
+    statement += "}";
+
+    db.command(statement);
+
+    Thread.sleep(1000);
+
+    OResultSet result = db.query("SELECT FROM " + viewName + " WHERE name = 'name4'");
+    result.getExecutionPlan().get().getSteps().stream()
+        .anyMatch(x -> x instanceof FetchFromIndexStep);
+    Assert.assertTrue(result.hasNext());
+    result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testCollectionIndexes() throws InterruptedException {
+    String className = "testCollectionIndexesClass";
+    String viewName = "testCollectionIndexes";
+    db.createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("name", "name" + i);
+      elem.setProperty("data", Arrays.asList(new Integer[] {1, 2, 3}));
+      elem.save();
+    }
+
+    String statement =
+        "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    statement +=
+        "indexes: [{type:'NOTUNIQUE', properties:{name:'STRING'}},{type:'NOTUNIQUE', properties:{data:['EMBEDDEDLIST','INTEGER']}}]";
     statement += "}";
 
     db.command(statement);
