@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
@@ -13,12 +12,7 @@ public class ViewManagerDistributed extends ViewManager {
   }
 
   @Override
-  protected boolean buildOnThisNode(ODatabase db, String viewName) {
-    OView view =
-        ((ODatabaseDocumentInternal) db)
-            .getMetadata()
-            .getImmutableSchemaSnapshot()
-            .getView(viewName);
+  protected boolean buildOnThisNode(ODatabaseDocumentInternal db, OView view) {
 
     List<String> nodesForView = view.getNodes();
     if (nodesForView == null || nodesForView.contains("*")) {

@@ -37,10 +37,8 @@ import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -51,7 +49,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 public class ViewManager {
   private final OrientDBInternal orientDB;
@@ -79,11 +76,10 @@ public class ViewManager {
   private final ConcurrentMap<String, String> oldIndexesPerViews = new ConcurrentHashMap<>();
   private final List<String> indexesToDrop = Collections.synchronizedList(new ArrayList<>());
 
-  private final Map<String, Long> lastUpdateTimestampForView = new HashMap<>();
+  private final ConcurrentMap<String, Long> lastUpdateTimestampForView = new ConcurrentHashMap<>();
 
-  private final Map<String, Long> lastChangePerClass = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, Long> lastChangePerClass = new ConcurrentHashMap<>();
 
-  private volatile String lastUpdatedView = null;
   private volatile TimerTask timerTask;
   private volatile Future<?> lastTask;
   private volatile boolean closed = false;
@@ -237,65 +233,55 @@ public class ViewManager {
     }
   }
 
-  public synchronized OView getNextViewToUpdate(ODatabase db) {
-    OSchema schema = db.getMetadata().getSchema();
+  public synchronized OView getNextViewToUpdate(ODatabaseDocumentInternal db) {
+    OSchema schema = db.getMetadata().getImmutableSchemaSnapshot();
 
-    List<String> names =
-        schema.getViews().stream().map(x -> x.getName()).sorted().collect(Collectors.toList());
-    if (names.isEmpty()) {
+    Collection<OView> views = schema.getViews();
+
+    if (views.isEmpty()) {
       return null;
     }
-    for (String name : names) {
-      if (!buildOnThisNode(db, name)) {
+    for (OView view : views) {
+      if (!buildOnThisNode(db, view)) {
         continue;
       }
-      if (isLiveUpdate(db, name)) {
+      if (isLiveUpdate(db, view)) {
         continue;
       }
-      if (!isUpdateExpiredFor(name, db)) {
+      if (!isUpdateExpiredFor(view, db)) {
         continue;
       }
-      if (!needsUpdateBasedOnWatchRules(name, db)) {
+      if (!needsUpdateBasedOnWatchRules(view, db)) {
         continue;
       }
-      if (lastUpdatedView == null || name.compareTo(lastUpdatedView) > 0) {
-        lastUpdatedView = name;
-        return schema.getView(name);
-      }
+      return db.getMetadata().getSchema().getView(view.getName());
     }
 
-    lastUpdatedView = null;
     return null;
   }
 
-  private boolean isLiveUpdate(ODatabase db, String viewName) {
-    OView view =
-        ((ODatabaseDocumentInternal) db)
-            .getMetadata()
-            .getImmutableSchemaSnapshot()
-            .getView(viewName);
+  private boolean isLiveUpdate(ODatabaseDocumentInternal db, OView view) {
     return OViewConfig.UPDATE_STRATEGY_LIVE.equalsIgnoreCase(view.getUpdateStrategy());
   }
 
-  protected boolean buildOnThisNode(ODatabase db, String name) {
+  protected boolean buildOnThisNode(ODatabaseDocumentInternal db, OView name) {
     return true;
   }
 
   /**
    * Checks if the view could need an update based on watch rules
    *
-   * @param name view name
+   * @param view view name
    * @param db db instance
    * @return true if there are no watch rules for this view; true if there are watch rules and some
    *     of them happened since last update; true if the view was never updated; false otherwise.
    */
-  private boolean needsUpdateBasedOnWatchRules(String name, ODatabase db) {
-    OView view = db.getMetadata().getSchema().getView(name);
+  private boolean needsUpdateBasedOnWatchRules(OView view, ODatabaseDocumentInternal db) {
     if (view == null) {
       return false;
     }
 
-    Long lastViewUpdate = lastUpdateTimestampForView.get(name);
+    Long lastViewUpdate = lastUpdateTimestampForView.get(view.getName());
     if (lastViewUpdate == null) {
       return true;
     }
@@ -318,16 +304,11 @@ public class ViewManager {
     return false;
   }
 
-  private boolean isUpdateExpiredFor(String viewName, ODatabase db) {
-    Long lastUpdate = lastUpdateTimestampForView.get(viewName);
+  private boolean isUpdateExpiredFor(OView view, ODatabaseDocumentInternal db) {
+    Long lastUpdate = lastUpdateTimestampForView.get(view.getName());
     if (lastUpdate == null) {
       return true;
     }
-    OView view =
-        ((ODatabaseDocumentInternal) db)
-            .getMetadata()
-            .getImmutableSchemaSnapshot()
-            .getView(viewName);
     int updateInterval = view.getUpdateIntervalSeconds();
     return lastUpdate + (updateInterval * 1000) < System.currentTimeMillis();
   }
@@ -487,7 +468,12 @@ public class ViewManager {
     orientDB.executeNoAuthorization(
         dbName,
         (databaseSession) -> {
-          if (!buildOnThisNode(databaseSession, name)) {
+          if (!buildOnThisNode(
+              (ODatabaseDocumentInternal) databaseSession,
+              ((ODatabaseDocumentInternal) databaseSession)
+                  .getMetadata()
+                  .getSchema()
+                  .getView(name))) {
             return null;
           }
           try {
