@@ -4,12 +4,14 @@ import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OViewEmbedded extends OViewImpl {
 
@@ -266,5 +268,23 @@ public class OViewEmbedded extends OViewImpl {
 
   public OClass setAbstract(boolean isAbstract) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OViewRemovedMetadata replaceViewClusterAndIndex(final int cluster, List<OIndex> indexes) {
+    acquireSchemaWriteLock();
+    try {
+      int[] oldClusters = getClusterIds();
+      addClusterId(cluster);
+      for (int i : oldClusters) {
+        removeClusterId(i);
+      }
+      List<String> oldIndexes = getInactiveIndexes();
+      inactivateIndexes();
+      addActiveIndexes(indexes.stream().map(x -> x.getName()).collect(Collectors.toList()));
+      return new OViewRemovedMetadata(oldClusters, oldIndexes);
+    } finally {
+      releaseSchemaWriteLock();
+    }
   }
 }

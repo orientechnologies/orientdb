@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.metadata.schema.OViewImpl;
+import com.orientechnologies.orient.core.metadata.schema.OViewRemovedMetadata;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -50,16 +51,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public class ViewManager {
   private final OrientDBInternal orientDB;
   private final String dbName;
   private boolean viewsExist = false;
-
-  Map<String, Lock> locks = new ConcurrentHashMap<>();
 
   /**
    * To retain clusters that are being used in queries until the queries are closed.
@@ -378,33 +375,22 @@ public class ViewManager {
       indexes.forEach(x -> indexesToDrop.add(x.getName()));
       return;
     }
-    lockView(view);
-    try {
-      view.addClusterId(cluster);
-      for (int i : view.getClusterIds()) {
-        if (i != cluster) {
-          clustersToDrop.add(i);
-          viewCluserVisitors.put(i, new AtomicInteger(0));
-          oldClustersPerViews.put(i, view.getName());
-          view.removeClusterId(i);
-        }
-      }
-
-      final OViewImpl viewImpl = ((OViewImpl) view);
-      viewImpl
-          .getInactiveIndexes()
-          .forEach(
-              idx -> {
-                indexesToDrop.add(idx);
-                viewIndexVisitors.put(idx, new AtomicInteger(0));
-                oldIndexesPerViews.put(idx, viewName);
-              });
-      viewImpl.inactivateIndexes();
-      viewImpl.addActiveIndexes(
-          indexes.stream().map(x -> x.getName()).collect(Collectors.toList()));
-    } finally {
-      unlockView(view);
+    OViewRemovedMetadata oldMetadata =
+        ((OViewImpl) view).replaceViewClusterAndIndex(cluster, indexes);
+    for (int i : oldMetadata.getClusters()) {
+      clustersToDrop.add(i);
+      viewCluserVisitors.put(i, new AtomicInteger(0));
+      oldClustersPerViews.put(i, view.getName());
     }
+
+    oldMetadata
+        .getIndexes()
+        .forEach(
+            idx -> {
+              indexesToDrop.add(idx);
+              viewIndexVisitors.put(idx, new AtomicInteger(0));
+              oldIndexesPerViews.put(idx, viewName);
+            });
     cleanUnusedViewIndexes(db);
     cleanUnusedViewClusters(db);
     OLogManager.instance().info(this, "Finished refresh of view '%s'", view.getName());
@@ -474,24 +460,6 @@ public class ViewManager {
       result.addIndex(new OPropertyIndexDefinition(viewName, pair.getKey(), pair.getValue()));
     }
     return result;
-  }
-
-  private synchronized void unlockView(OView view) {
-    Lock lock = locks.get(view.getName());
-    if (lock == null) {
-      lock = new ReentrantLock();
-      locks.put(view.getName(), lock);
-    }
-    lock.unlock();
-  }
-
-  private synchronized void lockView(OView view) {
-    Lock lock = locks.get(view.getName());
-    if (lock == null) {
-      lock = new ReentrantLock();
-      locks.put(view.getName(), lock);
-    }
-    lock.lock();
   }
 
   private String getNextClusterNameFor(OView view, ODatabase db) {
