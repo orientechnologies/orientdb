@@ -154,6 +154,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
                 getRawElement()
                     .getEdges(OrientGraphUtils.mapDirection(direction), edgeLabels)
                     .iterator())
+            .filter(e -> e != null && e.getFrom() != null && e.getTo() != null)
             .map(e -> graph.elementFactory().wrapEdge(e));
 
     return edgeStream.collect(Collectors.toList()).iterator();
