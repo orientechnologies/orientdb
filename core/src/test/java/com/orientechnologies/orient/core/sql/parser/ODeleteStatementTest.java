@@ -4,8 +4,8 @@ import static org.junit.Assert.fail;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -43,8 +43,8 @@ public class ODeleteStatementTest extends BaseMemoryDatabase {
   @Test
   public void deleteFromSubqueryWithWhereTest() {
 
-    db.command(new OCommandSQL("create class Foo")).execute();
-    db.command(new OCommandSQL("create class Bar")).execute();
+    db.command("create class Foo").close();
+    db.command("create class Bar").close();
     final ODocument doc1 = new ODocument("Foo").field("k", "key1");
     final ODocument doc2 = new ODocument("Foo").field("k", "key2");
     final ODocument doc3 = new ODocument("Foo").field("k", "key3");
@@ -60,14 +60,17 @@ public class ODeleteStatementTest extends BaseMemoryDatabase {
     final ODocument bar = new ODocument("Bar").field("arr", list);
     bar.save();
 
-    db.command(new OCommandSQL("delete from (select expand(arr) from Bar) where k = 'key2'"))
-        .execute();
+    db.command("delete from (select expand(arr) from Bar) where k = 'key2'").close();
 
-    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from Foo"));
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument doc : result) {
-      Assert.assertNotEquals(doc.field("k"), "key2");
+    try (OResultSet result = db.query("select from Foo")) {
+      Assert.assertNotNull(result);
+      int count = 0;
+      while (result.hasNext()) {
+        OResult doc = result.next();
+        Assert.assertNotEquals(doc.getProperty("k"), "key2");
+        count += 1;
+      }
+      Assert.assertEquals(count, 2);
     }
   }
 

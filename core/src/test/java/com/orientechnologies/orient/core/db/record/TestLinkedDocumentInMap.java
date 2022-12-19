@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,7 @@ public class TestLinkedDocumentInMap extends BaseMemoryDatabase {
   @Test
   public void testLinkedValue() {
     db.getMetadata().getSchema().createClass("PersonTest");
-    db.command(new OCommandSQL("delete from PersonTest")).execute();
+    db.command("delete from PersonTest").close();
     ODocument jaimeDoc = new ODocument("PersonTest");
     jaimeDoc.field("name", "jaime");
     jaimeDoc.save();
