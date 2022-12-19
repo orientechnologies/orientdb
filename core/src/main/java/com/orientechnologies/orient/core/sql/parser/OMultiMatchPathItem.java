@@ -108,5 +108,9 @@ public class OMultiMatchPathItem extends OMatchPathItem {
   public void setItems(List<OMatchPathItem> items) {
     this.items = items;
   }
+
+  public void addItem(OMatchPathItem item) {
+    this.items.add(item);
+  }
 }
 /* JavaCC - OriginalChecksum=f18f107768de80b8941f166d7fafb3c0 (do not edit this line) */

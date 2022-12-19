@@ -348,5 +348,13 @@ public class ONestedProjection extends SimpleNode {
     }
     recursion = fromResult.getProperty("recursion");
   }
+
+  public void addExcludeItem(ONestedProjectionItem item) {
+    this.excludeItems.add(item);
+  }
+
+  public void addIncludeItem(ONestedProjectionItem item) {
+    this.includeItems.add(item);
+  }
 }
 /* JavaCC - OriginalChecksum=a7faf9beb3c058e28999b17cb43b26f6 (do not edit this line) */

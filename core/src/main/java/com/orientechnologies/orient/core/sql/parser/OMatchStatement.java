@@ -59,6 +59,29 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   static final String DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
 
   private OSQLAsynchQuery<ODocument> request;
+  public static final String KEYWORD_MATCH = "MATCH";
+  // parsed data
+  protected List<OMatchExpression> matchExpressions = new ArrayList<>();
+  protected List<OMatchExpression> notMatchExpressions = new ArrayList<>();
+  protected List<OExpression> returnItems = new ArrayList<>();
+  protected List<OIdentifier> returnAliases = new ArrayList<>();
+  protected List<ONestedProjection> returnNestedProjections = new ArrayList<>();
+  protected boolean returnDistinct = false;
+  protected OGroupBy groupBy;
+  protected OOrderBy orderBy;
+  protected OUnwind unwind;
+  protected OSkip skip;
+  protected OLimit limit;
+
+  // post-parsing generated data
+  protected Pattern pattern;
+
+  private Map<String, OWhereClause> aliasFilters;
+  private Map<String, String> aliasClasses;
+
+  // execution data
+  private OCommandContext context;
+  private OProgressListener progressListener;
 
   long threshold = 20;
   private int limitFromProtocol = -1;
@@ -69,6 +92,18 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   public void setReturnNestedProjections(List<ONestedProjection> returnNestedProjections) {
     this.returnNestedProjections = returnNestedProjections;
+  }
+
+  public void addMatchExpression(OMatchExpression exp) {
+    this.matchExpressions.add(exp);
+  }
+
+  public void addNotMatchExpression(OMatchExpression exp) {
+    this.notMatchExpressions.add(exp);
+  }
+
+  public void addReturnNestedProjection(ONestedProjection projection) {
+    this.returnNestedProjections.add(projection);
   }
 
   public class MatchContext {
@@ -114,30 +149,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     public Map<String, Long> preFetchedAliases = new HashMap<String, Long>();
     public String rootAlias;
   }
-
-  public static final String KEYWORD_MATCH = "MATCH";
-  // parsed data
-  protected List<OMatchExpression> matchExpressions = new ArrayList<>();
-  protected List<OMatchExpression> notMatchExpressions = new ArrayList<>();
-  protected List<OExpression> returnItems = new ArrayList<>();
-  protected List<OIdentifier> returnAliases = new ArrayList<>();
-  protected List<ONestedProjection> returnNestedProjections = new ArrayList<>();
-  protected boolean returnDistinct = false;
-  protected OGroupBy groupBy;
-  protected OOrderBy orderBy;
-  protected OUnwind unwind;
-  protected OSkip skip;
-  protected OLimit limit;
-
-  // post-parsing generated data
-  protected Pattern pattern;
-
-  private Map<String, OWhereClause> aliasFilters;
-  private Map<String, String> aliasClasses;
-
-  // execution data
-  private OCommandContext context;
-  private OProgressListener progressListener;
 
   public OMatchStatement() {
     super(-1);

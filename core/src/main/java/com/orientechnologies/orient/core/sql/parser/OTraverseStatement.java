@@ -317,5 +317,9 @@ public class OTraverseStatement extends OStatement {
   public void setSkip(OSkip skip) {
     this.skip = skip;
   }
+
+  public void addProjection(OTraverseProjectionItem item) {
+    this.projections.add(item);
+  }
 }
 /* JavaCC - OriginalChecksum=47399a3a3d5a423768bbdc70ee957464 (do not edit this line) */

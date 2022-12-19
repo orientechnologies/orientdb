@@ -209,5 +209,9 @@ public class OMatchFilter extends SimpleNode {
   public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
+
+  public void addItem(OMatchFilterItem item) {
+    this.items.add(item);
+  }
 }
 /* JavaCC - OriginalChecksum=6b099371c69e0d0c1c106fc96b3072de (do not edit this line) */

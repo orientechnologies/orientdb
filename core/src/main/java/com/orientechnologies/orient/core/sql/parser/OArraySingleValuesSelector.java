@@ -276,5 +276,9 @@ public class OArraySingleValuesSelector extends SimpleNode {
       }
     }
   }
+
+  public void addItem(OArraySelector item) {
+    this.items.add(item);
+  }
 }
 /* JavaCC - OriginalChecksum=991998c77a4831184b6dca572513fd8d (do not edit this line) */

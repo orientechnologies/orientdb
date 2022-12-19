@@ -37,6 +37,10 @@ public class OArrayConcatExpression extends SimpleNode {
     this.childExpressions = childExpressions;
   }
 
+  public void addChildExpression(OArrayConcatExpressionElement elem) {
+    this.childExpressions.add(elem);
+  }
+
   public Object apply(Object left, Object right) {
 
     if (left == null && right == null) {

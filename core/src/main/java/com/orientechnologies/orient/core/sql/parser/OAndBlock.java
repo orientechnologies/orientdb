@@ -59,6 +59,10 @@ public class OAndBlock extends OBooleanExpression {
     this.subBlocks = subBlocks;
   }
 
+  public void addSubBlock(OBooleanExpression block) {
+    this.subBlocks.add(block);
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (subBlocks == null || subBlocks.size() == 0) {
       return;

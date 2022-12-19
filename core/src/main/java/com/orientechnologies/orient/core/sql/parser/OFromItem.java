@@ -450,5 +450,13 @@ public class OFromItem extends SimpleNode {
     }
     return false;
   }
+
+  public void addRid(ORid rid) {
+    this.rids.add(rid);
+  }
+
+  public void addInputParam(OInputParameter par) {
+    this.inputParams.add(par);
+  }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

@@ -77,5 +77,9 @@ public class OMatchExpression extends SimpleNode {
   public void setItems(List<OMatchPathItem> items) {
     this.items = items;
   }
+
+  public void addItem(OMatchPathItem item) {
+    this.items.add(item);
+  }
 }
 /* JavaCC - OriginalChecksum=73491fb653c32baf66997290db29f370 (do not edit this line) */

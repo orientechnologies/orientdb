@@ -990,7 +990,6 @@ OInteger Integer():
 {
 (
     [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {
-        //jjtThis.value = sign * Long.parseLong(tokenVal.image);
         jjtThis.setValue(sign, tokenVal.image);
     }
 ) { return jjtThis; }
@@ -1362,8 +1361,8 @@ OTraverseStatement TraverseStatement():
     (
     	<TRAVERSE>
     	[
-    	    lastProjection = TraverseProjectionItem() { jjtThis.projections.add(lastProjection); }
-    	    ( <COMMA> lastProjection = TraverseProjectionItem()  { jjtThis.projections.add(lastProjection); } )*
+    	    lastProjection = TraverseProjectionItem() { jjtThis.addProjection(lastProjection); }
+    	    ( <COMMA> lastProjection = TraverseProjectionItem()  { jjtThis.addProjection(lastProjection); } )*
     	]
     	<FROM>
     	jjtThis.target = FromClause()
@@ -1391,14 +1390,14 @@ OMatchStatement MatchStatement():
 {
     (
         <MATCH>
-        lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
+        lastMatchExpr = MatchExpression() { jjtThis.addMatchExpression(lastMatchExpr); }
         (
             <COMMA>
             (
-               lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
+               lastMatchExpr = MatchExpression() { jjtThis.addMatchExpression(lastMatchExpr); }
                |
                (
-                  <NOT> lastMatchExpr = MatchExpression() { jjtThis.notMatchExpressions.add(lastMatchExpr); }
+                  <NOT> lastMatchExpr = MatchExpression() { jjtThis.addNotMatchExpression(lastMatchExpr); }
                )
             )
         )*
@@ -1421,7 +1420,7 @@ OMatchStatement MatchStatement():
         {
             jjtThis.returnAliases.add(lastReturnAlias);
             jjtThis.returnItems.add(lastReturn);
-            jjtThis.returnNestedProjections.add(lastNestedProjection);
+            jjtThis.addReturnNestedProjection(lastNestedProjection);
             lastNestedProjection = null;
         }
         (
@@ -1432,7 +1431,7 @@ OMatchStatement MatchStatement():
             {
                 jjtThis.returnAliases.add(lastReturnAlias);
                 jjtThis.returnItems.add(lastReturn);
-                jjtThis.returnNestedProjections.add(lastNestedProjection);
+                jjtThis.addReturnNestedProjection(lastNestedProjection);
                 lastNestedProjection = null;
             }
         )*
@@ -2113,22 +2112,22 @@ ONestedProjection NestedProjection():
     <COLON> <LBRACE>
     lastItem = NestedProjectionItem() {
        if(lastItem.exclude) {
-         jjtThis.excludeItems.add(lastItem);
+         jjtThis.addExcludeItem(lastItem);
        } else if(lastItem.star) {
          jjtThis.starItem = lastItem;
        } else {
-         jjtThis.includeItems.add(lastItem);
+         jjtThis.addIncludeItem(lastItem);
        }
     }
     (
       <COMMA>
        lastItem = NestedProjectionItem() {
             if(lastItem.exclude) {
-              jjtThis.excludeItems.add(lastItem);
+              jjtThis.addExcludeItem(lastItem);
             } else if(lastItem.star) {
               jjtThis.starItem = lastItem;
             } else {
-              jjtThis.includeItems.add(lastItem);
+              jjtThis.addIncludeItem(lastItem);
             }
        }
     )*
@@ -2199,8 +2198,8 @@ OArraySingleValuesSelector ArraySingleValuesSelector():
 { OArraySelector lastSelector; }
 {
     (
-        lastSelector = ArraySelector() { jjtThis.items.add(lastSelector); }
-        ( <COMMA> lastSelector = ArraySelector() { jjtThis.items.add(lastSelector); } ) *
+        lastSelector = ArraySelector() { jjtThis.addItem(lastSelector); }
+        ( <COMMA> lastSelector = ArraySelector() { jjtThis.addItem(lastSelector); } ) *
     )
     { return jjtThis; }
 }
@@ -2413,10 +2412,10 @@ OArrayConcatExpression ArrayConcatExpression():
 }
 {
     (
-	    sub = ArrayConcatExpressionElement() { jjtThis.getChildExpressions().add(sub); }
+	    sub = ArrayConcatExpressionElement() { jjtThis.addChildExpression(sub); }
 	    (
             <SC_OR>
-	        sub = ArrayConcatExpressionElement() { jjtThis.getChildExpressions().add(sub); }
+	        sub = ArrayConcatExpressionElement() { jjtThis.addChildExpression(sub); }
 	    )+
 	)
 	{
@@ -2613,24 +2612,24 @@ OFromItem FromItem():
     	|
     	LOOKAHEAD(2)
     	(
-    	    <LBRACKET> lastRid = Rid() { jjtThis.rids.add(lastRid); }
+    	    <LBRACKET> lastRid = Rid() { jjtThis.addRid(lastRid); }
     	    (
-    	        <COMMA> lastRid = Rid() { jjtThis.rids.add(lastRid); }
+    	        <COMMA> lastRid = Rid() { jjtThis.addRid(lastRid); }
     	    )* <RBRACKET>
     	)
     	|
     	(
             <LBRACKET>
             (
-                lastParam = PositionalParameter() { jjtThis.inputParams.add(lastParam); }
+                lastParam = PositionalParameter() { jjtThis.addInputParam(lastParam); }
                 |
-                lastParam = NamedParameter() { jjtThis.inputParams.add(lastParam); }
+                lastParam = NamedParameter() { jjtThis.addInputParam(lastParam); }
             )
             (
                 <COMMA>
-                lastParam = PositionalParameter() { jjtThis.inputParams.add(lastParam); }
+                lastParam = PositionalParameter() { jjtThis.addInputParam(lastParam); }
                 |
-                lastParam = NamedParameter() { jjtThis.inputParams.add(lastParam); }
+                lastParam = NamedParameter() { jjtThis.addInputParam(lastParam); }
             )* <RBRACKET>
         )
     	|
@@ -2774,8 +2773,8 @@ OOrBlock OrBlock():
 { OAndBlock lastAnd = null; }
 {
     (
-    	lastAnd = AndBlock() { jjtThis.getSubBlocks().add(lastAnd); }
-    	( <OR> lastAnd = AndBlock() { jjtThis.getSubBlocks().add(lastAnd); } )*
+    	lastAnd = AndBlock() { jjtThis.addSubBlock(lastAnd); }
+    	( <OR> lastAnd = AndBlock() { jjtThis.addSubBlock(lastAnd); } )*
     )
     { return jjtThis; }
 }
@@ -2784,8 +2783,8 @@ OAndBlock AndBlock():
 {ONotBlock lastNot = null; }
 {
 (
-    lastNot = NotBlock() { jjtThis.getSubBlocks().add(lastNot); }
-    ( <AND> lastNot = NotBlock() { jjtThis.getSubBlocks().add(lastNot); } )*
+    lastNot = NotBlock() { jjtThis.addSubBlock(lastNot); }
+    ( <AND> lastNot = NotBlock() { jjtThis.addSubBlock(lastNot); } )*
 ) { return jjtThis; }
 }
 
@@ -3644,7 +3643,7 @@ OMatchExpression MatchExpression():
                 |
                 nextItem = FieldMatchPathItem()
             )
-            { jjtThis.items.add(nextItem); }
+            { jjtThis.addItem(nextItem); }
         )*
     ) { return jjtThis; }
 }
@@ -3685,11 +3684,11 @@ OMatchPathItem MultiMatchPathItem():
         <DOT>
         <LPAREN>
         (
-            nextItem = MatchPathItemFirst() { jjtThis.items.add(nextItem); }
+            nextItem = MatchPathItemFirst() { jjtThis.addItem(nextItem); }
         )
         (
             LOOKAHEAD(MatchPathItem())
-            nextItem = MatchPathItem() { jjtThis.items.add(nextItem); }
+            nextItem = MatchPathItem() { jjtThis.addItem(nextItem); }
         )*
         <RPAREN>
         [ jjtThis.filter = MatchFilter() ]
@@ -3708,13 +3707,13 @@ OMatchPathItem MultiMatchPathItemArrows():
         (
             (
                 LOOKAHEAD( OutPathItemOpt() )
-                nextItem = OutPathItemOpt()  { jjtThis.items.add(nextItem); }
+                nextItem = OutPathItemOpt()  { jjtThis.addItem(nextItem); }
                 |
                 LOOKAHEAD( InPathItemOpt() )
-                nextItem = InPathItemOpt()  { jjtThis.items.add(nextItem); }
+                nextItem = InPathItemOpt()  { jjtThis.addItem(nextItem); }
                 |
                 LOOKAHEAD( BothPathItemOpt() )
-                nextItem = BothPathItemOpt()  { jjtThis.items.add(nextItem); }
+                nextItem = BothPathItemOpt()  { jjtThis.addItem(nextItem); }
             ){
                 if(prevItem !=null && prevItem.filter == null){
                     throw new OQueryParsingException("MATCH sub-pattern with no square brackets");
@@ -3733,10 +3732,10 @@ OMatchFilter MatchFilter():
     (
         <LBRACE>
             [
-                lastItem = MatchFilterItem() { jjtThis.items.add(lastItem); }
+                lastItem = MatchFilterItem() { jjtThis.addItem(lastItem); }
                 (
                     <COMMA>
-                    lastItem = MatchFilterItem() { jjtThis.items.add(lastItem); }
+                    lastItem = MatchFilterItem() { jjtThis.addItem(lastItem); }
                 )*
             ]
         <RBRACE>
