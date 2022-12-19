@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.junit.Assert;
@@ -14,11 +13,12 @@ import org.junit.Test;
 
 /** Created by luigidellaquila on 14/09/17. */
 public class OCheckIndexToolTest extends BaseMemoryInternalDatabase {
+
   @Test
   public void test() {
-    db.command(new OCommandSQL("create class Foo")).execute();
-    db.command(new OCommandSQL("create property Foo.name STRING")).execute();
-    db.command(new OCommandSQL("create index Foo.name on Foo (name) NOTUNIQUE")).execute();
+    db.command("create class Foo").close();
+    db.command("create property Foo.name STRING").close();
+    db.command("create index Foo.name on Foo (name) NOTUNIQUE").close();
 
     ODocument doc = db.newInstance("Foo");
     doc.field("name", "a");
