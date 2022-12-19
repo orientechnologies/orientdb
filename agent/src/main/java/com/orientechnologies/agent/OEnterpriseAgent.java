@@ -372,7 +372,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
     final OModifiableDistributedConfiguration newCfg = cfg.modify();
     newCfg.setServerRole(serverName, ODistributedConfiguration.ROLES.valueOf(role));
-    dManager.updateCachedDatabaseConfiguration(databaseName, newCfg, true);
+    dManager.updateCachedDatabaseConfiguration(databaseName, newCfg);
   }
 
   @Override
@@ -390,7 +390,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
     final OModifiableDistributedConfiguration newCfg = cfg.modify();
     newCfg.setServerOwner(clusterName, owner);
-    dManager.updateCachedDatabaseConfiguration(databaseName, newCfg, true);
+    dManager.updateCachedDatabaseConfiguration(databaseName, newCfg);
   }
 
   public OEnterpriseServer getEnterpriseServer() {

@@ -195,7 +195,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     cfg.field("version", (Integer) cfg.field("version") + 1);
 
     OModifiableDistributedConfiguration config = new OModifiableDistributedConfiguration(cfg);
-    manager.updateCachedDatabaseConfiguration(database, config, true);
+    manager.updateCachedDatabaseConfiguration(database, config);
   }
 
   private void doGet(

@@ -1093,7 +1093,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           }
 
           OCacheEntry cacheEntry =
-              readCache.loadForWrite(fileId, pageIndex, true, writeCache, true, null);
+              readCache.loadForWrite(fileId, pageIndex, writeCache, true, null);
 
           if (cacheEntry == null) {
             do {
