@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.metadata.schema.OViewConfig.OViewIndexConfig.OIndexConfigProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,14 +97,14 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       indexDescriptor.put("type", idx.type);
       indexDescriptor.put("engine", idx.engine);
       Map<String, Object> properties = new HashMap<>();
-      for (OTriple<String, OType, OType> s : idx.props) {
-        if (s.getValue().getValue() != null) {
+      for (OIndexConfigProperty s : idx.props) {
+        if (s.getLinkedType() != null) {
           List<String> entry = new ArrayList<>();
-          entry.add(s.getValue().getKey().toString());
-          entry.add(s.getValue().getValue().toString());
-          properties.put(s.key, entry);
+          entry.add(s.getType().toString());
+          entry.add(s.getLinkedType().toString());
+          properties.put(s.getName(), entry);
         } else {
-          properties.put(s.key, s.value.getKey().toString());
+          properties.put(s.getName(), s.getType().toString());
         }
       }
       indexDescriptor.put("properties", properties);
@@ -132,14 +132,14 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       indexDescriptor.put("type", idx.type);
       indexDescriptor.put("engine", idx.engine);
       Map<String, Object> properties = new HashMap<>();
-      for (OTriple<String, OType, OType> s : idx.props) {
-        if (s.getValue().getValue() != null) {
+      for (OIndexConfigProperty s : idx.props) {
+        if (s.getLinkedType() != null) {
           List<String> entry = new ArrayList<>();
-          entry.add(s.getValue().getKey().toString());
-          entry.add(s.getValue().getValue().toString());
-          properties.put(s.key, entry);
+          entry.add(s.getType().toString());
+          entry.add(s.getLinkedType().toString());
+          properties.put(s.getName(), entry);
         } else {
-          properties.put(s.key, s.value.getKey().toString());
+          properties.put(s.getName(), s.getType().toString());
         }
       }
       indexes.add(indexDescriptor);

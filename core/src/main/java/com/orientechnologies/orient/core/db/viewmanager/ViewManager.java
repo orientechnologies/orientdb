@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.db.viewmanager;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OTriple;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -20,11 +20,13 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition.INDEX_BY;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
+import com.orientechnologies.orient.core.metadata.schema.OViewConfig.OViewIndexConfig.OIndexConfigProperty;
 import com.orientechnologies.orient.core.metadata.schema.OViewImpl;
 import com.orientechnologies.orient.core.metadata.schema.OViewRemovedMetadata;
 import com.orientechnologies.orient.core.record.OElement;
@@ -444,22 +446,26 @@ public class ViewManager {
   }
 
   private OIndexDefinition createIndexDefinition(
-      String viewName, List<OTriple<String, OType, OType>> requiredIndexesInfo) {
+      String viewName, List<OIndexConfigProperty> requiredIndexesInfo) {
     if (requiredIndexesInfo.size() == 1) {
-      String fieldName = requiredIndexesInfo.get(0).getKey();
-      OType fieldType = requiredIndexesInfo.get(0).getValue().getKey();
-      OType linkedType = requiredIndexesInfo.get(0).getValue().getValue();
+      String fieldName = requiredIndexesInfo.get(0).getName();
+      OType fieldType = requiredIndexesInfo.get(0).getType();
+      OType linkedType = requiredIndexesInfo.get(0).getLinkedType();
+      OCollate collate = requiredIndexesInfo.get(0).getCollate();
+      INDEX_BY index_by = requiredIndexesInfo.get(0).getIndexBy();
       return OIndexDefinitionFactory.createSingleFieldIndexDefinition(
-          viewName, fieldName, fieldType, linkedType, null, null, null);
+          viewName, fieldName, fieldType, linkedType, collate, null, index_by);
     }
     OCompositeIndexDefinition result = new OCompositeIndexDefinition(viewName);
-    for (OTriple<String, OType, OType> pair : requiredIndexesInfo) {
-      String fieldName = pair.getKey();
-      OType fieldType = pair.getValue().getKey();
-      OType linkedType = pair.getValue().getValue();
+    for (OIndexConfigProperty pair : requiredIndexesInfo) {
+      String fieldName = pair.getName();
+      OType fieldType = pair.getType();
+      OType linkedType = pair.getLinkedType();
+      OCollate collate = pair.getCollate();
+      INDEX_BY index_by = pair.getIndexBy();
       OIndexDefinition definition =
           OIndexDefinitionFactory.createSingleFieldIndexDefinition(
-              viewName, fieldName, fieldType, linkedType, null, null, null);
+              viewName, fieldName, fieldType, linkedType, collate, null, index_by);
       result.addIndex(definition);
     }
     return result;

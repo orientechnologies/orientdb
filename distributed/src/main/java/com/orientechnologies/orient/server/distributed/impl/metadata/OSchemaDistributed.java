@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
-import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
+import com.orientechnologies.orient.core.metadata.schema.OViewConfig.OViewIndexConfig.OIndexConfigProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import java.util.List;
@@ -111,21 +110,21 @@ public class OSchemaDistributed extends OSchemaEmbedded {
           }
           cmd.append(", properties:{");
           boolean firstProp = true;
-          for (OTriple<String, OType, OType> property : index.getProperties()) {
+          for (OIndexConfigProperty property : index.getProperties()) {
             if (!firstProp) {
               cmd.append(", ");
             }
             cmd.append("\"");
-            cmd.append(property.key);
-            if (property.value.value != null) {
+            cmd.append(property.getName());
+            if (property.getLinkedType() != null) {
               cmd.append("\":[\"");
-              cmd.append(property.value.key);
+              cmd.append(property.getType());
               cmd.append("\", \"");
-              cmd.append(property.value.value);
+              cmd.append(property.getLinkedType());
               cmd.append("\"]");
             } else {
               cmd.append("\":\"");
-              cmd.append(property.value.key);
+              cmd.append(property.getType());
               cmd.append("\"");
             }
             firstProp = false;
