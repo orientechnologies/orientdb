@@ -66,8 +66,9 @@ public class OViewConfig {
       this.engine = engine;
     }
 
-    public void addProperty(String name, OType type, OType linkedType) {
-      this.props.add(new OIndexConfigProperty(name, type, linkedType, null, null));
+    public void addProperty(
+        String name, OType type, OType linkedType, OCollate collate, INDEX_BY indexBy) {
+      this.props.add(new OIndexConfigProperty(name, type, linkedType, collate, indexBy));
     }
 
     public List<OIndexConfigProperty> getProperties() {

@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition.INDEX_BY;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig.OViewIndexConfig.OIndexConfigProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -46,20 +49,29 @@ public abstract class OViewImpl extends OClassImpl implements OView {
           ((Map<String, Object>) idx.get("properties")).entrySet()) {
         OType proType = null;
         OType linkedType = null;
-        if (prop.getValue() instanceof List) {
-          List<String> value = (List<String>) prop.getValue();
-          if (value.size() > 0 && value.get(0) != null) {
-            proType = OType.valueOf(value.get(0).toString());
+        String collateName = null;
+        INDEX_BY indexBy = null;
+        if (prop.getValue() instanceof Map) {
+          Map<String, Object> value = (Map<String, Object>) prop.getValue();
+          if (value.size() > 0 && value.get("type") != null) {
+            proType = OType.valueOf(value.get("type").toString());
           }
-          if (value.size() > 1 && value.get(1) != null) {
-            linkedType = OType.valueOf(value.get(1).toString());
+          if (value.size() > 1 && value.get("linkedType") != null) {
+            linkedType = OType.valueOf(value.get("linkedType").toString());
+          }
+          if (value.size() > 1 && value.get("collate") != null) {
+            collateName = value.get("collate").toString();
+          }
+          if (value.size() > 1 && value.get("collate") != null) {
+            indexBy = INDEX_BY.valueOf(value.get("collate").toString().toUpperCase());
           }
         } else {
           if (prop.getValue() != null) {
             proType = OType.valueOf(prop.getValue().toString());
           }
         }
-        indexConfig.addProperty(prop.getKey(), proType, linkedType);
+        OCollate collate = OSQLEngine.getCollate(collateName);
+        indexConfig.addProperty(prop.getKey(), proType, linkedType, collate, indexBy);
       }
     }
     if (document.getProperty("updateIntervalSeconds") instanceof Integer) {
@@ -98,14 +110,18 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       indexDescriptor.put("engine", idx.engine);
       Map<String, Object> properties = new HashMap<>();
       for (OIndexConfigProperty s : idx.props) {
+        HashMap<String, Object> entry = new HashMap<>();
+        entry.put("type", s.getType().toString());
         if (s.getLinkedType() != null) {
-          List<String> entry = new ArrayList<>();
-          entry.add(s.getType().toString());
-          entry.add(s.getLinkedType().toString());
-          properties.put(s.getName(), entry);
-        } else {
-          properties.put(s.getName(), s.getType().toString());
+          entry.put("linkedType", s.getLinkedType().toString());
         }
+        if (s.getIndexBy() != null) {
+          entry.put("indexBy", s.getIndexBy().toString());
+        }
+        if (s.getCollate() != null) {
+          entry.put("collate", s.getCollate().getName());
+        }
+        properties.put(s.getName(), entry);
       }
       indexDescriptor.put("properties", properties);
       indexes.add(indexDescriptor);
@@ -133,14 +149,18 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       indexDescriptor.put("engine", idx.engine);
       Map<String, Object> properties = new HashMap<>();
       for (OIndexConfigProperty s : idx.props) {
+        HashMap<String, Object> entry = new HashMap<>();
+        entry.put("type", s.getType().toString());
         if (s.getLinkedType() != null) {
-          List<String> entry = new ArrayList<>();
-          entry.add(s.getType().toString());
-          entry.add(s.getLinkedType().toString());
-          properties.put(s.getName(), entry);
-        } else {
-          properties.put(s.getName(), s.getType().toString());
+          entry.put("linkedType", s.getLinkedType().toString());
         }
+        if (s.getIndexBy() != null) {
+          entry.put("indexBy", s.getIndexBy().toString());
+        }
+        if (s.getCollate() != null) {
+          entry.put("collate", s.getCollate().getName());
+        }
+        properties.put(s.getName(), entry);
       }
       indexes.add(indexDescriptor);
     }

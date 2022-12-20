@@ -116,17 +116,17 @@ public class OSchemaDistributed extends OSchemaEmbedded {
             }
             cmd.append("\"");
             cmd.append(property.getName());
-            if (property.getLinkedType() != null) {
-              cmd.append("\":[\"");
-              cmd.append(property.getType());
-              cmd.append("\", \"");
-              cmd.append(property.getLinkedType());
-              cmd.append("\"]");
-            } else {
-              cmd.append("\":\"");
-              cmd.append(property.getType());
-              cmd.append("\"");
+            cmd.append("\":{\"type\":\"");
+            cmd.append(property.getType());
+            cmd.append("\", \"linkedType\":\"");
+            cmd.append(property.getLinkedType());
+            cmd.append("\", \"indexBy\":\"");
+            cmd.append(property.getIndexBy());
+            if (property.getCollate() != null) {
+              cmd.append("\", \"collate\":\"");
+              cmd.append(property.getName());
             }
+            cmd.append("\"}");
             firstProp = false;
           }
           cmd.append("  }");

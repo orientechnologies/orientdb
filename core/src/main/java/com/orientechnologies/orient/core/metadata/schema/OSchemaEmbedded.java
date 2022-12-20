@@ -13,10 +13,12 @@ import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition.INDEX_BY;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -245,14 +247,27 @@ public class OSchemaEmbedded extends OSchemaShared {
                 ((Map<String, Object>) ((Map) index).get("properties")).entrySet()) {
               OType val = null;
               OType linkedType = null;
-              if (entry.getValue() instanceof List) {
-                List<String> listVal = (List) entry.getValue();
-                if (listVal.size() > 0) {
-                  val = OType.valueOf(listVal.get(0).toUpperCase(Locale.ENGLISH));
+              String collate = null;
+              INDEX_BY indexBy = null;
+              if (entry.getValue() instanceof Map) {
+                Map<String, Object> listVal = (Map<String, Object>) entry.getValue();
+                if (listVal.get("type") != null) {
+                  val = OType.valueOf(listVal.get("type").toString().toUpperCase(Locale.ENGLISH));
                 }
-                if (listVal.size() > 1) {
-                  linkedType = OType.valueOf(listVal.get(1).toUpperCase(Locale.ENGLISH));
+                if (listVal.get("type") != null) {
+                  linkedType =
+                      OType.valueOf(
+                          listVal.get("linkedType").toString().toUpperCase(Locale.ENGLISH));
                 }
+                if (listVal.get("collate") != null) {
+                  collate = listVal.get("collate").toString();
+                }
+                if (listVal.get("indexBy") != null) {
+                  indexBy =
+                      INDEX_BY.valueOf(
+                          listVal.get("indexBy").toString().toUpperCase(Locale.ENGLISH));
+                }
+
               } else {
                 val = OType.valueOf(entry.getValue().toString().toUpperCase(Locale.ENGLISH));
               }
@@ -260,7 +275,8 @@ public class OSchemaEmbedded extends OSchemaShared {
                 throw new IllegalArgumentException(
                     "Invalid value for index key type: " + entry.getValue());
               }
-              idxConfig.addProperty(entry.getKey(), val, linkedType);
+              idxConfig.addProperty(
+                  entry.getKey(), val, linkedType, OSQLEngine.getCollate(collate), indexBy);
             }
           }
         }

@@ -17,7 +17,7 @@ public class OCreateViewStatementTest extends OParserTestAbstract {
     checkRightSyntax(
         "CREATE VIEW Foo FROM (select from v where name ='foo') METADATA {indexes:[{type:'UNIQUE', properties:{name:'STRING'}}]}");
     checkRightSyntax(
-        "CREATE VIEW Foo FROM (select from v where name ='foo') METADATA {indexes:[{\"type\":\"unique\", \"properties\":{\"ids\":[\"EMBEDDEDEDSET\",\"STRING\"]}}]}");
+        "CREATE VIEW Foo FROM (select from v where name ='foo') METADATA {indexes:[{\"type\":\"unique\", \"properties\":{\"ids\":{\"type\":\"EMBEDDEDEDSET\",\"linkedType\":\"STRING\"}}}]}");
   }
 
   @Test
