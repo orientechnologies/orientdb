@@ -163,6 +163,7 @@ public class OSharedContextEmbedded extends OSharedContext {
       // the index does not exist
     }
 
+    viewManager.create();
     loaded = true;
   }
 

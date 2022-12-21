@@ -131,6 +131,12 @@ public class ViewManager {
     start();
   }
 
+  public void create() {
+    closed = false;
+    init();
+    start();
+  }
+
   public void start() {
     schedule();
   }

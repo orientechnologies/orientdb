@@ -166,6 +166,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
             // the index does not exist
           }
 
+          viewManager.create();
           schema.forceSnapshot(database);
           loaded = true;
           return null;
