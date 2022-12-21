@@ -13,7 +13,6 @@ import java.util.concurrent.CountDownLatch;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
@@ -137,8 +136,9 @@ public class OCreateViewStatementExecutionTest {
     Thread.sleep(1000);
 
     OResultSet result = db.query("SELECT FROM " + viewName + " WHERE name = 'name4'");
-    result.getExecutionPlan().get().getSteps().stream()
-        .anyMatch(x -> x instanceof FetchFromIndexStep);
+    Assert.assertTrue(
+        result.getExecutionPlan().get().getSteps().stream()
+            .anyMatch(x -> x instanceof FetchFromIndexStep));
     Assert.assertTrue(result.hasNext());
     result.next();
     Assert.assertFalse(result.hasNext());
@@ -154,7 +154,7 @@ public class OCreateViewStatementExecutionTest {
     for (int i = 0; i < 10; i++) {
       OElement elem = db.newElement(className);
       elem.setProperty("name", "name" + i);
-      elem.setProperty("data", Arrays.asList(new Integer[] {1, 2, 3}));
+      elem.setProperty("data", Arrays.asList(new Integer[] {20 + i, 40 + i, 50 + i}));
       elem.save();
     }
 
@@ -168,9 +168,10 @@ public class OCreateViewStatementExecutionTest {
 
     Thread.sleep(1000);
 
-    OResultSet result = db.query("SELECT FROM " + viewName + " WHERE name = 'name4'");
-    result.getExecutionPlan().get().getSteps().stream()
-        .anyMatch(x -> x instanceof FetchFromIndexStep);
+    OResultSet result = db.query("SELECT FROM " + viewName + " WHERE data = 22");
+    Assert.assertTrue(
+        result.getExecutionPlan().get().getSteps().stream()
+            .anyMatch(x -> x instanceof FetchFromIndexStep));
     Assert.assertTrue(result.hasNext());
     result.next();
     Assert.assertFalse(result.hasNext());
