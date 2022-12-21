@@ -20,8 +20,6 @@ public class OViewRefreshIT {
         .close();
   }
 
-  public void simpleViewRefresh() {}
-
   @Test
   public void testLiveUpdateInsert() throws InterruptedException {
     try (ODatabaseSession db = orientDB.open(this.getClass().getSimpleName(), "admin", "admpwd")) {
@@ -178,6 +176,78 @@ public class OViewRefreshIT {
       result = db.query("SELECT FROM " + viewName);
       Assert.assertEquals(8, result.stream().count());
       result.close();
+    }
+  }
+
+  @Test
+  public void testOpenCloseRefresh() throws InterruptedException {
+    String className = "testLiveUpdateInsertClass";
+    String viewName = "testLiveUpdateInsert";
+    try (OrientDB orientDB =
+        new OrientDB("embedded:./target/viewRefresh", OrientDBConfig.defaultConfig())) {
+      orientDB
+          .execute(
+              "create database ? plocal users (admin identified by 'admpwd' role admin)",
+              this.getClass().getSimpleName())
+          .close();
+
+      try (ODatabaseSession db =
+          orientDB.open(this.getClass().getSimpleName(), "admin", "admpwd")) {
+
+        db.createClass(className);
+
+        for (int i = 0; i < 10; i++) {
+          OElement elem = db.newElement(className);
+          elem.setProperty("name", "name" + i);
+          elem.setProperty("surname", "surname" + i);
+          elem.save();
+        }
+
+        String statement =
+            "CREATE VIEW "
+                + viewName
+                + " FROM (SELECT FROM "
+                + className
+                + ") metadata {\"updateIntervalSeconds\":1} ";
+
+        db.command(statement);
+
+        Thread.sleep(2000);
+
+        OResultSet result = db.query("SELECT FROM " + viewName);
+        Assert.assertEquals(10, result.stream().count());
+        result.close();
+
+        for (int i = 10; i < 20; i++) {
+          OElement elem = db.newElement(className);
+          elem.setProperty("name", "name" + i);
+          elem.setProperty("surname", "surname" + i);
+          elem.save();
+        }
+      }
+    }
+    try (OrientDB orientDB =
+        new OrientDB("embedded:./target/viewRefresh", OrientDBConfig.defaultConfig())) {
+
+      try (ODatabaseSession db =
+          orientDB.open(this.getClass().getSimpleName(), "admin", "admpwd")) {
+        Thread.sleep(2000);
+
+        try (OResultSet result = db.query("SELECT FROM " + viewName)) {
+          Assert.assertEquals(20, result.stream().count());
+        }
+
+        for (int i = 20; i < 30; i++) {
+          OElement elem = db.newElement(className);
+          elem.setProperty("name", "name" + i);
+          elem.setProperty("surname", "surname" + i);
+          elem.save();
+        }
+        Thread.sleep(2000);
+        try (OResultSet result = db.query("SELECT FROM " + viewName)) {
+          Assert.assertEquals(30, result.stream().count());
+        }
+      }
     }
   }
 
