@@ -28,6 +28,22 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.14 - (December, 23 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3214---23-December-2022
+
+# Core
+- Optimization on graph delete operations (issue #9821)
+- Fix on remote deserialization of specific exception
+- Fix on index logic for multi-page split
+- Fix limit of index key size, now it fail with a user message when the key is over the maximum size (10Kb)
+- Optimization in index write
+- Optimization of security checks in writes
+- Fix wrongly oversize WAL records
+- Fix views locking logic to update the view atomically
+- Fix failing schedule of view if previous view fail to refresh
+- Add support of indexing of embedded types in views
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.13 - (December, 1 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3213---1-December-2022
 
