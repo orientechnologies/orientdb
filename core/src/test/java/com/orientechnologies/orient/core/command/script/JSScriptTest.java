@@ -223,6 +223,7 @@ public class JSScriptTest {
         Assert.assertEquals(1, resultSet.stream().count());
       }
       scriptManager.removeAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal")));
+      scriptManager.closeAll();
 
       try {
         db.execute("javascript", "new java.math.BigDecimal(1.0);");
@@ -236,6 +237,7 @@ public class JSScriptTest {
       }
 
       scriptManager.addAllowedPackages(new HashSet<>(Arrays.asList("java.math.*")));
+      scriptManager.closeAll();
 
       try (OResultSet resultSet = db.execute("javascript", "new java.math.BigDecimal(1.0);")) {
         Assert.assertEquals(1, resultSet.stream().count());

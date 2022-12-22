@@ -471,6 +471,7 @@ public class OScriptManager {
                 ((OSecuredScriptFactory) e.getValue()).addAllowedPackages(packages);
               }
             });
+    closeAll();
   }
 
   public void removeAllowedPackages(Set<String> packages) {
@@ -482,6 +483,7 @@ public class OScriptManager {
                 ((OSecuredScriptFactory) e.getValue()).removeAllowedPackages(packages);
               }
             });
+    closeAll();
   }
 
   public void unregisterInjection(final OScriptInjection iInj) {
