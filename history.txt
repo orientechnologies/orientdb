@@ -42,6 +42,7 @@ VERSION 3.2.14 - (December, 23 2022)
 - Fix views locking logic to update the view atomically
 - Fix failing schedule of view if previous view fail to refresh
 - Add support of indexing of embedded types in views
+- Fixed script poll release issue  
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.13 - (December, 1 2022)
