@@ -42,7 +42,7 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
   private Context resolveContext(ODatabaseDocumentInternal database) {
     OResourcePool<ODatabaseDocumentInternal, Context> pool =
         contextPools.computeIfAbsent(
-            language,
+            database.getName(),
             (k) -> {
               return new OResourcePool<ODatabaseDocumentInternal, Context>(
                   database.getConfiguration().getValueAsInteger(OGlobalConfiguration.SCRIPT_POOL),
@@ -51,8 +51,8 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
     return pool.getResource(database, 0);
   }
 
-  private void returnContext(Context context) {
-    OResourcePool<ODatabaseDocumentInternal, Context> pool = contextPools.get(language);
+  private void returnContext(Context context, ODatabaseDocumentInternal database) {
+    OResourcePool<ODatabaseDocumentInternal, Context> pool = contextPools.get(database.getName());
     if (pool != null) {
       pool.returnResource(context);
     }
@@ -139,7 +139,7 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
           new OCommandScriptException("Error on execution of the script", script, col),
           new ScriptException(e));
     } finally {
-      returnContext(ctx);
+      returnContext(ctx, database);
     }
   }
 
@@ -193,7 +193,7 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
           new OCommandScriptException("Error on execution of the script", functionName, col),
           new ScriptException(e));
     } finally {
-      returnContext(ctx);
+      returnContext(ctx, database);
     }
   }
 

@@ -730,11 +730,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
               OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
               if (clazz.isFunction()) {
                 database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
-                database
-                    .getSharedContext()
-                    .getOrientDB()
-                    .getScriptManager()
-                    .close(database.getName());
               }
               if (clazz.isSequence()) {
                 ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary())
