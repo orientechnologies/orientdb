@@ -51,6 +51,13 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
     return pool.getResource(database, 0);
   }
 
+  private void returnContext(Context context) {
+    OResourcePool<ODatabaseDocumentInternal, Context> pool = contextPools.get(language);
+    if (pool != null) {
+      pool.returnResource(context);
+    }
+  }
+
   @Override
   public Context createNewResource(ODatabaseDocumentInternal database, Object... iAdditionalArgs) {
     final OScriptManager scriptManager =
@@ -115,8 +122,8 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
     final OScriptManager scriptManager =
         database.getSharedContext().getOrientDB().getScriptManager();
 
+    Context ctx = resolveContext(database);
     try {
-      Context ctx = resolveContext(database);
       OPolyglotScriptBinding bindings = new OPolyglotScriptBinding(ctx.getBindings(language));
 
       scriptManager.bindContextVariables(null, bindings, database, null, params);
@@ -131,6 +138,8 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
       throw OException.wrapException(
           new OCommandScriptException("Error on execution of the script", script, col),
           new ScriptException(e));
+    } finally {
+      returnContext(ctx);
     }
   }
 
@@ -149,8 +158,8 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
     final OScriptManager scriptManager =
         database.getSharedContext().getOrientDB().getScriptManager();
 
+    Context ctx = resolveContext(database);
     try {
-      Context ctx = resolveContext(database);
 
       OPolyglotScriptBinding bindings = new OPolyglotScriptBinding(ctx.getBindings(language));
 
@@ -183,6 +192,8 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
       throw OException.wrapException(
           new OCommandScriptException("Error on execution of the script", functionName, col),
           new ScriptException(e));
+    } finally {
+      returnContext(ctx);
     }
   }
 
