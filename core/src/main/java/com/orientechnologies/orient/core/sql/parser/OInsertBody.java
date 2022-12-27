@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -192,12 +193,33 @@ public class OInsertBody extends SimpleNode {
     return identifierList;
   }
 
+  public void addIdentifier(OIdentifier identifier) {
+    if (this.identifierList == null) {
+      this.identifierList = new ArrayList<>();
+    }
+    this.identifierList.add(identifier);
+  }
+
   public List<List<OExpression>> getValueExpressions() {
     return valueExpressions;
   }
 
+  public void addValueExpression(List<OExpression> exp) {
+    if (this.valueExpressions == null) {
+      this.valueExpressions = new ArrayList<>();
+    }
+    this.valueExpressions.add(exp);
+  }
+
   public List<OInsertSetExpression> getSetExpressions() {
     return setExpressions;
+  }
+
+  public void addInsertSetExpression(OInsertSetExpression exp) {
+    if (this.setExpressions == null) {
+      this.setExpressions = new ArrayList<>();
+    }
+    this.setExpressions.add(exp);
   }
 
   public OJson getContent() {

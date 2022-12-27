@@ -20,7 +20,7 @@
 
 options {
 	TRACK_TOKENS = true;
-  	JDK_VERSION = "1.6";
+  	JDK_VERSION = "1.8";
   	MULTI=true;
   	VISITOR=true;
   	STATIC=false;
@@ -1418,8 +1418,8 @@ OMatchStatement MatchStatement():
         )
         [ <AS> lastReturnAlias = Identifier() ]
         {
-            jjtThis.returnAliases.add(lastReturnAlias);
-            jjtThis.returnItems.add(lastReturn);
+            jjtThis.addReturnAlias(lastReturnAlias);
+            jjtThis.addReturnItem(lastReturn);
             jjtThis.addReturnNestedProjection(lastNestedProjection);
             lastNestedProjection = null;
         }
@@ -1429,8 +1429,8 @@ OMatchStatement MatchStatement():
             [ lastNestedProjection = NestedProjection() ]
             [ <AS> lastReturnAlias = Identifier() ]
             {
-                jjtThis.returnAliases.add(lastReturnAlias);
-                jjtThis.returnItems.add(lastReturn);
+                jjtThis.addReturnAlias(lastReturnAlias);
+                jjtThis.addReturnItem(lastReturn);
                 jjtThis.addReturnNestedProjection(lastNestedProjection);
                 lastNestedProjection = null;
             }
@@ -1512,12 +1512,11 @@ ODeleteEdgeStatement DeleteEdgeByRidStatement():
             [
                 lastRid = Rid()
                 {
-                    jjtThis.rids = new ArrayList();
-                    jjtThis.rids.add(lastRid);
+                    jjtThis.addRid(lastRid);
                 }
                 (
                     <COMMA>
-                    lastRid = Rid() { jjtThis.rids.add(lastRid); }
+                    lastRid = Rid() { jjtThis.addRid(lastRid); }
                 )*
             ] <RBRACKET>
 	    )
@@ -1629,7 +1628,7 @@ OUpdateEdgeStatement UpdateEdgeStatement():
 	<UPDATE>
 	<EDGE>
 	jjtThis.target = FromClause()
-	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
+	( lastOperations = UpdateOperations() { jjtThis.addOperations(lastOperations); } )+
 	[ <UPSERT> { jjtThis.upsert = true; } ]
 	[
 		<RETURN>
@@ -1663,7 +1662,7 @@ OUpdateStatement UpdateStatement():
     (
     	<UPDATE>
     	jjtThis.target = FromClause()
-    	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
+    	( lastOperations = UpdateOperations() { jjtThis.addOperations(lastOperations); } )+
     	[ <UPSERT> { jjtThis.upsert = true; } ]
     	[
     	    <RETURN>
@@ -1701,17 +1700,17 @@ OUpdateOperations UpdateOperations():
     (
         (
             <SET> { jjtThis.type = OUpdateOperations.TYPE_SET; }
-            lastItem = UpdateItem() { jjtThis.updateItems.add(lastItem); }
+            lastItem = UpdateItem() { jjtThis.addUpdateItem(lastItem); }
             (
-                <COMMA> lastItem = UpdateItem() { jjtThis.updateItems.add(lastItem); }
+                <COMMA> lastItem = UpdateItem() { jjtThis.addUpdateItem(lastItem); }
             )*
         )
         |
         (
             <PUT> { jjtThis.type = OUpdateOperations.TYPE_PUT; }
-            lastPutItem = UpdatePutItem()  { jjtThis.updatePutItems.add(lastPutItem); }
+            lastPutItem = UpdatePutItem()  { jjtThis.addUpdatePutItem(lastPutItem); }
             (
-                <COMMA> lastPutItem = UpdatePutItem()  { jjtThis.updatePutItems.add(lastPutItem); }
+                <COMMA> lastPutItem = UpdatePutItem()  { jjtThis.addUpdatePutItem(lastPutItem); }
             )*
         )
         |
@@ -1730,18 +1729,18 @@ OUpdateOperations UpdateOperations():
                 |
                 <ADD> { jjtThis.type = OUpdateOperations.TYPE_ADD; }
             )
-            lastIncrementItem = UpdateIncrementItem() { jjtThis.updateIncrementItems.add(lastIncrementItem); }
+            lastIncrementItem = UpdateIncrementItem() { jjtThis.addUpdateIncrementItem(lastIncrementItem); }
             (
-                <COMMA> lastIncrementItem = UpdateIncrementItem() { jjtThis.updateIncrementItems.add(lastIncrementItem); }
+                <COMMA> lastIncrementItem = UpdateIncrementItem() { jjtThis.addUpdateIncrementItem(lastIncrementItem); }
             )*
          )
          |
          (
             <REMOVE> { jjtThis.type = OUpdateOperations.TYPE_REMOVE; }
-            lastRemoveItem = UpdateRemoveItem()  { jjtThis.updateRemoveItems.add(lastRemoveItem); }
+            lastRemoveItem = UpdateRemoveItem()  { jjtThis.addUpdateRemoveItem(lastRemoveItem); }
             (
                 <COMMA>
-                lastRemoveItem = UpdateRemoveItem()  { jjtThis.updateRemoveItems.add(lastRemoveItem); }
+                lastRemoveItem = UpdateRemoveItem()  { jjtThis.addUpdateRemoveItem(lastRemoveItem); }
             )*
          )
     )
@@ -1860,20 +1859,18 @@ OInsertBody InsertBody():
                 <LPAREN>
                 lastIdentifier = Identifier()
                 {
-                    jjtThis.identifierList = new ArrayList<OIdentifier>();
-                    jjtThis.identifierList.add(lastIdentifier);
+                    jjtThis.addIdentifier(lastIdentifier);
                 }
                 (
                     <COMMA>
-                    lastIdentifier = Identifier() { jjtThis.identifierList.add(lastIdentifier); }
+                    lastIdentifier = Identifier() { jjtThis.addIdentifier(lastIdentifier); }
                 )*
                 <RPAREN>
                 <VALUES>
                 <LPAREN>
                 {
-                    jjtThis.valueExpressions = new ArrayList<List<OExpression>>();
                     lastExpressionList = new ArrayList<OExpression>();
-                    jjtThis.valueExpressions.add(lastExpressionList);
+                    jjtThis.addValueExpression(lastExpressionList);
                 }
                 lastExpression = Expression() { lastExpressionList.add(lastExpression); }
                 (
@@ -1886,7 +1883,7 @@ OInsertBody InsertBody():
                     <LPAREN>
                     {
                         lastExpressionList = new ArrayList<OExpression>();
-                        jjtThis.valueExpressions.add(lastExpressionList);
+                        jjtThis.addValueExpression(lastExpressionList);
                     }
                     lastExpression = Expression() { lastExpressionList.add(lastExpression); }
                     (
@@ -1901,9 +1898,8 @@ OInsertBody InsertBody():
             (
                 <SET>
                 {
-                    jjtThis.setExpressions = new ArrayList<OInsertSetExpression>();
                     OInsertSetExpression lastSetExpr = new OInsertSetExpression();
-                    jjtThis.setExpressions.add(lastSetExpr);
+                    jjtThis.addInsertSetExpression(lastSetExpr);
                 }
                 lastSetExpr.left = Identifier() <EQ> lastSetExpr.right = Expression()
 
@@ -1911,7 +1907,7 @@ OInsertBody InsertBody():
                     <COMMA>
                     {
                          lastSetExpr = new OInsertSetExpression();
-                         jjtThis.setExpressions.add(lastSetExpr);
+                         jjtThis.addInsertSetExpression(lastSetExpr);
                     }
                     lastSetExpr.left = Identifier() <EQ> lastSetExpr.right = Expression()
                 )*
@@ -2276,7 +2272,7 @@ OFunctionCall FunctionCall():
     	<LPAREN>
     	(
             [
-            lastExpression = Expression() {jjtThis.params.add(lastExpression);} ( <COMMA> lastExpression = Expression() {jjtThis.params.add(lastExpression);})*
+            lastExpression = Expression() {jjtThis.addParam(lastExpression);} ( <COMMA> lastExpression = Expression() {jjtThis.addParam(lastExpression);})*
             ]
 
     	)
@@ -2291,8 +2287,8 @@ OMethodCall MethodCall():
     (
         <DOT> jjtThis.methodName = Identifier()
         <LPAREN> [
-            lastExpression = Expression() { jjtThis.params.add(lastExpression); }
-            ( <COMMA> lastExpression = Expression() { jjtThis.params.add(lastExpression); } )*
+            lastExpression = Expression() { jjtThis.addParam(lastExpression); }
+            ( <COMMA> lastExpression = Expression() { jjtThis.addParam(lastExpression); } )*
         ] <RPAREN>
     )
     { return jjtThis; }
@@ -2608,7 +2604,7 @@ OFromItem FromItem():
 }
 {
     (
-    	lastRid = Rid() { jjtThis.rids.add(lastRid); }
+    	lastRid = Rid() { jjtThis.addRid(lastRid); }
     	|
     	LOOKAHEAD(2)
     	(

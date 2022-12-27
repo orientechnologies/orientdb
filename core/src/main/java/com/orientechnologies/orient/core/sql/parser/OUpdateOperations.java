@@ -231,8 +231,16 @@ public class OUpdateOperations extends SimpleNode {
     return updateItems;
   }
 
+  public void addUpdateItem(OUpdateItem item) {
+    this.updateItems.add(item);
+  }
+
   public List<OUpdatePutItem> getUpdatePutItems() {
     return updatePutItems;
+  }
+
+  public void addUpdatePutItem(OUpdatePutItem item) {
+    this.updatePutItems.add(item);
   }
 
   public OJson getJson() {
@@ -243,8 +251,16 @@ public class OUpdateOperations extends SimpleNode {
     return updateIncrementItems;
   }
 
+  public void addUpdateIncrementItem(OUpdateIncrementItem item) {
+    this.updateIncrementItems.add(item);
+  }
+
   public List<OUpdateRemoveItem> getUpdateRemoveItems() {
     return updateRemoveItems;
+  }
+
+  public void addUpdateRemoveItem(OUpdateRemoveItem item) {
+    this.updateRemoveItems.add(item);
   }
 }
 /* JavaCC - OriginalChecksum=0eca3b3e4e3d96c42db57b7cd89cf755 (do not edit this line) */

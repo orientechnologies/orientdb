@@ -106,6 +106,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     this.returnNestedProjections.add(projection);
   }
 
+  public void addReturnItem(OExpression item) {
+    this.returnItems.add(item);
+  }
+
+  public void addReturnAlias(OIdentifier alias) {
+    this.returnAliases.add(alias);
+  }
+
   public class MatchContext {
     int currentEdgeNumber = 0;
 

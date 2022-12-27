@@ -311,5 +311,9 @@ public class OMethodCall extends SimpleNode {
     }
     return calculatedIsGraph;
   }
+
+  public void addParam(OExpression param) {
+    this.params.add(param);
+  }
 }
 /* JavaCC - OriginalChecksum=da95662da21ceb8dee3ad88c0d980413 (do not edit this line) */

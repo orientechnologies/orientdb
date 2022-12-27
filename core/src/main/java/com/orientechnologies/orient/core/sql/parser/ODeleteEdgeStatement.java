@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.sql.executor.ODeleteEdgeExecutionPlanne
 import com.orientechnologies.orient.core.sql.executor.ODeleteExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -295,6 +296,13 @@ public class ODeleteEdgeStatement extends OStatement {
 
   public void setRids(List<ORid> rids) {
     this.rids = rids;
+  }
+
+  public void addRid(ORid rid) {
+    if (this.rids == null) {
+      this.rids = new ArrayList<>();
+    }
+    this.rids.add(rid);
   }
 
   public OWhereClause getWhereClause() {

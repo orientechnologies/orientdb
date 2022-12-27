@@ -289,6 +289,10 @@ public class OUpdateStatement extends OStatement {
     return operations;
   }
 
+  public void addOperations(OUpdateOperations op) {
+    this.operations.add(op);
+  }
+
   public boolean isUpsert() {
     return upsert;
   }

@@ -64,6 +64,10 @@ public class OFunctionCall extends SimpleNode {
     this.params = params;
   }
 
+  public void addParam(OExpression param) {
+    this.params.add(param);
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     name.toString(params, builder);
     builder.append("(");
