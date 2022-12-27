@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFact
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class OStorageAbstract implements OStorage {
@@ -53,7 +54,6 @@ public abstract class OStorageAbstract implements OStorage {
   protected final String url;
   protected final String mode;
   protected final ReentrantReadWriteLock stateLock;
-  protected final ReentrantReadWriteLock errorLock;
 
   protected volatile OStorageConfiguration configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
@@ -62,8 +62,7 @@ public abstract class OStorageAbstract implements OStorage {
 
   protected volatile STATUS status = STATUS.CLOSED;
 
-  protected Throwable error = null;
-  protected volatile boolean inError = false;
+  protected AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
 
   public OStorageAbstract(final String name, final String iURL, final String mode) {
     this.name = normalizeName(name);
@@ -75,7 +74,6 @@ public abstract class OStorageAbstract implements OStorage {
     this.mode = mode;
 
     stateLock = new ReentrantReadWriteLock();
-    errorLock = new ReentrantReadWriteLock();
   }
 
   protected String normalizeName(String name) {

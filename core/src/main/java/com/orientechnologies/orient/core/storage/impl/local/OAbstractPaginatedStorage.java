@@ -1580,13 +1580,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private void setInError(final Throwable e) {
-    this.errorLock.writeLock().lock();
-    try {
-      error = e;
-      this.inError = true;
-    } finally {
-      this.errorLock.writeLock().unlock();
-    }
+    error.set(e);
   }
 
   public Optional<OBackgroundNewDelta> extractTransactionsFromWal(
@@ -4573,28 +4567,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected boolean isInError() {
-    errorLock.readLock().lock();
-    try {
-      return inError;
-    } finally {
-      errorLock.readLock().unlock();
-    }
+    return this.error.get() != null;
   }
 
   public void checkErrorState() {
-    errorLock.readLock().lock();
-    try {
-      if (this.error != null) {
-        throw OException.wrapException(
-            new OStorageException(
-                "Internal error happened in storage "
-                    + name
-                    + " please restart the server or re-open the storage to undergo the restore process and fix the error."),
-            this.error);
-      }
-
-    } finally {
-      errorLock.readLock().unlock();
+    if (this.error.get() != null) {
+      throw OException.wrapException(
+          new OStorageException(
+              "Internal error happened in storage "
+                  + name
+                  + " please restart the server or re-open the storage to undergo the restore process and fix the error."),
+          this.error.get());
     }
   }
 
@@ -5436,7 +5419,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (status != STATUS.OPEN && !isInError()) {
         throw OException.wrapException(
             new OStorageException("Storage " + name + " was not opened, so can not be closed"),
-            this.error);
+            this.error.get());
       }
 
       status = STATUS.CLOSING;
