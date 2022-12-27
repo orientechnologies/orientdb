@@ -23,7 +23,6 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -50,7 +49,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -1320,35 +1318,21 @@ public abstract class OClassImpl implements OClass {
     final boolean strictSQL =
         ((ODatabaseInternal) database).getStorageInfo().getConfiguration().isStrictSql();
 
-    OCommandResultListener updateListener =
-        new OCommandResultListener() {
-
-          @Override
-          public boolean result(Object iRecord) {
-            final ODocument record = ((OIdentifiable) iRecord).getRecord();
-            record.field(propertyName, record.field(propertyName), type);
-            database.save(record);
-            return true;
-          }
-
-          @Override
-          public void end() {}
-
-          @Override
-          public Object getResult() {
-            return null;
-          }
-        };
-    database.query(
-        new OSQLAsynchQuery<Object>(
+    try (OResultSet result =
+        database.query(
             "select from "
                 + getEscapedName(name, strictSQL)
                 + " where "
                 + getEscapedName(propertyName, strictSQL)
                 + ".type() <> \""
                 + type.name()
-                + "\"",
-            updateListener));
+                + "\"")) {
+      while (result.hasNext()) {
+        ODocument record = (ODocument) result.next().getElement().get();
+        record.field(propertyName, record.field(propertyName), type);
+        database.save(record);
+      }
+    }
   }
 
   public void firePropertyNameMigration(
@@ -1359,32 +1343,20 @@ public abstract class OClassImpl implements OClass {
     final boolean strictSQL =
         ((ODatabaseInternal) database).getStorageInfo().getConfiguration().isStrictSql();
 
-    database.query(
-        new OSQLAsynchQuery<Object>(
+    try (OResultSet result =
+        database.query(
             "select from "
                 + getEscapedName(name, strictSQL)
                 + " where "
                 + getEscapedName(propertyName, strictSQL)
-                + " is not null ",
-            new OCommandResultListener() {
-
-              @Override
-              public boolean result(Object iRecord) {
-                final ODocument record = ((OIdentifiable) iRecord).getRecord();
-                record.setFieldType(propertyName, type);
-                record.field(newPropertyName, record.field(propertyName), type);
-                database.save(record);
-                return true;
-              }
-
-              @Override
-              public void end() {}
-
-              @Override
-              public Object getResult() {
-                return null;
-              }
-            }));
+                + " is not null ")) {
+      while (result.hasNext()) {
+        ODocument record = (ODocument) result.next().getElement().get();
+        record.setFieldType(propertyName, type);
+        record.field(newPropertyName, record.field(propertyName), type);
+        database.save(record);
+      }
+    }
   }
 
   public void checkPersistentPropertyType(
