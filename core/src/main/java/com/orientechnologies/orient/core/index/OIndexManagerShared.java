@@ -170,6 +170,15 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   public void addClusterToIndex(final String clusterName, final String indexName) {
+    acquireSharedLock();
+    try {
+      final OIndex index = indexes.get(indexName);
+      if (index.getInternal().getClusters().contains(clusterName)) {
+        return;
+      }
+    } finally {
+      releaseSharedLock();
+    }
     acquireExclusiveLock();
     try {
       final OIndex index = indexes.get(indexName);
@@ -188,6 +197,15 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   public void removeClusterFromIndex(final String clusterName, final String indexName) {
+    acquireSharedLock();
+    try {
+      final OIndex index = indexes.get(indexName);
+      if (!index.getInternal().getClusters().contains(clusterName)) {
+        return;
+      }
+    } finally {
+      releaseSharedLock();
+    }
     acquireExclusiveLock();
     try {
       final OIndex index = indexes.get(indexName);
