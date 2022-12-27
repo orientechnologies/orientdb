@@ -52,7 +52,7 @@ public class StorageNamingTests {
 
   @Test
   public void testSpecialLettersOne() {
-    try (OrientDB orientDB = new OrientDB("embedded:nameTest", OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
       try {
         orientDB.create("name%", ODatabaseType.MEMORY);
         Assert.fail();
@@ -64,7 +64,7 @@ public class StorageNamingTests {
 
   @Test
   public void testSpecialLettersTwo() {
-    try (OrientDB orientDB = new OrientDB("embedded:nameTest", OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
       try {
         orientDB.create("na.me", ODatabaseType.MEMORY);
         Assert.fail();
@@ -76,7 +76,7 @@ public class StorageNamingTests {
 
   @Test
   public void testSpecialLettersThree() {
-    try (OrientDB orientDB = new OrientDB("embedded:nameTest", OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
       orientDB.create("na_me$", ODatabaseType.MEMORY);
       orientDB.drop("na_me$");
     }

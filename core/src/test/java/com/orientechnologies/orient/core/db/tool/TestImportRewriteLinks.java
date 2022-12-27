@@ -28,7 +28,7 @@ public class TestImportRewriteLinks {
   public void testNestedLinkRewrite() {
     try (final OrientDB orientDb =
         OCreateDatabaseUtil.createDatabase(
-            "testDB", "embedded:mapperTest", OCreateDatabaseUtil.TYPE_MEMORY)) {
+            "testDB", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY)) {
       try (final ODatabaseSession session =
           orientDb.open("testDB", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
         final OSchema schema = session.getMetadata().getSchema();

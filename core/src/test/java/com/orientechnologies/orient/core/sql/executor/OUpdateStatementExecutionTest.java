@@ -37,7 +37,7 @@ public class OUpdateStatementExecutionTest {
   public void before() {
     orientDB =
         OCreateDatabaseUtil.createDatabase(
-            name.getMethodName(), "embedded:./target/databases", OCreateDatabaseUtil.TYPE_MEMORY);
+            name.getMethodName(), "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     db = orientDB.open(name.getMethodName(), "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     className = name.getMethodName();

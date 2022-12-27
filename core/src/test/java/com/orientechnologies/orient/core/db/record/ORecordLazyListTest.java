@@ -27,9 +27,7 @@ public class ORecordLazyListTest {
   public void init() throws Exception {
     orientDb =
         OCreateDatabaseUtil.createDatabase(
-            ORecordLazyListTest.class.getSimpleName(),
-            "memory:localhost",
-            OCreateDatabaseUtil.TYPE_MEMORY);
+            ORecordLazyListTest.class.getSimpleName(), "memory:", OCreateDatabaseUtil.TYPE_MEMORY);
     dbSession =
         orientDb.open(
             ORecordLazyListTest.class.getSimpleName(),

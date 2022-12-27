@@ -22,8 +22,7 @@ public class OMoveVertexStatementExecutionTest {
   @Before
   public void before() {
     orientDB =
-        OCreateDatabaseUtil.createDatabase(
-            "test", "embedded:./target/databases", OCreateDatabaseUtil.TYPE_MEMORY);
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     db = orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
   }
 

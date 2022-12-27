@@ -16,7 +16,7 @@ public class OSqlScriptExecutorTest {
   @Test
   public void testPlain() {
     final OrientDB factory =
-        OCreateDatabaseUtil.createDatabase("test", "embedded:./", OCreateDatabaseUtil.TYPE_MEMORY);
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     final String dbName = getClass().getSimpleName() + "test";
     OCreateDatabaseUtil.createDatabase(dbName, factory, OCreateDatabaseUtil.TYPE_MEMORY);
     final ODatabaseDocument db =
@@ -47,7 +47,7 @@ public class OSqlScriptExecutorTest {
   @Test
   public void testWithPositionalParams() {
     final OrientDB factory =
-        OCreateDatabaseUtil.createDatabase("test", "embedded:./", OCreateDatabaseUtil.TYPE_MEMORY);
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     final String dbName = getClass().getSimpleName() + "test";
     OCreateDatabaseUtil.createDatabase(dbName, factory, OCreateDatabaseUtil.TYPE_MEMORY);
     final ODatabaseDocument db =
@@ -76,7 +76,7 @@ public class OSqlScriptExecutorTest {
   @Test
   public void testWithNamedParams() {
     final OrientDB factory =
-        OCreateDatabaseUtil.createDatabase("test", "embedded:./", OCreateDatabaseUtil.TYPE_MEMORY);
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     final String dbName = getClass().getSimpleName() + "test";
     OCreateDatabaseUtil.createDatabase(dbName, factory, OCreateDatabaseUtil.TYPE_MEMORY);
     final ODatabaseDocument db =
@@ -108,7 +108,7 @@ public class OSqlScriptExecutorTest {
   public void testMultipleCreateEdgeOnTheSameLet() {
     // issue #7635
     final OrientDB factory =
-        OCreateDatabaseUtil.createDatabase("test", "embedded:./", OCreateDatabaseUtil.TYPE_MEMORY);
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     final String dbName = getClass().getSimpleName() + "test";
     OCreateDatabaseUtil.createDatabase(dbName, factory, OCreateDatabaseUtil.TYPE_MEMORY);
     final ODatabaseDocument db =

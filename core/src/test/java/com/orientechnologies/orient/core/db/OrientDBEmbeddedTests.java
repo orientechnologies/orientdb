@@ -270,7 +270,7 @@ public class OrientDBEmbeddedTests {
             .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
             .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
             .build();
-    OrientDB orientDB = new OrientDB("embedded:testdb", config);
+    OrientDB orientDB = new OrientDB("embedded:", config);
     if (!orientDB.exists("testdb")) {
       orientDB.execute(
           "create database "
@@ -337,7 +337,7 @@ public class OrientDBEmbeddedTests {
             .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT, 1_000)
             .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
             .build();
-    OrientDB orientDB = new OrientDB("embedded:testdb", config);
+    OrientDB orientDB = new OrientDB("embedded:", config);
     if (!orientDB.exists("testdb")) {
       orientDB.execute(
           "create database "
@@ -424,7 +424,7 @@ public class OrientDBEmbeddedTests {
             .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
             .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
             .build();
-    final OrientDB orientDB = new OrientDB("embedded:testdb", config);
+    final OrientDB orientDB = new OrientDB("embedded:", config);
     orientDB.execute(
         "create database "
             + "testdb"
@@ -451,7 +451,7 @@ public class OrientDBEmbeddedTests {
   public void testOpenKeepClean() {
     OrientDB orientDb =
         new OrientDB(
-            "embedded:./",
+            "embedded:",
             OrientDBConfig.builder()
                 .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
                 .build());

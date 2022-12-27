@@ -190,7 +190,7 @@ public class OSchedulerTest {
 
   private OrientDB createContext() {
     final OrientDB orientDB =
-        OCreateDatabaseUtil.createDatabase("test", "embedded:./", OCreateDatabaseUtil.TYPE_MEMORY);
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     Orient.instance()
         .registerThreadDatabaseFactory(
             new TestScheduleDatabaseFactory(

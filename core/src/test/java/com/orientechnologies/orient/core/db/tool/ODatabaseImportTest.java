@@ -16,7 +16,8 @@ public class ODatabaseImportTest {
   @Test
   public void exportImportOnlySchemaTest() throws IOException {
     final String databaseName = "test";
-    final String exportDbUrl = "memory:target/export_" + ODatabaseImportTest.class.getSimpleName();
+    final String exportDbUrl =
+        "embedded:target/export_" + ODatabaseImportTest.class.getSimpleName();
     final OrientDB orientDB =
         OCreateDatabaseUtil.createDatabase(
             databaseName, exportDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
@@ -37,7 +38,8 @@ public class ODatabaseImportTest {
       export.setOptions(" -excludeAll -includeSchema=true");
       export.exportDatabase();
     }
-    final String importDbUrl = "memory:target/import_" + ODatabaseImportTest.class.getSimpleName();
+    final String importDbUrl =
+        "embedded:target/import_" + ODatabaseImportTest.class.getSimpleName();
     OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
     try (final ODatabaseSession db =
@@ -61,7 +63,7 @@ public class ODatabaseImportTest {
   public void exportImportExcludeClusters() throws IOException {
     final String databaseName = "test";
     final String exportDbUrl =
-        "memory:target/export_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
+        "embedded:target/export_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
     final OrientDB orientDB =
         OCreateDatabaseUtil.createDatabase(
             databaseName, exportDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
@@ -84,7 +86,7 @@ public class ODatabaseImportTest {
     }
 
     final String importDbUrl =
-        "memory:target/import_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
+        "embedded:target/import_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
     OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
     try (final ODatabaseSession db =
