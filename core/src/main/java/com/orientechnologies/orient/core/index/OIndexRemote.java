@@ -172,10 +172,6 @@ public abstract class OIndexRemote implements OIndex {
       // SAVE IT BEFORE TO PUT
       ((ORecord) value).save();
 
-    if (value.getIdentity().isNew())
-      throw new OIndexException(
-          "Cannot insert values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
-
     getDatabase().command(String.format(QUERY_PUT, name), key, value.getIdentity()).close();
     return this;
   }
@@ -192,10 +188,6 @@ public abstract class OIndexRemote implements OIndex {
   public boolean remove(final Object key, final OIdentifiable rid) {
     final long deleted;
     if (rid != null) {
-
-      if (rid.getIdentity().isNew())
-        throw new OIndexException(
-            "Cannot remove values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
 
       try (OResultSet result =
           getDatabase().command(String.format(QUERY_REMOVE2, name), key, rid)) {

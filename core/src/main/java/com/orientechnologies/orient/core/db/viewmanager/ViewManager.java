@@ -14,7 +14,6 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
-import com.orientechnologies.orient.core.index.OClassIndexManager.IndexChange;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -424,10 +423,8 @@ public class ViewManager {
       newRow.setProperty("@view", viewName);
     }
     db.save(newRow, clusterName);
-    List<IndexChange> ops = new ArrayList<>();
     OClassIndexManager.addIndexesEntries(
-        (ODatabaseDocumentInternal) db, (ODocument) newRow, indexes, ops);
-    OClassIndexManager.applyChanges(ops);
+        (ODatabaseDocumentInternal) db, (ODocument) newRow, indexes);
     db.commit();
   }
 

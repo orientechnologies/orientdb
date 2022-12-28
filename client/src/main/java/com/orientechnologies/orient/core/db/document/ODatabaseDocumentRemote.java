@@ -99,7 +99,6 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -612,12 +611,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       ODocument doc = (ODocument) id;
       OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null && getTransaction().isActive()) {
-        List<OClassIndexManager.IndexChange> indexChanges = new ArrayList<>();
-        OClassIndexManager.processIndexOnUpdate(this, doc, indexChanges);
-        OTransactionOptimisticClient tx = (OTransactionOptimisticClient) getTransaction();
-        for (OClassIndexManager.IndexChange indexChange : indexChanges) {
-          tx.addIndexChanged(indexChange.index.getName());
-        }
+        OClassIndexManager.processIndexOnUpdate(this, doc);
       }
     }
   }
@@ -628,12 +622,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       ODocument doc = (ODocument) id;
       OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null && getTransaction().isActive()) {
-        List<OClassIndexManager.IndexChange> indexChanges = new ArrayList<>();
-        OClassIndexManager.processIndexOnCreate(this, doc, indexChanges);
-        OTransactionOptimisticClient tx = (OTransactionOptimisticClient) getTransaction();
-        for (OClassIndexManager.IndexChange indexChange : indexChanges) {
-          tx.addIndexChanged(indexChange.index.getName());
-        }
+        OClassIndexManager.processIndexOnCreate(this, doc);
       }
     }
   }
@@ -644,12 +633,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       ODocument doc = (ODocument) id;
       OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null && getTransaction().isActive()) {
-        List<OClassIndexManager.IndexChange> indexChanges = new ArrayList<>();
-        OClassIndexManager.processIndexOnDelete(this, doc, indexChanges);
-        OTransactionOptimisticClient tx = (OTransactionOptimisticClient) getTransaction();
-        for (OClassIndexManager.IndexChange indexChange : indexChanges) {
-          tx.addIndexChanged(indexChange.index.getName());
-        }
+        OClassIndexManager.processIndexOnDelete(this, doc);
       }
     }
   }

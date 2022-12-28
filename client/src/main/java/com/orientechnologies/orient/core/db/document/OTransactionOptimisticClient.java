@@ -12,10 +12,12 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import java.util.HashSet;
@@ -246,7 +248,9 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
     return indexChanged;
   }
 
-  public void addIndexChanged(String indexName) {
-    indexChanged.add(indexName);
+  @Override
+  public void addIndexEntry(
+      OIndex delegate, String iIndexName, OPERATION iOperation, Object key, OIdentifiable iValue) {
+    this.indexChanged.add(delegate.getName());
   }
 }

@@ -693,7 +693,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   protected void resolveTracking(final ORecordOperation change) {
-    final List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
     final ODocument rec = (ODocument) change.getRecord();
     switch (change.getType()) {
       case ORecordOperation.CREATED:
@@ -703,7 +702,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, database);
           final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
-            OClassIndexManager.processIndexOnCreate(database, rec, changes);
+            OClassIndexManager.processIndexOnCreate(database, rec);
             if (clazz.isFunction()) {
               database.getSharedContext().getFunctionLibrary().createdFunction(doc);
             }
@@ -727,7 +726,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
             final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
             if (clazz != null) {
-              OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
+              OClassIndexManager.processIndexOnUpdate(database, updateDoc);
               if (clazz.isFunction()) {
                 database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
               }
@@ -745,7 +744,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           final ODocument doc = (ODocument) change.getRecord();
           final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
-            OClassIndexManager.processIndexOnDelete(database, rec, changes);
+            OClassIndexManager.processIndexOnDelete(database, rec);
             if (clazz.isFunction()) {
               database.getSharedContext().getFunctionLibrary().droppedFunction(doc);
               database
@@ -771,15 +770,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       case ORecordOperation.LOADED:
       default:
         break;
-    }
-
-    for (final OClassIndexManager.IndexChange indexChange : changes) {
-      addIndexEntry(
-          indexChange.index,
-          indexChange.index.getName(),
-          indexChange.operation,
-          indexChange.key,
-          indexChange.value);
     }
   }
 
