@@ -2568,7 +2568,7 @@ OLetClause LetClause():
 }
 {
     (
-        <LET> lastItem = LetItem() { jjtThis.items.add(lastItem); } ( <COMMA> lastItem = LetItem() { jjtThis.items.add(lastItem); } )*
+        <LET> lastItem = LetItem() { jjtThis.addItem(lastItem); } ( <COMMA> lastItem = LetItem() { jjtThis.addItem(lastItem); } )*
     )
     { return jjtThis; }
 }
@@ -2687,8 +2687,8 @@ OClusterList ClusterList():
     (
 	     <CLUSTER> <COLON> <LBRACKET>
 	     [
-	        lastIdentifier = Identifier() { jjtThis.clusters.add(lastIdentifier); }
-	        ( <COMMA> lastIdentifier = Identifier() { jjtThis.clusters.add(lastIdentifier); } )*
+	        lastIdentifier = Identifier() { jjtThis.addCluster(lastIdentifier); }
+	        ( <COMMA> lastIdentifier = Identifier() { jjtThis.addCluster(lastIdentifier); } )*
 	     ]
 	     <RBRACKET>
 	)
@@ -3273,7 +3273,7 @@ OOrderBy OrderBy():
             (
                 {
                     lastItem = new OOrderByItem();
-                    jjtThis.items.add(lastItem);
+                    jjtThis.addItem(lastItem);
                 }
                 (
                     (
@@ -3295,7 +3295,7 @@ OOrderBy OrderBy():
             (
                 {
                     lastItem = new OOrderByItem();
-                    jjtThis.items.add(lastItem);
+                    jjtThis.addItem(lastItem);
                 }
                 (
                     (
@@ -3320,7 +3320,7 @@ OOrderBy OrderBy():
                 (
                     {
                         lastItem = new OOrderByItem();
-                        jjtThis.items.add(lastItem);
+                        jjtThis.addItem(lastItem);
                     }
                     (
                         (
@@ -3342,7 +3342,7 @@ OOrderBy OrderBy():
                 (
                     {
                         lastItem = new OOrderByItem();
-                        jjtThis.items.add(lastItem);
+                        jjtThis.addItem(lastItem);
                     }
                     (
                         (
@@ -3368,10 +3368,10 @@ OGroupBy GroupBy():
 { OExpression lastExpression; }
 {
 (
-	<GROUP> <BY> lastExpression = Expression() { jjtThis.items.add(lastExpression); }
+	<GROUP> <BY> lastExpression = Expression() { jjtThis.addItem(lastExpression); }
 	(
 	    ","
-	    lastExpression = Expression() { jjtThis.items.add(lastExpression); }
+	    lastExpression = Expression() { jjtThis.addItem(lastExpression); }
 	)*
 ) {return jjtThis;}
 }
@@ -3380,10 +3380,10 @@ OUnwind Unwind():
 { OIdentifier lastIdentifier; }
 {
 (
-	<UNWIND> lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	<UNWIND> lastIdentifier = Identifier() { jjtThis.addItem(lastIdentifier); }
 	(
 	    ","
-	    lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	    lastIdentifier = Identifier() { jjtThis.addItem(lastIdentifier); }
 	)*
 ) {return jjtThis;}
 }
@@ -3492,10 +3492,10 @@ OCollection Collection():
 
         <LBRACKET>
         [
-            lastExpression = Expression() { jjtThis.expressions.add(lastExpression); }
+            lastExpression = Expression() { jjtThis.add(lastExpression); }
             (
                 <COMMA>
-                lastExpression = Expression() { jjtThis.expressions.add(lastExpression); }
+                lastExpression = Expression() { jjtThis.add(lastExpression); }
             )*
         ]
         <RBRACKET>
@@ -3509,8 +3509,8 @@ OFetchPlan FetchPlan():
 { OFetchPlanItem lastItem; }
 {
     (
-        <FETCHPLAN> lastItem = FetchPlanItem() { jjtThis.items.add(lastItem); }
-        ( lastItem = FetchPlanItem() { jjtThis.items.add(lastItem); } )*
+        <FETCHPLAN> lastItem = FetchPlanItem() { jjtThis.addItem(lastItem); }
+        ( lastItem = FetchPlanItem() { jjtThis.addItem(lastItem); } )*
     )
     { return jjtThis; }
 }
@@ -3539,7 +3539,7 @@ OFetchPlanItem FetchPlanItem():
                 if(lastStarred){
                     field += "*";
                 }
-                jjtThis.fieldChain.add(field);
+                jjtThis.addFieldToChain(field);
             }
             (
                 <DOT> lastIdentifier = Identifier()  { lastStarred = false; } [<STAR> { lastStarred = true; } ]
@@ -3548,7 +3548,7 @@ OFetchPlanItem FetchPlanItem():
                      if(lastStarred){
                          field += "*";
                      }
-                     jjtThis.fieldChain.add(field);
+                     jjtThis.addFieldToChain(field);
                  }
             )*
         )
@@ -3589,7 +3589,7 @@ OJson Json():
                 token = <CHARACTER_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
             )
             <COLON>
-            lastItem.right = Expression() { jjtThis.items.add(lastItem); }
+            lastItem.right = Expression() { jjtThis.addItem(lastItem); }
             (
                 <COMMA>
                 { lastItem = new OJsonItem(); }
@@ -3603,7 +3603,7 @@ OJson Json():
                     token = <CHARACTER_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
                 )
                 <COLON>
-                lastItem.right = Expression() { jjtThis.items.add(lastItem); }
+                lastItem.right = Expression() { jjtThis.addItem(lastItem); }
             )*
         ]
         <RBRACE>
@@ -3842,7 +3842,7 @@ OMatchPathItem OutPathItem():
      OExpression exp = new OExpression(-1);
      OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
      exp.mathExpression = sub;
-     jjtThis.method.params.add(exp);
+     jjtThis.method.addParam(exp);
      return jjtThis;
     }
 }
@@ -3874,7 +3874,7 @@ OMatchPathItem InPathItem():
      OExpression exp = new OExpression(-1);
      OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
      exp.mathExpression = sub;
-     jjtThis.method.params.add(exp);
+     jjtThis.method.addParam(exp);
      return jjtThis;
     }
 }
@@ -3905,7 +3905,7 @@ OMatchPathItem BothPathItem():
      OExpression exp = new OExpression(-1);
      OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
      exp.mathExpression = sub;
-     jjtThis.method.params.add(exp);
+     jjtThis.method.addParam(exp);
      return jjtThis;
     }
 }
@@ -3938,7 +3938,7 @@ OMatchPathItem OutPathItemOpt():
      OExpression exp = new OExpression(-1);
      OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
      exp.mathExpression = sub;
-     jjtThis.method.params.add(exp);
+     jjtThis.method.addParam(exp);
      return jjtThis;
     }
 }
@@ -3970,7 +3970,7 @@ OMatchPathItem InPathItemOpt():
      OExpression exp = new OExpression(-1);
      OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
      exp.mathExpression = sub;
-     jjtThis.method.params.add(exp);
+     jjtThis.method.addParam(exp);
      return jjtThis;
     }
 }
@@ -4001,7 +4001,7 @@ OMatchPathItem BothPathItemOpt():
      OExpression exp = new OExpression(-1);
      OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
      exp.mathExpression = sub;
-     jjtThis.method.params.add(exp);
+     jjtThis.method.addParam(exp);
      return jjtThis;
     }
 }
@@ -4051,10 +4051,10 @@ OTruncateRecordStatement TruncateRecordStatement():
 		(
 			<LBRACKET> { jjtThis.records = new ArrayList<ORid>(); }
 			[
-				lastRecord = Rid() { jjtThis.records.add(lastRecord); }
+				lastRecord = Rid() { jjtThis.addRecord(lastRecord); }
 				(
 					<COMMA>
-					lastRecord = Rid() { jjtThis.records.add(lastRecord); }
+					lastRecord = Rid() { jjtThis.addRecord(lastRecord); }
 				)*
 			]
 			<RBRACKET>
@@ -4083,14 +4083,14 @@ OFindReferencesStatement FindReferencesStatement():
     	    lastTarget = Identifier()
             |
             lastTarget = Cluster()
-    	){ jjtThis.targets.add(lastTarget); }
+    	){ jjtThis.addTarget(lastTarget); }
     	(
     		<COMMA>
     		(
 				lastTarget = Identifier()
 				|
 				lastTarget = Cluster()
-			){ jjtThis.targets.add(lastTarget); }
+			){ jjtThis.addTarget(lastTarget); }
     	)*
     	<RBRACKET>
     ]

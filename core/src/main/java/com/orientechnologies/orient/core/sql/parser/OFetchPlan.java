@@ -21,6 +21,10 @@ public class OFetchPlan extends SimpleNode {
     super(p, id);
   }
 
+  public void addItem(OFetchPlanItem item) {
+    this.items.add(item);
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("FETCHPLAN ");
     boolean first = true;

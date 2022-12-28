@@ -33,6 +33,10 @@ public class OFindReferencesStatement extends OStatement {
     return true;
   }
 
+  public void addTarget(SimpleNode node) {
+    this.targets.add(node);
+  }
+
   @Override
   public OResultSet execute(
       ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {

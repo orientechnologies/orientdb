@@ -250,6 +250,10 @@ public class OJson extends SimpleNode {
     }
   }
 
+  public void addItem(OJsonItem item) {
+    this.items.add(item);
+  }
+
   public boolean isCacheable() {
     return false; // TODO optimize
   }
