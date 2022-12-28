@@ -127,17 +127,7 @@ public class GraphInsertSpeedMTTest extends OrientMultiThreadTest {
 
       System.out.println("\nTotal objects in Client cluster after the test: " + total);
       System.out.println("Created " + (total));
-      Assert.assertEquals(total, threadCycles);
-
-      final long indexedItems =
-          graph
-              .getRawGraph()
-              .getMetadata()
-              .getIndexManagerInternal()
-              .getIndex(graph.getRawGraph(), "Client.uid")
-              .getInternal()
-              .size();
-      System.out.println("\nTotal indexed objects after the test: " + indexedItems);
+      Assert.assertEquals(total, counter.get());
 
     } finally {
       graph.shutdown();

@@ -1955,21 +1955,23 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
 
     final List<OStorageEntryConfiguration> custom =
         (List<OStorageEntryConfiguration>) databaseDocumentTx.get(ATTRIBUTES.CUSTOM);
-    for (OStorageEntryConfiguration c : custom) {
-      if (c.name.equals("useLightweightEdges"))
-        setUseLightweightEdges(Boolean.parseBoolean(c.value));
-      else if (c.name.equals("txRequiredForSQLGraphOperations")) // Since v2.2.0
-      setTxRequiredForSQLGraphOperations(Boolean.parseBoolean(c.value));
-      else if (c.name.equals("maxRetries")) // Since v2.2.0
-      setMaxRetries(Integer.parseInt(c.value));
-      else if (c.name.equals("useClassForEdgeLabel"))
-        setUseClassForEdgeLabel(Boolean.parseBoolean(c.value));
-      else if (c.name.equals("useClassForVertexLabel"))
-        setUseClassForVertexLabel(Boolean.parseBoolean(c.value));
-      else if (c.name.equals("useVertexFieldsForEdgeLabels"))
-        setUseVertexFieldsForEdgeLabels(Boolean.parseBoolean(c.value));
-      else if (c.name.equals("standardElementConstraints"))
-        setStandardElementConstraints(Boolean.parseBoolean(c.value));
+    if (custom != null) {
+      for (OStorageEntryConfiguration c : custom) {
+        if (c.name.equals("useLightweightEdges"))
+          setUseLightweightEdges(Boolean.parseBoolean(c.value));
+        else if (c.name.equals("txRequiredForSQLGraphOperations")) // Since v2.2.0
+        setTxRequiredForSQLGraphOperations(Boolean.parseBoolean(c.value));
+        else if (c.name.equals("maxRetries")) // Since v2.2.0
+        setMaxRetries(Integer.parseInt(c.value));
+        else if (c.name.equals("useClassForEdgeLabel"))
+          setUseClassForEdgeLabel(Boolean.parseBoolean(c.value));
+        else if (c.name.equals("useClassForVertexLabel"))
+          setUseClassForVertexLabel(Boolean.parseBoolean(c.value));
+        else if (c.name.equals("useVertexFieldsForEdgeLabels"))
+          setUseVertexFieldsForEdgeLabels(Boolean.parseBoolean(c.value));
+        else if (c.name.equals("standardElementConstraints"))
+          setStandardElementConstraints(Boolean.parseBoolean(c.value));
+      }
     }
   }
 
