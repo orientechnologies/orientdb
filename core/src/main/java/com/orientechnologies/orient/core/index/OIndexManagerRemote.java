@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
@@ -46,7 +45,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -277,20 +275,18 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
 
   public OIndex getClassIndex(
       ODatabaseDocumentInternal database, String className, String indexName) {
-    final Locale locale = getServerLocale();
-    className = className.toLowerCase(locale);
+    className = className.toLowerCase();
 
     final OIndex index = indexes.get(indexName);
     if (index != null
         && index.getDefinition() != null
         && index.getDefinition().getClassName() != null
-        && className.equals(index.getDefinition().getClassName().toLowerCase(locale))) return index;
+        && className.equals(index.getDefinition().getClassName().toLowerCase())) return index;
     return null;
   }
 
   public OIndex getClassAutoShardingIndex(ODatabaseDocumentInternal database, String className) {
-    final Locale locale = getServerLocale();
-    className = className.toLowerCase(locale);
+    className = className.toLowerCase();
 
     // LOOK FOR INDEX
     for (OIndex index : indexes.values()) {
@@ -298,8 +294,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
           && OAutoShardingIndexFactory.AUTOSHARDING_ALGORITHM.equals(index.getAlgorithm())
           && index.getDefinition() != null
           && index.getDefinition().getClassName() != null
-          && className.equals(index.getDefinition().getClassName().toLowerCase(locale)))
-        return index;
+          && className.equals(index.getDefinition().getClassName().toLowerCase())) return index;
     }
     return null;
   }
@@ -352,7 +347,6 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
   void addIndexInternal(final OIndex index) {
     acquireExclusiveLock();
     try {
-      final Locale locale = getServerLocale();
       indexes.put(index.getName(), index);
 
       final OIndexDefinition indexDefinition = index.getDefinition();
@@ -382,7 +376,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
       }
 
       classPropertyIndex.put(
-          indexDefinition.getClassName().toLowerCase(locale), copyPropertyMap(propertyIndex));
+          indexDefinition.getClassName().toLowerCase(), copyPropertyMap(propertyIndex));
     } finally {
       releaseExclusiveLock();
     }
@@ -403,19 +397,11 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
     return Collections.unmodifiableMap(result);
   }
 
-  Locale getServerLocale() {
-    OStorageInfo storage = getStorage();
-    OStorageConfiguration configuration = storage.getConfiguration();
-    return configuration.getLocaleInstance();
-  }
-
   private Map<OMultiKey, Set<OIndex>> getIndexOnProperty(final String className) {
-    final Locale locale = getServerLocale();
-
     acquireSharedLock();
     try {
 
-      return classPropertyIndex.get(className.toLowerCase(locale));
+      return classPropertyIndex.get(className.toLowerCase());
 
     } finally {
       releaseSharedLock();

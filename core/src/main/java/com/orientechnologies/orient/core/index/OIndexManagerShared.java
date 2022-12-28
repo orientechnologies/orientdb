@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -47,7 +46,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.Arrays;
 import java.util.Collection;
@@ -56,7 +54,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -401,20 +398,18 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
   public OIndex getClassIndex(
       ODatabaseDocumentInternal database, String className, String indexName) {
-    final Locale locale = getServerLocale();
-    className = className.toLowerCase(locale);
+    className = className.toLowerCase();
 
     final OIndex index = indexes.get(indexName);
     if (index != null
         && index.getDefinition() != null
         && index.getDefinition().getClassName() != null
-        && className.equals(index.getDefinition().getClassName().toLowerCase(locale))) return index;
+        && className.equals(index.getDefinition().getClassName().toLowerCase())) return index;
     return null;
   }
 
   public OIndex getClassAutoShardingIndex(ODatabaseDocumentInternal database, String className) {
-    final Locale locale = getServerLocale();
-    className = className.toLowerCase(locale);
+    className = className.toLowerCase();
 
     // LOOK FOR INDEX
     for (OIndex index : indexes.values()) {
@@ -422,8 +417,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
           && OAutoShardingIndexFactory.AUTOSHARDING_ALGORITHM.equals(index.getAlgorithm())
           && index.getDefinition() != null
           && index.getDefinition().getClassName() != null
-          && className.equals(index.getDefinition().getClassName().toLowerCase(locale)))
-        return index;
+          && className.equals(index.getDefinition().getClassName().toLowerCase())) return index;
     }
     return null;
   }
@@ -520,7 +514,6 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   private void addIndexInternalNoLock(final OIndex index) {
-    final Locale locale = getServerLocale();
     indexes.put(index.getName(), index);
 
     final OIndexDefinition indexDefinition = index.getDefinition();
@@ -549,7 +542,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     }
 
     classPropertyIndex.put(
-        indexDefinition.getClassName().toLowerCase(locale), copyPropertyMap(propertyIndex));
+        indexDefinition.getClassName().toLowerCase(), copyPropertyMap(propertyIndex));
   }
 
   static Map<OMultiKey, Set<OIndex>> copyPropertyMap(Map<OMultiKey, Set<OIndex>> original) {
@@ -588,19 +581,10 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         null);
   }
 
-  Locale getServerLocale() {
-    OStorageInfo storage = getStorage();
-    OStorageConfiguration configuration = storage.getConfiguration();
-    return configuration.getLocaleInstance();
-  }
-
   private Map<OMultiKey, Set<OIndex>> getIndexOnProperty(final String className) {
-    final Locale locale = getServerLocale();
-
     acquireSharedLock();
     try {
-
-      return classPropertyIndex.get(className.toLowerCase(locale));
+      return classPropertyIndex.get(className.toLowerCase());
 
     } finally {
       releaseSharedLock();
@@ -683,8 +667,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       throw new IllegalArgumentException("Index definition cannot be null");
     }
 
-    final Locale locale = getServerLocale();
-    type = type.toUpperCase(locale);
+    type = type.toUpperCase();
     if (algorithm == null) {
       algorithm = OIndexes.chooseDefaultIndexAlgorithm(type);
     }
@@ -1069,9 +1052,8 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       final OIndexDefinition indexDefinition = idx.getDefinition();
       if (indexDefinition == null || indexDefinition.getClassName() == null) return;
 
-      final Locale locale = getServerLocale();
       Map<OMultiKey, Set<OIndex>> map =
-          classPropertyIndex.get(indexDefinition.getClassName().toLowerCase(locale));
+          classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
 
       if (map == null) {
         return;
@@ -1098,11 +1080,9 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         }
       }
 
-      if (map.isEmpty())
-        classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase(locale));
+      if (map.isEmpty()) classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase());
       else
-        classPropertyIndex.put(
-            indexDefinition.getClassName().toLowerCase(locale), copyPropertyMap(map));
+        classPropertyIndex.put(indexDefinition.getClassName().toLowerCase(), copyPropertyMap(map));
 
     } finally {
       releaseExclusiveLock();

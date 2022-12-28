@@ -587,10 +587,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       final OEncryption encryption;
       if (engineData.getEncryption() == null
-          || engineData
-              .getEncryption()
-              .toLowerCase(configuration.getLocaleInstance())
-              .equals(ONothingEncryption.NAME)) {
+          || engineData.getEncryption().toLowerCase().equals(ONothingEncryption.NAME)) {
         encryption = null;
       } else {
         encryption =
@@ -664,11 +661,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                       + "'.",
                   e);
 
-          clusterMap.remove(
-              configurationClusters
-                  .get(i)
-                  .getName()
-                  .toLowerCase(configuration.getLocaleInstance()));
+          clusterMap.remove(configurationClusters.get(i).getName().toLowerCase());
 
           setCluster(i, null);
         }
@@ -1198,8 +1191,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         checkOpennessAndMigration();
 
-        final OCluster cluster =
-            clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
+        final OCluster cluster = clusterMap.get(clusterName.toLowerCase());
         if (cluster == null) {
           throwClusterDoesNotExist(clusterName);
         }
@@ -1438,7 +1430,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       newCluster.open(atomicOperation);
     }
 
-    clusterMap.put(cluster.getName().toLowerCase(configuration.getLocaleInstance()), newCluster);
+    clusterMap.put(cluster.getName().toLowerCase(), newCluster);
     clusters.set(clusterId, newCluster);
 
     ((OClusterBasedStorageConfiguration) configuration)
@@ -2085,8 +2077,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         // SEARCH IT BETWEEN PHYSICAL CLUSTERS
 
-        final OCluster segment =
-            clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
+        final OCluster segment = clusterMap.get(clusterName.toLowerCase());
         if (segment != null) {
           return segment.getId();
         }
@@ -5185,8 +5176,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private int createClusterFromConfig(final OStorageClusterConfiguration config)
       throws IOException {
-    OCluster cluster =
-        clusterMap.get(config.getName().toLowerCase(configuration.getLocaleInstance()));
+    OCluster cluster = clusterMap.get(config.getName().toLowerCase());
 
     if (cluster != null) {
       cluster.configure(this, config);
@@ -5229,8 +5219,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     if (cluster != null) {
       // CHECK FOR DUPLICATION OF NAMES
-      if (clusterMap.containsKey(
-          cluster.getName().toLowerCase(configuration.getLocaleInstance()))) {
+      if (clusterMap.containsKey(cluster.getName().toLowerCase())) {
         throw new OConfigurationException(
             "Cannot add cluster '"
                 + cluster.getName()
@@ -5239,7 +5228,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 + "'");
       }
       // CREATE AND ADD THE NEW REF SEGMENT
-      clusterMap.put(cluster.getName().toLowerCase(configuration.getLocaleInstance()), cluster);
+      clusterMap.put(cluster.getName().toLowerCase(), cluster);
       id = cluster.getId();
     } else {
       id = clusters.size();
@@ -5269,7 +5258,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throws IOException {
     final OPaginatedCluster cluster;
     if (clusterName != null) {
-      clusterName = clusterName.toLowerCase(configuration.getLocaleInstance());
+      clusterName = clusterName.toLowerCase();
 
       cluster =
           OPaginatedClusterFactory.createCluster(
@@ -5345,11 +5334,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       case NAME:
         Objects.requireNonNull(stringValue);
 
-        final Locale locale = configuration.getLocaleInstance();
         final String oldName = cluster.getName();
         cluster.setClusterName(stringValue);
-        clusterMap.remove(oldName.toLowerCase(locale));
-        clusterMap.put(stringValue.toLowerCase(locale), cluster);
+        clusterMap.remove(oldName.toLowerCase());
+        clusterMap.put(stringValue.toLowerCase(), cluster);
         break;
       case CONFLICTSTRATEGY:
         cluster.setRecordConflictStrategy(stringValue);
@@ -5363,8 +5351,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           return setClusterStatus(
               atomicOperation,
               cluster,
-              OStorageClusterConfiguration.STATUS.valueOf(
-                  stringValue.toUpperCase(configuration.getLocaleInstance())));
+              OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase()));
         }
         //noinspection deprecation
       case ENCRYPTION:
@@ -5390,7 +5377,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     cluster.delete(atomicOperation);
 
-    clusterMap.remove(cluster.getName().toLowerCase(configuration.getLocaleInstance()));
+    clusterMap.remove(cluster.getName().toLowerCase());
     clusters.set(clusterId, null);
 
     return false;
@@ -6930,7 +6917,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        Locale locale = configuration.getLocaleInstance();
         int[] result = new int[filterClusters.size()];
         int i = 0;
         for (String clusterName : filterClusters) {
@@ -6943,7 +6929,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
 
           // SEARCH IT BETWEEN PHYSICAL CLUSTERS
-          final OCluster segment = clusterMap.get(clusterName.toLowerCase(locale));
+          final OCluster segment = clusterMap.get(clusterName.toLowerCase());
           if (segment != null) {
             result[i] = segment.getId();
           } else {

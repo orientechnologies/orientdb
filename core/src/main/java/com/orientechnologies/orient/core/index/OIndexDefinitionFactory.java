@@ -21,16 +21,11 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.collate.OCollate;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.storage.OStorageInfo;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -246,12 +241,10 @@ public class OIndexDefinitionFactory {
       return OPropertyMapIndexDefinition.INDEX_BY.KEY;
     }
     if (fieldNameParts.length == 3) {
-      final Locale locale = getServerLocale();
 
-      if ("by".equals(fieldNameParts[1].toLowerCase(locale)))
+      if ("by".equals(fieldNameParts[1].toLowerCase()))
         try {
-          return OPropertyMapIndexDefinition.INDEX_BY.valueOf(
-              fieldNameParts[2].toUpperCase(locale));
+          return OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase());
         } catch (IllegalArgumentException iae) {
           throw new IllegalArgumentException(
               "Illegal field name format, should be '<property> [by key|value]' but was '"
@@ -264,13 +257,6 @@ public class OIndexDefinitionFactory {
         "Illegal field name format, should be '<property> [by key|value]' but was '"
             + fieldName
             + '\'');
-  }
-
-  private static Locale getServerLocale() {
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-    OStorageInfo storage = db.getStorageInfo();
-    OStorageConfiguration configuration = storage.getConfiguration();
-    return configuration.getLocaleInstance();
   }
 
   private static String adjustFieldName(final OClass clazz, final String fieldName) {
