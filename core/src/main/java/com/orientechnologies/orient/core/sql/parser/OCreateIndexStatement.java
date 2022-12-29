@@ -48,6 +48,14 @@ public class OCreateIndexStatement extends ODDLStatement {
     super(p, id);
   }
 
+  public void addProperty(Property property) {
+    this.propertyList.add(property);
+  }
+
+  public void addKeyType(OIdentifier identifier) {
+    this.keyTypes.add(identifier);
+  }
+
   @Override
   public OResultSet executeDDL(OCommandContext ctx) {
     Object execResult = execute(ctx);

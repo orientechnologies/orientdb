@@ -4108,17 +4108,17 @@ OCreateClassStatement CreateClassStatement():
 		jjtThis.name = Identifier()
 		[ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; }]
 		[
-			<EXTENDS> lastIdentifier = Identifier() { jjtThis.superclasses = new ArrayList<OIdentifier>(); jjtThis.superclasses.add(lastIdentifier); }
+			<EXTENDS> lastIdentifier = Identifier() { jjtThis.superclasses = new ArrayList<OIdentifier>(); jjtThis.addSuperclass(lastIdentifier); }
 			 (
 			 	<COMMA>
-			 	lastIdentifier = Identifier() { jjtThis.superclasses.add(lastIdentifier); }
+			 	lastIdentifier = Identifier() { jjtThis.addSuperclass(lastIdentifier); }
 			 )*
 		]
 		[
-			<CLUSTER> lastInteger = Integer() { jjtThis.clusters = new ArrayList<OInteger>(); jjtThis.clusters.add(lastInteger); }
+			<CLUSTER> lastInteger = Integer() { jjtThis.clusters = new ArrayList<OInteger>(); jjtThis.addCluster(lastInteger); }
 		 	(
 				<COMMA>
-				lastInteger = Integer() { jjtThis.clusters.add(lastInteger); }
+				lastInteger = Integer() { jjtThis.addCluster(lastInteger); }
 		 	)*
 		]
 		[ <CLUSTERS> jjtThis.totalClusterNo = Integer() ]
@@ -4193,10 +4193,10 @@ OAlterClassStatement AlterClassStatement():
 			}
 			(
 				(
-					lastIdentifier = Identifier() { jjtThis.identifierListValue.add(lastIdentifier); }
+					lastIdentifier = Identifier() { jjtThis.addIdentifierListValue(lastIdentifier); }
 					(
 						<COMMA>
-						lastIdentifier = Identifier() { jjtThis.identifierListValue.add(lastIdentifier); }
+						lastIdentifier = Identifier() { jjtThis.addIdentifierListValue(lastIdentifier); }
 					)*
 				)
 				|
@@ -4350,8 +4350,8 @@ OCreatePropertyStatement CreatePropertyStatement():
 		]
 		[
 		    <LPAREN>
-		    lastAttribute = CreatePropertyAttributeStatement() { jjtThis.attributes.add(lastAttribute); }
-		    (<COMMA> lastAttribute = CreatePropertyAttributeStatement() { jjtThis.attributes.add(lastAttribute); })*
+		    lastAttribute = CreatePropertyAttributeStatement() { jjtThis.addAttribute(lastAttribute); }
+		    (<COMMA> lastAttribute = CreatePropertyAttributeStatement() { jjtThis.addAttribute(lastAttribute); })*
 		    <RPAREN>
 		]
 		[ <UNSAFE> { jjtThis.unsafe = true; } ]
@@ -4435,13 +4435,13 @@ OCreateIndexStatement CreateIndexStatement():
                 lastIdentifier = Identifier() {
                     lastProperty = new OCreateIndexStatement.Property();
                     lastProperty.name = lastIdentifier;
-                    jjtThis.propertyList.add(lastProperty);
+                    jjtThis.addProperty(lastProperty);
                 }
                 |
                 lastRecordAttr = RecordAttribute() {
                     lastProperty = new OCreateIndexStatement.Property();
                     lastProperty.recordAttribute = lastRecordAttr;
-                    jjtThis.propertyList.add(lastProperty);
+                    jjtThis.addProperty(lastProperty);
                 }
             )
             [
@@ -4462,13 +4462,13 @@ OCreateIndexStatement CreateIndexStatement():
                     lastIdentifier = Identifier() {
                         lastProperty = new OCreateIndexStatement.Property();
                         lastProperty.name = lastIdentifier;
-                        jjtThis.propertyList.add(lastProperty);
+                        jjtThis.addProperty(lastProperty);
                     }
                     |
                     lastRecordAttr = RecordAttribute() {
                         lastProperty = new OCreateIndexStatement.Property();
                         lastProperty.recordAttribute = lastRecordAttr;
-                        jjtThis.propertyList.add(lastProperty);
+                        jjtThis.addProperty(lastProperty);
                     }
                 )
                 [
@@ -4509,9 +4509,9 @@ OCreateIndexStatement CreateIndexStatement():
                 )
                 |
                 (
-                    lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                    lastIdentifier = Identifier() {jjtThis.addKeyType(lastIdentifier);}
                     (
-                        <COMMA> lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                        <COMMA> lastIdentifier = Identifier() {jjtThis.addKeyType(lastIdentifier);}
                     )*
                     [ <METADATA> jjtThis.metadata = Json() ]
                 )
@@ -4526,9 +4526,9 @@ OCreateIndexStatement CreateIndexStatement():
                 )
                 |
                 (
-                    lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                    lastIdentifier = Identifier() {jjtThis.addKeyType(lastIdentifier);}
                     (
-                        <COMMA> lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                        <COMMA> lastIdentifier = Identifier() {jjtThis.addKeyType(lastIdentifier);}
                     )*
                     [ <METADATA> jjtThis.metadata = Json() ]
                 )
@@ -4648,7 +4648,7 @@ OOptimizeDatabaseStatement OptimizeDatabaseStatement():
     (
         <OPTIMIZE> <DATABASE>
         (
-            lastOption = CommandLineOption() { jjtThis.options.add(lastOption); }
+            lastOption = CommandLineOption() { jjtThis.addOption(lastOption); }
         )*
     )
     {return jjtThis;}
@@ -4782,11 +4782,11 @@ OCreateFunctionStatement CreateFunctionStatement():
             <LBRACKET>
             lastIdentifier = Identifier() {
                 jjtThis.parameters = new ArrayList<OIdentifier>();
-                jjtThis.parameters.add(lastIdentifier);
+                jjtThis.addParameter(lastIdentifier);
             }
             (
                 <COMMA>
-                lastIdentifier = Identifier() { jjtThis.parameters.add(lastIdentifier); }
+                lastIdentifier = Identifier() { jjtThis.addParameter(lastIdentifier); }
             )*
             <RBRACKET>
         ]
@@ -4895,9 +4895,9 @@ OCreateUserStatement CreateUserStatement():
             (
                <LBRACKET>
                [
-                 lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+                 lastIdentifier = Identifier() { jjtThis.addRole(lastIdentifier);}
                  (
-                    <COMMA> lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+                    <COMMA> lastIdentifier = Identifier() { jjtThis.addRole(lastIdentifier);}
                  )*
                ]
                <RBRACKET>
@@ -4933,7 +4933,7 @@ OAlterRoleStatement AlterRoleStatement():
       ( <SET> <POLICY> lastPolicy = Identifier() <ON> lastSecurityResource = SecurityResourceSegment()
 
         {
-        jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
+        jjtThis.addOperation(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
           com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_ADD,
           lastSecurityResource, lastPolicy));
         }
@@ -4941,7 +4941,7 @@ OAlterRoleStatement AlterRoleStatement():
       |
       ( <REMOVE> <POLICY> <ON> lastSecurityResource = SecurityResourceSegment()  )
         {
-          jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
+          jjtThis.addOperation(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
             com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_REMOVE,
             lastSecurityResource, null));
         }
@@ -4962,16 +4962,16 @@ OAlterSystemRoleStatement AlterSystemRoleStatement():
       ( <SET> <POLICY> lastPolicy = Identifier() <ON> lastSecurityResource = SecurityResourceSegment()
 
         {
-        jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
-          com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_ADD,
+        jjtThis.addOperation(new com.orientechnologies.orient.core.sql.parser.OAlterSystemRoleStatement.Op(
+          com.orientechnologies.orient.core.sql.parser.OAlterSystemRoleStatement.Op.TYPE_ADD,
           lastSecurityResource, lastPolicy));
         }
       )
       |
       ( <REMOVE> <POLICY> <ON> lastSecurityResource = SecurityResourceSegment()  )
         {
-          jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
-            com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_REMOVE,
+          jjtThis.addOperation(new com.orientechnologies.orient.core.sql.parser.OAlterSystemRoleStatement.Op(
+            com.orientechnologies.orient.core.sql.parser.OAlterSystemRoleStatement.Op.TYPE_REMOVE,
             lastSecurityResource, null));
         }
     )+

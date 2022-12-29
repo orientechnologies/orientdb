@@ -45,6 +45,10 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
+  public void addOperation(Op operation) {
+    this.operations.add(operation);
+  }
+
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
     OInternalResultSet rs = new OInternalResultSet();

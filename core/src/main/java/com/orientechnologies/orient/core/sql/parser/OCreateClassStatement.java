@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -227,6 +228,20 @@ public class OCreateClassStatement extends ODDLStatement {
 
   public List<OIdentifier> getSuperclasses() {
     return superclasses;
+  }
+
+  public void addSuperclass(OIdentifier identifier) {
+    if (this.superclasses == null) {
+      this.superclasses = new ArrayList<>();
+    }
+    this.superclasses.add(identifier);
+  }
+
+  public void addCluster(OInteger id) {
+    if (clusters == null) {
+      this.clusters = new ArrayList<>();
+    }
+    this.clusters.add(id);
   }
 }
 /* JavaCC - OriginalChecksum=4043013624f55fdf0ea8fee6d4f211b0 (do not edit this line) */

@@ -36,6 +36,13 @@ public class OCreatePropertyStatement extends ODDLStatement {
     super(p, id);
   }
 
+  public void addAttribute(OCreatePropertyAttributeStatement attribute) {
+    if (this.attributes == null) {
+      this.attributes = new ArrayList<>();
+    }
+    this.attributes.add(attribute);
+  }
+
   @Override
   public OResultSet executeDDL(OCommandContext ctx) {
     OResultInternal result = new OResultInternal();

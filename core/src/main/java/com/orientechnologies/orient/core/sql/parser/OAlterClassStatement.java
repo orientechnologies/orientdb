@@ -50,6 +50,13 @@ public class OAlterClassStatement extends ODDLStatement {
     super(p, id);
   }
 
+  public void addIdentifierListValue(OIdentifier id) {
+    if (this.identifierListValue == null) {
+      this.identifierListValue = new ArrayList<>();
+    }
+    this.identifierListValue.add(id);
+  }
+
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER CLASS ");
