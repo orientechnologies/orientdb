@@ -100,5 +100,9 @@ public class OClusterList extends SimpleNode {
       }
     }
   }
+
+  public void addCluster(OIdentifier cluster) {
+    this.clusters.add(cluster);
+  }
 }
 /* JavaCC - OriginalChecksum=bd90ffa0b9d17f204b3cf2d47eedb409 (do not edit this line) */

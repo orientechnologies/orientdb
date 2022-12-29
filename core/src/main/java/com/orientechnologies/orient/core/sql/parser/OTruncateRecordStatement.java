@@ -29,6 +29,13 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
+  public void addRecord(ORid rid) {
+    if (this.records == null) {
+      this.records = new ArrayList<>();
+    }
+    this.records.add(rid);
+  }
+
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
     List<ORid> recs = new ArrayList<>();

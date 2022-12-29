@@ -450,6 +450,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OSharedContext getSharedContext() {
+    if (internal == null) {
+      return null;
+    }
     return internal.getSharedContext();
   }
 

@@ -35,7 +35,7 @@ public class OAlterSystemRoleStatement extends OSimpleExecServerStatement {
   }
 
   protected OIdentifier name;
-  protected List<OAlterRoleStatement.Op> operations = new ArrayList<>();
+  protected List<Op> operations = new ArrayList<>();
 
   public OAlterSystemRoleStatement(int id) {
     super(id);
@@ -43,6 +43,10 @@ public class OAlterSystemRoleStatement extends OSimpleExecServerStatement {
 
   public OAlterSystemRoleStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  public void addOperation(Op operation) {
+    this.operations.add(operation);
   }
 
   @Override
@@ -60,12 +64,12 @@ public class OAlterSystemRoleStatement extends OSimpleExecServerStatement {
           if (role == null) {
             throw new OCommandExecutionException("role not found: " + name.getStringValue());
           }
-          for (OAlterRoleStatement.Op op : operations) {
+          for (Op op : operations) {
             OResultInternal result = new OResultInternal();
             result.setProperty("operation", "alter system role");
             result.setProperty("name", name.getStringValue());
             result.setProperty("resource", op.resource.toString());
-            if (op.type == OAlterRoleStatement.Op.TYPE_ADD) {
+            if (op.type == Op.TYPE_ADD) {
               OSecurityPolicyImpl policy =
                   security.getSecurityPolicy(db, op.policyName.getStringValue());
               result.setProperty("operation", "ADD POLICY");
@@ -96,7 +100,7 @@ public class OAlterSystemRoleStatement extends OSimpleExecServerStatement {
     builder.append("ALTER SYSTEM ROLE ");
     name.toString(params, builder);
 
-    for (OAlterRoleStatement.Op operation : operations) {
+    for (Op operation : operations) {
       if (operation.type == OAlterRoleStatement.Op.TYPE_ADD) {
         builder.append(" SET POLICY ");
         operation.policyName.toString(params, builder);

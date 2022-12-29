@@ -2055,6 +2055,25 @@ public class ODocument extends ORecordAbstract
     return this;
   }
 
+  @Override
+  protected ODocument fromStream(final byte[] iRecordBuffer, ODatabaseDocumentInternal db) {
+    removeAllCollectionChangeListeners();
+
+    fields = null;
+    fieldSize = 0;
+    contentChanged = false;
+    schema = null;
+    fetchSchemaIfCan(db);
+    super.fromStream(iRecordBuffer);
+
+    if (!lazyLoad) {
+      checkForLoading();
+      checkForFields();
+    }
+
+    return this;
+  }
+
   /**
    * Returns the forced field type if any.
    *

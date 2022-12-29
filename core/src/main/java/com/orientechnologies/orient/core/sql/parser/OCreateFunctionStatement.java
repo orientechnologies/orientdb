@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,6 +29,13 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
 
   public OCreateFunctionStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  public void addParameter(OIdentifier parameter) {
+    if (this.parameters == null) {
+      this.parameters = new ArrayList<>();
+    }
+    this.parameters.add(parameter);
   }
 
   @Override

@@ -39,6 +39,10 @@ public class OCreateUserStatement extends OSimpleExecStatement {
 
   protected List<OIdentifier> roles = new ArrayList<>();
 
+  public void addRole(OIdentifier role) {
+    this.roles.add(role);
+  }
+
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
 

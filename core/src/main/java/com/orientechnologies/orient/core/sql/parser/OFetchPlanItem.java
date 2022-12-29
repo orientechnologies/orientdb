@@ -25,6 +25,10 @@ public class OFetchPlanItem extends SimpleNode {
     super(p, id);
   }
 
+  public void addFieldToChain(String field) {
+    this.fieldChain.add(field);
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (Boolean.TRUE.equals(star)) {
       builder.append("*");

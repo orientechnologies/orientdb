@@ -32,6 +32,10 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
+  public void addOption(OCommandLineOption option) {
+    this.options.add(option);
+  }
+
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
     OResultInternal result = new OResultInternal();

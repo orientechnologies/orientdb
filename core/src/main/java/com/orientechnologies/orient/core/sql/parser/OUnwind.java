@@ -68,6 +68,10 @@ public class OUnwind extends SimpleNode {
     return items;
   }
 
+  public void addItem(OIdentifier iter) {
+    this.items.add(iter);
+  }
+
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     if (items != null) {

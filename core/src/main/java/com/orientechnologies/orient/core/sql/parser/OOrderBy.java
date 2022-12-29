@@ -33,6 +33,10 @@ public class OOrderBy extends SimpleNode {
     this.items = items;
   }
 
+  public void addItem(OOrderByItem item) {
+    this.items.add(item);
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (items != null && items.size() > 0) {
       builder.append("ORDER BY ");

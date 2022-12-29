@@ -52,7 +52,6 @@
             </activation>
             <properties>
                 <argLine>-Xmx${heapSize}
-                    -Dmemory.directMemory.preallocate=false
                 </argLine>
             </properties>
         </profile>
@@ -64,7 +63,6 @@
             <properties>
                 <argLine>-Xmx${heapSize} --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
                     --add-opens java.base/sun.security.x509=ALL-UNNAMED
-                    -Dmemory.directMemory.preallocate=false
                 </argLine>
             </properties>
         </profile>

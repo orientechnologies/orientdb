@@ -45,6 +45,10 @@ public class OGroupBy extends SimpleNode {
     return items;
   }
 
+  public void addItem(OExpression item) {
+    this.items.add(item);
+  }
+
   public OGroupBy copy() {
     OGroupBy result = new OGroupBy(-1);
     result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());

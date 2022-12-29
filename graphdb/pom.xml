@@ -205,9 +205,7 @@
                     -Ddb.makeFullCheckpointOnSchemaChange=false
                     -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
                     -Dstorage.diskCache.checksumMode=storeAndThrow
-                    -Dindex.allowManualIndexes=false
                     -Dsecurity.warningDefaultUsers=false
-                    -Dmemory.directMemory.preallocate=false
                 </argLine>
             </properties>
         </profile>
@@ -233,11 +231,9 @@
                     -Ddb.makeFullCheckpointOnSchemaChange=false
                     -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
                     -Dstorage.diskCache.checksumMode=storeAndThrow
-                    -Dindex.allowManualIndexes=false
                     -Dsecurity.warningDefaultUsers=false
                     --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
                     --add-opens java.base/sun.security.x509=ALL-UNNAMED
-                    -Dmemory.directMemory.preallocate=false
                 </argLine>
             </properties>
         </profile>
