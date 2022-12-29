@@ -129,6 +129,17 @@ public abstract class ORecordAbstract implements ORecord {
     return this;
   }
 
+  protected ORecordAbstract fromStream(final byte[] iRecordBuffer, ODatabaseDocumentInternal db) {
+    dirty = false;
+    contentChanged = false;
+    dirtyManager = null;
+    source = iRecordBuffer;
+    size = iRecordBuffer != null ? iRecordBuffer.length : 0;
+    status = ORecordElement.STATUS.LOADED;
+
+    return this;
+  }
+
   public ORecordAbstract setDirty() {
     if (!dirty && status != STATUS.UNMARSHALLING) {
       dirty = true;

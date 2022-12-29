@@ -22,6 +22,8 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OStringCache;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
@@ -175,8 +177,14 @@ public class HelperClasses {
   public static String stringFromBytesIntern(final byte[] bytes, final int offset, final int len) {
     try {
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-      if (db != null && !db.isClosed()) {
-        return db.getSharedContext().getStringCache().getString(bytes, offset, len);
+      if (db != null) {
+        OSharedContext context = db.getSharedContext();
+        if (context != null) {
+          OStringCache cache = context.getStringCache();
+          if (cache != null) {
+            return cache.getString(bytes, offset, len);
+          }
+        }
       }
       return new String(bytes, offset, len, CHARSET_UTF_8).intern();
     } catch (UnsupportedEncodingException e) {
