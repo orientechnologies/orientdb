@@ -24,11 +24,14 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.stream.Streams;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -527,5 +530,36 @@ public abstract class OIndexOneValue extends OIndexAbstract {
             return -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
           }
         });
+  }
+
+  @Override
+  public OIndexOneValue put(Object key, final OIdentifiable value) {
+    final ORID rid = value.getIdentity();
+
+    if (!rid.isValid()) {
+      if (value instanceof ORecord) {
+        // EARLY SAVE IT
+        ((ORecord) value).save();
+      } else {
+        throw new IllegalArgumentException(
+            "Cannot store non persistent RID as index value for key '" + key + "'");
+      }
+    }
+    key = getCollatingValue(key);
+
+    ODatabaseDocumentInternal database = getDatabase();
+    if (database.getTransaction().isActive()) {
+      OTransaction singleTx = database.getTransaction();
+      singleTx.addIndexEntry(
+          this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, value.getIdentity());
+
+    } else {
+      database.begin();
+      OTransaction singleTx = database.getTransaction();
+      singleTx.addIndexEntry(
+          this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, value.getIdentity());
+      database.commit();
+    }
+    return this;
   }
 }
