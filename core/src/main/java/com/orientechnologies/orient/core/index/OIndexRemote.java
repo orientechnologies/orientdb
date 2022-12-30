@@ -30,6 +30,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -168,48 +171,54 @@ public abstract class OIndexRemote implements OIndex {
   }
 
   public OIndexRemote put(final Object key, final OIdentifiable value) {
-    if (value instanceof ORecord && !value.getIdentity().isValid())
-      // SAVE IT BEFORE TO PUT
-      ((ORecord) value).save();
+    final ORID rid = value.getIdentity();
 
-    getDatabase().command(String.format(QUERY_PUT, name), key, value.getIdentity()).close();
+    if (!rid.isValid()) {
+      if (value instanceof ORecord) {
+        // EARLY SAVE IT
+        ((ORecord) value).save();
+      } else {
+        throw new IllegalArgumentException(
+            "Cannot store non persistent RID as index value for key '" + key + "'");
+      }
+    }
+
+    ODatabaseDocumentInternal database = getDatabase();
+    if (database.getTransaction().isActive()) {
+      OTransaction singleTx = database.getTransaction();
+      singleTx.addIndexEntry(this, getName(), OTransactionIndexChanges.OPERATION.PUT, key, value);
+    } else {
+      database.begin();
+      OTransaction singleTx = database.getTransaction();
+      singleTx.addIndexEntry(this, getName(), OTransactionIndexChanges.OPERATION.PUT, key, value);
+      database.commit();
+    }
     return this;
   }
 
   public boolean remove(final Object key) {
-    try (OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), key)) {
-      if (!result.hasNext()) {
-        return false;
-      }
-      return ((long) result.next().getProperty("count")) > 0;
+    ODatabaseDocumentInternal database = getDatabase();
+    if (database.getTransaction().isActive()) {
+      database.getTransaction().addIndexEntry(this, getName(), OPERATION.REMOVE, key, null);
+    } else {
+      database.begin();
+      database.getTransaction().addIndexEntry(this, getName(), OPERATION.REMOVE, key, null);
+      database.commit();
     }
+    return true;
   }
 
   public boolean remove(final Object key, final OIdentifiable rid) {
-    final long deleted;
-    if (rid != null) {
 
-      try (OResultSet result =
-          getDatabase().command(String.format(QUERY_REMOVE2, name), key, rid)) {
-        if (!result.hasNext()) {
-          deleted = 0;
-        } else deleted = result.next().getProperty("count");
-      }
+    ODatabaseDocumentInternal database = getDatabase();
+    if (database.getTransaction().isActive()) {
+      database.getTransaction().addIndexEntry(this, getName(), OPERATION.REMOVE, key, rid);
     } else {
-      try (OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), key)) {
-        if (!result.hasNext()) {
-          deleted = 0;
-        } else deleted = result.next().getProperty("count");
-      }
+      database.begin();
+      database.getTransaction().addIndexEntry(this, getName(), OPERATION.REMOVE, key, rid);
+      database.commit();
     }
-    return deleted > 0;
-  }
-
-  public int remove(final OIdentifiable iRecord) {
-    try (OResultSet rs =
-        getDatabase().command(String.format(QUERY_REMOVE3, name, iRecord.getIdentity()), iRecord)) {
-      return (Integer) rs.next().getProperty("value");
-    }
+    return true;
   }
 
   @Override
