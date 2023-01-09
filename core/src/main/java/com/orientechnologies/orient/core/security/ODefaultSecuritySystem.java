@@ -862,20 +862,19 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
             if (fis != null) fis.close();
           }
         } else {
-          OLogManager.instance()
-              .error(
-                  this,
-                  "ODefaultServerSecurity.loadConfig() Could not access the security JSON file: %s",
-                  null,
-                  jsonFile);
+          if (file.exists()) {
+            OLogManager.instance()
+                .warn(this, "Could not read the security JSON file: %s", null, jsonFile);
+          } else {
+            if (file.exists()) {
+              OLogManager.instance()
+                  .warn(this, "Security JSON file: %s do not exists", null, jsonFile);
+            }
+          }
         }
-      } else {
-        OLogManager.instance()
-            .error(
-                this, "ODefaultServerSecurity.loadConfig() Configuration file path is null", null);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.loadConfig()", ex);
+      OLogManager.instance().error(this, "error loading security config", ex);
     }
 
     return securityDoc;
