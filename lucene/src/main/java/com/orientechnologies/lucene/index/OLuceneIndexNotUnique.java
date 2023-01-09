@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -144,7 +143,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
 
   @Override
   public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) {
-
     while (true)
       try {
         storage.callIndexEngine(
@@ -156,9 +154,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
 
                 OAtomicOperation atomicOperation =
                     storage.getAtomicOperationsManager().getCurrentOperation();
-                Set<OIdentifiable> set = new HashSet<>();
-                set.add(rid);
-                indexEngine.put(atomicOperation, decodeKey(key), set);
+                indexEngine.put(atomicOperation, decodeKey(key), rid);
                 return null;
               } catch (IOException e) {
                 throw OException.wrapException(
@@ -169,6 +165,46 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }
+  }
+
+  @Override
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key)
+      throws OInvalidIndexEngineIdException {
+    while (true)
+      try {
+        storage.callIndexEngine(
+            false,
+            indexId,
+            engine -> {
+              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+              indexEngine.remove(decodeKey(key));
+              return true;
+            });
+        break;
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
+    return false;
+  }
+
+  @Override
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid)
+      throws OInvalidIndexEngineIdException {
+    while (true)
+      try {
+        storage.callIndexEngine(
+            false,
+            indexId,
+            engine -> {
+              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+              indexEngine.remove(decodeKey(key), rid);
+              return true;
+            });
+        break;
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
+    return false;
   }
 
   @Override

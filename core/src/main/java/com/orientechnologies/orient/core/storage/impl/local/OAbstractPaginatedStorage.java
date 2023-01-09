@@ -86,7 +86,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
@@ -2557,25 +2556,18 @@ public abstract class OAbstractPaginatedStorage
   private void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
     for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
       final OIndexInternal index = changes.getAssociatedIndex();
-      if (!index.isNativeTxSupported()) {
-        final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
-        index.addTxOperation(snapshot, changes);
-        index.commit(snapshot);
-        applyUniqueIndexChanges(index.getName(), changes);
-      } else {
-        try {
-          final int indexId = index.getIndexId();
-          if (changes.cleared) {
-            clearIndex(indexId);
-          }
-          for (final OTransactionIndexChangesPerKey changesPerKey :
-              changes.changesPerKey.values()) {
-            applyTxChanges(changesPerKey, index);
-          }
-          applyTxChanges(changes.nullKeyChanges, index);
-        } catch (final OInvalidIndexEngineIdException e) {
-          throw OException.wrapException(new OStorageException("Error during index commit"), e);
+
+      try {
+        final int indexId = index.getIndexId();
+        if (changes.cleared) {
+          clearIndex(indexId);
         }
+        for (final OTransactionIndexChangesPerKey changesPerKey : changes.changesPerKey.values()) {
+          applyTxChanges(changesPerKey, index);
+        }
+        applyTxChanges(changes.nullKeyChanges, index);
+      } catch (final OInvalidIndexEngineIdException e) {
+        throw OException.wrapException(new OStorageException("Error during index commit"), e);
       }
     }
   }

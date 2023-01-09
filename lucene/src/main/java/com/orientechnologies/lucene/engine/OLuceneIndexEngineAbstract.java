@@ -521,7 +521,6 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
     if (value == null || isCollectionDelete()) {
       return OLuceneIndexType.createDeleteQuery(value, indexDefinition.getFields(), key);
     }
-
     return OLuceneIndexType.createQueryId(value);
   }
 

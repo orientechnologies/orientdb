@@ -135,12 +135,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   public void put(final OAtomicOperation atomicOperation, final Object key, final Object value) {
     updateLastAccess();
     openIfClosed();
-    @SuppressWarnings("unchecked")
-    final Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
-    for (final OIdentifiable oIdentifiable : container) {
-      final Document doc = buildDocument(key, oIdentifiable);
-      addDocument(doc);
-    }
+    final Document doc = buildDocument(key, (OIdentifiable) value);
+    addDocument(doc);
   }
 
   @Override

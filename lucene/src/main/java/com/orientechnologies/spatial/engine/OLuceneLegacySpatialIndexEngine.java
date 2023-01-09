@@ -42,7 +42,6 @@ import com.orientechnologies.spatial.shape.legacy.OShapeBuilderLegacy;
 import com.orientechnologies.spatial.shape.legacy.OShapeBuilderLegacyImpl;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -196,11 +195,8 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
       updateLastAccess();
       openIfClosed();
       OCompositeKey compositeKey = (OCompositeKey) key;
-      @SuppressWarnings("unchecked")
-      Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
-      for (OIdentifiable oIdentifiable : container) {
-        addDocument(newGeoDocument(oIdentifiable, legacyBuilder.makeShape(compositeKey, ctx)));
-      }
+      addDocument(
+          newGeoDocument((OIdentifiable) value, legacyBuilder.makeShape(compositeKey, ctx)));
     }
   }
 

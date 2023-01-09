@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.spatial.query.OSpatialQueryContext;
 import com.orientechnologies.spatial.shape.OShapeBuilder;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -119,11 +118,8 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
     if (key instanceof OIdentifiable) {
       openIfClosed();
       ODocument location = ((OIdentifiable) key).getRecord();
-      Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
-      for (OIdentifiable oIdentifiable : container) {
-        updateLastAccess();
-        addDocument(newGeoDocument(oIdentifiable, factory.fromDoc(location)));
-      }
+      updateLastAccess();
+      addDocument(newGeoDocument((OIdentifiable) value, factory.fromDoc(location)));
     }
   }
 
