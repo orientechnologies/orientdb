@@ -108,7 +108,7 @@ public class ViewManager {
         });
   }
 
-  private synchronized void registerLiveUpdates(ODatabaseSession db) {
+  private void registerLiveUpdates(ODatabaseSession db) {
     boolean liveViewsExist = false;
     Collection<OView> views = db.getMetadata().getSchema().getViews();
     for (OView view : views) {
@@ -116,7 +116,7 @@ public class ViewManager {
     }
   }
 
-  public synchronized boolean registerLiveUpdateFor(ODatabaseSession db, String viewName) {
+  public boolean registerLiveUpdateFor(ODatabaseSession db, String viewName) {
     OView view = db.getMetadata().getSchema().getView(viewName);
     viewsExist = true;
     boolean registered = false;
@@ -203,7 +203,7 @@ public class ViewManager {
     closed = true;
   }
 
-  public synchronized void cleanUnusedViewClusters(ODatabaseDocument db) {
+  public void cleanUnusedViewClusters(ODatabaseDocument db) {
     if (((ODatabaseDocumentEmbedded) db).getStorage().isIcrementalBackupRunning()) {
       // backup is running handle delete the next run
       return;
@@ -224,7 +224,7 @@ public class ViewManager {
     }
   }
 
-  public synchronized void cleanUnusedViewIndexes(ODatabaseDocumentInternal db) {
+  public void cleanUnusedViewIndexes(ODatabaseDocumentInternal db) {
     if (((ODatabaseDocumentEmbedded) db).getStorage().isIcrementalBackupRunning()) {
       // backup is running handle delete the next run
       return;
@@ -245,7 +245,7 @@ public class ViewManager {
     }
   }
 
-  public synchronized OView getNextViewToUpdate(ODatabaseDocumentInternal db) {
+  public OView getNextViewToUpdate(ODatabaseDocumentInternal db) {
     OSchema schema = db.getMetadata().getImmutableSchemaSnapshot();
 
     Collection<OView> views = schema.getViews();
@@ -519,7 +519,7 @@ public class ViewManager {
         });
   }
 
-  public synchronized void startUsingViewCluster(Integer cluster) {
+  public void startUsingViewCluster(Integer cluster) {
     AtomicInteger item = viewCluserVisitors.get(cluster);
     if (item == null) {
       item = new AtomicInteger(0);
@@ -528,7 +528,7 @@ public class ViewManager {
     item.incrementAndGet();
   }
 
-  public synchronized void endUsingViewCluster(Integer cluster) {
+  public void endUsingViewCluster(Integer cluster) {
     AtomicInteger item = viewCluserVisitors.get(cluster);
     if (item == null) {
       return;
