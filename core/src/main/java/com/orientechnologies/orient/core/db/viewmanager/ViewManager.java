@@ -332,7 +332,7 @@ public class ViewManager {
     return lastUpdate + (updateInterval * 1000) < System.currentTimeMillis();
   }
 
-  public synchronized void updateView(OView view, ODatabaseDocumentInternal db) {
+  public void updateView(OView view, ODatabaseDocumentInternal db) {
     if (((ODatabaseDocumentEmbedded) db).getStorage().isIcrementalBackupRunning()) {
       // backup is running handle rebuild the next run
       return;
