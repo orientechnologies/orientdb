@@ -56,7 +56,9 @@ public class OLuceneTxChangesSingleRid extends OLuceneTxChangesAbstract {
 
   public void remove(final Object key, final OIdentifiable value) {
     try {
-      if (value.getIdentity().isTemporary()) {
+      if (value == null) {
+        writer.deleteDocuments(engine.deleteQuery(key, value));
+      } else if (value.getIdentity().isTemporary()) {
         writer.deleteDocuments(engine.deleteQuery(key, value));
       } else {
         deleted.add(value.getIdentity().toString());

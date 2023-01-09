@@ -78,8 +78,9 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   @Override
   public boolean remove(final Object key, final OIdentifiable rid) {
 
+    ODatabaseDocumentInternal database = getDatabase();
     if (key != null) {
-      OTransaction transaction = getDatabase().getTransaction();
+      OTransaction transaction = database.getTransaction();
       if (transaction.isActive()) {
 
         transaction.addIndexEntry(
@@ -88,18 +89,44 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         transactionChanges.remove(key, rid);
         return true;
       } else {
-        while (true) {
-          try {
-            return storage.callIndexEngine(
-                false,
-                indexId,
-                engine -> {
-                  OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-                  return indexEngine.remove(key, rid);
-                });
-          } catch (OInvalidIndexEngineIdException e) {
-            doReloadIndexEngine();
-          }
+        database.begin();
+        transaction.addIndexEntry(
+            this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), rid);
+        OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
+        transactionChanges.remove(key, rid);
+        database.commit();
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean remove(final Object key) {
+    if (key != null) {
+      ODatabaseDocumentInternal database = getDatabase();
+      OTransaction transaction = database.getTransaction();
+      if (transaction.isActive()) {
+
+        transaction.addIndexEntry(
+            this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), null);
+        OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
+        transactionChanges.remove(key, null);
+        return true;
+      } else {
+        database.begin();
+        try {
+          transaction.addIndexEntry(
+              this,
+              super.getName(),
+              OTransactionIndexChanges.OPERATION.REMOVE,
+              encodeKey(key),
+              null);
+          OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
+          transactionChanges.remove(key, null);
+          database.commit();
+        } catch (RuntimeException e) {
+          database.rollback();
+          throw e;
         }
       }
     }

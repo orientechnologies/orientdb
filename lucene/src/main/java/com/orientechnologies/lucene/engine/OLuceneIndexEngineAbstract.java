@@ -528,9 +528,11 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   public Query deleteQuery(Object key, OIdentifiable value) {
     updateLastAccess();
     openIfClosed();
-    if (isCollectionDelete()) {
+
+    if (value == null || isCollectionDelete()) {
       return OLuceneIndexType.createDeleteQuery(value, indexDefinition.getFields(), key);
     }
+
     return OLuceneIndexType.createQueryId(value);
   }
 
