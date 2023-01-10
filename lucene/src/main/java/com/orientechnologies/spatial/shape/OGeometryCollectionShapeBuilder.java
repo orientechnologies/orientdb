@@ -56,13 +56,12 @@ public class OGeometryCollectionShapeBuilder extends OComplexShapeBuilder<ShapeC
   @Override
   public ShapeCollection<Shape> fromDoc(ODocument doc) {
 
-    List<ODocument> geometries = doc.field("geometries");
+    List<Object> geometries = doc.field("geometries");
 
     List<Shape> shapes = new ArrayList<Shape>();
 
-    Geometry[] geoms = new Geometry[geometries.size()];
-    for (ODocument geometry : geometries) {
-      Shape shape = shapeFactory.fromDoc(geometry);
+    for (Object geometry : geometries) {
+      Shape shape = shapeFactory.fromObject(geometry);
       shapes.add(shape);
     }
 
