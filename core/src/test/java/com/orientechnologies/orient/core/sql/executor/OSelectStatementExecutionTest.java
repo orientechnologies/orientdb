@@ -4289,6 +4289,7 @@ public class OSelectStatementExecutionTest {
 
     for (int i = 0; i < 5; i++) {
       Assert.assertTrue(result.hasNext());
+      result.next();
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -4311,6 +4312,7 @@ public class OSelectStatementExecutionTest {
 
     for (int i = 0; i < 6; i++) {
       Assert.assertTrue(result.hasNext());
+      result.next();
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -4334,6 +4336,7 @@ public class OSelectStatementExecutionTest {
 
     for (int i = 0; i < 5; i++) {
       Assert.assertTrue(result.hasNext());
+      result.next();
     }
     Assert.assertFalse(result.hasNext());
     result.close();
