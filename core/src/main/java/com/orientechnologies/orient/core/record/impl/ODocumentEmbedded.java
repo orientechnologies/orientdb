@@ -13,7 +13,7 @@ public class ODocumentEmbedded extends ODocument {
   }
 
   public ODocumentEmbedded(String clazz, ODatabaseSession session) {
-    super(clazz, session);
+    super(session, clazz);
   }
 
   public ODocumentEmbedded(ODatabaseSession session) {
