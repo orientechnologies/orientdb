@@ -196,7 +196,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (instance != null)
         return instance;
 
-      final Orient orient = new Orient(false);
+      final Orient orient = new Orient(insideWebContainer);
       orient.startup();
 
       instance = orient;
