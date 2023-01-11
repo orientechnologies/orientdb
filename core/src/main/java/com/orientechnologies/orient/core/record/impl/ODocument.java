@@ -1052,6 +1052,32 @@ public class ODocument extends ORecordAbstract
                   + embeddedClass
                   + "' but the record has no class");
 
+        if (doc.isVertex()) {
+          throw new OValidationException(
+              "The field '"
+                  + p.getFullName()
+                  + "' has been declared as "
+                  + p.getType()
+                  + " with linked class '"
+                  + embeddedClass
+                  + "' but the record is of class '"
+                  + doc.getImmutableSchemaClass().getName()
+                  + "' that is vertex class");
+        }
+
+        if (doc.isVertex()) {
+          throw new OValidationException(
+              "The field '"
+                  + p.getFullName()
+                  + "' has been declared as "
+                  + p.getType()
+                  + " with linked class '"
+                  + embeddedClass
+                  + "' but the record is of class '"
+                  + doc.getImmutableSchemaClass().getName()
+                  + "' that is edge class");
+        }
+
         if (!(doc.getImmutableSchemaClass().isSubClassOf(embeddedClass)))
           throw new OValidationException(
               "The field '"
@@ -3489,5 +3515,11 @@ public class ODocument extends ORecordAbstract
 
   protected OImmutableSchema getImmutableSchema() {
     return schema;
+  }
+
+  protected void checkEmbeddable() {
+    if (isVertex() || isEdge()) {
+      throw new ODatabaseException("Vertices or Edges cannot be stored as embedded");
+    }
   }
 }
