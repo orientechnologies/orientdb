@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.db;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.After;
@@ -248,6 +250,65 @@ public class OViewRefreshIT {
           Assert.assertEquals(30, result.stream().count());
         }
       }
+    }
+  }
+
+  @Test
+  public void testRefreshFail() throws InterruptedException {
+    try (ODatabaseSession db = orientDB.open(this.getClass().getSimpleName(), "admin", "admpwd")) {
+
+      String className = "testLiveUpdateDeleteClass";
+      String viewName = "testLiveUpdateDelete";
+      db.createClass(className);
+
+      for (int i = 0; i < 10; i++) {
+        OElement elem = db.newElement(className);
+        elem.setProperty("name", "name" + i);
+        elem.setProperty("surname", "surname" + i);
+        elem.save();
+      }
+
+      String statement =
+          "CREATE VIEW "
+              + viewName
+              + " FROM (SELECT FROM "
+              + className
+              + ") METADATA { indexes:[{type:\"UNIQUE\", properties:{name:\"String\"}}],";
+      statement += "updateIntervalSeconds:1 ";
+      statement += "}";
+
+      db.command(statement);
+
+      Thread.sleep(1000);
+
+      System.out.println("");
+      OResultSet result = db.query("SELECT FROM " + viewName);
+      Assert.assertEquals(10, result.stream().count());
+      result.close();
+      result =
+          db.query(
+              "select list(clusterIds) as cl from (SELECT expand(views) FROM metadata:schema)");
+      Object cl = result.next().getProperty("cl");
+      result.close();
+
+      for (int i = 0; i < 10; i++) {
+        OElement elem = db.newElement(className);
+        elem.setProperty("name", "name" + i);
+        elem.setProperty("surname", "surname" + i);
+        elem.save();
+      }
+
+      Thread.sleep(3000);
+      result =
+          db.query(
+              "select list(clusterIds) as cl from (SELECT expand(views) FROM metadata:schema)");
+      Object cl1 = result.next().getProperty("cl");
+      result.close();
+      assertEquals(cl, cl1);
+      result = db.query("SELECT FROM " + viewName);
+      Assert.assertEquals(10, result.stream().count());
+
+      result.close();
     }
   }
 
