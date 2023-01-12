@@ -1039,9 +1039,40 @@ public class ODocument extends ORecordAbstract
                 + " but the value is a document with the valid RecordID "
                 + fieldValue);
 
+      final ORecord embeddedRecord = embedded.getRecord();
+      if (embeddedRecord instanceof ODocument) {
+        final OClass embeddedClass = p.getLinkedClass();
+        final ODocument doc = (ODocument) embeddedRecord;
+        if (doc.isVertex()) {
+          throw new OValidationException(
+              "The field '"
+                  + p.getFullName()
+                  + "' has been declared as "
+                  + p.getType()
+                  + " with linked class '"
+                  + embeddedClass
+                  + "' but the record is of class '"
+                  + doc.getImmutableSchemaClass().getName()
+                  + "' that is vertex class");
+        }
+
+        if (doc.isEdge()) {
+          throw new OValidationException(
+              "The field '"
+                  + p.getFullName()
+                  + "' has been declared as "
+                  + p.getType()
+                  + " with linked class '"
+                  + embeddedClass
+                  + "' but the record is of class '"
+                  + doc.getImmutableSchemaClass().getName()
+                  + "' that is edge class");
+        }
+      }
+
       final OClass embeddedClass = p.getLinkedClass();
       if (embeddedClass != null) {
-        final ORecord embeddedRecord = embedded.getRecord();
+
         if (!(embeddedRecord instanceof ODocument))
           throw new OValidationException(
               "The field '"
@@ -1062,32 +1093,6 @@ public class ODocument extends ORecordAbstract
                   + " with linked class '"
                   + embeddedClass
                   + "' but the record has no class");
-
-        if (doc.isVertex()) {
-          throw new OValidationException(
-              "The field '"
-                  + p.getFullName()
-                  + "' has been declared as "
-                  + p.getType()
-                  + " with linked class '"
-                  + embeddedClass
-                  + "' but the record is of class '"
-                  + doc.getImmutableSchemaClass().getName()
-                  + "' that is vertex class");
-        }
-
-        if (doc.isVertex()) {
-          throw new OValidationException(
-              "The field '"
-                  + p.getFullName()
-                  + "' has been declared as "
-                  + p.getType()
-                  + " with linked class '"
-                  + embeddedClass
-                  + "' but the record is of class '"
-                  + doc.getImmutableSchemaClass().getName()
-                  + "' that is edge class");
-        }
 
         if (!(doc.getImmutableSchemaClass().isSubClassOf(embeddedClass)))
           throw new OValidationException(
