@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
@@ -249,6 +250,10 @@ public class OSchemaEmbedded extends OSchemaShared {
               OType linkedType = null;
               String collate = null;
               INDEX_BY indexBy = null;
+              if (entry.getValue() == null || entry.getKey() == null) {
+                throw new ODatabaseException(
+                    "Invalid properties " + ((Map) index).get("properties"));
+              }
               if (entry.getValue() instanceof Map) {
                 Map<String, Object> listVal = (Map<String, Object>) entry.getValue();
                 if (listVal.get("type") != null) {
