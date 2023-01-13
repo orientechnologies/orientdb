@@ -333,6 +333,14 @@ public class ViewManager {
   }
 
   public void updateView(OView view, ODatabaseDocumentInternal db) {
+    OScenarioThreadLocal.executeAsDistributed(
+        () -> {
+          this.updateViewInternal(view, db);
+          return null;
+        });
+  }
+
+  public void updateViewInternal(OView view, ODatabaseDocumentInternal db) {
     if (((ODatabaseDocumentEmbedded) db).getStorage().isIcrementalBackupRunning()) {
       // backup is running handle rebuild the next run
       return;

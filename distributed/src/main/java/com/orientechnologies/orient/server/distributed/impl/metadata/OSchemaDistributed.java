@@ -85,7 +85,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       cmd.append(" from (");
       cmd.append(config.getQuery());
       cmd.append(") METADATA {");
-      cmd.append(", updateIntervalSeconds: " + config.getUpdateIntervalSeconds());
+      cmd.append(" updateIntervalSeconds: " + config.getUpdateIntervalSeconds());
       if (config.getWatchClasses() != null && config.getWatchClasses().size() > 0) {
         cmd.append(", watchClasses: [\"");
         cmd.append(config.getWatchClasses().stream().collect(Collectors.joining("\",\"")));
