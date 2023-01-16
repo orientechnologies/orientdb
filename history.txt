@@ -27,6 +27,28 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.15 - (Jennuary, 17 2023)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3215---17-Jennuary-2023
+
+# Core
+- give more clear error when view metadata are not correct on view creation
+- improved validation of embedded types to avoid use of vertices and edges in embedded
+- handle additional case for shape type conversion in query engine
+- removed not needed synchronization in views structures
+- reduced logging of the security module
+- minor fix for no-tx changes on lucene indexes
+- removed duplicate logic in index implementation
+- reduced the thread local lookups and database isClosed checks
+- removed some locale translate done only on specific use cases
+- avoid to update the index manager when there are no changes
+- replaced storage error state lock with atomic reference
+- removed server and client dependency from lucene module
+
+# Distributed
+- minor fix on view creation and refresh in case of distributed environment
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.14 - (December, 23 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3214---23-December-2022
