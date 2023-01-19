@@ -30,7 +30,7 @@ This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.15 - (Jennuary, 17 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3215---17-Jennuary-2023
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3215---17-January-2023
 
 # Core
 - give more clear error when view metadata are not correct on view creation
