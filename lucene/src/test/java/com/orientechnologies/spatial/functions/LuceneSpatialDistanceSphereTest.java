@@ -15,9 +15,8 @@
  */
 package com.orientechnologies.spatial.functions;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.spatial.BaseSpatialLuceneTest;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,20 +30,18 @@ public class LuceneSpatialDistanceSphereTest extends BaseSpatialLuceneTest {
   @Test
   public void testDistanceSphereNoIndex() {
 
-    List<ODocument> execute =
+    OResultSet execute =
         db.command(
-                new OCommandSQL(
-                    "select ST_Distance(ST_GEOMFROMTEXT('POINT(12.4662748 41.8914114)'),ST_GEOMFROMTEXT('POINT(12.4664632 41.8904382)')) as distanceDeg, \n"
-                        + "ST_Distance_Sphere(ST_GEOMFROMTEXT('POINT(12.4662748 41.8914114)'),ST_GEOMFROMTEXT('POINT(12.4664632 41.8904382)')) as distanceMeter"))
-            .execute();
+            "select ST_Distance(ST_GEOMFROMTEXT('POINT(12.4662748 41.8914114)'),ST_GEOMFROMTEXT('POINT(12.4664632 41.8904382)')) as distanceDeg, \n"
+                + "ST_Distance_Sphere(ST_GEOMFROMTEXT('POINT(12.4662748 41.8914114)'),ST_GEOMFROMTEXT('POINT(12.4664632 41.8904382)')) as distanceMeter");
 
-    Assert.assertEquals(1, execute.size());
-    ODocument next = execute.iterator().next();
+    OResult next = execute.next();
 
-    Double distanceDeg = next.field("distanceDeg");
-    Double distanceMeter = next.field("distanceMeter");
+    Double distanceDeg = next.getProperty("distanceDeg");
+    Double distanceMeter = next.getProperty("distanceMeter");
     Assert.assertNotNull(distanceDeg);
     Assert.assertNotNull(distanceMeter);
+    Assert.assertFalse(execute.hasNext());
 
     Assert.assertEquals(109, distanceMeter.intValue());
 
@@ -58,71 +55,56 @@ public class LuceneSpatialDistanceSphereTest extends BaseSpatialLuceneTest {
   @Test
   public void testWithinIndex() {
 
-    db.command(new OCommandSQL("create class Place extends v")).execute();
-    db.command(new OCommandSQL("create property Place.location EMBEDDED OPoint")).execute();
+    db.command("create class Place extends v").close();
+    db.command("create property Place.location EMBEDDED OPoint").close();
 
     db.command(
-            new OCommandSQL(
-                "insert into Place set name =  'Dar Poeta',location = ST_GeomFromText('POINT(12.4684635 41.8914114)')"))
-        .execute();
+            "insert into Place set name =  'Dar Poeta',location = ST_GeomFromText('POINT(12.4684635 41.8914114)')")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into Place set name  = 'Antilia Pub',location = ST_GeomFromText('POINT(12.4686519 41.890438)')"))
-        .execute();
+            "insert into Place set name  = 'Antilia Pub',location = ST_GeomFromText('POINT(12.4686519 41.890438)')")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "insert into Place set name = 'Museo Di Roma in Trastevere',location = ST_GeomFromText('POINT(12.4689762 41.8898916)')"))
-        .execute();
+            "insert into Place set name = 'Museo Di Roma in Trastevere',location = ST_GeomFromText('POINT(12.4689762 41.8898916)')")
+        .close();
 
-    db.command(new OCommandSQL("create index Place.l on Place (location) SPATIAL engine lucene"))
-        .execute();
-    List<ODocument> execute =
+    db.command("create index Place.l on Place (location) SPATIAL engine lucene").close();
+    OResultSet execute =
         db.command(
-                new OCommandSQL(
-                    "SELECT from Place where ST_Distance_Sphere(location, ST_GeomFromText('POINT(12.468933 41.890303)')) < 50"))
-            .execute();
+            "SELECT from Place where ST_Distance_Sphere(location, ST_GeomFromText('POINT(12.468933 41.890303)')) < 50");
 
-    Assert.assertEquals(2, execute.size());
-
+    Assert.assertEquals(2, execute.stream().count());
     execute =
         db.command(
-                new OCommandSQL(
-                    "SELECT from Place where ST_Distance_Sphere(location, ST_GeomFromText('POINT(12.468933 41.890303)')) > 50"))
-            .execute();
+            "SELECT from Place where ST_Distance_Sphere(location, ST_GeomFromText('POINT(12.468933 41.890303)')) > 50");
 
-    Assert.assertEquals(1, execute.size());
+    Assert.assertEquals(1, execute.stream().count());
   }
 
   // Need more test with index
   @Test
   public void testDistanceProjection() {
 
-    db.command(new OCommandSQL("create class Restaurant extends v")).execute();
-    db.command(new OCommandSQL("create property Restaurant.location EMBEDDED OPoint")).execute();
+    db.command("create class Restaurant extends v").close();
+    db.command("create property Restaurant.location EMBEDDED OPoint").close();
 
     db.command(
-            new OCommandSQL(
-                "INSERT INTO  Restaurant SET name = 'London', location = St_GeomFromText(\"POINT (-0.1277583 51.5073509)\")"))
-        .execute();
+            "INSERT INTO  Restaurant SET name = 'London', location = St_GeomFromText(\"POINT (-0.1277583 51.5073509)\")")
+        .close();
     db.command(
-            new OCommandSQL(
-                "INSERT INTO  Restaurant SET name = 'Trafalgar', location = St_GeomFromText(\"POINT (-0.1280688 51.5080388)\")"))
-        .execute();
+            "INSERT INTO  Restaurant SET name = 'Trafalgar', location = St_GeomFromText(\"POINT (-0.1280688 51.5080388)\")")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "INSERT INTO  Restaurant SET name = 'Lambeth North Station', location = St_GeomFromText(\"POINT (-0.1120681 51.4989103)\")"))
-        .execute();
+            "INSERT INTO  Restaurant SET name = 'Lambeth North Station', location = St_GeomFromText(\"POINT (-0.1120681 51.4989103)\")")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "INSERT INTO  Restaurant SET name = 'Montreal', location = St_GeomFromText(\"POINT (-73.567256 45.5016889)\")"))
-        .execute();
+            "INSERT INTO  Restaurant SET name = 'Montreal', location = St_GeomFromText(\"POINT (-73.567256 45.5016889)\")")
+        .close();
 
-    db.command(
-            new OCommandSQL("CREATE INDEX bla ON Restaurant (location) SPATIAL ENGINE LUCENE;\n"))
-        .execute();
+    db.command("CREATE INDEX bla ON Restaurant (location) SPATIAL ENGINE LUCENE;\n").close();
     List<OResult> execute =
         db
             .query(
@@ -135,27 +117,25 @@ public class LuceneSpatialDistanceSphereTest extends BaseSpatialLuceneTest {
 
   @Test
   public void testNullObject() {
-    List<ODocument> execute =
+    OResultSet execute =
         db.command(
-                new OCommandSQL(
-                    "select ST_Distance({ locationCoordinates: null },ST_GEOMFROMTEXT('POINT(12.4664632 41.8904382)')) as distanceMeter"))
-            .execute();
+            "select ST_Distance({ locationCoordinates: null },ST_GEOMFROMTEXT('POINT(12.4664632 41.8904382)')) as distanceMeter");
 
-    Assert.assertEquals(1, execute.size());
-    ODocument next = execute.iterator().next();
-    Assert.assertTrue(next.isEmpty());
+    OResult next = execute.next();
+    Assert.assertNull(next.getProperty("distanceMeter"));
+    Assert.assertFalse(execute.hasNext());
+    execute.close();
   }
 
   @Test
   public void testSphereNullObject() {
-    List<ODocument> execute =
+    OResultSet execute =
         db.command(
-                new OCommandSQL(
-                    "select ST_Distance_Sphere({ locationCoordinates: null },ST_GEOMFROMTEXT('POINT(12.4664632 41.8904382)')) as distanceMeter"))
-            .execute();
+            "select ST_Distance_Sphere({ locationCoordinates: null },ST_GEOMFROMTEXT('POINT(12.4664632 41.8904382)')) as distanceMeter");
 
-    Assert.assertEquals(1, execute.size());
-    ODocument next = execute.iterator().next();
-    Assert.assertTrue(next.isEmpty());
+    OResult next = execute.next();
+    Assert.assertNull(next.getProperty("distanceMeter"));
+    Assert.assertFalse(execute.hasNext());
+    execute.close();
   }
 }
