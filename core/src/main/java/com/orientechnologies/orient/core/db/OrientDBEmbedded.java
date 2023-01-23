@@ -989,6 +989,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     timer.cancel();
     securitySystem.shutdown();
     executor.shutdown();
+    preClose();
     try {
       while (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
         OLogManager.instance().warn(this, "Failed waiting background operations termination");
@@ -1003,6 +1004,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
       currentStorageIds.clear();
     }
     removeShutdownHook();
+  }
+
+  public synchronized void preClose() {
+    if (!open) return;
+    this.sharedContexts.values().forEach(x -> x.getViewManager().close());
   }
 
   public synchronized void internalClose() {
@@ -1172,8 +1178,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task) {
     return executor.submit(
         () -> {
-          try (ODatabaseSession session = openNoAuthorization(database)) {
-            return task.call(session);
+          if (isOpen()) {
+            try (ODatabaseSession session = openNoAuthorization(database)) {
+              return task.call(session);
+            }
+          } else {
+            OLogManager.instance()
+                .warn(this, " Cancelled execution of task, OrientDB instance is closed");
+            return null;
           }
         });
   }
