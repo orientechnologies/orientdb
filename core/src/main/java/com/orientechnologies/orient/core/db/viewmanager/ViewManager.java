@@ -38,9 +38,11 @@ import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -54,6 +56,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class ViewManager {
   private final OrientDBInternal orientDB;
@@ -164,12 +167,15 @@ public class ViewManager {
 
   private void updateViews(ODatabaseDocumentInternal db) {
     try {
-      cleanUnusedViewClusters(db);
-      cleanUnusedViewIndexes(db);
-      OView view = getNextViewToUpdate(db);
-      if (view != null) {
-        updateView(view, db);
-      }
+      OView view;
+      do {
+        cleanUnusedViewClusters(db);
+        cleanUnusedViewIndexes(db);
+        view = getNextViewToUpdate(db);
+        if (view != null) {
+          updateView(view, db);
+        }
+      } while (view != null && !closed);
 
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Failed to update views", e);
@@ -207,18 +213,21 @@ public class ViewManager {
       // backup is running handle delete the next run
       return;
     }
-    List<Integer> toRemove = new ArrayList<>();
-    for (Integer cluster : clustersToDrop) {
-      AtomicInteger visitors = viewCluserVisitors.get(cluster);
-      if (visitors == null || visitors.get() <= 0) {
-        toRemove.add(cluster);
+    List<Integer> clusters = new ArrayList<>();
+    synchronized (this) {
+      Iterator<Integer> iter = clustersToDrop.iterator();
+      while (iter.hasNext()) {
+        Integer cluster = iter.next();
+        AtomicInteger visitors = viewCluserVisitors.get(cluster);
+        if (visitors == null || visitors.get() <= 0) {
+          iter.remove();
+          clusters.add(cluster);
+        }
       }
     }
-
-    for (Integer cluster : toRemove) {
+    for (Integer cluster : clusters) {
       db.dropCluster(cluster);
       viewCluserVisitors.remove(cluster);
-      clustersToDrop.remove(cluster);
       oldClustersPerViews.remove(cluster);
     }
   }
@@ -228,18 +237,21 @@ public class ViewManager {
       // backup is running handle delete the next run
       return;
     }
-
-    List<String> toRemove = new ArrayList<>();
-    for (String index : indexesToDrop) {
-      AtomicInteger visitors = viewIndexVisitors.get(index);
-      if (visitors == null || visitors.get() <= 0) {
-        toRemove.add(index);
+    List<String> indexes = new ArrayList<>();
+    synchronized (this) {
+      Iterator<String> iter = indexesToDrop.iterator();
+      while (iter.hasNext()) {
+        String index = iter.next();
+        AtomicInteger visitors = viewIndexVisitors.get(index);
+        if (visitors == null || visitors.get() <= 0) {
+          iter.remove();
+          indexes.add(index);
+        }
       }
     }
-    for (String index : toRemove) {
+    for (String index : indexes) {
       db.getMetadata().getIndexManagerInternal().dropIndex(db, index);
       viewIndexVisitors.remove(index);
-      indexesToDrop.remove(index);
       oldIndexesPerViews.remove(index);
     }
   }
@@ -340,12 +352,17 @@ public class ViewManager {
   }
 
   public void updateViewInternal(OView view, ODatabaseDocumentInternal db) {
-    if (((ODatabaseDocumentEmbedded) db).getStorage().isIcrementalBackupRunning()) {
+    if (((ODatabaseDocumentEmbedded) db).getStorage().isIcrementalBackupRunning() || closed) {
       // backup is running handle rebuild the next run
       return;
     }
     try {
-      refreshing.add(view.getName());
+      synchronized (this) {
+        if (refreshing.contains(view.getName())) {
+          return;
+        }
+        refreshing.add(view.getName());
+      }
 
       OLogManager.instance().info(this, "Starting refresh of view '%s'", view.getName());
       lastUpdateTimestampForView.put(view.getName(), System.currentTimeMillis());
@@ -387,6 +404,16 @@ public class ViewManager {
       }
       OViewRemovedMetadata oldMetadata =
           ((OViewImpl) view).replaceViewClusterAndIndex(cluster, indexes);
+      OLogManager.instance()
+          .warn(
+              this,
+              "Replacing for view '%s' clusters '%s' with '%s'",
+              view.getName(),
+              Arrays.stream(oldMetadata.getClusters())
+                  .mapToObj((i) -> db.getClusterNameById(i))
+                  .collect(Collectors.toList())
+                  .toString(),
+              db.getClusterNameById(cluster));
       for (int i : oldMetadata.getClusters()) {
         clustersToDrop.add(i);
         viewCluserVisitors.put(i, new AtomicInteger(0));
@@ -480,7 +507,7 @@ public class ViewManager {
     int i = 0;
     String viewName = view.getName();
     while (true) {
-      String clusterName = viewName.toLowerCase(Locale.ENGLISH) + (i++);
+      String clusterName = "v_" + i++ + "_" + viewName.toLowerCase(Locale.ENGLISH);
       if (!db.getClusterNames().contains(clusterName)) {
         return clusterName;
       }
