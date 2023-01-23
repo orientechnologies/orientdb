@@ -210,7 +210,7 @@
         <dependency>
             <groupId>io.kubernetes</groupId>
             <artifactId>client-java</artifactId>
-            <version>10.0.0</version>
+            <version>11.0.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
