@@ -219,7 +219,7 @@ public class ODocumentSerializerDelta {
         deserializeDeltaEmbeddedMap(bytes, (OTrackedMap) toUpdate);
         break;
       case EMBEDDED:
-        deserializeDelta(bytes, (ODocument) toUpdate);
+        deserializeDelta(bytes, (ODocument) ((ORecord) toUpdate).getRecord());
         break;
       case LINKLIST:
         deserializeDeltaLinkList(bytes, (ORecordLazyList) toUpdate);
@@ -624,7 +624,7 @@ public class ODocumentSerializerDelta {
         serializeDeltaEmbeddedMap(bytes, (OTrackedMap) value);
         break;
       case EMBEDDED:
-        serializeDelta(bytes, (ODocument) value);
+        serializeDelta(bytes, (ODocument) ((ORecord) value).getRecord());
         break;
       case LINKLIST:
         serializeDeltaLinkList(bytes, (ORecordLazyList) value);
@@ -1064,7 +1064,7 @@ public class ODocumentSerializerDelta {
           cur.field(ODocumentSerializable.CLASS_NAME, value.getClass().getName());
           serialize(cur, bytes);
         } else {
-          serialize((ODocument) value, bytes);
+          serialize((ODocument) ((ORecord) value).getRecord(), bytes);
         }
         break;
       case EMBEDDEDSET:
