@@ -459,15 +459,15 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
           this.setDirty();
           this.save();
         }
-        database
-            .getSharedContext()
-            .getSchema()
-            .forceSnapshot(ODatabaseRecordThreadLocal.instance().get());
       }
     } finally {
       internalReleaseExclusiveLock();
     }
     if (val == 0 && database != null) {
+      database
+          .getSharedContext()
+          .getSchema()
+          .forceSnapshot(ODatabaseRecordThreadLocal.instance().get());
 
       for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
         listener.onIndexManagerUpdate(database.getName(), this);
