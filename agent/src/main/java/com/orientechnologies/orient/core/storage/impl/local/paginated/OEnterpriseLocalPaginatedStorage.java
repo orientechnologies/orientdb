@@ -377,9 +377,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     final String[] files =
         backupDirectory.list(
             (dir, name) ->
-                new File(dir, name).length() > 0
-                    && name.toLowerCase(configuration.getLocaleInstance())
-                        .endsWith(IBU_EXTENSION_V3));
+                new File(dir, name).length() > 0 && name.toLowerCase().endsWith(IBU_EXTENSION_V3));
 
     if (files == null)
       throw new OStorageException(
