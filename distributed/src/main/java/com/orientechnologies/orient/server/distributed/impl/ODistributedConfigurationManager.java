@@ -119,7 +119,7 @@ public class ODistributedConfigurationManager {
   private static ODocument readConfig(ODatabaseSession session) {
     OSharedContextEmbedded value =
         (OSharedContextEmbedded) ((ODatabaseDocumentInternal) session).getSharedContext();
-    ODocument doc = value.loadConfig(session, "ditributedConfig");
+    ODocument doc = value.loadDistributedConfig(session);
     return doc;
   }
 

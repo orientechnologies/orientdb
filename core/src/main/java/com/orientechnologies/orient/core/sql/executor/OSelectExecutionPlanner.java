@@ -1683,6 +1683,10 @@ public class OSelectExecutionPlanner {
       plan.chain(new FetchFromStorageMetadataStep(ctx, profilingEnabled));
     } else if (metadata.getName().equalsIgnoreCase(OCommandExecutorSQLAbstract.METADATA_DATABASE)) {
       plan.chain(new FetchFromDatabaseMetadataStep(ctx, profilingEnabled));
+    } else if (metadata
+        .getName()
+        .equalsIgnoreCase(OCommandExecutorSQLAbstract.METADATA_DISTRIBUTED)) {
+      plan.chain(new FetchFromDistributedMetadataStep(ctx, profilingEnabled));
     } else {
       throw new UnsupportedOperationException("Invalid metadata: " + metadata.getName());
     }

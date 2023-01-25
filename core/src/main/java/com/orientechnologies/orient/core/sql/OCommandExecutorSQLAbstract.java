@@ -74,6 +74,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   public static final String METADATA_INDEXMGR = "INDEXMANAGER";
   public static final String METADATA_STORAGE = "STORAGE";
   public static final String METADATA_DATABASE = "DATABASE";
+  public static final String METADATA_DISTRIBUTED = "DISTRIBUTED";
 
   public static final String DEFAULT_PARAM_USER = "$user";
 
