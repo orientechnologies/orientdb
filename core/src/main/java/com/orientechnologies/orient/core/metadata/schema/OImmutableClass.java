@@ -684,8 +684,7 @@ public class OImmutableClass implements OClass {
 
   @Override
   public Set<OIndex> getClassIndexes() {
-    final ODatabaseDocumentInternal database = getDatabase();
-    return database.getMetadata().getIndexManagerInternal().getClassIndexes(database, name);
+    return this.indexes;
   }
 
   @Override
