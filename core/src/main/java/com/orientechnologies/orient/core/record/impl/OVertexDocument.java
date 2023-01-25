@@ -166,7 +166,7 @@ public class OVertexDocument extends ODocument implements OVertex {
     if (db == null) {
       return labels;
     }
-    OSchema schema = getDatabaseIfDefined().getMetadata().getSchema();
+    OSchema schema = getDatabaseIfDefined().getMetadata().getImmutableSchemaSnapshot();
     String[] result = new String[labels.length];
     for (int i = 0; i < labels.length; i++) {
       OClass clazz = schema.getClass(labels[i]);

@@ -218,11 +218,12 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.beginCollection("classes");
         List<String> classNames = new ArrayList<String>();
 
-        for (OClass cls : db.getMetadata().getSchema().getClasses()) classNames.add(cls.getName());
+        for (OClass cls : db.getMetadata().getImmutableSchemaSnapshot().getClasses())
+          classNames.add(cls.getName());
         Collections.sort(classNames);
 
         for (String className : classNames) {
-          final OClass cls = db.getMetadata().getSchema().getClass(className);
+          final OClass cls = db.getMetadata().getImmutableSchemaSnapshot().getClass(className);
 
           try {
             exportClass(db, json, cls);
