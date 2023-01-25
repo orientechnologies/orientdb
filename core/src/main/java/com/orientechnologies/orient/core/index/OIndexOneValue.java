@@ -99,10 +99,11 @@ public abstract class OIndexOneValue extends OIndexAbstract {
           if (apiVersion == 0) {
             final ORID rid = (ORID) storage.getIndexValue(indexId, key);
             if (rid == null) {
-              return Stream.empty();
+              stream = Stream.empty();
+            } else {
+              //noinspection resource
+              stream = Stream.of(rid);
             }
-            //noinspection resource
-            stream = Stream.of(rid);
           } else if (apiVersion == 1) {
             //noinspection resource
             stream = storage.getIndexValues(indexId, key);
