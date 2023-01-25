@@ -487,7 +487,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         checkOpen();
         OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
         storage.incOnOpen();
-        embedded = newSessionInstance(storage, config);
+        embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(user, "nopwd", false);
@@ -500,16 +500,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected ODatabaseDocumentEmbedded newSessionInstance(
-      OAbstractPaginatedStorage storage, OrientDBConfig config) {
+      OAbstractPaginatedStorage storage, OrientDBConfig config, OSharedContext sharedContext) {
     ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
     embedded.init(config, getOrCreateSharedContext(storage));
     return embedded;
   }
 
   protected ODatabaseDocumentEmbedded newCreateSessionInstance(
-      OAbstractPaginatedStorage storage, OrientDBConfig config) {
+      OAbstractPaginatedStorage storage, OrientDBConfig config, OSharedContext sharedContext) {
     ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-    embedded.internalCreate(config, getOrCreateSharedContext(storage));
+    embedded.internalCreate(config, sharedContext);
     return embedded;
   }
 
@@ -522,7 +522,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         checkOpen();
         OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
         storage.incOnOpen();
-        embedded = newSessionInstance(storage, config);
+        embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
       }
       embedded.rebuildIndexes();
       embedded.callOnOpenListeners();
@@ -545,7 +545,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
         config = solveConfig(config);
         OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
 
-        embedded = newSessionInstance(storage, config);
+        embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
+
         storage.incOnOpen();
       }
       embedded.rebuildIndexes();
@@ -571,7 +572,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         }
         String database = authenticationInfo.getDatabase().get();
         OAbstractPaginatedStorage storage = getAndOpenStorage(database, config);
-        embedded = newSessionInstance(storage, config);
+        embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
         storage.incOnOpen();
       }
       embedded.rebuildIndexes();
@@ -634,7 +635,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     synchronized (this) {
       checkOpen();
       OAbstractPaginatedStorage storage = getAndOpenStorage(name, pool.getConfig());
-      embedded = newPooledSessionInstance(pool, storage);
+      embedded = newPooledSessionInstance(pool, storage, getOrCreateSharedContext(storage));
       storage.incOnOpen();
     }
     embedded.rebuildIndexes();
@@ -644,9 +645,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
-      ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
+      ODatabasePoolInternal pool, OAbstractPaginatedStorage storage, OSharedContext sharedContext) {
     ODatabaseDocumentEmbeddedPooled embedded = new ODatabaseDocumentEmbeddedPooled(pool, storage);
-    embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
+    embedded.init(pool.getConfig(), sharedContext);
     return embedded;
   }
 
@@ -882,7 +883,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected ODatabaseDocumentEmbedded internalCreate(
       OrientDBConfig config, OAbstractPaginatedStorage storage) {
     storage.create(config.getConfigurations());
-    return newCreateSessionInstance(storage, config);
+    return newCreateSessionInstance(storage, config, getOrCreateSharedContext(storage));
   }
 
   protected synchronized OSharedContext getOrCreateSharedContext(

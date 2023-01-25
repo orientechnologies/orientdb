@@ -115,10 +115,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private final ODistributedPlugin distributedManager;
 
-  public ODatabaseDocumentDistributed(OStorage storage, ODistributedPlugin distributedPlugin) {
+  public ODatabaseDocumentDistributed(
+      OStorage storage, ODistributedPlugin distributedPlugin, OSharedContext context) {
     super(storage);
     this.distributedManager = distributedPlugin;
-    distributedPlugin.registerNewDatabaseIfNeeded(storage.getName(), this);
+    this.sharedContext = context;
+    distributedPlugin.registerNewDatabaseIfNeeded(storage.getName(), this, context);
   }
 
   /**
@@ -220,7 +222,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentDistributed database =
-        new ODatabaseDocumentDistributed(getStorage(), distributedManager);
+        new ODatabaseDocumentDistributed(getStorage(), distributedManager, this.sharedContext);
     database.init(getConfig(), getSharedContext());
     String user;
     if (getUser() != null) {

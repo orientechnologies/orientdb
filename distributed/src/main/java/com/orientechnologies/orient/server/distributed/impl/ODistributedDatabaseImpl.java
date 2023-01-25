@@ -30,6 +30,7 @@ import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.id.ORID;
@@ -722,7 +723,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     checkNodeInConfiguration(serverName, cfg);
   }
 
-  public void initFirstOpen(ODatabaseDocumentInternal session) {
+  public void initFirstOpen(ODatabaseDocumentInternal session, OSharedContext context) {
     ODistributedConfiguration cfg = configurationManager.getDistributedConfiguration(session);
     checkNodeInConfiguration(getLocalNodeName(), cfg);
     resume();
