@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -816,8 +817,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void internalCommit2pc(ONewDistributedTxContextImpl txContext) {
+    OTransaction pre = this.currentTx;
     try {
       OTransactionInternal tx = txContext.getTransaction();
+      this.currentTx = tx;
       tx.setDatabase(this);
       ((OAbstractPaginatedStorage) this.getStorage()).commitPreAllocated(tx);
     } catch (OLowDiskSpaceException ex) {
@@ -825,6 +828,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     } finally {
+      this.currentTx = pre;
       txContext.destroy();
     }
   }
@@ -841,26 +845,31 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public void internalBegin2pc(
       ONewDistributedTxContextImpl txContext, boolean isCoordinator, boolean force) {
     final ODistributedDatabaseImpl localDb = (ODistributedDatabaseImpl) getDistributedShared();
-
+    OTransaction pre = this.currentTx;
     OTransactionInternal transaction = txContext.getTransaction();
     // This is moved before checks because also the coordinator first node allocate before checks
-    if (!isCoordinator) {
-      ((OTransactionOptimisticDistributed) transaction).setDatabase(this);
-      ((OTransactionOptimistic) transaction).begin();
+    try {
+      currentTx = transaction;
+      if (!isCoordinator) {
+        ((OTransactionOptimisticDistributed) transaction).setDatabase(this);
+        ((OTransactionOptimistic) transaction).begin();
+      }
+      localDb.getManager().messageBeforeOp("locks", txContext.getReqId());
+
+      if (isCoordinator) {
+        // make sure the create record operations have a valid id assigned that is used also on the
+        // followers.
+        getDistributedShared().getManager().messageBeforeOp("allocate", txContext.getReqId());
+        ((OAbstractPaginatedStorage) getStorage()).preallocateRids(transaction);
+        getDistributedShared().getManager().messageAfterOp("allocate", txContext.getReqId());
+      }
+
+      acquireLocksForTx(transaction, txContext, isCoordinator, force);
+
+      firstPhaseDataChecks(isCoordinator, transaction, txContext);
+    } finally {
+      this.currentTx = pre;
     }
-    localDb.getManager().messageBeforeOp("locks", txContext.getReqId());
-
-    if (isCoordinator) {
-      // make sure the create record operations have a valid id assigned that is used also on the
-      // followers.
-      getDistributedShared().getManager().messageBeforeOp("allocate", txContext.getReqId());
-      ((OAbstractPaginatedStorage) getStorage()).preallocateRids(transaction);
-      getDistributedShared().getManager().messageAfterOp("allocate", txContext.getReqId());
-    }
-
-    acquireLocksForTx(transaction, txContext, isCoordinator, force);
-
-    firstPhaseDataChecks(isCoordinator, transaction, txContext);
   }
 
   private void firstPhaseDataChecks(

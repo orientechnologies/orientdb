@@ -38,7 +38,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
-    // This now si simple but should be replaced by a factory depending to the protocol version
+    // This now is simple but should be replaced by a factory depending to the protocol version
   }
 
   @Override
