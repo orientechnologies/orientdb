@@ -373,6 +373,22 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   }
 
   @Override
+  public Stream<ORID> getRidsIgnoreTx(Object key) {
+    while (true) {
+      try {
+        @SuppressWarnings("unchecked")
+        Set<OIdentifiable> result = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+        //noinspection resource
+        return result.stream().map(OIdentifiable::getIdentity);
+        // TODO filter these results based on security
+        //          return new HashSet(OIndexInternal.securityFilterOnRead(this, result));
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
+    }
+  }
+
+  @Override
   public Stream<ORID> getRids(Object key) {
     final OTransaction transaction = getDatabase().getTransaction();
     if (transaction.isActive()) {

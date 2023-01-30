@@ -351,4 +351,6 @@ public interface OIndexInternal extends OIndex {
 
   boolean doRemove(OAbstractPaginatedStorage storage, Object key)
       throws OInvalidIndexEngineIdException;
+
+  Stream<ORID> getRidsIgnoreTx(Object key);
 }

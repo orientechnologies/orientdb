@@ -938,7 +938,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               throw new OInvalidSequentialException();
             }
           }
-          try (final Stream<ORID> rids = index.getInternal().getRids(changesPerKey.key)) {
+          try (final Stream<ORID> rids = index.getInternal().getRidsIgnoreTx(changesPerKey.key)) {
             old = rids.findFirst().orElse(null);
           }
           if (!changesPerKey.isEmpty()) {

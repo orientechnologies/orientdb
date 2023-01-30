@@ -88,7 +88,7 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   }
 
   @Override
-  public Stream<ORID> getRids(Object key) {
+  public Stream<ORID> getRidsIgnoreTx(Object key) {
     key = getCollatingValue(key);
 
     acquireSharedLock();
@@ -118,6 +118,15 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     } finally {
       releaseSharedLock();
     }
+    return stream;
+  }
+
+  @Override
+  public Stream<ORID> getRids(Object key) {
+    key = getCollatingValue(key);
+
+    Stream<ORID> stream = getRidsIgnoreTx(key);
+
     ODatabaseDocumentInternal database = getDatabase();
     final OTransactionIndexChanges indexChanges =
         database.getTransaction().getIndexChangesInternal(getName());

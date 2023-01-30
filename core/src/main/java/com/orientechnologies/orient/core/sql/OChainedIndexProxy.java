@@ -300,6 +300,17 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
   }
 
   @Override
+  public Stream<ORID> getRidsIgnoreTx(Object key) {
+    final List<ORID> lastIndexResult;
+    try (Stream<ORID> stream = lastIndex.getInternal().getRids(key)) {
+      lastIndexResult = stream.collect(Collectors.toList());
+    }
+
+    final Set<OIdentifiable> result = new HashSet<>(applyTailIndexes(lastIndexResult));
+    return result.stream().map(OIdentifiable::getIdentity);
+  }
+
+  @Override
   public Stream<ORID> getRids(Object key) {
     final List<ORID> lastIndexResult;
     try (Stream<ORID> stream = lastIndex.getInternal().getRids(key)) {
@@ -307,8 +318,6 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
     }
 
     final Set<OIdentifiable> result = new HashSet<>(applyTailIndexes(lastIndexResult));
-
-    //noinspection resource
     return result.stream().map(OIdentifiable::getIdentity);
   }
 

@@ -94,7 +94,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   }
 
   @Override
-  public Stream<ORID> getRids(Object key) {
+  public Stream<ORID> getRidsIgnoreTx(Object key) {
     final Object collatedKey = getCollatingValue(key);
     Stream<ORID> backedStream;
     acquireSharedLock();
@@ -128,6 +128,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     } finally {
       releaseSharedLock();
     }
+    return backedStream;
+  }
+
+  @Override
+  public Stream<ORID> getRids(Object key) {
+    final Object collatedKey = getCollatingValue(key);
+    Stream<ORID> backedStream = getRidsIgnoreTx(key);
     ODatabaseDocumentInternal database = getDatabase();
     final OTransactionIndexChanges indexChanges =
         database.getTransaction().getIndexChangesInternal(getName());
