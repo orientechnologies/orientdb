@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,9 +45,7 @@ public class LuceneInsertUpdateSingleDocumentTransactionTest extends BaseLuceneT
 
     OClass oClass = schema.createClass("City");
     oClass.createProperty("name", OType.STRING);
-    //noinspection deprecation
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE").close();
   }
 
   @Test

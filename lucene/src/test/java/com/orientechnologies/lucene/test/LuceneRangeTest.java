@@ -8,9 +8,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 import org.apache.lucene.document.DateTools;
@@ -55,9 +54,7 @@ public class LuceneRangeTest extends BaseLuceneTest {
 
   @Test
   public void shouldUseRangeQueryOnSingleIntegerField() {
-    //noinspection deprecation
-    db.command(new OCommandSQL("create index Person.age on Person(age) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Person.age on Person(age) FULLTEXT ENGINE LUCENE").close();
 
     assertThat(
             db.getMetadata()
@@ -68,15 +65,12 @@ public class LuceneRangeTest extends BaseLuceneTest {
         .isEqualTo(10);
 
     // range
-    @SuppressWarnings("deprecation")
-    Collection<ODocument> results =
-        db.command(new OCommandSQL("SELECT FROM Person WHERE age LUCENE 'age:[5 TO 6]'")).execute();
+    OResultSet results = db.command("SELECT FROM Person WHERE age LUCENE 'age:[5 TO 6]'");
 
     assertThat(results).hasSize(2);
 
     // single value
-    //noinspection deprecation
-    results = db.command(new OCommandSQL("SELECT FROM Person WHERE age LUCENE 'age:5'")).execute();
+    results = db.command("SELECT FROM Person WHERE age LUCENE 'age:5'");
 
     assertThat(results).hasSize(1);
   }
@@ -85,9 +79,7 @@ public class LuceneRangeTest extends BaseLuceneTest {
   public void shouldUseRangeQueryOnSingleDateField() {
 
     db.commit();
-    //noinspection deprecation
-    db.command(new OCommandSQL("create index Person.date on Person(date) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Person.date on Person(date) FULLTEXT ENGINE LUCENE").close();
     db.commit();
 
     assertThat(
@@ -104,27 +96,18 @@ public class LuceneRangeTest extends BaseLuceneTest {
             System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
     // range
-    @SuppressWarnings("deprecation")
-    Collection<ODocument> results =
+    OResultSet results =
         db.command(
-                new OCommandSQL(
-                    "SELECT FROM Person WHERE date LUCENE 'date:["
-                        + fiveDaysAgo
-                        + " TO "
-                        + today
-                        + "]'"))
-            .execute();
+            "SELECT FROM Person WHERE date LUCENE 'date:[" + fiveDaysAgo + " TO " + today + "]'");
 
     assertThat(results).hasSize(5);
   }
 
   @Test
   public void shouldUseRangeQueryMultipleField() {
-    //noinspection deprecation
     db.command(
-            new OCommandSQL(
-                "create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE"))
-        .execute();
+            "create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")
+        .close();
 
     assertThat(
             db.getMetadata()
@@ -142,51 +125,40 @@ public class LuceneRangeTest extends BaseLuceneTest {
             System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
     // name and age range
-    @SuppressWarnings("deprecation")
-    Collection<ODocument> results =
-        db.command(
-                new OCommandSQL(
-                    "SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'age:[5 TO 6] name:robert  '"))
-            .execute();
+    OResultSet results =
+        db.query(
+            "SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'age:[5 TO 6] name:robert  '");
 
     assertThat(results).hasSize(3);
 
     // date range
-    //noinspection deprecation
     results =
-        db.command(
-                new OCommandSQL(
-                    "SELECT FROM Person WHERE [name,surname,date,age] LUCENE 'date:["
-                        + fiveDaysAgo
-                        + " TO "
-                        + today
-                        + "]'"))
-            .execute();
+        db.query(
+            "SELECT FROM Person WHERE [name,surname,date,age] LUCENE 'date:["
+                + fiveDaysAgo
+                + " TO "
+                + today
+                + "]'");
 
     assertThat(results).hasSize(5);
 
     // age and date range with MUST
-    //noinspection deprecation
     results =
-        db.command(
-                new OCommandSQL(
-                    "SELECT FROM Person WHERE [name,surname,date,age] LUCENE '+age:[4 TO 7]  +date:["
-                        + fiveDaysAgo
-                        + " TO "
-                        + today
-                        + "]'"))
-            .execute();
+        db.query(
+            "SELECT FROM Person WHERE [name,surname,date,age] LUCENE '+age:[4 TO 7]  +date:["
+                + fiveDaysAgo
+                + " TO "
+                + today
+                + "]'");
 
     assertThat(results).hasSize(2);
   }
 
   @Test
   public void shouldUseRangeQueryMultipleFieldWithDirectIndexAccess() {
-    //noinspection deprecation
     db.command(
-            new OCommandSQL(
-                "create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE"))
-        .execute();
+            "create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")
+        .close();
 
     assertThat(
             db.getMetadata()
@@ -227,9 +199,7 @@ public class LuceneRangeTest extends BaseLuceneTest {
 
   @Test
   public void shouldFetchOnlyFromACluster() {
-    //noinspection deprecation
-    db.command(new OCommandSQL("create index Person.name on Person(name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Person.name on Person(name) FULLTEXT ENGINE LUCENE").close();
 
     assertThat(
             db.getMetadata()
@@ -242,11 +212,8 @@ public class LuceneRangeTest extends BaseLuceneTest {
     int cluster = db.getMetadata().getSchema().getClass("Person").getClusterIds()[1];
     db.commit();
 
-    @SuppressWarnings("deprecation")
-    Collection<ODocument> results =
-        db.command(
-                new OCommandSQL("SELECT FROM Person WHERE name LUCENE '+_CLUSTER:" + cluster + "'"))
-            .execute();
+    OResultSet results =
+        db.command("SELECT FROM Person WHERE name LUCENE '+_CLUSTER:" + cluster + "'");
 
     assertThat(results).hasSize(2);
   }

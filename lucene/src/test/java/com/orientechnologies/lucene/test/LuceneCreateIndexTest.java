@@ -18,13 +18,10 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
-import java.util.List;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,20 +33,18 @@ public class LuceneCreateIndexTest extends BaseLuceneTest {
   public void loadAndTest() {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    db.execute("sql", getScriptFromStream(stream)).close();
 
     db.command(
-            new OCommandSQL(
-                "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
-                    + StandardAnalyzer.class.getName()
-                    + "\"}"))
-        .execute();
+            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
+                + StandardAnalyzer.class.getName()
+                + "\"}")
+        .close();
     db.command(
-            new OCommandSQL(
-                "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
-                    + StandardAnalyzer.class.getName()
-                    + "\"}"))
-        .execute();
+            "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
+                + StandardAnalyzer.class.getName()
+                + "\"}")
+        .close();
 
     ODocument doc = new ODocument("Song");
 
@@ -79,39 +74,32 @@ public class LuceneCreateIndexTest extends BaseLuceneTest {
   }
 
   protected void assertQuery() {
-    List<ODocument> docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>("select * from Song where title LUCENE \"mountain\""));
+    OResultSet docs = db.query("select * from Song where title LUCENE \"mountain\"");
 
-    Assert.assertEquals(4, docs.size());
+    Assert.assertEquals(4, docs.stream().count());
 
-    docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>("select * from Song where author LUCENE \"Fabbio\""));
+    docs = db.query("select * from Song where author LUCENE \"Fabbio\"");
 
-    Assert.assertEquals(87, docs.size());
+    Assert.assertEquals(87, docs.stream().count());
 
     System.out.println("-------------");
     String query =
         "select * from Song where title LUCENE \"mountain\" and author LUCENE \"Fabbio\"  ";
     // String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and author =
     // 'Fabbio'";
-    docs = db.query(new OSQLSynchQuery<ODocument>(query));
-    Assert.assertEquals(1, docs.size());
+    docs = db.query(query);
+    Assert.assertEquals(1, docs.stream().count());
 
     query = "select * from Song where title LUCENE \"mountain\"  and author = 'Fabbio'";
-    docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    docs = db.query(query);
 
-    Assert.assertEquals(1, docs.size());
+    Assert.assertEquals(1, docs.stream().count());
   }
 
   protected void assertNewQuery() {
 
-    List<ODocument> docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title] LUCENE \"(title:Local)\""));
+    OResultSet docs = db.query("select * from Song where [title] LUCENE \"(title:Local)\"");
 
-    Assert.assertEquals(1, docs.size());
+    Assert.assertEquals(1, docs.stream().count());
   }
 }

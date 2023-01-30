@@ -21,8 +21,7 @@ package com.orientechnologies.lucene.test;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,8 +36,7 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
     OClass type = db.getMetadata().getSchema().createClass("City");
     type.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE").close();
   }
 
   @Test
@@ -54,10 +52,9 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
 
     db.save(doc);
 
-    List<ODocument> results =
-        db.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
+    OResultSet results = db.query("select from City where name lucene 'London'");
 
-    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.stream().count(), 1);
   }
 
   @Test
@@ -72,9 +69,8 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
 
     db.commit();
 
-    List<ODocument> results =
-        db.command(new OCommandSQL("select from City where name lucene 'Berlin'")).execute();
+    OResultSet results = db.command("select from City where name lucene 'Berlin'");
 
-    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.stream().count(), 1);
   }
 }

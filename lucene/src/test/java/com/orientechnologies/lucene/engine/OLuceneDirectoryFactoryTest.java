@@ -8,8 +8,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.orientechnologies.lucene.test.BaseLuceneTest;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.File;
@@ -40,59 +41,98 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
   @Test
   public void shouldCreateNioFsDirectory() throws Exception {
     meta.field(DIRECTORY_TYPE, DIRECTORY_NIO);
-    ODatabaseDocumentTx db =
-        dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
-    Directory directory = fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
-    assertThat(directory).isInstanceOf(NIOFSDirectory.class);
-    assertThat(
-            new File("./target/testDatabase/" + name.getMethodName() + "/luceneIndexes/index.name"))
-        .exists();
-    db.drop();
+    try (OrientDB ctx =
+        new OrientDB("embedded:./target/testDatabase/", OrientDBConfig.defaultConfig())) {
+      ctx.execute(
+          "create database "
+              + name.getMethodName()
+              + " plocal users (admin identified by 'adminpwd' role admin)");
+      ODatabaseDocumentInternal db =
+          (ODatabaseDocumentInternal) ctx.open(name.getMethodName(), "admin", "adminpwd");
+      Directory directory = fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
+      assertThat(directory).isInstanceOf(NIOFSDirectory.class);
+      assertThat(
+              new File(
+                  "./target/testDatabase/" + name.getMethodName() + "/luceneIndexes/index.name"))
+          .exists();
+      ctx.drop(name.getMethodName());
+    }
   }
 
   @Test
   public void shouldCreateMMapFsDirectory() throws Exception {
     meta.field(DIRECTORY_TYPE, DIRECTORY_MMAP);
-    ODatabaseDocumentTx db =
-        dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
-    Directory directory = fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
-    assertThat(directory).isInstanceOf(MMapDirectory.class);
-    assertThat(
-            new File("./target/testDatabase/" + name.getMethodName() + "/luceneIndexes/index.name"))
-        .exists();
-    db.drop();
+    try (OrientDB ctx =
+        new OrientDB("embedded:./target/testDatabase/", OrientDBConfig.defaultConfig())) {
+      ctx.execute(
+          "create database "
+              + name.getMethodName()
+              + " plocal users (admin identified by 'adminpwd' role admin)");
+      ODatabaseDocumentInternal db =
+          (ODatabaseDocumentInternal) ctx.open(name.getMethodName(), "admin", "adminpwd");
+      Directory directory = fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
+      assertThat(directory).isInstanceOf(MMapDirectory.class);
+      assertThat(
+              new File(
+                  "./target/testDatabase/" + name.getMethodName() + "/luceneIndexes/index.name"))
+          .exists();
+      ctx.drop(name.getMethodName());
+    }
   }
 
   @Test
   public void shouldCreateRamDirectory() throws Exception {
     meta.field(DIRECTORY_TYPE, DIRECTORY_RAM);
-    ODatabaseDocumentTx db =
-        dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
-    Directory directory = fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
-    assertThat(directory).isInstanceOf(RAMDirectory.class);
-    db.drop();
+    try (OrientDB ctx =
+        new OrientDB("embedded:./target/testDatabase/", OrientDBConfig.defaultConfig())) {
+      ctx.execute(
+          "create database "
+              + name.getMethodName()
+              + " plocal users (admin identified by 'adminpwd' role admin)");
+      ODatabaseDocumentInternal db =
+          (ODatabaseDocumentInternal) ctx.open(name.getMethodName(), "admin", "adminpwd");
+      Directory directory = fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
+      assertThat(directory).isInstanceOf(RAMDirectory.class);
+      ctx.drop(name.getMethodName());
+    }
   }
 
   @Test
   public void shouldCreateRamDirectoryOnMemoryDatabase() {
     meta.field(DIRECTORY_TYPE, DIRECTORY_RAM);
-    final ODatabaseDocumentTx db =
-        dropOrCreate(ODatabaseType.MEMORY.name().toLowerCase() + ":" + name.getMethodName(), true);
-    final Directory directory =
-        fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
-    // 'ODatabaseType.MEMORY' and 'DIRECTORY_RAM' determines the RAMDirectory.
-    assertThat(directory).isInstanceOf(RAMDirectory.class);
+    try (OrientDB ctx =
+        new OrientDB("embedded:./target/testDatabase/", OrientDBConfig.defaultConfig())) {
+      ctx.execute(
+          "create database "
+              + name.getMethodName()
+              + " memory users (admin identified by 'adminpwd' role admin)");
+      ODatabaseDocumentInternal db =
+          (ODatabaseDocumentInternal) ctx.open(name.getMethodName(), "admin", "adminpwd");
+      final Directory directory =
+          fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
+      // 'ODatabaseType.MEMORY' and 'DIRECTORY_RAM' determines the RAMDirectory.
+      assertThat(directory).isInstanceOf(RAMDirectory.class);
+      ctx.drop(name.getMethodName());
+    }
   }
 
   @Test
   public void shouldCreateRamDirectoryOnMemoryFromMmapDatabase() {
     meta.field(DIRECTORY_TYPE, DIRECTORY_MMAP);
-    final ODatabaseDocumentTx db =
-        dropOrCreate(ODatabaseType.MEMORY.name().toLowerCase() + ":" + name.getMethodName(), true);
-    final Directory directory =
-        fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
-    // 'ODatabaseType.MEMORY' plus 'DIRECTORY_MMAP' leads to the same result as just
-    // 'DIRECTORY_RAM'.
-    assertThat(directory).isInstanceOf(RAMDirectory.class);
+    try (OrientDB ctx =
+        new OrientDB("embedded:./target/testDatabase/", OrientDBConfig.defaultConfig())) {
+      ctx.execute(
+          "create database "
+              + name.getMethodName()
+              + " memory users (admin identified by 'adminpwd' role admin)");
+      ODatabaseDocumentInternal db =
+          (ODatabaseDocumentInternal) ctx.open(name.getMethodName(), "admin", "adminpwd");
+      final Directory directory =
+          fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
+      // 'ODatabaseType.MEMORY' plus 'DIRECTORY_MMAP' leads to the same result as just
+      // 'DIRECTORY_RAM'.
+      assertThat(directory).isInstanceOf(RAMDirectory.class);
+      ctx.drop(name.getMethodName());
+    }
   }
 }

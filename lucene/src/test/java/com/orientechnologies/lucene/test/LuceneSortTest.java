@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,9 +30,8 @@ public class LuceneSortTest extends BaseLuceneTest {
     db.save(new ODocument("Person").field("description", DESCRIPTION));
 
     db.command(
-            new OCommandSQL(
-                "create index Person.description on Person(description) FULLTEXT ENGINE LUCENE METADATA { \"*_index_sorted\" : false }"))
-        .execute();
+            "create index Person.description on Person(description) FULLTEXT ENGINE LUCENE METADATA { \"*_index_sorted\" : false }")
+        .close();
 
     long count =
         db.query("SELECT FROM Person WHERE SEARCH_CLASS(\"verylong\")  = true").stream().count();
@@ -47,9 +45,8 @@ public class LuceneSortTest extends BaseLuceneTest {
     db.save(new ODocument("Person").field("description", DESCRIPTION));
 
     db.command(
-            new OCommandSQL(
-                "create index Person.description on Person(description) FULLTEXT ENGINE LUCENE METADATA { \"description_index_sorted\" : false }"))
-        .execute();
+            "create index Person.description on Person(description) FULLTEXT ENGINE LUCENE METADATA { \"description_index_sorted\" : false }")
+        .close();
 
     long count =
         db.query("SELECT FROM Person WHERE SEARCH_CLASS(\"verylong\") = true ").stream().count();

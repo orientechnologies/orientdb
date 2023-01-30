@@ -51,7 +51,7 @@ public class LuceneBackupRestoreTest {
 
   private OrientDB orientDB;
 
-  private ODatabaseDocumentInternal databaseDocumentTx;
+  private ODatabaseDocumentInternal session;
 
   @Before
   public void setUp() throws Exception {
@@ -72,16 +72,16 @@ public class LuceneBackupRestoreTest {
     final String dbName = getClass().getSimpleName();
 
     orientDB.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", dbName);
-    databaseDocumentTx = (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "admin");
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)", dbName);
+    session = (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "adminpwd");
 
-    databaseDocumentTx.command("create class City ");
-    databaseDocumentTx.command("create property City.name string");
-    databaseDocumentTx.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE");
+    session.command("create class City ");
+    session.command("create property City.name string");
+    session.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE");
 
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
-    databaseDocumentTx.save(doc);
+    session.save(doc);
   }
 
   private void dropIfExists() {
@@ -102,35 +102,31 @@ public class LuceneBackupRestoreTest {
   public void shouldBackupAndRestore() throws IOException {
     File backupFile = new File(tempFolder, "backupRestore.gz");
 
-    try (OResultSet query = databaseDocumentTx.query("select from City where name lucene 'Rome'")) {
+    try (OResultSet query = session.query("select from City where name lucene 'Rome'")) {
       assertThat(query).hasSize(1);
     }
 
-    databaseDocumentTx.backup(new FileOutputStream(backupFile), null, null, null, 9, 1048576);
+    session.backup(new FileOutputStream(backupFile), null, null, null, 9, 1048576);
 
     orientDB.drop(getClass().getSimpleName());
     orientDB.execute(
         "create database ? plocal users(admin identified by 'admin' role admin)",
         getClass().getSimpleName());
-    databaseDocumentTx =
+    session =
         (ODatabaseDocumentInternal) orientDB.open(getClass().getSimpleName(), "admin", "admin");
 
     FileInputStream stream = new FileInputStream(backupFile);
 
-    databaseDocumentTx.restore(stream, null, null, null);
+    session.restore(stream, null, null, null);
 
-    assertThat(databaseDocumentTx.countClass("City")).isEqualTo(1);
+    assertThat(session.countClass("City")).isEqualTo(1);
 
-    OIndex index =
-        databaseDocumentTx
-            .getMetadata()
-            .getIndexManagerInternal()
-            .getIndex(databaseDocumentTx, "City.name");
+    OIndex index = session.getMetadata().getIndexManagerInternal().getIndex(session, "City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
-    try (OResultSet query = databaseDocumentTx.query("select from City where name lucene 'Rome'")) {
+    try (OResultSet query = session.query("select from City where name lucene 'Rome'")) {
       assertThat(query).hasSize(1);
     }
   }

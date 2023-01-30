@@ -1,13 +1,11 @@
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
-import java.util.List;
 import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -18,8 +16,7 @@ public class LuceneIssuesTest extends BaseLuceneTest {
   public void testGh_7382() throws Exception {
 
     try (InputStream stream = ClassLoader.getSystemResourceAsStream("testGh_7382.osql")) {
-      //noinspection deprecation
-      db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+      db.execute("sql", getScriptFromStream(stream)).close();
     }
 
     final OIndex index =
@@ -35,22 +32,14 @@ public class LuceneIssuesTest extends BaseLuceneTest {
   @Test
   public void testGh_4880_moreIndexesOnProperty() throws Exception {
     try (final InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql")) {
-      //noinspection deprecation
-      db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+      db.execute("sql", getScriptFromStream(stream)).close();
     }
 
-    //noinspection deprecation
-    db.command(
-            new OCommandSQL(
-                "create index Song.title_ft on Song (title,author) FULLTEXT ENGINE LUCENE"))
-        .execute();
-    //noinspection deprecation
-    db.command(new OCommandSQL("CREATE INDEX Song.author on Song (author)  NOTUNIQUE")).execute();
+    db.command("create index Song.title_ft on Song (title,author) FULLTEXT ENGINE LUCENE").close();
+    db.command("CREATE INDEX Song.author on Song (author)  NOTUNIQUE").close();
 
-    //noinspection deprecation
-    db.query(new OSQLSynchQuery<>("SELECT from Song where title = 'BELIEVE IT OR NOT' "));
+    db.query("SELECT from Song where title = 'BELIEVE IT OR NOT' ").close();
 
-    @SuppressWarnings("deprecation")
     ODocument query =
         db.command(
                 new OCommandSQL(
@@ -62,8 +51,7 @@ public class LuceneIssuesTest extends BaseLuceneTest {
   public void testGh_issue7513() throws Exception {
 
     try (InputStream stream = ClassLoader.getSystemResourceAsStream("testGh_7513.osql")) {
-      //noinspection deprecation
-      db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+      db.execute("sql", getScriptFromStream(stream)).close();
     }
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Item.content");
@@ -75,27 +63,20 @@ public class LuceneIssuesTest extends BaseLuceneTest {
   @Test
   public void test_ph8929() throws Exception {
     try (InputStream stream = ClassLoader.getSystemResourceAsStream("testPh_8929.osql")) {
-      //noinspection deprecation
-      db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+      db.execute("sql", getScriptFromStream(stream)).close();
     }
 
-    List<ODocument> documents;
+    OResultSet documents;
 
-    //noinspection deprecation
-    documents = db.query(new OSQLSynchQuery<>("select from Test where [a] lucene 'lion'"));
-
-    Assertions.assertThat(documents).hasSize(1);
-
-    //noinspection deprecation
-    documents = db.query(new OSQLSynchQuery<>("select from Test where [b] lucene 'mouse'"));
+    documents = db.query("select from Test where [a] lucene 'lion'");
 
     Assertions.assertThat(documents).hasSize(1);
 
-    //noinspection deprecation
-    documents =
-        db.query(
-            new OSQLSynchQuery<>(
-                "select from Test where [a] lucene 'lion' OR [b] LUCENE 'mouse' "));
+    documents = db.query("select from Test where [b] lucene 'mouse'");
+
+    Assertions.assertThat(documents).hasSize(1);
+
+    documents = db.query("select from Test where [a] lucene 'lion' OR [b] LUCENE 'mouse' ");
 
     Assertions.assertThat(documents).hasSize(2);
   }
@@ -104,26 +85,20 @@ public class LuceneIssuesTest extends BaseLuceneTest {
   public void test_ph8929_Single() throws Exception {
 
     try (InputStream stream = ClassLoader.getSystemResourceAsStream("testPh_8929.osql")) {
-      //noinspection deprecation
-      db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+      db.execute("sql", getScriptFromStream(stream)).close();
     }
 
-    List<ODocument> documents;
+    OResultSet documents;
 
-    //noinspection deprecation
-    documents = db.query(new OSQLSynchQuery<>("select from Test where a lucene 'lion'"));
-
-    Assertions.assertThat(documents).hasSize(1);
-
-    //noinspection deprecation
-    documents = db.query(new OSQLSynchQuery<>("select from Test where b lucene 'mouse'"));
+    documents = db.query("select from Test where a lucene 'lion'");
 
     Assertions.assertThat(documents).hasSize(1);
 
-    //noinspection deprecation
-    documents =
-        db.query(
-            new OSQLSynchQuery<>("select from Test where a lucene 'lion' OR b LUCENE 'mouse' "));
+    documents = db.query("select from Test where b lucene 'mouse'");
+
+    Assertions.assertThat(documents).hasSize(1);
+
+    documents = db.query("select from Test where a lucene 'lion' OR b LUCENE 'mouse' ");
 
     Assertions.assertThat(documents).hasSize(2);
   }
