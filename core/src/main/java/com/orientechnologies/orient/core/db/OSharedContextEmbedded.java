@@ -88,6 +88,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     try {
       if (!loaded) {
         schema.load(database);
+        schema.forceSnapshot(database);
         indexManager.load(database);
         // The Immutable snapshot should be after index and schema that require and before
         // everything else that use it
