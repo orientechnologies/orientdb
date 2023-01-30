@@ -44,7 +44,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
   // OSecurityComponent
   // Called once the Server is running.
   public void active() {
-    OLogManager.instance().info(this, "ODefaultPasswordAuthenticator is active");
+    OLogManager.instance().debug(this, "ODefaultPasswordAuthenticator is active");
   }
 
   // OSecurityComponent

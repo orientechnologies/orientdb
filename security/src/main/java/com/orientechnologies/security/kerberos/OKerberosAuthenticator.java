@@ -83,11 +83,8 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
         clientPeriod * 1000 * 60,
         clientPeriod * 1000 * 60); // Wait 30 seconds before starting
 
-    OLogManager.instance().info(this, "OrientDB Kerberos Version: " + kerberosPluginVersion);
-
-    OLogManager.instance().info(this, "***********************************************");
-    OLogManager.instance().info(this, "** OrientDB Kerberos Authenticator Is Active **");
-    OLogManager.instance().info(this, "***********************************************");
+    OLogManager.instance()
+        .debug(this, "OrientDB Kerberos Authenticator Is Active Version: " + kerberosPluginVersion);
   }
 
   // OSecurityAuthenticator

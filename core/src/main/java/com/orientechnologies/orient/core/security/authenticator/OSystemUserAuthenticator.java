@@ -36,7 +36,7 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
   // OSecurityComponent
   // Called once the Server is running.
   public void active() {
-    OLogManager.instance().info(this, "OSystemUserAuthenticator is active");
+    OLogManager.instance().debug(this, "OSystemUserAuthenticator is active");
   }
 
   // OSecurityComponent
