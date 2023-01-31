@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.db.viewmanager;
 
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -51,10 +50,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -90,7 +85,6 @@ public class ViewManager {
   private final Set<String> refreshing = Collections.synchronizedSet(new HashSet<>());
 
   private volatile TimerTask timerTask;
-  private volatile Future<?> lastTask;
   private volatile boolean closed = false;
 
   public ViewManager(OrientDBInternal orientDb, String dbName) {
@@ -153,13 +147,12 @@ public class ViewManager {
           @Override
           public void run() {
             if (closed) return;
-            lastTask =
-                orientDB.executeNoAuthorization(
-                    dbName,
-                    (db) -> {
-                      ViewManager.this.updateViews((ODatabaseDocumentInternal) db);
-                      return null;
-                    });
+            orientDB.executeNoAuthorization(
+                dbName,
+                (db) -> {
+                  ViewManager.this.updateViews((ODatabaseDocumentInternal) db);
+                  return null;
+                });
           }
         };
     this.orientDB.schedule(timerTask, 1000, 1000);
@@ -186,25 +179,6 @@ public class ViewManager {
     if (timerTask != null) {
       timerTask.cancel();
     }
-    if (lastTask != null) {
-      try {
-        // Try to cancel last task before it runs, otherwise wait for completion
-        if (!lastTask.cancel(false)) {
-          lastTask.get(20, TimeUnit.SECONDS);
-        }
-      } catch (TimeoutException e) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Timeout waiting for last task to complete view update background operations");
-      } catch (InterruptedException e) {
-        throw OException.wrapException(
-            new OInterruptedException("Terminated while waiting update view to finis"), e);
-      } catch (ExecutionException e) {
-        // Will already have been logged by thread pool executor
-      }
-    }
-
     closed = true;
   }
 
