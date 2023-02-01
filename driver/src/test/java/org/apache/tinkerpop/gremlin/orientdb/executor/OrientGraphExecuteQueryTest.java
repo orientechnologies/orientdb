@@ -34,6 +34,19 @@ import org.junit.Test;
 public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
 
   @Test
+  public void testFailingQueryGremlinSimple() {
+
+    OrientGraph noTx = factory.getNoTx();
+
+    noTx.addVertex(T.label, "Person", "name", "John");
+
+    OGremlinResultSet gremlin =
+        noTx.execute("gremlin", "g.V().hasLabel('Person','vl3').count()", null);
+
+    Assert.assertEquals(1, gremlin.stream().count());
+  }
+
+  @Test
   public void testExecuteGremlinSimpleQueryTest() {
 
     OrientGraph noTx = factory.getNoTx();

@@ -52,8 +52,9 @@ public class OrientClassCountStep<S> extends AbstractStep<S, Long> {
     ODatabaseDocument database = getDatabase();
     OSchema schema = database.getMetadata().getSchema();
     OClass schemaClass = schema.getClass(klass);
-
-    if (vertexStep) {
+    if (schemaClass == null) {
+      return false;
+    } else if (vertexStep) {
       return schemaClass.isSubClassOf("V");
     } else {
       return schemaClass.isSubClassOf("E");
