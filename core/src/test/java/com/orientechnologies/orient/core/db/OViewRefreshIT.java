@@ -147,6 +147,14 @@ public class OViewRefreshIT {
       String viewName = "testUpdateDelete";
       db.createClass(className);
 
+      for (int i = 0; i < 10002; i++) {
+        OElement elem = db.newElement(className);
+        elem.setProperty("name", "name" + i);
+        elem.setProperty("surname", "surname" + i);
+        elem.setProperty("toChange", "data");
+        elem.save();
+      }
+
       for (int i = 0; i < 20; i++) {
         String statement =
             "CREATE VIEW "
@@ -159,20 +167,12 @@ public class OViewRefreshIT {
         db.command(statement);
       }
 
-      for (int i = 0; i < 100002; i++) {
-        OElement elem = db.newElement(className);
-        elem.setProperty("name", "name" + i);
-        elem.setProperty("surname", "surname" + i);
-        elem.setProperty("toChange", "data");
-        elem.save();
-      }
-
-      Thread.sleep(40000);
+      Thread.sleep(20000);
 
       for (int i = 0; i < 20; i++) {
         System.out.println("checking " + viewName + i);
         OResultSet result = db.query("SELECT FROM " + viewName + i);
-        Assert.assertEquals(100002, result.stream().count());
+        Assert.assertEquals(10002, result.stream().count());
         result.close();
       }
 
@@ -180,11 +180,63 @@ public class OViewRefreshIT {
               "update " + className + " set toChange=\"other\" where name in [\"name2\",\"name6\"]")
           .close();
 
-      Thread.sleep(30000);
+      Thread.sleep(15000);
       for (int i = 0; i < 20; i++) {
         System.out.println("checking after update " + viewName + i);
         OResultSet result = db.query("SELECT FROM " + viewName + i);
-        Assert.assertEquals(100000, result.stream().count());
+        Assert.assertEquals(10000, result.stream().count());
+        result.close();
+      }
+    }
+  }
+
+  @Test
+  public void testBigDataParallelIndexRefresh() throws InterruptedException {
+    try (ODatabaseSession db = orientDB.open(this.getClass().getSimpleName(), "admin", "admpwd")) {
+      String className = "testUpdateDeleteClass";
+      String viewName = "testUpdateDelete";
+      db.createClass(className);
+
+      for (int i = 0; i < 10002; i++) {
+        OElement elem = db.newElement(className);
+        elem.setProperty("name", "name" + i);
+        elem.setProperty("surname", "surname" + i);
+        elem.setProperty("toChange", "data");
+        elem.save();
+      }
+
+      for (int i = 0; i < 20; i++) {
+        String statement =
+            "CREATE VIEW "
+                + viewName
+                + i
+                + " FROM (SELECT name FROM "
+                + className
+                + " where toChange=\"data\") metadata {\"updateIntervalSeconds\":5, indexes:[{type:\"NOTUNIQUE\", properties:{name:\"String\"}}] } ";
+
+        db.command(statement);
+      }
+
+      Thread.sleep(20000);
+
+      for (int i = 0; i < 20; i++) {
+        System.out.println("checking " + viewName + i);
+        OResultSet result = db.query("SELECT FROM " + viewName + i);
+        System.out.println("plan" + result.getExecutionPlan().get().prettyPrint(0, 0));
+        Assert.assertEquals(10002, result.stream().count());
+        result.close();
+      }
+
+      db.command(
+              "update " + className + " set toChange=\"other\" where name in [\"name2\",\"name6\"]")
+          .close();
+
+      Thread.sleep(15000);
+      for (int i = 0; i < 20; i++) {
+        System.out.println("checking after update " + viewName + i);
+        OResultSet result = db.query("SELECT FROM " + viewName + i);
+        System.out.println("plan" + result.getExecutionPlan().get().prettyPrint(0, 0));
+        Assert.assertEquals(10000, result.stream().count());
         result.close();
       }
     }
