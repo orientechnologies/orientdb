@@ -1653,6 +1653,25 @@ public abstract class OClassImpl implements OClass {
       removePolymorphicClusterId(clusterId);
   }
 
+  protected void onlyRemovePolymorphicClusterId(final int clusterId) {
+    final int index = Arrays.binarySearch(polymorphicClusterIds, clusterId);
+    if (index < 0) return;
+
+    if (index < polymorphicClusterIds.length - 1)
+      System.arraycopy(
+          polymorphicClusterIds,
+          index + 1,
+          polymorphicClusterIds,
+          index,
+          polymorphicClusterIds.length - (index + 1));
+
+    polymorphicClusterIds = Arrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length - 1);
+
+    for (OClassImpl superClass : superClasses) {
+      superClass.onlyRemovePolymorphicClusterId(clusterId);
+    }
+  }
+
   protected void removePolymorphicClusterId(final int clusterId) {
     final int index = Arrays.binarySearch(polymorphicClusterIds, clusterId);
     if (index < 0) return;

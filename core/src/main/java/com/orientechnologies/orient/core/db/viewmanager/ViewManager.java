@@ -76,7 +76,6 @@ public class ViewManager {
    */
   private final ConcurrentMap<String, AtomicInteger> viewIndexVisitors = new ConcurrentHashMap<>();
 
-  private final ConcurrentMap<String, String> oldIndexesPerViews = new ConcurrentHashMap<>();
   private final List<String> indexesToDrop = Collections.synchronizedList(new ArrayList<>());
 
   private final ConcurrentMap<String, Long> lastUpdateTimestampForView = new ConcurrentHashMap<>();
@@ -226,7 +225,6 @@ public class ViewManager {
     for (String index : indexes) {
       db.getMetadata().getIndexManagerInternal().dropIndex(db, index);
       viewIndexVisitors.remove(index);
-      oldIndexesPerViews.remove(index);
     }
   }
 
@@ -390,7 +388,6 @@ public class ViewManager {
               db.getClusterNameById(cluster));
       for (int i : oldMetadata.getClusters()) {
         clustersToDrop.add(i);
-        viewCluserVisitors.put(i, new AtomicInteger(0));
         oldClustersPerViews.put(i, view.getName());
       }
 
@@ -399,8 +396,6 @@ public class ViewManager {
           .forEach(
               idx -> {
                 indexesToDrop.add(idx);
-                viewIndexVisitors.put(idx, new AtomicInteger(0));
-                oldIndexesPerViews.put(idx, viewName);
               });
       cleanUnusedViewIndexes(db);
       cleanUnusedViewClusters(db);
@@ -482,7 +477,7 @@ public class ViewManager {
     String viewName = view.getName();
     while (true) {
       String clusterName = "v_" + i++ + "_" + viewName.toLowerCase(Locale.ENGLISH);
-      if (!db.getClusterNames().contains(clusterName)) {
+      if (!db.existsCluster(clusterName)) {
         return clusterName;
       }
     }

@@ -850,7 +850,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class,
       1),
-
+  @Deprecated
   INDEX_DURABLE_IN_NON_TX_MODE(
       "index.durableInNonTxMode",
       "Indicates whether index implementation for plocal storage will be durable in non-Tx mode (true by default)",

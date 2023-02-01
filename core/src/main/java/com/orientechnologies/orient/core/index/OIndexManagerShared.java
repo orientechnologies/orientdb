@@ -57,7 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -126,42 +125,16 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   public void save() {
 
     OScenarioThreadLocal.executeAsDistributed(
-        new Callable<Object>() {
-          @Override
-          public Object call() {
-            acquireExclusiveLock();
+        () -> {
+          acquireExclusiveLock();
 
-            try {
-              boolean saved = false;
-              for (int retry = 0; retry < 10; retry++)
-                try {
+          try {
+            internalSave();
 
-                  toStream();
-                  document.save();
-                  saved = true;
-                  break;
+            return null;
 
-                } catch (OConcurrentModificationException e) {
-                  OLogManager.instance()
-                      .debug(
-                          this,
-                          "concurrent modification while saving index manager configuration",
-                          e);
-                  document.reload(null, true);
-                }
-
-              if (!saved)
-                OLogManager.instance()
-                    .error(
-                        this,
-                        "failed to save the index manager configuration after 10 retries",
-                        null);
-
-              return null;
-
-            } finally {
-              releaseExclusiveLock();
-            }
+          } finally {
+            releaseExclusiveLock();
           }
         });
   }
@@ -456,8 +429,12 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     try {
       if (val == 0 && database != null) {
         if (save) {
-          this.setDirty();
-          this.save();
+          document.setDirty();
+          OScenarioThreadLocal.executeAsDistributed(
+              () -> {
+                internalSave();
+                return null;
+              });
         }
       }
     } finally {
@@ -684,9 +661,6 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       // manual indexes are always durable
       if (clusterIdsToIndex == null || clusterIdsToIndex.length == 0) {
         if (metadata == null) metadata = new ODocument().setTrackingChanges(false);
-
-        final Object durable = metadata.field("durableInNonTxMode");
-        if (!(durable instanceof Boolean)) metadata.field("durableInNonTxMode", true);
         if (metadata.field("trackMode") == null) metadata.field("trackMode", "FULL");
       }
 
@@ -723,9 +697,8 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
     } finally {
       releaseExclusiveLock(true);
+      notifyInvolvedClasses(database, clusterIdsToIndex);
     }
-
-    notifyInvolvedClasses(database, clusterIdsToIndex);
 
     return index;
   }
@@ -861,11 +834,10 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
         idx.delete();
         indexes.remove(iIndexName);
-
-        notifyInvolvedClasses(database, clusterIdsToIndex);
       }
     } finally {
       releaseExclusiveLock(true);
+      notifyInvolvedClasses(database, clusterIdsToIndex);
     }
   }
 
@@ -1101,5 +1073,26 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
   public ODocument getDocument() {
     return document;
+  }
+
+  private void internalSave() {
+    boolean saved = false;
+    for (int retry = 0; retry < 10; retry++)
+      try {
+
+        toStream();
+        document.save();
+        saved = true;
+        break;
+
+      } catch (OConcurrentModificationException e) {
+        OLogManager.instance()
+            .debug(this, "concurrent modification while saving index manager configuration", e);
+        document.reload(null, true);
+      }
+
+    if (!saved)
+      OLogManager.instance()
+          .error(this, "failed to save the index manager configuration after 10 retries", null);
   }
 }

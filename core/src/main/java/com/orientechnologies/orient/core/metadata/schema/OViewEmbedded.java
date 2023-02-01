@@ -237,7 +237,7 @@ public class OViewEmbedded extends OViewImpl {
         }
         clusterIds = newClusterIds;
 
-        removePolymorphicClusterId(clusterToRemove);
+        onlyRemovePolymorphicClusterId(clusterToRemove);
       }
 
       if (defaultClusterId == clusterToRemove) {
@@ -274,13 +274,13 @@ public class OViewEmbedded extends OViewImpl {
   public OViewRemovedMetadata replaceViewClusterAndIndex(final int cluster, List<OIndex> indexes) {
     acquireSchemaWriteLock();
     try {
+      List<String> oldIndexes = getInactiveIndexes();
+      inactivateIndexes();
       int[] oldClusters = getClusterIds();
       addClusterId(cluster);
       for (int i : oldClusters) {
         removeClusterId(i);
       }
-      List<String> oldIndexes = getInactiveIndexes();
-      inactivateIndexes();
       addActiveIndexes(indexes.stream().map(x -> x.getName()).collect(Collectors.toList()));
       return new OViewRemovedMetadata(oldClusters, oldIndexes);
     } finally {
