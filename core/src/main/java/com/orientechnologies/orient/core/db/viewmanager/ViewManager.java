@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -47,7 +48,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.TimerTask;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -199,6 +199,7 @@ public class ViewManager {
       }
     }
     for (Integer cluster : clusters) {
+      System.out.println("dropping cluster " + cluster);
       db.dropCluster(cluster);
       viewCluserVisitors.remove(cluster);
       oldClustersPerViews.remove(cluster);
@@ -338,34 +339,23 @@ public class ViewManager {
 
       OLogManager.instance().info(this, "Starting refresh of view '%s'", view.getName());
       lastUpdateTimestampForView.put(view.getName(), System.currentTimeMillis());
-      int cluster = db.addCluster(getNextClusterNameFor(view, db));
+      String clusterName = createNextClusterNameFor(view, db);
+      int cluster = db.getClusterIdByName(clusterName);
 
       String viewName = view.getName();
       String query = view.getQuery();
       String originRidField = view.getOriginRidField();
-      String clusterName = db.getClusterNameById(cluster);
 
       List<OIndex> indexes = createNewIndexesForView(view, cluster, db);
 
-      OScenarioThreadLocal.executeAsDistributed(
-          new Callable<Object>() {
-            @Override
-            public Object call() {
-              int iterationCount = 0;
-              db.begin();
-              try (OResultSet rs = db.query(query)) {
-                while (rs.hasNext()) {
-                  OResult item = rs.next();
-                  addItemToView(item, db, originRidField, viewName, clusterName, indexes);
-                  if (iterationCount % 100 == 0) {
-                    db.commit();
-                  }
-                }
-              }
-              db.commit();
-              return null;
-            }
-          });
+      try {
+        fillView(db, viewName, query, originRidField, clusterName, indexes);
+      } catch (RuntimeException e) {
+        for (OIndex index : indexes) {
+          db.getMetadata().getIndexManagerInternal().dropIndex(db, index.getName());
+        }
+        db.dropCluster(cluster);
+      }
 
       view = db.getMetadata().getSchema().getView(view.getName());
       if (view == null) {
@@ -382,10 +372,10 @@ public class ViewManager {
               "Replacing for view '%s' clusters '%s' with '%s'",
               view.getName(),
               Arrays.stream(oldMetadata.getClusters())
-                  .mapToObj((i) -> db.getClusterNameById(i))
+                  .mapToObj((i) -> i + " => " + db.getClusterNameById(i))
                   .collect(Collectors.toList())
                   .toString(),
-              db.getClusterNameById(cluster));
+              cluster + " => " + db.getClusterNameById(cluster));
       for (int i : oldMetadata.getClusters()) {
         clustersToDrop.add(i);
         oldClustersPerViews.put(i, view.getName());
@@ -403,6 +393,27 @@ public class ViewManager {
     } finally {
       refreshing.remove(view.getName());
     }
+  }
+
+  private void fillView(
+      ODatabaseDocumentInternal db,
+      String viewName,
+      String query,
+      String originRidField,
+      String clusterName,
+      List<OIndex> indexes) {
+    int iterationCount = 0;
+    db.begin();
+    try (OResultSet rs = db.query(query)) {
+      while (rs.hasNext()) {
+        OResult item = rs.next();
+        addItemToView(item, db, originRidField, viewName, clusterName, indexes);
+        if (iterationCount % 100 == 0) {
+          db.commit();
+        }
+      }
+    }
+    db.commit();
   }
 
   private void addItemToView(
@@ -472,13 +483,19 @@ public class ViewManager {
     return result;
   }
 
-  private String getNextClusterNameFor(OView view, ODatabase db) {
+  private String createNextClusterNameFor(OView view, ODatabase db) {
     int i = 0;
     String viewName = view.getName();
     while (true) {
       String clusterName = "v_" + i++ + "_" + viewName.toLowerCase(Locale.ENGLISH);
+
       if (!db.existsCluster(clusterName)) {
-        return clusterName;
+        try {
+          db.addCluster(clusterName);
+          return clusterName;
+        } catch (OConfigurationException e) {
+          // Ignore and retry
+        }
       }
     }
   }
@@ -515,6 +532,7 @@ public class ViewManager {
             if (listener != null) {
               listener.onError(name, e);
             }
+            OLogManager.instance().warn(this, "Failed to update views", e);
           }
           return null;
         });
