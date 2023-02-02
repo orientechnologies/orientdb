@@ -139,7 +139,7 @@ public class OViewEmbedded extends OViewImpl {
       clusterIds[clusterIds.length - 1] = clusterId;
       Arrays.sort(clusterIds);
 
-      addPolymorphicClusterId(clusterId);
+      onlyAddPolymorphicClusterId(clusterId);
 
       if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID) defaultClusterId = clusterId;
 

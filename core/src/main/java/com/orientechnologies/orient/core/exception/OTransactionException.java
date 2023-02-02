@@ -19,7 +19,9 @@
  */
 package com.orientechnologies.orient.core.exception;
 
-public class OTransactionException extends OCoreException {
+import com.orientechnologies.common.exception.OHighLevelException;
+
+public class OTransactionException extends OCoreException implements OHighLevelException {
 
   private static final long serialVersionUID = 2347493191705052402L;
 

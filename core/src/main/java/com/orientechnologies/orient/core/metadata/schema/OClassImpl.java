@@ -1538,6 +1538,18 @@ public abstract class OClassImpl implements OClass {
     }
   }
 
+  protected void onlyAddPolymorphicClusterId(int clusterId) {
+    if (Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0) return;
+
+    polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
+    polymorphicClusterIds[polymorphicClusterIds.length - 1] = clusterId;
+    Arrays.sort(polymorphicClusterIds);
+
+    for (OClassImpl superClass : superClasses) {
+      superClass.onlyAddPolymorphicClusterId(clusterId);
+    }
+  }
+
   protected abstract OProperty addProperty(
       final String propertyName,
       final OType type,

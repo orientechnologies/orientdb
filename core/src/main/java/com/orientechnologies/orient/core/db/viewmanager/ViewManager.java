@@ -115,7 +115,8 @@ public class ViewManager {
     OView view = db.getMetadata().getSchema().getView(viewName);
     viewsExist = true;
     boolean registered = false;
-    if (view.getUpdateStrategy() != null
+    if (view != null
+        && view.getUpdateStrategy() != null
         && view.getUpdateStrategy().equalsIgnoreCase(OViewConfig.UPDATE_STRATEGY_LIVE)) {
       db.live(view.getQuery(), new ViewUpdateListener(view.getName()));
       registered = true;
@@ -199,7 +200,6 @@ public class ViewManager {
       }
     }
     for (Integer cluster : clusters) {
-      System.out.println("dropping cluster " + cluster);
       db.dropCluster(cluster);
       viewCluserVisitors.remove(cluster);
       oldClustersPerViews.remove(cluster);
@@ -329,23 +329,22 @@ public class ViewManager {
       // backup is running handle rebuild the next run
       return;
     }
+    String viewName = view.getName();
     try {
       synchronized (this) {
-        if (refreshing.contains(view.getName())) {
+        if (refreshing.contains(viewName)) {
           return;
         }
-        refreshing.add(view.getName());
+        refreshing.add(viewName);
       }
 
-      OLogManager.instance().info(this, "Starting refresh of view '%s'", view.getName());
-      lastUpdateTimestampForView.put(view.getName(), System.currentTimeMillis());
+      OLogManager.instance().info(this, "Starting refresh of view '%s'", viewName);
+      lastUpdateTimestampForView.put(viewName, System.currentTimeMillis());
       String clusterName = createNextClusterNameFor(view, db);
       int cluster = db.getClusterIdByName(clusterName);
 
-      String viewName = view.getName();
       String query = view.getQuery();
       String originRidField = view.getOriginRidField();
-
       List<OIndex> indexes = createNewIndexesForView(view, cluster, db);
 
       try {
@@ -355,9 +354,10 @@ public class ViewManager {
           db.getMetadata().getIndexManagerInternal().dropIndex(db, index.getName());
         }
         db.dropCluster(cluster);
+        throw e;
       }
 
-      view = db.getMetadata().getSchema().getView(view.getName());
+      view = db.getMetadata().getSchema().getView(viewName);
       if (view == null) {
         // the view was dropped in the meantime
         clustersToDrop.add(cluster);
@@ -370,7 +370,7 @@ public class ViewManager {
           .warn(
               this,
               "Replacing for view '%s' clusters '%s' with '%s'",
-              view.getName(),
+              viewName,
               Arrays.stream(oldMetadata.getClusters())
                   .mapToObj((i) -> i + " => " + db.getClusterNameById(i))
                   .collect(Collectors.toList())
@@ -378,7 +378,7 @@ public class ViewManager {
               cluster + " => " + db.getClusterNameById(cluster));
       for (int i : oldMetadata.getClusters()) {
         clustersToDrop.add(i);
-        oldClustersPerViews.put(i, view.getName());
+        oldClustersPerViews.put(i, viewName);
       }
 
       oldMetadata
@@ -389,9 +389,9 @@ public class ViewManager {
               });
       cleanUnusedViewIndexes(db);
       cleanUnusedViewClusters(db);
-      OLogManager.instance().info(this, "Finished refresh of view '%s'", view.getName());
+      OLogManager.instance().info(this, "Finished refresh of view '%s'", viewName);
     } finally {
-      refreshing.remove(view.getName());
+      refreshing.remove(viewName);
     }
   }
 
@@ -410,6 +410,7 @@ public class ViewManager {
         addItemToView(item, db, originRidField, viewName, clusterName, indexes);
         if (iterationCount % 100 == 0) {
           db.commit();
+          db.begin();
         }
       }
     }
