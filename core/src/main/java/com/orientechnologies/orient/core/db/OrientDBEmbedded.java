@@ -187,14 +187,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
       final long delay = autoCloseDelay * 60 * 1000;
       initAutoClose(delay);
     }
-    systemDatabase = new OSystemDatabase(this);
-    securitySystem = new ODefaultSecuritySystem();
-    securitySystem.activate(this, this.configurations.getSecurityConfig());
     long timeout =
         this.configurations
             .getConfigurations()
             .getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
     timeoutChecker = new OCommandTimeoutChecker(timeout, this);
+    systemDatabase = new OSystemDatabase(this);
+    securitySystem = new ODefaultSecuritySystem();
+    securitySystem.activate(this, this.configurations.getSecurityConfig());
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
