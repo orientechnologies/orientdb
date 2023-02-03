@@ -45,7 +45,7 @@ public class OSecuritySymmetricKeyAuth extends ODefaultPasswordAuthenticator {
 
   @Override
   public void active() {
-    OLogManager.instance().info(this, "OSecuritySymmetricKeyAuth is active");
+    OLogManager.instance().debug(this, "OSecuritySymmetricKeyAuth is active");
   }
 
   // Derived implementations can override this method to provide new server user implementations.

@@ -39,7 +39,7 @@ public class OSystemSymmetricKeyAuth extends OSystemUserAuthenticator {
   // OSecurityComponent
   // Called once the Server is running.
   public void active() {
-    OLogManager.instance().info(this, "OSystemSymmetricKeyAuth is active");
+    OLogManager.instance().debug(this, "OSystemSymmetricKeyAuth is active");
   }
 
   // OSecurityAuthenticator
