@@ -29,6 +29,30 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.16 - (February, 8 2023)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3216---8-February-2023
+
+# Core
+- removed the need to buffer changes before adding the to the tx
+- make sure to stop scheduling of view refresh before closing the OrientDB instance
+- improved refreshing and cleaning of views
+- minor fix to handle misstyped records in delta serialization
+- minor correction on metadata snapshot logic on release of index manager lock
+- make sure to use transaction aware stream also with legacy index implementations, issue #9914
+- reduced the number of times the storage goes in read only mode, and allow to delete not empty datastructures
+- make sure that on index load the schema snapshot are available, issue #9915
+- changes in index manager and view implementation to avoid cross locking during updates
+- avoid to re-index new cluster when swapping the cluster in views.
+- make sure to initialize the timeout checker before the system db
+
+# Remote
+- made remote index changes go through the transaction instead of the query
+
+# Distributed
+- make sure to have the correct transaction in the context for distributed phases execution
+- managed correctly the check of all value of a unique index during first phase checks
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.15 - (Jennuary, 17 2023)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3215---17-January-2023
 
