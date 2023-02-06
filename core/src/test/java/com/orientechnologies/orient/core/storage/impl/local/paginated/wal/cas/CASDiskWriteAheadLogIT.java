@@ -4270,7 +4270,7 @@ public class CASDiskWriteAheadLogIT {
         if (segmentWasAdded) {
           Assert.assertEquals(
               new OLogSequenceNumber(
-                  records.get(records.size() - 1).getLsn().getSegment() + 2,
+                  records.get(records.size() - 1).getLsn().getSegment() + 4,
                   CASWALPage.RECORDS_OFFSET),
               wal.end());
         } else {
