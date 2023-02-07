@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
@@ -96,6 +97,8 @@ public interface ODistributedDatabase {
   void checkReverseSync(OTransactionSequenceStatus lastState);
 
   ODistributedConfiguration getDistributedConfiguration();
+
+  ODistributedConfiguration getDistributedConfiguration(ODatabaseSession session);
 
   void setDistributedConfiguration(
       final OModifiableDistributedConfiguration distributedConfiguration);

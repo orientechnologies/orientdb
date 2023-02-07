@@ -229,11 +229,11 @@ public class OSharedContextEmbedded extends OSharedContext {
           return null;
         });
   }
-  
+
   public ODocument loadDistributedConfig(ODatabaseSession session) {
     return loadConfig(session, "ditributedConfig");
   }
-  
+
   public void saveDistributedConfig(ODatabaseSession session, String name, ODocument value) {
     this.saveConfig(session, "ditributedConfig", value);
   }

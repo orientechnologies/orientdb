@@ -57,7 +57,7 @@ public class ODistributedTxCoordinatorTest {
     when(responseManager.isQuorumReached()).thenReturn(true);
     when(databaseDocument.beginDistributedTx(any(), any(), eq(tx), eq(true), anyInt()))
         .thenReturn(true);
-    when(distributedDatabase.getAvailableNodesButLocal(anySet()))
+    when(distributedDatabase.getAvailableNodesButLocal(any(), anySet()))
         .thenReturn(new HashSet<>(remoteNodes));
     when(responseManager.getDistributedTxFinalResponse()).thenReturn(Optional.of(new OTxSuccess()));
 

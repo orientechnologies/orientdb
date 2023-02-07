@@ -120,7 +120,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     super(storage);
     this.distributedManager = distributedPlugin;
     this.sharedContext = context;
-    distributedPlugin.registerNewDatabaseIfNeeded(storage.getName(), this, context);
   }
 
   /**
@@ -423,7 +422,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
       ODistributedDatabase localDistributedDatabase = getDistributedShared();
       final ODistributedConfiguration dbCfg =
-          localDistributedDatabase.getDistributedConfiguration();
+          localDistributedDatabase.getDistributedConfiguration(this);
       ODistributedServerManager dManager = getDistributedManager();
       final String localNodeName = dManager.getLocalNodeName();
       checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");

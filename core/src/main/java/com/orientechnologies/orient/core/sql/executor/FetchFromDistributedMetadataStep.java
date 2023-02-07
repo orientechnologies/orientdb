@@ -4,7 +4,6 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
-import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Map;
 import java.util.Optional;
@@ -45,11 +44,11 @@ public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
             served = true;
             OResultInternal result = new OResultInternal();
             doc.setTrackingChanges(false);
-              doc.deserializeFields();
-                 
-              for (String alias : doc.getPropertyNames()) {
-                result.setProperty(alias, doc.getProperty(alias));
-              }
+            doc.deserializeFields();
+
+            for (String alias : doc.getPropertyNames()) {
+              result.setProperty(alias, doc.getProperty(alias));
+            }
             return result;
           }
           throw new IllegalStateException();

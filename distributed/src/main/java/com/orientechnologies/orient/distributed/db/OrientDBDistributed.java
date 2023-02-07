@@ -108,11 +108,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         || plugin == null
         || !plugin.isEnabled()) {
       embedded = new ODatabaseDocumentEmbedded(storage);
+      embedded.init(config, sharedContext);
     } else {
       embedded = new ODatabaseDocumentDistributed(storage, plugin, sharedContext);
+      embedded.init(config, sharedContext);
+      plugin.registerNewDatabaseIfNeeded(storage.getName(), embedded, sharedContext);
     }
-    embedded.init(config, sharedContext);
-    plugin.registerNewDatabaseIfNeeded(storage.getName(), embedded, sharedContext);
     return embedded;
   }
 
@@ -124,11 +125,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         || plugin == null
         || !plugin.isEnabled()) {
       embedded = new ODatabaseDocumentEmbedded(storage);
+      embedded.internalCreate(config, getOrCreateSharedContext(storage));
     } else {
       embedded = new ODatabaseDocumentDistributed(storage, plugin, sharedContext);
+      embedded.internalCreate(config, getOrCreateSharedContext(storage));
+      plugin.registerNewDatabaseIfNeeded(storage.getName(), embedded, sharedContext);
     }
-    embedded.internalCreate(config, getOrCreateSharedContext(storage));
-    plugin.registerNewDatabaseIfNeeded(storage.getName(), embedded, sharedContext);
     return embedded;
   }
 
@@ -139,11 +141,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         || plugin == null
         || !plugin.isEnabled()) {
       embedded = new ODatabaseDocumentEmbeddedPooled(pool, storage);
+      embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
     } else {
       embedded = new ODatabaseDocumentDistributedPooled(pool, storage, plugin, sharedContext);
+      embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
+      plugin.registerNewDatabaseIfNeeded(storage.getName(), embedded, sharedContext);
     }
-    embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
-    plugin.registerNewDatabaseIfNeeded(storage.getName(), embedded, sharedContext);
     return embedded;
   }
 

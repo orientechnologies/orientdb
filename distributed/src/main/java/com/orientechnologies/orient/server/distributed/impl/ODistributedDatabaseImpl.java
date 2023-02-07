@@ -30,6 +30,7 @@ import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -979,6 +980,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return configurationManager.getDistributedConfiguration();
   }
 
+  public ODistributedConfiguration getDistributedConfiguration(ODatabaseSession session) {
+    return configurationManager.getDistributedConfiguration(session);
+  }
+
   public void setDistributedConfiguration(
       final OModifiableDistributedConfiguration distributedConfiguration) {
     configurationManager.setDistributedConfiguration(distributedConfiguration);
@@ -1028,8 +1033,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     this.totalSentRequests.incrementAndGet();
   }
 
-  public Set<String> getAvailableNodesButLocal(Set<String> involvedClusters) {
-    final Set<String> nodes = getDistributedConfiguration().getServers(involvedClusters);
+  public Set<String> getAvailableNodesButLocal(
+      ODatabaseSession database, Set<String> involvedClusters) {
+    final Set<String> nodes = getDistributedConfiguration(database).getServers(involvedClusters);
 
     // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
     nodes.remove(localNodeName);

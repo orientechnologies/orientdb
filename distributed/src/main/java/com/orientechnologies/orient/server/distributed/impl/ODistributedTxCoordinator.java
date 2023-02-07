@@ -172,7 +172,7 @@ public class ODistributedTxCoordinator {
           nodeName, ((OTxKeyLockTimeout) localResult).getKey());
     }
 
-    Set<String> nodes = sharedDb.getAvailableNodesButLocal(clusters);
+    Set<String> nodes = sharedDb.getAvailableNodesButLocal(database, clusters);
     if (nodes.isEmpty()) {
       switch (localResult.getResponseType()) {
         case OTxSuccess.ID:
