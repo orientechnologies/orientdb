@@ -22,11 +22,11 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.version.OVersionPage;
 import java.io.IOException;
 
 /**
@@ -37,6 +37,8 @@ import java.io.IOException;
 public final class OVersionPositionMapV0 extends OVersionPositionMap {
   private long fileId;
   private int numberOfPages;
+  public static final int PAGE_SIZE =
+      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
   public OVersionPositionMapV0(
       final OAbstractPaginatedStorage storage,
@@ -163,7 +165,8 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     numberOfPages =
         (int)
             Math.ceil(
-                (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0) / OVersionPage.PAGE_SIZE);
+                (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0)
+                    / OVersionPositionMapV0.PAGE_SIZE);
     final long foundNumberOfPages = getFilledUpTo(atomicOperation, fileId);
     OLogManager.instance()
         .debug(
@@ -197,7 +200,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }
 
   private int calculatePageIndex(final int startPositionWithOffset) {
-    return (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE);
+    return (int) Math.ceil(startPositionWithOffset / OVersionPositionMapV0.PAGE_SIZE);
   }
 
   int getNumberOfPages() {

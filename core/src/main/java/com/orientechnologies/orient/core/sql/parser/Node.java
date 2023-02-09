@@ -30,8 +30,5 @@ public interface Node {
 
   /** Return the number of children the node has. */
   public int jjtGetNumChildren();
-
-  /** Accept the visitor. * */
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data);
 }
 /* JavaCC - OriginalChecksum=8a51f6ec86184506d7baca4d2245af96 (do not edit this line) */

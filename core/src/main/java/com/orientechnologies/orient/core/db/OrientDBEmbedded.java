@@ -1052,10 +1052,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     pools.remove(pool);
   }
 
-  public interface InstanceFactory<T> {
-    T create(OAbstractPaginatedStorage storage);
-  }
-
   private static void scanDatabaseDirectory(final File directory, DatabaseFound found) {
     try {
       if (directory.exists() && directory.isDirectory()) {

@@ -139,10 +139,5 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
       config.toString(params, builder);
     }
   }
-
-  /** Accept the visitor. */
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
 }
 /* JavaCC - OriginalChecksum=99888a0f8bb929dce0904816cd51fefe (do not edit this line) */
