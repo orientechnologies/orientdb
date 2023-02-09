@@ -151,7 +151,7 @@
         <osgi.dynamicImport />
         <osgi.private />
         <!-- | shared build/report plugins version -->
-        <surefire.version>3.0.0-M7</surefire.version>
+        <surefire.version>3.0.0-M8</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
 
@@ -159,10 +159,10 @@
         <!--Override with the given url on external modules-->
         <!--<license.location>https://github.com/orientechnologies/orientdb/raw/develop/ODB-ASL-LICENSE.txt</license.location>-->
         <heapSize>2048m</heapSize>
-        <javaassist.version>3.28.0-GA</javaassist.version>
+        <javaassist.version>3.29.2-GA</javaassist.version>
         <jaxb.api.version>2.3.0</jaxb.api.version>
         <project.rootdir>${project.basedir}/</project.rootdir>
-        <graalvm.version>20.3.7.1</graalvm.version>
+        <graalvm.version>21.3.5</graalvm.version>
     </properties>
 
     <build>
