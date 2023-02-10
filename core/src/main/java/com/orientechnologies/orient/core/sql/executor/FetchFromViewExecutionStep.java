@@ -48,7 +48,11 @@ public class FetchFromViewExecutionStep extends FetchFromClassExecutionStep {
   }
 
   protected OView loadClassFromSchema(String className, OCommandContext ctx) {
-    OView clazz = ctx.getDatabase().getMetadata().getSchema().getView(className);
+    OView clazz =
+        ((ODatabaseDocumentInternal) ctx.getDatabase())
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getView(className);
     if (clazz == null) {
       throw new OCommandExecutionException("View " + className + " not found");
     }
