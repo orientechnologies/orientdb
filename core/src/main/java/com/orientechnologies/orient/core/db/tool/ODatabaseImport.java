@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.OElement;
@@ -193,6 +194,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   public ODatabaseImport importDatabase() {
+    database.checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_ALL);
     final boolean preValidation = database.isValidationEnabled();
     try {
       listener.onMessage(
@@ -201,8 +203,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
       database.setValidationEnabled(false);
-      // status concept seems deprecated - status `IMPORTING` never checked
-      database.setStatus(STATUS.IMPORTING);
+      database.setUser(null);
 
       if (!merge) {
         removeDefaultNonSecurityClasses();
