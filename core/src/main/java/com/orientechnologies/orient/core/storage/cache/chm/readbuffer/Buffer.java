@@ -15,7 +15,8 @@
  */
 package com.orientechnologies.orient.core.storage.cache.chm.readbuffer;
 
-import java.util.function.Consumer;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.chm.WTinyLFUPolicy;
 
 /**
  * A multiple-producer / single-consumer buffer that rejects new elements if it is full or fails
@@ -27,7 +28,7 @@ import java.util.function.Consumer;
  * @param <E> the type of elements maintained by this buffer
  * @author ben.manes@gmail.com (Ben Manes)
  */
-public interface Buffer<E> {
+public interface Buffer {
   int FULL = 1;
   int SUCCESS = 0;
   int FAILED = -1;
@@ -40,7 +41,7 @@ public interface Buffer<E> {
    * @param e the element to add
    * @return {@code 1} if the buffer is full, {@code -1} if the CAS failed, or {@code 0} if added
    */
-  int offer(E e);
+  int offer(OCacheEntry e);
 
   /**
    * Drains the buffer, sending each element to the consumer for processing. The caller must ensure
@@ -48,7 +49,7 @@ public interface Buffer<E> {
    *
    * @param consumer the action to perform on each element
    */
-  void drainTo(Consumer<E> consumer);
+  void drainTo(WTinyLFUPolicy consumer);
 
   /**
    * Returns the number of elements residing in the buffer.

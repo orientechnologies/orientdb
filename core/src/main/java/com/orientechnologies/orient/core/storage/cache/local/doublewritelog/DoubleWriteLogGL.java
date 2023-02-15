@@ -192,8 +192,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
           final int maxCompressedLength = LZ_4_COMPRESSOR.maxCompressedLength(buffer.limit());
           final OPointer compressedPointer =
-              ODirectMemoryAllocator.instance()
-                  .allocate(maxCompressedLength, false, Intention.DWL_ALLOCATE_COMPRESSED_CHUNK);
+              ALLOCATOR.allocate(
+                  maxCompressedLength, false, Intention.DWL_ALLOCATE_COMPRESSED_CHUNK);
           try {
             final ByteBuffer compressedBuffer = compressedPointer.getNativeByteBuffer();
             LZ_4_COMPRESSOR.compress(buffer, compressedBuffer);

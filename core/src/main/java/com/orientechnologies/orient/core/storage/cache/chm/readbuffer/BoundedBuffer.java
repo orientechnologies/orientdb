@@ -15,9 +15,10 @@
  */
 package com.orientechnologies.orient.core.storage.cache.chm.readbuffer;
 
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.chm.WTinyLFUPolicy;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.function.Consumer;
 
 /**
  * A striped, non-blocking, bounded buffer.
@@ -25,7 +26,7 @@ import java.util.function.Consumer;
  * @param <E> the type of elements maintained by this buffer
  * @author ben.manes@gmail.com (Ben Manes)
  */
-public final class BoundedBuffer<E> extends StripedBuffer<E> {
+public final class BoundedBuffer extends StripedBuffer {
   /*
    * A circular ring buffer stores the elements being transferred by the producers to the consumer.
    * The monotonically increasing count of reads and writes allow indexing sequentially to the next
@@ -54,23 +55,22 @@ public final class BoundedBuffer<E> extends StripedBuffer<E> {
   private static final int OFFSET = 16;
 
   @Override
-  protected Buffer<E> create(final E e) {
-    return new RingBuffer<>(e);
+  protected Buffer create(final OCacheEntry e) {
+    return new RingBuffer(e);
   }
 
-  static final class RingBuffer<E> implements Buffer<E> {
-    private final AtomicReferenceArray<E> buffer;
+  private static final class RingBuffer implements Buffer {
+    private final AtomicReferenceArray<OCacheEntry> buffer;
     private final AtomicLong readCounter = new AtomicLong();
     private final AtomicLong writeCounter = new AtomicLong();
 
-    @SuppressWarnings({"cast"})
-    private RingBuffer(final E e) {
+    private RingBuffer(final OCacheEntry e) {
       buffer = new AtomicReferenceArray<>(SPACED_SIZE);
       buffer.lazySet(0, e);
     }
 
     @Override
-    public int offer(final E e) {
+    public int offer(final OCacheEntry e) {
       final long head = readCounter.get();
       final long tail = writeCounter.get();
       final long size = (tail - head);
@@ -86,7 +86,7 @@ public final class BoundedBuffer<E> extends StripedBuffer<E> {
     }
 
     @Override
-    public void drainTo(final Consumer<E> consumer) {
+    public void drainTo(final WTinyLFUPolicy consumer) {
       long head = readCounter.get();
       final long tail = writeCounter.get();
 
@@ -96,13 +96,13 @@ public final class BoundedBuffer<E> extends StripedBuffer<E> {
       }
       do {
         final int index = (int) (head & SPACED_MASK);
-        final E e = buffer.get(index);
+        final OCacheEntry e = buffer.get(index);
         if (e == null) {
           // not published yet
           break;
         }
         buffer.lazySet(index, null);
-        consumer.accept(e);
+        consumer.onAccess(e);
         head += OFFSET;
       } while (head != tail);
 

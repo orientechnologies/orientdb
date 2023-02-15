@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Window TinyLFU eviction policy https://arxiv.org/pdf/1512.00727.pdf. */
-final class WTinyLFUPolicy {
+public final class WTinyLFUPolicy {
   private static final int EDEN_PERCENT = 20;
   private static final int PROBATIONARY_PERCENT = 20;
 
@@ -52,7 +52,7 @@ final class WTinyLFUPolicy {
     return maxSize;
   }
 
-  void onAccess(OCacheEntry cacheEntry) {
+  public void onAccess(OCacheEntry cacheEntry) {
     admittor.increment(PageKey.hashCode(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex()));
 
     if (!cacheEntry.isDead()) {

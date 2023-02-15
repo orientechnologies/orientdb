@@ -50,8 +50,8 @@ public final class AsyncReadCache implements OReadCache {
 
   private final WTinyLFUPolicy policy;
 
-  private final Buffer<OCacheEntry> readBuffer = new BoundedBuffer<>();
-  private final MPSCLinkedQueue<Runnable> writeBuffer = new MPSCLinkedQueue<>();
+  private final Buffer readBuffer = new BoundedBuffer();
+  private final MPSCLinkedQueue<OCacheEntry> writeBuffer = new MPSCLinkedQueue<>();
   private final AtomicInteger cacheSize = new AtomicInteger();
   private final int maxCacheSize;
 
@@ -379,10 +379,10 @@ public final class AsyncReadCache implements OReadCache {
   }
 
   private void afterAdd(final OCacheEntry entry) {
-    afterWrite(() -> policy.onAdd(entry));
+    afterWrite(entry);
   }
 
-  private void afterWrite(final Runnable command) {
+  private void afterWrite(final OCacheEntry command) {
     writeBuffer.offer(command);
 
     drainStatus.lazySet(DrainStatus.REQUIRED);
@@ -450,30 +450,30 @@ public final class AsyncReadCache implements OReadCache {
   }
 
   private void drainReadBuffers() {
-    readBuffer.drainTo(policy::onAccess);
+    readBuffer.drainTo(policy);
   }
 
   private void drainWriteBuffer() {
     for (int i = 0; i < WRITE_BUFFER_MAX_BATCH; i++) {
-      final Runnable command = writeBuffer.poll();
+      final OCacheEntry entry = writeBuffer.poll();
 
-      if (command == null) {
+      if (entry == null) {
         break;
       }
 
-      command.run();
+      this.policy.onAdd(entry);
     }
   }
 
   private void emptyWriteBuffer() {
     while (true) {
-      final Runnable command = writeBuffer.poll();
+      final OCacheEntry entry = writeBuffer.poll();
 
-      if (command == null) {
+      if (entry == null) {
         break;
       }
 
-      command.run();
+      this.policy.onAdd(entry);
     }
   }
 

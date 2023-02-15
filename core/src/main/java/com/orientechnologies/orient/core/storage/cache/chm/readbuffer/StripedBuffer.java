@@ -20,10 +20,11 @@
  */
 package com.orientechnologies.orient.core.storage.cache.chm.readbuffer;
 
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.chm.WTinyLFUPolicy;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 /**
  * A base class providing the mechanics for supporting dynamic striping of bounded buffers. This
@@ -34,7 +35,7 @@ import java.util.function.Consumer;
  * @author dl@cs.oswego.edu (Doug Lea)
  * @author ben.manes@gmail.com (Ben Manes)
  */
-abstract class StripedBuffer<E> implements Buffer<E> {
+abstract class StripedBuffer implements Buffer {
   /*
    * This class maintains a lazily-initialized table of atomically updated buffers. The table size
    * is a power of two. Indexing uses masked per-thread hash codes. Nearly all declarations in this
@@ -103,7 +104,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
   private static final int ATTEMPTS = 3;
 
   /** Table of buffers. When non-null, size is a power of 2. */
-  private transient volatile Buffer<E>[] table;
+  private transient volatile Buffer[] table;
 
   /** Returns the probe value for the current thread. */
   private int getProbe() {
@@ -132,15 +133,15 @@ abstract class StripedBuffer<E> implements Buffer<E> {
    * @param e the producer's element
    * @return a newly created buffer populated with a single element
    */
-  protected abstract Buffer<E> create(E e);
+  protected abstract Buffer create(OCacheEntry e);
 
   @Override
-  public int offer(final E e) {
+  public int offer(final OCacheEntry e) {
     final int mask;
     int result = 0;
-    final Buffer<E> buffer;
+    final Buffer buffer;
     boolean uncontended = true;
-    final Buffer<E>[] buffers = table;
+    final Buffer[] buffers = table;
 
     if ((buffers == null)
         || (mask = buffers.length - 1) < 0
@@ -152,12 +153,12 @@ abstract class StripedBuffer<E> implements Buffer<E> {
   }
 
   @Override
-  public void drainTo(final Consumer<E> consumer) {
-    final Buffer<E>[] buffers = table;
+  public void drainTo(final WTinyLFUPolicy consumer) {
+    final Buffer[] buffers = table;
     if (buffers == null) {
       return;
     }
-    for (final Buffer<E> buffer : buffers) {
+    for (final Buffer buffer : buffers) {
       if (buffer != null) {
         buffer.drainTo(consumer);
       }
@@ -166,12 +167,12 @@ abstract class StripedBuffer<E> implements Buffer<E> {
 
   @Override
   public int reads() {
-    final Buffer<E>[] buffers = table;
+    final Buffer[] buffers = table;
     if (buffers == null) {
       return 0;
     }
     int reads = 0;
-    for (final Buffer<E> buffer : buffers) {
+    for (final Buffer buffer : buffers) {
       if (buffer != null) {
         reads += buffer.reads();
       }
@@ -181,12 +182,12 @@ abstract class StripedBuffer<E> implements Buffer<E> {
 
   @Override
   public int writes() {
-    final Buffer<E>[] buffers = table;
+    final Buffer[] buffers = table;
     if (buffers == null) {
       return 0;
     }
     int writes = 0;
-    for (final Buffer<E> buffer : buffers) {
+    for (final Buffer buffer : buffers) {
       if (buffer != null) {
         writes += buffer.writes();
       }
@@ -203,7 +204,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
    * @param wasUncontended false if CAS failed before call
    */
   @SuppressWarnings("PMD.ConfusingTernary")
-  private void expandOrRetry(final E e, boolean wasUncontended) {
+  private void expandOrRetry(final OCacheEntry e, boolean wasUncontended) {
     int h;
     if ((h = getProbe()) == 0) {
       initProbe();
@@ -213,8 +214,8 @@ abstract class StripedBuffer<E> implements Buffer<E> {
     }
     boolean collide = false; // True if last slot nonempty
     for (int attempt = 0; attempt < ATTEMPTS; attempt++) {
-      final Buffer<E>[] buffers;
-      final Buffer<E> buffer;
+      final Buffer[] buffers;
+      final Buffer buffer;
       final int n;
       if (((buffers = table) != null) && ((n = buffers.length) > 0)) {
         if ((buffer = buffers[(n - 1) & h]) == null) {
@@ -222,7 +223,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
               && tableBusy.compareAndSet(false, true)) { // Try to attach new Buffer
             boolean created = false;
             try { // Recheck under lock
-              final Buffer<E>[] rs;
+              final Buffer[] rs;
               final int mask;
               final int j;
               if (((rs = table) != null)
@@ -265,7 +266,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
         try { // Initialize table
           if (table == buffers) {
             @SuppressWarnings({"unchecked"})
-            final Buffer<E>[] rs = new Buffer[1];
+            final Buffer[] rs = new Buffer[1];
             rs[0] = create(e);
             table = rs;
             init = true;
