@@ -472,7 +472,9 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
             pageLSNs.add(
                 new ORawTriple<>(
-                    new PageKey(fileId, (int) pageIndex), initialLSN, updatePageRecord.getLsn()));
+                    filePageChangesEntry.getValue().getPageKey(),
+                    initialLSN,
+                    updatePageRecord.getLsn()));
           } else {
             filePageChangesIterator.remove();
           }

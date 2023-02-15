@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
+import com.orientechnologies.orient.core.storage.cache.chm.PageKey;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
@@ -36,11 +37,6 @@ public class OCacheEntryChanges implements OCacheEntry {
   @Override
   public void clearCachePointer() {
     delegate.clearCachePointer();
-  }
-
-  @Override
-  public void setCachePointer(final OCachePointer cachePointer) {
-    delegate.setCachePointer(cachePointer);
   }
 
   @Override
@@ -222,6 +218,11 @@ public class OCacheEntryChanges implements OCacheEntry {
   @Override
   public void setInitialLSN(OLogSequenceNumber lsn) {
     this.initialLSN = lsn;
+  }
+
+  @Override
+  public PageKey getPageKey() {
+    return delegate.getPageKey();
   }
 
   @Override

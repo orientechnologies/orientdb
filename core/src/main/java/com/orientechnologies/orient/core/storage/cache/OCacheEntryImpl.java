@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
+import com.orientechnologies.orient.core.storage.cache.chm.PageKey;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import java.io.IOException;
@@ -20,23 +21,20 @@ public class OCacheEntryImpl implements OCacheEntry {
   private static final int DEAD = -2;
 
   private OCachePointer dataPointer;
-  private final long fileId;
-  private final int pageIndex;
-
   private volatile int usagesCount;
   private volatile int state;
 
-  private OCacheEntry next;
-  private OCacheEntry prev;
+  private volatile OCacheEntry next;
+  private volatile OCacheEntry prev;
 
-  private LRUList container;
+  private volatile LRUList container;
 
   /** Protected by page lock inside disk cache */
   private boolean allocatedPage;
 
-  private int hash;
   private final boolean insideCache;
   private final OReadCache readCache;
+  private final PageKey pageKey;
 
   public OCacheEntryImpl(
       final long fileId,
@@ -53,12 +51,10 @@ public class OCacheEntryImpl implements OCacheEntry {
       throw new IllegalStateException("Page index has invalid value " + pageIndex);
     }
 
-    this.fileId = fileId;
-    this.pageIndex = pageIndex;
-
     this.dataPointer = dataPointer;
     this.insideCache = insideCache;
     this.readCache = readCache;
+    this.pageKey = new PageKey(fileId, pageIndex);
   }
 
   public boolean isNewlyAllocatedPage() {
@@ -84,18 +80,13 @@ public class OCacheEntryImpl implements OCacheEntry {
   }
 
   @Override
-  public void setCachePointer(final OCachePointer cachePointer) {
-    this.dataPointer = cachePointer;
-  }
-
-  @Override
   public long getFileId() {
-    return fileId;
+    return pageKey.getFileId();
   }
 
   @Override
   public int getPageIndex() {
-    return pageIndex;
+    return pageKey.getPageIndex();
   }
 
   @Override
@@ -188,7 +179,7 @@ public class OCacheEntryImpl implements OCacheEntry {
     while (true) {
       if (state <= 0) {
         throw new IllegalStateException(
-            "Cache entry " + fileId + ":" + pageIndex + " has invalid state " + state);
+            "Cache entry " + getFileId() + ":" + getPageIndex() + " has invalid state " + state);
       }
 
       if (STATE_UPDATER.compareAndSet(this, state, state - 1)) {
@@ -241,7 +232,7 @@ public class OCacheEntryImpl implements OCacheEntry {
     }
 
     throw new IllegalStateException(
-        "Cache entry " + fileId + ":" + pageIndex + " has invalid state " + state);
+        "Cache entry " + getFileId() + ":" + getPageIndex() + " has invalid state " + state);
   }
 
   @Override
@@ -294,25 +285,17 @@ public class OCacheEntryImpl implements OCacheEntry {
     }
 
     OCacheEntryImpl that = (OCacheEntryImpl) o;
-
-    if (fileId != that.fileId) {
-      return false;
-    }
-    return pageIndex == that.pageIndex;
+    return this.pageKey.equals(that.pageKey);
   }
 
   @Override
   public int hashCode() {
-    if (hash != 0) {
-      return hash;
-    }
+    return pageKey.hashCode();
+  }
 
-    int result = (int) (fileId ^ (fileId >>> 32));
-    result = 31 * result + pageIndex;
-
-    hash = result;
-
-    return hash;
+  @Override
+  public PageKey getPageKey() {
+    return this.pageKey;
   }
 
   @Override
@@ -321,9 +304,9 @@ public class OCacheEntryImpl implements OCacheEntry {
         + "dataPointer="
         + dataPointer
         + ", fileId="
-        + fileId
+        + getFileId()
         + ", pageIndex="
-        + pageIndex
+        + getPageIndex()
         + ", usagesCount="
         + usagesCount
         + '}';

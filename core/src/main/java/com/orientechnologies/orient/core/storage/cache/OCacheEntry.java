@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
+import com.orientechnologies.orient.core.storage.cache.chm.PageKey;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import java.io.Closeable;
@@ -33,8 +34,6 @@ public interface OCacheEntry extends Closeable {
   OCachePointer getCachePointer();
 
   void clearCachePointer();
-
-  void setCachePointer(OCachePointer cachePointer);
 
   long getFileId();
 
@@ -106,4 +105,6 @@ public interface OCacheEntry extends Closeable {
   void clearAllocationFlag();
 
   boolean insideCache();
+
+  PageKey getPageKey();
 }

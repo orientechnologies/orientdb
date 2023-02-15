@@ -4,11 +4,12 @@ public final class PageKey {
   private final long fileId;
   private final int pageIndex;
 
-  private int hash;
+  private final int hash;
 
   public PageKey(final long fileId, final int pageIndex) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
+    this.hash = hashCode(fileId, pageIndex);
   }
 
   public long getFileId() {
@@ -32,12 +33,6 @@ public final class PageKey {
 
   @Override
   public int hashCode() {
-    if (hash != 0) {
-      return hash;
-    }
-
-    hash = hashCode(fileId, pageIndex);
-
     return hash;
   }
 

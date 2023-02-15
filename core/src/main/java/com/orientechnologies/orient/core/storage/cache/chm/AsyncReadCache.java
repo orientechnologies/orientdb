@@ -273,7 +273,6 @@ public final class AsyncReadCache implements OReadCache {
   }
 
   private OCacheEntry addNewPagePointerToTheCache(final long fileId, final int pageIndex) {
-    final PageKey pageKey = new PageKey(fileId, pageIndex);
 
     final OPointer pointer = bufferPool.acquireDirect(true, Intention.ADD_NEW_PAGE_IN_DISK_CACHE);
     final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, fileId, pageIndex);
@@ -282,7 +281,7 @@ public final class AsyncReadCache implements OReadCache {
     final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, cachePointer, true, this);
     cacheEntry.acquireEntry();
 
-    final OCacheEntry oldCacheEntry = data.putIfAbsent(pageKey, cacheEntry);
+    final OCacheEntry oldCacheEntry = data.putIfAbsent(cacheEntry.getPageKey(), cacheEntry);
     if (oldCacheEntry != null) {
       throw new IllegalStateException(
           "Page  " + fileId + ":" + pageIndex + " was allocated in other thread");
@@ -318,14 +317,13 @@ public final class AsyncReadCache implements OReadCache {
     final OCachePointer cachePointer = cacheEntry.getCachePointer();
     assert cachePointer != null;
 
-    final PageKey pageKey = new PageKey(cacheEntry.getFileId(), cacheEntry.getPageIndex());
     if (cacheEntry.isNewlyAllocatedPage() || changed) {
       if (cacheEntry.isNewlyAllocatedPage()) {
         cacheEntry.clearAllocationFlag();
       }
 
       data.compute(
-          pageKey,
+          cacheEntry.getPageKey(),
           (page, entry) -> {
             writeCache.store(
                 cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
