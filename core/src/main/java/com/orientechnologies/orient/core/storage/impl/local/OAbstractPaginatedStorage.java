@@ -48,11 +48,11 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.config.OStorageConfigurationUpdateListener;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -91,6 +91,7 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
@@ -565,16 +566,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     // avoid duplication of index engine ids
     for (final String indexName : indexNames) {
-      final OStorageConfiguration.IndexEngineData engineData =
-          configuration.getIndexEngine(indexName, -1);
+      final IndexEngineData engineData = configuration.getIndexEngine(indexName, -1);
       if (counter <= engineData.getIndexId()) {
         counter = engineData.getIndexId() + 1;
       }
     }
 
     for (final String indexName : indexNames) {
-      final OStorageConfiguration.IndexEngineData engineData =
-          configuration.getIndexEngine(indexName, counter);
+      final IndexEngineData engineData = configuration.getIndexEngine(indexName, counter);
       final OBaseIndexEngine engine =
           OIndexes.createIndexEngine(
               engineData.getIndexId(),
@@ -2555,8 +2554,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OBaseIndexEngine engine =
             OIndexes.createIndexEngine(
                 indexEngines.size(), engineName, algorithm, indexType, this, version, multivalue);
-        final OStorageConfiguration.IndexEngineData engineData =
-            new OStorageConfigurationImpl.IndexEngineData(
+        final IndexEngineData engineData =
+            new IndexEngineData(
                 engine.getId(),
                 engineName,
                 algorithm,
@@ -2615,16 +2614,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public int addIndexEngine(
-      final String engineName,
-      final String algorithm,
-      final String indexType,
-      final OIndexDefinition indexDefinition,
+      final OIndexMetadata indexMetadata,
       final OBinarySerializer<?> valueSerializer,
-      final boolean isAutomatic,
       final int version,
-      final boolean multivalue,
-      final Map<String, String> engineProperties,
-      final ODocument metadata) {
+      final Map<String, String> engineProperties) {
+    final String engineName = indexMetadata.getName();
+    final String algorithm = indexMetadata.getAlgorithm();
+    final String indexType = indexMetadata.getType();
+    final OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
+    final boolean isAutomatic = indexMetadata.getIndexDefinition().isAutomatic();
+    final boolean multivalue = indexMetadata.isMultivalue();
+
     try {
       if (indexDefinition == null) {
         throw new OIndexException("Index definition hav to be provided");
@@ -2700,8 +2700,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               final String cfgEncryptionKey =
                   ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
 
-              final OStorageConfiguration.IndexEngineData engineData =
-                  new OStorageConfigurationImpl.IndexEngineData(
+              final IndexEngineData engineData =
+                  new IndexEngineData(
                       engine.getId(),
                       engineName,
                       algorithm,
@@ -2878,7 +2878,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   deleteIndexEngineInternal(atomicOperation, internalIndexId);
               final String engineName = engine.getName();
 
-              final OStorageConfiguration.IndexEngineData engineData =
+              final IndexEngineData engineData =
                   configuration.getIndexEngine(engineName, internalIndexId);
               ((OClusterBasedStorageConfiguration) configuration)
                   .deleteIndexEngine(atomicOperation, engineName);
@@ -6882,8 +6882,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private boolean isIndexUniqueByName(final String indexName) {
-    final OStorageConfiguration.IndexEngineData engineData =
-        configuration.getIndexEngine(indexName, 0);
+    final IndexEngineData engineData = configuration.getIndexEngine(indexName, 0);
     return isIndexUniqueByType(engineData.getIndexType());
   }
 

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -170,7 +171,7 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   }
 
   @Override
-  public OStorageConfiguration.IndexEngineData getIndexEngine(String name, int defaultIndexId) {
+  public IndexEngineData getIndexEngine(String name, int defaultIndexId) {
     throw new UnsupportedOperationException();
   }
 

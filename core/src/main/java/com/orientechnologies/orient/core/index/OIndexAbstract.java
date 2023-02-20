@@ -240,18 +240,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         engineProperties.put("partitions", Integer.toString(clustersToIndex.size()));
       }
 
-      indexId =
-          storage.addIndexEngine(
-              indexMetadata.getName(),
-              indexMetadata.getAlgorithm(),
-              indexMetadata.getType(),
-              indexMetadata.getIndexDefinition(),
-              valueSerializer,
-              indexMetadata.getIndexDefinition().isAutomatic(),
-              version,
-              indexMetadata.isMultivalue(),
-              engineProperties,
-              indexMetadata.getMetadata());
+      indexId = storage.addIndexEngine(indexMetadata, valueSerializer, version, engineProperties);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
       assert indexId >= 0;
@@ -510,18 +499,10 @@ public abstract class OIndexAbstract implements OIndexInternal {
         OLogManager.instance().error(this, "Error during index '%s' delete", e, name);
       }
 
+      OIndexMetadata indexMetadata = this.configuration.getIndexMetadata(this);
       indexId =
           storage.addIndexEngine(
-              name,
-              algorithm,
-              type,
-              indexDefinition,
-              determineValueSerializer(),
-              isAutomatic(),
-              version,
-              this instanceof OIndexMultiValues,
-              engineProperties,
-              metadata);
+              indexMetadata, determineValueSerializer(), version, engineProperties);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
       onIndexEngineChange(indexId);
@@ -1135,6 +1116,10 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
     private ODocument getDocument() {
       return document;
+    }
+
+    public OIndexMetadata getIndexMetadata(OIndexAbstract index) {
+      return index.loadMetadata(document);
     }
 
     private synchronized void updateConfiguration(

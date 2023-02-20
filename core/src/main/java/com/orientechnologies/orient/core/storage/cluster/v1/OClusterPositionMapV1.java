@@ -232,7 +232,6 @@ public final class OClusterPositionMapV1 extends OClusterPositionMap {
           this);
     }
 
-    ;
     try (final OCacheEntry cacheEntry =
         loadPageForWrite(atomicOperation, fileId, pageIndex, true)) {
       final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);

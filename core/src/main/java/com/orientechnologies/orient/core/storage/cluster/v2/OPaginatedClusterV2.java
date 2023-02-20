@@ -1417,7 +1417,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       paginatedClusterState.setFileSize(0);
     } finally {
       stateEntry.close();
-      ;
     }
   }
 
