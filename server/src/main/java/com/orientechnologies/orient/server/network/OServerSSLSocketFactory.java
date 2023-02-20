@@ -166,4 +166,8 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
     return configureSocket(
         (SSLServerSocket) getBackingFactory().createServerSocket(port, backlog, ifAddress));
   }
+
+  public boolean isEncrypted() {
+    return true;
+  }
 }

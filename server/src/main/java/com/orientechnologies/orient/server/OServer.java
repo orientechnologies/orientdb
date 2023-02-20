@@ -491,15 +491,25 @@ public class OServer {
       running = true;
 
       String httpAddress = "localhost:2480";
+      boolean ssl = false;
       for (OServerNetworkListener listener : getNetworkListeners()) {
-        if (listener.getProtocolType().getName().equals(ONetworkProtocolHttpDb.class.getName()))
+        if (listener.getProtocolType().getName().equals(ONetworkProtocolHttpDb.class.getName())) {
           httpAddress = listener.getListeningAddress(true);
+          ssl = listener.getSocketFactory().isEncrypted();
+        }
+      }
+      String proto;
+      if (ssl) {
+        proto = "https";
+      } else {
+        proto = "http";
       }
 
       OLogManager.instance()
           .info(
               this,
-              "OrientDB Studio available at $ANSI{blue http://%s/studio/index.html}",
+              "OrientDB Studio available at $ANSI{blue %s://%s/studio/index.html}",
+              proto,
               httpAddress);
       OLogManager.instance()
           .info(

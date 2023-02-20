@@ -420,4 +420,8 @@ public class OServerNetworkListener extends Thread {
     socketBufferSize =
         configuration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
   }
+
+  public OServerSocketFactory getSocketFactory() {
+    return socketFactory;
+  }
 }
