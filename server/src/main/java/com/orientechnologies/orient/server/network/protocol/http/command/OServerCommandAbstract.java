@@ -26,6 +26,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponseAbstract;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -57,7 +58,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
       final String iURL, final int iArgumentCount, final String iSyntax) {
     final List<String> parts =
         OStringSerializerHelper.smartSplit(
-            iURL, OHttpResponse.URL_SEPARATOR, 1, -1, true, true, false, false);
+            iURL, OHttpResponseAbstract.URL_SEPARATOR, 1, -1, true, true, false, false);
     try {
       for (int i = 0; i < parts.size(); i++) {
         parts.set(i, URLDecoder.decode(parts.get(i), "UTF-8"));

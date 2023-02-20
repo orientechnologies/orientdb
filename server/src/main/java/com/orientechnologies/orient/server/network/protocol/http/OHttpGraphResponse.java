@@ -46,7 +46,7 @@ import java.util.Set;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OHttpGraphResponse extends OHttpResponse {
+public class OHttpGraphResponse extends OHttpResponseAbstract {
 
   private OHttpResponse iWrapped;
 
@@ -357,7 +357,7 @@ public class OHttpGraphResponse extends OHttpResponse {
   }
 
   @Override
-  protected void checkConnection() throws IOException {
+  public void checkConnection() throws IOException {
     iWrapped.checkConnection();
   }
 }

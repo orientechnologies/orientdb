@@ -1,22 +1,3 @@
-/*
- *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *  *
- *  *  Licensed under the Apache License, Version 2.0 (the "License");
- *  *  you may not use this file except in compliance with the License.
- *  *  You may obtain a copy of the License at
- *  *
- *  *       http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  *  Unless required by applicable law or agreed to in writing, software
- *  *  distributed under the License is distributed on an "AS IS" BASIS,
- *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  See the License for the specific language governing permissions and
- *  *  limitations under the License.
- *  *
- *  * For more information: http://orientdb.com
- *
- */
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -24,208 +5,109 @@ import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
-/**
- * Maintains information about current HTTP request.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
-public abstract class OHttpRequest {
-  private final OContextConfiguration configuration;
-  private final InputStream in;
-  private final ONetworkProtocolData data;
-  private final ONetworkHttpExecutor executor;
-  protected String content;
-  protected Map<String, String> parameters;
-  private String sessionId;
-  protected String authorization;
-  private String databaseName;
+public interface OHttpRequest {
 
-  public OHttpRequest(
-      final ONetworkHttpExecutor iExecutor,
-      final InputStream iInStream,
-      final ONetworkProtocolData iData,
-      final OContextConfiguration iConfiguration) {
-    executor = iExecutor;
-    in = iInStream;
-    data = iData;
-    configuration = iConfiguration;
-  }
+  String getUser();
 
-  public String getUser() {
-    return getAuthorization() != null
-        ? getAuthorization().substring(0, getAuthorization().indexOf(":"))
-        : null;
-  }
+  InputStream getInputStream();
 
-  public InputStream getInputStream() {
-    return getIn();
-  }
+  String getParameter(String iName);
 
-  public String getParameter(final String iName) {
-    return getParameters() != null ? getParameters().get(iName) : null;
-  }
+  void addHeader(String h);
 
-  public void addHeader(final String h) {
-    if (getHeaders() == null) setHeaders(new HashMap<String, String>());
+  Map<String, String> getUrlEncodedContent();
 
-    final int pos = h.indexOf(':');
-    if (pos > -1) {
-      getHeaders()
-          .put(h.substring(0, pos).trim().toLowerCase(Locale.ENGLISH), h.substring(pos + 1).trim());
-    }
-  }
+  void setParameters(Map<String, String> parameters);
 
-  public Map<String, String> getUrlEncodedContent() {
-    if (getContent() == null || getContent().length() < 1) {
-      return null;
-    }
-    HashMap<String, String> retMap = new HashMap<String, String>();
-    String key;
-    String value;
-    try {
-      String[] pairs = getContent().split("\\&");
-      for (int i = 0; i < pairs.length; i++) {
-        String[] fields = pairs[i].split("=");
-        if (fields.length == 2) {
-          key = URLDecoder.decode(fields[0], "UTF-8");
-          value = URLDecoder.decode(fields[1], "UTF-8");
-          retMap.put(key, value);
-        }
-      }
-    } catch (UnsupportedEncodingException usEx) {
-      // noop
-    }
-    return retMap;
-  }
+  Map<String, String> getParameters();
 
-  public void setParameters(Map<String, String> parameters) {
-    this.parameters = parameters;
-  }
+  String getHeader(String iName);
 
-  public Map<String, String> getParameters() {
-    return parameters;
-  }
+  Map<String, String> getHeaders();
 
-  public String getHeader(final String iName) {
-    return getHeaders().get(iName.toLowerCase(Locale.ENGLISH));
-  }
+  String getRemoteAddress();
 
-  public abstract Map<String, String> getHeaders();
+  String getContent();
 
-  public String getRemoteAddress() {
-    if (getData().caller != null) return getData().caller;
-    return getExecutor().getRemoteAddress();
-  }
+  void setContent(String content);
 
-  public String getContent() {
-    return content;
-  }
+  String getUrl();
 
-  public void setContent(String content) {
-    this.content = content;
-  }
+  OContextConfiguration getConfiguration();
 
-  public abstract String getUrl();
+  InputStream getIn();
 
-  public OContextConfiguration getConfiguration() {
-    return configuration;
-  }
+  ONetworkProtocolData getData();
 
-  public InputStream getIn() {
-    return in;
-  }
+  ONetworkHttpExecutor getExecutor();
 
-  public ONetworkProtocolData getData() {
-    return data;
-  }
+  String getAuthorization();
 
-  public ONetworkHttpExecutor getExecutor() {
-    return executor;
-  }
+  void setAuthorization(String authorization);
 
-  public String getAuthorization() {
-    return authorization;
-  }
+  String getSessionId();
 
-  public void setAuthorization(String authorization) {
-    this.authorization = authorization;
-  }
+  void setSessionId(String sessionId);
 
-  public String getSessionId() {
-    return sessionId;
-  }
+  void setUrl(String url);
 
-  public void setSessionId(String sessionId) {
-    this.sessionId = sessionId;
-  }
+  String getHttpMethod();
 
-  public abstract void setUrl(String url);
+  void setHttpMethod(String httpMethod);
 
-  public abstract String getHttpMethod();
+  String getHttpVersion();
 
-  public abstract void setHttpMethod(String httpMethod);
+  void setHttpVersion(String httpVersion);
 
-  public abstract String getHttpVersion();
+  String getContentType();
 
-  public abstract void setHttpVersion(String httpVersion);
+  void setContentType(String contentType);
 
-  public abstract String getContentType();
+  String getContentEncoding();
 
-  public abstract void setContentType(String contentType);
+  void setContentEncoding(String contentEncoding);
 
-  public abstract String getContentEncoding();
+  String getAcceptEncoding();
 
-  public abstract void setContentEncoding(String contentEncoding);
+  void setAcceptEncoding(String acceptEncoding);
 
-  public abstract String getAcceptEncoding();
+  OHttpMultipartBaseInputStream getMultipartStream();
 
-  public abstract void setAcceptEncoding(String acceptEncoding);
+  void setMultipartStream(OHttpMultipartBaseInputStream multipartStream);
 
-  public abstract OHttpMultipartBaseInputStream getMultipartStream();
+  String getBoundary();
 
-  public abstract void setMultipartStream(OHttpMultipartBaseInputStream multipartStream);
+  void setBoundary(String boundary);
 
-  public abstract String getBoundary();
+  String getDatabaseName();
 
-  public abstract void setBoundary(String boundary);
+  void setDatabaseName(String databaseName);
 
-  public String getDatabaseName() {
-    return databaseName;
-  }
+  boolean isMultipart();
 
-  public void setDatabaseName(String databaseName) {
-    this.databaseName = databaseName;
-  }
+  void setMultipart(boolean multipart);
 
-  public abstract boolean isMultipart();
+  String getIfMatch();
 
-  public abstract void setMultipart(boolean multipart);
+  void setIfMatch(String ifMatch);
 
-  public abstract String getIfMatch();
+  String getAuthentication();
 
-  public abstract void setIfMatch(String ifMatch);
+  void setAuthentication(String authentication);
 
-  public abstract String getAuthentication();
+  boolean isKeepAlive();
 
-  public abstract void setAuthentication(String authentication);
+  void setKeepAlive(boolean keepAlive);
 
-  public abstract boolean isKeepAlive();
+  void setHeaders(Map<String, String> headers);
 
-  public abstract void setKeepAlive(boolean keepAlive);
+  String getBearerTokenRaw();
 
-  public abstract void setHeaders(Map<String, String> headers);
+  void setBearerTokenRaw(String bearerTokenRaw);
 
-  public abstract String getBearerTokenRaw();
+  OParsedToken getBearerToken();
 
-  public abstract void setBearerTokenRaw(String bearerTokenRaw);
-
-  public abstract OParsedToken getBearerToken();
-
-  public abstract void setBearerToken(OParsedToken bearerToken);
+  void setBearerToken(OParsedToken bearerToken);
 }

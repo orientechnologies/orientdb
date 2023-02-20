@@ -7,7 +7,7 @@ import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttp
 import java.io.InputStream;
 import java.util.Map;
 
-public class OHttpRequestImpl extends OHttpRequest {
+public class OHttpRequestImpl extends OHttpRequestAbstract {
 
   private String url;
   private String httpMethod;

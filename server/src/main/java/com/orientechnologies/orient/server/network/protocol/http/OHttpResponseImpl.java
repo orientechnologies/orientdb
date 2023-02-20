@@ -8,7 +8,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Map;
 
-public class OHttpResponseImpl extends OHttpResponse {
+public class OHttpResponseImpl extends OHttpResponseAbstract {
 
   public OHttpResponseImpl(
       OutputStream iOutStream,
@@ -212,7 +212,7 @@ public class OHttpResponseImpl extends OHttpResponse {
   }
 
   @Override
-  protected void checkConnection() throws IOException {
+  public void checkConnection() throws IOException {
     final Socket socket;
     if (getConnection().getProtocol() == null || getConnection().getProtocol().getChannel() == null)
       socket = null;

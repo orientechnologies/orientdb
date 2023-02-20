@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.patch;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 
 public class OServerCommandPatchDocument
     extends com.orientechnologies.orient.server.network.protocol.http.command
@@ -27,10 +29,7 @@ public class OServerCommandPatchDocument
   private static final String[] NAMES = {"PATCH|document/*"};
 
   @Override
-  public boolean execute(
-      final com.orientechnologies.orient.server.network.protocol.http.OHttpRequest iRequest,
-      com.orientechnologies.orient.server.network.protocol.http.OHttpResponse iResponse)
-      throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] urlParts =
         checkSyntax(iRequest.getUrl(), 2, "Syntax error: document/<database>[/<record-id>]");
 
