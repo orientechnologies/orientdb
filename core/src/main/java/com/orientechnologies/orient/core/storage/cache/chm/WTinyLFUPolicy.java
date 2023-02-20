@@ -132,7 +132,7 @@ public final class WTinyLFUPolicy {
           }
         } else {
           if (candidate.freeze()) {
-            final boolean removed = data.remove(victim.getPageKey(), candidate);
+            final boolean removed = data.remove(candidate.getPageKey(), candidate);
             candidate.makeDead();
 
             if (removed) {
