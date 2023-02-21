@@ -64,9 +64,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
-import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
@@ -104,7 +101,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseNewDeltaTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
-import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
@@ -1734,12 +1730,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
           if (value instanceof ODistributedException) throw (ODistributedException) value;
 
         } else if (value instanceof ODistributedDatabaseChunk) {
-
-          // DISABLED BECAUSE MOMENTUM IS NOT RELIABLE YET
-          // distrDatabase.filterBeforeThisMomentum(((ODistributedDatabaseChunk)
-          // value).getMomentum());
-          final File uniqueClustersBackupDirectory =
-              getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
           if (backupDatabase) backupCurrentDatabase(databaseName);
 
           try {
@@ -1749,7 +1739,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                 distrDatabase,
                 r.getKey(),
                 (ODistributedDatabaseChunk) value,
-                uniqueClustersBackupDirectory,
                 cfg);
           } catch (OException e) {
             OLogManager.instance().error(this, "Error installing database from network", e);
@@ -1768,91 +1757,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
         "No response received from remote nodes for auto-deploy of database '"
             + databaseName
             + "'");
-  }
-
-  protected File getClusterOwnedExclusivelyByCurrentNode(
-      final String dbPath, final String iDatabaseName) {
-    final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabaseName);
-
-    final HashSet<String> clusters = new HashSet<String>();
-
-    for (String clName : cfg.getClusterNames()) {
-      final List<String> servers = cfg.getServers(clName, null);
-      if (servers != null) {
-        if (servers.size() == 1 && servers.get(0).equals(getLocalNodeName())) clusters.add(clName);
-      }
-    }
-
-    if (!clusters.isEmpty()) {
-      // COPY FILES IN A SAFE LOCATION TO BE REPLACED AFTER THE DATABASE RESTORE
-
-      // MOVE DIRECTORY TO ../backup/databases/<db-name>
-      final String backupDirectory = Orient.instance().getHomePath() + "/temp/db_" + iDatabaseName;
-      final File backupFullPath = new File(backupDirectory);
-      if (backupFullPath.exists()) OFileUtils.deleteRecursively(backupFullPath);
-      else backupFullPath.mkdirs();
-
-      // MOVE THE DATABASE ON CURRENT NODE
-      ODistributedServerLog.warn(
-          this,
-          nodeName,
-          null,
-          DIRECTION.NONE,
-          "Saving clusters %s to directory '%s' to be replaced after distributed full backup...",
-          clusters,
-          backupFullPath);
-
-      for (String clName : clusters) {
-        // MOVE .PCL and .PCM FILES
-        {
-          final File oldFile = new File(dbPath + "/" + clName + OPaginatedCluster.DEF_EXTENSION);
-          final File newFile =
-              new File(backupFullPath + "/" + clName + OPaginatedCluster.DEF_EXTENSION);
-
-          if (oldFile.exists()) {
-            if (!oldFile.renameTo(newFile)) {
-              ODistributedServerLog.error(
-                  this,
-                  nodeName,
-                  null,
-                  DIRECTION.NONE,
-                  "Cannot make a safe copy of exclusive clusters. Error on moving file %s -> %s: restore of database '%s' has been aborted because unsafe",
-                  oldFile,
-                  newFile,
-                  iDatabaseName);
-              throw new ODistributedException("Cannot make a safe copy of exclusive clusters");
-            }
-          }
-        }
-
-        {
-          final File oldFile = new File(dbPath + "/" + clName + OClusterPositionMap.DEF_EXTENSION);
-          final File newFile =
-              new File(backupFullPath + "/" + clName + OClusterPositionMap.DEF_EXTENSION);
-
-          if (oldFile.exists()) {
-            if (!oldFile.renameTo(newFile)) {
-              ODistributedServerLog.error(
-                  this,
-                  nodeName,
-                  null,
-                  DIRECTION.NONE,
-                  "Cannot make a safe copy of exclusive clusters. Error on moving file %s -> %s: restore of database '%s' has been aborted because unsafe",
-                  oldFile,
-                  newFile,
-                  iDatabaseName);
-              throw new ODistributedException("Cannot make a safe copy of exclusive clusters");
-            }
-          }
-        }
-
-        // TODO: ADD AUTO-SHARDING INDEX FILES TOO
-
-      }
-      return backupFullPath;
-    }
-
-    return null;
   }
 
   protected void backupCurrentDatabase(final String iDatabaseName) {
@@ -1994,45 +1898,15 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final ODistributedDatabaseImpl distrDatabase,
       final String iNode,
       final ODistributedDatabaseChunk firstChunk,
-      final File uniqueClustersBackupDirectory,
       final OModifiableDistributedConfiguration cfg) {
-
-    final String localNodeName = nodeName;
 
     OSyncReceiver receiver = new OSyncReceiver(this, databaseName, firstChunk, iNode, dbPath);
     receiver.spawnReceiverThread();
 
-    installDatabaseOnLocalNode(
-        databaseName,
-        dbPath,
-        iNode,
-        uniqueClustersBackupDirectory,
-        cfg,
-        firstChunk.incremental,
-        receiver);
+    installDatabaseOnLocalNode(databaseName, dbPath, iNode, cfg, firstChunk.incremental, receiver);
     receiver.close();
 
     distrDatabase.setOnline();
-
-    // ASK FOR INDIVIDUAL CLUSTERS IN CASE OF SHARDING AND NO LOCAL COPY
-    final Set<String> localManagedClusters = cfg.getClustersOnServer(localNodeName);
-    final Set<String> sourceNodeClusters = cfg.getClustersOnServer(iNode);
-    localManagedClusters.removeAll(sourceNodeClusters);
-
-    final HashSet<String> toSynchClusters = new HashSet<String>();
-    for (String cl : localManagedClusters) {
-      // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
-      final List<String> servers = cfg.getServers(cl, localNodeName);
-      getAvailableNodes(servers, databaseName);
-
-      if (!servers.isEmpty()) toSynchClusters.add(cl);
-    }
-
-    // SYNC ALL THE CLUSTERS
-    for (String cl : toSynchClusters) {
-      // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
-      OCommandExecutorSQLHASyncCluster.replaceCluster(this, serverInstance, databaseName, cl);
-    }
 
     try {
       rebalanceClusterOwnership(nodeName, databaseName, cfg, false);
@@ -2373,7 +2247,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final String databaseName,
       final String dbPath,
       final String iNode,
-      final File uniqueClustersBackupDirectory,
       final OModifiableDistributedConfiguration cfg,
       boolean incremental,
       OSyncReceiver receiver) {
@@ -2394,7 +2267,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
           new OInterruptedException("Interrupted waiting receive of sync"), e);
     }
 
-    final ODistributedPlugin me = this;
     executeInDistributedDatabaseLock(
         databaseName,
         20000,
@@ -2404,35 +2276,13 @@ public class ODistributedPlugin extends OServerPluginAbstract
           public Void call(final OModifiableDistributedConfiguration cfg) {
             try {
               if (incremental) {
-                OStorage storage =
-                    serverInstance
-                        .getDatabases()
-                        .fullSync(
-                            databaseName,
-                            receiver.getInputStream(),
-                            OrientDBConfig.defaultConfig());
+
+                serverInstance
+                    .getDatabases()
+                    .fullSync(
+                        databaseName, receiver.getInputStream(), OrientDBConfig.defaultConfig());
                 ODistributedDatabaseImpl distrDatabase = messageService.getDatabase(databaseName);
                 distrDatabase.saveDatabaseConfiguration();
-                if (uniqueClustersBackupDirectory != null
-                    && uniqueClustersBackupDirectory.exists()) {
-                  // RESTORE UNIQUE FILES FROM THE BACKUP FOLDERS. THOSE FILES ARE THE CLUSTERS
-                  // OWNED EXCLUSIVELY BY CURRENT
-                  // NODE THAT WOULD BE LOST IF NOT REPLACED
-                  for (File f : uniqueClustersBackupDirectory.listFiles()) {
-                    final File oldFile = new File(dbPath + "/" + f.getName());
-                    if (oldFile.exists()) oldFile.delete();
-
-                    // REPLACE IT
-                    if (!f.renameTo(oldFile))
-                      throw new ODistributedException(
-                          "Cannot restore exclusive cluster file '"
-                              + f.getAbsolutePath()
-                              + "' into "
-                              + oldFile.getAbsolutePath());
-                  }
-
-                  uniqueClustersBackupDirectory.delete();
-                }
 
                 try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
                   Optional<byte[]> read =
@@ -2470,37 +2320,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
                 try (InputStream in = receiver.getInputStream()) {
 
                   // IMPORT FULL DATABASE (LISTENER ONLY FOR DEBUG PURPOSE)
-                  serverInstance
-                      .getDatabases()
-                      .networkRestore(
-                          databaseName,
-                          in,
-                          new Callable<Object>() {
-                            @Override
-                            public Object call() throws Exception {
-                              if (uniqueClustersBackupDirectory != null
-                                  && uniqueClustersBackupDirectory.exists()) {
-                                // RESTORE UNIQUE FILES FROM THE BACKUP FOLDERS. THOSE FILES ARE THE
-                                // CLUSTERS OWNED EXCLUSIVELY BY CURRENT
-                                // NODE THAT WOULD BE LOST IF NOT REPLACED
-                                for (File f : uniqueClustersBackupDirectory.listFiles()) {
-                                  final File oldFile = new File(dbPath + "/" + f.getName());
-                                  if (oldFile.exists()) oldFile.delete();
-
-                                  // REPLACE IT
-                                  if (!f.renameTo(oldFile))
-                                    throw new ODistributedException(
-                                        "Cannot restore exclusive cluster file '"
-                                            + f.getAbsolutePath()
-                                            + "' into "
-                                            + oldFile.getAbsolutePath());
-                                }
-
-                                uniqueClustersBackupDirectory.delete();
-                              }
-                              return null;
-                            }
-                          });
+                  serverInstance.getDatabases().networkRestore(databaseName, in, null);
                 }
               }
               return null;
