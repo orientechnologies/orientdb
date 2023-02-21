@@ -2249,7 +2249,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
         cfg -> {
           try {
             if (incremental) {
-
               serverInstance
                   .getDatabases()
                   .fullSync(
