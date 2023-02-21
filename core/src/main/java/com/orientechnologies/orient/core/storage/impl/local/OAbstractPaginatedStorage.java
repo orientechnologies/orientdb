@@ -1000,7 +1000,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkBackupRunning();
       stateLock.writeLock().lock();
       try {
-
+        if (clusterMap.containsKey(clusterName)) {
+          throw new OConfigurationException(
+              String.format("Cluster with name:'%s' already exists", clusterName));
+        }
         checkOpennessAndMigration();
 
         makeStorageDirty();
@@ -1041,6 +1044,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   + "] is occupied by cluster with name ["
                   + clusters.get(requestedId).getName()
                   + "]");
+        }
+        if (clusterMap.containsKey(clusterName)) {
+          throw new OConfigurationException(
+              String.format("Cluster with name:'%s' already exists", clusterName));
         }
 
         makeStorageDirty();
