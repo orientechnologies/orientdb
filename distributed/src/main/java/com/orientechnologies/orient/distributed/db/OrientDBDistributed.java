@@ -28,6 +28,8 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
@@ -38,7 +40,10 @@ import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedCont
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 /** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
@@ -55,6 +60,29 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void init(OServer server) {
     // Cannot get the plugin from here, is too early, doing it lazy
     this.server = server;
+  }
+
+  public void loadAllDatabases() {
+    List<String> dbs = new ArrayList<String>(this.listDatabases(null, null));
+    Collections.sort(dbs);
+    for (final String databaseName : dbs) {
+      if (!OSystemDatabase.SYSTEM_DB_NAME.equals(databaseName)) {
+        ODistributedServerManager dm = getDistributedManager();
+        ODistributedServerLog.info(
+            this,
+            dm.getLocalNodeName(),
+            null,
+            DIRECTION.NONE,
+            "Opening database '%s'...",
+            databaseName);
+        openNoAuthorization(databaseName).close();
+        final ODistributedDatabaseImpl ddb =
+            (ODistributedDatabaseImpl) dm.getMessageService().getDatabase(databaseName);
+        ddb.resume();
+        dm.reassignClustersOwnership(dm.getLocalNodeName(), databaseName, null, true);
+        ddb.setOnline();
+      }
+    }
   }
 
   public synchronized ODistributedPlugin getPlugin() {

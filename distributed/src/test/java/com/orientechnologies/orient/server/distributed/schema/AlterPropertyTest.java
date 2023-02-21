@@ -12,8 +12,6 @@ import org.junit.Test;
 
 public class AlterPropertyTest extends AbstractServerClusterTest {
 
-  private OProperty property;
-
   @Test
   public void test() throws Exception {
     init(2);
@@ -25,7 +23,7 @@ public class AlterPropertyTest extends AbstractServerClusterTest {
   protected void onAfterDatabaseCreation(ODatabaseDocument db) {
     OClass oClass = db.getMetadata().getSchema().createClass("AlterPropertyTestClass");
 
-    property = oClass.createProperty("property", OType.STRING);
+    oClass.createProperty("property", OType.STRING);
   }
 
   @Override
@@ -46,19 +44,23 @@ public class AlterPropertyTest extends AbstractServerClusterTest {
       // wait till databases will be opened on both servers
       Thread.sleep(1_000);
 
-      testAlterCustomAttributeInProperty();
-      testAlterCustomAttributeWithDotInProperty();
+      testAlterCustomAttributeInProperty(db);
+      testAlterCustomAttributeWithDotInProperty(db);
     } finally {
       db.close();
     }
   }
 
-  private void testAlterCustomAttributeInProperty() {
+  private void testAlterCustomAttributeInProperty(ODatabaseDocument db) {
+    OClass oClass = db.getMetadata().getSchema().getClass("AlterPropertyTestClass");
+    OProperty property = oClass.getProperty("property");
     property.setCustom("customAttribute", "value");
     assertEquals("value", property.getCustom("customAttribute"));
   }
 
-  private void testAlterCustomAttributeWithDotInProperty() {
+  private void testAlterCustomAttributeWithDotInProperty(ODatabaseDocument db) {
+    OClass oClass = db.getMetadata().getSchema().getClass("AlterPropertyTestClass");
+    OProperty property = oClass.getProperty("property");
     property.setCustom("custom.attribute", "value");
     assertEquals("value", property.getCustom("custom.attribute"));
   }

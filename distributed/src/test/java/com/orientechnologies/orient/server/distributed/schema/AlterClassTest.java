@@ -10,8 +10,6 @@ import org.junit.Test;
 
 public class AlterClassTest extends AbstractServerClusterTest {
 
-  private OClass oClass;
-
   @Test
   public void test() throws Exception {
     init(2);
@@ -21,7 +19,7 @@ public class AlterClassTest extends AbstractServerClusterTest {
 
   @Override
   protected void onAfterDatabaseCreation(ODatabaseDocument db) {
-    oClass = db.getMetadata().getSchema().createClass("AlterPropertyTestClass");
+    db.getMetadata().getSchema().createClass("AlterPropertyTestClass");
   }
 
   @Override
@@ -39,19 +37,21 @@ public class AlterClassTest extends AbstractServerClusterTest {
     ODatabaseDocument db =
         serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName());
     try {
-      testAlterCustomAttributeInClass();
-      testAlterCustomAttributeWithDotInClass();
+      testAlterCustomAttributeInClass(db);
+      testAlterCustomAttributeWithDotInClass(db);
     } finally {
       db.close();
     }
   }
 
-  private void testAlterCustomAttributeInClass() {
+  private void testAlterCustomAttributeInClass(ODatabaseDocument db) {
+    OClass oClass = db.getMetadata().getSchema().getClass("AlterPropertyTestClass");
     oClass.setCustom("customAttribute", "value");
     assertEquals("value", oClass.getCustom("customAttribute"));
   }
 
-  private void testAlterCustomAttributeWithDotInClass() {
+  private void testAlterCustomAttributeWithDotInClass(ODatabaseDocument db) {
+    OClass oClass = db.getMetadata().getSchema().getClass("AlterPropertyTestClass");
     oClass.setCustom("custom.attribute", "value");
     assertEquals("value", oClass.getCustom("custom.attribute"));
   }

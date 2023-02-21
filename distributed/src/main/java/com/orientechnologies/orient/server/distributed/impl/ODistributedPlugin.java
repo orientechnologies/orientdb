@@ -2490,46 +2490,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   /** Initializes all the available server's databases as distributed. */
   public void loadLocalDatabases() {
-    final List<String> dbs =
-        new ArrayList<String>(serverInstance.getAvailableStorageNames().keySet());
-    Collections.sort(dbs);
-
-    for (final String databaseName : dbs) {
-      if (getMessageService().getDatabase(databaseName) == null) {
-        ODistributedServerLog.info(
-            this, nodeName, null, DIRECTION.NONE, "Opening database '%s'...", databaseName);
-
-        // INIT THE STORAGE
-        final ODistributedDatabaseImpl ddb = getMessageService().registerDatabase(databaseName);
-
-        executeInDistributedDatabaseLock(
-            databaseName,
-            60000,
-            null,
-            cfg -> {
-              ODistributedServerLog.info(
-                  this,
-                  nodeName,
-                  null,
-                  DIRECTION.NONE,
-                  "Current node started as %s for database '%s'",
-                  cfg.getServerRole(nodeName),
-                  databaseName);
-
-              ddb.resume();
-
-              // 1ST NODE TO HAVE THE DATABASE
-              cfg.addNewNodeInServerList(nodeName);
-
-              // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
-              reassignClustersOwnership(nodeName, databaseName, cfg, true);
-
-              ddb.setOnline();
-
-              return null;
-            });
-      }
-    }
+    ((OrientDBDistributed) serverInstance.getDatabases()).loadAllDatabases();
   }
 
   public void installNewDatabasesFromCluster() {
