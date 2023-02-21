@@ -1350,7 +1350,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
                   // FIRST TIME, ASK FOR FULL REPLICA
                   databaseInstalled =
-                      requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+                      requestFullDatabase(distrDatabase, databaseName, iStartup);
 
                 } else {
                   if (tryWithDeltaFirst) {
@@ -1377,12 +1377,12 @@ public class ODistributedPlugin extends OServerPluginAbstract
                       }
 
                       databaseInstalled =
-                          requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+                          requestFullDatabase(distrDatabase, databaseName, iStartup);
                     }
                   } else
                     // SKIP DELTA AND EXECUTE FULL BACKUP
                     databaseInstalled =
-                        requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+                        requestFullDatabase(distrDatabase, databaseName, iStartup);
                 }
 
                 if (!databaseInstalled) {
@@ -1476,7 +1476,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
             installResponseNewDeltaSync(
                 distrDatabase,
                 databaseName,
-                cfg,
                 targetNode,
                 (ONewDeltaTaskResponse) response.getPayload());
 
@@ -1507,8 +1506,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   protected boolean requestFullDatabase(
       final ODistributedDatabaseImpl distrDatabase,
       final String databaseName,
-      final boolean backupDatabase,
-      final OModifiableDistributedConfiguration cfg) {
+      final boolean backupDatabase) {
     ODistributedServerLog.info(
         this,
         nodeName,
@@ -1519,7 +1517,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     for (int retry = 0; retry < DEPLOY_DB_MAX_RETRIES; ++retry) {
       // ASK DATABASE TO THE FIRST NODE, THE FIRST ATTEMPT, OTHERWISE ASK TO EVERYONE
-      if (requestDatabaseFullSync(distrDatabase, backupDatabase, databaseName, retry > 0, cfg))
+      if (requestDatabaseFullSync(distrDatabase, backupDatabase, databaseName, retry > 0))
         // DEPLOYED
         return true;
       try {
@@ -1537,7 +1535,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   private boolean installResponseNewDeltaSync(
       ODistributedDatabaseImpl distrDatabase,
       String databaseName,
-      OModifiableDistributedConfiguration cfg,
       String targetNode,
       ONewDeltaTaskResponse results) {
     final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
@@ -1555,23 +1552,22 @@ public class ODistributedPlugin extends OServerPluginAbstract
         executeInDistributedDatabaseLock(
             databaseName,
             20000,
-            cfg,
-            (OCallable<Void, OModifiableDistributedConfiguration>)
-                cfg1 -> {
-                  try (InputStream in = receiver.getInputStream()) {
-                    new ONewDeltaSyncImporter()
-                        .importDelta(serverInstance, databaseName, in, targetNode);
-                  } catch (IOException e) {
-                    throw OException.wrapException(
-                        new OIOException("Error on distributed sync of database"), e);
-                  }
-                  return null;
-                });
+            null,
+            cfg1 -> {
+              try (InputStream in = receiver.getInputStream()) {
+                new ONewDeltaSyncImporter()
+                    .importDelta(serverInstance, databaseName, in, targetNode);
+              } catch (IOException e) {
+                throw OException.wrapException(
+                    new OIOException("Error on distributed sync of database"), e);
+              }
+              return null;
+            });
 
         distrDatabase.setOnline();
 
         try {
-          rebalanceClusterOwnership(nodeName, databaseName, cfg, false);
+          reassignClustersOwnership(nodeName, databaseName, null, false);
         } catch (Exception e) {
           // HANDLE IT AS WARNING
           ODistributedServerLog.warn(
@@ -1612,10 +1608,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final ODistributedDatabaseImpl distrDatabase,
       final boolean backupDatabase,
       final String databaseName,
-      final boolean iAskToAllNodes,
-      final OModifiableDistributedConfiguration cfg) {
+      final boolean iAskToAllNodes) {
     // GET ALL THE OTHER SERVERS
-    Collection<String> nodes = cfg.getServers(null, nodeName);
+    Collection<String> nodes = getActiveServers();
     if (nodes.isEmpty()) {
       ODistributedServerLog.warn(
           this,
@@ -1702,7 +1697,24 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
 
-      // EXTRACT THE REAL RESULT
+      for (Map.Entry<String, Object> r : results.entrySet()) {
+        final Object value = r.getValue();
+        if (value instanceof ODistributedDatabaseChunk) {
+          if (backupDatabase) backupCurrentDatabase(databaseName);
+
+          try {
+            installDatabaseFromNetwork(
+                dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value);
+          } catch (OException e) {
+            OLogManager.instance().error(this, "Error installing database from network", e);
+            continue;
+          }
+
+          distrDatabase.resume();
+          return true;
+        }
+      }
+
       for (Map.Entry<String, Object> r : results.entrySet()) {
         final Object value = r.getValue();
 
@@ -1728,26 +1740,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
           setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
 
           if (value instanceof ODistributedException) throw (ODistributedException) value;
-
-        } else if (value instanceof ODistributedDatabaseChunk) {
-          if (backupDatabase) backupCurrentDatabase(databaseName);
-
-          try {
-            installDatabaseFromNetwork(
-                dbPath,
-                databaseName,
-                distrDatabase,
-                r.getKey(),
-                (ODistributedDatabaseChunk) value,
-                cfg);
-          } catch (OException e) {
-            OLogManager.instance().error(this, "Error installing database from network", e);
-            return false;
-          }
-
-          distrDatabase.resume();
-
-          return true;
 
         } else throw new IllegalArgumentException("Type " + value + " not supported");
       }
@@ -1897,19 +1889,18 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final String databaseName,
       final ODistributedDatabaseImpl distrDatabase,
       final String iNode,
-      final ODistributedDatabaseChunk firstChunk,
-      final OModifiableDistributedConfiguration cfg) {
+      final ODistributedDatabaseChunk firstChunk) {
 
     OSyncReceiver receiver = new OSyncReceiver(this, databaseName, firstChunk, iNode, dbPath);
     receiver.spawnReceiverThread();
 
-    installDatabaseOnLocalNode(databaseName, dbPath, iNode, cfg, firstChunk.incremental, receiver);
+    installDatabaseOnLocalNode(databaseName, dbPath, iNode, firstChunk.incremental, receiver);
     receiver.close();
 
     distrDatabase.setOnline();
 
     try {
-      rebalanceClusterOwnership(nodeName, databaseName, cfg, false);
+      reassignClustersOwnership(nodeName, databaseName, null, false);
     } catch (Exception e) {
       // HANDLE IT AS WARNING
       ODistributedServerLog.warn(
@@ -2247,7 +2238,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final String databaseName,
       final String dbPath,
       final String iNode,
-      final OModifiableDistributedConfiguration cfg,
       boolean incremental,
       OSyncReceiver receiver) {
     ODistributedServerLog.info(
@@ -2270,7 +2260,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     executeInDistributedDatabaseLock(
         databaseName,
         20000,
-        cfg,
+        null,
         new OCallable<Void, OModifiableDistributedConfiguration>() {
           @Override
           public Void call(final OModifiableDistributedConfiguration cfg) {
@@ -2309,7 +2299,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                     installResponseNewDeltaSync(
                         distrDatabase,
                         databaseName,
-                        cfg,
                         iNode,
                         (ONewDeltaTaskResponse) response.getPayload());
                   }
