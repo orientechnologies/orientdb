@@ -28,7 +28,6 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -694,25 +693,22 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         databaseName,
         20000,
         cfg != null ? cfg.modify() : null,
-        new OCallable<Void, OModifiableDistributedConfiguration>() {
-          @Override
-          public Void call(final OModifiableDistributedConfiguration lastCfg) {
-            // GET LAST VERSION IN LOCK
-            final List<String> foundPartition = lastCfg.addNewNodeInServerList(serverName);
-            if (foundPartition != null) {
-              ODistributedServerLog.info(
-                  this,
-                  localNodeName,
-                  null,
-                  DIRECTION.NONE,
-                  "Adding node '%s' in partition: %s db=%s v=%d",
-                  serverName,
-                  foundPartition,
-                  databaseName,
-                  lastCfg.getVersion());
-            }
-            return null;
+        lastCfg -> {
+          // GET LAST VERSION IN LOCK
+          final List<String> foundPartition = lastCfg.addNewNodeInServerList(serverName);
+          if (foundPartition != null) {
+            ODistributedServerLog.info(
+                this,
+                localNodeName,
+                null,
+                DIRECTION.NONE,
+                "Adding node '%s' in partition: %s db=%s v=%d",
+                serverName,
+                foundPartition,
+                databaseName,
+                lastCfg.getVersion());
           }
+          return null;
         });
   }
 
