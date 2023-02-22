@@ -943,9 +943,9 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public void onEmbeddedFactoryInit(OrientDBEmbedded embeddedFactory) {
     OEngine memory = engines.get("memory");
-    if (!memory.isRunning()) memory.startup();
+    if (memory != null && !memory.isRunning()) memory.startup();
     OEngine disc = engines.get("plocal");
-    if (!disc.isRunning()) disc.startup();
+    if (disc != null && !disc.isRunning()) disc.startup();
     factories.add(embeddedFactory);
   }
 
@@ -953,9 +953,9 @@ public class Orient extends OListenerManger<OOrientListener> {
     factories.remove(embeddedFactory);
     if (factories.isEmpty()) {
       OEngine memory = engines.get("memory");
-      if (memory.isRunning()) memory.shutdown();
+      if (memory != null && memory.isRunning()) memory.shutdown();
       OEngine disc = engines.get("plocal");
-      if (disc.isRunning()) disc.shutdown();
+      if (disc != null && disc.isRunning()) disc.shutdown();
     }
   }
 
