@@ -169,5 +169,9 @@ public class OCreateSystemUserStatement extends OSimpleExecServerStatement {
   public int hashCode() {
     return Objects.hash(name, passwordIdentifier, passwordString, passwordParam, roles);
   }
+
+  public void addRole(OIdentifier identifer) {
+    this.roles.add(identifer);
+  }
 }
 /* JavaCC - OriginalChecksum=7d1598a31cf500e4b388bb961049e27f (do not edit this line) */

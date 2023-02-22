@@ -28,6 +28,13 @@ public class ODatabaseUserData extends SimpleNode {
     super(p, id);
   }
 
+  public void addRole(OIdentifier role) {
+    if (this.roles == null) {
+      this.roles = new ArrayList<>();
+    }
+    this.roles.add(role);
+  }
+
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (name != null) {

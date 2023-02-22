@@ -23,7 +23,7 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
   protected boolean ifNotExists = false;
   protected OJson config;
 
-  List<ODatabaseUserData> users = new ArrayList<>();
+  private List<ODatabaseUserData> users = new ArrayList<>();
 
   public OCreateDatabaseStatement(int id) {
     super(id);
@@ -31,6 +31,13 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
 
   public OCreateDatabaseStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  public void addUser(ODatabaseUserData user) {
+    if (this.users == null) {
+      this.users = new ArrayList<>();
+    }
+    this.users.add(user);
   }
 
   @Override

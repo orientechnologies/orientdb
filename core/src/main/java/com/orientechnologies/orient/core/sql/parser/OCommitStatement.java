@@ -24,6 +24,13 @@ public class OCommitStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
+  public void addElse(OStatement statement) {
+    if (elseStatements == null) {
+      elseStatements = new ArrayList<>();
+    }
+    this.elseStatements.add(statement);
+  }
+
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
     ctx.getDatabase()

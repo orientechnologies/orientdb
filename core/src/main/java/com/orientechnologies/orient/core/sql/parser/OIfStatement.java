@@ -32,6 +32,20 @@ public class OIfStatement extends OStatement {
     super(p, id);
   }
 
+  public void addStatement(OStatement statement) {
+    if (this.statements == null) {
+      this.statements = new ArrayList<>();
+    }
+    this.statements.add(statement);
+  }
+
+  public void addElse(OStatement statement) {
+    if (this.elseStatements == null) {
+      this.elseStatements = new ArrayList<>();
+    }
+    this.elseStatements.add(statement);
+  }
+
   @Override
   public boolean isIdempotent() {
     for (OStatement stm : statements) {

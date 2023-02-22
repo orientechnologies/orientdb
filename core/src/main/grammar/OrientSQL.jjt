@@ -4830,16 +4830,16 @@ OCreateSystemUserStatement CreateSystemUserStatement():
             (
               lastIdentifier = Identifier()
               {
-                 jjtThis.roles.add(lastIdentifier);
+                 jjtThis.addRole(lastIdentifier);
               }
             )
             |
             (
                <LBRACKET>
                [
-                 lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+                 lastIdentifier = Identifier() { jjtThis.addRole(lastIdentifier);}
                  (
-                    <COMMA> lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+                    <COMMA> lastIdentifier = Identifier() { jjtThis.addRole(lastIdentifier);}
                  )*
                ]
                <RBRACKET>
@@ -4888,7 +4888,7 @@ OCreateUserStatement CreateUserStatement():
             (
               lastIdentifier = Identifier()
               {
-                 jjtThis.roles.add(lastIdentifier);
+                 jjtThis.addRole(lastIdentifier);
               }
             )
             |
@@ -5022,7 +5022,7 @@ OCommitStatement CommitStatement():
                   { jjtThis.elseStatements = new ArrayList(); }
                   <LBRACE>
                   (
-                    last = StatementInternal() { jjtThis.elseStatements.add(last); }
+                    last = StatementInternal() { jjtThis.addElse(last); }
                     <SEMICOLON>
                   )+
                   <RBRACE>
@@ -5069,13 +5069,13 @@ OIfStatement IfStatement():
         <RPAREN><LBRACE>
         (
             LOOKAHEAD(StatementSemicolon())
-            last = StatementSemicolon() { jjtThis.statements.add(last); }
+            last = StatementSemicolon() { jjtThis.addStatement(last); }
             |
-            last = IfStatement() { jjtThis.statements.add(last); }
+            last = IfStatement() { jjtThis.addStatement(last); }
             |
-            last = WhileBlock() {jjtThis.statements.add(last); }
+            last = WhileBlock() {jjtThis.addStatement(last); }
             |
-            last = ForEachBlock() {jjtThis.statements.add(last); }
+            last = ForEachBlock() {jjtThis.addStatement(last); }
             |
             <SEMICOLON>
         )*
@@ -5313,13 +5313,13 @@ OForEachBlock ForEachBlock():
     <LBRACE>
     (
         LOOKAHEAD(StatementSemicolon())
-        lastStatement = StatementSemicolon() {jjtThis.statements.add(lastStatement); }
+        lastStatement = StatementSemicolon() {jjtThis.addStatement(lastStatement); }
         |
-        lastStatement = IfStatement() {jjtThis.statements.add(lastStatement); }
+        lastStatement = IfStatement() {jjtThis.addStatement(lastStatement); }
         |
-        lastStatement = ForEachBlock() {jjtThis.statements.add(lastStatement); }
+        lastStatement = ForEachBlock() {jjtThis.addStatement(lastStatement); }
         |
-        lastStatement = WhileBlock() {jjtThis.statements.add(lastStatement); }
+        lastStatement = WhileBlock() {jjtThis.addStatement(lastStatement); }
         |
         <SEMICOLON>
     )*
@@ -5339,13 +5339,13 @@ OWhileBlock WhileBlock():
     <LBRACE>
     (
         LOOKAHEAD(StatementSemicolon())
-        lastStatement = StatementSemicolon() {jjtThis.statements.add(lastStatement); }
+        lastStatement = StatementSemicolon() {jjtThis.addStatement(lastStatement); }
         |
-        lastStatement = IfStatement() {jjtThis.statements.add(lastStatement); }
+        lastStatement = IfStatement() {jjtThis.addStatement(lastStatement); }
         |
-        lastStatement = ForEachBlock() {jjtThis.statements.add(lastStatement); }
+        lastStatement = ForEachBlock() {jjtThis.addStatement(lastStatement); }
         |
-        lastStatement = WhileBlock() {jjtThis.statements.add(lastStatement); }
+        lastStatement = WhileBlock() {jjtThis.addStatement(lastStatement); }
         |
         <SEMICOLON>
     )*
@@ -5545,16 +5545,16 @@ ODatabaseUserData DatabaseUserData():
         (
           lastIdentifier = Identifier()
           {
-             jjtThis.roles.add(lastIdentifier);
+             jjtThis.addRole(lastIdentifier);
           }
         )
         |
         (
            <LBRACKET>
            [
-             lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+             lastIdentifier = Identifier() { jjtThis.addRole(lastIdentifier);}
              (
-                <COMMA> lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+                <COMMA> lastIdentifier = Identifier() { jjtThis.addRole(lastIdentifier);}
              )*
            ]
            <RBRACKET>
@@ -5582,9 +5582,9 @@ OCreateDatabaseStatement CreateDatabaseStatement():
     [
        <USERS> <LPAREN>
        (
-          lastUserData = DatabaseUserData() { jjtThis.users.add(lastUserData); }
+          lastUserData = DatabaseUserData() { jjtThis.addUser(lastUserData); }
           (
-            <COMMA> lastUserData = DatabaseUserData() { jjtThis.users.add(lastUserData); }
+            <COMMA> lastUserData = DatabaseUserData() { jjtThis.addUser(lastUserData); }
           )*
        )
        <RPAREN>

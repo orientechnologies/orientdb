@@ -34,6 +34,13 @@ public class OForEachBlock extends OStatement {
     super(p, id);
   }
 
+  public void addStatement(OStatement statement) {
+    if (statements == null) {
+      this.statements = new ArrayList<>();
+    }
+    this.statements.add(statement);
+  }
+
   @Override
   public OResultSet execute(
       ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
