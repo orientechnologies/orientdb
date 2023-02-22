@@ -26,6 +26,32 @@ public class OMatchPathItem extends SimpleNode {
     super(p, id);
   }
 
+  private void graphPath(OIdentifier edgeName, String direction) {
+    if (edgeName == null) {
+      edgeName = new OIdentifier(-1);
+      edgeName.value = "E";
+    }
+    this.method = new OMethodCall(-1);
+    this.method.methodName = new OIdentifier(-1);
+    this.method.methodName.value = direction;
+    OExpression exp = new OExpression(-1);
+    OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
+    exp.mathExpression = sub;
+    this.method.addParam(exp);
+  }
+
+  public void inPath(OIdentifier edgeName) {
+    graphPath(edgeName, "in");
+  }
+
+  public void bothPath(OIdentifier edgeName) {
+    graphPath(edgeName, "both");
+  }
+
+  public void outPath(OIdentifier edgeName) {
+    graphPath(edgeName, "out");
+  }
+
   public boolean isBidirectional() {
     if (filter.getWhileCondition() != null) {
       return false;

@@ -3832,17 +3832,7 @@ OMatchPathItem OutPathItem():
         jjtThis.filter = MatchFilter()
 
     {
-     if(edgeName==null){
-        edgeName = new OIdentifier(-1);
-        edgeName.value = "E";
-     }
-     jjtThis.method = new OMethodCall(-1);
-     jjtThis.method.methodName = new OIdentifier(-1);
-     jjtThis.method.methodName.value = "out";
-     OExpression exp = new OExpression(-1);
-     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
-     exp.mathExpression = sub;
-     jjtThis.method.addParam(exp);
+     jjtThis.outPath(edgeName);
      return jjtThis;
     }
 }
@@ -3864,17 +3854,7 @@ OMatchPathItem InPathItem():
         jjtThis.filter = MatchFilter()
 
     {
-     if(edgeName==null){
-        edgeName = new OIdentifier(-1);
-        edgeName.value = "E";
-     }
-     jjtThis.method = new OMethodCall(-1);
-     jjtThis.method.methodName = new OIdentifier(-1);
-     jjtThis.method.methodName.value = "in";
-     OExpression exp = new OExpression(-1);
-     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
-     exp.mathExpression = sub;
-     jjtThis.method.addParam(exp);
+     jjtThis.inPath(edgeName);
      return jjtThis;
     }
 }
@@ -3895,17 +3875,7 @@ OMatchPathItem BothPathItem():
         jjtThis.filter = MatchFilter()
 
     {
-     if(edgeName==null){
-        edgeName = new OIdentifier(-1);
-        edgeName.value = "E";
-     }
-     jjtThis.method = new OMethodCall(-1);
-     jjtThis.method.methodName = new OIdentifier(-1);
-     jjtThis.method.methodName.value = "both";
-     OExpression exp = new OExpression(-1);
-     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
-     exp.mathExpression = sub;
-     jjtThis.method.addParam(exp);
+     jjtThis.bothPath(edgeName);
      return jjtThis;
     }
 }
@@ -3928,17 +3898,7 @@ OMatchPathItem OutPathItemOpt():
         [jjtThis.filter = MatchFilter()]
 
     {
-     if(edgeName==null){
-        edgeName = new OIdentifier(-1);
-        edgeName.value = "E";
-     }
-     jjtThis.method = new OMethodCall(-1);
-     jjtThis.method.methodName = new OIdentifier(-1);
-     jjtThis.method.methodName.value = "out";
-     OExpression exp = new OExpression(-1);
-     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
-     exp.mathExpression = sub;
-     jjtThis.method.addParam(exp);
+     jjtThis.outPath(edgeName);
      return jjtThis;
     }
 }
@@ -3960,17 +3920,7 @@ OMatchPathItem InPathItemOpt():
         [jjtThis.filter = MatchFilter()]
 
     {
-     if(edgeName==null){
-        edgeName = new OIdentifier(-1);
-        edgeName.value = "E";
-     }
-     jjtThis.method = new OMethodCall(-1);
-     jjtThis.method.methodName = new OIdentifier(-1);
-     jjtThis.method.methodName.value = "in";
-     OExpression exp = new OExpression(-1);
-     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
-     exp.mathExpression = sub;
-     jjtThis.method.addParam(exp);
+     jjtThis.inPath(edgeName);
      return jjtThis;
     }
 }
@@ -3991,17 +3941,7 @@ OMatchPathItem BothPathItemOpt():
         [jjtThis.filter = MatchFilter()]
 
     {
-     if(edgeName==null){
-        edgeName = new OIdentifier(-1);
-        edgeName.value = "E";
-     }
-     jjtThis.method = new OMethodCall(-1);
-     jjtThis.method.methodName = new OIdentifier(-1);
-     jjtThis.method.methodName.value = "both";
-     OExpression exp = new OExpression(-1);
-     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
-     exp.mathExpression = sub;
-     jjtThis.method.addParam(exp);
+     jjtThis.bothPath(edgeName);
      return jjtThis;
     }
 }
