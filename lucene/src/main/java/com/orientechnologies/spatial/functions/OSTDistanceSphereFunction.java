@@ -20,8 +20,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
-import com.orientechnologies.orient.core.sql.parser.OLeOperator;
-import com.orientechnologies.orient.core.sql.parser.OLtOperator;
 import com.orientechnologies.spatial.shape.OShapeFactory;
 import com.orientechnologies.spatial.strategy.SpatialQueryBuilderDistanceSphere;
 import java.util.Map;
@@ -97,10 +95,6 @@ public class OSTDistanceSphereFunction extends OSpatialFunctionAbstractIndexable
     }
 
     return super.estimate(target, operator, rightValue, ctx, args);
-  }
-
-  private boolean isValidBinaryOperator(OBinaryCompareOperator operator) {
-    return operator instanceof OLtOperator || operator instanceof OLeOperator;
   }
 
   @Override

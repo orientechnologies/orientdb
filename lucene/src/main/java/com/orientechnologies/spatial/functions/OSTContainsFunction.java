@@ -55,6 +55,11 @@ public class OSTContainsFunction extends OSpatialFunctionAbstractIndexable {
   }
 
   @Override
+  protected boolean isValidBinaryOperator(OBinaryCompareOperator operator) {
+    return true;
+  }
+
+  @Override
   public String getSyntax() {
     return null;
   }
