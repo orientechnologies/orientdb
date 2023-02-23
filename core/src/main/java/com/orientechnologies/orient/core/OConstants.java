@@ -12,20 +12,13 @@ public class OConstants {
   private static final Properties properties = new Properties();
 
   static {
-    final InputStream inputStream =
-        OConstants.class.getResourceAsStream("/com/orientechnologies/orientdb.properties");
-    try {
-      properties.load(inputStream);
+    try (final InputStream inputStream =
+        OConstants.class.getResourceAsStream("/com/orientechnologies/orientdb.properties")) {
+      if (inputStream != null) {
+        properties.load(inputStream);
+      }
     } catch (IOException e) {
       OLogManager.instance().errorNoDb(OConstants.class, "Failed to load OrientDB properties", e);
-    } finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        } catch (IOException ignore) {
-          // Ignore
-        }
-      }
     }
   }
 
