@@ -177,7 +177,7 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
       Object rightValue,
       OCommandContext ctx,
       OExpression... args) {
-    return true;
+    return false;
   }
 
   @Override
