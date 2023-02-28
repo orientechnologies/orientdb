@@ -38,7 +38,7 @@ public class OBackupTask implements OBackupListener {
 
   public OBackupTask(OBackupStrategy strategy, OEnterpriseServer server) {
     this.strategy = strategy;
-    this.server=server;
+    this.server = server;
     schedule();
   }
 
@@ -49,7 +49,8 @@ public class OBackupTask implements OBackupListener {
           Orient.instance()
               .scheduleTask(
                   () -> {
-                    server.getDatabases()
+                    server
+                        .getDatabases()
                         .execute(
                             () -> {
                               try {
