@@ -1181,6 +1181,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
+  public <X> Future<X> execute(Callable<X> task) {
+    return executor.submit(task);
+  }
+
+  @Override
   public <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task) {
     return executor.submit(
         () -> {

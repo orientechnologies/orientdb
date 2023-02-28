@@ -25,6 +25,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETW
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.*;
 import com.orientechnologies.orient.client.remote.OStorageRemote.CONNECTION_STRATEGY;
@@ -49,7 +50,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBRemote implements OrientDBInternal {
@@ -64,6 +67,7 @@ public class OrientDBRemote implements OrientDBInternal {
   private volatile boolean open = true;
   private final Timer timer;
   private final ORemoteURLs urls;
+  private final ExecutorService executor;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
@@ -77,6 +81,14 @@ public class OrientDBRemote implements OrientDBInternal {
     orient.addOrientDB(this);
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
     urls = new ORemoteURLs(hosts, this.configurations.getConfigurations());
+    executor =
+        OThreadPoolExecutors.newScalingThreadPool(
+            "OrientDBRemote",
+            0,
+            Runtime.getRuntime().availableProcessors() / 2,
+            100,
+            1,
+            TimeUnit.MINUTES);
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
@@ -490,7 +502,12 @@ public class OrientDBRemote implements OrientDBInternal {
 
   @Override
   public Future<?> execute(Runnable task) {
-    throw new UnsupportedOperationException("execute not available in remote");
+    return executor.submit(task);
+  }
+
+  @Override
+  public <X> Future<X> execute(Callable<X> task) {
+    return executor.submit(task);
   }
 
   public void releaseDatabase(String database, String user, String password) {

@@ -333,6 +333,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
 
   Future<?> execute(Runnable task);
 
+  <X> Future<X> execute(Callable<X> task);
+
   <X> Future<X> execute(String database, String user, ODatabaseTask<X> task);
 
   <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task);
