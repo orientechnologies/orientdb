@@ -42,7 +42,7 @@ public class OBackupService implements OEnterpriseService {
     final Collection<ODocument> backups = config.backups();
     for (final ODocument backup : backups) {
       final OBackupStrategy strategy = config.strategy(backup, logger);
-      tasks.put(backup.field(OBackupConfig.ID), new OBackupTask(strategy));
+      tasks.put(backup.field(OBackupConfig.ID), new OBackupTask(strategy, this.server));
     }
   }
 
@@ -64,7 +64,7 @@ public class OBackupService implements OEnterpriseService {
   public ODocument addBackupAndSchedule(final ODocument backupConfigDoc) {
     final ODocument backup = config.addAndPushBackup(backupConfigDoc);
     final OBackupStrategy strategy = config.strategy(backup, logger);
-    tasks.put(backupConfigDoc.field(OBackupConfig.ID), new OBackupTask(strategy));
+    tasks.put(backupConfigDoc.field(OBackupConfig.ID), new OBackupTask(strategy, this.server));
     return backup;
   }
 

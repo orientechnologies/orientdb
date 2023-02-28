@@ -22,6 +22,7 @@ import com.orientechnologies.agent.services.backup.log.OBackupLog;
 import com.orientechnologies.agent.services.backup.log.OBackupLogType;
 import com.orientechnologies.agent.services.backup.strategy.OBackupStrategy;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
@@ -33,9 +34,11 @@ public class OBackupTask implements OBackupListener {
   private OBackupStrategy strategy;
   private TimerTask task;
   private OBackupListener listener;
+  private OEnterpriseServer server;
 
-  public OBackupTask(OBackupStrategy strategy) {
+  public OBackupTask(OBackupStrategy strategy, OEnterpriseServer server) {
     this.strategy = strategy;
+    this.server=server;
     schedule();
   }
 
@@ -46,8 +49,8 @@ public class OBackupTask implements OBackupListener {
           Orient.instance()
               .scheduleTask(
                   () -> {
-                    Orient.instance()
-                        .submit(
+                    server.getDatabases()
+                        .execute(
                             () -> {
                               try {
                                 final long start = tickStart();
