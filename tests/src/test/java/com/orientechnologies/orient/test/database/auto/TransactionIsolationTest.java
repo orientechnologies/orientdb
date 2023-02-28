@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -128,8 +127,9 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
         .save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
     Future<List<OIdentifiable>> txFuture =
-        Orient.instance()
-            .submit(
+        db1.getSharedContext()
+            .getOrientDB()
+            .execute(
                 new Callable<List<OIdentifiable>>() {
                   @Override
                   public List<OIdentifiable> call() throws Exception {
@@ -184,8 +184,9 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
         .save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
     Future<List<OIdentifiable>> txFuture =
-        Orient.instance()
-            .submit(
+        db1.getSharedContext()
+            .getOrientDB()
+            .execute(
                 new Callable<List<OIdentifiable>>() {
                   @Override
                   public List<OIdentifiable> call() throws Exception {
