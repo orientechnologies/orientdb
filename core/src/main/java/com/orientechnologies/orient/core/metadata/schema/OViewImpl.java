@@ -39,38 +39,42 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     this.cfg = new OViewConfig(getName(), query);
     this.cfg.setUpdatable(Boolean.TRUE.equals(document.getProperty("updatable")));
 
-    List<Map<String, Object>> idxData = document.getProperty("indexes");
-    for (Map<String, Object> idx : idxData) {
-      String type = (String) idx.get("type");
-      String engine = (String) idx.get("engine");
-      OViewConfig.OViewIndexConfig indexConfig = this.cfg.addIndex(type, engine);
-      for (Map.Entry<String, Object> prop :
-          ((Map<String, Object>) idx.get("properties")).entrySet()) {
-        OType proType = null;
-        OType linkedType = null;
-        String collateName = null;
-        INDEX_BY indexBy = null;
-        if (prop.getValue() instanceof Map) {
-          Map<String, Object> value = (Map<String, Object>) prop.getValue();
-          if (value.size() > 0 && value.get("type") != null) {
-            proType = OType.valueOf(value.get("type").toString());
-          }
-          if (value.size() > 1 && value.get("linkedType") != null) {
-            linkedType = OType.valueOf(value.get("linkedType").toString());
-          }
-          if (value.size() > 1 && value.get("collate") != null) {
-            collateName = value.get("collate").toString();
-          }
-          if (value.size() > 1 && value.get("collate") != null) {
-            indexBy = INDEX_BY.valueOf(value.get("collate").toString().toUpperCase());
-          }
-        } else {
-          if (prop.getValue() != null) {
-            proType = OType.valueOf(prop.getValue().toString());
+    if (document.getProperty("indexes") instanceof Map) {
+      List<Map<String, Object>> idxData = document.getProperty("indexes");
+      for (Map<String, Object> idx : idxData) {
+        String type = (String) idx.get("type");
+        String engine = (String) idx.get("engine");
+        OViewConfig.OViewIndexConfig indexConfig = this.cfg.addIndex(type, engine);
+        if (idx.get("properties") instanceof Map) {
+          Map<String, Object> props = (Map<String, Object>) idx.get("properties");
+          for (Map.Entry<String, Object> prop : props.entrySet()) {
+            OType proType = null;
+            OType linkedType = null;
+            String collateName = null;
+            INDEX_BY indexBy = null;
+            if (prop.getValue() instanceof Map) {
+              Map<String, Object> value = (Map<String, Object>) prop.getValue();
+              if (value.size() > 0 && value.get("type") != null) {
+                proType = OType.valueOf(value.get("type").toString());
+              }
+              if (value.size() > 1 && value.get("linkedType") != null) {
+                linkedType = OType.valueOf(value.get("linkedType").toString());
+              }
+              if (value.size() > 1 && value.get("collate") != null) {
+                collateName = value.get("collate").toString();
+              }
+              if (value.size() > 1 && value.get("collate") != null) {
+                indexBy = INDEX_BY.valueOf(value.get("collate").toString().toUpperCase());
+              }
+            } else {
+              if (prop.getValue() != null) {
+                proType = OType.valueOf(prop.getValue().toString());
+              }
+            }
+            OCollate collate = OSQLEngine.getCollate(collateName);
+            indexConfig.addProperty(prop.getKey(), proType, linkedType, collate, indexBy);
           }
         }
-        OCollate collate = OSQLEngine.getCollate(collateName);
-        indexConfig.addProperty(prop.getKey(), proType, linkedType, collate, indexBy);
       }
     }
     if (document.getProperty("updateIntervalSeconds") instanceof Integer) {
@@ -156,6 +160,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
           entry.put("collate", s.getCollate().getName());
         }
         properties.put(s.getName(), entry);
+        indexDescriptor.put("properties", properties);
       }
       indexes.add(indexDescriptor);
     }
