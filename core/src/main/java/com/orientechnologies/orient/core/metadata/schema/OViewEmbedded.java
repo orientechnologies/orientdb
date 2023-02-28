@@ -274,8 +274,7 @@ public class OViewEmbedded extends OViewImpl {
   public OViewRemovedMetadata replaceViewClusterAndIndex(final int cluster, List<OIndex> indexes) {
     acquireSchemaWriteLock();
     try {
-      List<String> oldIndexes = getInactiveIndexes();
-      inactivateIndexes();
+      List<String> oldIndexes = inactivateIndexes();
       int[] oldClusters = getClusterIds();
       addClusterId(cluster);
       for (int i : oldClusters) {

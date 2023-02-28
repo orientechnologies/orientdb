@@ -22,7 +22,6 @@ public abstract class OViewImpl extends OClassImpl implements OView {
 
   private OViewConfig cfg;
   private Set<String> activeIndexNames = new HashSet<>();
-  private List<String> inactiveIndexNames = new ArrayList<>();
 
   protected OViewImpl(OSchemaShared iOwner, String iName, OViewConfig cfg, int[] iClusterIds) {
     super(iOwner, iName, iClusterIds);
@@ -92,9 +91,6 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     if (document.getProperty("activeIndexNames") instanceof Set) {
       activeIndexNames = document.getProperty("activeIndexNames");
     }
-    if (document.getProperty("inactiveIndexNames") instanceof List) {
-      inactiveIndexNames = document.getProperty("inactiveIndexNames");
-    }
   }
 
   @Override
@@ -133,7 +129,6 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("originRidField", cfg.getOriginRidField());
     result.setProperty("nodes", cfg.getNodes());
     result.setProperty("activeIndexNames", activeIndexNames);
-    result.setProperty("inactiveIndexNames", inactiveIndexNames);
     return result;
   }
 
@@ -171,7 +166,6 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("originRidField", cfg.getOriginRidField());
     result.setProperty("nodes", cfg.getNodes());
     result.setProperty("activeIndexNames", activeIndexNames);
-    result.setProperty("inactiveIndexNames", inactiveIndexNames);
     return result;
   }
 
@@ -261,32 +255,14 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     }
   }
 
-  public void inactivateIndexes() {
+  public List<String> inactivateIndexes() {
     acquireSchemaWriteLock();
     try {
-      this.inactiveIndexNames.addAll(activeIndexNames);
+      List<String> oldIndexes = new ArrayList<>(activeIndexNames);
       this.activeIndexNames.clear();
+      return oldIndexes;
     } finally {
       releaseSchemaWriteLock();
-    }
-  }
-
-  public void inactivateIndex(String name) {
-    acquireSchemaWriteLock();
-    try {
-      this.activeIndexNames.remove(name);
-      this.inactiveIndexNames.add(name);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  public List<String> getInactiveIndexes() {
-    acquireSchemaReadLock();
-    try {
-      return new ArrayList<String>(inactiveIndexNames);
-    } finally {
-      releaseSchemaReadLock();
     }
   }
 
