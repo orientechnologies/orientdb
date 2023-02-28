@@ -488,6 +488,11 @@ public class OrientDBRemote implements OrientDBInternal {
     throw new UnsupportedOperationException("execute with no session not available in remote");
   }
 
+  @Override
+  public Future<?> execute(Runnable task) {
+    throw new UnsupportedOperationException("execute not available in remote");
+  }
+
   public void releaseDatabase(String database, String user, String password) {
     OReleaseDatabaseRequest request = new OReleaseDatabaseRequest(database, null);
     OReleaseDatabaseResponse response = connectAndSend(database, user, password, request);

@@ -1643,16 +1643,16 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OPushManager manager = server.getPushManager();
     manager.subscribeDistributeConfig((ONetworkProtocolBinary) connection.getProtocol());
 
-    Set<String> dbs = server.getDatabases().listLodadedDatabases();
+    OrientDBInternal databases = server.getDatabases();
+    Set<String> dbs = databases.listLodadedDatabases();
     ODistributedServerManager plugin = server.getPlugin("cluster");
     if (plugin != null) {
-      Orient.instance()
-          .submit(
-              () -> {
-                for (String db : dbs) {
-                  plugin.notifyClients(db);
-                }
-              });
+      databases.execute(
+          () -> {
+            for (String db : dbs) {
+              plugin.notifyClients(db);
+            }
+          });
     }
     return new OSubscribeDistributedConfigurationResponse();
   }

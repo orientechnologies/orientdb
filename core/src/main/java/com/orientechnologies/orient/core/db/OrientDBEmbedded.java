@@ -210,8 +210,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public void initAutoClose(long delay) {
     final long scheduleTime = delay / 3;
     autoCloseTimer =
-        orient.scheduleTask(
-            () -> orient.submit(() -> checkAndCloseStorages(delay)), scheduleTime, scheduleTime);
+        new TimerTask() {
+          @Override
+          public void run() {
+            OrientDBEmbedded.this.execute(() -> checkAndCloseStorages(delay));
+          }
+        };
+    schedule(autoCloseTimer, scheduleTime, scheduleTime);
   }
 
   private synchronized void checkAndCloseStorages(long delay) {
@@ -1168,6 +1173,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
             return task.call(session);
           }
         });
+  }
+
+  @Override
+  public Future<?> execute(Runnable task) {
+    return executor.submit(task);
   }
 
   @Override

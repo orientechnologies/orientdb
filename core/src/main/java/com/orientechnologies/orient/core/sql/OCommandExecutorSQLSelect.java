@@ -1847,7 +1847,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             ODatabaseRecordThreadLocal.instance().remove();
           };
 
-      jobs.add(Orient.instance().submit(job));
+      jobs.add(db.getSharedContext().getOrientDB().execute(job));
     }
 
     final int maxQueueSize =
