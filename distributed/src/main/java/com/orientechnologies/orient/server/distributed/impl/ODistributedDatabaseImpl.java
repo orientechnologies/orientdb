@@ -905,8 +905,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     List<OTransactionId> res = sequenceManager.checkSelfStatus(status);
     res.removeAll(this.inQueue);
     if (!res.isEmpty()) {
-      Orient.instance()
-          .submit(
+      this.manager
+          .getServerInstance()
+          .getDatabases()
+          .execute(
               () -> {
                 manager.installDatabase(false, databaseName, true, true);
               });

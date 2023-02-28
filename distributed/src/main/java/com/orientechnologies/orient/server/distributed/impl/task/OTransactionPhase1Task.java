@@ -437,8 +437,11 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
                   new Runnable() {
                     @Override
                     public void run() {
-                      Orient.instance()
-                          .submit(
+                      distributedDatabase
+                          .getManager()
+                          .getServerInstance()
+                          .getDatabases()
+                          .execute(
                               () -> {
                                 if (!finished) {
                                   ODistributedDatabaseImpl.sendResponseBack(

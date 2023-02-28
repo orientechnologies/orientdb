@@ -16,7 +16,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -698,8 +697,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         } catch (RuntimeException | Error e) {
           txContext.destroy();
           localDistributedDatabase.popTxContext(transactionId);
-          Orient.instance()
-              .submit(
+          this.sharedContext
+              .getOrientDB()
+              .execute(
                   () -> {
                     getDistributedManager().installDatabase(false, getName(), true, true);
                   });
@@ -773,11 +773,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           } catch (RuntimeException | Error e) {
             txContext.destroy();
             localDistributedDatabase.popTxContext(transactionId);
-            Orient.instance()
-                .submit(
+            this.sharedContext
+                .getOrientDB()
+                .execute(
                     () -> {
                       getDistributedManager().installDatabase(false, getName(), true, true);
                     });
+
             throw e;
           } finally {
             OLiveQueryHook.removePendingDatabaseOps(this);
@@ -786,8 +788,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         } else {
           txContext.destroy();
           localDistributedDatabase.popTxContext(transactionId);
-          Orient.instance()
-              .submit(
+          this.sharedContext
+              .getOrientDB()
+              .execute(
                   () -> {
                     OLogManager.instance()
                         .warn(
@@ -1436,17 +1439,20 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   return null;
                 });
           } catch (RuntimeException | Error e) {
-            Orient.instance()
-                .submit(
+            this.sharedContext
+                .getOrientDB()
+                .execute(
                     () -> {
                       getDistributedManager().installDatabase(false, getName(), true, true);
                     });
+
             throw e;
           }
         } else {
           ODistributedRequestId id = context.getReqId();
-          Orient.instance()
-              .submit(
+          this.sharedContext
+              .getOrientDB()
+              .execute(
                   () -> {
                     OLogManager.instance()
                         .warn(

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -148,8 +147,10 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
                   autoRetryDelay);
           hasResponse = false;
         } else {
-          Orient.instance()
-              .submit(
+          database
+              .getSharedContext()
+              .getOrientDB()
+              .execute(
                   () -> {
                     OLogManager.instance()
                         .warn(
