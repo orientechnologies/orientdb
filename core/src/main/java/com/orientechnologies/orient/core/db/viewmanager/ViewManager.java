@@ -367,32 +367,39 @@ public class ViewManager {
       OViewRemovedMetadata oldMetadata =
           ((OViewImpl) view).replaceViewClusterAndIndex(cluster, indexes);
       OLogManager.instance()
-          .warn(
+          .info(
               this,
-              "Replacing for view '%s' clusters '%s' with '%s'",
+              "Replaced for view '%s' clusters '%s' with '%s'",
               viewName,
               Arrays.stream(oldMetadata.getClusters())
                   .mapToObj((i) -> i + " => " + db.getClusterNameById(i))
                   .collect(Collectors.toList())
                   .toString(),
               cluster + " => " + db.getClusterNameById(cluster));
+      OLogManager.instance()
+          .info(
+              this,
+              "Replaced for view '%s' indexes '%s' with '%s'",
+              viewName,
+              oldMetadata.getIndexes().toString(),
+              indexes.stream().map((i) -> i.getName()).collect(Collectors.toList()).toString());
       for (int i : oldMetadata.getClusters()) {
         clustersToDrop.add(i);
         oldClustersPerViews.put(i, viewName);
       }
-
       oldMetadata
           .getIndexes()
           .forEach(
               idx -> {
                 indexesToDrop.add(idx);
               });
-      cleanUnusedViewIndexes(db);
-      cleanUnusedViewClusters(db);
+
       OLogManager.instance().info(this, "Finished refresh of view '%s'", viewName);
     } finally {
       refreshing.remove(viewName);
     }
+    cleanUnusedViewIndexes(db);
+    cleanUnusedViewClusters(db);
   }
 
   private void fillView(
