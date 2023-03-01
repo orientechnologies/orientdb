@@ -254,7 +254,6 @@ public abstract class OViewImpl extends OClassImpl implements OView {
           .map(name -> idxManager.getIndex(database, name))
           .filter(Objects::nonNull)
           .forEach(indexes::add);
-      idxManager.getClassIndexes(database, name, indexes);
     } finally {
       releaseSchemaReadLock();
     }
