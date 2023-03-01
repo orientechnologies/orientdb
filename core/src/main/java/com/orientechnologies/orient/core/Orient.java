@@ -28,7 +28,6 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerStub;
-import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactory;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactoryImpl;
@@ -60,13 +59,8 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -132,7 +126,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   private volatile OAbstractProfiler profiler;
   private ODatabaseThreadLocalFactory databaseThreadFactory;
   private volatile boolean active = false;
-  private ExecutorService workers;
   private OSignalHandler signalHandler;
 
   /** Indicates that engine is initialized inside of web application container. */
@@ -265,19 +258,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         signalHandler.installDefaultSignals();
       }
 
-      final int cores = Runtime.getRuntime().availableProcessors();
-
-      workers =
-          OThreadPoolExecutors.newBlockingScalingThreadPool(
-              "Orient Worker",
-              threadGroup,
-              cores,
-              cores * 3,
-              cores * 100,
-              cores * 500,
-              10,
-              TimeUnit.SECONDS);
-
       registerEngines();
 
       if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
@@ -329,7 +309,6 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   /** Adds shutdown handlers in order which will be used during execution of shutdown. */
   private void initShutdownQueue() {
-    addShutdownHandler(new OShutdownWorkersHandler());
     addShutdownHandler(new OShutdownOrientDBInstancesHandler());
     addShutdownHandler(new OShutdownPendingThreadsHandler());
     addShutdownHandler(new OShutdownProfilerHandler());
@@ -493,41 +472,6 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public boolean isActive() {
     return active;
-  }
-
-  /**
-   * @deprecated This method is not thread safe. Use {@link #submit(java.util.concurrent.Callable)}
-   *     instead.
-   */
-  @Deprecated
-  public ThreadPoolExecutor getWorkers() {
-    return (ThreadPoolExecutor) workers;
-  }
-
-  public Future<?> submit(final Runnable runnable) {
-    engineLock.readLock().lock();
-    try {
-      if (active) return workers.submit(runnable);
-      else {
-        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be submitted.");
-        throw new IllegalStateException("OrientDB engine is down. Task will not be submitted.");
-      }
-    } finally {
-      engineLock.readLock().unlock();
-    }
-  }
-
-  public <V> Future<V> submit(final Callable<V> callable) {
-    engineLock.readLock().lock();
-    try {
-      if (active) return workers.submit(callable);
-      else {
-        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be submitted.");
-        throw new IllegalStateException("OrientDB engine is down. Task will not be submitted.");
-      }
-    } finally {
-      engineLock.readLock().unlock();
-    }
   }
 
   public boolean isWindowsOS() {
@@ -816,32 +760,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         internal.internalClose();
       }
       runningInstances.clear();
-    }
-
-    @Override
-    public String toString() {
-      return getClass().getSimpleName();
-    }
-  }
-
-  /**
-   * Shutdown thread group which is used in methods {@link #submit(Callable)} and {@link
-   * #submit(Runnable)}.
-   */
-  public class OShutdownWorkersHandler implements OShutdownHandler {
-    @Override
-    public int getPriority() {
-      return SHUTDOWN_WORKERS_PRIORITY;
-    }
-
-    @Override
-    public void shutdown() throws Exception {
-      workers.shutdown();
-      try {
-        workers.awaitTermination(2, TimeUnit.MINUTES);
-      } catch (InterruptedException e) {
-        OLogManager.instance().error(this, "Shutdown was interrupted", e);
-      }
     }
 
     @Override
