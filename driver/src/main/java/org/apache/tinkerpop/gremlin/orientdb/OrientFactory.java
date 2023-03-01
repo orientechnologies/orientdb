@@ -4,8 +4,8 @@ import static org.apache.tinkerpop.gremlin.orientdb.OrientGraph.CONFIG_PASS;
 import static org.apache.tinkerpop.gremlin.orientdb.OrientGraph.CONFIG_URL;
 import static org.apache.tinkerpop.gremlin.orientdb.OrientGraph.CONFIG_USER;
 
-import org.apache.commons.configuration.BaseConfiguration;
-import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration2.BaseConfiguration;
+import org.apache.commons.configuration2.Configuration;
 
 /** OrientFactory is used to open a new OrientStandardGraph */
 public class OrientFactory {

@@ -8,7 +8,7 @@ import static org.junit.Assert.assertTrue;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.tinkerpop.AbstractRemoteTest;
 import java.util.concurrent.ExecutionException;
-import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration2.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.apache.tinkerpop.gremlin.driver.Cluster;
 import org.apache.tinkerpop.gremlin.driver.MessageSerializer;

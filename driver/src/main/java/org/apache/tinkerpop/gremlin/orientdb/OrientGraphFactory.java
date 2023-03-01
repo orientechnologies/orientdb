@@ -11,8 +11,8 @@ import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
-import org.apache.commons.configuration.BaseConfiguration;
-import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration2.BaseConfiguration;
+import org.apache.commons.configuration2.Configuration;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseFactory {

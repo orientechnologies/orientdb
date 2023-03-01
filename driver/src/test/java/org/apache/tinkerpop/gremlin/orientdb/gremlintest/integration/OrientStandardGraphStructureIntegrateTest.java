@@ -4,9 +4,9 @@ package org.apache.tinkerpop.gremlin.orientdb.gremlintest.integration;
 import org.apache.tinkerpop.gremlin.GraphProviderClass;
 import org.apache.tinkerpop.gremlin.orientdb.OrientStandardGraph;
 import org.apache.tinkerpop.gremlin.orientdb.gremlintest.OrientStandardGraphProvider;
-import org.apache.tinkerpop.gremlin.structure.StructureIntegrateSuite;
+import org.apache.tinkerpop.gremlin.structure.StructureStandardSuite;
 import org.junit.runner.RunWith;
 
-@RunWith(StructureIntegrateSuite.class)
+@RunWith(StructureStandardSuite.class)
 @GraphProviderClass(provider = OrientStandardGraphProvider.class, graph = OrientStandardGraph.class)
 public class OrientStandardGraphStructureIntegrateTest {}

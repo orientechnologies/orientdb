@@ -16,7 +16,7 @@ import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration2.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.junit.Assert;
 import org.junit.Test;

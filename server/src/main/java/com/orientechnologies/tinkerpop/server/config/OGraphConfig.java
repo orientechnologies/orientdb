@@ -16,7 +16,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Objects;
 import javax.script.Bindings;
-import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration2.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraphBaseFactory;
 import org.apache.tinkerpop.gremlin.orientdb.OrientStandardGraph;

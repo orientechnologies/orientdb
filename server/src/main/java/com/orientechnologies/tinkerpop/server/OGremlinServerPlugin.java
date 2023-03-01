@@ -12,7 +12,7 @@ import com.orientechnologies.tinkerpop.server.config.OGraphConfig;
 import java.io.*;
 import java.util.concurrent.CompletableFuture;
 import javax.script.Bindings;
-import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration2.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.orientdb.OrientEmbeddedFactory;
 import org.apache.tinkerpop.gremlin.orientdb.OrientStandardGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;

@@ -46,7 +46,7 @@ public abstract class OrientElement implements Element, OIdentifiable {
 
   private <V> Property<V> property(final String key, final V value, boolean saveDocument) {
     if (key == null) throw Property.Exceptions.propertyKeyCanNotBeNull();
-    if (value == null) throw Property.Exceptions.propertyValueCanNotBeNull();
+    if (value == null) throw new IllegalArgumentException("Property value can not be null");
     if (Graph.Hidden.isHidden(key)) throw Property.Exceptions.propertyKeyCanNotBeAHiddenKey(key);
 
     this.graph.tx().readWrite();

@@ -5,7 +5,7 @@ import static org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils.asList;
 
 import java.util.Arrays;
 import java.util.Map;
-import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration2.Configuration;
 import org.apache.tinkerpop.gremlin.LoadGraphWith;
 import org.apache.tinkerpop.gremlin.orientdb.OrientFactory;
 import org.apache.tinkerpop.gremlin.orientdb.OrientStandardGraph;
