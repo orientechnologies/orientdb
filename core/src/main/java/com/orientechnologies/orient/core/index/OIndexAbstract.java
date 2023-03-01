@@ -651,7 +651,22 @@ public abstract class OIndexAbstract implements OIndexInternal {
         //noinspection ObjectAllocationInLoop
         try {
           try (final Stream<ORawPair<Object, ORID>> stream = stream()) {
-            stream.forEach((pair) -> remove(pair.first, pair.second));
+            ODatabaseDocumentInternal database = getDatabase();
+            Iterator<ORawPair<Object, ORID>> iterator = stream.iterator();
+            long count = 0;
+            database.begin();
+            try {
+              while (iterator.hasNext()) {
+                ORawPair<Object, ORID> pair = iterator.next();
+                remove(pair.first, pair.second);
+                if (count % 1000 == 0) {
+                  database.commit();
+                  database.begin();
+                }
+              }
+            } finally {
+              database.commit();
+            }
           }
         } catch (OIndexEngineException e) {
           throw e;
