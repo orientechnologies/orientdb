@@ -24,8 +24,6 @@ public class TestOrientBulkInsert {
   }
 
   public TestOrientBulkInsert() throws InterruptedException {
-    OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.setValue(0); // Turn off cache
-    OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(0);
 
     Map defaultsMap = new HashMap<String, Object>();
     defaultsMap.put("mvrbtree.lazyUpdates", 1);

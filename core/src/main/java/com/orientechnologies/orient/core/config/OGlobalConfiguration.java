@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
@@ -258,14 +257,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Integer.class,
       -1),
 
-  @Deprecated
-  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL(
-      "storage.diskCache.diskFreeSpaceCheckInterval",
-      "The interval (in seconds), after which the storage periodically "
-          + "checks whether the amount of free disk space is enough to work in write mode",
-      Integer.class,
-      5),
-
   /**
    * The interval (how many new pages should be added before free space will be checked), after
    * which the storage periodically checks whether the amount of free disk space is enough to work
@@ -359,19 +350,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Boolean.class,
       false),
 
-  /**
-   * @deprecated because it was used as workaround for the case when storage is already opened but
-   *     there are no checkpoints and as result data restore after crash may work incorrectly, this
-   *     bug is fixed under https://github.com/orientechnologies/orientdb/issues/7562 in so this
-   *     functionality is not needed any more.
-   */
-  @Deprecated
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN(
-      "storage.makeFullCheckpointAfterOpen",
-      "Indicates whether a full checkpoint should be performed, if storage was opened. It is needed so fuzzy checkpoints can work properly",
-      Boolean.class,
-      true),
-
   STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT(
       "storage.atomicOperationsTable.compactionLimit",
       "Limit of size of atomic operations table after which compaction will be triggered on",
@@ -415,14 +393,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
           + "If both set maximum and minimum size of segments. Minimum size always will have priority over maximum size.",
       Integer.class,
       256),
-
-  @Deprecated
-  STORAGE_TRACK_PAGE_OPERATIONS_IN_TX(
-      "storage.trackOperationsInTx",
-      "If this flag switched on, transaction features will be implemented "
-          + "not by tracking of binary changes, but by tracking of operations on page level.",
-      Boolean.class,
-      false),
 
   STORAGE_PAGE_OPERATIONS_CACHE_SIZE(
       "storage.pageOperationsCacheSize",
@@ -699,13 +669,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Integer.class,
       2000),
 
-  @Deprecated
-  STORAGE_USE_TOMBSTONES(
-      "storage.useTombstones",
-      "When a record is deleted, the space in the cluster will not be freed, but rather tombstoned",
-      Boolean.class,
-      false),
-
   // RECORDS
   @Deprecated
   RECORD_DOWNSIZING_ENABLED(
@@ -777,35 +740,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   DB_CUSTOM_SUPPORT(
       "db.custom.support", "Enables or disables use of custom types", Boolean.class, false, false),
 
-  // SETTINGS OF NON-TRANSACTIONAL MODE
-  @Deprecated
-  NON_TX_RECORD_UPDATE_SYNCH(
-      "nonTX.recordUpdate.synch",
-      "Executes a sync against the file-system for every record operation. This slows down record updates, "
-          + "but guarantees reliability on unreliable drives",
-      Boolean.class,
-      Boolean.FALSE),
-
-  NON_TX_CLUSTERS_SYNC_IMMEDIATELY(
-      "nonTX.clusters.sync.immediately",
-      "List of clusters to sync immediately after update (separated by commas). Can be useful for a manual index",
-      String.class,
-      OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME),
-
-  // TRANSACTIONS
-  @Deprecated
-  TX_TRACK_ATOMIC_OPERATIONS(
-      "tx.trackAtomicOperations",
-      "This setting is used only for debug purposes. It creates a stack trace of methods, when an atomic operation is started",
-      Boolean.class,
-      false),
-
-  TX_PAGE_CACHE_SIZE(
-      "tx.pageCacheSize",
-      "The size of a per-transaction page cache in pages, 12 by default, 0 to disable the cache.",
-      Integer.class,
-      12),
-
   // INDEX
   INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD(
       "index.embeddedToSbtreeBonsaiThreshold",
@@ -834,28 +768,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Boolean.class,
       Boolean.TRUE),
 
-  @Deprecated
-  INDEX_AUTO_LAZY_UPDATES(
-      "index.auto.lazyUpdates",
-      "Configure the TreeMaps for automatic indexes, as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
-      Integer.class,
-      10000),
-
   INDEX_FLUSH_AFTER_CREATE(
       "index.flushAfterCreate", "Flush storage buffer after index creation", Boolean.class, true),
-
-  @Deprecated
-  INDEX_MANUAL_LAZY_UPDATES(
-      "index.manual.lazyUpdates",
-      "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
-      Integer.class,
-      1),
-  @Deprecated
-  INDEX_DURABLE_IN_NON_TX_MODE(
-      "index.durableInNonTxMode",
-      "Indicates whether index implementation for plocal storage will be durable in non-Tx mode (true by default)",
-      Boolean.class,
-      true),
 
   INDEX_ALLOW_MANUAL_INDEXES(
       "index.allowManualIndexes",
@@ -963,14 +877,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Integer.class,
       30000),
 
-  // FILE
-  @Deprecated
-  TRACK_FILE_CLOSE(
-      "file.trackFileClose",
-      "Log all the cases when files are closed. This is needed only for internal debugging purposes",
-      Boolean.class,
-      false),
-
   FILE_LOCK("file.lock", "Locks files when used. Default is true", boolean.class, true),
 
   FILE_DELETE_DELAY(
@@ -1073,14 +979,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "TCP/IP max content length (in KB) of BINARY requests",
       Integer.class,
       16384,
-      true),
-
-  @Deprecated
-  NETWORK_BINARY_READ_RESPONSE_MAX_TIMES(
-      "network.binary.readResponse.maxTimes",
-      "Maximum attempts, until a response can be read. Otherwise, the response will be dropped from the channel",
-      Integer.class,
-      20,
       true),
 
   NETWORK_BINARY_MIN_PROTOCOL_VERSION(
@@ -1350,13 +1248,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Integer.class,
       20000),
 
-  @Deprecated
-  QUERY_SCAN_PREFETCH_PAGES(
-      "query.scanPrefetchPages",
-      "Pages to prefetch during scan. Setting this value higher makes scans faster, because it reduces the number of I/O operations, though it consumes more memory. (Use 0 to disable)",
-      Integer.class,
-      20),
-
   QUERY_SCAN_BATCH_SIZE(
       "query.scanBatchSize",
       "Scan clusters in blocks of records. This setting reduces the lock time on the cluster during scans."
@@ -1580,30 +1471,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       15000l),
 
   /** @Since 2.2.7 */
-  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHAIN(
-      "distributed.conflictResolverRepairerChain",
-      "Chain of conflict resolver implementation to use",
-      String.class,
-      "majority,content,version",
-      false),
-
-  /** @Since 2.2.7 */
-  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY(
-      "distributed.conflictResolverRepairerCheckEvery",
-      "Time (in ms) when the conflict resolver auto-repairer checks for records/cluster to repair",
-      Long.class,
-      5000,
-      true),
-
-  /** @Since 2.2.7 */
-  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH(
-      "distributed.conflictResolverRepairerBatch",
-      "Maximum number of records to repair in batch",
-      Integer.class,
-      1000,
-      true),
-
-  /** @Since 2.2.7 */
   DISTRIBUTED_TX_EXPIRE_TIMEOUT(
       "distributed.txAliveTimeout",
       "Maximum timeout (in ms) a distributed transaction can be alive. This timeout is to rollback pending transactions after a while",
@@ -1686,15 +1553,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Integer.class,
       0),
 
-  /** @Since 2.1.3, Deprecated in 2.2.0 */
-  @Deprecated
-  @OApi(maturity = OApi.MATURITY.NEW)
-  DISTRIBUTED_QUEUE_MAXSIZE(
-      "distributed.queueMaxSize",
-      "Maximum queue size to mark a node as stalled. If the number of messages in queue are more than this values, the node is restarted with a remote command (0 = no maximum, which means up to 2^31-1 entries)",
-      Integer.class,
-      10000),
-
   /** @Since 2.1.3 */
   @OApi(maturity = OApi.MATURITY.NEW)
   DISTRIBUTED_BACKUP_DIRECTORY(
@@ -1710,14 +1568,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Try to execute an incremental backup first.",
       Boolean.class,
       true),
-
-  /** @Since 2.2.27 */
-  @OApi(maturity = OApi.MATURITY.NEW)
-  DISTRIBUTED_CHECKINTEGRITY_LAST_TX(
-      "distributed.checkIntegrityLastTxs",
-      "Before asking for a delta sync, checks the integrity of the records touched by the last X transactions committed on local server.",
-      Integer.class,
-      16),
 
   /** @Since 2.1 */
   @OApi(maturity = OApi.MATURITY.NEW)

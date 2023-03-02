@@ -125,8 +125,6 @@ public class ReinstallDatabaseTestIT {
 
   @After
   public void after() {
-    OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.setValue(
-        OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getDefValue());
     OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.setValue(
         OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getDefValue());
     try {

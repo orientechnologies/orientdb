@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.test.internal.index;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -25,8 +24,6 @@ public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   @Override
   @Test(enabled = false)
   public void init() throws Exception {
-    OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY.setValue("");
-    OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(10000);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     if (buildDirectory == null) buildDirectory = ".";
