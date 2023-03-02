@@ -11,7 +11,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
@@ -233,7 +232,16 @@ public class OHazelcastClusterMetadataManager
     final long delay = OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
     if (delay > 0) {
       publishLocalNodeConfigurationTask =
-          Orient.instance().scheduleTask(this::publishLocalNodeConfiguration, delay, delay);
+          new TimerTask() {
+
+            @Override
+            public void run() {
+              serverInstance
+                  .getDatabases()
+                  .execute(OHazelcastClusterMetadataManager.this::publishLocalNodeConfiguration);
+            }
+          };
+      serverInstance.getDatabases().schedule(publishLocalNodeConfigurationTask, delay, delay);
     }
   }
 
@@ -1245,24 +1253,32 @@ public class OHazelcastClusterMetadataManager
     else if (autoRemoveOffLineServer > 0) {
       // SCHEDULE AUTO REMOVAL IN A WHILE
       autoRemovalOfServers.put(nodeLeftName, System.currentTimeMillis());
-      Orient.instance()
-          .scheduleTask(
-              () -> {
-                try {
-                  final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
-                  if (lastTimeNodeLeft == null)
-                    // NODE WAS BACK ONLINE
-                    return;
+      TimerTask task =
+          new TimerTask() {
 
-                  if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
-                    removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
-                  }
-                } catch (Exception e) {
-                  // IGNORE IT
-                }
-              },
-              autoRemoveOffLineServer,
-              0);
+            @Override
+            public void run() {
+              serverInstance
+                  .getDatabases()
+                  .execute(
+                      () -> {
+                        try {
+                          final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
+                          if (lastTimeNodeLeft == null)
+                            // NODE WAS BACK ONLINE
+                            return;
+
+                          if (System.currentTimeMillis() - lastTimeNodeLeft
+                              >= autoRemoveOffLineServer) {
+                            removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
+                          }
+                        } catch (Exception e) {
+                          // IGNORE IT
+                        }
+                      });
+            }
+          };
+      serverInstance.getDatabases().scheduleOnce(task, autoRemoveOffLineServer);
     }
 
     for (String databaseName : distributedPlugin.getManagedDatabases()) {

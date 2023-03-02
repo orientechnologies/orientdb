@@ -54,6 +54,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -270,8 +271,20 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
                   .info(this, "Automatic Backup finished: %d ok, %d errors", ok, errors);
             }
           };
-      if (firstTime == null) Orient.instance().scheduleTask(timerTask, delay, delay);
-      else Orient.instance().scheduleTask(timerTask, firstTime, delay);
+
+      TimerTask task =
+          new TimerTask() {
+
+            @Override
+            public void run() {
+              serverInstance.getDatabases().execute(timerTask);
+            }
+          };
+      if (firstTime == null) {
+        serverInstance.getDatabases().schedule(task, delay, delay);
+      } else {
+        Orient.instance().scheduleTask(task, firstTime, delay);
+      }
     } else {
       OLogManager.instance().info(this, "Automatic Backup plugin is disabled");
     }

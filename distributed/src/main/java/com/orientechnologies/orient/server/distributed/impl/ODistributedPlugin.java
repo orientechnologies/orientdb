@@ -306,16 +306,28 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       final long statsDelay = OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY.getValueAsLong();
       if (statsDelay > 0) {
-        haStatsTask = Orient.instance().scheduleTask(this::dumpStats, statsDelay, statsDelay);
+        haStatsTask =
+            new TimerTask() {
+              @Override
+              public void run() {
+                ODistributedPlugin.this.dumpStats();
+              }
+            };
+        serverInstance.getDatabases().schedule(haStatsTask, statsDelay, statsDelay);
       }
 
       final long healthChecker =
           OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY.getValueAsLong();
       if (healthChecker > 0) {
+        OClusterHealthChecker checkTask = new OClusterHealthChecker(this, healthChecker);
         healthCheckerTask =
-            Orient.instance()
-                .scheduleTask(
-                    new OClusterHealthChecker(this, healthChecker), healthChecker, healthChecker);
+            new TimerTask() {
+              @Override
+              public void run() {
+                serverInstance.getDatabases().execute(checkTask);
+              }
+            };
+        serverInstance.getDatabases().schedule(healthCheckerTask, healthChecker, healthChecker);
       }
 
       signalListener =

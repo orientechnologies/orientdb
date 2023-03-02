@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBDistributed;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
@@ -301,20 +302,23 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       int retryCount,
       int autoRetryDelay) {
     pending.incrementAndGet();
-    Orient.instance()
-        .scheduleTask(
-            () -> {
-              try {
-                processRequest(
-                    new ODistributedRequest(
-                        getManager(), senderNodeId, msgSequence, databaseName, payload),
-                    false);
-              } finally {
-                pending.decrementAndGet();
-              }
-            },
-            autoRetryDelay * retryCount,
-            0);
+    OrientDBInternal context = manager.getServerInstance().getDatabases();
+    context.scheduleOnce(
+        new TimerTask() {
+
+          @Override
+          public void run() {
+            try {
+              processRequest(
+                  new ODistributedRequest(
+                      getManager(), senderNodeId, msgSequence, databaseName, payload),
+                  false);
+            } finally {
+              pending.decrementAndGet();
+            }
+          }
+        },
+        autoRetryDelay * retryCount);
   }
 
   /**
