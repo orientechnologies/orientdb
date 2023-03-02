@@ -81,14 +81,17 @@ public class OrientDBRemote implements OrientDBInternal {
     orient.addOrientDB(this);
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
     urls = new ORemoteURLs(hosts, this.configurations.getConfigurations());
+    int size =
+        this.configurations
+            .getConfigurations()
+            .getValueAsInteger(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
+    if (size == -1) {
+      size = Runtime.getRuntime().availableProcessors() / 2;
+    }
+
     executor =
         OThreadPoolExecutors.newScalingThreadPool(
-            "OrientDBRemote",
-            0,
-            Runtime.getRuntime().availableProcessors() / 2,
-            100,
-            1,
-            TimeUnit.MINUTES);
+            "OrientDBRemote", 0, size, 100, 1, TimeUnit.MINUTES);
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {

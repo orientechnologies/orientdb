@@ -2001,6 +2001,11 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       2500,
       false,
       false),
+  EXECUTOR_POOL_MAX_SIZE(
+      "executor.pool.maxSize",
+      "Maximum number of threads in the executor pool (-1 will base the size on the number CPUs)",
+      Integer.class,
+      -1),
   ;
 
   static {

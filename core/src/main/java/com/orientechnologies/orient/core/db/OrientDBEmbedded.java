@@ -162,15 +162,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
     orient.addOrientDB(this);
-
+    int size =
+        this.configurations
+            .getConfigurations()
+            .getValueAsInteger(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
+    if (size == -1) {
+      size = Runtime.getRuntime().availableProcessors();
+    }
     executor =
         OThreadPoolExecutors.newScalingThreadPool(
-            "OrientDBEmbedded",
-            1,
-            Runtime.getRuntime().availableProcessors(),
-            100,
-            30,
-            TimeUnit.MINUTES);
+            "OrientDBEmbedded", 1, size, 1000, 30, TimeUnit.MINUTES);
     timer = new Timer();
 
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
