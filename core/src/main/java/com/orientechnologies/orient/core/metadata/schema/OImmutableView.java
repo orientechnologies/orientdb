@@ -1,7 +1,12 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class OImmutableView extends OImmutableClass implements OView {
 
@@ -13,6 +18,7 @@ public class OImmutableView extends OImmutableClass implements OView {
   private String originRidField;
   private boolean updatable;
   private String updateStrategy;
+  private Set<String> activeIndexNames;
 
   public OImmutableView(OView view, OImmutableSchema schema) {
     super(view, schema);
@@ -26,6 +32,16 @@ public class OImmutableView extends OImmutableClass implements OView {
     this.requiredIndexesInfo =
         view.getRequiredIndexesInfo() == null ? null : new ArrayList(view.getRequiredIndexesInfo());
     this.updateStrategy = view.getUpdateStrategy();
+    this.activeIndexNames = view.getActiveIndexNames();
+  }
+
+  public void getRawClassIndexes(final Collection<OIndex> indexes) {
+    ODatabaseDocumentInternal database = getDatabase();
+    OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
+    for (String indexName : activeIndexNames) {
+      OIndex index = indexManager.getIndex(database, indexName);
+      indexes.add(index);
+    }
   }
 
   @Override
@@ -69,5 +85,10 @@ public class OImmutableView extends OImmutableClass implements OView {
   @Override
   public long count(boolean isPolymorphic) {
     return getDatabase().countView(getName());
+  }
+
+  @Override
+  public Set<String> getActiveIndexNames() {
+    return activeIndexNames;
   }
 }

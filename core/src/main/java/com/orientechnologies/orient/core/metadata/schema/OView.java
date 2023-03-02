@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.util.List;
+import java.util.Set;
 
 public interface OView extends OClass {
   String getQuery();
@@ -18,4 +19,6 @@ public interface OView extends OClass {
   List<OViewConfig.OViewIndexConfig> getRequiredIndexesInfo();
 
   String getUpdateStrategy();
+
+  public Set<String> getActiveIndexNames();
 }

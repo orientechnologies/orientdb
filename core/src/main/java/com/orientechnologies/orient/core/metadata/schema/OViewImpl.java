@@ -281,4 +281,8 @@ public abstract class OViewImpl extends OClassImpl implements OView {
 
   public abstract OViewRemovedMetadata replaceViewClusterAndIndex(
       int cluster, List<OIndex> indexes);
+
+  public Set<String> getActiveIndexNames() {
+    return activeIndexNames;
+  }
 }
