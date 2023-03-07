@@ -27,6 +27,39 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.17 - (March, 9 2023)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3216---9-March-2023
+
+# Changes
+
+## Core 
+- update dependencies 
+- make sure to make view query wait for drop and create operations
+- changed security checks for the import logic to avoid sprious failures
+- optimizatons in disk cache implementation 
+- pre-check cluster existence to avoid storage to go in read only mode in case of duplicate cluster
+- add check to avoid failure when engines are unloaded, issue #9629
+- removed not used configurations
+- moved cleanup of old structures out of the view refresh window
+- replaced global executor with context executor
+- use correct index in immutable view metadata
+- add configuration for define the max number of threas for the context executor
+
+## Server
+- make sure to print the right protocol for studio address when ssl is enabled
+
+## Client
+- minor fix on view metadata serialization and deserializatin over network
+
+## Distributed
+
+- Removed not used single cluster management in distributed sync
+
+## Spatial
+
+- Fix spacial function filtering when used trough the new query engine
+
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.16 - (February, 8 2023)
