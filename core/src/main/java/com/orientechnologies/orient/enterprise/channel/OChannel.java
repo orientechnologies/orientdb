@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.enterprise.channel;
 
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
-import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -28,7 +27,6 @@ import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,7 +39,7 @@ import java.util.Enumeration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-public abstract class OChannel extends OListenerManger<OChannelListener> {
+public abstract class OChannel {
   private static final OProfiler PROFILER = Orient.instance().getProfiler();
   private static final AtomicLong metricGlobalTransmittedBytes = new AtomicLong();
   private static final AtomicLong metricGlobalReceivedBytes = new AtomicLong();
@@ -91,7 +89,6 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   }
 
   public OChannel(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
-    super(true);
     socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
 
     socket = iSocket;
@@ -183,17 +180,8 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
       OLogManager.instance().debug(this, "Error during closing of output stream", e);
     }
 
-    for (OChannelListener l : getListenersCopy())
-      try {
-        l.onChannelClose(this);
-      } catch (Exception e) {
-        OLogManager.instance().debug(this, "Error during closing of channel close listener", e);
-      }
-
     lockRead.close();
     lockWrite.close();
-
-    resetListeners();
   }
 
   public void connected() {
