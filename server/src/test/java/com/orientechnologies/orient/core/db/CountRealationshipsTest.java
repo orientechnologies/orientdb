@@ -2,40 +2,41 @@ package com.orientechnologies.orient.core.db;
 
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.server.AbstractRemoteTest;
+import com.orientechnologies.orient.server.OServer;
+import java.io.File;
 import java.util.Iterator;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
-public class CountRelationshipGraphTest extends AbstractRemoteTest {
+/** Created by tglman on 03/01/17. */
+public class CountRealationshipsTest {
 
-  private OrientDB orientdb;
-  private int old;
+  private static final String SERVER_DIRECTORY = "./target/cluster";
+  private OServer server;
+  private OrientDB orientDB;
 
-  public void setup() throws Exception {
-    old = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-    OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
-    super.setup();
-    orientdb =
-        new OrientDB(
-            "remote:localhost",
-            "root",
-            "root",
-            OrientDBConfig.builder()
-                .addConfig(OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, -1)
-                .build());
-  }
+  @Before
+  public void before() throws Exception {
+    server = new OServer(false);
+    server.setServerRootDirectory(SERVER_DIRECTORY);
+    server.startup(getClass().getResourceAsStream("orientdb-server-config-tree-ridbag.xml"));
+    server.activate();
 
-  public void teardown() {
-    OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(old);
-    super.teardown();
+    orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    orientDB.execute(
+        "create database ? memory users (admin identified by 'admin' role admin)",
+        CountRealationshipsTest.class.getSimpleName());
   }
 
   @Test
   public void test() throws Exception {
-    ODatabaseSession g = orientdb.open(name.getMethodName(), "admin", "admin");
+    ODatabaseSession g =
+        orientDB.open(CountRealationshipsTest.class.getSimpleName(), "admin", "admin");
     g.begin();
     OVertex vertex1 = g.newVertex("V");
     vertex1.save();
@@ -83,7 +84,7 @@ public class CountRelationshipGraphTest extends AbstractRemoteTest {
 
     g.close();
 
-    g = orientdb.open(name.getMethodName(), "admin", "admin");
+    g = orientDB.open(CountRealationshipsTest.class.getSimpleName(), "admin", "admin");
     vertex1 = g.load(vertex1.getIdentity());
     vertex2 = g.load(vertex2.getIdentity());
 
@@ -107,5 +108,14 @@ public class CountRelationshipGraphTest extends AbstractRemoteTest {
       it.next();
     }
     return c;
+  }
+
+  @After
+  public void after() {
+    orientDB.close();
+    server.shutdown();
+    Orient.instance().shutdown();
+    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
+    Orient.instance().startup();
   }
 }

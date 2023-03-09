@@ -586,6 +586,7 @@ public class ODocument extends ORecordAbstract
             null); // in order to avoid IllegalStateException when ridBag changes the owner
         // (ODocument.merge)
         ridBag.setOwner(this);
+        ridBag.setRecordAndField(recordId, iPropetyName);
       }
     }
 
