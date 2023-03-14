@@ -15,7 +15,7 @@ import com.orientechnologies.orient.core.exception.EncryptionKeyAbsentException;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -65,11 +65,11 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   static {
     commitExecutor =
         OThreadPoolExecutors.newSingleThreadScheduledPool(
-            "OrientDB WAL Flush Task", OStorageAbstract.storageThreadGroup);
+            "OrientDB WAL Flush Task", OAbstractPaginatedStorage.storageThreadGroup);
 
     writeExecutor =
         OThreadPoolExecutors.newSingleThreadPool(
-            "OrientDB WAL Write Task Thread", OStorageAbstract.storageThreadGroup);
+            "OrientDB WAL Write Task Thread", OAbstractPaginatedStorage.storageThreadGroup);
   }
 
   private final boolean keepSingleWALSegment;

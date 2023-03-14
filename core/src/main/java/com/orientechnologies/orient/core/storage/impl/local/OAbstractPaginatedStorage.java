@@ -114,6 +114,7 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexEngine;
@@ -123,7 +124,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
@@ -205,7 +206,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -215,20 +218,40 @@ import java.util.zip.ZipOutputStream;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 28.03.13
  */
-public abstract class OAbstractPaginatedStorage extends OStorageAbstract
+public abstract class OAbstractPaginatedStorage
     implements OCheckpointRequestListener,
         OIdentifiableStorage,
         OBackgroundExceptionListener,
         OFreezableStorageComponent,
-        OPageIsBrokenListener {
+        OPageIsBrokenListener,
+        OStorage {
   private static final int WAL_RESTORE_REPORT_INTERVAL = 30 * 1000; // milliseconds
 
   private static final Comparator<ORecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR =
       Comparator.comparing(o -> o.getRecord().getIdentity());
+  public static final ThreadGroup storageThreadGroup;
 
   protected static final ScheduledExecutorService fuzzyCheckpointExecutor;
 
   static {
+    ThreadGroup parentThreadGroup = Thread.currentThread().getThreadGroup();
+
+    final ThreadGroup parentThreadGroupBackup = parentThreadGroup;
+
+    boolean found = false;
+
+    while (parentThreadGroup.getParent() != null) {
+      if (parentThreadGroup.equals(Orient.instance().getThreadGroup())) {
+        parentThreadGroup = parentThreadGroup.getParent();
+        found = true;
+        break;
+      } else parentThreadGroup = parentThreadGroup.getParent();
+    }
+
+    if (!found) parentThreadGroup = parentThreadGroupBackup;
+
+    storageThreadGroup = new ThreadGroup(parentThreadGroup, "OrientDB Storage");
+
     fuzzyCheckpointExecutor =
         OThreadPoolExecutors.newSingleThreadScheduledPool("Fuzzy Checkpoint", storageThreadGroup);
   }
@@ -288,10 +311,27 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected static final String DATABASE_INSTANCE_ID = "databaseInstenceId";
 
   protected AtomicOperationsTable atomicOperationsTable;
+  protected final String url;
+  protected final ReentrantReadWriteLock stateLock;
+
+  protected volatile OStorageConfiguration configuration;
+  protected volatile OCurrentStorageComponentsFactory componentsFactory;
+  protected String name;
+  private final AtomicLong version = new AtomicLong();
+
+  protected volatile STATUS status = STATUS.CLOSED;
+
+  protected AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
+  protected OrientDBInternal context;
 
   public OAbstractPaginatedStorage(
       final String name, final String filePath, final int id, OrientDBInternal context) {
-    super(name, filePath, context);
+    this.context = context;
+    this.name = checkName(name);
+
+    url = filePath;
+
+    stateLock = new ReentrantReadWriteLock();
 
     this.id = id;
     lockManager = new ONotThreadRWLockManager<>();
@@ -299,6 +339,94 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
 
     registerProfilerHooks();
+  }
+
+  protected static String normalizeName(String name) {
+    final int firstIndexOf = name.lastIndexOf('/');
+    final int secondIndexOf = name.lastIndexOf(java.io.File.separator);
+
+    if (firstIndexOf >= 0 || secondIndexOf >= 0)
+      return name.substring(Math.max(firstIndexOf, secondIndexOf) + 1);
+    else return name;
+  }
+
+  public static String checkName(String name) {
+    name = normalizeName(name);
+    if (OStringSerializerHelper.contains(name, ','))
+      throw new IllegalArgumentException("Invalid character in storage name: " + name);
+    return name;
+  }
+
+  @Override
+  @Deprecated
+  public OStorage getUnderlying() {
+    return this;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public String getURL() {
+    return url;
+  }
+
+  @Override
+  public void close() {
+    close(false, false);
+  }
+
+  @Override
+  public boolean dropCluster(final String iClusterName) {
+    return dropCluster(getClusterIdByName(iClusterName));
+  }
+
+  @Override
+  public long countRecords() {
+    long tot = 0;
+
+    for (OCluster c : getClusterInstances())
+      if (c != null) tot += c.getEntries() - c.getTombstonesCount();
+
+    return tot;
+  }
+
+  @Override
+  public String toString() {
+    return url != null ? url : "?";
+  }
+
+  @Override
+  public STATUS getStatus() {
+    return status;
+  }
+
+  @Deprecated
+  @Override
+  public boolean isDistributed() {
+    return false;
+  }
+
+  @Override
+  public boolean isAssigningClusterIds() {
+    return true;
+  }
+
+  @Override
+  public OCurrentStorageComponentsFactory getComponentsFactory() {
+    return componentsFactory;
+  }
+
+  @Override
+  public long getVersion() {
+    return version.get();
+  }
+
+  @Override
+  public void shutdown() {
+    close(true, false);
   }
 
   private static void checkPageSizeAndRelatedParametersInGlobalConfiguration() {
@@ -897,7 +1025,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.readLock().lock();
       try {
-        return super.isClosed();
+        return status == STATUS.CLOSED;
       } finally {
         stateLock.readLock().unlock();
       }
@@ -5461,8 +5589,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         clusterMap.clear();
         indexEngines.clear();
         indexEngineNameMap.clear();
-
-        super.close(force, onDelete);
 
         if (writeCache != null) {
           writeCache.removeBackgroundExceptionListener(this);

@@ -200,16 +200,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected final String normalizeName(final String name) {
-    final int firstIndexOf = name.lastIndexOf('/');
-    final int secondIndexOf = name.lastIndexOf(java.io.File.separator);
-
-    if (firstIndexOf >= 0 || secondIndexOf >= 0)
-      return name.substring(Math.max(firstIndexOf, secondIndexOf) + 1);
-    else return name;
-  }
-
-  @Override
   public final boolean exists() {
     try {
       if (status == STATUS.OPEN || isInError() || status == STATUS.MIGRATION) return true;
