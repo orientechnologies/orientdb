@@ -297,7 +297,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
       final byte[] record =
           ((OClusterBasedStorageConfiguration)
-                  connection.getDatabase().getStorage().getConfiguration())
+                  connection.getDatabase().getStorageInfo().getConfiguration())
               .toStream(connection.getData().protocolVersion, StandardCharsets.UTF_8);
 
       response = new OReadRecordResponse(OBlob.RECORD_TYPE, 0, record, new HashSet<>());
