@@ -6,10 +6,15 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorage;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -82,6 +87,13 @@ public class OClassEmbedded extends OClassImpl {
       releaseSchemaWriteLock();
     }
     return this;
+  }
+  
+  protected void setEncryptionInternal(ODatabaseDocumentInternal database, final String value) {
+    for (int cl : getClusterIds()) {
+      final OStorage storage = database.getStorage();
+      storage.setClusterAttribute(cl, OCluster.ATTRIBUTES.ENCRYPTION, value);
+    }
   }
 
   @Override
@@ -343,33 +355,6 @@ public class OClassEmbedded extends OClassImpl {
     try {
       checkEmbedded();
       this.defaultClusterId = defaultClusterId;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected OClass addClusterIdInternal(ODatabaseDocumentInternal database, final int clusterId) {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      owner.checkClusterCanBeAdded(clusterId, this);
-
-      for (int currId : clusterIds)
-        if (currId == clusterId)
-          // ALREADY ADDED
-          return this;
-
-      clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
-      clusterIds[clusterIds.length - 1] = clusterId;
-      Arrays.sort(clusterIds);
-
-      addPolymorphicClusterId(clusterId);
-
-      if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID) defaultClusterId = clusterId;
-
-      ((OSchemaEmbedded) owner).addClusterForClass(database, clusterId, this);
-      return this;
     } finally {
       releaseSchemaWriteLock();
     }
@@ -789,5 +774,57 @@ public class OClassEmbedded extends OClassImpl {
         getDatabase().dropClusterInternal(clusterId);
       }
     }
+  }
+
+  protected OClass addClusterIdInternal(ODatabaseDocumentInternal database, final int clusterId) {
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      owner.checkClusterCanBeAdded(clusterId, this);
+
+      for (int currId : clusterIds)
+        if (currId == clusterId)
+          // ALREADY ADDED
+          return this;
+
+      clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
+      clusterIds[clusterIds.length - 1] = clusterId;
+      Arrays.sort(clusterIds);
+
+      addPolymorphicClusterId(clusterId);
+
+      if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID) defaultClusterId = clusterId;
+
+      ((OSchemaEmbedded) owner).addClusterForClass(database, clusterId, this);
+      return this;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  protected void addPolymorphicClusterId(int clusterId) {
+    if (Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0) return;
+
+    polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
+    polymorphicClusterIds[polymorphicClusterIds.length - 1] = clusterId;
+    Arrays.sort(polymorphicClusterIds);
+
+    addClusterIdToIndexes(clusterId);
+
+    for (OClassImpl superClass : superClasses) {
+      ((OClassEmbedded) superClass).addPolymorphicClusterId(clusterId);
+    }
+  }
+
+  protected void addClusterIdToIndexes(int iId) {
+    final String clusterName = getDatabase().getClusterNameById(iId);
+    final List<String> indexesToAdd = new ArrayList<String>();
+
+    for (OIndex index : getIndexes()) indexesToAdd.add(index.getName());
+
+    final OIndexManagerAbstract indexManager =
+        getDatabase().getMetadata().getIndexManagerInternal();
+    for (String indexName : indexesToAdd) indexManager.addClusterToIndex(clusterName, indexName);
   }
 }

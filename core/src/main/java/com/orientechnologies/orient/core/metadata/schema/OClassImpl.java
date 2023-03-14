@@ -1035,13 +1035,6 @@ public abstract class OClassImpl implements OClass {
 
   public abstract OClassImpl setEncryption(final String iValue);
 
-  protected void setEncryptionInternal(ODatabaseDocumentInternal database, final String value) {
-    for (int cl : getClusterIds()) {
-      final OStorage storage = database.getStorage();
-      storage.setClusterAttribute(cl, OCluster.ATTRIBUTES.ENCRYPTION, value);
-    }
-  }
-
   public OIndex createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
     return createIndex(iName, iType.name(), fields);
   }
@@ -1524,20 +1517,6 @@ public abstract class OClassImpl implements OClass {
     database.command("alter cluster `" + oldName + "` NAME \"" + newName + "\"").close();
   }
 
-  protected void addPolymorphicClusterId(int clusterId) {
-    if (Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0) return;
-
-    polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
-    polymorphicClusterIds[polymorphicClusterIds.length - 1] = clusterId;
-    Arrays.sort(polymorphicClusterIds);
-
-    addClusterIdToIndexes(clusterId);
-
-    for (OClassImpl superClass : superClasses) {
-      superClass.addPolymorphicClusterId(clusterId);
-    }
-  }
-
   protected void onlyAddPolymorphicClusterId(int clusterId) {
     if (Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0) return;
 
@@ -1572,19 +1551,7 @@ public abstract class OClassImpl implements OClass {
     return clId;
   }
 
-  private void addClusterIdToIndexes(int iId) {
-    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (database != null && database.getStorage() instanceof OAbstractPaginatedStorage) {
-      final String clusterName = getDatabase().getClusterNameById(iId);
-      final List<String> indexesToAdd = new ArrayList<String>();
-
-      for (OIndex index : getIndexes()) indexesToAdd.add(index.getName());
-
-      final OIndexManagerAbstract indexManager =
-          getDatabase().getMetadata().getIndexManagerInternal();
-      for (String indexName : indexesToAdd) indexManager.addClusterToIndex(clusterName, indexName);
-    }
-  }
+  protected abstract void addClusterIdToIndexes(int iId);
 
   /**
    * Adds a base class to the current one. It adds also the base class cluster ids to the

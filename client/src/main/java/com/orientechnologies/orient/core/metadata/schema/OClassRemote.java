@@ -478,4 +478,6 @@ public class OClassRemote extends OClassImpl {
         String.format("alter class `%s` DEFAULTCLUSTER `%s`", this.name, clusterName);
     database.command(cmd).close();
   }
+
+  protected void addClusterIdToIndexes(int iId) {}
 }

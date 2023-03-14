@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -285,5 +286,16 @@ public class OViewEmbedded extends OViewImpl {
     } finally {
       releaseSchemaWriteLock();
     }
+  }
+
+  protected void addClusterIdToIndexes(int iId) {
+    final String clusterName = getDatabase().getClusterNameById(iId);
+    final List<String> indexesToAdd = new ArrayList<String>();
+
+    for (OIndex index : getIndexes()) indexesToAdd.add(index.getName());
+
+    final OIndexManagerAbstract indexManager =
+        getDatabase().getMetadata().getIndexManagerInternal();
+    for (String indexName : indexesToAdd) indexManager.addClusterToIndex(clusterName, indexName);
   }
 }
