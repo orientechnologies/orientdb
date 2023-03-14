@@ -62,7 +62,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
@@ -2355,22 +2354,14 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   protected boolean isRelatedToLocalServer(final ODatabaseInternal iDatabase) {
-    final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
-
     // Check for the system database.
     if (iDatabase.getName().equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME)) return false;
-
-    if (dbUrl.startsWith("plocal:")) {
-      final OLocalPaginatedStorage paginatedStorage =
-          (OLocalPaginatedStorage) iDatabase.getStorage();
-
-      // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
-      final Path storagePath = paginatedStorage.getStoragePath();
-      final Path dbDirectoryPath = Paths.get(serverInstance.getDatabaseDirectory());
-
-      // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
-      return storagePath.startsWith(dbDirectoryPath);
-    } else return !dbUrl.startsWith("remote:");
+    if (iDatabase.getSharedContext().getOrientDB() == this.serverInstance.getDatabases()) {
+      // Same instance of OrientDB context means is related to this server
+      return true;
+    } else {
+      return false;
+    }
   }
 
   /** Avoids to dump the same configuration twice if it's unchanged since the last time. */
