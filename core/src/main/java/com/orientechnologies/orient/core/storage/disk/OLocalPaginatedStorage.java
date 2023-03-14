@@ -147,13 +147,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   public OLocalPaginatedStorage(
       final String name,
       final String filePath,
-      final String mode,
       final int id,
       final OReadCache readCache,
       final OClosableLinkedContainer<Long, OFile> files,
       final long walMaxSegSize,
       long doubleWriteLogMaxSegSize) {
-    super(name, filePath, mode, id);
+    super(name, filePath, id);
 
     this.walMaxSegSize = walMaxSegSize;
     this.files = files;

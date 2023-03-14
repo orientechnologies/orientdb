@@ -52,7 +52,6 @@ public abstract class OStorageAbstract implements OStorage {
   }
 
   protected final String url;
-  protected final String mode;
   protected final ReentrantReadWriteLock stateLock;
 
   protected volatile OStorageConfiguration configuration;
@@ -64,14 +63,13 @@ public abstract class OStorageAbstract implements OStorage {
 
   protected AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
 
-  public OStorageAbstract(final String name, final String iURL, final String mode) {
+  public OStorageAbstract(final String name, final String iURL) {
     this.name = normalizeName(name);
 
     if (OStringSerializerHelper.contains(this.name, ','))
       throw new IllegalArgumentException("Invalid character in storage name: " + this.name);
 
     url = iURL;
-    this.mode = mode;
 
     stateLock = new ReentrantReadWriteLock();
   }

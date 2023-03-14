@@ -109,7 +109,7 @@ public class StorageNamingTests {
   private static class NamingTestStorage extends OStorageAbstract {
 
     public NamingTestStorage(String name) {
-      super(name, name, "rw");
+      super(name, name);
     }
 
     @Override

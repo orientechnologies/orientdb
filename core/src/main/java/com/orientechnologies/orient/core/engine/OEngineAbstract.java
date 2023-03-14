@@ -19,19 +19,9 @@
  */
 package com.orientechnologies.orient.core.engine;
 
-import java.util.Map;
-
 public abstract class OEngineAbstract implements OEngine {
 
   private boolean running = false;
-
-  protected String getMode(Map<String, String> iConfiguration) {
-    String dbMode = null;
-    if (iConfiguration != null) dbMode = iConfiguration.get("mode");
-
-    if (dbMode == null) dbMode = "rw";
-    return dbMode;
-  }
 
   @Override
   public void startup() {

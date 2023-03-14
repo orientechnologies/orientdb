@@ -27,7 +27,6 @@ import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedCont
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Iterator;
 
 /** Created by tglman on 08/08/17. */
@@ -111,10 +110,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
             (OAbstractPaginatedStorage)
                 disk.createStorage(
                     buildName(dbName),
-                    new HashMap<>(),
                     maxWALSegmentSize,
                     doubleWriteLogMaxSegSize,
-                    generateStorageId());
+                    generateStorageId(),
+                    this);
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (OModificationOperationProhibitedException e) {

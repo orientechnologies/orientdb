@@ -99,7 +99,10 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
                       // STORAGE HAS BEEN CLOSED: REOPEN IT
                       iValue
                           .getStorage()
-                          .open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], new OContextConfiguration());
+                          .open(
+                              (String) iAdditionalArgs[0],
+                              (String) iAdditionalArgs[1],
+                              new OContextConfiguration());
                     else if (!iValue.getUser().checkPassword((String) iAdditionalArgs[1]))
                       throw new OSecurityAccessException(
                           iValue.getName(),

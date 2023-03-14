@@ -106,7 +106,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -289,9 +288,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected AtomicOperationsTable atomicOperationsTable;
 
-  public OAbstractPaginatedStorage(
-      final String name, final String filePath, final String mode, final int id) {
-    super(name, filePath, mode);
+  public OAbstractPaginatedStorage(final String name, final String filePath, final int id) {
+    super(name, filePath);
 
     this.id = id;
     lockManager = new ONotThreadRWLockManager<>();
@@ -4090,7 +4088,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @SuppressWarnings("unused")
   public String getMode() {
-    return mode;
+    return "rw";
   }
 
   /** @inheritDoc */

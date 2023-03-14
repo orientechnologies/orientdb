@@ -30,6 +30,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -40,7 +41,6 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import jnr.posix.POSIXFactory;
 
 /**
@@ -135,21 +135,14 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   public OStorage createStorage(
       final String dbName,
-      final Map<String, String> configuration,
       long maxWalSegSize,
       long doubleWriteLogMaxSegSize,
-      int storageId) {
+      int storageId,
+      OrientDBInternal context) {
     try {
 
       return new OLocalPaginatedStorage(
-          dbName,
-          dbName,
-          getMode(configuration),
-          storageId,
-          readCache,
-          files,
-          maxWalSegSize,
-          doubleWriteLogMaxSegSize);
+          dbName, dbName, storageId, readCache, files, maxWalSegSize, doubleWriteLogMaxSegSize);
     } catch (Exception e) {
       final String message =
           "Error on opening database: "

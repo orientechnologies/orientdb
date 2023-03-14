@@ -22,12 +22,12 @@ package com.orientechnologies.orient.core.engine.memory;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.memory.ODirectMemoryStorage;
-import java.util.Map;
 
 public class OEngineMemory extends OEngineAbstract {
   public static final String NAME = "memory";
@@ -36,12 +36,12 @@ public class OEngineMemory extends OEngineAbstract {
 
   public OStorage createStorage(
       String url,
-      Map<String, String> configuration,
       long maxWalSegSize,
       long doubleWriteLogMaxSegSize,
-      int storageId) {
+      int storageId,
+      OrientDBInternal context) {
     try {
-      return new ODirectMemoryStorage(url, url, getMode(configuration), storageId);
+      return new ODirectMemoryStorage(url, url, storageId);
     } catch (Exception e) {
       final String message = "Error on opening in memory storage: " + url;
       OLogManager.instance().error(this, message, e);

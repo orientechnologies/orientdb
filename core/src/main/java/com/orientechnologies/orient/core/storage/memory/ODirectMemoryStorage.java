@@ -45,9 +45,8 @@ import java.util.zip.ZipOutputStream;
 public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   private static final int ONE_KB = 1024;
 
-  public ODirectMemoryStorage(
-      final String name, final String filePath, final String mode, final int id) {
-    super(name, filePath, mode, id);
+  public ODirectMemoryStorage(final String name, final String filePath, final int id) {
+    super(name, filePath, id);
   }
 
   @Override

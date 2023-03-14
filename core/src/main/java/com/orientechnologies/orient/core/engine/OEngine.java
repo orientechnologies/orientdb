@@ -19,18 +19,18 @@
  */
 package com.orientechnologies.orient.core.engine;
 
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
-import java.util.Map;
 
 public interface OEngine {
   String getName();
 
   OStorage createStorage(
       String iURL,
-      Map<String, String> parameters,
       long maxWalSegSize,
       long doubleWriteLogMaxSegSize,
-      int storageId);
+      int storageId,
+      OrientDBInternal context);
 
   void shutdown();
 

@@ -629,10 +629,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
             (OAbstractPaginatedStorage)
                 disk.createStorage(
                     buildName(name),
-                    new HashMap<>(),
                     maxWALSegmentSize,
                     doubleWriteLogMaxSegSize,
-                    generateStorageId());
+                    generateStorageId(),
+                    this);
         if (storage.exists()) {
           storages.put(name, storage);
         }
@@ -692,19 +692,19 @@ public class OrientDBEmbedded implements OrientDBInternal {
                 (OAbstractPaginatedStorage)
                     memory.createStorage(
                         name,
-                        new HashMap<>(),
                         maxWALSegmentSize,
                         doubleWriteLogMaxSegSize,
-                        generateStorageId());
+                        generateStorageId(),
+                        this);
           } else {
             storage =
                 (OAbstractPaginatedStorage)
                     disk.createStorage(
                         buildName(name),
-                        new HashMap<>(),
                         maxWALSegmentSize,
                         doubleWriteLogMaxSegSize,
-                        generateStorageId());
+                        generateStorageId(),
+                        this);
           }
           storages.put(name, storage);
           embedded = internalCreate(config, storage);
@@ -787,10 +787,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
               (OAbstractPaginatedStorage)
                   disk.createStorage(
                       buildName(name),
-                      new HashMap<>(),
                       maxWALSegmentSize,
                       doubleWriteLogMaxSegSize,
-                      generateStorageId());
+                      generateStorageId(),
+                      this);
           embedded = internalCreate(config, storage);
           storages.put(name, storage);
         } catch (Exception e) {
@@ -1102,11 +1102,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       OAbstractPaginatedStorage storage =
           (OAbstractPaginatedStorage)
               disk.createStorage(
-                  path,
-                  new HashMap<>(),
-                  maxWALSegmentSize,
-                  doubleWriteLogMaxSegSize,
-                  generateStorageId());
+                  path, maxWALSegmentSize, doubleWriteLogMaxSegSize, generateStorageId(), this);
       // TODO: Add Creation settings and parameters
       if (!exists) {
         embedded = internalCreate(getConfigurations(), storage);

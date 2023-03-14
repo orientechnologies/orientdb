@@ -32,7 +32,6 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.ODatabaseImportRemote;
-import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OConstants;
@@ -933,7 +932,7 @@ public class OConsoleDatabaseApp extends OrientConsole
 
     final String dbName = currentDatabase.getName();
 
-    if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
+    if (currentDatabase.isRemote()) {
       if (storageType == null) storageType = "plocal";
 
       new OServerAdmin(currentDatabase.getURL())
@@ -961,7 +960,7 @@ public class OConsoleDatabaseApp extends OrientConsole
 
     final String dbName = currentDatabase.getName();
 
-    if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
+    if (currentDatabase.isRemote()) {
       if (storageType == null) storageType = "plocal";
 
       new OServerAdmin(currentDatabase.getURL())
