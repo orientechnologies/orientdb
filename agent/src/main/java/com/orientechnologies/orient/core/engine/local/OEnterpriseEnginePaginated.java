@@ -18,9 +18,9 @@
 
 package com.orientechnologies.orient.core.engine.local;
 
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage;
-import java.util.Map;
 
 /** Created by Enrico Risa on 08/02/16. */
 public class OEnterpriseEnginePaginated extends OEngineLocalPaginated {
@@ -32,18 +32,18 @@ public class OEnterpriseEnginePaginated extends OEngineLocalPaginated {
   @Override
   public OStorage createStorage(
       String dbName,
-      Map<String, String> configuration,
       long maxWalSegSize,
       long doubleWriteLogMaxSegSize,
-      int storageId) {
+      int storageId,
+      OrientDBInternal context) {
     return new OEnterpriseLocalPaginatedStorage(
         dbName,
         dbName,
-        getMode(configuration),
         storageId,
         getReadCache(),
         files,
         maxWalSegSize,
-        doubleWriteLogMaxSegSize);
+        doubleWriteLogMaxSegSize,
+        context);
   }
 }

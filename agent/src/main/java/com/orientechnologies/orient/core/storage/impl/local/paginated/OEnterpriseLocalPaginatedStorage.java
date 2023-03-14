@@ -35,6 +35,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OQuarto;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -103,13 +104,13 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   public OEnterpriseLocalPaginatedStorage(
       String name,
       String filePath,
-      String mode,
       int id,
       OReadCache readCache,
       OClosableLinkedContainer<Long, OFile> files,
       long walMaxSize,
-      long doubleWriteLogMaxSize) {
-    super(name, filePath, mode, id, readCache, files, walMaxSize, doubleWriteLogMaxSize);
+      long doubleWriteLogMaxSize,
+      OrientDBInternal context) {
+    super(name, filePath, id, readCache, files, walMaxSize, doubleWriteLogMaxSize, context);
     OLogManager.instance().info(this, "Enterprise storage installed correctly.");
   }
 
