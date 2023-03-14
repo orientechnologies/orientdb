@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.memory;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -45,8 +46,9 @@ import java.util.zip.ZipOutputStream;
 public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   private static final int ONE_KB = 1024;
 
-  public ODirectMemoryStorage(final String name, final String filePath, final int id) {
-    super(name, filePath, id);
+  public ODirectMemoryStorage(
+      final String name, final String filePath, final int id, OrientDBInternal context) {
+    super(name, filePath, id, context);
   }
 
   @Override

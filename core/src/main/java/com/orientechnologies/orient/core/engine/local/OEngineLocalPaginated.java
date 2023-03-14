@@ -142,7 +142,14 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     try {
 
       return new OLocalPaginatedStorage(
-          dbName, dbName, storageId, readCache, files, maxWalSegSize, doubleWriteLogMaxSegSize);
+          dbName,
+          dbName,
+          storageId,
+          readCache,
+          files,
+          maxWalSegSize,
+          doubleWriteLogMaxSegSize,
+          context);
     } catch (Exception e) {
       final String message =
           "Error on opening database: "

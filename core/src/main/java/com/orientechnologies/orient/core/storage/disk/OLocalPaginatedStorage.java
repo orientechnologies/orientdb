@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
@@ -151,8 +152,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       final OReadCache readCache,
       final OClosableLinkedContainer<Long, OFile> files,
       final long walMaxSegSize,
-      long doubleWriteLogMaxSegSize) {
-    super(name, filePath, id);
+      long doubleWriteLogMaxSegSize,
+      OrientDBInternal context) {
+    super(name, filePath, id, context);
 
     this.walMaxSegSize = walMaxSegSize;
     this.files = files;

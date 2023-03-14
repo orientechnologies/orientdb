@@ -41,7 +41,7 @@ public class OEngineMemory extends OEngineAbstract {
       int storageId,
       OrientDBInternal context) {
     try {
-      return new ODirectMemoryStorage(url, url, storageId);
+      return new ODirectMemoryStorage(url, url, storageId, context);
     } catch (Exception e) {
       final String message = "Error on opening in memory storage: " + url;
       OLogManager.instance().error(this, message, e);

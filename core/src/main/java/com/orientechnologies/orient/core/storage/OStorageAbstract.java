@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -62,8 +63,9 @@ public abstract class OStorageAbstract implements OStorage {
   protected volatile STATUS status = STATUS.CLOSED;
 
   protected AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
+  protected OrientDBInternal context;
 
-  public OStorageAbstract(final String name, final String iURL) {
+  public OStorageAbstract(final String name, final String iURL, OrientDBInternal context) {
     this.name = normalizeName(name);
 
     if (OStringSerializerHelper.contains(this.name, ','))

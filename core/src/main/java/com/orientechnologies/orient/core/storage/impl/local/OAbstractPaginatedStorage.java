@@ -59,6 +59,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -288,8 +289,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected AtomicOperationsTable atomicOperationsTable;
 
-  public OAbstractPaginatedStorage(final String name, final String filePath, final int id) {
-    super(name, filePath);
+  public OAbstractPaginatedStorage(
+      final String name, final String filePath, final int id, OrientDBInternal context) {
+    super(name, filePath, context);
 
     this.id = id;
     lockManager = new ONotThreadRWLockManager<>();
