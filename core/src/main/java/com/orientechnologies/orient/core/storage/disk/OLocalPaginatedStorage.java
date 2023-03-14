@@ -370,7 +370,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         stateLock.writeLock().unlock();
       }
 
-      open(null, null, new OContextConfiguration());
+      open(new OContextConfiguration());
       atomicOperationsManager.executeInsideAtomicOperation(
           null,
           (atomicOperation) -> {

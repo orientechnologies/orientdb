@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import java.util.Map;
@@ -98,7 +99,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
                       // STORAGE HAS BEEN CLOSED: REOPEN IT
                       iValue
                           .getStorage()
-                          .open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
+                          .open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], new OContextConfiguration());
                     else if (!iValue.getUser().checkPassword((String) iAdditionalArgs[1]))
                       throw new OSecurityAccessException(
                           iValue.getName(),

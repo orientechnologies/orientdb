@@ -688,10 +688,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void open(final OToken iToken, final OContextConfiguration configuration) {
-    open(iToken.getUserName(), "", configuration);
-  }
-
   @Override
   public void create(final OContextConfiguration contextConfiguration) {
     checkPageSizeAndRelatedParametersInGlobalConfiguration();
@@ -4082,7 +4078,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void reload() {
     try {
       close();
-      open(null, null, null);
+      open(new OContextConfiguration());
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
