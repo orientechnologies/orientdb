@@ -25,7 +25,6 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -881,9 +880,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
   @Override
   public OObjectDatabaseTx setConflictStrategy(final String iStrategyName) {
-    getStorage()
-        .setConflictStrategy(
-            Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+    underlying.setConflictStrategy(iStrategyName);
     return this;
   }
 
