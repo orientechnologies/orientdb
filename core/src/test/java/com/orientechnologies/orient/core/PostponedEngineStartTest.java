@@ -639,6 +639,11 @@ public class PostponedEngineStartTest {
         public int[] getClustersIds(Set<String> filterClusters) {
           return null;
         }
+
+        @Override
+        public OrientDBInternal getContext() {
+          return null;
+        }
       };
     }
 

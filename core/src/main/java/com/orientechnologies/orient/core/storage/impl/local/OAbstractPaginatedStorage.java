@@ -7083,4 +7083,9 @@ public abstract class OAbstractPaginatedStorage
   public void startDDL() {}
 
   public void endDDL() {}
+
+  @Override
+  public OrientDBInternal getContext() {
+    return this.context;
+  }
 }

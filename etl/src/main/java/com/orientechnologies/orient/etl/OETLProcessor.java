@@ -22,8 +22,8 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -238,7 +238,18 @@ public class OETLProcessor {
 
     final Integer dumpEveryMs = (Integer) context.getVariable("dumpEveryMs");
     if (dumpEveryMs != null && dumpEveryMs > 0) {
-      dumpTask = Orient.instance().scheduleTask(this::dumpProgress, dumpEveryMs, dumpEveryMs);
+      dumpTask =
+          new TimerTask() {
+
+            @Override
+            public void run() {
+              OETLProcessor.this.dumpProgress();
+            }
+          };
+      ((ODatabaseDocumentInternal) getContext().getDatabase())
+          .getSharedContext()
+          .getOrientDB()
+          .schedule(dumpTask, dumpEveryMs, dumpEveryMs);
 
       startTime = System.currentTimeMillis();
     }

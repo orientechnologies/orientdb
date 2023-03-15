@@ -32,7 +32,6 @@ import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesMultiRid;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesSingleRid;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -175,24 +174,26 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   private void scheduleCommitTask() {
     commitTask =
-        Orient.instance()
-            .scheduleTask(
-                () -> {
-                  if (shouldClose()) {
-                    synchronized (OLuceneIndexEngineAbstract.this) {
-                      // while on lock the index was opened
-                      if (!shouldClose()) return;
-                      doClose(false);
-                    }
-                  }
-                  if (!closed.get()) {
+        new TimerTask() {
 
-                    OLogManager.instance().debug(this, "Flushing index: " + indexName());
-                    flush();
-                  }
-                },
-                firstFlushAfter,
-                flushIndexInterval);
+          @Override
+          public void run() {
+            if (shouldClose()) {
+              synchronized (OLuceneIndexEngineAbstract.this) {
+                // while on lock the index was opened
+                if (!shouldClose()) return;
+                doClose(false);
+              }
+            }
+            if (!closed.get()) {
+
+              OLogManager.instance().debug(this, "Flushing index: " + indexName());
+              flush();
+            }
+          }
+        };
+    this.storage.getContext().schedule(commitTask, firstFlushAfter, flushIndexInterval);
+    ;
   }
 
   private boolean shouldClose() {

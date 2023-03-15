@@ -130,6 +130,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
@@ -2483,5 +2484,10 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   @Override
   public int[] getClustersIds(Set<String> filterClusters) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OrientDBInternal getContext() {
+    return context;
   }
 }
