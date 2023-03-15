@@ -163,40 +163,15 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
     orient.addOrientDB(this);
-    int size =
-        this.configurations
-            .getConfigurations()
-            .getValueAsInteger(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
-    if (size == -1) {
-      size = Runtime.getRuntime().availableProcessors();
-    }
-    int baseSize;
-
-    if (size > 10) {
-      baseSize = size / 10;
-    } else if (size > 4) {
-      baseSize = size / 2;
-    } else {
-      baseSize = size;
-    }
+    int size = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
     executor =
         OThreadPoolExecutors.newScalingThreadPool(
-            "OrientDBEmbedded", 1, baseSize, size, 30, TimeUnit.MINUTES);
+            "OrientDBEmbedded", 1, excutorBaseSize(size), size, 30, TimeUnit.MINUTES);
 
-    if (size == -1) {
-      size = Runtime.getRuntime().availableProcessors();
-    }
-
-    if (size > 10) {
-      baseSize = size / 10;
-    } else if (size > 4) {
-      baseSize = size / 2;
-    } else {
-      baseSize = size;
-    }
+    int ioSize = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
     ioExecutor =
         OThreadPoolExecutors.newScalingThreadPool(
-            "OrientDB-IO", 1, baseSize, size, 30, TimeUnit.MINUTES);
+            "OrientDB-IO", 1, excutorBaseSize(ioSize), ioSize, 30, TimeUnit.MINUTES);
     timer = new Timer();
 
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
@@ -221,6 +196,35 @@ public class OrientDBEmbedded implements OrientDBInternal {
     systemDatabase = new OSystemDatabase(this);
     securitySystem = new ODefaultSecuritySystem();
     securitySystem.activate(this, this.configurations.getSecurityConfig());
+  }
+
+  private int excutorMaxSize(OGlobalConfiguration config) {
+    int size = this.configurations.getConfigurations().getValueAsInteger(config);
+    if (size == 0) {
+      OLogManager.instance()
+          .warn(
+              this,
+              "Configuration "
+                  + config.getKey()
+                  + " has a value 0 using number of CPUs as base value");
+      size = Runtime.getRuntime().availableProcessors();
+    } else if (size <= -1) {
+      size = Runtime.getRuntime().availableProcessors();
+    }
+    return size;
+  }
+
+  private int excutorBaseSize(int size) {
+    int baseSize;
+
+    if (size > 10) {
+      baseSize = size / 10;
+    } else if (size > 4) {
+      baseSize = size / 2;
+    } else {
+      baseSize = size;
+    }
+    return baseSize;
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
