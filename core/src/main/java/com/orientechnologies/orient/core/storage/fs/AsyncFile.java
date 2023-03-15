@@ -12,12 +12,16 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -32,10 +36,20 @@ public final class AsyncFile implements OFile {
   private AsynchronousFileChannel fileChannel;
 
   private final int pageSize;
+  private final ExecutorService executor;
 
-  public AsyncFile(final Path osFile, final int pageSize) {
+  private static final Set<OpenOption> options;
+
+  static {
+    options = new HashSet<>();
+    options.add(StandardOpenOption.READ);
+    options.add(StandardOpenOption.WRITE);
+  }
+
+  public AsyncFile(final Path osFile, final int pageSize, ExecutorService executor) {
     this.osFile = osFile;
     this.pageSize = pageSize;
+    this.executor = executor;
   }
 
   @Override
@@ -123,9 +137,7 @@ public final class AsyncFile implements OFile {
     if (fileChannel != null) {
       throw new OStorageException("File " + osFile + " is already opened.");
     }
-
-    fileChannel =
-        AsynchronousFileChannel.open(osFile, StandardOpenOption.READ, StandardOpenOption.WRITE);
+    fileChannel = AsynchronousFileChannel.open(osFile, options, executor);
 
     initSize();
   }

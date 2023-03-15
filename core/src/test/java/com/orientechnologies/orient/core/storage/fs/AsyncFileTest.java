@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Executors;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -34,7 +35,7 @@ public class AsyncFileTest {
 
   @Test
   public void testWrite() throws Exception {
-    final AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
+    final AsyncFile file = new AsyncFile(buildDirectoryPath, 1, Executors.newCachedThreadPool());
     file.create();
 
     file.allocateSpace(128);
@@ -59,7 +60,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWrite() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, Executors.newCachedThreadPool());
     file.create();
 
     file.allocateSpace(128);
@@ -87,7 +88,7 @@ public class AsyncFileTest {
 
   @Test
   public void testWriteSeveralChunks() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, Executors.newCachedThreadPool());
     file.create();
 
     final long position1 = file.allocateSpace(128);
@@ -134,7 +135,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWriteSeveralChunks() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, Executors.newCachedThreadPool());
     file.create();
 
     final long position1 = file.allocateSpace(128);
@@ -179,7 +180,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWriteSeveralChunksTwo() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, Executors.newCachedThreadPool());
     file.create();
 
     final long position1 = file.allocateSpace(128);
@@ -223,7 +224,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWriteSeveralChunksThree() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, Executors.newCachedThreadPool());
     file.create();
 
     final long position1 = file.allocateSpace(128 * 1024);
@@ -272,7 +273,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenClose() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, Executors.newCachedThreadPool());
     Assert.assertFalse(file.isOpen());
 
     file.create();

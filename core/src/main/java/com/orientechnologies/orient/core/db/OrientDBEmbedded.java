@@ -103,6 +103,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected final OCachedDatabasePoolFactory cachedPoolFactory;
   private volatile boolean open = true;
   private final ExecutorService executor;
+  private final ExecutorService ioExecutor;
   private final Timer timer;
   private TimerTask autoCloseTimer = null;
   private final OScriptManager scriptManager = new OScriptManager();
@@ -169,9 +170,33 @@ public class OrientDBEmbedded implements OrientDBInternal {
     if (size == -1) {
       size = Runtime.getRuntime().availableProcessors();
     }
+    int baseSize;
+
+    if (size > 10) {
+      baseSize = size / 10;
+    } else if (size > 4) {
+      baseSize = size / 2;
+    } else {
+      baseSize = size;
+    }
     executor =
         OThreadPoolExecutors.newScalingThreadPool(
-            "OrientDBEmbedded", 1, size, 1000, 30, TimeUnit.MINUTES);
+            "OrientDBEmbedded", 1, baseSize, size, 30, TimeUnit.MINUTES);
+
+    if (size == -1) {
+      size = Runtime.getRuntime().availableProcessors();
+    }
+
+    if (size > 10) {
+      baseSize = size / 10;
+    } else if (size > 4) {
+      baseSize = size / 2;
+    } else {
+      baseSize = size;
+    }
+    ioExecutor =
+        OThreadPoolExecutors.newScalingThreadPool(
+            "OrientDB-IO", 1, baseSize, size, 30, TimeUnit.MINUTES);
     timer = new Timer();
 
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
@@ -1299,5 +1324,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
       connectionUrl += basePath;
     }
     return connectionUrl;
+  }
+
+  public ExecutorService getIoExecutor() {
+    return ioExecutor;
   }
 }
