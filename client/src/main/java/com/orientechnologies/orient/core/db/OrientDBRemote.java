@@ -379,7 +379,7 @@ public class OrientDBRemote implements OrientDBInternal {
 
     for (OStorageRemote stg : storagesCopy) {
       try {
-        OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
+        OLogManager.instance().info(this, "- shutdown storage: %s ...", stg.getName());
         stg.shutdown();
       } catch (Exception e) {
         OLogManager.instance().warn(this, "-- error on shutdown storage", e);
