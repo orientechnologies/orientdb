@@ -178,18 +178,24 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
           @Override
           public void run() {
-            if (shouldClose()) {
-              synchronized (OLuceneIndexEngineAbstract.this) {
-                // while on lock the index was opened
-                if (!shouldClose()) return;
-                doClose(false);
-              }
-            }
-            if (!closed.get()) {
+            OLuceneIndexEngineAbstract.this
+                .storage
+                .getContext()
+                .execute(
+                    () -> {
+                      if (shouldClose()) {
+                        synchronized (OLuceneIndexEngineAbstract.this) {
+                          // while on lock the index was opened
+                          if (!shouldClose()) return;
+                          doClose(false);
+                        }
+                      }
+                      if (!closed.get()) {
 
-              OLogManager.instance().debug(this, "Flushing index: " + indexName());
-              flush();
-            }
+                        OLogManager.instance().debug(this, "Flushing index: " + indexName());
+                        flush();
+                      }
+                    });
           }
         };
     this.storage.getContext().schedule(commitTask, firstFlushAfter, flushIndexInterval);
