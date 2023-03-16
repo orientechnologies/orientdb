@@ -16,6 +16,7 @@ public class OrientProperty<V> implements Property<V> {
   protected V value;
   protected Object wrappedValue;
   protected OrientElement element;
+  private boolean removed = false;
 
   public OrientProperty(String key, V value, OrientElement element) {
     this.key = key;
@@ -70,7 +71,7 @@ public class OrientProperty<V> implements Property<V> {
 
   @Override
   public boolean isPresent() {
-    return value != null;
+    return !removed;
   }
 
   @Override
@@ -85,6 +86,7 @@ public class OrientProperty<V> implements Property<V> {
     doc.save();
     this.value = null;
     wrappedValue = null;
+    removed = true;
   }
 
   @Override

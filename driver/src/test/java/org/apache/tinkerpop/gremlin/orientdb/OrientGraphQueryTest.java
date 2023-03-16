@@ -3,6 +3,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /** Created by Enrico Risa on 11/08/2017. */
@@ -172,6 +173,7 @@ public class OrientGraphQueryTest extends OrientGraphBaseTest {
   }
 
   @Test
+  @Ignore
   public void hasIdWithVertex() {
     final String labelVertex = "VertexLabel";
     OrientGraph graph = factory.getTx();

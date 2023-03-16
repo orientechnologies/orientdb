@@ -11,6 +11,7 @@ public class OrientVertexPropertyProperty<U> implements Property<U> {
   private final String key;
   private final U value;
   private final OrientVertexProperty<?> source;
+  private boolean removed = false;
 
   public OrientVertexPropertyProperty(
       String key, U value, OrientVertexProperty<?> orientVertexProperty) {
@@ -31,7 +32,7 @@ public class OrientVertexPropertyProperty<U> implements Property<U> {
 
   @Override
   public boolean isPresent() {
-    return value != null;
+    return !removed;
   }
 
   @Override
@@ -42,6 +43,7 @@ public class OrientVertexPropertyProperty<U> implements Property<U> {
   @Override
   public void remove() {
     source.removeMetadata(key);
+    this.removed = true;
   }
 
   @Override
