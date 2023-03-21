@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.File;
 import java.io.InputStream;
@@ -54,10 +53,8 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
     oClass.createProperty("longitude", OType.DOUBLE);
     oClass.createProperty("name", OType.STRING);
 
-    db.command(
-            new OCommandSQL(
-                "CREATE INDEX Place.l_lon ON Place(latitude,longitude) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("CREATE INDEX Place.l_lon ON Place(latitude,longitude) SPATIAL ENGINE LUCENE")
+        .close();
 
     try {
       ZipFile zipFile =

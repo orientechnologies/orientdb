@@ -38,15 +38,13 @@ public class LuceneMiscTest extends BaseLuceneTest {
   // TODO Re-enable when removed check syntax on ODB
   public void testDoubleLucene() {
 
-    db.command(new OCommandSQL("create class Test extends V")).execute();
-    db.command(new OCommandSQL("create property Test.attr1 string")).execute();
-    db.command(new OCommandSQL("create index Test.attr1 on Test (attr1) fulltext engine lucene"))
-        .execute();
-    db.command(new OCommandSQL("create property Test.attr2 string")).execute();
-    db.command(new OCommandSQL("create index Test.attr2 on Test (attr2) fulltext engine lucene"))
-        .execute();
-    db.command(new OCommandSQL("insert into Test set attr1='foo', attr2='bar'")).execute();
-    db.command(new OCommandSQL("insert into Test set attr1='bar', attr2='foo'")).execute();
+    db.command("create class Test extends V").close();
+    db.command("create property Test.attr1 string").close();
+    db.command("create index Test.attr1 on Test (attr1) fulltext engine lucene").close();
+    db.command("create property Test.attr2 string").close();
+    db.command("create index Test.attr2 on Test (attr2) fulltext engine lucene").close();
+    db.command("insert into Test set attr1='foo', attr2='bar'").close();
+    db.command("insert into Test set attr1='bar', attr2='foo'").close();
 
     List<ODocument> results =
         db.command(

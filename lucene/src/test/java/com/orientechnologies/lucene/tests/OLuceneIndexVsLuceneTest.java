@@ -24,7 +24,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.File;
 import java.io.IOException;
@@ -77,8 +76,7 @@ public class OLuceneIndexVsLuceneTest extends OLuceneBaseTest {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE").close();
   }
 
   private File getPath() {

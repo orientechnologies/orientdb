@@ -18,9 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.InputStream;
 import java.util.List;
@@ -37,10 +35,9 @@ public class LuceneQueryErrorTest extends BaseLuceneTest {
   public void init() {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    db.execute("sql", getScriptFromStream(stream)).close();
 
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE").close();
   }
 
   @Test

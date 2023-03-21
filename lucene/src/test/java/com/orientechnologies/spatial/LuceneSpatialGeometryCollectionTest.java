@@ -28,14 +28,11 @@ public class LuceneSpatialGeometryCollectionTest extends BaseSpatialLuceneTest {
 
   @Before
   public void init() {
-    db.command(new OCommandSQL("create class test")).execute();
-    db.command(new OCommandSQL("create property test.name STRING")).execute();
-    db.command(new OCommandSQL("create property test.geometry EMBEDDED OGeometryCollection"))
-        .execute();
+    db.command("create class test").close();
+    db.command("create property test.name STRING").close();
+    db.command("create property test.geometry EMBEDDED OGeometryCollection").close();
 
-    db.command(
-            new OCommandSQL("create index test.geometry on test (geometry) SPATIAL engine lucene"))
-        .execute();
+    db.command("create index test.geometry on test (geometry) SPATIAL engine lucene").close();
   }
 
   @Test

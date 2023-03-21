@@ -19,9 +19,7 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.io.InputStream;
 import java.util.logging.Level;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -36,20 +34,18 @@ public class LuceneDropClusterTest extends BaseLuceneTest {
     OLogManager.instance().setConsoleLevel(Level.FINE.getName());
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    db.execute("sql", getScriptFromStream(stream)).close();
 
     db.command(
-            new OCommandSQL(
-                "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"default\":\""
-                    + StandardAnalyzer.class.getName()
-                    + "\"}"))
-        .execute();
+            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"default\":\""
+                + StandardAnalyzer.class.getName()
+                + "\"}")
+        .close();
     db.command(
-            new OCommandSQL(
-                "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"default\":\""
-                    + StandardAnalyzer.class.getName()
-                    + "\"}"))
-        .execute();
+            "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"default\":\""
+                + StandardAnalyzer.class.getName()
+                + "\"}")
+        .close();
 
     OMetadataInternal metadata = db.getMetadata();
 

@@ -19,7 +19,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
   public void setUp() throws Exception {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    //    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    //    db.execute("sql", getScriptFromStream(stream)).close();
     db.execute("sql", getScriptFromStream(stream));
 
     db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE ");

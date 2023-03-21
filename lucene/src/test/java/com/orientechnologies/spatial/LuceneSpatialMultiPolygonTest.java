@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -50,15 +49,13 @@ public class LuceneSpatialMultiPolygonTest extends BaseSpatialLuceneTest {
     oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OMultiPolygon"));
     oClass.createProperty("name", OType.STRING);
 
-    db.command(
-            new OCommandSQL("CREATE INDEX Place.location ON Place(location) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("CREATE INDEX Place.location ON Place(location) SPATIAL ENGINE LUCENE").close();
   }
 
   @Test
   public void testMultiPolygonWithoutIndex() throws IOException {
     testIndexingMultiPolygon();
-    db.command(new OCommandSQL("DROP INDEX Place.location")).execute();
+    db.command("DROP INDEX Place.location").close();
     queryMultiPolygon();
   }
 
@@ -105,18 +102,14 @@ public class LuceneSpatialMultiPolygonTest extends BaseSpatialLuceneTest {
 
     OIOUtils.copyStream(systemResourceAsStream, outputStream);
     db.command(
-            new OCommandSQL(
-                "insert into Place set name = 'TestInsert' , location = ST_GeomFromText('"
-                    + outputStream.toString()
-                    + "')"))
-        .execute();
+            "insert into Place set name = 'TestInsert' , location = ST_GeomFromText('"
+                + outputStream.toString()
+                + "')")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "insert into Place set name = 'Test1' , location = ST_GeomFromText('"
-                    + MULTIWKT
-                    + "')"))
-        .execute();
+            "insert into Place set name = 'Test1' , location = ST_GeomFromText('" + MULTIWKT + "')")
+        .close();
 
     Assert.assertEquals(3, index.getInternal().size());
 

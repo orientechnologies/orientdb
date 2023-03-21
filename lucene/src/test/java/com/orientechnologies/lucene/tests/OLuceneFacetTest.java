@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.junit.Assert;
@@ -42,9 +41,8 @@ public class OLuceneFacetTest extends OLuceneBaseTest {
     oClass.createProperty("category", OType.STRING);
 
     db.command(
-            new OCommandSQL(
-                "create index Item.name_category on Item (name,category) FULLTEXT ENGINE LUCENE METADATA { 'facetFields' : ['category']}"))
-        .execute();
+            "create index Item.name_category on Item (name,category) FULLTEXT ENGINE LUCENE METADATA { 'facetFields' : ['category']}")
+        .close();
 
     ODocument doc = new ODocument("Item");
     doc.field("name", "Pioneer");

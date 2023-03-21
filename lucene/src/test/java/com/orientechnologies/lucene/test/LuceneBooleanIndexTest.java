@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -48,10 +47,8 @@ public class LuceneBooleanIndexTest extends BaseLuceneTest {
     song.setSuperClass(v);
     song.createProperty("isDeleted", OType.BOOLEAN);
 
-    db.command(
-            new OCommandSQL(
-                "create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE")
+        .close();
   }
 
   @Test

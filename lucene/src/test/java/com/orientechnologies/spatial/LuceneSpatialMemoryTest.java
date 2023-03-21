@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.spatial.collections.OSpatialCompositeKey;
 import java.util.ArrayList;
@@ -48,10 +47,8 @@ public class LuceneSpatialMemoryTest {
         point.createProperty("latitude", OType.DOUBLE);
         point.createProperty("longitude", OType.DOUBLE);
 
-        db.command(
-                new OCommandSQL(
-                    "CREATE INDEX Point.ll ON Point(latitude,longitude) SPATIAL ENGINE LUCENE"))
-            .execute();
+        db.command("CREATE INDEX Point.ll ON Point(latitude,longitude) SPATIAL ENGINE LUCENE")
+            .close();
 
         ODocument document = new ODocument("Point");
 
@@ -84,10 +81,8 @@ public class LuceneSpatialMemoryTest {
       point.createProperty("latitude", OType.DOUBLE);
       point.createProperty("longitude", OType.DOUBLE);
 
-      db.command(
-              new OCommandSQL(
-                  "CREATE INDEX Point.ll ON Point(latitude,longitude) SPATIAL ENGINE LUCENE"))
-          .execute();
+      db.command("CREATE INDEX Point.ll ON Point(latitude,longitude) SPATIAL ENGINE LUCENE")
+          .close();
 
       db.begin();
 
@@ -164,10 +159,8 @@ public class LuceneSpatialMemoryTest {
       point.createProperty("latitude", OType.DOUBLE);
       point.createProperty("longitude", OType.DOUBLE);
 
-      db.command(
-              new OCommandSQL(
-                  "CREATE INDEX Point.ll ON Point(latitude,longitude) SPATIAL ENGINE LUCENE"))
-          .execute();
+      db.command("CREATE INDEX Point.ll ON Point(latitude,longitude) SPATIAL ENGINE LUCENE")
+          .close();
 
       db.begin();
 
