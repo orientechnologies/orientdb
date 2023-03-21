@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,9 +46,7 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
     oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OLineString"));
     oClass.createProperty("name", OType.STRING);
 
-    db.command(
-            new OCommandSQL("CREATE INDEX Place.location ON Place(location) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("CREATE INDEX Place.location ON Place(location) SPATIAL ENGINE LUCENE").close();
 
     ODocument linestring1 = new ODocument("Place");
     linestring1.field("name", "LineString1");
@@ -78,11 +75,10 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
     db.save(linestring2);
 
     db.command(
-            new OCommandSQL(
-                "insert into Place set name = 'LineString3' , location = ST_GeomFromText('"
-                    + LINEWKT
-                    + "')"))
-        .execute();
+            "insert into Place set name = 'LineString3' , location = ST_GeomFromText('"
+                + LINEWKT
+                + "')")
+        .close();
   }
 
   //  @After
@@ -98,7 +94,7 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
 
   @Test
   public void testLineStringWithoutIndex() throws IOException {
-    db.command(new OCommandSQL("drop index Place.location")).execute();
+    db.command("drop index Place.location").close();
     queryLineString();
   }
 

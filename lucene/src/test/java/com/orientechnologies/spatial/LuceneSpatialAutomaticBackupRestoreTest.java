@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -112,16 +111,13 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
     db = (ODatabaseDocumentInternal) orientDB.open(DBNAME, "admin", "admin");
 
-    db.command(new OCommandSQL("create class City ")).execute();
-    db.command(new OCommandSQL("create property City.name string")).execute();
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create class City ").close();
+    db.command("create property City.name string").close();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE").close();
 
-    db.command(new OCommandSQL("create property City.location EMBEDDED OPOINT")).execute();
+    db.command("create property City.location EMBEDDED OPOINT").close();
 
-    db.command(
-            new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE").close();
 
     ODocument rome = newCity("Rome", 12.5, 41.9);
 

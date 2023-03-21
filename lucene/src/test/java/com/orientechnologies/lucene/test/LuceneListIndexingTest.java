@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,17 +51,14 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
     person.createProperty("name", OType.STRING);
     person.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
     //noinspection deprecation
-    db.command(
-            new OCommandSQL(
-                "create index Person.name_tags on Person (name,tags) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Person.name_tags on Person (name,tags) FULLTEXT ENGINE LUCENE")
+        .close();
 
     OClass city = schema.createClass("City");
     city.createProperty("name", OType.STRING);
     city.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
     //noinspection deprecation
-    db.command(new OCommandSQL("create index City.tags on City (tags) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index City.tags on City (tags) FULLTEXT ENGINE LUCENE").close();
   }
 
   @Test

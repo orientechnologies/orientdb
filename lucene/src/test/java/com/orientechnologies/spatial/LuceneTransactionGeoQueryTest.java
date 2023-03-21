@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,9 +48,7 @@ public class LuceneTransactionGeoQueryTest {
       oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OPoint"));
       oClass.createProperty("name", OType.STRING);
 
-      db.command(
-              new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE"))
-          .execute();
+      db.command("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE").close();
 
       OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
       ODocument rome = newCity("Rome", 12.5, 41.9);
@@ -60,11 +57,10 @@ public class LuceneTransactionGeoQueryTest {
       db.begin();
 
       db.command(
-              new OCommandSQL(
-                  "insert into City set name = 'TestInsert' , location = ST_GeomFromText('"
-                      + PWKT
-                      + "')"))
-          .execute();
+              "insert into City set name = 'TestInsert' , location = ST_GeomFromText('"
+                  + PWKT
+                  + "')")
+          .close();
       db.save(rome);
       db.save(london);
       String query =
@@ -99,9 +95,7 @@ public class LuceneTransactionGeoQueryTest {
       oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OPoint"));
       oClass.createProperty("name", OType.STRING);
 
-      db.command(
-              new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE"))
-          .execute();
+      db.command("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE").close();
 
       OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
       ODocument rome = newCity("Rome", 12.5, 41.9);
@@ -120,8 +114,7 @@ public class LuceneTransactionGeoQueryTest {
 
       db.begin();
 
-      db.command(new OCommandSQL("update City set location = ST_GeomFromText('" + PWKT + "')"))
-          .execute();
+      db.command("update City set location = ST_GeomFromText('" + PWKT + "')").close();
 
       query =
           "select * from City where location && 'LINESTRING(-160.06393432617188 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594 21.787556698550834)' ";

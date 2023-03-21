@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,9 +49,7 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
     place.createProperty("longitude", OType.DOUBLE);
     place.createProperty("name", OType.STRING);
 
-    db.command(
-            new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE").close();
   }
 
   protected ODocument newCity(String name, final Double longitude, final Double latitude) {

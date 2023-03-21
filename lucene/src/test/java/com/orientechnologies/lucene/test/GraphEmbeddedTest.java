@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.assertj.core.api.Assertions;
@@ -42,8 +41,7 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
     type.createProperty("longitude", OType.DOUBLE);
     type.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE").close();
     db.commit();
   }
 

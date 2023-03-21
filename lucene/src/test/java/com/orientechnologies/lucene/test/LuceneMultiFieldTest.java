@@ -20,11 +20,9 @@ package com.orientechnologies.lucene.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.InputStream;
@@ -47,23 +45,22 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   public void init() throws Exception {
     try (InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql")) {
       //noinspection deprecation
-      db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+      db.execute("sql", getScriptFromStream(stream)).close();
     }
 
     //noinspection deprecation
     db.command(
-            new OCommandSQL(
-                "create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE METADATA {"
-                    + "\"title_index\":\""
-                    + EnglishAnalyzer.class.getName()
-                    + "\" , "
-                    + "\"title_query\":\""
-                    + EnglishAnalyzer.class.getName()
-                    + "\" , "
-                    + "\"author_index\":\""
-                    + StandardAnalyzer.class.getName()
-                    + "\"}"))
-        .execute();
+            "create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE METADATA {"
+                + "\"title_index\":\""
+                + EnglishAnalyzer.class.getName()
+                + "\" , "
+                + "\"title_query\":\""
+                + EnglishAnalyzer.class.getName()
+                + "\" , "
+                + "\"author_index\":\""
+                + StandardAnalyzer.class.getName()
+                + "\"}")
+        .close();
 
     final ODocument index =
         db.getMetadata().getIndexManagerInternal().getIndex(db, "Song.title_author").getMetadata();
@@ -144,17 +141,15 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   public void testSelectOnIndexWithIgnoreNullValuesToFalse() {
     // #5579
     String script =
-        "create class Item\n"
-            + "create property Item.Title string\n"
-            + "create property Item.Summary string\n"
-            + "create property Item.Content string\n"
-            + "create index Item.i_lucene on Item(Title, Summary, Content) fulltext engine lucene METADATA {ignoreNullValues:false}\n"
-            + "insert into Item set Title = 'wrong', content = 'not me please'\n"
-            + "insert into Item set Title = 'test', content = 'this is a test'\n";
-    //noinspection deprecation
-    db.command(new OCommandScript("sql", script)).execute();
+        "create class Item;\n"
+            + "create property Item.Title string;\n"
+            + "create property Item.Summary string;\n"
+            + "create property Item.Content string;\n"
+            + "create index Item.i_lucene on Item(Title, Summary, Content) fulltext engine lucene METADATA {ignoreNullValues:false};\n"
+            + "insert into Item set Title = 'wrong', content = 'not me please';\n"
+            + "insert into Item set Title = 'test', content = 'this is a test';\n";
+    db.execute("sql", script).close();
 
-    @SuppressWarnings("deprecation")
     List<ODocument> docs =
         db.query(new OSQLSynchQuery<ODocument>("select * from Item where Title lucene 'te*'"));
     assertThat(docs).hasSize(1);
