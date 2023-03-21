@@ -38,11 +38,11 @@ public class SQLCreateVertexAndEdgeTest extends BaseMemoryDatabase {
     int vclusterId = db.addCluster("vdefault");
     int eclusterId = db.addCluster("edefault");
 
-    db.command(new OCommandSQL("create class V1 extends V")).execute();
-    db.command(new OCommandSQL("alter class V1 addcluster vdefault")).execute();
+    db.command("create class V1 extends V").close();
+    db.command("alter class V1 addcluster vdefault").close();
 
-    db.command(new OCommandSQL("create class E1 extends E")).execute();
-    db.command(new OCommandSQL("alter class E1 addcluster edefault")).execute();
+    db.command("create class E1 extends E").close();
+    db.command("alter class E1 addcluster edefault").close();
 
     db.getMetadata().getSchema().reload();
 
@@ -145,7 +145,7 @@ public class SQLCreateVertexAndEdgeTest extends BaseMemoryDatabase {
 
       int before = result.size();
 
-      db.command(new OCommandScript("sql", cmd)).execute();
+      db.execute("sql", cmd).close();
 
       result = db.query(new OSQLSynchQuery<OVertex>("select from V"));
 
@@ -166,30 +166,29 @@ public class SQLCreateVertexAndEdgeTest extends BaseMemoryDatabase {
 
     ORID vid = v1.getIdentity();
     // TODO remove this
-    db.command(new OCommandSQL("create edge from " + vid + " to " + vid)).execute();
 
-    db.command(new OCommandSQL("create edge E from " + vid + " to " + vid)).execute();
+    db.command("create edge from " + vid + " to " + vid).close();
 
-    db.command(new OCommandSQL("create edge from " + vid + " to " + vid + " set foo = 'bar'"))
-        .execute();
+    db.command("create edge E from " + vid + " to " + vid).close();
 
-    db.command(new OCommandSQL("create edge E from " + vid + " to " + vid + " set bar = 'foo'"))
-        .execute();
+    db.command("create edge from " + vid + " to " + vid + " set foo = 'bar'").close();
+
+    db.command("create edge E from " + vid + " to " + vid + " set bar = 'foo'").close();
   }
 
   @Test
   public void testCannotAlterEClassname() {
-    db.command(new OCommandSQL("create class ETest extends E")).execute();
+    db.command("create class ETest extends E").close();
 
     try {
-      db.command(new OCommandSQL("alter class ETest name ETest2")).execute();
+      db.command("alter class ETest name ETest2").close();
       Assert.assertTrue(false);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(true);
     }
 
     try {
-      db.command(new OCommandSQL("alter class ETest name ETest2 unsafe")).execute();
+      db.command("alter class ETest name ETest2 unsafe").close();
       Assert.assertTrue(true);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(false);
@@ -199,14 +198,11 @@ public class SQLCreateVertexAndEdgeTest extends BaseMemoryDatabase {
   public void testSqlScriptThatDeletesEdge() {
     long start = System.currentTimeMillis();
 
-    db.command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge1'"))
-        .execute();
-    db.command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge2'"))
-        .execute();
+    db.command("create vertex V set name = 'testSqlScriptThatDeletesEdge1'").close();
+    db.command("create vertex V set name = 'testSqlScriptThatDeletesEdge2'").close();
     db.command(
-            new OCommandSQL(
-                "create edge E from (select from V where name = 'testSqlScriptThatDeletesEdge1') to (select from V where name = 'testSqlScriptThatDeletesEdge2') set name = 'testSqlScriptThatDeletesEdge'"))
-        .execute();
+            "create edge E from (select from V where name = 'testSqlScriptThatDeletesEdge1') to (select from V where name = 'testSqlScriptThatDeletesEdge2') set name = 'testSqlScriptThatDeletesEdge'")
+        .close();
 
     try {
       String cmd = "BEGIN\n";
