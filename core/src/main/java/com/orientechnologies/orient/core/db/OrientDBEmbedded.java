@@ -1038,6 +1038,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
       internalClose();
       currentStorageIds.clear();
     }
+    try {
+      while (!ioExecutor.awaitTermination(1, TimeUnit.MINUTES)) {
+        OLogManager.instance().warn(this, "Failed waiting background io operations termination");
+        ioExecutor.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
     removeShutdownHook();
   }
 
