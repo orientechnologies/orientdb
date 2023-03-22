@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.index.OIndexDictionary;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
@@ -80,14 +81,12 @@ public final class OHashIndexFactory implements OIndexFactory {
   }
 
   public final OIndexInternal createIndex(
-      final String name,
-      final OStorage storage,
-      final String indexType,
-      final String algorithm,
-      String valueContainerAlgorithm,
-      final ODocument metadata,
-      int version)
-      throws OConfigurationException {
+      final OStorage storage, final OIndexMetadata im, int version) throws OConfigurationException {
+    final String name = im.getName();
+    final ODocument metadata = im.getMetadata();
+    final String indexType = im.getType();
+    final String algorithm = im.getAlgorithm();
+    String valueContainerAlgorithm = im.getValueContainerAlgorithm();
 
     if (version < 0) {
       version = getLastVersion(algorithm);

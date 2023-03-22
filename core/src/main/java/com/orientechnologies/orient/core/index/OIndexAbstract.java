@@ -294,16 +294,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         if (indexId == -1) {
           indexId =
               storage.loadExternalIndexEngine(
-                  name,
-                  algorithm,
-                  type,
-                  indexDefinition,
-                  determineValueSerializer(),
-                  isAutomatic(),
-                  version,
-                  1,
-                  this instanceof OIndexMultiValues,
-                  engineProperties);
+                  indexMetadata, determineValueSerializer(), version, 1, engineProperties);
           apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         }
 

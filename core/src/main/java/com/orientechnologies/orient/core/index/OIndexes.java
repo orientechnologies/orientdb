@@ -155,14 +155,7 @@ public final class OIndexes {
     }
 
     return findFactoryByAlgorithmAndType(algorithm, indexType)
-        .createIndex(
-            metadata.getName(),
-            storage,
-            indexType,
-            algorithm,
-            metadata.getValueContainerAlgorithm(),
-            metadata.getMetadata(),
-            version);
+        .createIndex(storage, metadata, version);
   }
 
   private static OIndexFactory findFactoryByAlgorithmAndType(String algorithm, String indexType) {

@@ -99,15 +99,14 @@ public class ODefaultIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal createIndex(
-      String name,
-      OStorage storage,
-      String indexType,
-      String algorithm,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      int version)
+  public OIndexInternal createIndex(OStorage storage, OIndexMetadata im, int version)
       throws OConfigurationException {
+    final String name = im.getName();
+    final ODocument metadata = im.getMetadata();
+    final String indexType = im.getType();
+    final String algorithm = im.getAlgorithm();
+    String valueContainerAlgorithm = im.getValueContainerAlgorithm();
+
     if (valueContainerAlgorithm == null) {
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
     }

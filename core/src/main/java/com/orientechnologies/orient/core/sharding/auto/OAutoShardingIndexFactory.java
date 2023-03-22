@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
@@ -80,15 +81,14 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal createIndex(
-      String name,
-      OStorage storage,
-      String indexType,
-      String algorithm,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      int version)
+  public OIndexInternal createIndex(OStorage storage, OIndexMetadata im, int version)
       throws OConfigurationException {
+    final String name = im.getName();
+    final ODocument metadata = im.getMetadata();
+    final String indexType = im.getType();
+    final String algorithm = im.getAlgorithm();
+    String valueContainerAlgorithm = im.getValueContainerAlgorithm();
+
     if (valueContainerAlgorithm == null) valueContainerAlgorithm = NONE_VALUE_CONTAINER;
 
     if (version < 0) {

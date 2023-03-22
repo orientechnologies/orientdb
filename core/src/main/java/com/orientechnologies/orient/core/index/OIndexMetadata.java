@@ -103,7 +103,7 @@ public class OIndexMetadata {
     return result;
   }
 
-  String getValueContainerAlgorithm() {
+  public String getValueContainerAlgorithm() {
     return valueContainerAlgorithm;
   }
 

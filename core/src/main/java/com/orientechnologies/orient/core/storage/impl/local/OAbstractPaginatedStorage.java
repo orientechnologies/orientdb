@@ -2649,16 +2649,17 @@ public abstract class OAbstractPaginatedStorage
   }
 
   public int loadExternalIndexEngine(
-      final String engineName,
-      final String algorithm,
-      final String indexType,
-      final OIndexDefinition indexDefinition,
+      final OIndexMetadata indexMetadata,
       final OBinarySerializer<?> valueSerializer,
-      final boolean isAutomatic,
       final int version,
       final int apiVersion,
-      final boolean multivalue,
       final Map<String, String> engineProperties) {
+    final String engineName = indexMetadata.getName();
+    final String algorithm = indexMetadata.getAlgorithm();
+    final String indexType = indexMetadata.getType();
+    final OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
+    final boolean isAutomatic = indexMetadata.getIndexDefinition().isAutomatic();
+    final boolean multivalue = indexMetadata.isMultivalue();
     try {
       stateLock.writeLock().lock();
       try {

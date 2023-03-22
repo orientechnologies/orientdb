@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.Set;
 
@@ -38,18 +37,11 @@ public interface OIndexFactory {
   /**
    * Creates an index.
    *
-   * @param indexType index type
+   * @param im TODO
    * @return OIndexInternal
    * @throws OConfigurationException if index creation failed
    */
-  OIndexInternal createIndex(
-      String name,
-      OStorage storage,
-      String indexType,
-      String algorithm,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      int version)
+  OIndexInternal createIndex(OStorage storage, OIndexMetadata im, int version)
       throws OConfigurationException;
 
   OBaseIndexEngine createIndexEngine(
