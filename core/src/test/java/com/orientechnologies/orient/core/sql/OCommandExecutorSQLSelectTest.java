@@ -51,133 +51,105 @@ import java.util.regex.Pattern;
 import org.junit.Test;
 
 public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
+
   private static int ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
 
   public void beforeTest() {
     super.beforeTest();
     getProfilerInstance().startRecording();
 
-    db.command(new OCommandSQL("CREATE class foo")).execute();
-    db.command(new OCommandSQL("CREATE property foo.name STRING")).execute();
-    db.command(new OCommandSQL("CREATE property foo.bar INTEGER")).execute();
-    db.command(new OCommandSQL("CREATE property foo.address EMBEDDED")).execute();
-    db.command(new OCommandSQL("CREATE property foo.comp STRING")).execute();
-    db.command(new OCommandSQL("CREATE property foo.osite INTEGER")).execute();
+    db.command("CREATE class foo").close();
+    db.command("CREATE property foo.name STRING").close();
+    db.command("CREATE property foo.bar INTEGER").close();
+    db.command("CREATE property foo.address EMBEDDED").close();
+    db.command("CREATE property foo.comp STRING").close();
+    db.command("CREATE property foo.osite INTEGER").close();
 
-    db.command(new OCommandSQL("CREATE index foo_name on foo (name) NOTUNIQUE")).execute();
-    db.command(new OCommandSQL("CREATE index foo_bar on foo (bar) NOTUNIQUE")).execute();
-    db.command(new OCommandSQL("CREATE index foo_comp_osite on foo (comp, osite) NOTUNIQUE"))
-        .execute();
+    db.command("CREATE index foo_name on foo (name) NOTUNIQUE").close();
+    db.command("CREATE index foo_bar on foo (bar) NOTUNIQUE").close();
+    db.command("CREATE index foo_comp_osite on foo (comp, osite) NOTUNIQUE").close();
 
     db.command(
-            new OCommandSQL(
-                "insert into foo (name, bar, address) values ('a', 1, {'street':'1st street', 'city':'NY', '@type':'d'})"))
-        .execute();
-    db.command(new OCommandSQL("insert into foo (name, bar) values ('b', 2)")).execute();
-    db.command(new OCommandSQL("insert into foo (name, bar) values ('c', 3)")).execute();
+            "insert into foo (name, bar, address) values ('a', 1, {'street':'1st street', 'city':'NY', '@type':'d'})")
+        .close();
+    db.command("insert into foo (name, bar) values ('b', 2)").close();
+    db.command("insert into foo (name, bar) values ('c', 3)").close();
 
-    db.command(new OCommandSQL("insert into foo (comp, osite) values ('a', 1)")).execute();
-    db.command(new OCommandSQL("insert into foo (comp, osite) values ('b', 2)")).execute();
+    db.command("insert into foo (comp, osite) values ('a', 1)").close();
+    db.command("insert into foo (comp, osite) values ('b', 2)").close();
 
-    db.command(new OCommandSQL("CREATE class bar")).execute();
+    db.command("CREATE class bar").close();
 
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('a', 1)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('b', 2)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('c', 3)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('d', 4)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('e', 5)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('f', 1)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('g', 2)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('h', 3)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('i', 4)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('j', 5)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('k', 1)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('l', 2)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('m', 3)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('n', 4)")).execute();
-    db.command(new OCommandSQL("insert into bar (name, foo) values ('o', 5)")).execute();
+    db.command("insert into bar (name, foo) values ('a', 1)").close();
+    db.command("insert into bar (name, foo) values ('b', 2)").close();
+    db.command("insert into bar (name, foo) values ('c', 3)").close();
+    db.command("insert into bar (name, foo) values ('d', 4)").close();
+    db.command("insert into bar (name, foo) values ('e', 5)").close();
+    db.command("insert into bar (name, foo) values ('f', 1)").close();
+    db.command("insert into bar (name, foo) values ('g', 2)").close();
+    db.command("insert into bar (name, foo) values ('h', 3)").close();
+    db.command("insert into bar (name, foo) values ('i', 4)").close();
+    db.command("insert into bar (name, foo) values ('j', 5)").close();
+    db.command("insert into bar (name, foo) values ('k', 1)").close();
+    db.command("insert into bar (name, foo) values ('l', 2)").close();
+    db.command("insert into bar (name, foo) values ('m', 3)").close();
+    db.command("insert into bar (name, foo) values ('n', 4)").close();
+    db.command("insert into bar (name, foo) values ('o', 5)").close();
 
-    db.command(new OCommandSQL("CREATE class ridsorttest clusters 1")).execute();
-    db.command(new OCommandSQL("CREATE property ridsorttest.name INTEGER")).execute();
-    db.command(new OCommandSQL("CREATE index ridsorttest_name on ridsorttest (name) NOTUNIQUE"))
-        .execute();
+    db.command("CREATE class ridsorttest clusters 1").close();
+    db.command("CREATE property ridsorttest.name INTEGER").close();
+    db.command("CREATE index ridsorttest_name on ridsorttest (name) NOTUNIQUE").close();
 
-    db.command(new OCommandSQL("insert into ridsorttest (name) values (1)")).execute();
-    db.command(new OCommandSQL("insert into ridsorttest (name) values (5)")).execute();
-    db.command(new OCommandSQL("insert into ridsorttest (name) values (3)")).execute();
-    db.command(new OCommandSQL("insert into ridsorttest (name) values (4)")).execute();
-    db.command(new OCommandSQL("insert into ridsorttest (name) values (1)")).execute();
-    db.command(new OCommandSQL("insert into ridsorttest (name) values (8)")).execute();
-    db.command(new OCommandSQL("insert into ridsorttest (name) values (6)")).execute();
+    db.command("insert into ridsorttest (name) values (1)").close();
+    db.command("insert into ridsorttest (name) values (5)").close();
+    db.command("insert into ridsorttest (name) values (3)").close();
+    db.command("insert into ridsorttest (name) values (4)").close();
+    db.command("insert into ridsorttest (name) values (1)").close();
+    db.command("insert into ridsorttest (name) values (8)").close();
+    db.command("insert into ridsorttest (name) values (6)").close();
 
-    db.command(new OCommandSQL("CREATE class unwindtest")).execute();
+    db.command("CREATE class unwindtest").close();
+    db.command("insert into unwindtest (name, coll) values ('foo', ['foo1', 'foo2'])").close();
+    db.command("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])").close();
+
+    db.command("CREATE class unwindtest2").close();
+    db.command("insert into unwindtest2 (name, coll) values ('foo', [])").close();
+
+    db.command("CREATE class `edge`").close();
+
+    db.command("CREATE class TestFromInSquare").close();
+    db.command("insert into TestFromInSquare set tags = {' from ':'foo',' to ':'bar'}").close();
+
+    db.command("CREATE class TestMultipleClusters").close();
+    db.command("alter class TestMultipleClusters addcluster testmultipleclusters1 ").close();
+    db.command("alter class TestMultipleClusters addcluster testmultipleclusters2 ").close();
+    db.command("insert into cluster:testmultipleclusters set name = 'aaa'").close();
+    db.command("insert into cluster:testmultipleclusters1 set name = 'foo'").close();
+    db.command("insert into cluster:testmultipleclusters2 set name = 'bar'").close();
+
+    db.command("CREATE class TestUrl").close();
+    db.command("insert into TestUrl content { \"url\": \"http://www.google.com\" }").close();
+
+    db.command("CREATE class TestParams").close();
+    db.command("insert into TestParams  set name = 'foo', surname ='foo', active = true").close();
+    db.command("insert into TestParams  set name = 'foo', surname ='bar', active = false").close();
+
+    db.command("CREATE class TestParamsEmbedded").close();
     db.command(
-            new OCommandSQL("insert into unwindtest (name, coll) values ('foo', ['foo1', 'foo2'])"))
-        .execute();
+            "insert into TestParamsEmbedded set emb = {  \n"
+                + "            \"count\":0,\n"
+                + "            \"testupdate\":\"1441258203385\"\n"
+                + "         }")
+        .close();
     db.command(
-            new OCommandSQL("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])"))
-        .execute();
+            "insert into TestParamsEmbedded set emb = {  \n"
+                + "            \"count\":1,\n"
+                + "            \"testupdate\":\"1441258203385\"\n"
+                + "         }")
+        .close();
 
-    db.command(new OCommandSQL("CREATE class unwindtest2")).execute();
-    db.command(new OCommandSQL("insert into unwindtest2 (name, coll) values ('foo', [])"))
-        .execute();
-
-    db.command(new OCommandSQL("CREATE class `edge`")).execute();
-
-    db.command(new OCommandSQL("CREATE class TestFromInSquare")).execute();
-    db.command(
-            new OCommandSQL(
-                "insert into TestFromInSquare set tags = {' from ':'foo',' to ':'bar'}"))
-        .execute();
-
-    db.command(new OCommandSQL("CREATE class TestMultipleClusters")).execute();
-    db.command(
-            new OCommandSQL("alter class TestMultipleClusters addcluster testmultipleclusters1 "))
-        .execute();
-    db.command(
-            new OCommandSQL("alter class TestMultipleClusters addcluster testmultipleclusters2 "))
-        .execute();
-    db.command(new OCommandSQL("insert into cluster:testmultipleclusters set name = 'aaa'"))
-        .execute();
-    db.command(new OCommandSQL("insert into cluster:testmultipleclusters1 set name = 'foo'"))
-        .execute();
-    db.command(new OCommandSQL("insert into cluster:testmultipleclusters2 set name = 'bar'"))
-        .execute();
-
-    db.command(new OCommandSQL("CREATE class TestUrl")).execute();
-    db.command(
-            new OCommandSQL("insert into TestUrl content { \"url\": \"http://www.google.com\" }"))
-        .execute();
-
-    db.command(new OCommandSQL("CREATE class TestParams")).execute();
-    db.command(
-            new OCommandSQL(
-                "insert into TestParams  set name = 'foo', surname ='foo', active = true"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into TestParams  set name = 'foo', surname ='bar', active = false"))
-        .execute();
-
-    db.command(new OCommandSQL("CREATE class TestParamsEmbedded")).execute();
-    db.command(
-            new OCommandSQL(
-                "insert into TestParamsEmbedded set emb = {  \n"
-                    + "            \"count\":0,\n"
-                    + "            \"testupdate\":\"1441258203385\"\n"
-                    + "         }"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into TestParamsEmbedded set emb = {  \n"
-                    + "            \"count\":1,\n"
-                    + "            \"testupdate\":\"1441258203385\"\n"
-                    + "         }"))
-        .execute();
-
-    db.command(new OCommandSQL("CREATE class TestBacktick")).execute();
-    db.command(new OCommandSQL("insert into TestBacktick  set foo = 1, bar = 2, `foo-bar` = 10"))
-        .execute();
+    db.command("CREATE class TestBacktick").close();
+    db.command("insert into TestBacktick  set foo = 1, bar = 2, `foo-bar` = 10").close();
 
     // /*** from issue #2743
     OSchema schema = db.getMetadata().getSchema();
@@ -201,19 +173,17 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
       doc.save();
     }
 
-    db.command(new OCommandSQL("create class OCommandExecutorSQLSelectTest_aggregations"))
-        .execute();
+    db.command("create class OCommandExecutorSQLSelectTest_aggregations").close();
     db.command(
-            new OCommandSQL(
-                "insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0}, {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]"))
-        .execute();
+            "insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0}, {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]")
+        .close();
   }
 
   private static void initCollateOnLinked(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE CLASS CollateOnLinked")).execute();
-    db.command(new OCommandSQL("CREATE CLASS CollateOnLinked2")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY CollateOnLinked.name String")).execute();
-    db.command(new OCommandSQL("ALTER PROPERTY CollateOnLinked.name collate ci")).execute();
+    db.command("CREATE CLASS CollateOnLinked").close();
+    db.command("CREATE CLASS CollateOnLinked2").close();
+    db.command("CREATE PROPERTY CollateOnLinked.name String").close();
+    db.command("ALTER PROPERTY CollateOnLinked.name collate ci").close();
 
     ODocument doc = new ODocument("CollateOnLinked");
     doc.field("name", "foo");
@@ -225,142 +195,96 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   }
 
   private static void initComplexFilterInSquareBrackets(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE CLASS ComplexFilterInSquareBrackets1")).execute();
-    db.command(new OCommandSQL("CREATE CLASS ComplexFilterInSquareBrackets2")).execute();
+    db.command("CREATE CLASS ComplexFilterInSquareBrackets1").close();
+    db.command("CREATE CLASS ComplexFilterInSquareBrackets2").close();
+    db.command("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n1', value = 1").close();
+    db.command("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n2', value = 2").close();
+    db.command("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n3', value = 3").close();
+    db.command("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n4', value = 4").close();
+    db.command("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n5', value = 5").close();
+    db.command("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n6', value = -1").close();
+    db.command("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n7', value = null").close();
     db.command(
-            new OCommandSQL(
-                "INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n1', value = 1"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n2', value = 2"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n3', value = 3"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n4', value = 4"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n5', value = 5"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n6', value = -1"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n7', value = null"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "INSERT INTO ComplexFilterInSquareBrackets2 SET collection = (select from ComplexFilterInSquareBrackets1)"))
-        .execute();
+            "INSERT INTO ComplexFilterInSquareBrackets2 SET collection = (select from ComplexFilterInSquareBrackets1)")
+        .close();
   }
 
   private static void initFilterAndOrderByTest(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE CLASS FilterAndOrderByTest")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY FilterAndOrderByTest.dc DATETIME")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY FilterAndOrderByTest.active BOOLEAN")).execute();
+    db.command("CREATE CLASS FilterAndOrderByTest").close();
+    db.command("CREATE PROPERTY FilterAndOrderByTest.dc DATETIME").close();
+    db.command("CREATE PROPERTY FilterAndOrderByTest.active BOOLEAN").close();
     db.command(
-            new OCommandSQL(
-                "CREATE INDEX FilterAndOrderByTest.active ON FilterAndOrderByTest (active) NOTUNIQUE"))
-        .execute();
+            "CREATE INDEX FilterAndOrderByTest.active ON FilterAndOrderByTest (active) NOTUNIQUE")
+        .close();
 
+    db.command("insert into FilterAndOrderByTest SET dc = '2010-01-05 12:00:00:000', active = true")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into FilterAndOrderByTest SET dc = '2010-01-05 12:00:00:000', active = true"))
-        .execute();
+            "insert into FilterAndOrderByTest SET dc = '2010-05-05 14:00:00:000', active = false")
+        .close();
+    db.command("insert into FilterAndOrderByTest SET dc = '2009-05-05 16:00:00:000', active = true")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into FilterAndOrderByTest SET dc = '2010-05-05 14:00:00:000', active = false"))
-        .execute();
+            "insert into FilterAndOrderByTest SET dc = '2008-05-05 12:00:00:000', active = false")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into FilterAndOrderByTest SET dc = '2009-05-05 16:00:00:000', active = true"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into FilterAndOrderByTest SET dc = '2008-05-05 12:00:00:000', active = false"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into FilterAndOrderByTest SET dc = '2014-05-05 14:00:00:000', active = false"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into FilterAndOrderByTest SET dc = '2016-01-05 14:00:00:000', active = true"))
-        .execute();
+            "insert into FilterAndOrderByTest SET dc = '2014-05-05 14:00:00:000', active = false")
+        .close();
+    db.command("insert into FilterAndOrderByTest SET dc = '2016-01-05 14:00:00:000', active = true")
+        .close();
   }
 
   private static void initMaxLongNumber(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE class MaxLongNumberTest")).execute();
-    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = 1")).execute();
-    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = null")).execute();
-    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = 958769876987698"))
-        .execute();
-    db.command(new OCommandSQL("insert into MaxLongNumberTest set foo = 'bar'")).execute();
+    db.command("CREATE class MaxLongNumberTest").close();
+    db.command("insert into MaxLongNumberTest set last = 1").close();
+    db.command("insert into MaxLongNumberTest set last = null").close();
+    db.command("insert into MaxLongNumberTest set last = 958769876987698").close();
+    db.command("insert into MaxLongNumberTest set foo = 'bar'").close();
   }
 
   private static void initLinkListSequence(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE class LinkListSequence")).execute();
+    db.command("CREATE class LinkListSequence").close();
 
-    db.command(new OCommandSQL("insert into LinkListSequence set name = '1.1.1'")).execute();
-    db.command(new OCommandSQL("insert into LinkListSequence set name = '1.1.2'")).execute();
-    db.command(new OCommandSQL("insert into LinkListSequence set name = '1.2.1'")).execute();
-    db.command(new OCommandSQL("insert into LinkListSequence set name = '1.2.2'")).execute();
+    db.command("insert into LinkListSequence set name = '1.1.1'").close();
+    db.command("insert into LinkListSequence set name = '1.1.2'").close();
+    db.command("insert into LinkListSequence set name = '1.2.1'").close();
+    db.command("insert into LinkListSequence set name = '1.2.2'").close();
     db.command(
-            new OCommandSQL(
-                "insert into LinkListSequence set name = '1.1', children = (select from LinkListSequence where name like '1.1.%')"))
-        .execute();
+            "insert into LinkListSequence set name = '1.1', children = (select from LinkListSequence where name like '1.1.%')")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into LinkListSequence set name = '1.2', children = (select from LinkListSequence where name like '1.2.%')"))
-        .execute();
+            "insert into LinkListSequence set name = '1.2', children = (select from LinkListSequence where name like '1.2.%')")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into LinkListSequence set name = '1', children = (select from LinkListSequence where name in ['1.1', '1.2'])"))
-        .execute();
-    db.command(new OCommandSQL("insert into LinkListSequence set name = '2'")).execute();
+            "insert into LinkListSequence set name = '1', children = (select from LinkListSequence where name in ['1.1', '1.2'])")
+        .close();
+    db.command("insert into LinkListSequence set name = '2'").close();
     db.command(
-            new OCommandSQL(
-                "insert into LinkListSequence set name = 'root', children = (select from LinkListSequence where name in ['1', '1'])"))
-        .execute();
+            "insert into LinkListSequence set name = 'root', children = (select from LinkListSequence where name in ['1', '1'])")
+        .close();
   }
 
   private static void initMatchesWithRegex(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE class matchesstuff")).execute();
+    db.command("CREATE class matchesstuff").close();
 
-    db.command(new OCommandSQL("insert into matchesstuff (name, foo) values ('admin[name]', 1)"))
-        .execute();
+    db.command("insert into matchesstuff (name, foo) values ('admin[name]', 1)").close();
   }
 
   private static void initDistinctLimit(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE class DistinctLimit")).execute();
+    db.command("CREATE class DistinctLimit").close();
 
-    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('one', 1)"))
-        .execute();
-    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('one', 1)"))
-        .execute();
-    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('two', 2)"))
-        .execute();
-    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('two', 2)"))
-        .execute();
+    db.command("insert into DistinctLimit (name, foo) values ('one', 1)").close();
+    db.command("insert into DistinctLimit (name, foo) values ('one', 1)").close();
+    db.command("insert into DistinctLimit (name, foo) values ('two', 2)").close();
+    db.command("insert into DistinctLimit (name, foo) values ('two', 2)").close();
   }
 
   private static void initDatesSet(ODatabaseDocument db) {
-    db.command(new OCommandSQL("create class OCommandExecutorSQLSelectTest_datesSet")).execute();
-    db.command(
-            new OCommandSQL(
-                "create property OCommandExecutorSQLSelectTest_datesSet.foo embeddedlist date"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into OCommandExecutorSQLSelectTest_datesSet set foo = ['2015-10-21']"))
-        .execute();
+    db.command("create class OCommandExecutorSQLSelectTest_datesSet").close();
+    db.command("create property OCommandExecutorSQLSelectTest_datesSet.foo embeddedlist date")
+        .close();
+    db.command("insert into OCommandExecutorSQLSelectTest_datesSet set foo = ['2015-10-21']")
+        .close();
   }
 
   private static void initMassiveOrderSkipLimit(ODatabaseDocument db) {
@@ -384,7 +308,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   }
 
   private static void initExpandSkipLimit(ODatabaseDocument db) {
-    db.command(new OCommandSQL("create class ExpandSkipLimit clusters 1")).execute();
+    db.command("create class ExpandSkipLimit clusters 1").close();
 
     for (int i = 0; i < 5; i++) {
       ODocument doc = new ODocument("ExpandSkipLimit");
@@ -1341,8 +1265,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
         new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 3);
-    db.command(new OCommandSQL("update MaxLongNumberTest set last = max(91,ifnull(last,0))"))
-        .execute();
+    db.command("update MaxLongNumberTest set last = max(91,ifnull(last,0))").close();
     sql = new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
     results = db.query(sql);
     assertEquals(results.size(), 0);
@@ -1429,28 +1352,22 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   @Test
   public void testCollateOnCollections() {
     // issue #4851
-    db.command(new OCommandSQL("create class OCommandExecutorSqlSelectTest_collateOnCollections"))
-        .execute();
+    db.command("create class OCommandExecutorSqlSelectTest_collateOnCollections").close();
     db.command(
-            new OCommandSQL(
-                "create property OCommandExecutorSqlSelectTest_collateOnCollections.categories EMBEDDEDLIST string"))
-        .execute();
+            "create property OCommandExecutorSqlSelectTest_collateOnCollections.categories EMBEDDEDLIST string")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b']"))
-        .execute();
+            "insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b']")
+        .close();
     db.command(
-            new OCommandSQL(
-                "alter property OCommandExecutorSqlSelectTest_collateOnCollections.categories COLLATE ci"))
-        .execute();
+            "alter property OCommandExecutorSqlSelectTest_collateOnCollections.categories COLLATE ci")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['Math','English']"))
-        .execute();
+            "insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['Math','English']")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b','c']"))
-        .execute();
+            "insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b','c']")
+        .close();
     List<ODocument> results =
         db.query(
             new OSQLSynchQuery<ODocument>(
@@ -1466,16 +1383,12 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   @Test
   public void testCountUniqueIndex() {
     // issue http://www.prjhub.com/#/issues/6419
-    db.command(new OCommandSQL("create class OCommandExecutorSqlSelectTest_testCountUniqueIndex"))
-        .execute();
+    db.command("create class OCommandExecutorSqlSelectTest_testCountUniqueIndex").close();
+    db.command("create property OCommandExecutorSqlSelectTest_testCountUniqueIndex.AAA String")
+        .close();
     db.command(
-            new OCommandSQL(
-                "create property OCommandExecutorSqlSelectTest_testCountUniqueIndex.AAA String"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "create index OCommandExecutorSqlSelectTest_testCountUniqueIndex.AAA unique"))
-        .execute();
+            "create index OCommandExecutorSqlSelectTest_testCountUniqueIndex.AAA on OCommandExecutorSqlSelectTest_testCountUniqueIndex(AAA) unique")
+        .close();
 
     List<ODocument> results =
         db.query(
@@ -1526,22 +1439,15 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testCompositeIndexWithoutNullValues() {
-    db.command(new OCommandSQL("create class CompositeIndexWithoutNullValues")).execute();
-    db.command(new OCommandSQL("create property CompositeIndexWithoutNullValues.one String"))
-        .execute();
-    db.command(new OCommandSQL("create property CompositeIndexWithoutNullValues.two String"))
-        .execute();
+    db.command("create class CompositeIndexWithoutNullValues").close();
+    db.command("create property CompositeIndexWithoutNullValues.one String").close();
+    db.command("create property CompositeIndexWithoutNullValues.two String").close();
     db.command(
-            new OCommandSQL(
-                "create index CompositeIndexWithoutNullValues.one_two on CompositeIndexWithoutNullValues (one, two) NOTUNIQUE METADATA {ignoreNullValues: true}"))
-        .execute();
+            "create index CompositeIndexWithoutNullValues.one_two on CompositeIndexWithoutNullValues (one, two) NOTUNIQUE METADATA {ignoreNullValues: true}")
+        .close();
 
-    db.command(new OCommandSQL("insert into CompositeIndexWithoutNullValues set one = 'foo'"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into CompositeIndexWithoutNullValues set one = 'foo', two = 'bar'"))
-        .execute();
+    db.command("insert into CompositeIndexWithoutNullValues set one = 'foo'").close();
+    db.command("insert into CompositeIndexWithoutNullValues set one = 'foo', two = 'bar'").close();
     List<ODocument> results =
         db.query(
             new OSQLSynchQuery<ODocument>(
@@ -1556,22 +1462,15 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
             "bar");
     assertEquals(results.size(), 1);
 
-    db.command(new OCommandSQL("create class CompositeIndexWithoutNullValues2")).execute();
-    db.command(new OCommandSQL("create property CompositeIndexWithoutNullValues2.one String"))
-        .execute();
-    db.command(new OCommandSQL("create property CompositeIndexWithoutNullValues2.two String"))
-        .execute();
+    db.command("create class CompositeIndexWithoutNullValues2").close();
+    db.command("create property CompositeIndexWithoutNullValues2.one String").close();
+    db.command("create property CompositeIndexWithoutNullValues2.two String").close();
     db.command(
-            new OCommandSQL(
-                "create index CompositeIndexWithoutNullValues2.one_two on CompositeIndexWithoutNullValues2 (one, two) NOTUNIQUE METADATA {ignoreNullValues: false}"))
-        .execute();
+            "create index CompositeIndexWithoutNullValues2.one_two on CompositeIndexWithoutNullValues2 (one, two) NOTUNIQUE METADATA {ignoreNullValues: false}")
+        .close();
 
-    db.command(new OCommandSQL("insert into CompositeIndexWithoutNullValues2 set one = 'foo'"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into CompositeIndexWithoutNullValues2 set one = 'foo', two = 'bar'"))
-        .execute();
+    db.command("insert into CompositeIndexWithoutNullValues2 set one = 'foo'").close();
+    db.command("insert into CompositeIndexWithoutNullValues2 set one = 'foo', two = 'bar'").close();
     results =
         db.query(
             new OSQLSynchQuery<ODocument>(
@@ -1639,10 +1538,10 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   @Test
   public void testFoo() {
     // dispose it!
-    db.command(new OCommandSQL("create class testFoo")).execute();
-    db.command(new OCommandSQL("insert into testFoo set val = 1, name = 'foo'")).execute();
-    db.command(new OCommandSQL("insert into testFoo set val = 3, name = 'foo'")).execute();
-    db.command(new OCommandSQL("insert into testFoo set val = 5, name = 'bar'")).execute();
+    db.command("create class testFoo");
+    db.command("insert into testFoo set val = 1, name = 'foo'");
+    db.command("insert into testFoo set val = 3, name = 'foo'");
+    db.command("insert into testFoo set val = 5, name = 'bar'");
 
     List<ODocument> results =
         db.query(new OSQLSynchQuery<ODocument>("select sum(val), name from testFoo group by name"));
@@ -1655,11 +1554,10 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
     byte[] array = new byte[] {1, 4, 5, 74, 3, 45, 6, 127, -120, 2};
 
-    db.command(new OCommandSQL("create class TestDateComparison")).execute();
-    db.command(new OCommandSQL("create property TestDateComparison.dateProp DATE")).execute();
+    db.command("create class TestDateComparison").close();
+    db.command("create property TestDateComparison.dateProp DATE").close();
 
-    db.command(new OCommandSQL("insert into TestDateComparison set dateProp = '2016-05-01'"))
-        .execute();
+    db.command("insert into TestDateComparison set dateProp = '2016-05-01'").close();
 
     List<ODocument> results =
         db.query(
@@ -1914,10 +1812,10 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #7820
     String className = "testInvertedIndexedCondition";
 
-    db.command(new OCommandSQL("create class " + className)).execute();
-    db.command(new OCommandSQL("create property " + className + ".name STRING")).execute();
-    db.command(new OCommandSQL("insert into " + className + " SET name = \"1\"")).execute();
-    db.command(new OCommandSQL("insert into " + className + " SET name = \"2\"")).execute();
+    db.command("create class " + className).close();
+    db.command("create property " + className + ".name STRING").close();
+    db.command("insert into " + className + " SET name = \"1\"").close();
+    db.command("insert into " + className + " SET name = \"2\"").close();
 
     List<ODocument> results =
         db.query(
@@ -1955,10 +1853,10 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #7879
     String className = "testIsDefinedOnNull";
 
-    db.command(new OCommandSQL("create class " + className)).execute();
-    db.command(new OCommandSQL("create property " + className + ".name STRING")).execute();
-    db.command(new OCommandSQL("insert into " + className + " SET name = null, x = 1")).execute();
-    db.command(new OCommandSQL("insert into " + className + " SET x = 2")).execute();
+    db.command("create class " + className).close();
+    db.command("create property " + className + ".name STRING").close();
+    db.command("insert into " + className + " SET name = null, x = 1").close();
+    db.command("insert into " + className + " SET x = 2").close();
 
     List<ODocument> results =
         db.query(

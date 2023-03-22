@@ -30,17 +30,16 @@ public class OCommandExecutorSQLCreateLinkTest extends BaseMemoryDatabase {
 
   @Test
   public void testBasic() throws Exception {
-    db.command(new OCommandSQL("create class Basic1")).execute();
-    db.command(new OCommandSQL("create class Basic2")).execute();
+    db.command("create class Basic1").close();
+    db.command("create class Basic2").close();
 
-    db.command(new OCommandSQL("insert into Basic1 set pk = 'pkb1_1', fk = 'pkb2_1'")).execute();
-    db.command(new OCommandSQL("insert into Basic1 set pk = 'pkb1_2', fk = 'pkb2_2'")).execute();
+    db.command("insert into Basic1 set pk = 'pkb1_1', fk = 'pkb2_1'").close();
+    db.command("insert into Basic1 set pk = 'pkb1_2', fk = 'pkb2_2'").close();
 
-    db.command(new OCommandSQL("insert into Basic2 set pk = 'pkb2_1'")).execute();
-    db.command(new OCommandSQL("insert into Basic2 set pk = 'pkb2_2'")).execute();
+    db.command("insert into Basic2 set pk = 'pkb2_1'").close();
+    db.command("insert into Basic2 set pk = 'pkb2_2'").close();
 
-    db.command(new OCommandSQL("CREATE LINK theLink type link FROM Basic1.fk TO Basic2.pk "))
-        .execute();
+    db.command("CREATE LINK theLink type link FROM Basic1.fk TO Basic2.pk ").close();
 
     List<ODocument> result =
         db.query(
@@ -59,20 +58,17 @@ public class OCommandExecutorSQLCreateLinkTest extends BaseMemoryDatabase {
 
   @Test
   public void testInverse() throws Exception {
-    db.command(new OCommandSQL("create class Inverse1")).execute();
-    db.command(new OCommandSQL("create class Inverse2")).execute();
+    db.command("create class Inverse1").close();
+    db.command("create class Inverse2").close();
 
-    db.command(new OCommandSQL("insert into Inverse1 set pk = 'pkb1_1', fk = 'pkb2_1'")).execute();
-    db.command(new OCommandSQL("insert into Inverse1 set pk = 'pkb1_2', fk = 'pkb2_2'")).execute();
-    db.command(new OCommandSQL("insert into Inverse1 set pk = 'pkb1_3', fk = 'pkb2_2'")).execute();
+    db.command("insert into Inverse1 set pk = 'pkb1_1', fk = 'pkb2_1'").close();
+    db.command("insert into Inverse1 set pk = 'pkb1_2', fk = 'pkb2_2'").close();
+    db.command("insert into Inverse1 set pk = 'pkb1_3', fk = 'pkb2_2'").close();
 
-    db.command(new OCommandSQL("insert into Inverse2 set pk = 'pkb2_1'")).execute();
-    db.command(new OCommandSQL("insert into Inverse2 set pk = 'pkb2_2'")).execute();
+    db.command("insert into Inverse2 set pk = 'pkb2_1'").close();
+    db.command("insert into Inverse2 set pk = 'pkb2_2'").close();
 
-    db.command(
-            new OCommandSQL(
-                "CREATE LINK theLink TYPE LINKSET FROM Inverse1.fk TO Inverse2.pk INVERSE"))
-        .execute();
+    db.command("CREATE LINK theLink TYPE LINKSET FROM Inverse1.fk TO Inverse2.pk INVERSE").close();
 
     List<ODocument> result =
         db.query(

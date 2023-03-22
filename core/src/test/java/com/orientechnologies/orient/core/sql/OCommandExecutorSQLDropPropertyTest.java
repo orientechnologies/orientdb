@@ -35,25 +35,25 @@ public class OCommandExecutorSQLDropPropertyTest extends BaseMemoryDatabase {
 
     foo.createProperty("name", OType.STRING);
     Assert.assertTrue(schema.getClass("Foo").existsProperty("name"));
-    db.command(new OCommandSQL("DROP PROPERTY Foo.name")).execute();
+    db.command("DROP PROPERTY Foo.name").close();
     schema.reload();
     Assert.assertFalse(schema.getClass("Foo").existsProperty("name"));
 
     foo.createProperty("name", OType.STRING);
     Assert.assertTrue(schema.getClass("Foo").existsProperty("name"));
-    db.command(new OCommandSQL("DROP PROPERTY `Foo`.name")).execute();
+    db.command("DROP PROPERTY `Foo`.name").close();
     schema.reload();
     Assert.assertFalse(schema.getClass("Foo").existsProperty("name"));
 
     foo.createProperty("name", OType.STRING);
     Assert.assertTrue(schema.getClass("Foo").existsProperty("name"));
-    db.command(new OCommandSQL("DROP PROPERTY Foo.`name`")).execute();
+    db.command("DROP PROPERTY Foo.`name`").close();
     schema.reload();
     Assert.assertFalse(schema.getClass("Foo").existsProperty("name"));
 
     foo.createProperty("name", OType.STRING);
     Assert.assertTrue(schema.getClass("Foo").existsProperty("name"));
-    db.command(new OCommandSQL("DROP PROPERTY `Foo`.`name`")).execute();
+    db.command("DROP PROPERTY `Foo`.`name`").close();
     schema.reload();
     Assert.assertFalse(schema.getClass("Foo").existsProperty("name"));
   }
@@ -65,11 +65,11 @@ public class OCommandExecutorSQLDropPropertyTest extends BaseMemoryDatabase {
 
     testIfExistsClass.createProperty("name", OType.STRING);
     Assert.assertTrue(schema.getClass("testIfExists").existsProperty("name"));
-    db.command(new OCommandSQL("DROP PROPERTY testIfExists.name if exists")).execute();
+    db.command("DROP PROPERTY testIfExists.name if exists").close();
     schema.reload();
     Assert.assertFalse(schema.getClass("testIfExists").existsProperty("name"));
 
-    db.command(new OCommandSQL("DROP PROPERTY testIfExists.name if exists")).execute();
+    db.command("DROP PROPERTY testIfExists.name if exists").close();
     schema.reload();
     Assert.assertFalse(schema.getClass("testIfExists").existsProperty("name"));
   }

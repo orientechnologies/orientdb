@@ -12,9 +12,8 @@ public class OCommandExecutorSQLCreateFunctionTest extends BaseMemoryDatabase {
   @Test
   public void testCreateFunction() {
     db.command(
-            new OCommandSQL(
-                "CREATE FUNCTION testCreateFunction \"return 'hello '+name;\" PARAMETERS [name] IDEMPOTENT true LANGUAGE Javascript"))
-        .execute();
+            "CREATE FUNCTION testCreateFunction \"return 'hello '+name;\" PARAMETERS [name] IDEMPOTENT true LANGUAGE Javascript")
+        .close();
     OLegacyResultSet<ODocument> result =
         db.command(new OCommandSQL("select testCreateFunction('world') as name")).execute();
     Assert.assertEquals(result.size(), 1);
