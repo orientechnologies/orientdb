@@ -19,12 +19,10 @@ public class OSQLFunctionConvertTest extends BaseMemoryDatabase {
   @Test
   public void testSQLConversions() {
 
-    db.command(new OCommandSQL("create class TestConversion")).execute();
+    db.command("create class TestConversion").close();
 
-    db.command(
-            new OCommandSQL(
-                "insert into TestConversion set string = 'Jay', date = sysdate(), number = 33"))
-        .execute();
+    db.command("insert into TestConversion set string = 'Jay', date = sysdate(), number = 33")
+        .close();
 
     ODocument doc =
         (ODocument)

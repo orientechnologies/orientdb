@@ -40,13 +40,13 @@ public class OCommandExecutorSQLGrantRevokeTest extends BaseMemoryDatabase {
 
     assertFalse(testRole.allow(ORule.ResourceGeneric.SERVER, "server", ORole.PERMISSION_EXECUTE));
 
-    db.command(new OCommandSQL("GRANT execute on server.remove to testRole")).execute();
+    db.command("GRANT execute on server.remove to testRole").close();
 
     testRole = db.getMetadata().getSecurity().getRole("testRole");
 
     assertTrue(testRole.allow(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE));
 
-    db.command(new OCommandSQL("REVOKE execute on server.remove from testRole")).execute();
+    db.command("REVOKE execute on server.remove from testRole").close();
 
     testRole = db.getMetadata().getSecurity().getRole("testRole");
 

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.Collection;
 import java.util.List;
@@ -20,7 +19,7 @@ public class SaveLinkedTypeAnyTest extends BaseMemoryDatabase {
 
     //    db.command(new OCommandSQL("alter property TestRemoveLinkedType.prop linkedtype
     // null")).execute();
-    db.command(new OCommandSQL("insert into TestRemoveLinkedType set prop = [4]")).execute();
+    db.command("insert into TestRemoveLinkedType set prop = [4]").close();
 
     List<ODocument> result =
         db.query(new OSQLSynchQuery<ODocument>("select from TestRemoveLinkedType"));
@@ -37,9 +36,8 @@ public class SaveLinkedTypeAnyTest extends BaseMemoryDatabase {
     OClass classA = schema.createClass("TestRemoveLinkedType");
     OProperty prop = classA.createProperty("prop", OType.EMBEDDEDLIST, OType.ANY);
 
-    db.command(new OCommandSQL("alter property TestRemoveLinkedType.prop linkedtype null"))
-        .execute();
-    db.command(new OCommandSQL("insert into TestRemoveLinkedType set prop = [4]")).execute();
+    db.command("alter property TestRemoveLinkedType.prop linkedtype null").close();
+    db.command("insert into TestRemoveLinkedType set prop = [4]").close();
 
     List<ODocument> result =
         db.query(new OSQLSynchQuery<ODocument>("select from TestRemoveLinkedType"));

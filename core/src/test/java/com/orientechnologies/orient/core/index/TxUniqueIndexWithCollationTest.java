@@ -59,7 +59,7 @@ public class TxUniqueIndexWithCollationTest extends BaseMemoryDatabase {
   public void testSubstrings() {
     db.begin();
 
-    db.command(new OCommandSQL("update user set name='abd' where name='Aby'")).execute();
+    db.command("update user set name='abd' where name='Aby'").close();
 
     final OLegacyResultSet<ODocument> r =
         db.command(new OCommandSQL("select * from user where name like '%B%' order by name"))
@@ -76,7 +76,7 @@ public class TxUniqueIndexWithCollationTest extends BaseMemoryDatabase {
   public void testRange() {
     db.begin();
 
-    db.command(new OCommandSQL("update user set name='Abd' where name='Aby'")).execute();
+    db.command("update user set name='Abd' where name='Aby'").close();
 
     final OLegacyResultSet<ODocument> r =
         db.command(new OCommandSQL("select * from user where name >= 'abd' order by name"))
@@ -92,7 +92,7 @@ public class TxUniqueIndexWithCollationTest extends BaseMemoryDatabase {
   public void testIn() {
     db.begin();
 
-    db.command(new OCommandSQL("update user set name='abd' where name='Aby'")).execute();
+    db.command("update user set name='abd' where name='Aby'").close();
 
     final OLegacyResultSet<ODocument> r =
         db.command(
