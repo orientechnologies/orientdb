@@ -699,7 +699,7 @@ public abstract class OClassImpl implements OClass {
     }
   }
 
-  protected abstract OClass removeBaseClassInternal(final OClass baseClass);
+  public abstract OClass removeBaseClassInternal(final OClass baseClass);
 
   public float getOverSize() {
     acquireSchemaReadLock();
@@ -1557,7 +1557,7 @@ public abstract class OClassImpl implements OClass {
    *
    * @param iBaseClass The base class to add.
    */
-  protected OClass addBaseClass(final OClassImpl iBaseClass) {
+  public OClass addBaseClass(final OClassImpl iBaseClass) {
     checkRecursion(iBaseClass);
 
     if (subclasses == null) subclasses = new ArrayList<OClass>();

@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.db.document;
+package com.orientechnologies.orient.client.remote.db.document;
 
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
 

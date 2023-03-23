@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
-import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
@@ -32,7 +31,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
-import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -41,10 +39,21 @@ import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
+import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.lock.OFreezeGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManager;
@@ -239,7 +248,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final ORemoteServerController remoteSenderServer = manager.getRemoteServer(sender);
 
       ODistributedServerLog.debug(
-          current, local, sender, OUT, "Sending response %s back (reqId=%s)", response, iRequestId);
+          current,
+          local,
+          sender,
+          DIRECTION.OUT,
+          "Sending response %s back (reqId=%s)",
+          response,
+          iRequestId);
 
       remoteSenderServer.sendResponse(response);
 
@@ -248,7 +263,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           current,
           local,
           sender,
-          OUT,
+          DIRECTION.OUT,
           "Error on sending response '%s' back (reqId=%s err=%s)",
           e,
           response,

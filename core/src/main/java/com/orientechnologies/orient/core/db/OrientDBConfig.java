@@ -115,7 +115,7 @@ public class OrientDBConfig {
     return users;
   }
 
-  protected void setParent(OrientDBConfig parent) {
+  public void setParent(OrientDBConfig parent) {
     this.parent = parent;
     if (parent != null) {
       if (parent.attributes != null) {

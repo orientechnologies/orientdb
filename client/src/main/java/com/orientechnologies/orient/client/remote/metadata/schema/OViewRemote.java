@@ -1,8 +1,17 @@
-package com.orientechnologies.orient.core.metadata.schema;
+package com.orientechnologies.orient.client.remote.metadata.schema;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.OView;
+import com.orientechnologies.orient.core.metadata.schema.OViewImpl;
+import com.orientechnologies.orient.core.metadata.schema.OViewRemovedMetadata;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -53,12 +62,12 @@ public class OViewRemote extends OViewImpl {
 
       // TYPE
       cmd.append(' ');
-      cmd.append(type.name);
+      cmd.append(type.getName());
 
       if (linkedType != null) {
         // TYPE
         cmd.append(' ');
-        cmd.append(linkedType.name);
+        cmd.append(linkedType.getName());
 
       } else if (linkedClass != null) {
         // TYPE
@@ -297,7 +306,7 @@ public class OViewRemote extends OViewImpl {
     throw new UnsupportedOperationException();
   }
 
-  protected OView removeBaseClassInternal(final OClass baseClass) {
+  public OView removeBaseClassInternal(final OClass baseClass) {
     throw new UnsupportedOperationException();
   }
 

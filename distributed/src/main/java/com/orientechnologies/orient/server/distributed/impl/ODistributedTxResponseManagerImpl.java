@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedTxResponseManager;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;

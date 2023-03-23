@@ -84,7 +84,7 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
     OrientDBInternal factory;
 
     try {
-      String className = "com.orientechnologies.orient.core.db.OrientDBRemote";
+      String className = "com.orientechnologies.orient.client.remote.OrientDBRemote";
       ClassLoader loader;
       if (configuration != null) {
         loader = configuration.getClassLoader();
@@ -132,7 +132,7 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
       }
       Class<?> kass;
       try {
-        String className = "com.orientechnologies.orient.core.db.OrientDBDistributed";
+        String className = "com.orientechnologies.orient.distributed.db.OrientDBDistributed";
         kass = loader.loadClass(className);
       } catch (ClassNotFoundException e) {
         String className = "com.orientechnologies.orient.distributed.OrientDBDistributed";

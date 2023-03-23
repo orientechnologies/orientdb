@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.db;
+package com.orientechnologies.orient.distributed.db;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
@@ -9,6 +9,16 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentEmbeddedPooled;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
+import com.orientechnologies.orient.core.db.OSystemDatabase;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;

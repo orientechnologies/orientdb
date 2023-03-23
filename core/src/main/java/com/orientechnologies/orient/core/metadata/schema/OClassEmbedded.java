@@ -180,7 +180,7 @@ public class OClassEmbedded extends OClassImpl {
     return this;
   }
 
-  protected OClass removeBaseClassInternal(final OClass baseClass) {
+  public OClass removeBaseClassInternal(final OClass baseClass) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();

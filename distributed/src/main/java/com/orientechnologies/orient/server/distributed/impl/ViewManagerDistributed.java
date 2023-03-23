@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.metadata.schema.OView;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.util.List;
 
 public class ViewManagerDistributed extends ViewManager {

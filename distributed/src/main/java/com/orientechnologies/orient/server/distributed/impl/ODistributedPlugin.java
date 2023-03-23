@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
-import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
 
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstance;
@@ -52,7 +51,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -68,6 +66,7 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -86,12 +85,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
 import com.orientechnologies.orient.server.distributed.ODistributedStrategy;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
-import com.orientechnologies.orient.server.distributed.ORemoteServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ONewDeltaTaskResponse;
@@ -605,7 +605,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
           this,
           this.nodeName,
           null,
-          OUT,
+          DIRECTION.OUT,
           "Local server is not online (status='%s'). Request %s will be ignored",
           srvStatus,
           iRequest);
@@ -635,7 +635,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
             this,
             this.nodeName,
             null,
-            OUT,
+            DIRECTION.OUT,
             "No nodes configured for database '%s' request: %s",
             databaseName,
             iRequest);
@@ -725,7 +725,12 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(
-            this, this.nodeName, iNodes.toString(), OUT, "Sending request %s...", iRequest);
+            this,
+            this.nodeName,
+            iNodes.toString(),
+            DIRECTION.OUT,
+            "Sending request %s...",
+            iRequest);
 
       for (String node : iNodes) {
         // CATCH ANY EXCEPTION LOG IT AND IGNORE TO CONTINUE SENDING REQUESTS TO OTHER NODES
@@ -762,7 +767,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
                 this,
                 this.nodeName,
                 node,
-                OUT,
+                DIRECTION.OUT,
                 "Error on sending distributed request %s. The target node is not available. Active nodes: %s",
                 e,
                 iRequest,
@@ -772,7 +777,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
                 this,
                 this.nodeName,
                 node,
-                OUT,
+                DIRECTION.OUT,
                 "Error on sending distributed request %s (err=%s). Active nodes: %s",
                 iRequest,
                 reason,
@@ -793,7 +798,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(
-            this, this.nodeName, iNodes.toString(), OUT, "Sent request %s", iRequest);
+            this, this.nodeName, iNodes.toString(), DIRECTION.OUT, "Sent request %s", iRequest);
 
       if (databaseName != null) {
         ODistributedDatabaseImpl shared = getMessageService().getDatabase(databaseName);
@@ -940,7 +945,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
           this,
           this.nodeName,
           iNodes.toString(),
-          OUT,
+          DIRECTION.OUT,
           "Adjusted timeouts by adding +%dms because this is the maximum latency recorded against servers %s (reqId=%s)",
           delta,
           iNodes,

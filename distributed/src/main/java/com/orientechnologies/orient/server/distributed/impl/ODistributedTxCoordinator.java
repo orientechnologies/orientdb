@@ -489,7 +489,7 @@ public class ODistributedTxCoordinator {
   }
 
   /** This is to be used only for testing! */
-  void setResponseManager(ODistributedTxResponseManager responseManager) {
+  public void setResponseManager(ODistributedTxResponseManager responseManager) {
     this.responseManager = responseManager;
   }
 }

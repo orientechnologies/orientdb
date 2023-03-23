@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
@@ -522,5 +523,9 @@ public abstract class OClassAbstractDelegate implements OClass {
   @Override
   public int hashCode() {
     return delegate.hashCode();
+  }
+
+  public OClass getDelegate() {
+    return delegate;
   }
 }

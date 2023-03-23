@@ -1,8 +1,15 @@
-package com.orientechnologies.orient.core.metadata.schema;
+package com.orientechnologies.orient.client.remote.metadata.schema;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassAbstractDelegate;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -61,12 +68,12 @@ public class OClassRemote extends OClassImpl {
 
       // TYPE
       cmd.append(' ');
-      cmd.append(type.name);
+      cmd.append(type.getName());
 
       if (linkedType != null) {
         // TYPE
         cmd.append(' ');
-        cmd.append(linkedType.name);
+        cmd.append(linkedType.getName());
 
       } else if (linkedClass != null) {
         // TYPE
@@ -423,7 +430,7 @@ public class OClassRemote extends OClassImpl {
     return this;
   }
 
-  protected OClass removeBaseClassInternal(final OClass baseClass) {
+  public OClass removeBaseClassInternal(final OClass baseClass) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -443,7 +450,7 @@ public class OClassRemote extends OClassImpl {
     OClassImpl cls;
     for (OClass superClass : classes) {
       if (superClass instanceof OClassAbstractDelegate)
-        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
+        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).getDelegate();
       else cls = (OClassImpl) superClass;
 
       if (newSuperClasses.contains(cls)) {

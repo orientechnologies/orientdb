@@ -55,7 +55,7 @@ public class OViewEmbedded extends OViewImpl {
     throw new UnsupportedOperationException();
   }
 
-  protected OClass removeBaseClassInternal(final OClass baseClass) {
+  public OClass removeBaseClassInternal(final OClass baseClass) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();

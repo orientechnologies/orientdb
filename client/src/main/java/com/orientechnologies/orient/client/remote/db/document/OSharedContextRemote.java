@@ -1,14 +1,14 @@
-package com.orientechnologies.orient.core.db.document;
+package com.orientechnologies.orient.client.remote.db.document;
 
+import com.orientechnologies.orient.client.remote.OrientDBRemote;
+import com.orientechnologies.orient.client.remote.metadata.schema.OSchemaRemote;
+import com.orientechnologies.orient.client.remote.metadata.security.OSecurityRemote;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OStringCache;
-import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
-import com.orientechnologies.orient.core.metadata.security.OSecurityRemote;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.storage.OStorageInfo;

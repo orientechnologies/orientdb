@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
+import com.orientechnologies.orient.client.remote.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;

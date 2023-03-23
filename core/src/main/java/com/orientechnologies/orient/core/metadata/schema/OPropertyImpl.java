@@ -73,12 +73,12 @@ public abstract class OPropertyImpl implements OProperty {
 
   private volatile int hashCode;
 
-  OPropertyImpl(final OClassImpl owner) {
+  public OPropertyImpl(final OClassImpl owner) {
     document = new ODocument().setTrackingChanges(false);
     this.owner = owner;
   }
 
-  OPropertyImpl(final OClassImpl owner, final ODocument document) {
+  public OPropertyImpl(final OClassImpl owner, final ODocument document) {
     this(owner);
     this.document = document;
   }

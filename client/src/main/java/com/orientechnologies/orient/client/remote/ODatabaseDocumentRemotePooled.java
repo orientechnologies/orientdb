@@ -1,7 +1,11 @@
-package com.orientechnologies.orient.core.db;
+package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
+import com.orientechnologies.orient.client.remote.db.document.ODatabaseDocumentRemote;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContext;
 
 /** Created by tglman on 07/07/16. */
 public class ODatabaseDocumentRemotePooled extends ODatabaseDocumentRemote {

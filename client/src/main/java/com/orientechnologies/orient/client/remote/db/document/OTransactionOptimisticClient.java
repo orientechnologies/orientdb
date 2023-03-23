@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.db.document;
+package com.orientechnologies.orient.client.remote.db.document;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
