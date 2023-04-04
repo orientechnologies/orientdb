@@ -259,10 +259,13 @@ public class OServerPluginManager implements OService {
 
   @SuppressWarnings("unchecked")
   protected OServerPlugin startPluginClass(
-      final String iClassName, final OServerParameterConfiguration[] params) throws Exception {
+      final String iClassName,
+      URLClassLoader pluginClassLoader,
+      final OServerParameterConfiguration[] params)
+      throws Exception {
 
     final Class<? extends OServerPlugin> classToLoad =
-        (Class<? extends OServerPlugin>) Class.forName(iClassName);
+        (Class<? extends OServerPlugin>) pluginClassLoader.loadClass(iClassName);
     final OServerPlugin instance = classToLoad.newInstance();
 
     // CONFIG()
@@ -375,7 +378,7 @@ public class OServerPluginManager implements OService {
           final OServerParameterConfiguration[] pluginParams =
               params.toArray(new OServerParameterConfiguration[params.size()]);
 
-          pluginInstance = startPluginClass(pluginClass, pluginParams);
+          pluginInstance = startPluginClass(pluginClass, pluginClassLoader, pluginParams);
         } else {
           pluginInstance = null;
           parameters = null;
