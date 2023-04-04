@@ -108,6 +108,9 @@ public class OServer {
   protected OServerPluginManager pluginManager;
   protected OConfigurableHooksManager hookManager;
   protected ODistributedServerManager distributedManager;
+  /** Whether a distributed plugin is registered in the configuration */
+  private volatile boolean distributedPluginEnabled;
+
   protected OServerSecurity serverSecurity;
   private SecureRandom random = new SecureRandom();
   private Map<String, Object> variables = new HashMap<String, Object>();
@@ -446,6 +449,15 @@ public class OServer {
 
       for (OServerLifecycleListener l : lifecycleListeners) l.onBeforeActivate();
 
+      // Load server plugin config and determine if participants in activation
+      // need to be aware if distributed plugin will be part of server
+      final List<ServerPluginConfig> serverPlugins = loadServerPlugins();
+      for (ServerPluginConfig serverPlugin : serverPlugins) {
+        if (ODistributedServerManager.class.isAssignableFrom(serverPlugin.clazz)) {
+          distributedPluginEnabled = true;
+        }
+      }
+
       final OServerConfiguration configuration = serverCfg.getConfiguration();
 
       tokenHandler = new OTokenHandlerImpl(this);
@@ -497,7 +509,7 @@ public class OServer {
         throw OException.wrapException(new OConfigurationException(message), e);
       }
 
-      registerPlugins();
+      registerPlugins(serverPlugins);
 
       for (OServerLifecycleListener l : lifecycleListeners) l.onAfterActivate();
 
@@ -1000,6 +1012,10 @@ public class OServer {
     return openDatabase(database, "internal", "internal", null, true);
   }
 
+  public boolean isDistributedPluginEnabled() {
+    return distributedPluginEnabled;
+  }
+
   public ODistributedServerManager getDistributedManager() {
     return distributedManager;
   }
@@ -1203,21 +1219,23 @@ public class OServer {
     return pluginManager;
   }
 
-  protected void registerPlugins()
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-    pluginManager = new OServerPluginManager();
-    pluginManager.config(this);
-    pluginManager.startup();
+  private static class ServerPluginConfig {
+    private final Class<?> clazz;
+    private OServerParameterConfiguration[] parameters;
 
-    if (serverSecurity != null) serverSecurity.onAfterDynamicPlugins();
+    private ServerPluginConfig(Class<?> clazz, OServerParameterConfiguration[] parameters) {
+      this.clazz = clazz;
+      this.parameters = parameters;
+    }
+  }
 
-    // PLUGINS CONFIGURED IN XML
+  private List<ServerPluginConfig> loadServerPlugins() throws ClassNotFoundException {
+    // PLUGINS CONFIGURED IN XML and enabled
+    List<ServerPluginConfig> plugins = new ArrayList<>();
+
     final OServerConfiguration configuration = serverCfg.getConfiguration();
 
     if (configuration.handlers != null) {
-      // ACTIVATE PLUGINS
-      final List<OServerPlugin> plugins = new ArrayList<OServerPlugin>();
-
       for (OServerHandlerConfiguration h : configuration.handlers) {
         if (h.parameters != null) {
           // CHECK IF IT'S ENABLED
@@ -1244,27 +1262,43 @@ public class OServer {
             continue;
         }
 
-        final OServerPlugin plugin = (OServerPlugin) loadClass(h.clazz).newInstance();
-
-        if (plugin instanceof ODistributedServerManager)
-          distributedManager = (ODistributedServerManager) plugin;
-
-        pluginManager.registerPlugin(
-            new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
-
-        pluginManager.callListenerBeforeConfig(plugin, h.parameters);
-        plugin.config(this, h.parameters);
-        pluginManager.callListenerAfterConfig(plugin, h.parameters);
-
-        plugins.add(plugin);
+        Class<?> pluginClass = loadClass(h.clazz);
+        plugins.add(new ServerPluginConfig(pluginClass, h.parameters));
       }
+    }
+    return plugins;
+  }
 
-      // START ALL THE CONFIGURED PLUGINS
-      for (OServerPlugin plugin : plugins) {
-        pluginManager.callListenerBeforeStartup(plugin);
-        plugin.startup();
-        pluginManager.callListenerAfterStartup(plugin);
-      }
+  protected void registerPlugins(List<ServerPluginConfig> serverPlugins)
+      throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+    pluginManager = new OServerPluginManager();
+    pluginManager.config(this);
+    pluginManager.startup();
+
+    if (serverSecurity != null) serverSecurity.onAfterDynamicPlugins();
+
+    final List<OServerPlugin> plugins = new ArrayList<>();
+    for (ServerPluginConfig serverPlugin : serverPlugins) {
+      final OServerPlugin plugin = (OServerPlugin) serverPlugin.clazz.newInstance();
+
+      if (plugin instanceof ODistributedServerManager)
+        distributedManager = (ODistributedServerManager) plugin;
+
+      pluginManager.registerPlugin(
+          new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
+
+      pluginManager.callListenerBeforeConfig(plugin, serverPlugin.parameters);
+      plugin.config(this, serverPlugin.parameters);
+      pluginManager.callListenerAfterConfig(plugin, serverPlugin.parameters);
+
+      plugins.add(plugin);
+    }
+
+    // START ALL THE CONFIGURED PLUGINS
+    for (OServerPlugin plugin : plugins) {
+      pluginManager.callListenerBeforeStartup(plugin);
+      plugin.startup();
+      pluginManager.callListenerAfterStartup(plugin);
     }
   }
 
