@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -378,14 +377,13 @@ public class HelperClasses {
   }
 
   protected static void writeEmbeddedRidbag(BytesContainer bytes, ORidBag ridbag) {
-    OVarIntSerializer.write(bytes, ridbag.size());
-    Object[] entries = ((OEmbeddedRidBag) ridbag.getDelegate()).getEntries();
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    int size = ridbag.size();
+    Object[] entries = ((OEmbeddedRidBag) ridbag.getDelegate()).getEntries();
     for (int i = 0; i < entries.length; i++) {
       Object entry = entries[i];
       if (entry instanceof OIdentifiable) {
         OIdentifiable itemValue = (OIdentifiable) entry;
-        final ORID rid = itemValue.getIdentity();
         if (db != null
             && !db.isClosed()
             && db.getTransaction().isActive()
@@ -393,15 +391,21 @@ public class HelperClasses {
           itemValue = db.getTransaction().getRecord(itemValue.getIdentity());
         }
         if (itemValue == null) {
-          // should never happen
-          String errorMessage = "Found null entry in ridbag with rid=" + rid;
-          OSerializationException exc = new OSerializationException(errorMessage);
-          OLogManager.instance().error(ORecordSerializerBinaryV1.class, errorMessage, null);
-          throw exc;
+          entries[i] = null;
+          // Decrease size, nulls are ignored
+          size--;
         } else {
           entries[i] = itemValue.getIdentity();
-          writeLinkOptimized(bytes, itemValue);
         }
+      }
+    }
+
+    OVarIntSerializer.write(bytes, size);
+    for (int i = 0; i < entries.length; i++) {
+      Object entry = entries[i];
+      // Obviously this exclude nulls as well
+      if (entry instanceof OIdentifiable) {
+        writeLinkOptimized(bytes, ((OIdentifiable) entry).getIdentity());
       }
     }
   }
