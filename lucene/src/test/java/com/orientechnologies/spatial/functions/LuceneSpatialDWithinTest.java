@@ -15,12 +15,9 @@
  */
 package com.orientechnologies.spatial.functions;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.spatial.BaseSpatialLuceneTest;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,16 +27,14 @@ public class LuceneSpatialDWithinTest extends BaseSpatialLuceneTest {
   @Test
   public void testDWithinNoIndex() {
 
-    List<ODocument> execute =
-        db.command(
-                new OCommandSQL(
-                    "SELECT ST_DWithin(ST_GeomFromText('POLYGON((0 0, 10 0, 10 5, 0 5, 0 0))'), ST_GeomFromText('POLYGON((12 0, 14 0, 14 6, 12 6, 12 0))'), 2.0d) as distance"))
-            .execute();
+    OResultSet execute =
+        db.query(
+            "SELECT ST_DWithin(ST_GeomFromText('POLYGON((0 0, 10 0, 10 5, 0 5, 0 0))'), ST_GeomFromText('POLYGON((12 0, 14 0, 14 6, 12 6, 12 0))'), 2.0d) as distance");
 
-    Assert.assertEquals(1, execute.size());
-    ODocument next = execute.iterator().next();
+    OResult next = execute.next();
 
-    Assert.assertEquals(true, next.field("distance"));
+    Assert.assertEquals(true, next.getProperty("distance"));
+    Assert.assertFalse(execute.hasNext());
   }
 
   // TODO
@@ -47,24 +42,20 @@ public class LuceneSpatialDWithinTest extends BaseSpatialLuceneTest {
   @Test
   public void testWithinIndex() {
 
-    db.command(new OCommandSQL("create class Polygon extends v")).execute();
-    db.command(new OCommandSQL("create property Polygon.geometry EMBEDDED OPolygon")).execute();
+    db.command("create class Polygon extends v").close();
+    db.command("create property Polygon.geometry EMBEDDED OPolygon").close();
 
     db.command(
-            new OCommandSQL(
-                "insert into Polygon set geometry = ST_GeomFromText('POLYGON((0 0, 10 0, 10 5, 0 5, 0 0))')"))
-        .execute();
+            "insert into Polygon set geometry = ST_GeomFromText('POLYGON((0 0, 10 0, 10 5, 0 5, 0 0))')")
+        .close();
 
-    db.command(
-            new OCommandSQL("create index Polygon.g on Polygon (geometry) SPATIAL engine lucene"))
-        .execute();
+    db.command("create index Polygon.g on Polygon (geometry) SPATIAL engine lucene").close();
 
-    List<ODocument> execute =
+    OResultSet execute =
         db.query(
-            new OSQLSynchQuery<ODocument>(
-                "SELECT from Polygon where ST_DWithin(geometry, ST_GeomFromText('POLYGON((12 0, 14 0, 14 6, 12 6, 12 0))'), 2.0) = true"));
+            "SELECT from Polygon where ST_DWithin(geometry, ST_GeomFromText('POLYGON((12 0, 14 0, 14 6, 12 6, 12 0))'), 2.0) = true");
 
-    Assert.assertEquals(1, execute.size());
+    Assert.assertEquals(1, execute.stream().count());
 
     OResultSet resultSet =
         db.query(

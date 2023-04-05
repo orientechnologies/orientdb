@@ -17,11 +17,9 @@ package com.orientechnologies.spatial.functions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.spatial.BaseSpatialLuceneTest;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,52 +29,40 @@ public class LuceneSpatialWithinTest extends BaseSpatialLuceneTest {
   @Test
   public void testWithinNoIndex() {
 
-    List<ODocument> execute =
-        db.command(
-                new OCommandSQL(
-                    "select ST_Within(smallc,smallc) as smallinsmall,ST_Within(smallc, bigc) As smallinbig, ST_Within(bigc,smallc) As biginsmall "
-                        + "from (SELECT ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20) As smallc,ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40) As bigc)"))
-            .execute();
-    ODocument next = execute.iterator().next();
+    OResultSet execute =
+        db.query(
+            "select ST_Within(smallc,smallc) as smallinsmall,ST_Within(smallc, bigc) As smallinbig, ST_Within(bigc,smallc) As biginsmall "
+                + "from (SELECT ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20) As smallc,ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40) As bigc)");
+    OResult next = execute.next();
 
-    Assert.assertEquals(next.field("smallinsmall"), true);
-    Assert.assertEquals(next.field("smallinbig"), true);
-    Assert.assertEquals(next.field("biginsmall"), false);
+    Assert.assertEquals(next.getProperty("smallinsmall"), true);
+    Assert.assertEquals(next.getProperty("smallinbig"), true);
+    Assert.assertEquals(next.getProperty("biginsmall"), false);
   }
 
   @Test
   public void testWithinIndex() {
 
-    db.command(new OCommandSQL("create class Polygon extends v")).execute();
-    db.command(new OCommandSQL("create property Polygon.geometry EMBEDDED OPolygon")).execute();
+    db.command("create class Polygon extends v").close();
+    db.command("create property Polygon.geometry EMBEDDED OPolygon").close();
 
-    db.command(
-            new OCommandSQL(
-                "insert into Polygon set geometry = ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20)"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into Polygon set geometry = ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40)"))
-        .execute();
+    db.command("insert into Polygon set geometry = ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20)")
+        .close();
+    db.command("insert into Polygon set geometry = ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40)")
+        .close();
 
-    db.command(
-            new OCommandSQL("create index Polygon.g on Polygon (geometry) SPATIAL engine lucene"))
-        .execute();
-    List<ODocument> execute =
-        db.command(
-                new OCommandSQL(
-                    "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50 50)'), 50)) = true"))
-            .execute();
+    db.command("create index Polygon.g on Polygon (geometry) SPATIAL engine lucene").close();
+    OResultSet execute =
+        db.query(
+            "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50 50)'), 50)) = true");
 
-    Assert.assertEquals(execute.size(), 2);
+    Assert.assertEquals(execute.stream().count(), 2);
 
     execute =
-        db.command(
-                new OCommandSQL(
-                    "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50 50)'), 30)) = true"))
-            .execute();
+        db.query(
+            "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50 50)'), 30)) = true");
 
-    Assert.assertEquals(execute.size(), 1);
+    Assert.assertEquals(execute.stream().count(), 1);
   }
 
   @Test
