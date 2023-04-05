@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.List;
@@ -93,7 +92,7 @@ public class OLiveIndexRebuildTest {
             final ODatabaseDocumentTx database = pool.acquire();
             try {
               long start = System.nanoTime();
-              database.command(new OCommandSQL("rebuild index " + indexName)).execute();
+              database.command("rebuild index " + indexName).close();
               long end = System.nanoTime();
               rebuildInterval += (end - start);
               rebuildCount++;

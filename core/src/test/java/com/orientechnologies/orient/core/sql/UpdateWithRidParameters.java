@@ -19,23 +19,19 @@ public class UpdateWithRidParameters extends BaseMemoryDatabase {
     schm.createClass("testingClass");
     schm.createClass("testingClass2");
 
-    OCommandSQL cmd = new OCommandSQL("INSERT INTO testingClass SET id = ?");
-    db.command(cmd).execute(123);
+    db.command("INSERT INTO testingClass SET id = ?", 123).close();
 
-    OCommandSQL cmd2 = new OCommandSQL("INSERT INTO testingClass2 SET id = ?");
-    db.command(cmd2).execute(456);
+    db.command("INSERT INTO testingClass2 SET id = ?", 456).close();
 
     List<ODocument> docs =
         db.query(new OSQLSynchQuery<ODocument>("SELECT FROM testingClass2 WHERE id = ?"), 456);
     ORID orid = (ORID) docs.get(0).field("@rid", ORID.class);
 
     // This does not work. It silently adds a null instead of the ORID.
-    OCommandSQL cmd3 = new OCommandSQL("UPDATE testingClass ADD linkedlist = ?");
-    db.command(cmd3).execute(orid);
+    db.command("UPDATE testingClass set linkedlist = linkedlist || ?", orid).close();
 
     // This does work.
-    OCommandSQL cmd4 = new OCommandSQL("UPDATE testingClass ADD linkedlist = " + orid.toString());
-    db.command(cmd4).execute();
+    db.command("UPDATE testingClass set linkedlist = linkedlist || " + orid.toString()).close();
 
     List<ODocument> docs2 =
         db.query(new OSQLSynchQuery<ODocument>("SELECT FROM testingClass WHERE id = ?"), 123);
