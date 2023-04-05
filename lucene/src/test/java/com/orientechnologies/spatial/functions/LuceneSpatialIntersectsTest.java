@@ -15,10 +15,9 @@
  */
 package com.orientechnologies.spatial.functions;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.spatial.BaseSpatialLuceneTest;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,43 +27,35 @@ public class LuceneSpatialIntersectsTest extends BaseSpatialLuceneTest {
   @Test
   public void testIntersectsNoIndex() {
 
-    List<ODocument> execute =
-        db.command(new OCommandSQL("SELECT ST_Intersects('POINT(0 0)', 'LINESTRING ( 2 0, 0 2 )')"))
-            .execute();
-    ODocument next = execute.iterator().next();
+    OResultSet execute =
+        db.query("SELECT ST_Intersects('POINT(0 0)', 'LINESTRING ( 2 0, 0 2 )') as ST_Intersects");
+    OResult next = execute.next();
 
-    Assert.assertEquals(next.field("ST_Intersects"), false);
+    Assert.assertEquals(next.getProperty("ST_Intersects"), false);
+    execute.close();
     execute =
-        db.command(new OCommandSQL("SELECT ST_Intersects('POINT(0 0)', 'LINESTRING ( 0 0, 0 2 )')"))
-            .execute();
-    next = execute.iterator().next();
+        db.query("SELECT ST_Intersects('POINT(0 0)', 'LINESTRING ( 0 0, 0 2 )') as ST_Intersects");
+    next = execute.next();
 
-    Assert.assertEquals(next.field("ST_Intersects"), true);
+    Assert.assertEquals(next.getProperty("ST_Intersects"), true);
+    execute.close();
   }
 
   @Test
   public void testIntersectsIndex() {
 
-    db.command(new OCommandSQL("create class Lines extends v")).execute();
-    db.command(new OCommandSQL("create property Lines.geometry EMBEDDED OLINESTRING")).execute();
+    db.command("create class Lines extends v").close();
+    db.command("create property Lines.geometry EMBEDDED OLINESTRING").close();
 
-    db.command(
-            new OCommandSQL(
-                "insert into Lines set geometry = ST_GeomFromText('LINESTRING ( 2 0, 0 2 )')"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into Lines set geometry = ST_GeomFromText('LINESTRING ( 0 0, 0 2 )')"))
-        .execute();
+    db.command("insert into Lines set geometry = ST_GeomFromText('LINESTRING ( 2 0, 0 2 )')")
+        .close();
+    db.command("insert into Lines set geometry = ST_GeomFromText('LINESTRING ( 0 0, 0 2 )')")
+        .close();
 
-    db.command(new OCommandSQL("create index L.g on Lines (geometry) SPATIAL engine lucene"))
-        .execute();
-    List<ODocument> execute =
-        db.command(
-                new OCommandSQL(
-                    "SELECT from lines where ST_Intersects(geometry, 'POINT(0 0)') = true"))
-            .execute();
+    db.command("create index L.g on Lines (geometry) SPATIAL engine lucene").close();
+    OResultSet execute =
+        db.query("SELECT from lines where ST_Intersects(geometry, 'POINT(0 0)') = true");
 
-    Assert.assertEquals(execute.size(), 1);
+    Assert.assertEquals(execute.stream().count(), 1);
   }
 }
