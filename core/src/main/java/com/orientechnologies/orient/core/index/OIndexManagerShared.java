@@ -129,7 +129,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
             || indexDefinition.getClassName() == null
             || indexDefinition.getFields() == null
             || indexDefinition.getFields().isEmpty();
-    if (manualIndexesAreUsed) {
+    if (manualIndexesAreUsed && !"LUCENE_CROSS_CLASS".equals(algorithm)) {
       OIndexAbstract.manualIndexesWarning();
     } else {
       checkSecurityConstraintsForIndexCreate(database, indexDefinition);
