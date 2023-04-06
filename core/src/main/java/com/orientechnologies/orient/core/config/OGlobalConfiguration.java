@@ -1861,6 +1861,11 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Maximum number of threads in the executor pool (-1 will base the size on the number CPUs)",
       Integer.class,
       -1),
+  EXECUTOR_POOL_IO_ENABLED(
+      "executor.pool.io.enabled",
+      "Flag to use the executor pool for IO, default enabled",
+      Boolean.class,
+      true),
   ;
 
   static {

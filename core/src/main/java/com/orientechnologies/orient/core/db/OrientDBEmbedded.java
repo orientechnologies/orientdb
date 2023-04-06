@@ -168,10 +168,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
         OThreadPoolExecutors.newScalingThreadPool(
             "OrientDBEmbedded", 1, excutorBaseSize(size), size, 30, TimeUnit.MINUTES);
 
-    int ioSize = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
-    ioExecutor =
-        OThreadPoolExecutors.newScalingThreadPool(
-            "OrientDB-IO", 1, excutorBaseSize(ioSize), ioSize, 30, TimeUnit.MINUTES);
+    if (this.configurations
+        .getConfigurations()
+        .getValueAsBoolean(OGlobalConfiguration.EXECUTOR_POOL_IO_ENABLED)) {
+      int ioSize = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_IO_MAX_SIZE);
+      ioExecutor =
+          OThreadPoolExecutors.newScalingThreadPool(
+              "OrientDB-IO", 1, excutorBaseSize(ioSize), ioSize, 30, TimeUnit.MINUTES);
+    } else {
+      ioExecutor = null;
+    }
     timer = new Timer();
 
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
@@ -1038,14 +1044,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
       internalClose();
       currentStorageIds.clear();
     }
-    try {
-      ioExecutor.shutdown();
-      while (!ioExecutor.awaitTermination(1, TimeUnit.MINUTES)) {
-        OLogManager.instance().warn(this, "Failed waiting background io operations termination");
-        ioExecutor.shutdownNow();
+    if (ioExecutor != null) {
+      try {
+        ioExecutor.shutdown();
+        while (!ioExecutor.awaitTermination(1, TimeUnit.MINUTES)) {
+          OLogManager.instance().warn(this, "Failed waiting background io operations termination");
+          ioExecutor.shutdownNow();
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
     }
     removeShutdownHook();
   }
