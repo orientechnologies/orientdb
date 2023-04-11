@@ -6,10 +6,9 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.security.AbstractSecurityTest;
-import java.io.*;
+import java.io.File;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -83,7 +82,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
     try {
       final String sql =
           String.format("create user %s identified by %s role %s", "testuser", "pass", "admin");
-      db.command(new OCommandSQL(sql)).execute();
+      db.command(sql).close();
     } catch (Exception ex) {
 
       assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
@@ -100,7 +99,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
     try {
       final String sql =
           String.format("create user %s identified by %s role %s", "testuser", "passw", "admin");
-      db.command(new OCommandSQL(sql)).execute();
+      db.command(sql).close();
     } catch (Exception ex) {
       assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
     }
@@ -116,7 +115,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
     try {
       final String sql =
           String.format("create user %s identified by %s role %s", "testuser", "passw12", "admin");
-      db.command(new OCommandSQL(sql)).execute();
+      db.command(sql).close();
     } catch (Exception ex) {
       assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
     }
@@ -134,7 +133,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
       final String sql =
           String.format(
               "create user %s identified by %s role %s", "testuser", "passw12$$", "admin");
-      db.command(new OCommandSQL(sql)).execute();
+      db.command(sql).close();
     } catch (Exception ex) {
       assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
     }
@@ -151,7 +150,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
         String.format(
             "create user %s identified by %s role %s",
             "uuiduser", java.util.UUID.randomUUID().toString(), "admin");
-    db.command(new OCommandSQL(sql)).execute();
+    db.command(sql).close();
 
     db.close();
   }
@@ -163,7 +162,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
 
     final String sql =
         String.format("create user %s identified by %s role %s", "testuser", "PASsw12$$", "admin");
-    db.command(new OCommandSQL(sql)).execute();
+    db.command(sql).close();
 
     db.close();
   }

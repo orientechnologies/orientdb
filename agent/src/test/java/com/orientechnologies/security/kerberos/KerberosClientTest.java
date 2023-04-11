@@ -4,7 +4,6 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.security.AbstractSecurityTest;
 import java.io.IOException;
 import org.junit.AfterClass;
@@ -42,7 +41,7 @@ public class KerberosClientTest extends AbstractSecurityTest {
         final String sql =
             String.format(
                 "create user %s identified by %s role %s", kerbUser, "notneeded", "admin");
-        db.command(new OCommandSQL(sql)).execute();
+        db.command(sql).close();
       } finally {
         if (db != null) db.close();
       }

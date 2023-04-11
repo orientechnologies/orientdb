@@ -69,7 +69,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:localhost:2424/" + getDatabaseName());
     db.open("admin", "admin");
     try {
-      db.command(new OCommandSQL("INSERT into Item (name) values ('foo')")).execute();
+      db.command("INSERT into Item (name) values ('foo')").close();
     } finally {
       db.close();
     }
@@ -85,8 +85,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
       Assert.assertEquals(
           Collections.singletonList("foo"), result.iterator().next().field("names"));
 
-      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this"))
-          .execute();
+      db.command("INSERT into Item (map) values ({'a':'b'}) return @this").close();
 
       result = db.command(new OCommandSQL("select map(map) as names from Item")).execute();
       Assert.assertEquals(
@@ -100,8 +99,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     db = new ODatabaseDocumentTx("remote:localhost:2426/" + getDatabaseName());
     db.open("admin", "admin");
     try {
-      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this"))
-          .execute();
+      db.command("INSERT into Item (map) values ({'a':'b'}) return @this").close();
       Assert.fail("Quorum not reached, but no failure has been caught");
     } catch (Exception e) {
       Assert.assertTrue(e.getCause().toString().contains("Quorum"));
@@ -116,8 +114,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     db = new ODatabaseDocumentTx("remote:localhost:2425/" + getDatabaseName());
     db.open("admin", "admin");
     try {
-      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this"))
-          .execute();
+      db.command("INSERT into Item (map) values ({'a':'b'}) return @this").close();
       Assert.fail("Quorum not reached, but no failure has been caught");
     } catch (Exception e) {
       Assert.assertTrue(e.getCause().toString().contains("Quorum"));
@@ -137,8 +134,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     db = new ODatabaseDocumentTx("remote:localhost:2425/" + getDatabaseName());
     db.open("admin", "admin");
     try {
-      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this"))
-          .execute();
+      db.command("INSERT into Item (map) values ({'a':'b'}) return @this").close();
     } finally {
       db.close();
     }

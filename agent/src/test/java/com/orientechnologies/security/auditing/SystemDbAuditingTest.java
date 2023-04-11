@@ -6,7 +6,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.security.AbstractSecurityTest;
@@ -89,7 +88,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
 
     server.getSystemDatabase().execute(null, "delete from OAuditingLog where database = ?", TESTDB);
 
-    db.command(new OCommandSQL("create class TestClass")).execute();
+    db.command("create class TestClass").close();
 
     try {
       Thread.sleep(
@@ -114,7 +113,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
     assertThat(result).hasSize(1);
 
     // Drop Class Test
-    db.command(new OCommandSQL("drop class TestClass")).execute();
+    db.command("drop class TestClass").close();
 
     try {
       Thread.sleep(
