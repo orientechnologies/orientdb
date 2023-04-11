@@ -24,12 +24,8 @@ public class LuceneReuseTest extends BaseLuceneTest {
     cls.createProperty("surname", OType.STRING);
     cls.createProperty("age", OType.LONG);
 
-    db.command(
-            new OCommandSQL("create index Reuse.composite on Reuse (name,surname,date,age) UNIQUE"))
-        .execute();
-    db.command(
-            new OCommandSQL("create index Reuse.surname on Reuse (surname) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Reuse.composite on Reuse (name,surname,date,age) UNIQUE").close();
+    db.command("create index Reuse.surname on Reuse (surname) FULLTEXT ENGINE LUCENE").close();
 
     for (int i = 0; i < 10; i++) {
       db.save(
@@ -65,15 +61,11 @@ public class LuceneReuseTest extends BaseLuceneTest {
     cls.createProperty("surname", OType.STRING);
     cls.createProperty("age", OType.LONG);
 
-    db.command(
-            new OCommandSQL("create index Reuse.composite on Reuse (name,surname,date,age) UNIQUE"))
-        .execute();
+    db.command("create index Reuse.composite on Reuse (name,surname,date,age) UNIQUE").close();
 
     // lucene on name and surname
-    db.command(
-            new OCommandSQL(
-                "create index Reuse.name_surname on Reuse (name,surname) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Reuse.name_surname on Reuse (name,surname) FULLTEXT ENGINE LUCENE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       db.save(

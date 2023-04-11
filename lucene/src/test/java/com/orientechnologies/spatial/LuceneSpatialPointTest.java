@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,14 +49,10 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
     place.createProperty("longitude", OType.DOUBLE);
     place.createProperty("name", OType.STRING);
 
-    db.command(
-            new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE").close();
 
-    db.command(
-            new OCommandSQL(
-                "CREATE INDEX Place.l_lon ON Place(latitude,longitude) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("CREATE INDEX Place.l_lon ON Place(latitude,longitude) SPATIAL ENGINE LUCENE")
+        .close();
 
     ODocument rome = newCity("Rome", 12.5, 41.9);
     ODocument london = newCity("London", -0.1275, 51.507222);
@@ -71,17 +66,14 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
     db.save(london);
 
     db.command(
-            new OCommandSQL(
-                "insert into City set name = 'TestInsert' , location = ST_GeomFromText('"
-                    + PWKT
-                    + "')"))
-        .execute();
+            "insert into City set name = 'TestInsert' , location = ST_GeomFromText('" + PWKT + "')")
+        .close();
   }
 
   @Test
   public void testPointWithoutIndex() {
 
-    db.command(new OCommandSQL("Drop INDEX City.location")).execute();
+    db.command("Drop INDEX City.location").close();
     queryPoint();
   }
 
@@ -141,7 +133,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
   @Test
   public void testOldNearQueryWithoutIndex() {
 
-    db.command(new OCommandSQL("Drop INDEX Place.l_lon")).execute();
+    db.command("Drop INDEX Place.l_lon").close();
     queryOldNear();
   }
 

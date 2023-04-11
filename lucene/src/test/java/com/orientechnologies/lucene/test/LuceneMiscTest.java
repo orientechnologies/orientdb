@@ -140,9 +140,8 @@ public class LuceneMiscTest extends BaseLuceneTest {
     authorOf.createProperty("in", OType.LINK, song);
     db.commit();
 
-    db.command(new OCommandSQL("create index AuthorOf.in on AuthorOf (in) NOTUNIQUE")).execute();
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index AuthorOf.in on AuthorOf (in) NOTUNIQUE").close();
+    db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE").close();
 
     OVertex authorVertex = db.newVertex("Author");
     authorVertex.setProperty("name", "Bob Dylan");
@@ -168,14 +167,13 @@ public class LuceneMiscTest extends BaseLuceneTest {
   @Test
   public void testUnderscoreField() {
 
-    db.command(new OCommandSQL("create class Test extends V")).execute();
+    db.command("create class Test extends V").close();
 
-    db.command(new OCommandSQL("create property V._attr1 string")).execute();
+    db.command("create property V._attr1 string").close();
 
-    db.command(new OCommandSQL("create index V._attr1 on V (_attr1) fulltext engine lucene"))
-        .execute();
+    db.command("create index V._attr1 on V (_attr1) fulltext engine lucene").close();
 
-    db.command(new OCommandSQL("insert into Test set _attr1='anyPerson', attr2='bar'")).execute();
+    db.command("insert into Test set _attr1='anyPerson', attr2='bar'").close();
 
     OSQLSynchQuery query = new OSQLSynchQuery("select from Test where _attr1 lucene :name");
     Map params = new HashMap();

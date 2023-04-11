@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -27,10 +26,6 @@ public class OSQLFunctionConvertTest extends BaseMemoryDatabase {
     ODocument doc =
         (ODocument)
             db.query(new OSQLSynchQuery<ODocument>("select from TestConversion limit 1")).get(0);
-
-    db.command(
-            new OCommandSQL("update TestConversion set selfrid = 'foo" + doc.getIdentity() + "'"))
-        .execute();
 
     List<ODocument> results =
         db.query(

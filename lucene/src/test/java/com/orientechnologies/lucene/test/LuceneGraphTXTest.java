@@ -35,8 +35,7 @@ public class LuceneGraphTXTest extends BaseLuceneTest {
     OClass type = db.createVertexClass("City");
     type.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE").close();
   }
 
   @Test
