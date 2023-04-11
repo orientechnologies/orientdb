@@ -161,7 +161,8 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
     db.open("root", ROOT_PASSWORD);
 
     final String sql =
-        String.format("create user %s identified by '%s' role %s", "testuser", "PASsw12$$", "admin");
+        String.format(
+            "create user %s identified by '%s' role %s", "testuser", "PASsw12$$", "admin");
     db.command(sql).close();
 
     db.close();
