@@ -29,12 +29,15 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /** Created by Enrico Risa on 30/03/16. */
@@ -350,7 +353,7 @@ public class OBackupDBLogger implements OBackupLogger {
                             }
                           }))
                   .execute(queryParams);
-              session.command(new OCommandSQL(query)).execute(queryParams);
+              session.command(query, queryParams).close();
               return null;
             });
   }
@@ -400,7 +403,7 @@ public class OBackupDBLogger implements OBackupLogger {
                             }
                           }))
                   .execute(queryParams);
-              session.command(new OCommandSQL(query)).execute(queryParams);
+              session.command(query, queryParams).close();
               return null;
             });
   }
@@ -477,7 +480,7 @@ public class OBackupDBLogger implements OBackupLogger {
     getDatabase()
         .executeInDBScope(
             session -> {
-              session.command(new OCommandSQL(query)).execute(queryParams);
+              session.command(query, queryParams).close();
               return null;
             });
   }

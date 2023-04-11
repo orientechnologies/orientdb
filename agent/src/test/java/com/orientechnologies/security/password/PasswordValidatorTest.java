@@ -132,7 +132,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
 
       final String sql =
           String.format(
-              "create user %s identified by %s role %s", "testuser", "passw12$$", "admin");
+              "create user %s identified by \"%s\" role %s", "testuser", "passw12$$", "admin");
       db.command(sql).close();
     } catch (Exception ex) {
       assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
