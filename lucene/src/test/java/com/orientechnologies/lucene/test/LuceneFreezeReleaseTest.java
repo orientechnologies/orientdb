@@ -34,8 +34,7 @@ public class LuceneFreezeReleaseTest {
     OClass person = schema.createClass("Person");
     person.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("create index Person.name on Person (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Person.name on Person (name) FULLTEXT ENGINE LUCENE").close();
 
     db.save(new ODocument("Person").field("name", "John"));
 
@@ -77,8 +76,7 @@ public class LuceneFreezeReleaseTest {
     OClass person = schema.createClass("Person");
     person.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("create index Person.name on Person (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Person.name on Person (name) FULLTEXT ENGINE LUCENE").close();
 
     db.save(new ODocument("Person").field("name", "John"));
 

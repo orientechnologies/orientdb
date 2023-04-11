@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,15 +44,13 @@ public class LuceneSpatialPolygonTest extends BaseSpatialLuceneTest {
     oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OPolygon"));
     oClass.createProperty("name", OType.STRING);
 
-    db.command(
-            new OCommandSQL("CREATE INDEX Place.location ON Place(location) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("CREATE INDEX Place.location ON Place(location) SPATIAL ENGINE LUCENE").close();
   }
 
   @Test
   public void testPolygonWithoutIndex() throws IOException {
     testIndexingPolygon();
-    db.command(new OCommandSQL("drop index Place.location")).execute();
+    db.command("drop index Place.location").close();
     queryPolygon();
   }
 

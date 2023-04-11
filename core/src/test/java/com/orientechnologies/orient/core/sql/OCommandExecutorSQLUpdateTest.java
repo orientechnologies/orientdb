@@ -46,31 +46,30 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
   @Test
   public void testUpdateRemoveAll() throws Exception {
 
-    db.command(new OCommandSQL("CREATE class company")).execute();
-    db.command(new OCommandSQL("CREATE property company.name STRING")).execute();
-    db.command(new OCommandSQL("CREATE class employee")).execute();
-    db.command(new OCommandSQL("CREATE property employee.name STRING")).execute();
-    db.command(new OCommandSQL("CREATE property company.employees LINKSET employee")).execute();
+    db.command("CREATE class company").close();
+    db.command("CREATE property company.name STRING").close();
+    db.command("CREATE class employee").close();
+    db.command("CREATE property employee.name STRING").close();
+    db.command("CREATE property company.employees LINKSET employee").close();
 
-    db.command(new OCommandSQL("INSERT INTO company SET name = 'MyCompany'")).execute();
+    db.command("INSERT INTO company SET name = 'MyCompany'").close();
 
     final ODocument r =
         (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM company")).get(0);
 
-    db.command(new OCommandSQL("INSERT INTO employee SET name = 'Philipp'")).execute();
-    db.command(new OCommandSQL("INSERT INTO employee SET name = 'Selma'")).execute();
-    db.command(new OCommandSQL("INSERT INTO employee SET name = 'Thierry'")).execute();
-    db.command(new OCommandSQL("INSERT INTO employee SET name = 'Linn'")).execute();
+    db.command("INSERT INTO employee SET name = 'Philipp'").close();
+    db.command("INSERT INTO employee SET name = 'Selma'").close();
+    db.command("INSERT INTO employee SET name = 'Thierry'").close();
+    db.command("INSERT INTO employee SET name = 'Linn'").close();
 
-    db.command(new OCommandSQL("UPDATE company ADD employees = (SELECT FROM employee)")).execute();
+    db.command("UPDATE company set employees = (SELECT FROM employee)").close();
 
     r.reload();
     assertEquals(((Set) r.field("employees")).size(), 4);
 
     db.command(
-            new OCommandSQL(
-                "UPDATE company REMOVE employees = (SELECT FROM employee WHERE name = 'Linn') WHERE name = 'MyCompany'"))
-        .execute();
+            "UPDATE company REMOVE employees = (SELECT FROM employee WHERE name = 'Linn') WHERE name = 'MyCompany'")
+        .close();
 
     r.reload();
     assertEquals(((Set) r.field("employees")).size(), 3);
@@ -78,8 +77,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
   @Test
   public void testUpdateContent() throws Exception {
-    db.command(new OCommandSQL("insert into V (name) values ('bar')")).execute();
-    db.command(new OCommandSQL("UPDATE V content {\"value\":\"foo\"}")).execute();
+    db.command("insert into V (name) values ('bar')").close();
+    db.command("UPDATE V content {\"value\":\"foo\"}").close();
     Iterable result = db.query(new OSQLSynchQuery<Object>("select from V"));
     ODocument doc = (ODocument) result.iterator().next();
     assertEquals(doc.field("value"), "foo");
@@ -87,13 +86,13 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
   @Test
   public void testUpdateContentParse() throws Exception {
-    db.command(new OCommandSQL("insert into V (name) values ('bar')")).execute();
-    db.command(new OCommandSQL("UPDATE V content {\"value\":\"foo\\\\\"}")).execute();
+    db.command("insert into V (name) values ('bar')").close();
+    db.command("UPDATE V content {\"value\":\"foo\\\\\"}").close();
     Iterable result = db.query(new OSQLSynchQuery<Object>("select from V"));
     ODocument doc = (ODocument) result.iterator().next();
     assertEquals(doc.field("value"), "foo\\");
 
-    db.command(new OCommandSQL("UPDATE V content {\"value\":\"foo\\\\\\\\\"}")).execute();
+    db.command("UPDATE V content {\"value\":\"foo\\\\\\\\\"}").close();
 
     result = db.query(new OSQLSynchQuery<Object>("select from V"));
     doc = (ODocument) result.iterator().next();
@@ -102,28 +101,22 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
   @Test
   public void testUpdateMergeWithIndex() {
-    db.command(new OCommandSQL("CREATE CLASS i_have_a_list ")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY i_have_a_list.id STRING")).execute();
-    db.command(new OCommandSQL("CREATE INDEX i_have_a_list.id ON i_have_a_list (id) UNIQUE"))
-        .execute();
-    db.command(new OCommandSQL("CREATE PROPERTY i_have_a_list.types EMBEDDEDLIST STRING"))
-        .execute();
+    db.command("CREATE CLASS i_have_a_list ").close();
+    db.command("CREATE PROPERTY i_have_a_list.id STRING").close();
+    db.command("CREATE INDEX i_have_a_list.id ON i_have_a_list (id) UNIQUE").close();
+    db.command("CREATE PROPERTY i_have_a_list.types EMBEDDEDLIST STRING").close();
+    db.command("CREATE INDEX i_have_a_list.types ON i_have_a_list (types) NOTUNIQUE").close();
     db.command(
-            new OCommandSQL("CREATE INDEX i_have_a_list.types ON i_have_a_list (types) NOTUNIQUE"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "INSERT INTO i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"aaa\", \"bbb\"]}"))
-        .execute();
+            "INSERT INTO i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"aaa\", \"bbb\"]}")
+        .close();
 
     Iterable result =
         db.query(new OSQLSynchQuery<Object>("SELECT * FROM i_have_a_list WHERE types = 'aaa'"));
     assertTrue(result.iterator().hasNext());
 
     db.command(
-            new OCommandSQL(
-                "UPDATE i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"ccc\", \"bbb\"]} WHERE id = 'the_id'"))
-        .execute();
+            "UPDATE i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"ccc\", \"bbb\"]} WHERE id = 'the_id'")
+        .close();
 
     result =
         db.query(new OSQLSynchQuery<Object>("SELECT * FROM i_have_a_list WHERE types = 'ccc'"));
@@ -138,7 +131,6 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
   public void testNamedParamsSyntax() {
     // issue #4470
     String className = getClass().getSimpleName() + "_NamedParamsSyntax";
-    db.command(new OCommandSQL("create class " + className)).execute();
 
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("name", "foo");
@@ -149,6 +141,7 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     params.put("ssh_url", "foo");
     params.put("clone_url", "foo");
     params.put("svn_url", "foo");
+    db.command("create class " + className).close();
 
     OCommandSQL sql1 =
         new OCommandSQL(
@@ -171,11 +164,10 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
   @Test
   public void testUpsertSetPut() throws Exception {
-    db.command(new OCommandSQL("CREATE CLASS test")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY test.id integer")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY test.addField EMBEDDEDSET string")).execute();
-    db.command(new OCommandSQL("UPDATE test SET id = 1 ADD addField=\"xxxx\" UPSERT WHERE id = 1"))
-        .execute();
+    db.command("CREATE CLASS test").close();
+    db.command("CREATE PROPERTY test.id integer").close();
+    db.command("CREATE PROPERTY test.addField EMBEDDEDSET string").close();
+    db.command("UPDATE test SET id = 1 , addField=[\"xxxx\"] UPSERT WHERE id = 1").close();
     Iterable result = db.query(new OSQLSynchQuery<Object>("select from test"));
     ODocument doc = (ODocument) result.iterator().next();
     Set<?> set = doc.field("addField");
@@ -185,15 +177,16 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
   @Test
   public void testUpdateParamDate() throws Exception {
-    db.command(new OCommandSQL("CREATE CLASS test")).execute();
+
+    db.command("CREATE CLASS test").close();
     Date date = new Date();
-    db.command(new OCommandSQL("insert into test set birthDate = ?")).execute(date);
+    db.command("insert into test set birthDate = ?", date).close();
     Iterable result = db.query(new OSQLSynchQuery<Object>("select from test"));
     ODocument doc = (ODocument) result.iterator().next();
     assertEquals(doc.field("birthDate"), date);
 
     date = new Date();
-    db.command(new OCommandSQL("UPDATE test set birthDate = ?")).execute(date);
+    db.command("UPDATE test set birthDate = ?", date).close();
     result = db.query(new OSQLSynchQuery<Object>("select from test"));
     doc = (ODocument) result.iterator().next();
     assertEquals(doc.field("birthDate"), date);
@@ -243,7 +236,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
   @Test
   public void testIncrementWithDotNotationField() throws Exception {
-    db.command(new OCommandSQL("CREATE class test")).execute();
+
+    db.command("CREATE class test").close();
 
     final ODocument test = new ODocument("test");
     test.field("id", "id1");
@@ -260,19 +254,19 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
             db.query(new OSQLSynchQuery<Object>("SELECT FROM test WHERE id = \"id1\"")).get(0);
     ;
 
-    db.command(new OCommandSQL("UPDATE test INCREMENT count = 2")).execute();
+    db.command("UPDATE test set count += 2").close();
     queried.reload();
     //    assertEquals(queried.field("count"), 22);
 
     Assertions.assertThat(queried.<Integer>field("count")).isEqualTo(22);
 
-    db.command(new OCommandSQL("UPDATE test INCREMENT `map.nestedCount` = 5")).execute();
+    db.command("UPDATE test set map.nestedCount = map.nestedCount + 5").close();
     queried.reload();
     //    assertEquals(queried.field("map.nestedCount"), 15);
 
     Assertions.assertThat(queried.<Integer>field("map.nestedCount")).isEqualTo(15);
 
-    db.command(new OCommandSQL("UPDATE test INCREMENT map.nestedCount = 5")).execute();
+    db.command("UPDATE test set map.nestedCount = map.nestedCount+ 5").close();
     queried.reload();
 
     Assertions.assertThat(queried.<Integer>field("map.nestedCount")).isEqualTo(20);
@@ -283,7 +277,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
   @Test
   public void testSingleQuoteInNamedParameter() throws Exception {
-    db.command(new OCommandSQL("CREATE class test")).execute();
+
+    db.command("CREATE class test").close();
 
     final ODocument test = new ODocument("test");
     test.field("text", "initial value");
@@ -305,7 +300,7 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
   @Test
   public void testQuotedStringInNamedParameter() throws Exception {
 
-    db.command(new OCommandSQL("CREATE class test")).execute();
+    db.command("CREATE class test").close();
 
     final ODocument test = new ODocument("test");
     test.field("text", "initial value");
@@ -327,11 +322,10 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
   @Test
   public void testQuotesInJson() throws Exception {
 
-    db.command(new OCommandSQL("CREATE class testquotesinjson")).execute();
+    db.command("CREATE class testquotesinjson").close();
     db.command(
-            new OCommandSQL(
-                "UPDATE testquotesinjson SET value = {\"f12\":'test\\\\'} UPSERT WHERE key = \"test\""))
-        .execute();
+            "UPDATE testquotesinjson SET value = {\"f12\":'test\\\\'} UPSERT WHERE key = \"test\"")
+        .close();
     // db.command(new OCommandSQL("update V set value.f12 = 'asdf\\\\' WHERE key =
     // \"test\"")).execute();
 
@@ -343,11 +337,10 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
   @Test
   public void testDottedTargetInScript() throws Exception {
     // #issue #5397
-
-    db.command(new OCommandSQL("create class A")).execute();
-    db.command(new OCommandSQL("create class B")).execute();
-    db.command(new OCommandSQL("insert into A set name = 'foo'")).execute();
-    db.command(new OCommandSQL("insert into B set name = 'bar', a = (select from A)")).execute();
+    db.command("create class A").close();
+    db.command("create class B").close();
+    db.command("insert into A set name = 'foo'").close();
+    db.command("insert into B set name = 'bar', a = (select from A)").close();
 
     StringBuilder script = new StringBuilder();
     script.append("let $a = select from B;\n");
@@ -363,8 +356,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
   @Test
   public void testBacktickClassName() throws Exception {
     db.getMetadata().getSchema().createClass("foo-bar");
-    db.command(new OCommandSQL("insert into `foo-bar` set name = 'foo'")).execute();
-    db.command(new OCommandSQL("UPDATE `foo-bar` set name = 'bar' where name = 'foo'")).execute();
+    db.command("insert into `foo-bar` set name = 'foo'").close();
+    db.command("UPDATE `foo-bar` set name = 'bar' where name = 'foo'").close();
     Iterable result = db.query(new OSQLSynchQuery<Object>("select from `foo-bar`"));
     ODocument doc = (ODocument) result.iterator().next();
     assertEquals(doc.field("name"), "bar");
@@ -374,23 +367,19 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
   @Ignore
   public void testUpdateLockLimit() throws Exception {
     db.getMetadata().getSchema().createClass("foo");
-    db.command(new OCommandSQL("insert into foo set name = 'foo'")).execute();
-    db.command(
-            new OCommandSQL("UPDATE foo set name = 'bar' where name = 'foo' lock record limit 1"))
-        .execute();
+    db.command("insert into foo set name = 'foo'").close();
+    db.command("UPDATE foo set name = 'bar' where name = 'foo' lock record limit 1").close();
     Iterable result = db.query(new OSQLSynchQuery<Object>("select from foo"));
     ODocument doc = (ODocument) result.iterator().next();
     assertEquals(doc.field("name"), "bar");
-    db.command(
-            new OCommandSQL("UPDATE foo set name = 'foo' where name = 'bar' lock record limit 1"))
-        .execute();
+    db.command("UPDATE foo set name = 'foo' where name = 'bar' lock record limit 1").close();
   }
 
   @Test
   public void testUpdateContentOnClusterTarget() throws Exception {
-    db.command(new OCommandSQL("CREATE class Foo")).execute();
-    db.command(new OCommandSQL("CREATE class Bar")).execute();
-    db.command(new OCommandSQL("CREATE property Foo.bar EMBEDDED Bar")).execute();
+    db.command("CREATE class Foo").close();
+    db.command("CREATE class Bar").close();
+    db.command("CREATE property Foo.bar EMBEDDED Bar").close();
 
     db.command(new OCommandSQL("insert into cluster:foo set bar = {\"value\":\"zz\\\\\"}"))
         .execute();
@@ -402,11 +391,11 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
   @Test
   public void testUpdateContentOnClusterTargetMultiple() throws Exception {
-    db.command(new OCommandSQL("CREATE class Foo")).execute();
-    db.command(new OCommandSQL("ALTER CLASS Foo addcluster fooadditional1")).execute();
-    db.command(new OCommandSQL("ALTER CLASS Foo addcluster fooadditional2")).execute();
-    db.command(new OCommandSQL("CREATE class Bar")).execute();
-    db.command(new OCommandSQL("CREATE property Foo.bar EMBEDDED Bar")).execute();
+    db.command("CREATE class Foo").close();
+    db.command("ALTER CLASS Foo addcluster fooadditional1").close();
+    db.command("ALTER CLASS Foo addcluster fooadditional2").close();
+    db.command("CREATE class Bar").close();
+    db.command("CREATE property Foo.bar EMBEDDED Bar").close();
 
     db.command(new OCommandSQL("insert into cluster:foo set bar = {\"value\":\"zz\\\\\"}"))
         .execute();
@@ -433,12 +422,12 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
   @Test
   public void testUpdateContentOnClusterTargetMultipleSelection() throws Exception {
-    db.command(new OCommandSQL("CREATE class Foo")).execute();
-    db.command(new OCommandSQL("ALTER CLASS Foo addcluster fooadditional1")).execute();
-    db.command(new OCommandSQL("ALTER CLASS Foo addcluster fooadditional2")).execute();
-    db.command(new OCommandSQL("ALTER CLASS Foo addcluster fooadditional3")).execute();
-    db.command(new OCommandSQL("CREATE class Bar")).execute();
-    db.command(new OCommandSQL("CREATE property Foo.bar EMBEDDED Bar")).execute();
+    db.command("CREATE class Foo").close();
+    db.command("ALTER CLASS Foo addcluster fooadditional1").close();
+    db.command("ALTER CLASS Foo addcluster fooadditional2").close();
+    db.command("ALTER CLASS Foo addcluster fooadditional3").close();
+    db.command("CREATE class Bar").close();
+    db.command("CREATE property Foo.bar EMBEDDED Bar").close();
 
     db.command(
             new OCommandSQL("insert into cluster:fooadditional1 set bar = {\"value\":\"zz\\\\\"}"))
@@ -469,13 +458,13 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
   @Test
   public void testUpdateContentNotORestricted() throws Exception {
     // issue #5564
-    db.command(new OCommandSQL("CREATE class Foo")).execute();
+    db.command("CREATE class Foo").close();
 
     ODocument d = new ODocument("Foo");
     d.field("name", "foo");
     d.save();
-    db.command(new OCommandSQL("update Foo MERGE {\"a\":1}")).execute();
-    db.command(new OCommandSQL("update Foo CONTENT {\"a\":1}")).execute();
+    db.command("update Foo MERGE {\"a\":1}").close();
+    db.command("update Foo CONTENT {\"a\":1}").close();
 
     List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from Foo"));
 
@@ -487,7 +476,7 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
   @Test
   public void testUpdateReturnCount() throws Exception {
     // issue #5564
-    db.command(new OCommandSQL("CREATE class Foo")).execute();
+    db.command("CREATE class Foo").close();
 
     ODocument d = new ODocument("Foo");
     d.field("name", "foo");
