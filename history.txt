@@ -27,6 +27,35 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.18 - (April, 13 2023)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3216---13-April-2023
+
+# Changes
+
+## Core
+- Add a specific executor, for all the io operations
+- Make sure to use the context executor for all background ops
+- Fix automatically remove null links on write of embedded ridbags, issue #9767
+- Make sure to use the plugin class loader to load the plugin class
+- Avoid repeated distributed database shutdowns
+- Fix race in registering installing database to guard against concurrent installs
+- Upgrated dependencies
+- Minor fix on embedded storage reload
+- Increased separation of schema logic for remote and embedded cases
+
+
+## Remote
+- Corrected edge iteration in remote after commit, with relative test case issue #9805
+
+## Gremlin
+- Upgrated to the last release of gremlin libraries
+
+## Agent
+- Removed not needed dependencies, to reduce the agent bundle size
+
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.17 - (March, 9 2023)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3216---9-March-2023
