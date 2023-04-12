@@ -14,7 +14,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>3.2.18-SNAPSHOT</version>
+    <version>3.2.18</version>
     <packaging>pom</packaging>
 
     <name>OrientDB</name>
@@ -92,7 +92,7 @@
         <connection>scm:git:git@github.com:orientechnologies/orientdb.git</connection>
         <developerConnection>scm:git:git@github.com:orientechnologies/orientdb.git</developerConnection>
         <url>scm:git:git@github.com:orientechnologies/orientdb.git</url>
-      <tag>HEAD</tag>
+      <tag>3.2.18</tag>
   </scm>
     <issueManagement>
         <system>GitHub Issues</system>
