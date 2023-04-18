@@ -306,7 +306,7 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
                         // RETRY
                       }
 
-                    while (vtxs.hasNext()) {
+                    while (vtxs != null && vtxs.hasNext()) {
                       OResult vtx = vtxs.next();
                       if (retry) {
                         retry = true;

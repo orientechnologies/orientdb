@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -420,7 +421,7 @@ public class ODocumentSerializerDeltaTest {
       assertEquals("two", checkList.get(0).get(0).field(variableField));
     } catch (Exception e) {
       e.printStackTrace();
-      assertNotNull(null);
+      fail();
     } finally {
       if (db != null) db.close();
       if (odb != null) {

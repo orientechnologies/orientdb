@@ -161,14 +161,16 @@ public class HaSyncClusterIT extends AbstractServerClusterTest {
                           }
                           long processed =
                               messageService.getProcessedRequests() - gossip - deploy_cluster;
+                          if (messageStats != null) {
 
-                          OLogManager.instance()
-                              .info(
-                                  this,
-                                  "Waiting for processed requests to be [%d], actual [%d] with stats [%s] ",
-                                  NUM_RECORDS,
-                                  processed,
-                                  messageStats.toJSON());
+                            OLogManager.instance()
+                                .info(
+                                    this,
+                                    "Waiting for processed requests to be [%d], actual [%d] with stats [%s] ",
+                                    NUM_RECORDS,
+                                    processed,
+                                    messageStats.toJSON());
+                          }
 
                           return processed >= NUM_RECORDS;
                         }

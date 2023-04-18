@@ -140,8 +140,8 @@ public class OFunctionCall extends SimpleNode {
       }
     }
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
-    function.config(this.params.toArray());
     if (function != null) {
+      function.config(this.params.toArray());
 
       validateFunctionParams(function, paramValues);
 

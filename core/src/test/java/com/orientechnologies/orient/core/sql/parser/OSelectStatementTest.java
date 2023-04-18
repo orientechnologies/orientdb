@@ -63,7 +63,6 @@ public class OSelectStatementTest {
     OSelectStatement select = (OSelectStatement) stm;
     assertTrue(select.getProjection() == null);
     assertTrue(select.getTarget() != null);
-    assertTrue(!Boolean.TRUE.equals(select.getLockRecord()));
     assertTrue(select.getWhereClause() == null);
   }
 
@@ -76,7 +75,6 @@ public class OSelectStatementTest {
     assertTrue(select.getProjection().getItems() != null);
     assertEquals(select.getProjection().getItems().size(), 1);
     assertTrue(select.getTarget() != null);
-    assertTrue(!Boolean.TRUE.equals(select.getLockRecord()));
     assertTrue(select.getWhereClause() == null);
   }
 

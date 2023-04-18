@@ -13,9 +13,8 @@ public class OBinaryProtocolHelper {
     if (OLDEST_SUPPORTED_PROTOCOL_VERSION > protocolVersion) {
       String message =
           String.format(
-              "Backward compatibility support available from to version {} your version is {}",
-              OLDEST_SUPPORTED_PROTOCOL_VERSION,
-              protocolVersion);
+              "Backward compatibility support available from to version %d your version is %d",
+              OLDEST_SUPPORTED_PROTOCOL_VERSION, protocolVersion);
       OLogManager.instance().error(caller, message, null);
       throw new ODatabaseException(message);
     }
@@ -23,7 +22,7 @@ public class OBinaryProtocolHelper {
     if (NETWORK_BINARY_MIN_PROTOCOL_VERSION.getValueAsInteger() > protocolVersion) {
       String message =
           String.format(
-              "Backward compatibility support enabled from version {} your version is {}, check `{}` settings",
+              "Backward compatibility support enabled from version %d your version is %d, check `%s` settings",
               NETWORK_BINARY_MIN_PROTOCOL_VERSION.getValueAsInteger(),
               protocolVersion,
               NETWORK_BINARY_MIN_PROTOCOL_VERSION.getKey());

@@ -716,11 +716,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
         int delay = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
 
+        Random random = new Random();
         for (int i = 0; i < nretry; i++) {
           try {
             if (i > 0) {
               try {
-                Thread.sleep(new Random().nextInt(delay));
+                Thread.sleep(random.nextInt(delay));
               } catch (InterruptedException e) {
                 OException.wrapException(new OInterruptedException(e.getMessage()), e);
               }
@@ -1401,11 +1402,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
         int delay = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
 
+        Random random = new Random();
         for (int i = 0; i < nretry; i++) {
           try {
             if (i > 0) {
               try {
-                Thread.sleep(new Random().nextInt(delay));
+                Thread.sleep(random.nextInt(delay));
               } catch (InterruptedException e) {
                 OException.wrapException(new OInterruptedException(e.getMessage()), e);
               }

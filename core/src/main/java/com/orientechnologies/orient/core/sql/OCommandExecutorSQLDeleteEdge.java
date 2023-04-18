@@ -97,7 +97,6 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
         originalTemp =
             parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
 
-      final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
       ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.instance().get();
       //      final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false,
       // shutdownFlag);

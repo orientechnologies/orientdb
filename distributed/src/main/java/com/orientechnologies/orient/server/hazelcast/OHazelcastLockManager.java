@@ -45,7 +45,7 @@ public class OHazelcastLockManager implements ODistributedLockManager {
         throw new ODistributedLockException(
             String.format(
                 "Interrupted while attempting to obtain lock for resource '%s' on node '%s'",
-                timeout, resource, nodeSource));
+                resource, nodeSource));
       }
     } else {
       hazelcast.getLock(resource).lock();

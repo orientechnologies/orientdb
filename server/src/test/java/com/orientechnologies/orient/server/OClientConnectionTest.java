@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -54,7 +55,7 @@ public class OClientConnectionTest {
 
     conn.validateSession(tokenBytes, handler, null);
     assertTrue(conn.getTokenBased());
-    assertEquals(tokenBytes, conn.getTokenBytes());
+    assertArrayEquals(tokenBytes, conn.getTokenBytes());
     assertNotNull(conn.getToken());
   }
 
@@ -85,7 +86,7 @@ public class OClientConnectionTest {
     byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
     conn.validateSession(tokenBytes, handler, protocol);
     assertTrue(conn.getTokenBased());
-    assertEquals(tokenBytes, conn.getTokenBytes());
+    assertArrayEquals(tokenBytes, conn.getTokenBytes());
     assertNotNull(conn.getToken());
     // second validation don't need token
     conn.validateSession(null, handler, protocol);
@@ -109,7 +110,7 @@ public class OClientConnectionTest {
     byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
     conn.validateSession(tokenBytes, handler, protocol);
     assertTrue(conn.getTokenBased());
-    assertEquals(tokenBytes, conn.getTokenBytes());
+    assertArrayEquals(tokenBytes, conn.getTokenBytes());
     assertNotNull(conn.getToken());
     // second validation don't need token
     ONetworkProtocolBinary otherConn = Mockito.mock(ONetworkProtocolBinary.class);

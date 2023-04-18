@@ -1497,7 +1497,7 @@ public class ODocumentSerializerDelta {
   public static ORecordId readOptimizedLink(final BytesContainer bytes) {
     int clusterId = OVarIntSerializer.readAsInteger(bytes);
     long clusterPos = OVarIntSerializer.readAsLong(bytes);
-    if (clusterId == -2 && clusterId == -2) return null;
+    if (clusterId == -2 && clusterPos == -2) return null;
     else return new ORecordId(clusterId, clusterPos);
   }
 

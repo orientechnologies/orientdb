@@ -40,7 +40,6 @@ import java.util.Set;
  * @author Luca
  */
 public class OServerSideScriptInterpreter extends OServerPluginAbstract {
-  protected boolean enabled = false;
   protected Set<String> allowedLanguages = new HashSet<String>();
 
   protected OScriptInterceptor interceptor;

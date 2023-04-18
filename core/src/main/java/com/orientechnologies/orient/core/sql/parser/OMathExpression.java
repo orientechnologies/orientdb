@@ -993,7 +993,7 @@ public class OMathExpression extends SimpleNode {
    */
   public boolean executeIndexedFunctionAfterIndexSearch(
       OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
-    if (this.childExpressions == null) {
+    if (this.childExpressions != null) {
       if (this.childExpressions.size() == 1) {
         return this.childExpressions
             .get(0)

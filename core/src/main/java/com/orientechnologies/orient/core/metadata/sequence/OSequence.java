@@ -324,7 +324,7 @@ public abstract class OSequence {
       any = true;
     }
 
-    if (params.limitValue != null && this.getLimitValue() != params.limitValue) {
+    if (params.limitValue != null && !params.limitValue.equals(this.getLimitValue())) {
       this.setLimitValue(params.limitValue);
       any = true;
     }

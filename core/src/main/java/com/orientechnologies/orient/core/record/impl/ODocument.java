@@ -2001,7 +2001,7 @@ public class ODocument extends ORecordAbstract
 
   @Deprecated
   public Iterable<ORecordElement> getOwners() {
-    if (owner == null && owner.get() == null) return Collections.emptyList();
+    if (owner == null || owner.get() == null) return Collections.emptyList();
 
     final List<ORecordElement> result = new ArrayList<>();
     result.add(owner.get());

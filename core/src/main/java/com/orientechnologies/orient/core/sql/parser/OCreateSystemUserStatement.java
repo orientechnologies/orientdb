@@ -148,7 +148,7 @@ public class OCreateSystemUserStatement extends OSimpleExecServerStatement {
     result.name = name == null ? null : name.copy();
     result.passwordIdentifier = passwordIdentifier == null ? null : passwordIdentifier.copy();
     result.passwordString = passwordString;
-    result.passwordParam = passwordParam != null ? null : passwordParam.copy();
+    result.passwordParam = passwordParam == null ? null : passwordParam.copy();
     roles.forEach(x -> result.roles.add(x.copy()));
     return result;
   }

@@ -134,7 +134,7 @@ public class ORid extends SimpleNode {
   public OInteger getCluster() {
     if (expression != null) {
       ORecordId rid = toRecordId((OResult) null, new OBasicCommandContext());
-      if (rid == null) {
+      if (rid != null) {
         OInteger result = new OInteger(-1);
         result.setValue(rid.getClusterId());
         return result;
@@ -146,7 +146,7 @@ public class ORid extends SimpleNode {
   public OInteger getPosition() {
     if (expression != null) {
       ORecordId rid = toRecordId((OResult) null, new OBasicCommandContext());
-      if (rid == null) {
+      if (rid != null) {
         OInteger result = new OInteger(-1);
         result.setValue(rid.getClusterPosition());
         return result;

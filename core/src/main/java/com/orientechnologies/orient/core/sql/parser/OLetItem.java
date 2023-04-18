@@ -150,10 +150,6 @@ public class OLetItem extends SimpleNode {
     if (expression != null) {
       return expression.isCacheable();
     }
-    if (query != null) {
-      return expression.isCacheable();
-    }
-
     return true;
   }
 }

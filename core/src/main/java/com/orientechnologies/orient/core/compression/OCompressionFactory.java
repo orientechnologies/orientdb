@@ -53,7 +53,7 @@ public class OCompressionFactory {
   }
 
   public OCompression getCompression(final String name, final String iOptions) {
-    if (name.length() == 0) return ONothingCompression.INSTANCE;
+    if (name == null || name.length() == 0) return ONothingCompression.INSTANCE;
 
     OCompression compression = compressions.get(name);
     if (compression == null) {

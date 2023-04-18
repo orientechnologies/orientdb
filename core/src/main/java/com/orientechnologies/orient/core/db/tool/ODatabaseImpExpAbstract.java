@@ -36,7 +36,6 @@ import java.util.Set;
  */
 public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
   protected static final String DEFAULT_EXT = ".json";
-  protected ODatabaseDocumentInternal database;
   protected String fileName;
   protected Set<String> includeClusters;
   protected Set<String> excludeClusters;

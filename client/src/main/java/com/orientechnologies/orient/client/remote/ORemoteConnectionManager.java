@@ -90,8 +90,7 @@ public class ORemoteConnectionManager {
 
     ORemoteConnectionPool pool = connections.get(iServerURL);
     if (pool == null) {
-      int maxPool =
-          clientConfiguration.getValueAsInteger(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL);
+      int maxPool = 8;
 
       if (clientConfiguration != null) {
         final Object max =

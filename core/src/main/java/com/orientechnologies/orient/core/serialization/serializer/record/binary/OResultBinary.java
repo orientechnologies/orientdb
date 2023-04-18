@@ -148,7 +148,7 @@ public class OResultBinary implements OResult {
 
   @Override
   public Optional<OBlob> getBlob() {
-    return null;
+    return Optional.empty();
   }
 
   @Override

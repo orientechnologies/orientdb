@@ -239,9 +239,9 @@ public class OVertexDelegate implements OVertex {
     if (edgeId == null) {
       // lightweight edge
 
-      Object out = edge.getFrom();
-      Object in = edge.getTo();
-      if (vertex.getIdentity().equals(out)) {
+      OVertex out = edge.getFrom();
+      OVertex in = edge.getTo();
+      if (out != null && vertex.getIdentity().equals(out.getIdentity())) {
         edgeId = (OIdentifiable) in;
       } else {
         edgeId = (OIdentifiable) out;

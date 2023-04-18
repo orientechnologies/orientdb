@@ -98,7 +98,7 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     Object value;
 
     String cmd = "select from ";
-    if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField)) {
+    if (destField != null && !ODocumentHelper.ATTRIBUTE_RID.equals(destField.value)) {
       cmd = "select from " + getDestClass() + " where " + destField + " = ";
     }
 
@@ -133,7 +133,9 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
             // SEARCH THE DESTINATION RECORD
             target = null;
 
-            if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField) && value instanceof String)
+            if (destField != null
+                && !ODocumentHelper.ATTRIBUTE_RID.equals(destField.value)
+                && value instanceof String)
               if (((String) value).length() == 0) value = null;
               else value = "'" + value + "'";
 
