@@ -79,7 +79,16 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         final ODistributedDatabaseImpl ddb =
             (ODistributedDatabaseImpl) dm.getMessageService().getDatabase(databaseName);
         ddb.resume();
-        dm.reassignClustersOwnership(dm.getLocalNodeName(), databaseName, null, true);
+        try {
+          dm.reassignClustersOwnership(dm.getLocalNodeName(), databaseName, null, true);
+        } catch (Exception e) {
+          OLogManager.instance()
+              .warn(
+                  this,
+                  "failed reassing cluster owneship for database '%s' ignoring.",
+                  e,
+                  databaseName);
+        }
         ddb.setOnline();
       }
     }
