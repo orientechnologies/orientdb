@@ -273,7 +273,7 @@ public class OGraphRepair {
     final OMetadata metadata = db.getMetadata();
     final OSchema schema = metadata.getSchema();
 
-    final OClass vertexClass = schema.getClass(OClass.EDGE_CLASS_NAME);
+    final OClass vertexClass = schema.getClass(OClass.VERTEX_CLASS_NAME);
     if (vertexClass != null) {
       final long countVertices = db.countClass(vertexClass.getName());
 
