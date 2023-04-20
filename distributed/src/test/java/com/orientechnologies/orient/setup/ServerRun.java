@@ -184,12 +184,6 @@ public class ServerRun {
   public void shutdownServer() {
     if (server != null) {
       try {
-        ((ODistributedPlugin) server.getDistributedManager()).getHazelcastInstance().shutdown();
-      } catch (Exception e) {
-        // IGNORE IT
-      }
-
-      try {
         server.shutdown();
       } catch (Exception e) {
         e.printStackTrace();
