@@ -19,16 +19,17 @@
  */
 package com.orientechnologies.common.jnr;
 
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OMemory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.nio.ByteBuffer;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
@@ -36,14 +37,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
-
-import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OMemory;
-
 import jnr.ffi.LibraryLoader;
-import jnr.ffi.NativeLong;
-import jnr.ffi.byref.PointerByReference;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 import jnr.posix.RLimit;
@@ -55,45 +49,11 @@ public class ONative {
   private static volatile ONative instance = null;
   private static final Lock initLock = new ReentrantLock();
 
-  @SuppressWarnings("OctalInteger")
-  public static final int O_RDONLY = 00;
-
-  @SuppressWarnings("OctalInteger")
-  public static final int O_WRONLY = 01;
-
-  @SuppressWarnings("OctalInteger")
-  public static final int O_RDWR = 02;
-
-  @SuppressWarnings("OctalInteger")
-  public static final int O_CREAT = 0100;
-
-  @SuppressWarnings("OctalInteger")
-  public static final int O_EXCL = 0200;
-
-  @SuppressWarnings("OctalInteger")
-  public static final int O_APPEND = 02000;
-
-  @SuppressWarnings("OctalInteger")
-  public static final int O_TRUNC = 01000;
-
-  @SuppressWarnings("OctalInteger")
-  public static final int O_DIRECT = 040000;
-
-  @SuppressWarnings("OctalInteger")
-  public static final int O_SYNC = 04000000;
-
-  public static final int SEEK_SET = 0;
-  public static final int SEEK_CUR = 1;
-  public static final int SEEK_END = 2;
-
-  public static final int MCL_CURRENT = 1;
-  public static final int MCL_FUTURE = 2;
-
   private static volatile POSIX posix;
 
   public static ONative instance() {
     if (instance != null) return instance;
-    
+
     initLock.lock();
     try {
       if (instance != null) return instance;
@@ -104,7 +64,7 @@ public class ONative {
       } else {
         C_LIBRARY = null;
       }
-      
+
       instance = new ONative();
     } finally {
       initLock.unlock();
@@ -285,52 +245,10 @@ public class ONative {
     return new MemoryLimitResult(memoryLimit, insideContainer);
   }
 
-  public int open(String path, int flags) throws LastErrorException {
-    final int fId = posix.open(path, flags, 0000400 | 0000200); // rw mask
-    if (fId == -1) {
-      checkLastError();
-    }
-
-    return fId;
-  }
-
-  public void fallocate(int fd, long offset, long len) throws LastErrorException {
-    final int res = C_LIBRARY.fallocate(fd, 0, offset, len);
-    if (res == -1) {
-      checkLastError();
-    }
-  }
-
-  public long read(int fd, ByteBuffer buffer, int count) throws LastErrorException {
-    final long bytesRead = posix.read(fd, buffer, count);
-    if (bytesRead == -1) {
-      checkLastError();
-    }
-
-    return bytesRead;
-  }
-
-  public long write(int fd, ByteBuffer buffer, int count) throws LastErrorException {
-    final long bytesWritten = posix.write(fd, buffer, count);
-    if (bytesWritten == -1) {
-      checkLastError();
-    }
-
-    return bytesWritten;
-  }
-
   private void checkLastError() {
     final int errno = posix.errno();
     if (errno != 0) {
       throw new LastErrorException(errno);
-    }
-  }
-
-  public void posix_memalign(PointerByReference memptr, NativeLong alignment, NativeLong size)
-      throws LastErrorException {
-    final int res = C_LIBRARY.posix_memalign(memptr, alignment, size);
-    if (res != 0) {
-      throw new LastErrorException(res);
     }
   }
 
@@ -344,33 +262,6 @@ public class ONative {
       checkLastError();
     }
     return limit;
-  }
-
-  public void fsync(int fd) throws IOException {
-    try {
-      final int res = posix.fsync(fd);
-      if (res == -1) {
-        checkLastError();
-      }
-    } catch (LastErrorException e) {
-      throw new IOException("Can not fsync file", e);
-    }
-  }
-
-  public long lseek(int fd, long offset, int whence) throws LastErrorException {
-    final long fileOffset = posix.lseekLong(fd, offset, whence);
-    if (fileOffset == -1) {
-      checkLastError();
-    }
-
-    return fileOffset;
-  }
-
-  public void close(int fd) throws LastErrorException {
-    final int res = posix.close(fd);
-    if (res == -1) {
-      checkLastError();
-    }
   }
 
   private long updateMemoryLimit(long memoryLimit, final long newMemoryLimit) {
