@@ -20,7 +20,6 @@ package com.orientechnologies.spatial;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.kenai.jffi.Platform;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -72,7 +71,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
   @Before
   public void setUp() throws Exception {
-    Assume.assumeFalse(Platform.getPlatform().getOS() == Platform.OS.WINDOWS);
+    Assume.assumeFalse(OIOUtils.isOsWindows());
 
     final String buildDirectory = System.getProperty("buildDirectory", "target");
     final File buildDirectoryFile = new File(buildDirectory);
@@ -157,7 +156,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
   @After
   public void tearDown() throws Exception {
-    if (Platform.getPlatform().getOS() != Platform.OS.WINDOWS) {
+    if (!OIOUtils.isOsWindows()) {
       dropIfExists();
 
       tempFolder.delete();

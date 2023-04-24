@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.common.io;
 
-import com.kenai.jffi.Platform;
 import com.orientechnologies.common.jnr.LastErrorException;
 import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.util.OPatternConst;
@@ -407,8 +406,33 @@ public class OIOUtils {
     return written;
   }
 
+  private static boolean compareStartIgnoreCase(String contaner, String contained) {
+    return contaner.startsWith(contained)
+        || contaner.toUpperCase().startsWith(contained.toUpperCase())
+        || contaner.toLowerCase().startsWith(contained.toLowerCase());
+  }
+
+  public static boolean isOsWindows() {
+    String osName = System.getProperty("os.name").split(" ")[0];
+    if (compareStartIgnoreCase(osName, "windows")) {
+      return true;
+
+    } else {
+      return false;
+    }
+  }
+
+  public static boolean isOsLinux() {
+    String osName = System.getProperty("os.name").split(" ")[0];
+    if (compareStartIgnoreCase(osName, "linux")) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public static int calculateBlockSize(String path) {
-    if (Platform.getPlatform().getOS() != Platform.OS.LINUX) {
+    if (!isOsLinux()) {
       return -1;
     }
 

@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.engine.local;
 
-import com.kenai.jffi.Platform;
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
@@ -78,8 +77,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     final String userName = System.getProperty("user.name", "unknown");
     OLogManager.instance()
         .infoNoDb(this, "System is started under an effective user : `%s`", userName);
-    if (Platform.getPlatform().getOS() == Platform.OS.LINUX
-        && POSIXFactory.getPOSIX().getegid() == 0) {
+    if (OIOUtils.isOsLinux() && POSIXFactory.getPOSIX().getegid() == 0) {
       OLogManager.instance()
           .warnNoDb(
               this,

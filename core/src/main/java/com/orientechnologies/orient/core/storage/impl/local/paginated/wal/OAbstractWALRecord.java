@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.kenai.jffi.MemoryIO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -39,7 +38,6 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
 
   private ByteBuffer binaryContent;
   private int binaryContentLen = -1;
-  private long pointer;
 
   private boolean written;
 
@@ -56,9 +54,8 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
   }
 
   @Override
-  public void setBinaryContent(ByteBuffer buffer, long pointer) {
+  public void setBinaryContent(ByteBuffer buffer) {
     this.binaryContent = buffer;
-    this.pointer = pointer;
     this.binaryContentLen = buffer.limit();
   }
 
@@ -69,11 +66,6 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
 
   @Override
   public void freeBinaryContent() {
-    if (pointer > 0) {
-      MemoryIO.getInstance().freeMemory(pointer);
-    }
-
-    this.pointer = 0;
     this.binaryContent = null;
   }
 

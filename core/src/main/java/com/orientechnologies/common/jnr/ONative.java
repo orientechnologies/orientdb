@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.common.jnr;
 
-import com.kenai.jffi.Platform;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OMemory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,6 +28,7 @@ import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
@@ -38,6 +36,11 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OMemory;
+
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.NativeLong;
 import jnr.ffi.byref.PointerByReference;
@@ -90,18 +93,18 @@ public class ONative {
 
   public static ONative instance() {
     if (instance != null) return instance;
-
+    
     initLock.lock();
     try {
       if (instance != null) return instance;
 
-      if (Platform.getPlatform().getOS() == Platform.OS.LINUX) {
+      if (OIOUtils.isOsLinux()) {
         posix = POSIXFactory.getPOSIX();
         C_LIBRARY = LibraryLoader.create(OCLibrary.class).load("c");
       } else {
         C_LIBRARY = null;
       }
-
+      
       instance = new ONative();
     } finally {
       initLock.unlock();
@@ -121,8 +124,7 @@ public class ONative {
    * @return limit of open files, available for the system.
    */
   public int getOpenFilesLimit(boolean verbose, int recommended, int defLimit) {
-    final Platform.OS os = Platform.getPlatform().getOS();
-    if (os == Platform.OS.LINUX) {
+    if (OIOUtils.isOsLinux()) {
       try {
         final RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_NOFILE);
         if (rLimit.rlimCur() > 0) {
@@ -153,7 +155,7 @@ public class ONative {
           OLogManager.instance().infoNoDb(this, "Can not detect value of limit of open files.", e);
         }
       }
-    } else if (os == Platform.OS.WINDOWS) {
+    } else if (OIOUtils.isOsWindows()) {
       if (verbose) {
         OLogManager.instance()
             .infoNoDb(
@@ -199,8 +201,7 @@ public class ONative {
               convertToGB(memoryLimit));
     }
 
-    final Platform.OS os = Platform.getPlatform().getOS();
-    if (os == Platform.OS.LINUX) {
+    if (OIOUtils.isOsLinux()) {
       try {
         final RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_AS);
         if (printSteps) {

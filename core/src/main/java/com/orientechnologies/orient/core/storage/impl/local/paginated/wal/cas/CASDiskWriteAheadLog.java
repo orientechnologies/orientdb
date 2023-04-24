@@ -1194,7 +1194,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     ByteBuffer serializedRecord;
     if (writeableRecord.getBinaryContentLen() < 0) {
       serializedRecord = OWALRecordsFactory.toStream(writeableRecord);
-      writeableRecord.setBinaryContent(serializedRecord, 0);
+      writeableRecord.setBinaryContent(serializedRecord);
     }
 
     writeableRecord.setLsn(new OLogSequenceNumber(currentSegment, -1));
