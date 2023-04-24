@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -37,13 +38,12 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
-import jnr.ffi.LibraryLoader;
+import jnr.constants.platform.Sysconf;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 import jnr.posix.RLimit;
 
 public class ONative {
-  private static volatile OCLibrary C_LIBRARY;
   private static final String DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/cgroup/memory";
 
   private static volatile ONative instance = null;
@@ -60,9 +60,6 @@ public class ONative {
 
       if (OIOUtils.isOsLinux()) {
         posix = POSIXFactory.getPOSIX();
-        C_LIBRARY = LibraryLoader.create(OCLibrary.class).load("c");
-      } else {
-        C_LIBRARY = null;
       }
 
       instance = new ONative();
@@ -72,6 +69,11 @@ public class ONative {
 
     return instance;
   }
+
+  /** Address space limit. */
+  public static final int RLIMIT_AS = 9;
+
+  public static final int RLIMIT_NOFILE = 7;
 
   /** Prevent initialization outside singleton */
   private ONative() {}
@@ -86,7 +88,7 @@ public class ONative {
   public int getOpenFilesLimit(boolean verbose, int recommended, int defLimit) {
     if (OIOUtils.isOsLinux()) {
       try {
-        final RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_NOFILE);
+        final RLimit rLimit = posix.getrlimit(ONative.RLIMIT_NOFILE);
         if (rLimit.rlimCur() > 0) {
           if (verbose) {
             OLogManager.instance()
@@ -163,7 +165,7 @@ public class ONative {
 
     if (OIOUtils.isOsLinux()) {
       try {
-        final RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_AS);
+        final RLimit rLimit = posix.getrlimit(ONative.RLIMIT_AS);
         if (printSteps) {
           OLogManager.instance()
               .infoNoDb(
@@ -245,23 +247,8 @@ public class ONative {
     return new MemoryLimitResult(memoryLimit, insideContainer);
   }
 
-  private void checkLastError() {
-    final int errno = posix.errno();
-    if (errno != 0) {
-      throw new LastErrorException(errno);
-    }
-  }
-
   public int getpagesize() throws LastErrorException {
-    return C_LIBRARY.getpagesize();
-  }
-
-  public int pathconf(String path, int name) throws LastErrorException {
-    final int limit = C_LIBRARY.pathconf(path, name);
-    if (limit == -1) {
-      checkLastError();
-    }
-    return limit;
+    return (int) posix.sysconf(Sysconf._SC_PAGE_SIZE);
   }
 
   private long updateMemoryLimit(long memoryLimit, final long newMemoryLimit) {
@@ -561,6 +548,16 @@ public class ONative {
     MemoryLimitResult(final long memoryLimit, final boolean insideContainer) {
       this.memoryLimit = memoryLimit;
       this.insideContainer = insideContainer;
+    }
+  }
+
+  public long blockSize(String path) {
+    // TODO:When upgrading to java 11 use FileStore.getBlockSize()
+    try (RandomAccessFile file = new RandomAccessFile(path, "r")) {
+      return posix.fstat(file.getFD()).blockSize();
+    } catch (IOException e) {
+      OLogManager.instance().warn(this, "Error detecting block size ignoring", e);
+      return 4096;
     }
   }
 }

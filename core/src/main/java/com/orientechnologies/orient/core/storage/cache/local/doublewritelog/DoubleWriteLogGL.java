@@ -117,10 +117,11 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       this.currentSegment =
           latestPath.map(path -> extractSegmentId(path.getFileName().toString()) + 1).orElse(0L);
 
-      this.currentFile = createLogFile();
+      Path path = createLogFilePath();
+      this.currentFile = createLogFile(path);
       this.currentLogSize = calculateLogSize();
 
-      blockSize = OIOUtils.calculateBlockSize(storagePath.toAbsolutePath().toString());
+      blockSize = OIOUtils.calculateBlockSize(path.toAbsolutePath().toString());
       if (blockSize == -1) {
         blockSize = DEFAULT_BLOCK_SIZE;
       }
@@ -144,13 +145,17 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
     return Long.parseLong(index);
   }
 
-  private FileChannel createLogFile() throws IOException {
-    final Path currentFilePath = storagePath.resolve(generateSegmentsName(currentSegment));
+  private FileChannel createLogFile(Path path) throws IOException {
     return FileChannel.open(
-        currentFilePath,
-        StandardOpenOption.WRITE,
-        StandardOpenOption.CREATE_NEW,
-        StandardOpenOption.SYNC);
+        path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.SYNC);
+  }
+
+  private Path createLogFilePath() throws IOException {
+    return storagePath.resolve(generateSegmentsName(currentSegment));
+  }
+
+  private FileChannel createLogFile() throws IOException {
+    return createLogFile(createLogFilePath());
   }
 
   private String generateSegmentsName(long id) {

@@ -430,9 +430,7 @@ public class OIOUtils {
       }
     }
 
-    final int _PC_REC_XFER_ALIGN = 0x11;
-
-    int fsBlockSize = ONative.instance().pathconf(path, _PC_REC_XFER_ALIGN);
+    int fsBlockSize = (int) ONative.instance().blockSize(path);
     int pageSize = ONative.instance().getpagesize();
     fsBlockSize = lcm(fsBlockSize, pageSize);
 

@@ -983,11 +983,18 @@ public class DoubleWriteLogGLTestIT {
   }
 
   private int blockSize() {
-    int blockSize =
-        OIOUtils.calculateBlockSize(Paths.get(buildDirectory).toAbsolutePath().toString());
+    File f = new File(buildDirectory + "/block_check_file");
+    try {
+      f.createNewFile();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    int blockSize = OIOUtils.calculateBlockSize(f.getAbsolutePath().toString());
     if (blockSize == -1) {
       blockSize = DEFAULT_BLOCK_SIZE;
     }
+
+    f.delete();
 
     return blockSize;
   }
