@@ -30,7 +30,7 @@ Yes. OrientDB is totally written in [Java](http://en.wikipedia.org/wiki/Java_%28
 
 ## Main References
 - [Documentation Version < 3.1.x](http://orientdb.org/docs/3.1.x/)
-- [Documentaiton Version > 3.2.x](https://orientdb.com/docs/3.2.x/)
+- [Documentation Version > 3.2.x](https://orientdb.com/docs/3.2.x/)
 - For any questions visit the [OrientDB Community Group](https://github.com/orientechnologies/orientdb/discussions)
 
 [Get started with OrientDB](http://orientdb.org/docs/3.1.x/gettingstarted/).
