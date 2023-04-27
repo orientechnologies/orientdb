@@ -72,25 +72,50 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return new OSharedContextDistributed(storage, this);
   }
 
-  protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
+  protected ODatabaseDocumentEmbedded newSessionInstance(
+      OAbstractPaginatedStorage storage, OrientDBConfig config) {
+    ODatabaseDocumentEmbedded embedded;
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
         || plugin == null
         || !plugin.isEnabled()) {
-      return new ODatabaseDocumentEmbedded(storage);
+      embedded = new ODatabaseDocumentEmbedded(storage);
+    } else {
+      plugin.registerNewDatabaseIfNeeded(storage.getName());
+      embedded = new ODatabaseDocumentDistributed(storage, plugin);
     }
-    plugin.registerNewDatabaseIfNeeded(storage.getName());
-    return new ODatabaseDocumentDistributed(storage, plugin);
+    embedded.init(config, getOrCreateSharedContext(storage));
+    return embedded;
+  }
+
+  @Override
+  protected ODatabaseDocumentEmbedded newCreateSessionInstance(
+      OAbstractPaginatedStorage storage, OrientDBConfig config) {
+    ODatabaseDocumentEmbedded embedded;
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
+        || plugin == null
+        || !plugin.isEnabled()) {
+      embedded = new ODatabaseDocumentEmbedded(storage);
+    } else {
+      plugin.registerNewDatabaseIfNeeded(storage.getName());
+      embedded = new ODatabaseDocumentDistributed(storage, plugin);
+    }
+    embedded.internalCreate(config, getOrCreateSharedContext(storage));
+    return embedded;
   }
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
       ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
+    ODatabaseDocumentEmbedded embedded;
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
         || plugin == null
         || !plugin.isEnabled()) {
-      return new ODatabaseDocumentEmbeddedPooled(pool, storage);
+      embedded = new ODatabaseDocumentEmbeddedPooled(pool, storage);
+    } else {
+      plugin.registerNewDatabaseIfNeeded(storage.getName());
+      embedded = new ODatabaseDocumentDistributedPooled(pool, storage, plugin);
     }
-    plugin.registerNewDatabaseIfNeeded(storage.getName());
-    return new ODatabaseDocumentDistributedPooled(pool, storage, plugin);
+    embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
+    return embedded;
   }
 
   public void setPlugin(ODistributedPlugin plugin) {
@@ -106,8 +131,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
         if (storage != null) {
           // The underlying storage instance will be closed so no need to closed it
-          ODatabaseDocumentEmbedded deleteInstance = newSessionInstance(storage);
-          deleteInstance.init(config, getOrCreateSharedContext(storage));
+          ODatabaseDocumentEmbedded deleteInstance = newSessionInstance(storage, config);
           dropStorageFiles((OLocalPaginatedStorage) storage);
           OSharedContext context = sharedContexts.remove(dbName);
           context.close();

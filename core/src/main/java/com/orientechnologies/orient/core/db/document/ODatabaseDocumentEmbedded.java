@@ -94,6 +94,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.OEdgeDocument;
 import com.orientechnologies.orient.core.record.impl.OVertexDocument;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.LiveQueryListenerImpl;
@@ -300,6 +301,15 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   /** {@inheritDoc} */
   public void internalCreate(OrientDBConfig config, OSharedContext ctx) {
+    ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
+    if (serializer.toString().equals("ORecordDocument2csv"))
+      throw new ODatabaseException(
+          "Impossible to create the database with ORecordDocument2csv serializer");
+    storage.setRecordSerializer(serializer.toString(), serializer.getCurrentVersion());
+    storage.setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
+
+    this.setSerializer(serializer);
+
     this.sharedContext = ctx;
     this.status = STATUS.OPEN;
     // THIS IF SHOULDN'T BE NEEDED, CREATE HAPPEN ONLY IN EMBEDDED

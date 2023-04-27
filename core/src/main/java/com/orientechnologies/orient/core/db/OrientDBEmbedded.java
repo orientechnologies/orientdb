@@ -41,14 +41,11 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.security.ODefaultSecuritySystem;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OServerStatement;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
@@ -490,8 +487,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         checkOpen();
         OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
         storage.incOnOpen();
-        embedded = newSessionInstance(storage);
-        embedded.init(config, getOrCreateSharedContext(storage));
+        embedded = newSessionInstance(storage, config);
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(user, "nopwd", false);
@@ -503,8 +499,18 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
-    return new ODatabaseDocumentEmbedded(storage);
+  protected ODatabaseDocumentEmbedded newSessionInstance(
+      OAbstractPaginatedStorage storage, OrientDBConfig config) {
+    ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
+    embedded.init(config, getOrCreateSharedContext(storage));
+    return embedded;
+  }
+
+  protected ODatabaseDocumentEmbedded newCreateSessionInstance(
+      OAbstractPaginatedStorage storage, OrientDBConfig config) {
+    ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
+    embedded.internalCreate(config, getOrCreateSharedContext(storage));
+    return embedded;
   }
 
   public ODatabaseDocumentEmbedded openNoAuthorization(String name) {
@@ -516,8 +522,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         checkOpen();
         OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
         storage.incOnOpen();
-        embedded = newSessionInstance(storage);
-        embedded.init(config, getOrCreateSharedContext(storage));
+        embedded = newSessionInstance(storage, config);
       }
       embedded.rebuildIndexes();
       embedded.callOnOpenListeners();
@@ -540,8 +545,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         config = solveConfig(config);
         OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
 
-        embedded = newSessionInstance(storage);
-        embedded.init(config, getOrCreateSharedContext(storage));
+        embedded = newSessionInstance(storage, config);
         storage.incOnOpen();
       }
       embedded.rebuildIndexes();
@@ -567,8 +571,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         }
         String database = authenticationInfo.getDatabase().get();
         OAbstractPaginatedStorage storage = getAndOpenStorage(database, config);
-        embedded = newSessionInstance(storage);
-        embedded.init(config, getOrCreateSharedContext(storage));
+        embedded = newSessionInstance(storage, config);
         storage.incOnOpen();
       }
       embedded.rebuildIndexes();
@@ -632,7 +635,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
       checkOpen();
       OAbstractPaginatedStorage storage = getAndOpenStorage(name, pool.getConfig());
       embedded = newPooledSessionInstance(pool, storage);
-      embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
       storage.incOnOpen();
     }
     embedded.rebuildIndexes();
@@ -643,7 +645,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
       ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
-    return new ODatabaseDocumentEmbeddedPooled(pool, storage);
+    ODatabaseDocumentEmbeddedPooled embedded = new ODatabaseDocumentEmbeddedPooled(pool, storage);
+    embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
+    return embedded;
   }
 
   protected OAbstractPaginatedStorage getOrInitStorage(String name) {
@@ -878,20 +882,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected ODatabaseDocumentEmbedded internalCreate(
       OrientDBConfig config, OAbstractPaginatedStorage storage) {
     storage.create(config.getConfigurations());
-
-    ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
-    if (serializer.toString().equals("ORecordDocument2csv"))
-      throw new ODatabaseException(
-          "Impossible to create the database with ORecordDocument2csv serializer");
-    storage.setRecordSerializer(serializer.toString(), serializer.getCurrentVersion());
-    // since 2.1 newly created databases use strict SQL validation by default
-    storage.setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
-
-    // No need to close
-    final ODatabaseDocumentEmbedded embedded = newSessionInstance(storage);
-    embedded.setSerializer(serializer);
-    embedded.internalCreate(config, getOrCreateSharedContext(storage));
-    return embedded;
+    return newCreateSessionInstance(storage, config);
   }
 
   protected synchronized OSharedContext getOrCreateSharedContext(
