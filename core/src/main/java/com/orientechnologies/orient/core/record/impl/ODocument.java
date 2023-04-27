@@ -2511,7 +2511,13 @@ public class ODocument extends ORecordAbstract
   public void writeExternal(ObjectOutput stream) throws IOException {
     ORecordSerializer serializer =
         ORecordSerializerFactory.instance().getFormat(ORecordSerializerNetwork.NAME);
-    final byte[] idBuffer = recordId.toStream();
+    final byte[] idBuffer;
+    if (recordId != null) {
+      idBuffer = recordId.toStream();
+    } else {
+      idBuffer = new ORecordId(-2, -2).toStream();
+    }
+
     stream.writeInt(-1);
     stream.writeInt(idBuffer.length);
     stream.write(idBuffer);
@@ -2533,7 +2539,13 @@ public class ODocument extends ORecordAbstract
     else size = i;
     final byte[] idBuffer = new byte[size];
     stream.readFully(idBuffer);
-    recordId.fromStream(idBuffer);
+    ORecordId rid = new ORecordId();
+    rid.fromStream(idBuffer);
+    if (rid.getClusterId() == -2 && rid.getClusterPosition() == -2) {
+      recordId = null;
+    } else {
+      recordId = rid;
+    }
 
     recordVersion = stream.readInt();
 
