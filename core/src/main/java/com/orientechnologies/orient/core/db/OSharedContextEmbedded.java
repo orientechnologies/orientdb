@@ -195,7 +195,7 @@ public class OSharedContextEmbedded extends OSharedContext {
               if (id != null) {
                 ORecordId recordId = new ORecordId(id);
                 ODocument config = session.load(recordId, null, false);
-                ORecordInternal.setIdentity(config, null);
+                ORecordInternal.setIdentity(config, new ORecordId(-1, -1));
                 return config;
               } else {
                 return null;
