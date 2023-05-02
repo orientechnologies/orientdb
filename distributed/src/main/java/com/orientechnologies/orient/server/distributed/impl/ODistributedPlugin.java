@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -1502,6 +1503,21 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       if (databaseInstalledCorrectly) {
         distrDatabase.resume();
+
+        try {
+          reassignClustersOwnership(nodeName, databaseName, null, false);
+        } catch (Exception e) {
+          // HANDLE IT AS WARNING
+          ODistributedServerLog.warn(
+              this,
+              nodeName,
+              null,
+              DIRECTION.NONE,
+              "Error on re-balancing the cluster for database '%s'",
+              e,
+              databaseName);
+          // NOT CRITICAL, CONTINUE
+        }
         return true;
       }
     }
@@ -1555,37 +1571,15 @@ public class ODistributedPlugin extends OServerPluginAbstract
         receiver.spawnReceiverThread();
         receiver.getStarted().await();
 
-        executeInDistributedDatabaseLock(
-            databaseName,
-            20000,
-            null,
-            cfg1 -> {
-              try (InputStream in = receiver.getInputStream()) {
-                new ONewDeltaSyncImporter()
-                    .importDelta(serverInstance, databaseName, in, targetNode);
-              } catch (IOException e) {
-                throw OException.wrapException(
-                    new OIOException("Error on distributed sync of database"), e);
-              }
-              return null;
-            });
+        try (InputStream in = receiver.getInputStream()) {
+          OrientDBInternal context = serverInstance.getDatabases();
+          context.deltaSync(databaseName, in, OrientDBConfig.defaultConfig());
+        } catch (IOException e) {
+          throw OException.wrapException(
+              new OIOException("Error on distributed sync of database"), e);
+        }
 
         distrDatabase.setOnline();
-
-        try {
-          reassignClustersOwnership(nodeName, databaseName, null, false);
-        } catch (Exception e) {
-          // HANDLE IT AS WARNING
-          ODistributedServerLog.warn(
-              this,
-              nodeName,
-              null,
-              DIRECTION.NONE,
-              "Error on re-balancing the cluster for database '%s'",
-              e,
-              databaseName);
-          // NOT CRITICAL, CONTINUE
-        }
 
         ODistributedServerLog.info(
             this,
@@ -1939,9 +1933,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     final String databaseName = iDatabase.getName();
     if (iClass.isAbstract()) return false;
-
-    // INIT THE DATABASE IF NEEDED
-    getMessageService().registerDatabase(databaseName);
 
     return executeInDistributedDatabaseLock(
         databaseName,

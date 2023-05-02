@@ -33,6 +33,7 @@ import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDis
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ONewDeltaSyncImporter;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import java.io.File;
 import java.io.IOException;
@@ -334,5 +335,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   @Override
   public ODistributedServerManager getDistributedManager() {
     return this.plugin;
+  }
+
+  @Override
+  public void deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
+    new ONewDeltaSyncImporter()
+        .importDelta(server, dbName, backupStream, plugin.getLocalNodeName());
   }
 }
