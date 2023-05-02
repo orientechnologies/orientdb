@@ -93,7 +93,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final String localNodeName;
   private final OTxPromiseManager<ORID> recordPromiseManager;
   private final OTxPromiseManager<Object> indexKeyPromiseManager;
-  private final AtomicLong pending = new AtomicLong();
   private final ODistributedConfigurationManager configurationManager;
   protected Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
       new ConcurrentHashMap<>(64);
@@ -316,21 +315,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final ORemoteTask payload,
       int retryCount,
       int autoRetryDelay) {
-    pending.incrementAndGet();
     OrientDBInternal context = manager.getServerInstance().getDatabases();
     context.scheduleOnce(
         new TimerTask() {
 
           @Override
           public void run() {
-            try {
-              processRequest(
-                  new ODistributedRequest(
-                      getManager(), senderNodeId, msgSequence, databaseName, payload),
-                  false);
-            } finally {
-              pending.decrementAndGet();
-            }
+            processRequest(
+                new ODistributedRequest(
+                    getManager(), senderNodeId, msgSequence, databaseName, payload),
+                false);
           }
         },
         autoRetryDelay * retryCount);
@@ -649,7 +643,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (!running) {
       return;
     }
-    waitPending();
     running = false;
 
     try {
@@ -695,17 +688,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         } catch (Exception e) {
           // IGNORE IT
         }
-      }
-    }
-  }
-
-  private void waitPending() {
-    while (pending.get() > 0) {
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return;
       }
     }
   }
