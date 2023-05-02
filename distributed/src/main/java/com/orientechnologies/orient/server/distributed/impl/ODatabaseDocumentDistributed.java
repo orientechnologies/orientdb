@@ -631,7 +631,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public ODistributedDatabase getDistributedShared() {
-    return getDistributedManager().getMessageService().getDatabase(getName());
+    return getDistributedManager().getDatabase(getName());
   }
 
   public void register(
@@ -1030,7 +1030,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public ODistributedConfiguration getDistributedConfiguration() {
-    ODistributedDatabaseImpl local = distributedManager.getMessageService().getDatabase(getName());
+    ODistributedDatabaseImpl local = distributedManager.getDatabase(getName());
     return local.getDistributedConfiguration();
   }
 

@@ -596,8 +596,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         try {
           if (manager.getMessageService() != null) {
             String databaseName = connection.getDatabaseName();
-            final ODistributedDatabase dDatabase =
-                manager.getMessageService().getDatabase(databaseName);
+            final ODistributedDatabase dDatabase = manager.getDatabase(databaseName);
             if (dDatabase != null) {
               dDatabase.waitForOnline();
             } else manager.waitUntilNodeOnline(manager.getLocalNodeName(), databaseName);
@@ -662,7 +661,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     final String dbName = req.getDatabaseName();
     ODistributedDatabase ddb = null;
     if (dbName != null) {
-      ddb = manager.getMessageService().getDatabase(dbName);
+      ddb = manager.getDatabase(dbName);
       if (ddb == null && req.getTask().isNodeOnlineRequired())
         throw new ODistributedException(
             "Database configuration not found for database '" + req.getDatabaseName() + "'");

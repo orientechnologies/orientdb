@@ -50,7 +50,7 @@ public class OSyncDatabaseNewDeltaTask extends OAbstractRemoteTask {
       ODistributedServerManager iManager,
       ODatabaseDocumentInternal database)
       throws Exception {
-    ODistributedDatabase db = iManager.getMessageService().getDatabase(database.getName());
+    ODistributedDatabase db = iManager.getDatabase(database.getName());
     db.checkReverseSync(lastState);
     List<OTransactionId> missing = db.missingTransactions(lastState);
     if (!missing.isEmpty()) {

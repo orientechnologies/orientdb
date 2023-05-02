@@ -74,7 +74,7 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
 
       final String databaseName = database.getName();
       final ODistributedDatabaseImpl dDatabase =
-          (ODistributedDatabaseImpl) iManager.getMessageService().getDatabase(databaseName);
+          (ODistributedDatabaseImpl) iManager.getDatabase(databaseName);
 
       try {
 

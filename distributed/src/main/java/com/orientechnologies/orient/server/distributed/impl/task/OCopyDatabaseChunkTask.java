@@ -74,7 +74,7 @@ public class OCopyDatabaseChunkTask extends OAbstractRemoteTask {
     }
 
     ODistributedDatabaseImpl local =
-        (ODistributedDatabaseImpl) iManager.getMessageService().getDatabase(database.getName());
+        (ODistributedDatabaseImpl) iManager.getDatabase(database.getName());
 
     OSyncSource b = local.getLastValidBackup();
 

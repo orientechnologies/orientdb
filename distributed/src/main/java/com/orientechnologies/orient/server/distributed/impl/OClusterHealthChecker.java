@@ -142,7 +142,7 @@ public class OClusterHealthChecker implements Runnable {
 
               if (cfg.getVersion() < mostUpdatedServerVersion) {
                 // OVERWRITE DB VERSION
-                ODistributedDatabase local = manager.getMessageService().getDatabase(databaseName);
+                ODistributedDatabase local = manager.getDatabase(databaseName);
                 local.setDistributedConfiguration(
                     new OModifiableDistributedConfiguration(
                         (ODocument) responses.get(mostUpdatedServer)));
@@ -241,7 +241,7 @@ public class OClusterHealthChecker implements Runnable {
             "No server are ONLINE for database '%s'. Considering local copy of database as the good one. Setting status=ONLINE...",
             dbName);
 
-        manager.getMessageService().getDatabase(dbName).setOnline();
+        manager.getDatabase(dbName).setOnline();
 
       } else {
         ODistributedServerLog.info(
@@ -256,7 +256,7 @@ public class OClusterHealthChecker implements Runnable {
           // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
           return;
 
-        ODistributedDatabase ddImpl = manager.getMessageService().getDatabase(dbName);
+        ODistributedDatabase ddImpl = manager.getDatabase(dbName);
 
         final ODistributedConfiguration dCfg = ddImpl.getDistributedConfiguration();
         if (dCfg != null) {
@@ -380,7 +380,7 @@ public class OClusterHealthChecker implements Runnable {
       if (servers.isEmpty()) continue;
 
       try {
-        ODistributedDatabase sharedDb = manager.getMessageService().getDatabase(dbName);
+        ODistributedDatabase sharedDb = manager.getDatabase(dbName);
         Optional<OTransactionSequenceStatus> status = sharedDb.status();
         if (status.isPresent()) {
           ORemoteTask task = new OUpdateDatabaseSequenceStatusTask(dbName, status.get());

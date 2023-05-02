@@ -191,9 +191,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   public void waitUntilNodeOnline(final String nodeName, final String databaseName)
       throws InterruptedException {
-    while (messageService == null
-        || messageService.getDatabase(databaseName) == null
-        || !isNodeOnline(nodeName, databaseName)) Thread.sleep(100);
+    while (getDatabase(databaseName) == null || !isNodeOnline(nodeName, databaseName))
+      Thread.sleep(100);
   }
 
   @Override
@@ -399,10 +398,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
   public void onOpen(final ODatabaseInternal iDatabase) {}
 
   public void registerNewDatabaseIfNeeded(String dbName) {
-    ODistributedDatabaseImpl distribDatabase = getMessageService().getDatabase(dbName);
+    ODistributedDatabaseImpl distribDatabase = getDatabase(dbName);
     if (distribDatabase == null) {
       // CHECK TO PUBLISH IT TO THE CLUSTER
-      distribDatabase = messageService.registerDatabase(dbName);
+      distribDatabase = getMessageService().registerDatabase(dbName);
       distribDatabase.checkNodeInConfiguration(getLocalNodeName());
       distribDatabase.resume();
       distribDatabase.setOnline();
@@ -432,7 +431,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   public void dropOnAllServers(final String dbName) {
     Set<String> servers = clusterManager.dropDbFromConfiguration(dbName);
-    if (!servers.isEmpty() && messageService.getDatabase(dbName) != null) {
+    if (!servers.isEmpty() && getDatabase(dbName) != null) {
       sendRequest(
           dbName,
           null,
@@ -802,7 +801,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
             this, this.nodeName, iNodes.toString(), DIRECTION.OUT, "Sent request %s", iRequest);
 
       if (databaseName != null) {
-        ODistributedDatabaseImpl shared = getMessageService().getDatabase(databaseName);
+        ODistributedDatabaseImpl shared = getDatabase(databaseName);
         if (shared != null) {
           shared.incSentRequest();
         }
@@ -937,7 +936,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     if (iNodes != null)
       for (String n : iNodes) {
         // UPDATE THE TIMEOUT WITH THE CURRENT SERVER LATENCY
-        final long l = messageService.getCurrentLatency(n);
+        final long l = getMessageService().getCurrentLatency(n);
         delta = Math.max(delta, l);
       }
 
@@ -1105,10 +1104,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     // RUN ONLY IN NON-DISTRIBUTED MODE
     if (!isRelatedToLocalServer(iDatabase)) return;
 
-    if (messageService == null || messageService.getDatabase(iDatabase.getName()) == null)
-      // NOT INITIALIZED YET
-      return;
-
     final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
 
     installClustersOfClass(iDatabase, iClass, cfg.modify());
@@ -1132,11 +1127,11 @@ public class ODistributedPlugin extends OServerPluginAbstract
     doc.field("localNode", localNode);
 
     localNode.put("name", nodeName);
-    localNode.put("averageResponseTime", messageService.getAverageResponseTime());
+    localNode.put("averageResponseTime", getMessageService().getAverageResponseTime());
 
     Map<String, Object> databases = new HashMap<String, Object>();
     localNode.put("databases", databases);
-    for (String dbName : messageService.getDatabases()) {
+    for (String dbName : getMessageService().getDatabases()) {
       Map<String, Object> db = new HashMap<String, Object>();
       databases.put(dbName, db);
     }
@@ -1290,7 +1285,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
       return false;
     }
 
-    final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName);
+    final ODistributedDatabaseImpl distrDatabase =
+        getMessageService().registerDatabase(databaseName);
 
     try {
       return executeInDistributedDatabaseLock(
@@ -1367,7 +1363,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                   try {
 
                     // TRY WITH DELTA SYNC
-                    // databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
                     databaseInstalled = requestNewDatabaseDelta(distrDatabase, databaseName, cfg);
 
                   } catch (ODistributedDatabaseDeltaSyncException e) {
@@ -2259,7 +2254,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
                   .getDatabases()
                   .fullSync(
                       databaseName, receiver.getInputStream(), OrientDBConfig.defaultConfig());
-              ODistributedDatabaseImpl distrDatabase = messageService.getDatabase(databaseName);
+              ODistributedDatabaseImpl distrDatabase = getDatabase(databaseName);
               distrDatabase.saveDatabaseConfiguration();
 
               try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
@@ -2500,12 +2495,12 @@ public class ODistributedPlugin extends OServerPluginAbstract
     Collections.sort(dbs);
 
     for (final String databaseName : dbs) {
-      if (messageService.getDatabase(databaseName) == null) {
+      if (getMessageService().getDatabase(databaseName) == null) {
         ODistributedServerLog.info(
             this, nodeName, null, DIRECTION.NONE, "Opening database '%s'...", databaseName);
 
         // INIT THE STORAGE
-        final ODistributedDatabaseImpl ddb = messageService.registerDatabase(databaseName);
+        final ODistributedDatabaseImpl ddb = getMessageService().registerDatabase(databaseName);
 
         executeInDistributedDatabaseLock(
             databaseName,
@@ -2598,7 +2593,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       OLogManager.instance().flush();
       for (String db : dbs) {
-        buffer.append(messageService.getDatabase(db).dump());
+        buffer.append(getDatabase(db).dump());
       }
 
       // DUMP HA STATS
@@ -2717,7 +2712,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName);
 
     // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
-    for (String db : messageService.getDatabases()) {
+    for (String db : getMessageService().getDatabases()) {
       if (getDatabaseConfiguration(db).isAutoDeploy()
           && getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE) {
         setDatabaseStatus(joinedNodeName, db, DB_STATUS.NOT_AVAILABLE);
@@ -2768,7 +2763,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       // UNLOCK ANY PENDING LOCKS
       if (messageService != null) {
         for (String dbName : messageService.getDatabases())
-          messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftName);
+          getDatabase(dbName).handleUnreachableNode(nodeLeftName);
       }
 
       clusterManager.removeServerFromCluster(member, nodeLeftName, removeOnlyDynamicServers);
@@ -2912,7 +2907,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     final Set<String> servers = new HashSet<String>(getActiveServers());
     servers.remove(nodeName);
 
-    if (!servers.isEmpty() && messageService.getDatabase(databaseName) != null) {
+    if (!servers.isEmpty() && getDatabase(databaseName) != null) {
 
       final ODistributedResponse dResponse =
           sendRequest(
@@ -2978,5 +2973,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public ODocument getOnlineDatabaseConfiguration(String databaseName) {
     return clusterManager.getOnlineDatabaseConfiguration(databaseName);
+  }
+
+  @Override
+  public ODistributedDatabaseImpl getDatabase(String name) {
+    return getMessageService().getDatabase(name);
   }
 }

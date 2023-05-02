@@ -73,17 +73,8 @@ public class OTransactionPhase1TaskTest {
     operations.add(new ORecordOperation(id1.getIdentity(), ORecordOperation.DELETED));
     operations.add(new ORecordOperation(rec2, ORecordOperation.CREATED));
     OTransactionId txId =
-        server
-            .getDistributedManager()
-            .getMessageService()
-            .getDatabase(session.getName())
-            .nextId()
-            .get();
-    server
-        .getDistributedManager()
-        .getMessageService()
-        .getDatabase(session.getName())
-        .rollback(txId);
+        server.getDistributedManager().getDatabase(session.getName()).nextId().get();
+    server.getDistributedManager().getDatabase(session.getName()).rollback(txId);
 
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations, txId, new TreeSet<>());
     OTransactionPhase1TaskResult res =
@@ -113,13 +104,8 @@ public class OTransactionPhase1TaskTest {
     operations.add(new ORecordOperation(old, ORecordOperation.UPDATED));
 
     OTransactionId id =
-        server
-            .getDistributedManager()
-            .getMessageService()
-            .getDatabase(session.getName())
-            .nextId()
-            .get();
-    server.getDistributedManager().getMessageService().getDatabase(session.getName()).rollback(id);
+        server.getDistributedManager().getDatabase(session.getName()).nextId().get();
+    server.getDistributedManager().getDatabase(session.getName()).rollback(id);
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id, new TreeSet<>());
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
@@ -149,13 +135,8 @@ public class OTransactionPhase1TaskTest {
     operations.add(new ORecordOperation(old, ORecordOperation.DELETED));
 
     OTransactionId id =
-        server
-            .getDistributedManager()
-            .getMessageService()
-            .getDatabase(session.getName())
-            .nextId()
-            .get();
-    server.getDistributedManager().getMessageService().getDatabase(session.getName()).rollback(id);
+        server.getDistributedManager().getDatabase(session.getName()).nextId().get();
+    server.getDistributedManager().getDatabase(session.getName()).rollback(id);
 
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id, new TreeSet<>());
     OTransactionPhase1TaskResult res =
@@ -188,13 +169,8 @@ public class OTransactionPhase1TaskTest {
     uniqueIndexKeys.add(new OTransactionUniqueKey("TestClassInd.one", "value", 0));
 
     OTransactionId id =
-        server
-            .getDistributedManager()
-            .getMessageService()
-            .getDatabase(session.getName())
-            .nextId()
-            .get();
-    server.getDistributedManager().getMessageService().getDatabase(session.getName()).rollback(id);
+        server.getDistributedManager().getDatabase(session.getName()).nextId().get();
+    server.getDistributedManager().getDatabase(session.getName()).rollback(id);
 
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id, uniqueIndexKeys);
     OTransactionPhase1TaskResult res =

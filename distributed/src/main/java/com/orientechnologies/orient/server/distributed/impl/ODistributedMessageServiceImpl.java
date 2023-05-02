@@ -58,7 +58,6 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
       new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
   private Thread responseThread;
   private long[] responseTimeMetrics = new long[10];
-  private volatile boolean running = true;
   private final Map<String, OProfilerEntry> latencies = new HashMap<String, OProfilerEntry>();
   private final Map<String, AtomicLong> messagesStats = new HashMap<String, AtomicLong>();
 
@@ -87,8 +86,6 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   public void shutdown() {
-    running = false;
-
     if (responseThread != null) {
       responseThread.interrupt();
       responseThread = null;

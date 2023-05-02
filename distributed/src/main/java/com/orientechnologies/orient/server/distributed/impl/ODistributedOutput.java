@@ -665,7 +665,7 @@ public class ODistributedOutput {
     final List<ODocument> rows = new ArrayList<ODocument>();
 
     Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
-        manager.getMessageService().getDatabase(db).getActiveTxContexts();
+        manager.getDatabase(db).getActiveTxContexts();
 
     if (activeTxContexts != null) {
       for (Map.Entry<ODistributedRequestId, ODistributedTxContext> entries :

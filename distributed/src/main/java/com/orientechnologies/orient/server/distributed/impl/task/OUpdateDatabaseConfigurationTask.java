@@ -62,7 +62,7 @@ public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
       final ODatabaseDocumentInternal database)
       throws Exception {
 
-    ODistributedDatabase local = iManager.getMessageService().getDatabase(databaseName);
+    ODistributedDatabase local = iManager.getDatabase(databaseName);
     if (local != null) {
       ODistributedServerLog.debug(
           this,

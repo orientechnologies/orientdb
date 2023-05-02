@@ -140,6 +140,8 @@ public interface ODistributedServerManager {
 
   ODistributedMessageService getMessageService();
 
+  ODistributedDatabase getDatabase(String name);
+
   ODistributedStrategy getDistributedStrategy();
 
   void setDistributedStrategy(ODistributedStrategy streatgy);

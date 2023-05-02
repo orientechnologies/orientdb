@@ -614,8 +614,7 @@ public class OHazelcastClusterMetadataManager
 
   public boolean tryUpdatingDatabaseConfigurationLocally(
       final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
-    ODistributedDatabaseImpl local =
-        distributedPlugin.getMessageService().getDatabase(iDatabaseName);
+    ODistributedDatabaseImpl local = distributedPlugin.getDatabase(iDatabaseName);
     if (local == null) return false;
 
     final ODistributedConfiguration dCfg = local.getDistributedConfiguration();
@@ -1535,8 +1534,7 @@ public class OHazelcastClusterMetadataManager
 
   public ODistributedConfiguration getDatabaseConfiguration(
       final String iDatabaseName, final boolean createIfNotPresent) {
-    ODistributedDatabaseImpl local =
-        distributedPlugin.getMessageService().getDatabase(iDatabaseName);
+    ODistributedDatabaseImpl local = distributedPlugin.getDatabase(iDatabaseName);
     if (local == null) {
       return null;
     }

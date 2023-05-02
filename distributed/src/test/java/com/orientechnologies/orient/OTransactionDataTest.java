@@ -157,9 +157,8 @@ public class OTransactionDataTest {
         }
         db.commit();
       }
-      OTransactionId id =
-          server0.getDistributedManager().getMessageService().getDatabase("test1").nextId().get();
-      server0.getDistributedManager().getMessageService().getDatabase("test1").rollback(id);
+      OTransactionId id = server0.getDistributedManager().getDatabase("test1").nextId().get();
+      server0.getDistributedManager().getDatabase("test1").rollback(id);
       OTransactionData data = new OTransactionData(id);
       for (byte[] change : changes) {
         data.addRecord(change);
