@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -9,7 +8,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -29,13 +27,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OBackgroundBackup implements Runnable, OSyncSource {
-  private OSyncDatabaseTask oSyncDatabaseTask;
-  private final ODistributedServerManager iManager;
+  private final String syncTarget;
+  private final String localNodeName;
   private final ODatabaseDocumentInternal database;
   private final File resultedBackupFile;
   private final String finalBackupPath;
   private final AtomicBoolean incremental = new AtomicBoolean(false);
-  private final ODistributedDatabase dDatabase;
   private final ODistributedRequestId requestId;
   private final CountDownLatch started = new CountDownLatch(1);
   private final CountDownLatch finished = new CountDownLatch(1);
@@ -50,27 +47,19 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
       ODatabaseDocumentInternal database,
       File resultedBackupFile,
       String finalBackupPath,
-      OModifiableBoolean incremental,
-      ODistributedDatabase dDatabase,
-      ODistributedRequestId requestId,
-      File completedFile) {
-    this.oSyncDatabaseTask = oSyncDatabaseTask;
-    this.iManager = iManager;
+      ODistributedRequestId requestId) {
+    this.syncTarget = oSyncDatabaseTask.getNodeSource();
+    this.localNodeName = iManager.getLocalNodeName();
     this.database = database;
     this.resultedBackupFile = resultedBackupFile;
     this.finalBackupPath = finalBackupPath;
-    this.dDatabase = dDatabase;
     this.requestId = requestId;
   }
 
   @Override
   public void run() {
     Thread.currentThread()
-        .setName(
-            "OrientDB SyncDatabase node="
-                + iManager.getLocalNodeName()
-                + " db="
-                + database.getName());
+        .setName("OrientDB SyncDatabase node=" + localNodeName + " db=" + database.getName());
     database.activateOnCurrentThread();
     startExpireTask();
     try {
@@ -78,8 +67,8 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
 
         ODistributedServerLog.info(
             this,
-            iManager.getLocalNodeName(),
-            oSyncDatabaseTask.getNodeSource(),
+            localNodeName,
+            syncTarget,
             ODistributedServerLog.DIRECTION.OUT,
             "Compressing database '%s' %d clusters %s...",
             database.getName(),
@@ -155,8 +144,8 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
 
         ODistributedServerLog.info(
             this,
-            iManager.getLocalNodeName(),
-            oSyncDatabaseTask.getNodeSource(),
+            localNodeName,
+            syncTarget,
             ODistributedServerLog.DIRECTION.OUT,
             "Backup of database '%s' completed. lastOperationId=%s...",
             database.getName(),

@@ -62,34 +62,12 @@ public class ODistributedRequest {
     return id;
   }
 
-  public void setId(final ODistributedRequestId reqId) {
-    id = reqId;
-  }
-
   public String getDatabaseName() {
     return databaseName;
   }
 
-  public ODistributedRequest setDatabaseName(final String databaseName) {
-    this.databaseName = databaseName;
-    return this;
-  }
-
   public ORemoteTask getTask() {
     return task;
-  }
-
-  public ODistributedRequest setTask(final ORemoteTask payload) {
-    this.task = payload;
-    return this;
-  }
-
-  public ORecordId getUserRID() {
-    return userRID;
-  }
-
-  public void setUserRID(final ORecordId iUserRID) {
-    this.userRID = iUserRID;
   }
 
   public void toStream(final DataOutput out) throws IOException {

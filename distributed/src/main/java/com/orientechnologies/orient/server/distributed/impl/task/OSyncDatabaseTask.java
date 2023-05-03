@@ -129,15 +129,7 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
 
           backup =
               new OBackgroundBackup(
-                  this,
-                  iManager,
-                  database,
-                  resultedBackupFile,
-                  backupPath,
-                  null,
-                  dDatabase,
-                  requestId,
-                  completedFile);
+                  this, iManager, database, resultedBackupFile, backupPath, requestId);
           Thread t = new Thread(backup);
           t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
           t.start();

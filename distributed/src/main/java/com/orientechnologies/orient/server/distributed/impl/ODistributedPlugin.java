@@ -53,11 +53,9 @@ import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -567,13 +565,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     final ODistributedRequest req =
         new ODistributedRequest(this, getLocalNodeId(), reqId, iDatabaseName, iTask);
-
-    final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (currentDatabase != null
-        && currentDatabase.getUser() != null
-        && currentDatabase.getUser().getIdentity().getIdentity().isValid())
-      // SET CURRENT DATABASE NAME
-      req.setUserRID((ORecordId) currentDatabase.getUser().getIdentity().getIdentity());
 
     if (iTargetNodes == null || iTargetNodes.isEmpty()) {
       ODistributedServerLog.error(
