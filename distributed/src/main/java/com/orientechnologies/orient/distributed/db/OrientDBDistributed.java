@@ -75,7 +75,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
             DIRECTION.NONE,
             "Opening database '%s'...",
             databaseName);
-        openNoAuthorization(databaseName).close();
+        try {
+          openNoAuthorization(databaseName).close();
+        } catch (Exception e) {
+          OLogManager.instance()
+              .warn(this, " Exception on first inizialization of database '%s'", e, databaseName);
+        }
       }
     }
   }

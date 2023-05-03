@@ -211,6 +211,9 @@ public class OHazelcastClusterMetadataManager
     distributedPlugin.connectToAllNodes(activeNodes.keySet());
 
     publishLocalNodeConfiguration();
+    membershipListenerMapRegistration =
+        configurationMap.getHazelcastMap().addEntryListener(this, true);
+    membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
 
     new Thread(
             () -> {
@@ -219,10 +222,6 @@ public class OHazelcastClusterMetadataManager
               distributedPlugin.notifyStarted();
             })
         .start();
-
-    membershipListenerMapRegistration =
-        configurationMap.getHazelcastMap().addEntryListener(this, true);
-    membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
 
     // REGISTER CURRENT MEMBERS
     setNodeStatus(ODistributedServerManager.NODE_STATUS.ONLINE);
