@@ -6,12 +6,15 @@ import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
@@ -44,23 +47,42 @@ public class ODistributedConfigurationManager {
             "Downloaded configuration for database '%s' from the cluster",
             databaseName);
         setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
+      } else if (!isMemory() && distributedConfigFileExists()) {
+        doc = loadConfigurationFromFile(getDistributedConfigFile());
+        if (doc == null) {
+          doc = loadConfigurationFromFile(distributedManager.getDefaultDatabaseConfigFile());
+        }
+        if (doc == null) {
+          throw new OConfigurationException(
+              "Cannot load default distributed for database '"
+                  + databaseName
+                  + "' config file: "
+                  + distributedManager.getDefaultDatabaseConfigFile());
+        }
+
+        // SAVE THE GENERIC FILE AS DATABASE FILE
+        setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
+        // JUST LOAD THE FILE IN MEMORY
+        distributedConfiguration = new ODistributedConfiguration(doc);
+
+        // LOADED FILE, PUBLISH IT IN THE CLUSTER
+        distributedManager.updateCachedDatabaseConfiguration(
+            databaseName, new OModifiableDistributedConfiguration(doc));
+
       } else {
         doc = loadDatabaseConfiguration(session);
         if (doc == null) {
-          // LOOK FOR THE STD FILE
-          doc = loadConfiguration();
-          if (doc == null)
-            throw new OConfigurationException(
-                "Cannot load default distributed for database '"
-                    + databaseName
-                    + "' config file: "
-                    + distributedManager.getDefaultDatabaseConfigFile());
-
-          // SAVE THE GENERIC FILE AS DATABASE FILE
-          setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
-        } else
-          // JUST LOAD THE FILE IN MEMORY
-          distributedConfiguration = new ODistributedConfiguration(doc);
+          doc = loadConfigurationFromFile(distributedManager.getDefaultDatabaseConfigFile());
+        }
+        if (doc == null) {
+          throw new OConfigurationException(
+              "Cannot load default distributed for database '"
+                  + databaseName
+                  + "' config file: "
+                  + distributedManager.getDefaultDatabaseConfigFile());
+        }
+        // JUST LOAD THE FILE IN MEMORY
+        distributedConfiguration = new ODistributedConfiguration(doc);
 
         // LOADED FILE, PUBLISH IT IN THE CLUSTER
         distributedManager.updateCachedDatabaseConfiguration(
@@ -134,10 +156,18 @@ public class ODistributedConfigurationManager {
           value.saveConfig(session, "ditributedConfig", doc);
           return null;
         });
+    if (!isMemory()) {
+      saveDatabaseConfigurationToFile();
+    }
   }
 
-  public ODocument loadConfiguration() {
-    final File file = distributedManager.getDefaultDatabaseConfigFile();
+  private boolean isMemory() {
+    OrientDBInternal context = distributedManager.getServerInstance().getDatabases();
+    OAbstractPaginatedStorage storage = ((OrientDBDistributed) context).getStorage(databaseName);
+    return storage != null && storage.isMemory();
+  }
+
+  public ODocument loadConfigurationFromFile(final File file) {
     if (!file.exists() || file.length() == 0) return null;
 
     ODistributedServerLog.info(
@@ -176,5 +206,58 @@ public class ODistributedConfigurationManager {
         }
     }
     return null;
+  }
+
+  public void saveDatabaseConfigurationToFile() {
+    // SAVE THE CONFIGURATION TO DISK
+    FileOutputStream f = null;
+    try {
+      File file = getDistributedConfigFile();
+
+      ODistributedServerLog.debug(
+          this,
+          distributedManager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Saving distributed configuration file for database '%s' to: %s",
+          databaseName,
+          file);
+
+      if (!file.exists()) {
+        file.getParentFile().mkdirs();
+        file.createNewFile();
+      }
+
+      f = new FileOutputStream(file);
+      f.write(distributedConfiguration.getDocument().toJSON().getBytes());
+      f.flush();
+    } catch (Exception e) {
+      ODistributedServerLog.error(
+          this,
+          distributedManager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Error on saving distributed configuration file",
+          e);
+
+    } finally {
+      if (f != null)
+        try {
+          f.close();
+        } catch (IOException e) {
+        }
+    }
+  }
+
+  private boolean distributedConfigFileExists() {
+    return getDistributedConfigFile().exists();
+  }
+
+  protected File getDistributedConfigFile() {
+    return new File(
+        distributedManager.getServerInstance().getDatabaseDirectory()
+            + databaseName
+            + "/"
+            + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
   }
 }

@@ -1033,7 +1033,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public ODistributedConfiguration getDistributedConfiguration() {
     ODistributedDatabaseImpl local = distributedManager.getDatabase(getName());
-    return local.getDistributedConfiguration();
+    return local.getDistributedConfiguration(this);
   }
 
   public void sendDDLCommand(String command, boolean excludeLocal) {

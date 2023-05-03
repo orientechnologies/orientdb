@@ -7089,4 +7089,8 @@ public abstract class OAbstractPaginatedStorage
   public OrientDBInternal getContext() {
     return this.context;
   }
+
+  public boolean isMemory() {
+    return false;
+  }
 }

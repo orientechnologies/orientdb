@@ -193,4 +193,9 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void checkBackupRunning() {}
+
+  @Override
+  public boolean isMemory() {
+    return true;
+  }
 }

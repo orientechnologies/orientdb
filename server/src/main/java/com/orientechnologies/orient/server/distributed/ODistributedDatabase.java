@@ -86,8 +86,6 @@ public interface ODistributedDatabase {
 
   long getProcessedRequests();
 
-  void checkNodeInConfiguration(String serverName);
-
   Optional<OTransactionId> nextId();
 
   List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState);

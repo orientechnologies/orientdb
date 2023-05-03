@@ -718,12 +718,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         });
   }
 
-  @Override
-  public void checkNodeInConfiguration(final String serverName) {
-    ODistributedConfiguration cfg = getDistributedConfiguration();
-    checkNodeInConfiguration(serverName, cfg);
-  }
-
   public void initFirstOpen(ODatabaseDocumentInternal session, OSharedContext context) {
     ODistributedConfiguration cfg = configurationManager.getDistributedConfiguration(session);
     checkNodeInConfiguration(getLocalNodeName(), cfg);
