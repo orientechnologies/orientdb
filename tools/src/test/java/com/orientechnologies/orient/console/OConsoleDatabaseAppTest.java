@@ -5,13 +5,12 @@ import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -73,11 +72,10 @@ public class OConsoleDatabaseAppTest {
 
       ODatabaseDocument db = console.getCurrentDatabase();
       try {
-        List<ODocument> result =
-            db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
-        Assert.assertEquals(1, result.size());
-        ODocument doc = result.get(0);
-        Assert.assertNull(doc.field("surname"));
+        OResultSet result = db.query("select from foo where name = 'foo'");
+        OResult doc = result.next();
+        Assert.assertNull(doc.getProperty("surname"));
+        Assert.assertFalse(result.hasNext());
       } finally {
         db.close();
       }
@@ -277,14 +275,14 @@ public class OConsoleDatabaseAppTest {
       console.run();
 
       ODatabaseDocument db = console.getCurrentDatabase();
-      List<ODocument> result =
-          db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
-      Assert.assertEquals(1, result.size());
-      ODocument doc = result.get(0);
-      Assert.assertEquals("bar", doc.field("surname"));
+      OResultSet result = db.query("select from foo where name = 'foo'");
+      OResult doc = result.next();
+      Assert.assertEquals("bar", doc.getProperty("surname"));
+      Assert.assertFalse(result.hasNext());
+      result.close();
 
-      result = db.query(new OSQLSynchQuery<ODocument>("select from bar"));
-      Assert.assertEquals(0, result.size());
+      result = db.query("select from bar");
+      Assert.assertEquals(0, result.stream().count());
 
     } finally {
       console.close();
@@ -344,14 +342,14 @@ public class OConsoleDatabaseAppTest {
       console.run();
 
       ODatabaseDocument db = console.getCurrentDatabase();
-      List<ODocument> result =
-          db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
-      Assert.assertEquals(1, result.size());
-      ODocument doc = result.get(0);
-      Assert.assertEquals("bar", doc.field("surname"));
+      OResultSet result = db.query("select from foo where name = 'foo'");
+      OResult doc = result.next();
+      Assert.assertEquals("bar", doc.getProperty("surname"));
+      Assert.assertFalse(result.hasNext());
+      result.close();
 
-      result = db.query(new OSQLSynchQuery<ODocument>("select from bar"));
-      Assert.assertEquals(0, result.size());
+      result = db.query("select from bar");
+      Assert.assertEquals(0, result.stream().count());
 
     } finally {
       console.close();
