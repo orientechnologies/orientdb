@@ -33,10 +33,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.OStressTesterSettings;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -282,23 +281,22 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
 
   public void readOperation(final ODatabase database, final long n) {
     final String query = String.format("SELECT FROM %s WHERE name = ?", CLASS_NAME);
-    final List<ODocument> result =
-        database.command(new OSQLSynchQuery<ODocument>(query)).execute("value" + n);
-    if (result.size() != 1) {
+    final OResultSet result = database.query(query, "value" + n);
+    long count = result.stream().count();
+    if (count != 1) {
       throw new RuntimeException(
-          String.format(
-              "The query [%s] result size is %d. Expected size is 1.", query, result.size()));
+          String.format("The query [%s] result size is %d. Expected size is 1.", query, count));
     }
   }
 
   public void scanOperation(final ODatabase database) {
     final String query =
         String.format("SELECT count(*) FROM %s WHERE notexistent is null", CLASS_NAME);
-    final List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    if (result.size() != 1) {
+    final OResultSet result = database.query(query);
+    long count = result.stream().count();
+    if (count != 1) {
       throw new RuntimeException(
-          String.format(
-              "The query [%s] result size is %d. Expected size is 1.", query, result.size()));
+          String.format("The query [%s] result size is %d. Expected size is 1.", query, count));
     }
   }
 

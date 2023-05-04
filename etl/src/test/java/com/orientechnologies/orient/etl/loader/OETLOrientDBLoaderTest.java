@@ -27,9 +27,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLBaseTest;
-import java.util.List;
 import org.junit.Test;
 
 /** Created by frank on 9/14/15. */
@@ -201,9 +199,9 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
 
     ODatabaseDocument db = proc.getLoader().getPool().acquire();
 
-    List<?> res = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM Person"));
+    OResultSet res = db.query("SELECT FROM Person");
 
-    assertThat(res.size()).isEqualTo(1);
+    assertThat(res.stream().count()).isEqualTo(1);
 
     db.close();
   }

@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
@@ -40,7 +40,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.zip.GZIPInputStream;
@@ -165,9 +164,9 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     String query =
         "select * from City where  ST_WITHIN(location,'POLYGON ((12.314015 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))')"
             + " = true";
-    List<?> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    OResultSet docs = db.query(query);
 
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(docs.stream().count(), 1);
 
     String jsonConfig =
         OIOUtils.readStreamAsString(
@@ -236,7 +235,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.SPATIAL.name());
 
-    assertThat(db.<List>query(new OSQLSynchQuery<Object>(query))).hasSize(1);
+    assertThat(db.query(query).stream()).hasSize(1);
   }
 
   @Test
@@ -245,9 +244,9 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     String query =
         "select * from City where  ST_WITHIN(location,'POLYGON ((12.314015 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))')"
             + " = true";
-    List<?> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    OResultSet docs = db.query(query);
 
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(docs.stream().count(), 1);
 
     String jsonConfig =
         OIOUtils.readStreamAsString(
@@ -320,7 +319,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.SPATIAL.name());
 
-    assertThat(db.<List>query(new OSQLSynchQuery<Object>(query))).hasSize(1);
+    assertThat(db.query(query).stream()).hasSize(1);
   }
 
   private ODatabaseDocumentInternal createAndOpen() {
