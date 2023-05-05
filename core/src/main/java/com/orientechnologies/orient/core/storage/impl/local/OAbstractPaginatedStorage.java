@@ -201,6 +201,7 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -323,6 +324,7 @@ public abstract class OAbstractPaginatedStorage
 
   protected AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
   protected OrientDBInternal context;
+  private final CountDownLatch migration = new CountDownLatch(1);
 
   public OAbstractPaginatedStorage(
       final String name, final String filePath, final int id, OrientDBInternal context) {
@@ -465,6 +467,7 @@ public abstract class OAbstractPaginatedStorage
 
   public final void open(final OContextConfiguration contextConfiguration) {
     try {
+      boolean isInMigration = false;
       stateLock.readLock().lock();
       try {
         if (status == STATUS.OPEN || isInError())
@@ -473,8 +476,15 @@ public abstract class OAbstractPaginatedStorage
         {
           return;
         }
+        if (status == STATUS.MIGRATION) {
+          isInMigration = true;
+        }
       } finally {
         stateLock.readLock().unlock();
+      }
+
+      if (isInMigration) {
+        migration.await();
       }
 
       try {
@@ -613,6 +623,7 @@ public abstract class OAbstractPaginatedStorage
                     status.name());
             return;
           }
+          migration.countDown();
 
           // we need to check presence of ridbags for backward compatibility with previous
           // versions
