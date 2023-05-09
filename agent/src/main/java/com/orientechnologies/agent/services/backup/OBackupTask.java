@@ -110,7 +110,8 @@ public class OBackupTask implements OBackupListener {
   @Override
   public Boolean onEvent(final ODocument cfg, final OBackupLog log) {
     final boolean canContinue = invokeListener(cfg, log);
-    if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
+    if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())
+        || OBackupLogType.BACKUP_ERROR.equals(log.getType())) {
       if (canContinue) {
         schedule();
       }
