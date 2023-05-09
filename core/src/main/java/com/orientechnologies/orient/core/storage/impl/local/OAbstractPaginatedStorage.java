@@ -467,7 +467,6 @@ public abstract class OAbstractPaginatedStorage
 
   public final void open(final OContextConfiguration contextConfiguration) {
     try {
-      boolean isInMigration = false;
       stateLock.readLock().lock();
       try {
         if (status == STATUS.OPEN || isInError())
@@ -476,15 +475,8 @@ public abstract class OAbstractPaginatedStorage
         {
           return;
         }
-        if (status == STATUS.MIGRATION) {
-          isInMigration = true;
-        }
       } finally {
         stateLock.readLock().unlock();
-      }
-
-      if (isInMigration) {
-        migration.await();
       }
 
       try {
@@ -495,6 +487,15 @@ public abstract class OAbstractPaginatedStorage
           // REUSED
           {
             return;
+          }
+          if (status == STATUS.MIGRATION) {
+            try {
+              // Yes this look inverted but is correct.
+              stateLock.writeLock().unlock();
+              migration.await();
+            } finally {
+              stateLock.writeLock().lock();
+            }
           }
 
           if (status != STATUS.CLOSED) {
