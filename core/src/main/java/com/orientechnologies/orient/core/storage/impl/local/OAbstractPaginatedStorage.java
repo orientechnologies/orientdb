@@ -623,12 +623,12 @@ public abstract class OAbstractPaginatedStorage
                     status.name());
             return;
           }
-          migration.countDown();
 
           // we need to check presence of ridbags for backward compatibility with previous
           // versions
           atomicOperationsManager.executeInsideAtomicOperation(null, this::checkRidBagsPresence);
           status = STATUS.OPEN;
+          migration.countDown();
         } finally {
           stateLock.writeLock().unlock();
         }
