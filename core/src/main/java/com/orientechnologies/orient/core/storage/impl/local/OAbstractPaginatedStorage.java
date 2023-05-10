@@ -482,12 +482,6 @@ public abstract class OAbstractPaginatedStorage
       try {
         stateLock.writeLock().lock();
         try {
-          if (status == STATUS.OPEN || isInError())
-          // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
-          // REUSED
-          {
-            return;
-          }
           if (status == STATUS.MIGRATION) {
             try {
               // Yes this look inverted but is correct.
@@ -496,6 +490,13 @@ public abstract class OAbstractPaginatedStorage
             } finally {
               stateLock.writeLock().lock();
             }
+          }
+
+          if (status == STATUS.OPEN || isInError())
+          // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
+          // REUSED
+          {
+            return;
           }
 
           if (status != STATUS.CLOSED) {
