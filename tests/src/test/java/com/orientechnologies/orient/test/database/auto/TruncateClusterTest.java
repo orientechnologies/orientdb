@@ -5,8 +5,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -56,21 +55,17 @@ public class TruncateClusterTest extends DocumentDBBaseTest {
     Assert.assertEquals(database.countClass(className), 1);
     Assert.assertEquals(database.countClusterElements(clusterId), 1);
 
-    List<ODocument> indexQuery =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select from TruncateClusterClass where value='val'"));
-    Assert.assertEquals(indexQuery.size(), 1);
+    OResultSet indexQuery = database.query("select from TruncateClusterClass where value='val'");
+    Assert.assertEquals(indexQuery.stream().count(), 1);
 
     database.truncateCluster(clusterName);
 
     Assert.assertEquals(database.countClass(className), 0);
     Assert.assertEquals(database.countClusterElements(clusterId), 0);
 
-    indexQuery =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select from TruncateClusterClass where value='val'"));
+    indexQuery = database.query("select from TruncateClusterClass where value='val'");
 
-    Assert.assertEquals(indexQuery.size(), 0);
+    Assert.assertEquals(indexQuery.stream().count(), 0);
   }
 
   public void testSimpleClusterIsAbsent() {

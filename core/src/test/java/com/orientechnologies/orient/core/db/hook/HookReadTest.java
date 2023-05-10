@@ -7,8 +7,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Test;
 
 /** Created by tglman on 01/06/16. */
@@ -44,7 +43,7 @@ public class HookReadTest extends BaseMemoryDatabase {
 
     db.save(new ODocument("TestClass"));
 
-    List<ODocument> res = db.query(new OSQLSynchQuery<Object>("select from TestClass"));
-    assertEquals(res.get(0).field("read"), "test");
+    OResultSet res = db.query("select from TestClass");
+    assertEquals(res.next().getProperty("read"), "test");
   }
 }

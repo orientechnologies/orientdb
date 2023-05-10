@@ -19,11 +19,9 @@ import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import java.io.UnsupportedEncodingException;
-import java.util.List;
 import org.testng.annotations.Test;
 
 @Test(enabled = false)
@@ -45,12 +43,9 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OComm
 
   @Override
   public void cycle() throws UnsupportedEncodingException {
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select * from Profile where nick = 100010"))
-            .execute();
+    OResultSet result = database.query("select * from Profile where nick = 100010");
 
-    for (ODocument d : result) result(d);
+    while (result.hasNext()) result(result.next().getElement().get());
   }
 
   public boolean result(final Object iRecord) {

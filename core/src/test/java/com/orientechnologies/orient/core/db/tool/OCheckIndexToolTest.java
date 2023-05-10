@@ -6,8 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,8 +36,8 @@ public class OCheckIndexToolTest extends BaseMemoryInternalDatabase {
     Object key = idx.getDefinition().createValue("a");
     boolean a = idx.remove(key, rid);
 
-    List result = db.query(new OSQLSynchQuery<Object>("SELECT FROM Foo"));
-    Assert.assertEquals(N_RECORDS + 1, result.size());
+    OResultSet result = db.query("SELECT FROM Foo");
+    Assert.assertEquals(N_RECORDS + 1, result.stream().count());
 
     OCheckIndexTool tool = new OCheckIndexTool();
     tool.setDatabase(db);

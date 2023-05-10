@@ -7,9 +7,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryInternalDatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -434,7 +435,8 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
             new Callable<ODocument>() {
               @Override
               public ODocument call() throws Exception {
-                ODocument doc1 = db.copy().load(document.getIdentity());
+                ODocument doc1 =
+                    ((ODatabaseDocumentInternal) db).copy().load(document.getIdentity());
                 assertEquals(doc1.fieldType("test1"), OType.LINKLIST);
                 assertEquals(doc1.fieldType("test2"), OType.EMBEDDEDLIST);
                 assertEquals(doc1.fieldType("test3"), OType.LINKSET);
@@ -502,9 +504,9 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
 
     oClass.createProperty("name", OType.ANY);
 
-    List<?> result =
-        db.query(new OSQLSynchQuery<Object>("select from " + className + " where name = 'foo'"));
-    assertEquals(result.size(), 1);
+    try (OResultSet result = db.query("select from " + className + " where name = 'foo'")) {
+      assertEquals(result.stream().count(), 1);
+    }
   }
 
   @Test
