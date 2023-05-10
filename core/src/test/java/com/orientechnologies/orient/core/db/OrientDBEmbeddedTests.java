@@ -1,7 +1,12 @@
 package com.orientechnologies.orient.core.db;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -11,12 +16,15 @@ import com.orientechnologies.orient.core.exception.OStorageDoesNotExistException
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.junit.Assert;
@@ -88,7 +96,7 @@ public class OrientDBEmbeddedTests {
             ODatabaseSession db = pool.acquire();
             try {
               assertThat(db.isActiveOnCurrentThread()).isTrue();
-              final List<ODocument> res = db.query(new OSQLSynchQuery<>("SELECT * FROM OUser"));
+              final OResultSet res = db.query("SELECT * FROM OUser");
               assertThat(res).hasSize(1); // Only 'admin' created in this test
             } finally {
               db.close();

@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
@@ -29,11 +29,10 @@ public class TestLinkedDocumentInMap extends BaseMemoryDatabase {
     Assert.assertTrue(doc.get("contact").getIdentity().isValid());
 
     reOpen("admin", "adminpwd");
-
-    List<ODocument> result =
-        db.query(new OSQLSynchQuery<ODocument>("select from " + tyrionDoc.getIdentity()));
-    res = result.get(0).field("emergency_contact");
-    doc = res.get(0);
-    Assert.assertTrue(doc.get("contact").getIdentity().isValid());
+    try (OResultSet result = db.query("select from " + tyrionDoc.getIdentity())) {
+      res = result.next().getProperty("emergency_contact");
+      doc = res.get(0);
+      Assert.assertTrue(doc.get("contact").getIdentity().isValid());
+    }
   }
 }

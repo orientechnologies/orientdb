@@ -1,10 +1,8 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.BaseMemoryDatabase;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Collection;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,13 +19,13 @@ public class SaveLinkedTypeAnyTest extends BaseMemoryDatabase {
     // null")).execute();
     db.command("insert into TestRemoveLinkedType set prop = [4]").close();
 
-    List<ODocument> result =
-        db.query(new OSQLSynchQuery<ODocument>("select from TestRemoveLinkedType"));
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
-    Collection coll = result.get(0).field("prop");
-    Assert.assertEquals(coll.size(), 1);
-    Assert.assertEquals(coll.iterator().next(), 4);
+    try (OResultSet result = db.query("select from TestRemoveLinkedType")) {
+      Assert.assertTrue(result.hasNext());
+      Collection coll = result.next().getProperty("prop");
+      Assert.assertFalse(result.hasNext());
+      Assert.assertEquals(coll.size(), 1);
+      Assert.assertEquals(coll.iterator().next(), 4);
+    }
   }
 
   @Test
@@ -39,12 +37,12 @@ public class SaveLinkedTypeAnyTest extends BaseMemoryDatabase {
     db.command("alter property TestRemoveLinkedType.prop linkedtype null").close();
     db.command("insert into TestRemoveLinkedType set prop = [4]").close();
 
-    List<ODocument> result =
-        db.query(new OSQLSynchQuery<ODocument>("select from TestRemoveLinkedType"));
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
-    Collection coll = result.get(0).field("prop");
-    Assert.assertEquals(coll.size(), 1);
-    Assert.assertEquals(coll.iterator().next(), 4);
+    try (OResultSet result = db.query("select from TestRemoveLinkedType")) {
+      Assert.assertTrue(result.hasNext());
+      Collection coll = result.next().getProperty("prop");
+      Assert.assertFalse(result.hasNext());
+      Assert.assertEquals(coll.size(), 1);
+      Assert.assertEquals(coll.iterator().next(), 4);
+    }
   }
 }
