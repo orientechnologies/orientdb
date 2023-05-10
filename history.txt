@@ -27,10 +27,37 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.19 - (May, 11 2023)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3219---11-May-2023
+
+# Changes
+
+## Core
+
+- Correct the class for scanning vertex on graph repair, issue #9970
+- Reduced some dependencies from external libraries
+- Removed not needed implementations in native logic
+- Removed the need to load a native library to check some system settings
+- Moved sources in main modules to avoid split packages, issue #8001
+- Minor fix for new internal experimental configuration store
+- Revert upgrade of minor dependency that cause issues on older OS
+- Minor fixes from static analisys
+- Make sure to unblock other storage open operations only when migration is complete, issue #9974
+
+## Distributed
+
+- Deduplication and semplification of distributed logic
+- Removed operation waiting flow not needed anymore
+- Avoid startup failure in case of rebalancing failure
+- Avoid that failure on load of database block the server starting
+- Add command to fetch distributed configuration from SQL
+
+
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.18 - (April, 13 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3216---13-April-2023
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3218---13-April-2023
 
 # Changes
 
@@ -58,7 +85,7 @@ VERSION 3.2.18 - (April, 13 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.17 - (March, 9 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3216---9-March-2023
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3217---9-March-2023
 
 # Changes
 
