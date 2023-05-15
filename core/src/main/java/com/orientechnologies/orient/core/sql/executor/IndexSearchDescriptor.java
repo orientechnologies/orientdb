@@ -10,32 +10,30 @@ import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 
 /** Created by luigidellaquila on 26/07/16. */
 public class IndexSearchDescriptor {
-  protected OIndex idx;
-  protected OAndBlock keyCondition;
-  protected OBinaryCondition additionalRangeCondition;
-  protected OBooleanExpression remainingCondition;
+  private OIndex index;
+  private OAndBlock keyCondition;
+  private OBinaryCondition additionalRangeCondition;
+  private OBooleanExpression remainingCondition;
 
   public IndexSearchDescriptor(
       OIndex idx,
       OAndBlock keyCondition,
       OBinaryCondition additional,
       OBooleanExpression remainingCondition) {
-    this.idx = idx;
+    this.index = idx;
     this.keyCondition = keyCondition;
     this.additionalRangeCondition = additional;
     this.remainingCondition = remainingCondition;
   }
 
-  public IndexSearchDescriptor() {}
-
   public int cost(OCommandContext ctx) {
     OQueryStats stats = OQueryStats.get((ODatabaseDocumentInternal) ctx.getDatabase());
 
-    String indexName = idx.getName();
-    int size = keyCondition.getSubBlocks().size();
+    String indexName = getIndex().getName();
+    int size = getKeyCondition().getSubBlocks().size();
     boolean range = false;
     OBooleanExpression lastOp =
-        keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
+        getKeyCondition().getSubBlocks().get(getKeyCondition().getSubBlocks().size() - 1);
     if (lastOp instanceof OBinaryCondition) {
       OBinaryCompareOperator op = ((OBinaryCondition) lastOp).getOperator();
       range = op.isRangeOperator();
@@ -43,7 +41,7 @@ public class IndexSearchDescriptor {
 
     long val =
         stats.getIndexStats(
-            indexName, size, range, additionalRangeCondition != null, ctx.getDatabase());
+            indexName, size, range, getAdditionalRangeCondition() != null, ctx.getDatabase());
     if (val == -1) {
       // TODO query the index!
     }
@@ -51,5 +49,21 @@ public class IndexSearchDescriptor {
       return val > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) val;
     }
     return Integer.MAX_VALUE;
+  }
+
+  protected OIndex getIndex() {
+    return index;
+  }
+
+  protected OAndBlock getKeyCondition() {
+    return keyCondition;
+  }
+
+  protected OBinaryCondition getAdditionalRangeCondition() {
+    return additionalRangeCondition;
+  }
+
+  protected OBooleanExpression getRemainingCondition() {
+    return remainingCondition;
   }
 }
