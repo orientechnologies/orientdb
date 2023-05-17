@@ -8,12 +8,15 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OContainsAnyCondition extends OBooleanExpression {
@@ -378,6 +381,17 @@ public class OContainsAnyCondition extends OBooleanExpression {
       }
     }
     return false;
+  }
+
+  @Override
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    if (left.isBaseIdentifier()) {
+      if (right.isEarlyCalculated(ctx)) {
+        String fieldName = left.getDefaultAlias().getStringValue();
+        return info.findExactIndex(fieldName, ctx);
+      }
+    }
+    return Optional.empty();
   }
 
   @Override

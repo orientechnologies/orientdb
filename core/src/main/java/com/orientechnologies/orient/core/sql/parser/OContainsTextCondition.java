@@ -5,9 +5,12 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OContainsTextCondition extends OBooleanExpression {
@@ -228,6 +231,17 @@ public class OContainsTextCondition extends OBooleanExpression {
 
   public OExpression getRight() {
     return right;
+  }
+
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    if (left.isBaseIdentifier()) {
+      if (right != null && right.isEarlyCalculated(ctx)) {
+        String fieldName = left.getDefaultAlias().getStringValue();
+        return info.findFullTextIndex(fieldName, ctx);
+      }
+    }
+
+    return Optional.empty();
   }
 
   @Override
