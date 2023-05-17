@@ -5,7 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -56,37 +56,37 @@ public class OStatement extends SimpleNode {
     throw new UnsupportedOperationException("Unsupported command: " + getClass().getSimpleName());
   }
 
-  public OResultSet execute(ODatabase db, Object[] args) {
+  public OResultSet execute(ODatabaseSession db, Object[] args) {
     return execute(db, args, true);
   }
 
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext) {
+  public OResultSet execute(ODatabaseSession db, Object[] args, OCommandContext parentContext) {
     return execute(db, args, parentContext, true);
   }
 
-  public OResultSet execute(ODatabase db, Map args) {
+  public OResultSet execute(ODatabaseSession db, Map args) {
     return execute(db, args, true);
   }
 
-  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext) {
+  public OResultSet execute(ODatabaseSession db, Map args, OCommandContext parentContext) {
     return execute(db, args, parentContext, true);
   }
 
-  public OResultSet execute(ODatabase db, Object[] args, boolean usePlanCache) {
+  public OResultSet execute(ODatabaseSession db, Object[] args, boolean usePlanCache) {
     return execute(db, args, null, usePlanCache);
   }
 
   public OResultSet execute(
-      ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
+      ODatabaseSession db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
     throw new UnsupportedOperationException();
   }
 
-  public OResultSet execute(ODatabase db, Map args, boolean usePlanCache) {
+  public OResultSet execute(ODatabaseSession db, Map args, boolean usePlanCache) {
     return execute(db, args, null, usePlanCache);
   }
 
   public OResultSet execute(
-      ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
+      ODatabaseSession db, Map args, OCommandContext parentContext, boolean usePlanCache) {
     throw new UnsupportedOperationException();
   }
 

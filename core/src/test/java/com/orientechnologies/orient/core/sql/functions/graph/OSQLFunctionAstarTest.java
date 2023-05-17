@@ -23,8 +23,8 @@ import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
@@ -46,7 +46,7 @@ public class OSQLFunctionAstarTest {
   private static int dbCounter = 0;
 
   private OrientDB orientDB;
-  private ODatabaseDocument graph;
+  private ODatabaseSession graph;
 
   private OVertex v0;
   private OVertex v1;

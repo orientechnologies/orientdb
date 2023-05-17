@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -100,7 +99,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
     resource.putInternal(statement, plan, db);
   }
 
-  public void putInternal(String statement, OExecutionPlan plan, ODatabaseDocument db) {
+  public void putInternal(String statement, OExecutionPlan plan, ODatabaseDocumentInternal db) {
     if (statement == null) {
       return;
     }

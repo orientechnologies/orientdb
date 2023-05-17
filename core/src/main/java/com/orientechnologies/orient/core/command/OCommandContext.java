@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import java.util.Map;
 
 /**
@@ -88,7 +88,7 @@ public interface OCommandContext {
    */
   void merge(OCommandContext iContext);
 
-  ODatabase getDatabase();
+  ODatabaseSession getDatabase();
 
   void declareScriptVariable(String varName);
 

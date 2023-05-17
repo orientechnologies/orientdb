@@ -4,7 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -61,7 +61,7 @@ public class OTraverseStatement extends OStatement {
 
   @Override
   public OResultSet execute(
-      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+      ODatabaseSession db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -86,7 +86,7 @@ public class OTraverseStatement extends OStatement {
 
   @Override
   public OResultSet execute(
-      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+      ODatabaseSession db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);

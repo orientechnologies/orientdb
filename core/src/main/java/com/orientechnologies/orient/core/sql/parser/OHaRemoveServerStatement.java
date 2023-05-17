@@ -3,8 +3,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -36,7 +36,7 @@ public class OHaRemoveServerStatement extends OStatement {
 
   @Override
   public OResultSet execute(
-      ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
+      ODatabaseSession db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
     ODatabaseDocumentInternal internalDb = (ODatabaseDocumentInternal) db;
     boolean res = internalDb.removeHaServer(serverName.getStringValue());
     OResultInternal r = new OResultInternal();
@@ -48,7 +48,7 @@ public class OHaRemoveServerStatement extends OStatement {
 
   @Override
   public OResultSet execute(
-      ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
+      ODatabaseSession db, Map args, OCommandContext parentContext, boolean usePlanCache) {
     ODatabaseDocumentInternal internalDb = (ODatabaseDocumentInternal) db;
     boolean res = internalDb.removeHaServer(serverName.getStringValue());
     OResultInternal r = new OResultInternal();

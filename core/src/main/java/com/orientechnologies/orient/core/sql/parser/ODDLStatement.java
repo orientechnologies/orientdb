@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.sql.executor.ODDLExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -23,7 +23,7 @@ public abstract class ODDLStatement extends OStatement {
   public abstract OResultSet executeDDL(OCommandContext ctx);
 
   public OResultSet execute(
-      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+      ODatabaseSession db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -41,7 +41,7 @@ public abstract class ODDLStatement extends OStatement {
   }
 
   public OResultSet execute(
-      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+      ODatabaseSession db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
