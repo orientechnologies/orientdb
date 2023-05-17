@@ -4,8 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -49,7 +49,7 @@ public class OAlterDatabaseStatement extends ODDLStatement {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     db.checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_UPDATE);
     List<OStorageEntryConfiguration> oldValues =
-        (List<OStorageEntryConfiguration>) db.get(ODatabase.ATTRIBUTES.CUSTOM);
+        (List<OStorageEntryConfiguration>) db.get(ODatabaseSession.ATTRIBUTES.CUSTOM);
     String oldValue = null;
     if (oldValues != null) {
       for (OStorageEntryConfiguration entry : oldValues) {
@@ -72,8 +72,9 @@ public class OAlterDatabaseStatement extends ODDLStatement {
 
   private OResult executeSimpleAlter(
       OIdentifier settingName, OExpression settingValue, OCommandContext ctx) {
-    ODatabase.ATTRIBUTES attribute =
-        ODatabase.ATTRIBUTES.valueOf(settingName.getStringValue().toUpperCase(Locale.ENGLISH));
+    ODatabaseSession.ATTRIBUTES attribute =
+        ODatabaseSession.ATTRIBUTES.valueOf(
+            settingName.getStringValue().toUpperCase(Locale.ENGLISH));
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     db.checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_UPDATE);
     Object oldValue = db.get(attribute);

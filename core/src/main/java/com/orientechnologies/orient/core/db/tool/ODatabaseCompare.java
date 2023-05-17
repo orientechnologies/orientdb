@@ -24,8 +24,8 @@ import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.make
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -722,9 +722,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     listener.onMessage("\nChecking the number of clusters...");
 
-    Collection<String> clusterNames1 = makeDbCall(databaseOne, ODatabase::getClusterNames);
+    Collection<String> clusterNames1 = makeDbCall(databaseOne, ODatabaseSession::getClusterNames);
 
-    Collection<String> clusterNames2 = makeDbCall(databaseTwo, ODatabase::getClusterNames);
+    Collection<String> clusterNames2 = makeDbCall(databaseTwo, ODatabaseSession::getClusterNames);
 
     if (clusterNames1.size() != clusterNames2.size() - clusterDifference) {
       listener.onMessage(
@@ -806,7 +806,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     listener.onMessage(
         "\nStarting deep comparison record by record. This may take a few minutes. Wait please...");
 
-    Collection<String> clusterNames1 = makeDbCall(databaseOne, ODatabase::getClusterNames);
+    Collection<String> clusterNames1 = makeDbCall(databaseOne, ODatabaseSession::getClusterNames);
 
     for (final String clusterName : clusterNames1) {
       // CHECK IF THE CLUSTER IS INCLUDED

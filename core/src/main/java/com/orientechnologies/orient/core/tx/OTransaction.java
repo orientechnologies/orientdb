@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -196,7 +196,7 @@ public interface OTransaction {
   ORecord saveRecord(
       ORecord record,
       String clusterName,
-      ODatabase.OPERATION_MODE operationMode,
+      ODatabaseSession.OPERATION_MODE operationMode,
       boolean forceCreate,
       ORecordCallback<? extends Number> createdCallback,
       ORecordCallback<Integer> updatedCallback);
@@ -207,7 +207,7 @@ public interface OTransaction {
    * @param record the record to delete.
    * @param mode the operation mode.
    */
-  void deleteRecord(ORecord record, ODatabase.OPERATION_MODE mode);
+  void deleteRecord(ORecord record, ODatabaseSession.OPERATION_MODE mode);
 
   /**
    * Resolves a record with the given RID in the context of this transaction.

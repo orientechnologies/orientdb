@@ -27,7 +27,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -2421,7 +2420,13 @@ public class ODocument extends ORecordAbstract
   @Override
   public ORecordAbstract save(final String iClusterName, final boolean forceCreate) {
     return getDatabase()
-        .save(this, iClusterName, ODatabase.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
+        .save(
+            this,
+            iClusterName,
+            ODatabaseSession.OPERATION_MODE.SYNCHRONOUS,
+            forceCreate,
+            null,
+            null);
   }
 
   /*

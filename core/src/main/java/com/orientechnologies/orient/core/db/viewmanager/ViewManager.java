@@ -4,7 +4,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
@@ -491,7 +490,7 @@ public class ViewManager {
     return result;
   }
 
-  private String createNextClusterNameFor(OView view, ODatabase db) {
+  private String createNextClusterNameFor(OView view, ODatabaseSession db) {
     int i = 0;
     String viewName = view.getName();
     while (true) {

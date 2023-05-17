@@ -19,7 +19,6 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -64,7 +63,7 @@ public abstract class BaseLuceneTest {
         name.getMethodName());
 
     db = (ODatabaseDocumentInternal) context.open(name.getMethodName(), "admin", "admin");
-    db.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);
+    db.set(ODatabaseSession.ATTRIBUTES.MINIMUMCLUSTERS, 8);
   }
 
   public ODatabaseSession openDatabase() {

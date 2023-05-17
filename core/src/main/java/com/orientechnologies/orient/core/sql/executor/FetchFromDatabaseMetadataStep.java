@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import java.util.Map;
 import java.util.Optional;
@@ -41,28 +40,37 @@ public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
             ODatabaseSession db = ctx.getDatabase();
             result.setProperty("name", db.getName());
             result.setProperty("user", db.getUser() == null ? null : db.getUser().getName());
-            result.setProperty("type", String.valueOf(db.get(ODatabase.ATTRIBUTES.TYPE)));
-            result.setProperty("status", String.valueOf(db.get(ODatabase.ATTRIBUTES.STATUS)));
+            result.setProperty("type", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.TYPE)));
             result.setProperty(
-                "defaultClusterId", String.valueOf(db.get(ODatabase.ATTRIBUTES.DEFAULTCLUSTERID)));
+                "status", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.STATUS)));
             result.setProperty(
-                "dateFormat", String.valueOf(db.get(ODatabase.ATTRIBUTES.DATEFORMAT)));
+                "defaultClusterId",
+                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.DEFAULTCLUSTERID)));
             result.setProperty(
-                "dateTimeFormat", String.valueOf(db.get(ODatabase.ATTRIBUTES.DATETIMEFORMAT)));
-            result.setProperty("timezone", String.valueOf(db.get(ODatabase.ATTRIBUTES.TIMEZONE)));
+                "dateFormat", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.DATEFORMAT)));
             result.setProperty(
-                "localeCountry", String.valueOf(db.get(ODatabase.ATTRIBUTES.LOCALECOUNTRY)));
+                "dateTimeFormat",
+                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.DATETIMEFORMAT)));
             result.setProperty(
-                "localeLanguage", String.valueOf(db.get(ODatabase.ATTRIBUTES.LOCALELANGUAGE)));
-            result.setProperty("charset", String.valueOf(db.get(ODatabase.ATTRIBUTES.CHARSET)));
+                "timezone", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.TIMEZONE)));
             result.setProperty(
-                "clusterSelection", String.valueOf(db.get(ODatabase.ATTRIBUTES.CLUSTERSELECTION)));
+                "localeCountry", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.LOCALECOUNTRY)));
             result.setProperty(
-                "minimumClusters", String.valueOf(db.get(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS)));
+                "localeLanguage",
+                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.LOCALELANGUAGE)));
             result.setProperty(
-                "conflictStrategy", String.valueOf(db.get(ODatabase.ATTRIBUTES.CONFLICTSTRATEGY)));
+                "charset", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.CHARSET)));
             result.setProperty(
-                "validation", String.valueOf(db.get(ODatabase.ATTRIBUTES.VALIDATION)));
+                "clusterSelection",
+                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.CLUSTERSELECTION)));
+            result.setProperty(
+                "minimumClusters",
+                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.MINIMUMCLUSTERS)));
+            result.setProperty(
+                "conflictStrategy",
+                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.CONFLICTSTRATEGY)));
+            result.setProperty(
+                "validation", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.VALIDATION)));
 
             served = true;
             return result;

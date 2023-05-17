@@ -16,8 +16,8 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -57,7 +57,7 @@ public class OrientJdbcConnection implements Connection {
   private OrientDB orientDB;
   private boolean readOnly;
   private boolean autoCommit;
-  private ODatabase.STATUS status;
+  private ODatabaseSession.STATUS status;
 
   private boolean orientDBisPrivate;
 
@@ -95,7 +95,7 @@ public class OrientJdbcConnection implements Connection {
     database = orientDB.open(connUrl.getDbName(), username, password);
 
     orientDBisPrivate = true;
-    status = ODatabase.STATUS.OPEN;
+    status = ODatabaseSession.STATUS.OPEN;
   }
 
   public OrientJdbcConnection(ODatabaseDocument database, OrientDB orientDB, Properties info) {
@@ -103,7 +103,7 @@ public class OrientJdbcConnection implements Connection {
     this.orientDB = orientDB;
     this.info = info;
     orientDBisPrivate = false;
-    status = ODatabase.STATUS.OPEN;
+    status = ODatabaseSession.STATUS.OPEN;
   }
 
   protected OrientDB getOrientDB() {
@@ -144,7 +144,7 @@ public class OrientJdbcConnection implements Connection {
   }
 
   public void close() throws SQLException {
-    status = ODatabase.STATUS.CLOSED;
+    status = ODatabaseSession.STATUS.CLOSED;
     if (database != null) {
       database.activateOnCurrentThread();
       database.close();
@@ -165,7 +165,7 @@ public class OrientJdbcConnection implements Connection {
   }
 
   public boolean isClosed() throws SQLException {
-    return status == ODatabase.STATUS.CLOSED;
+    return status == ODatabaseSession.STATUS.CLOSED;
   }
 
   public boolean isReadOnly() throws SQLException {
