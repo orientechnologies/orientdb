@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
@@ -40,7 +40,7 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
 
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
-    ODatabase database = ctx.getDatabase();
+    ODatabaseSession database = ctx.getDatabase();
     final OFunction f =
         database.getMetadata().getFunctionLibrary().createFunction(name.getStringValue());
     f.setCode(code);

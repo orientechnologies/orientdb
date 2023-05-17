@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import java.util.Map;
 import java.util.Optional;
@@ -21,11 +21,11 @@ public class FilterByClustersStep extends AbstractExecutionStep {
       Set<String> filterClusters, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.clusters = filterClusters;
-    ODatabase db = ctx.getDatabase();
+    ODatabaseSession db = ctx.getDatabase();
     init(db);
   }
 
-  private void init(ODatabase db) {
+  private void init(ODatabaseSession db) {
     if (this.clusterIds == null) {
       this.clusterIds =
           clusters.stream()

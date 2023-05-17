@@ -3,8 +3,8 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -810,7 +810,7 @@ public class OMatchExecutionPlanner {
     }
   }
 
-  private String getLowerSubclass(ODatabase db, String className1, String className2) {
+  private String getLowerSubclass(ODatabaseSession db, String className1, String className2) {
     OSchema schema = db.getMetadata().getSchema();
     OClass class1 = schema.getClass(className1);
     OClass class2 = schema.getClass(className2);
@@ -890,7 +890,7 @@ public class OMatchExecutionPlanner {
         }
         result.put(alias, upperBound);
       } else if (clusterName != null) {
-        ODatabase db = ctx.getDatabase();
+        ODatabaseSession db = ctx.getDatabase();
         if (!db.existsCluster(clusterName)) {
           throw new OCommandExecutionException("cluster not defined: " + clusterName);
         }

@@ -4,8 +4,8 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OElement;
@@ -27,7 +27,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   }
 
   protected abstract Object move(
-      final ODatabase db, final OIdentifiable iRecord, final String[] iLabels);
+      final ODatabaseSession db, final OIdentifiable iRecord, final String[] iLabels);
 
   public String getSyntax() {
     return "Syntax error: " + name + "([<labels>])";
@@ -40,7 +40,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
       final Object[] iParameters,
       final OCommandContext iContext) {
 
-    ODatabase db =
+    ODatabaseSession db =
         iContext != null
             ? iContext.getDatabase()
             : ODatabaseRecordThreadLocal.instance().getIfDefined();
@@ -72,7 +72,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   }
 
   protected Object v2v(
-      final ODatabase graph,
+      final ODatabaseSession graph,
       final OIdentifiable iRecord,
       final ODirection iDirection,
       final String[] iLabels) {
@@ -89,7 +89,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   }
 
   protected Object v2e(
-      final ODatabase graph,
+      final ODatabaseSession graph,
       final OIdentifiable iRecord,
       final ODirection iDirection,
       final String[] iLabels) {
@@ -106,7 +106,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   }
 
   protected Object e2v(
-      final ODatabase graph,
+      final ODatabaseSession graph,
       final OIdentifiable iRecord,
       final ODirection iDirection,
       final String[] iLabels) {

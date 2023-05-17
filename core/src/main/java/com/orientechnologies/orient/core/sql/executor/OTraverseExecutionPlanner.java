@@ -2,9 +2,9 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -287,7 +287,7 @@ public class OTraverseExecutionPlanner {
       List<OCluster> clusters,
       OCommandContext ctx,
       boolean profilingEnabled) {
-    ODatabase db = ctx.getDatabase();
+    ODatabaseSession db = ctx.getDatabase();
     Boolean orderByRidAsc = null; // null: no order. true: asc, false:desc
     if (clusters.size() == 1) {
       OCluster cluster = clusters.get(0);

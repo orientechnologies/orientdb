@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import java.util.Map;
 import java.util.Optional;
 
@@ -37,7 +38,7 @@ public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
           if (!served) {
             OResultInternal result = new OResultInternal();
 
-            ODatabase db = ctx.getDatabase();
+            ODatabaseSession db = ctx.getDatabase();
             result.setProperty("name", db.getName());
             result.setProperty("user", db.getUser() == null ? null : db.getUser().getName());
             result.setProperty("type", String.valueOf(db.get(ODatabase.ATTRIBUTES.TYPE)));

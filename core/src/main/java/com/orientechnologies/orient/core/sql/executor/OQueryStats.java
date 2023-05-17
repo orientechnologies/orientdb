@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.index.OIndex;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,7 +22,11 @@ public class OQueryStats {
   }
 
   public long getIndexStats(
-      String indexName, int params, boolean range, boolean additionalRange, ODatabase database) {
+      String indexName,
+      int params,
+      boolean range,
+      boolean additionalRange,
+      ODatabaseSession database) {
     String key =
         generateKey(
             "INDEX",

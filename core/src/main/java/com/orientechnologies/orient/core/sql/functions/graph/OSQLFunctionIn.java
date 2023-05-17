@@ -2,8 +2,8 @@ package com.orientechnologies.orient.core.sql.functions.graph;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.OSizeable;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -27,12 +27,12 @@ public class OSQLFunctionIn extends OSQLFunctionMoveFiltered {
 
   @Override
   protected Object move(
-      final ODatabase graph, final OIdentifiable iRecord, final String[] iLabels) {
+      final ODatabaseSession graph, final OIdentifiable iRecord, final String[] iLabels) {
     return v2v(graph, iRecord, ODirection.IN, iLabels);
   }
 
   protected Object move(
-      final ODatabase graph,
+      final ODatabaseSession graph,
       final OIdentifiable iRecord,
       final String[] iLabels,
       Iterable<OIdentifiable> iPossibleResults) {
@@ -59,7 +59,10 @@ public class OSQLFunctionIn extends OSQLFunctionMoveFiltered {
   }
 
   private Object fetchFromIndex(
-      ODatabase graph, OIdentifiable iFrom, Iterable<OIdentifiable> to, String[] iEdgeTypes) {
+      ODatabaseSession graph,
+      OIdentifiable iFrom,
+      Iterable<OIdentifiable> to,
+      String[] iEdgeTypes) {
     String edgeClassName = null;
     if (iEdgeTypes == null) {
       edgeClassName = "E";

@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.sql.parser.OBatch;
 import java.util.Map;
 import java.util.Optional;
@@ -31,7 +31,7 @@ public class BatchStep extends AbstractExecutionStep {
       public OResult next() {
         OResult res = prevResult.next();
         if (count % batchSize == 0) {
-          ODatabase db = ctx.getDatabase();
+          ODatabaseSession db = ctx.getDatabase();
           if (db.getTransaction().isActive()) {
             db.commit();
             db.begin();

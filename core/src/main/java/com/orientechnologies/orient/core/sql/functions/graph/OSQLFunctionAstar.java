@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.sql.functions.graph;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
@@ -140,7 +140,8 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     return internalExecute(iContext, iContext.getDatabase());
   }
 
-  private LinkedList<OVertex> internalExecute(final OCommandContext iContext, ODatabase graph) {
+  private LinkedList<OVertex> internalExecute(
+      final OCommandContext iContext, ODatabaseSession graph) {
 
     OVertex start = paramSourceVertex;
     OVertex goal = paramDestinationVertex;
@@ -203,7 +204,7 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     return getPath();
   }
 
-  private OVertex getNeighbor(OVertex current, OEdge neighborEdge, ODatabase graph) {
+  private OVertex getNeighbor(OVertex current, OEdge neighborEdge, ODatabaseSession graph) {
     if (neighborEdge.getFrom().equals(current)) {
       return toVertex(neighborEdge.getTo());
     }
