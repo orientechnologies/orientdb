@@ -1,6 +1,7 @@
-package com.orientechnologies.orient.core.sql.executor;
+package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -10,9 +11,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.executor.metadata.OClassIndexFinder;
-import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
-import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import java.util.Optional;
 import org.junit.After;
 import org.junit.Before;
@@ -74,6 +72,53 @@ public class OIndexFinderTest {
   }
 
   @Test
+  public void testFindRangeMatchIndex() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.NOTUNIQUE);
+    OProperty prop1 = cl.createProperty("surname", OType.STRING);
+    prop1.createIndex(INDEX_TYPE.UNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    Optional<OIndexCandidate> result =
+        finder.findAllowRangeIndex("name", new OBasicCommandContext(session));
+
+    assertEquals("cl.name", result.get().getName());
+
+    Optional<OIndexCandidate> result1 =
+        finder.findAllowRangeIndex("surname", new OBasicCommandContext(session));
+
+    assertEquals("cl.surname", result1.get().getName());
+  }
+
+  @Test
+  public void testFindRangeNotMatchIndex() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.NOTUNIQUE_HASH_INDEX);
+    OProperty prop1 = cl.createProperty("surname", OType.STRING);
+    prop1.createIndex(INDEX_TYPE.UNIQUE_HASH_INDEX);
+    OProperty prop2 = cl.createProperty("third", OType.STRING);
+    prop2.createIndex(INDEX_TYPE.FULLTEXT);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    Optional<OIndexCandidate> result =
+        finder.findAllowRangeIndex("name", new OBasicCommandContext(session));
+
+    assertFalse(result.isPresent());
+
+    Optional<OIndexCandidate> result1 =
+        finder.findAllowRangeIndex("surname", new OBasicCommandContext(session));
+
+    assertFalse(result1.isPresent());
+
+    Optional<OIndexCandidate> result2 =
+        finder.findAllowRangeIndex("third", new OBasicCommandContext(session));
+
+    assertFalse(result2.isPresent());
+  }
+
+  @Test
   public void testFindByKey() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("map", OType.EMBEDDEDMAP);
@@ -97,6 +142,19 @@ public class OIndexFinderTest {
         finder.findByValueIndex("map", new OBasicCommandContext(session));
 
     assertEquals("cl.map", result.get().getName());
+  }
+
+  @Test
+  public void testFindFullTextMatchIndex() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.FULLTEXT);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    Optional<OIndexCandidate> result =
+        finder.findFullTextIndex("name", new OBasicCommandContext(session));
+
+    assertEquals("cl.name", result.get().getName());
   }
 
   @After

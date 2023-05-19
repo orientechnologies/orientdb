@@ -23,10 +23,7 @@ public class OClassIndexFinder implements OIndexFinder {
     OClass cl = ctx.getDatabase().getClass(this.clazz);
     Collection<OIndex> indexes = cl.getProperty(fieldName).getAllIndexes();
     for (OIndex index : indexes) {
-      if (OClass.INDEX_TYPE.UNIQUE.name().equalsIgnoreCase(index.getType())
-          || OClass.INDEX_TYPE.NOTUNIQUE.name().equalsIgnoreCase(index.getType())
-          || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equalsIgnoreCase(index.getType())
-          || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name().equalsIgnoreCase(index.getType())) {
+      if (index.getInternal().canBeUsedInEqualityOperators()) {
         return Optional.of(new OIndexCandidateImpl(index.getName()));
       }
     }
@@ -40,10 +37,12 @@ public class OClassIndexFinder implements OIndexFinder {
     if (prop.getType() == OType.EMBEDDEDMAP) {
       Collection<OIndex> indexes = prop.getAllIndexes();
       for (OIndex index : indexes) {
-        OIndexDefinition def = index.getDefinition();
-        for (String o : def.getFieldsToIndex()) {
-          if (o.equalsIgnoreCase(fieldName + " by key")) {
-            return Optional.of(new OIndexCandidateImpl(index.getName()));
+        if (index.getInternal().canBeUsedInEqualityOperators()) {
+          OIndexDefinition def = index.getDefinition();
+          for (String o : def.getFieldsToIndex()) {
+            if (o.equalsIgnoreCase(fieldName + " by key")) {
+              return Optional.of(new OIndexCandidateImpl(index.getName()));
+            }
           }
         }
       }
@@ -53,7 +52,13 @@ public class OClassIndexFinder implements OIndexFinder {
 
   @Override
   public Optional<OIndexCandidate> findAllowRangeIndex(String fieldName, OCommandContext ctx) {
-    // TODO Auto-generated method stub
+    OClass cl = ctx.getDatabase().getClass(this.clazz);
+    Collection<OIndex> indexes = cl.getProperty(fieldName).getAllIndexes();
+    for (OIndex index : indexes) {
+      if (index.getInternal().canBeUsedInEqualityOperators() && index.supportsOrderedIterations()) {
+        return Optional.of(new OIndexCandidateImpl(index.getName()));
+      }
+    }
     return Optional.empty();
   }
 
@@ -65,9 +70,11 @@ public class OClassIndexFinder implements OIndexFinder {
       Collection<OIndex> indexes = prop.getAllIndexes();
       for (OIndex index : indexes) {
         OIndexDefinition def = index.getDefinition();
-        for (String o : def.getFieldsToIndex()) {
-          if (o.equalsIgnoreCase(fieldName + " by value")) {
-            return Optional.of(new OIndexCandidateImpl(index.getName()));
+        if (index.getInternal().canBeUsedInEqualityOperators()) {
+          for (String o : def.getFieldsToIndex()) {
+            if (o.equalsIgnoreCase(fieldName + " by value")) {
+              return Optional.of(new OIndexCandidateImpl(index.getName()));
+            }
           }
         }
       }
@@ -77,7 +84,14 @@ public class OClassIndexFinder implements OIndexFinder {
 
   @Override
   public Optional<OIndexCandidate> findFullTextIndex(String fieldName, OCommandContext ctx) {
-    // TODO Auto-generated method stub
+    OClass cl = ctx.getDatabase().getClass(this.clazz);
+    Collection<OIndex> indexes = cl.getProperty(fieldName).getAllIndexes();
+    for (OIndex index : indexes) {
+      if (OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(index.getType())
+          && !index.getAlgorithm().equalsIgnoreCase("LUCENE")) {
+        return Optional.of(new OIndexCandidateImpl(index.getName()));
+      }
+    }
     return Optional.empty();
   }
 }
