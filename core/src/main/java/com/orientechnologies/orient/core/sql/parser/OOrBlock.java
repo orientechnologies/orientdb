@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
+import com.orientechnologies.orient.core.sql.executor.metadata.ORequiredIndexCanditate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -266,13 +267,28 @@ public class OOrBlock extends OBooleanExpression {
   }
 
   public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
-    // TODO: actually implement or
     Optional<OIndexCandidate> result = Optional.empty();
+    boolean first = true;
     for (OBooleanExpression exp : subBlocks) {
       Optional<OIndexCandidate> singleResult = exp.findIndex(info, ctx);
       if (singleResult.isPresent()) {
-        result = singleResult;
+        if (first) {
+          result = singleResult;
+
+        } else if (result.isPresent()) {
+          if (result.get() instanceof ORequiredIndexCanditate) {
+            ((ORequiredIndexCanditate) result.get()).addCanditate(singleResult.get());
+          } else {
+            ORequiredIndexCanditate req = new ORequiredIndexCanditate();
+            req.addCanditate(result.get());
+            req.addCanditate(singleResult.get());
+            result = Optional.of(req);
+          }
+        } else {
+          return Optional.empty();
+        }
       }
+      first = false;
     }
     return result;
   }
