@@ -7,9 +7,12 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OAndBlock extends OBooleanExpression {
@@ -272,6 +275,18 @@ public class OAndBlock extends OBooleanExpression {
       return this;
     }
     return this;
+  }
+
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    // TODO: actually implement and
+    Optional<OIndexCandidate> result = Optional.empty();
+    for (OBooleanExpression exp : subBlocks) {
+      Optional<OIndexCandidate> singleResult = exp.findIndex(info, ctx);
+      if (singleResult.isPresent()) {
+        result = singleResult;
+      }
+    }
+    return result;
   }
 
   @Override
