@@ -12,7 +12,6 @@ public abstract class OParserTestAbstract {
     StringBuilder builder = new StringBuilder();
     result.toString(null, builder);
     return checkSyntax(builder.toString(), true);
-    //    return checkSyntax(query, true);
   }
 
   protected SimpleNode checkRightSyntaxServer(String query) {
@@ -20,7 +19,6 @@ public abstract class OParserTestAbstract {
     StringBuilder builder = new StringBuilder();
     result.toString(null, builder);
     return checkSyntaxServer(builder.toString(), true);
-    //    return checkSyntax(query, true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {
@@ -36,23 +34,12 @@ public abstract class OParserTestAbstract {
     try {
       SimpleNode result = osql.parse();
       if (!isCorrect) {
-        //        System.out.println(query);
-        //        if (result != null) {
-        //          System.out.println("->");
-        //          StringBuilder builer = new StringBuilder();
-        //          result.toString(null, builer);
-        //          System.out.println(builer.toString());
-        //          System.out.println("............");
-        //        }
-
         fail();
       }
 
       return result;
     } catch (Exception e) {
       if (isCorrect) {
-        System.out.println(query);
-        e.printStackTrace();
         fail();
       }
     }
@@ -64,37 +51,16 @@ public abstract class OParserTestAbstract {
     try {
       SimpleNode result = osql.parseServerStatement();
       if (!isCorrect) {
-        //        System.out.println(query);
-        //        if (result != null) {
-        //          System.out.println("->");
-        //          StringBuilder builer = new StringBuilder();
-        //          result.toString(null, builer);
-        //          System.out.println(builer.toString());
-        //          System.out.println("............");
-        //        }
-
         fail();
       }
 
       return result;
     } catch (Exception e) {
       if (isCorrect) {
-        System.out.println(query);
-        e.printStackTrace();
         fail();
       }
     }
     return null;
-  }
-
-  private void printTree(String s) {
-    OrientSql osql = getParserFor(s);
-    try {
-      SimpleNode n = osql.parse();
-
-    } catch (ParseException e) {
-      e.printStackTrace();
-    }
   }
 
   protected OrientSql getParserFor(String string) {
