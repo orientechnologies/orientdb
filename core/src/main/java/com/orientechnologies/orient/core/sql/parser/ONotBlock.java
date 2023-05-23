@@ -182,8 +182,11 @@ public class ONotBlock extends OBooleanExpression {
   }
 
   public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
-    // TODO: Invert Info
-    return sub.findIndex(info, ctx);
+    Optional<OIndexCandidate> found = sub.findIndex(info, ctx);
+    if (negate && found.isPresent()) {
+      found = found.get().invert();
+    }
+    return found;
   }
 
   @Override

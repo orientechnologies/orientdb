@@ -135,6 +135,20 @@ public class OStatementIndexFinderTest {
     assertEquals("cl.name", required.getCanditates().get(1).getName());
   }
 
+  @Test
+  public void simpleRangeNotTest() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.NOTUNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    OSelectStatement stat = parseQuery("select from cl where not name < 'a' ");
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    assertEquals("cl.name", result.get().getName());
+  }
+
   private OSelectStatement parseQuery(String query) {
     InputStream is = new ByteArrayInputStream(query.getBytes());
     OrientSql osql = new OrientSql(is);
