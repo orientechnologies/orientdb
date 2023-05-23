@@ -13,9 +13,11 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OBaseExpression extends OMathExpression {
@@ -239,6 +241,23 @@ public class OBaseExpression extends OMathExpression {
   @Override
   public boolean isBaseIdentifier() {
     return identifier != null && modifier == null && identifier.isBaseIdentifier();
+  }
+
+  public Optional<OPath> getPath() {
+    if (this.isBaseIdentifier()) {
+      if (modifier != null) {
+        Optional<OPath> path = modifier.getPath();
+        if (path.isPresent()) {
+          path.get().addPre(this.identifier.getSuffix().identifier.getStringValue());
+          return path;
+        } else {
+          return Optional.empty();
+        }
+      } else {
+        return Optional.of(new OPath(this.identifier.getSuffix().identifier.getStringValue()));
+      }
+    }
+    return Optional.empty();
   }
 
   @Override

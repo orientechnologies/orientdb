@@ -5,13 +5,13 @@ import java.util.Optional;
 
 public interface OIndexFinder {
 
-  Optional<OIndexCandidate> findExactIndex(String fieldName, OCommandContext ctx);
+  Optional<OIndexCandidate> findExactIndex(OPath fieldName, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findByKeyIndex(String fieldName, OCommandContext ctx);
+  Optional<OIndexCandidate> findByKeyIndex(OPath fieldName, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findAllowRangeIndex(String fieldName, OCommandContext ctx);
+  Optional<OIndexCandidate> findAllowRangeIndex(OPath fieldName, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findByValueIndex(String fieldName, OCommandContext ctx);
+  Optional<OIndexCandidate> findByValueIndex(OPath fieldName, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findFullTextIndex(String fieldName, OCommandContext ctx);
+  Optional<OIndexCandidate> findFullTextIndex(OPath fieldName, OCommandContext ctx);
 }

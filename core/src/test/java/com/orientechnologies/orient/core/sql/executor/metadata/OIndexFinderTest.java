@@ -40,13 +40,12 @@ public class OIndexFinderTest {
     prop1.createIndex(INDEX_TYPE.UNIQUE);
 
     OIndexFinder finder = new OClassIndexFinder("cl");
-    Optional<OIndexCandidate> result =
-        finder.findExactIndex("name", new OBasicCommandContext(session));
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    Optional<OIndexCandidate> result = finder.findExactIndex(new OPath("name"), ctx);
 
     assertEquals("cl.name", result.get().getName());
 
-    Optional<OIndexCandidate> result1 =
-        finder.findExactIndex("surname", new OBasicCommandContext(session));
+    Optional<OIndexCandidate> result1 = finder.findExactIndex(new OPath("surname"), ctx);
 
     assertEquals("cl.surname", result1.get().getName());
   }
@@ -60,13 +59,12 @@ public class OIndexFinderTest {
     prop1.createIndex(INDEX_TYPE.UNIQUE_HASH_INDEX);
 
     OIndexFinder finder = new OClassIndexFinder("cl");
-    Optional<OIndexCandidate> result =
-        finder.findExactIndex("name", new OBasicCommandContext(session));
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    Optional<OIndexCandidate> result = finder.findExactIndex(new OPath("name"), ctx);
 
     assertEquals("cl.name", result.get().getName());
 
-    Optional<OIndexCandidate> result1 =
-        finder.findExactIndex("surname", new OBasicCommandContext(session));
+    Optional<OIndexCandidate> result1 = finder.findExactIndex(new OPath("surname"), ctx);
 
     assertEquals("cl.surname", result1.get().getName());
   }
@@ -80,13 +78,12 @@ public class OIndexFinderTest {
     prop1.createIndex(INDEX_TYPE.UNIQUE);
 
     OIndexFinder finder = new OClassIndexFinder("cl");
-    Optional<OIndexCandidate> result =
-        finder.findAllowRangeIndex("name", new OBasicCommandContext(session));
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    Optional<OIndexCandidate> result = finder.findAllowRangeIndex(new OPath("name"), ctx);
 
     assertEquals("cl.name", result.get().getName());
 
-    Optional<OIndexCandidate> result1 =
-        finder.findAllowRangeIndex("surname", new OBasicCommandContext(session));
+    Optional<OIndexCandidate> result1 = finder.findAllowRangeIndex(new OPath("surname"), ctx);
 
     assertEquals("cl.surname", result1.get().getName());
   }
@@ -102,18 +99,16 @@ public class OIndexFinderTest {
     prop2.createIndex(INDEX_TYPE.FULLTEXT);
 
     OIndexFinder finder = new OClassIndexFinder("cl");
-    Optional<OIndexCandidate> result =
-        finder.findAllowRangeIndex("name", new OBasicCommandContext(session));
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    Optional<OIndexCandidate> result = finder.findAllowRangeIndex(new OPath("name"), ctx);
 
     assertFalse(result.isPresent());
 
-    Optional<OIndexCandidate> result1 =
-        finder.findAllowRangeIndex("surname", new OBasicCommandContext(session));
+    Optional<OIndexCandidate> result1 = finder.findAllowRangeIndex(new OPath("surname"), ctx);
 
     assertFalse(result1.isPresent());
 
-    Optional<OIndexCandidate> result2 =
-        finder.findAllowRangeIndex("third", new OBasicCommandContext(session));
+    Optional<OIndexCandidate> result2 = finder.findAllowRangeIndex(new OPath("third"), ctx);
 
     assertFalse(result2.isPresent());
   }
@@ -125,8 +120,8 @@ public class OIndexFinderTest {
     this.session.command("create index cl.map on cl(map by key) NOTUNIQUE").close();
 
     OIndexFinder finder = new OClassIndexFinder("cl");
-    Optional<OIndexCandidate> result =
-        finder.findByKeyIndex("map", new OBasicCommandContext(session));
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    Optional<OIndexCandidate> result = finder.findByKeyIndex(new OPath("map"), ctx);
 
     assertEquals("cl.map", result.get().getName());
   }
@@ -138,8 +133,8 @@ public class OIndexFinderTest {
     this.session.command("create index cl.map on cl(map by value) NOTUNIQUE").close();
 
     OIndexFinder finder = new OClassIndexFinder("cl");
-    Optional<OIndexCandidate> result =
-        finder.findByValueIndex("map", new OBasicCommandContext(session));
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    Optional<OIndexCandidate> result = finder.findByValueIndex(new OPath("map"), ctx);
 
     assertEquals("cl.map", result.get().getName());
   }
@@ -151,10 +146,27 @@ public class OIndexFinderTest {
     prop.createIndex(INDEX_TYPE.FULLTEXT);
 
     OIndexFinder finder = new OClassIndexFinder("cl");
-    Optional<OIndexCandidate> result =
-        finder.findFullTextIndex("name", new OBasicCommandContext(session));
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    Optional<OIndexCandidate> result = finder.findFullTextIndex(new OPath("name"), ctx);
 
     assertEquals("cl.name", result.get().getName());
+  }
+
+  @Test
+  public void testFindChainMatchIndex() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.NOTUNIQUE);
+    OProperty prop1 = cl.createProperty("friend", OType.LINK, cl);
+    prop1.createIndex(INDEX_TYPE.NOTUNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    OPath path = new OPath("name");
+    path.addPre("friend");
+    path.addPre("friend");
+    Optional<OIndexCandidate> result = finder.findExactIndex(path, ctx);
+    assertEquals("cl.friend->cl.friend->cl.name->", result.get().getName());
   }
 
   @After

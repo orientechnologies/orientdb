@@ -10,12 +10,14 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OModifier extends SimpleNode {
@@ -492,6 +494,21 @@ public class OModifier extends SimpleNode {
       }
     }
     return false;
+  }
+
+  public Optional<OPath> getPath() {
+    if (this.suffix != null && this.suffix.isBaseIdentifier()) {
+      if (this.next != null) {
+        Optional<OPath> path = this.getPath();
+        if (path.isPresent()) {
+          path.get().addPre(suffix.identifier.getValue());
+        }
+        return path;
+      } else {
+        return Optional.of(new OPath(suffix.identifier.getValue()));
+      }
+    }
+    return Optional.empty();
   }
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

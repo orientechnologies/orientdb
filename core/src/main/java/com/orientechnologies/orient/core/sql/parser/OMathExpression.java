@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.math.BigDecimal;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.Date;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -1028,6 +1030,15 @@ public class OMathExpression extends SimpleNode {
       }
     }
     return false;
+  }
+
+  public Optional<OPath> getPath() {
+    if (this.childExpressions != null) {
+      if (childExpressions.size() == 1) {
+        return childExpressions.get(0).getPath();
+      }
+    }
+    return Optional.empty();
   }
 
   public OCollate getCollate(OResult currentRecord, OCommandContext ctx) {

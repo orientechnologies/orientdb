@@ -12,8 +12,10 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OExpression extends SimpleNode {
@@ -142,6 +144,17 @@ public class OExpression extends SimpleNode {
     }
 
     return false;
+  }
+
+  public Optional<OPath> getPath() {
+    if (mathExpression != null) {
+      return mathExpression.getPath();
+    }
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).getPath();
+    }
+
+    return Optional.empty();
   }
 
   public boolean isEarlyCalculated(OCommandContext ctx) {
