@@ -244,7 +244,7 @@ public class OBaseExpression extends OMathExpression {
   }
 
   public Optional<OPath> getPath() {
-    if (this.isBaseIdentifier()) {
+    if (identifier != null && identifier.isBaseIdentifier()) {
       if (modifier != null) {
         Optional<OPath> path = modifier.getPath();
         if (path.isPresent()) {

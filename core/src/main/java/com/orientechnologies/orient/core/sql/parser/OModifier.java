@@ -499,7 +499,7 @@ public class OModifier extends SimpleNode {
   public Optional<OPath> getPath() {
     if (this.suffix != null && this.suffix.isBaseIdentifier()) {
       if (this.next != null) {
-        Optional<OPath> path = this.getPath();
+        Optional<OPath> path = this.next.getPath();
         if (path.isPresent()) {
           path.get().addPre(suffix.identifier.getValue());
         }

@@ -169,6 +169,75 @@ public class OIndexFinderTest {
     assertEquals("cl.friend->cl.friend->cl.name->", result.get().getName());
   }
 
+  @Test
+  public void testFindChainRangeIndex() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.NOTUNIQUE);
+    OProperty prop1 = cl.createProperty("friend", OType.LINK, cl);
+    prop1.createIndex(INDEX_TYPE.NOTUNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    OPath path = new OPath("name");
+    path.addPre("friend");
+    path.addPre("friend");
+    Optional<OIndexCandidate> result = finder.findAllowRangeIndex(path, ctx);
+    assertEquals("cl.friend->cl.friend->cl.name->", result.get().getName());
+  }
+
+  @Test
+  public void testFindChainByKeyIndex() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("map", OType.EMBEDDEDMAP, OType.STRING);
+    this.session.command("create index cl.map on cl(map by key) NOTUNIQUE").close();
+    OProperty prop1 = cl.createProperty("friend", OType.LINK, cl);
+    prop1.createIndex(INDEX_TYPE.NOTUNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    OPath path = new OPath("map");
+    path.addPre("friend");
+    path.addPre("friend");
+    Optional<OIndexCandidate> result = finder.findByKeyIndex(path, ctx);
+    assertEquals("cl.friend->cl.friend->cl.map->", result.get().getName());
+  }
+
+  @Test
+  public void testFindChainByValueIndex() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("map", OType.EMBEDDEDMAP, OType.STRING);
+    this.session.command("create index cl.map on cl(map by value) NOTUNIQUE").close();
+    OProperty prop1 = cl.createProperty("friend", OType.LINK, cl);
+    prop1.createIndex(INDEX_TYPE.NOTUNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    OPath path = new OPath("map");
+    path.addPre("friend");
+    path.addPre("friend");
+    Optional<OIndexCandidate> result = finder.findByValueIndex(path, ctx);
+    assertEquals("cl.friend->cl.friend->cl.map->", result.get().getName());
+  }
+
+  @Test
+  public void testFindChainFullTextMatchIndex() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.FULLTEXT);
+    OProperty prop1 = cl.createProperty("friend", OType.LINK, cl);
+    prop1.createIndex(INDEX_TYPE.NOTUNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    OPath path = new OPath("name");
+    path.addPre("friend");
+    path.addPre("friend");
+
+    Optional<OIndexCandidate> result = finder.findFullTextIndex(path, ctx);
+    assertEquals("cl.friend->cl.friend->cl.name->", result.get().getName());
+  }
+
   @After
   public void after() {
     this.session.close();
