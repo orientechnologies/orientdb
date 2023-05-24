@@ -512,12 +512,13 @@ public class OBinaryCondition extends OBooleanExpression {
     if (path.isPresent()) {
       OPath p = path.get();
       if (right.isEarlyCalculated(ctx)) {
+        Object value = right.execute((OResult) null, ctx);
         if (operator instanceof OEqualsCompareOperator) {
-          return info.findExactIndex(p, ctx);
+          return info.findExactIndex(p, value, ctx);
         } else if (operator instanceof OContainsKeyOperator) {
-          return info.findByKeyIndex(p, ctx);
+          return info.findByKeyIndex(p, value, ctx);
         } else if (operator.isRangeOperator()) {
-          return info.findAllowRangeIndex(p, ctx);
+          return info.findAllowRangeIndex(p, operator.getOperation(), value, ctx);
         }
       }
     }

@@ -238,7 +238,8 @@ public class OContainsTextCondition extends OBooleanExpression {
     Optional<OPath> path = left.getPath();
     if (path.isPresent()) {
       if (right != null && right.isEarlyCalculated(ctx)) {
-        return info.findFullTextIndex(path.get(), ctx);
+        Object value = right.execute((OResult) null, ctx);
+        return info.findFullTextIndex(path.get(), value, ctx);
       }
     }
 

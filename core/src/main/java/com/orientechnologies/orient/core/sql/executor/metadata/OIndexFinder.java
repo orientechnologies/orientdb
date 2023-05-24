@@ -5,13 +5,23 @@ import java.util.Optional;
 
 public interface OIndexFinder {
 
-  Optional<OIndexCandidate> findExactIndex(OPath fieldName, OCommandContext ctx);
+  enum Operation {
+    Eq,
+    Gt,
+    Lt,
+    Ge,
+    LE,
+    FuzzyEq,
+  }
 
-  Optional<OIndexCandidate> findByKeyIndex(OPath fieldName, OCommandContext ctx);
+  Optional<OIndexCandidate> findExactIndex(OPath fieldName, Object value, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findAllowRangeIndex(OPath fieldName, OCommandContext ctx);
+  Optional<OIndexCandidate> findByKeyIndex(OPath fieldName, Object value, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findByValueIndex(OPath fieldName, OCommandContext ctx);
+  Optional<OIndexCandidate> findAllowRangeIndex(
+      OPath fieldName, Operation operation, Object value, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findFullTextIndex(OPath fieldName, OCommandContext ctx);
+  Optional<OIndexCandidate> findByValueIndex(OPath fieldName, Object value, OCommandContext ctx);
+
+  Optional<OIndexCandidate> findFullTextIndex(OPath fieldName, Object value, OCommandContext ctx);
 }

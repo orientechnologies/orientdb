@@ -389,7 +389,8 @@ public class OContainsAnyCondition extends OBooleanExpression {
     Optional<OPath> path = left.getPath();
     if (path.isPresent()) {
       if (right.isEarlyCalculated(ctx)) {
-        return info.findExactIndex(path.get(), ctx);
+        Object value = right.execute((OResult) null, ctx);
+        return info.findExactIndex(path.get(), value, ctx);
       }
     }
     return Optional.empty();

@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.Map;
 
 public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
@@ -71,6 +72,11 @@ public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
   @Override
   public boolean isRangeOperator() {
     return true;
+  }
+
+  @Override
+  public Operation getOperation() {
+    return Operation.LE;
   }
 
   @Override
