@@ -10,7 +10,7 @@ public interface OIndexFinder {
     Gt,
     Lt,
     Ge,
-    LE,
+    Le,
     FuzzyEq,
   }
 

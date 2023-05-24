@@ -86,9 +86,10 @@ public class OClassIndexFinder implements OIndexFinder {
       if (index.getInternal().canBeUsedInEqualityOperators()) {
         if (cand.isPresent()) {
           ((OIndexCandidateChain) cand.get()).add(index.getName());
+          ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
           return cand;
         } else {
-          return Optional.of(new OIndexCandidateImpl(index.getName()));
+          return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq));
         }
       }
     }
@@ -115,9 +116,10 @@ public class OClassIndexFinder implements OIndexFinder {
             if (o.equalsIgnoreCase(last + " by key")) {
               if (cand.isPresent()) {
                 ((OIndexCandidateChain) cand.get()).add(index.getName());
+                ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
                 return cand;
               } else {
-                return Optional.of(new OIndexCandidateImpl(index.getName()));
+                return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq));
               }
             }
           }
@@ -143,9 +145,10 @@ public class OClassIndexFinder implements OIndexFinder {
       if (index.getInternal().canBeUsedInEqualityOperators() && index.supportsOrderedIterations()) {
         if (cand.isPresent()) {
           ((OIndexCandidateChain) cand.get()).add(index.getName());
+          ((OIndexCandidateChain) cand.get()).setOperation(op);
           return cand;
         } else {
-          return Optional.of(new OIndexCandidateImpl(index.getName()));
+          return Optional.of(new OIndexCandidateImpl(index.getName(), op));
         }
       }
     }
@@ -172,9 +175,10 @@ public class OClassIndexFinder implements OIndexFinder {
             if (o.equalsIgnoreCase(last + " by value")) {
               if (cand.isPresent()) {
                 ((OIndexCandidateChain) cand.get()).add(index.getName());
+                ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
                 return cand;
               } else {
-                return Optional.of(new OIndexCandidateImpl(index.getName()));
+                return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq));
               }
             }
           }
@@ -201,9 +205,10 @@ public class OClassIndexFinder implements OIndexFinder {
           && !index.getAlgorithm().equalsIgnoreCase("LUCENE")) {
         if (cand.isPresent()) {
           ((OIndexCandidateChain) cand.get()).add(index.getName());
+          ((OIndexCandidateChain) cand.get()).setOperation(Operation.FuzzyEq);
           return cand;
         } else {
-          return Optional.of(new OIndexCandidateImpl(index.getName()));
+          return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.FuzzyEq));
         }
       }
     }

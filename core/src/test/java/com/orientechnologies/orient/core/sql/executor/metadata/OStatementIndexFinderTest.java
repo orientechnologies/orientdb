@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
@@ -48,6 +49,7 @@ public class OStatementIndexFinderTest {
     OBasicCommandContext ctx = new OBasicCommandContext(session);
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
     assertEquals("cl.name", result.get().getName());
+    assertEquals(Operation.Eq, result.get().getOperation());
   }
 
   @Test
@@ -63,10 +65,12 @@ public class OStatementIndexFinderTest {
 
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
     assertEquals("cl.name", result.get().getName());
+    assertEquals(Operation.Gt, result.get().getOperation());
 
     OSelectStatement stat1 = parseQuery("select from cl where name < 'a'");
     Optional<OIndexCandidate> result1 = stat1.getWhereClause().findIndex(finder, ctx);
     assertEquals("cl.name", result1.get().getName());
+    assertEquals(Operation.Lt, result1.get().getOperation());
   }
 
   @Test
@@ -82,7 +86,9 @@ public class OStatementIndexFinderTest {
     assertTrue((result.get() instanceof OMultipleIndexCanditate));
     OMultipleIndexCanditate multiple = (OMultipleIndexCanditate) result.get();
     assertEquals("cl.name", multiple.getCanditates().get(0).getName());
+    assertEquals(Operation.Eq, multiple.getCanditates().get(0).getOperation());
     assertEquals("cl.name", multiple.getCanditates().get(1).getName());
+    assertEquals(Operation.Eq, multiple.getCanditates().get(0).getOperation());
   }
 
   @Test
@@ -98,7 +104,9 @@ public class OStatementIndexFinderTest {
     assertTrue((result.get() instanceof ORequiredIndexCanditate));
     ORequiredIndexCanditate required = (ORequiredIndexCanditate) result.get();
     assertEquals("cl.name", required.getCanditates().get(0).getName());
+    assertEquals(Operation.Eq, required.getCanditates().get(0).getOperation());
     assertEquals("cl.name", required.getCanditates().get(1).getName());
+    assertEquals(Operation.Eq, required.getCanditates().get(0).getOperation());
   }
 
   @Test
@@ -115,7 +123,9 @@ public class OStatementIndexFinderTest {
     assertTrue((result.get() instanceof OMultipleIndexCanditate));
     OMultipleIndexCanditate multiple = (OMultipleIndexCanditate) result.get();
     assertEquals("cl.name", multiple.getCanditates().get(0).getName());
+    assertEquals(Operation.Lt, multiple.getCanditates().get(0).getOperation());
     assertEquals("cl.name", multiple.getCanditates().get(1).getName());
+    assertEquals(Operation.Gt, multiple.getCanditates().get(1).getOperation());
   }
 
   @Test
@@ -132,7 +142,9 @@ public class OStatementIndexFinderTest {
     assertTrue((result.get() instanceof ORequiredIndexCanditate));
     ORequiredIndexCanditate required = (ORequiredIndexCanditate) result.get();
     assertEquals("cl.name", required.getCanditates().get(0).getName());
+    assertEquals(Operation.Lt, required.getCanditates().get(0).getOperation());
     assertEquals("cl.name", required.getCanditates().get(1).getName());
+    assertEquals(Operation.Gt, required.getCanditates().get(1).getOperation());
   }
 
   @Test
@@ -147,6 +159,7 @@ public class OStatementIndexFinderTest {
     OSelectStatement stat = parseQuery("select from cl where not name < 'a' ");
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
     assertEquals("cl.name", result.get().getName());
+    assertEquals(Operation.Ge, result.get().getOperation());
   }
 
   @Test
@@ -163,6 +176,7 @@ public class OStatementIndexFinderTest {
     OSelectStatement stat = parseQuery("select from cl where friend.friend.name = 'a' ");
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
     assertEquals("cl.friend->cl.friend->cl.name->", result.get().getName());
+    assertEquals(Operation.Eq, result.get().getOperation());
   }
 
   private OSelectStatement parseQuery(String query) {

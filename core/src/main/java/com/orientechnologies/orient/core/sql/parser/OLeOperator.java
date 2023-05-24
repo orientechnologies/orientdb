@@ -76,7 +76,7 @@ public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
 
   @Override
   public Operation getOperation() {
-    return Operation.LE;
+    return Operation.Le;
   }
 
   @Override
