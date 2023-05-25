@@ -324,7 +324,7 @@ public abstract class OAbstractPaginatedStorage
 
   protected AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
   protected OrientDBInternal context;
-  private final CountDownLatch migration = new CountDownLatch(1);
+  private volatile CountDownLatch migration = new CountDownLatch(1);
 
   public OAbstractPaginatedStorage(
       final String name, final String filePath, final int id, OrientDBInternal context) {
@@ -5635,7 +5635,7 @@ public abstract class OAbstractPaginatedStorage
       postCloseSteps(onDelete, isInError(), idGen.getLastId());
       transaction = null;
       lastMetadata = null;
-
+      migration = new CountDownLatch(1);
       status = STATUS.CLOSED;
     } catch (final IOException e) {
       final String message = "Error on closing of storage '" + name;
