@@ -287,6 +287,8 @@ public class OOrBlock extends OBooleanExpression {
         } else {
           return Optional.empty();
         }
+      } else {
+        return Optional.empty();
       }
       first = false;
     }

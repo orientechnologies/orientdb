@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
@@ -177,6 +178,82 @@ public class OStatementIndexFinderTest {
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
     assertEquals("cl.friend->cl.friend->cl.name->", result.get().getName());
     assertEquals(Operation.Eq, result.get().getOperation());
+  }
+
+  @Test
+  public void simpleNestedAndOrMatchTest() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.NOTUNIQUE);
+    OProperty prop1 = cl.createProperty("friend", OType.LINK, cl);
+    prop1.createIndex(INDEX_TYPE.NOTUNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    OSelectStatement stat =
+        parseQuery(
+            "select from cl where (friend.name = 'a' and name='a') or (friend.name='b' and name='b') ");
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+
+    assertTrue((result.get() instanceof ORequiredIndexCanditate));
+    ORequiredIndexCanditate required = (ORequiredIndexCanditate) result.get();
+    assertTrue((required.getCanditates().get(0) instanceof OMultipleIndexCanditate));
+    OMultipleIndexCanditate first = (OMultipleIndexCanditate) required.getCanditates().get(0);
+    assertEquals("cl.friend->cl.name->", first.getCanditates().get(0).getName());
+    assertEquals(Operation.Eq, first.getCanditates().get(0).getOperation());
+    assertEquals("cl.name", first.getCanditates().get(1).getName());
+    assertEquals(Operation.Eq, first.getCanditates().get(1).getOperation());
+
+    OMultipleIndexCanditate second = (OMultipleIndexCanditate) required.getCanditates().get(1);
+    assertEquals("cl.friend->cl.name->", second.getCanditates().get(0).getName());
+    assertEquals(Operation.Eq, second.getCanditates().get(0).getOperation());
+    assertEquals("cl.name", second.getCanditates().get(1).getName());
+    assertEquals(Operation.Eq, second.getCanditates().get(1).getOperation());
+  }
+
+  @Test
+  public void simpleNestedAndOrPartialMatchTest() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.NOTUNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    OSelectStatement stat =
+        parseQuery(
+            "select from cl where (friend.name = 'a' and name='a') or (friend.name='b' and name='b') ");
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+
+    assertTrue((result.get() instanceof ORequiredIndexCanditate));
+    ORequiredIndexCanditate required = (ORequiredIndexCanditate) result.get();
+    OIndexCandidate first = required.getCanditates().get(0);
+    assertEquals("cl.name", first.getName());
+    assertEquals(Operation.Eq, first.getOperation());
+
+    OIndexCandidate second = required.getCanditates().get(1);
+    assertEquals("cl.name", second.getName());
+    assertEquals(Operation.Eq, second.getOperation());
+  }
+
+  @Test
+  public void simpleNestedOrNotMatchTest() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.NOTUNIQUE);
+    OProperty prop1 = cl.createProperty("friend", OType.LINK, cl);
+    prop1.createIndex(INDEX_TYPE.NOTUNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    OSelectStatement stat =
+        parseQuery(
+            "select from cl where (friend.name = 'a' and name='a') or (friend.other='b' and other='b') ");
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+
+    assertFalse(result.isPresent());
   }
 
   private OSelectStatement parseQuery(String query) {
