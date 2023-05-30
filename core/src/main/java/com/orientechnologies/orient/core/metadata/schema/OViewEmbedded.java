@@ -272,9 +272,11 @@ public class OViewEmbedded extends OViewImpl {
   }
 
   @Override
-  public OViewRemovedMetadata replaceViewClusterAndIndex(final int cluster, List<OIndex> indexes) {
+  public OViewRemovedMetadata replaceViewClusterAndIndex(
+      final int cluster, List<OIndex> indexes, long lastRefreshTime) {
     acquireSchemaWriteLock();
     try {
+      this.lastRefreshTime = lastRefreshTime;
       List<String> oldIndexes = inactivateIndexes();
       int[] oldClusters = getClusterIds();
       addClusterId(cluster);

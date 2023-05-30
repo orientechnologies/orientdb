@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.orient.core.collate.OCollate;
-import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition.INDEX_BY;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,78 +9,6 @@ public class OViewConfig {
   public static String UPDATE_STRATEGY_BATCH = "batch";
 
   public static String UPDATE_STRATEGY_LIVE = "live";
-
-  public static class OViewIndexConfig {
-
-    protected final String type;
-    protected final String engine;
-
-    public static class OIndexConfigProperty {
-      protected final String name;
-      protected final OType type;
-      protected final OType linkedType;
-      protected final OCollate collate;
-      protected final INDEX_BY index_by;
-
-      public OIndexConfigProperty(
-          String name, OType type, OType linkedType, OCollate collate, INDEX_BY index_by) {
-        this.name = name;
-        this.type = type;
-        this.linkedType = linkedType;
-        this.collate = collate;
-        this.index_by = index_by;
-      }
-
-      public OCollate getCollate() {
-        return collate;
-      }
-
-      public OType getLinkedType() {
-        return linkedType;
-      }
-
-      public String getName() {
-        return name;
-      }
-
-      public OType getType() {
-        return type;
-      }
-
-      public INDEX_BY getIndexBy() {
-        return index_by;
-      }
-
-      public OIndexConfigProperty copy() {
-        return new OIndexConfigProperty(
-            this.name, this.type, this.linkedType, this.collate, this.index_by);
-      }
-    }
-
-    protected List<OIndexConfigProperty> props = new ArrayList<>();
-
-    OViewIndexConfig(String type, String engine) {
-      this.type = type;
-      this.engine = engine;
-    }
-
-    public void addProperty(
-        String name, OType type, OType linkedType, OCollate collate, INDEX_BY indexBy) {
-      this.props.add(new OIndexConfigProperty(name, type, linkedType, collate, indexBy));
-    }
-
-    public List<OIndexConfigProperty> getProperties() {
-      return props;
-    }
-
-    public String getType() {
-      return type;
-    }
-
-    public String getEngine() {
-      return engine;
-    }
-  }
 
   protected String name;
   protected String query;

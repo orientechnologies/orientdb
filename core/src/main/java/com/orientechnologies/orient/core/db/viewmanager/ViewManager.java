@@ -20,12 +20,13 @@ import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition.INDEX_BY;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OIndexConfigProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
-import com.orientechnologies.orient.core.metadata.schema.OViewConfig.OViewIndexConfig.OIndexConfigProperty;
 import com.orientechnologies.orient.core.metadata.schema.OViewImpl;
+import com.orientechnologies.orient.core.metadata.schema.OViewIndexConfig;
 import com.orientechnologies.orient.core.metadata.schema.OViewRemovedMetadata;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -76,8 +77,6 @@ public class ViewManager {
   private final ConcurrentMap<String, AtomicInteger> viewIndexVisitors = new ConcurrentHashMap<>();
 
   private final List<String> indexesToDrop = Collections.synchronizedList(new ArrayList<>());
-
-  private final ConcurrentMap<String, Long> lastUpdateTimestampForView = new ConcurrentHashMap<>();
 
   private final ConcurrentMap<String, Long> lastChangePerClass = new ConcurrentHashMap<>();
   private final Set<String> refreshing = Collections.synchronizedSet(new HashSet<>());
@@ -283,10 +282,7 @@ public class ViewManager {
       return false;
     }
 
-    Long lastViewUpdate = lastUpdateTimestampForView.get(view.getName());
-    if (lastViewUpdate == null) {
-      return true;
-    }
+    long lastViewUpdate = view.getLastRefreshTime();
 
     List<String> watchRules = view.getWatchClasses();
     if (watchRules == null || watchRules.size() == 0) {
@@ -307,10 +303,7 @@ public class ViewManager {
   }
 
   private boolean isUpdateExpiredFor(OView view, ODatabaseDocumentInternal db) {
-    Long lastUpdate = lastUpdateTimestampForView.get(view.getName());
-    if (lastUpdate == null) {
-      return true;
-    }
+    long lastUpdate = view.getLastRefreshTime();
     int updateInterval = view.getUpdateIntervalSeconds();
     return lastUpdate + (updateInterval * 1000) < System.currentTimeMillis();
   }
@@ -338,7 +331,7 @@ public class ViewManager {
       }
 
       OLogManager.instance().info(this, "Starting refresh of view '%s'", viewName);
-      lastUpdateTimestampForView.put(viewName, System.currentTimeMillis());
+      long lastRefreshTime = System.currentTimeMillis();
       String clusterName = createNextClusterNameFor(view, db);
       int cluster = db.getClusterIdByName(clusterName);
 
@@ -364,7 +357,7 @@ public class ViewManager {
         return;
       }
       OViewRemovedMetadata oldMetadata =
-          ((OViewImpl) view).replaceViewClusterAndIndex(cluster, indexes);
+          ((OViewImpl) view).replaceViewClusterAndIndex(cluster, indexes, lastRefreshTime);
       OLogManager.instance()
           .info(
               this,
@@ -447,7 +440,7 @@ public class ViewManager {
     try {
       List<OIndex> result = new ArrayList<>();
       OIndexManagerAbstract idxMgr = db.getMetadata().getIndexManagerInternal();
-      for (OViewConfig.OViewIndexConfig cfg : view.getRequiredIndexesInfo()) {
+      for (OViewIndexConfig cfg : view.getRequiredIndexesInfo()) {
         OIndexDefinition definition = createIndexDefinition(view.getName(), cfg.getProperties());
         String indexName = view.getName() + "_" + UUID.randomUUID().toString().replaceAll("-", "_");
         String type = cfg.getType();

@@ -16,9 +16,11 @@ public interface OView extends OClass {
 
   List<String> getNodes();
 
-  List<OViewConfig.OViewIndexConfig> getRequiredIndexesInfo();
+  List<OViewIndexConfig> getRequiredIndexesInfo();
 
   String getUpdateStrategy();
 
-  public Set<String> getActiveIndexNames();
+  Set<String> getActiveIndexNames();
+
+  long getLastRefreshTime();
 }

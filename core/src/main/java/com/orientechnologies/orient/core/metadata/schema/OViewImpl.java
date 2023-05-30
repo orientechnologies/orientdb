@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition.INDEX_BY;
-import com.orientechnologies.orient.core.metadata.schema.OViewConfig.OViewIndexConfig.OIndexConfigProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import java.util.ArrayList;
@@ -22,6 +21,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
 
   private OViewConfig cfg;
   private Set<String> activeIndexNames = new HashSet<>();
+  protected long lastRefreshTime = 0;
 
   protected OViewImpl(OSchemaShared iOwner, String iName, OViewConfig cfg, int[] iClusterIds) {
     super(iOwner, iName, iClusterIds);
@@ -44,7 +44,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       for (Map<String, Object> idx : idxData) {
         String type = (String) idx.get("type");
         String engine = (String) idx.get("engine");
-        OViewConfig.OViewIndexConfig indexConfig = this.cfg.addIndex(type, engine);
+        OViewIndexConfig indexConfig = this.cfg.addIndex(type, engine);
         if (idx.get("properties") instanceof Map) {
           Map<String, Object> props = (Map<String, Object>) idx.get("properties");
           for (Map.Entry<String, Object> prop : props.entrySet()) {
@@ -95,6 +95,9 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     if (document.getProperty("activeIndexNames") instanceof Set) {
       activeIndexNames = document.getProperty("activeIndexNames");
     }
+    if (document.getProperty("lastRefreshTime") != null) {
+      lastRefreshTime = document.getProperty("lastRefreshTime");
+    }
   }
 
   @Override
@@ -104,7 +107,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("updatable", cfg.isUpdatable());
 
     List<Map<String, Object>> indexes = new ArrayList<>();
-    for (OViewConfig.OViewIndexConfig idx : cfg.indexes) {
+    for (OViewIndexConfig idx : cfg.indexes) {
       Map<String, Object> indexDescriptor = new HashMap<>();
       indexDescriptor.put("type", idx.type);
       indexDescriptor.put("engine", idx.engine);
@@ -133,6 +136,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("originRidField", cfg.getOriginRidField());
     result.setProperty("nodes", cfg.getNodes());
     result.setProperty("activeIndexNames", activeIndexNames);
+    result.setProperty("lastRefreshTime", lastRefreshTime);
     return result;
   }
 
@@ -142,7 +146,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("query", cfg.getQuery());
     result.setProperty("updatable", cfg.isUpdatable());
     List<Map<String, Object>> indexes = new ArrayList<>();
-    for (OViewConfig.OViewIndexConfig idx : cfg.indexes) {
+    for (OViewIndexConfig idx : cfg.indexes) {
       Map<String, Object> indexDescriptor = new HashMap<>();
       indexDescriptor.put("type", idx.type);
       indexDescriptor.put("engine", idx.engine);
@@ -171,6 +175,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("originRidField", cfg.getOriginRidField());
     result.setProperty("nodes", cfg.getNodes());
     result.setProperty("activeIndexNames", activeIndexNames);
+    result.setProperty("lastRefreshTime", lastRefreshTime);
     return result;
   }
 
@@ -218,7 +223,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
   }
 
   @Override
-  public List<OViewConfig.OViewIndexConfig> getRequiredIndexesInfo() {
+  public List<OViewIndexConfig> getRequiredIndexesInfo() {
     return cfg.getIndexes();
   }
 
@@ -280,9 +285,13 @@ public abstract class OViewImpl extends OClassImpl implements OView {
   }
 
   public abstract OViewRemovedMetadata replaceViewClusterAndIndex(
-      int cluster, List<OIndex> indexes);
+      int cluster, List<OIndex> indexes, long lastRefreshTime);
 
   public Set<String> getActiveIndexNames() {
     return activeIndexNames;
+  }
+
+  public long getLastRefreshTime() {
+    return lastRefreshTime;
   }
 }

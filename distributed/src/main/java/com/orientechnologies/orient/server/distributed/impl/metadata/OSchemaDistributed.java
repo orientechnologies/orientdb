@@ -4,9 +4,10 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OIndexConfigProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
-import com.orientechnologies.orient.core.metadata.schema.OViewConfig.OViewIndexConfig.OIndexConfigProperty;
+import com.orientechnologies.orient.core.metadata.schema.OViewIndexConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import java.util.List;
@@ -99,7 +100,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       if (config.getIndexes() != null && config.getIndexes().size() > 0) {
         cmd.append(", indexes: [");
         boolean first = true;
-        for (OViewConfig.OViewIndexConfig index : config.getIndexes()) {
+        for (OViewIndexConfig index : config.getIndexes()) {
           if (!first) {
             cmd.append(", ");
           }

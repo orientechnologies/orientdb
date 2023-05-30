@@ -241,7 +241,7 @@ public class OSchemaEmbedded extends OSchemaShared {
       if (indexes instanceof Collection) {
         for (Object index : (Collection) indexes) {
           if (index instanceof Map) {
-            OViewConfig.OViewIndexConfig idxConfig =
+            OViewIndexConfig idxConfig =
                 cfg.addIndex(
                     (String) ((Map) index).get("type"), (String) ((Map) index).get("engine"));
             for (Map.Entry<String, Object> entry :

@@ -13,12 +13,13 @@ public class OImmutableView extends OImmutableClass implements OView {
   private final int updateIntervalSeconds;
   private final List<String> watchClasses;
   private final List<String> nodes;
-  private final List<OViewConfig.OViewIndexConfig> requiredIndexesInfo;
+  private final List<OViewIndexConfig> requiredIndexesInfo;
   private String query;
   private String originRidField;
   private boolean updatable;
   private String updateStrategy;
   private Set<String> activeIndexNames;
+  private long lastRefreshTime;
 
   public OImmutableView(OView view, OImmutableSchema schema) {
     super(view, schema);
@@ -30,9 +31,12 @@ public class OImmutableView extends OImmutableClass implements OView {
     this.updatable = view.isUpdatable();
     this.nodes = view.getNodes() == null ? null : new ArrayList<>(view.getNodes());
     this.requiredIndexesInfo =
-        view.getRequiredIndexesInfo() == null ? null : new ArrayList(view.getRequiredIndexesInfo());
+        view.getRequiredIndexesInfo() == null
+            ? null
+            : new ArrayList<>(view.getRequiredIndexesInfo());
     this.updateStrategy = view.getUpdateStrategy();
     this.activeIndexNames = view.getActiveIndexNames();
+    this.lastRefreshTime = view.getLastRefreshTime();
   }
 
   public void getRawClassIndexes(final Collection<OIndex> indexes) {
@@ -73,7 +77,7 @@ public class OImmutableView extends OImmutableClass implements OView {
   }
 
   @Override
-  public List<OViewConfig.OViewIndexConfig> getRequiredIndexesInfo() {
+  public List<OViewIndexConfig> getRequiredIndexesInfo() {
     return requiredIndexesInfo;
   }
 
@@ -90,5 +94,10 @@ public class OImmutableView extends OImmutableClass implements OView {
   @Override
   public Set<String> getActiveIndexNames() {
     return activeIndexNames;
+  }
+
+  @Override
+  public long getLastRefreshTime() {
+    return lastRefreshTime;
   }
 }

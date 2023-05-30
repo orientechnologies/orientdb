@@ -319,7 +319,8 @@ public class OViewRemote extends OViewImpl {
   }
 
   @Override
-  public OViewRemovedMetadata replaceViewClusterAndIndex(int cluster, List<OIndex> indexes) {
+  public OViewRemovedMetadata replaceViewClusterAndIndex(
+      int cluster, List<OIndex> indexes, long lastRefreshTime) {
     throw new UnsupportedOperationException();
   }
 
