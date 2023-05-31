@@ -49,7 +49,6 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -395,18 +394,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public void onOpen(final ODatabaseInternal iDatabase) {}
 
-  public boolean registerNewDatabaseIfNeeded(
-      String dbName, ODatabaseDocumentInternal session, OSharedContext context) {
-    ODistributedDatabaseImpl distribDatabase = getDatabase(dbName);
-    if (distribDatabase == null) {
-      // CHECK TO PUBLISH IT TO THE CLUSTER
-      distribDatabase = messageService.registerDatabase(dbName);
-      distribDatabase.initFirstOpen(session, context);
-      return true;
-    }
-    return false;
-  }
-
   /** Remove myself as hook. */
   @Override
   public void onClose(final ODatabaseInternal iDatabase) {}
@@ -422,7 +409,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     final ODistributedMessageService msgService = getMessageService();
     if (msgService != null) {
-      msgService.unregisterDatabase(iDatabase.getName());
+      ((OrientDBDistributed) getServerInstance().getDatabases())
+          .unregisterDatabase(iDatabase.getName());
     }
 
     clusterManager.removeDbFromClusterMetadata(iDatabase);
@@ -1254,7 +1242,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     }
 
     final ODistributedDatabaseImpl distrDatabase =
-        getMessageService().registerDatabase(databaseName);
+        ((OrientDBDistributed) getServerInstance().getDatabases()).registerDatabase(databaseName);
 
     try {
       return executeInDistributedDatabaseLock(

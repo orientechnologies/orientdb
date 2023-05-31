@@ -92,7 +92,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public static final String DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
   protected final ODistributedPlugin manager;
-  protected final ODistributedMessageServiceImpl msgService;
   protected final String databaseName;
   private final String localNodeName;
   private final OTxPromiseManager<ORID> recordPromiseManager;
@@ -115,22 +114,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private OFreezeGuard freezeGuard;
 
   public ODistributedDatabaseImpl(
-      final ODistributedPlugin manager,
-      final ODistributedMessageServiceImpl msgService,
-      final String iDatabaseName,
-      OServer server) {
+      final ODistributedPlugin manager, final String iDatabaseName, OServer server) {
     this.manager = manager;
-    this.msgService = msgService;
     this.databaseName = iDatabaseName;
     this.localNodeName = manager.getLocalNodeName();
     this.configurationManager = new ODistributedConfigurationManager(manager, iDatabaseName);
-
-    // SELF REGISTERING ITSELF HERE BECAUSE IT'S NEEDED FURTHER IN THE CALL CHAIN
-    final ODistributedDatabaseImpl prev = msgService.databases.put(iDatabaseName, this);
-    if (prev != null) {
-      // KILL THE PREVIOUS ONE
-      prev.shutdown();
-    }
 
     startAcceptingRequests();
 
@@ -772,7 +760,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
                       if (ctx.getReqId().getNodeId() == manager.getLocalNodeId())
                         // REQUEST WAS ORIGINATED FROM CURRENT SERVER
-                        msgService.timeoutRequest(ctx.getReqId().getMessageId());
+                        manager.getMessageService().timeoutRequest(ctx.getReqId().getMessageId());
 
                     } catch (Exception t) {
                       ODistributedServerLog.info(

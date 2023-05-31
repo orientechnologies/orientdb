@@ -24,13 +24,9 @@ import java.util.Set;
 
 /** @author Luca Garulli (l.garulli--at--orientdb.com) */
 public interface ODistributedMessageService {
-  ODistributedDatabase registerDatabase(String iDatabaseName);
-
   Set<String> getDatabases();
 
   ODistributedDatabase getDatabase(String iDatabaseName);
-
-  ODistributedDatabase unregisterDatabase(String iDatabaseName);
 
   void dispatchResponseToThread(final ODistributedResponse response);
 
