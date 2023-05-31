@@ -1903,67 +1903,59 @@ public class ODistributedPlugin extends OServerPluginAbstract
       OModifiableDistributedConfiguration cfg) {
     if (cluster2Create.isEmpty()) return;
 
-    executeInDistributedDatabaseLock(
-        iDatabase.getName(),
-        20000,
-        cfg,
-        cfg1 -> {
+    // UPDATE LAST CFG BEFORE TO MODIFY THE CLUSTERS
+    updateCachedDatabaseConfiguration(iDatabase.getName(), cfg);
 
-          // UPDATE LAST CFG BEFORE TO MODIFY THE CLUSTERS
-          updateCachedDatabaseConfiguration(iDatabase.getName(), cfg1);
+    for (Map.Entry<OClass, List<String>> entry : cluster2Create.entrySet()) {
+      final OClass clazz = entry.getKey();
 
-          for (Map.Entry<OClass, List<String>> entry : cluster2Create.entrySet()) {
-            final OClass clazz = entry.getKey();
+      // SAVE CONFIGURATION LOCALLY TO ALLOW THE CREATION OF THE CLUSTERS IF ANY
+      // CHECK OWNER AFTER RE-BALANCE AND CREATE NEW CLUSTERS IF NEEDED
+      for (final String newClusterName : entry.getValue()) {
 
-            // SAVE CONFIGURATION LOCALLY TO ALLOW THE CREATION OF THE CLUSTERS IF ANY
-            // CHECK OWNER AFTER RE-BALANCE AND CREATE NEW CLUSTERS IF NEEDED
-            for (final String newClusterName : entry.getValue()) {
+        ODistributedServerLog.info(
+            this,
+            getLocalNodeName(),
+            null,
+            ODistributedServerLog.DIRECTION.NONE,
+            "Class '%s', creation of new local cluster '%s' (id=%d)",
+            clazz,
+            newClusterName,
+            iDatabase.getClusterIdByName(newClusterName));
 
-              ODistributedServerLog.info(
-                  this,
-                  getLocalNodeName(),
-                  null,
-                  ODistributedServerLog.DIRECTION.NONE,
-                  "Class '%s', creation of new local cluster '%s' (id=%d)",
-                  clazz,
-                  newClusterName,
-                  iDatabase.getClusterIdByName(newClusterName));
-
-              OScenarioThreadLocal.executeAsDefault(
-                  new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
-                      try {
-                        clazz.addCluster(newClusterName);
-                      } catch (Exception e) {
-                        if (!iDatabase.getClusterNames().contains(newClusterName)) {
-                          // NOT CREATED
-                          ODistributedServerLog.error(
-                              this,
-                              getLocalNodeName(),
-                              null,
-                              ODistributedServerLog.DIRECTION.NONE,
-                              "Error on creating cluster '%s' in class '%s': ",
-                              newClusterName,
-                              clazz,
-                              e);
-                          throw OException.wrapException(
-                              new ODistributedException(
-                                  "Error on creating cluster '"
-                                      + newClusterName
-                                      + "' in class '"
-                                      + clazz
-                                      + "'"),
-                              e);
-                        }
-                      }
-                      return null;
-                    }
-                  });
-            }
-          }
-          return null;
-        });
+        OScenarioThreadLocal.executeAsDefault(
+            new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                try {
+                  clazz.addCluster(newClusterName);
+                } catch (Exception e) {
+                  if (!iDatabase.getClusterNames().contains(newClusterName)) {
+                    // NOT CREATED
+                    ODistributedServerLog.error(
+                        this,
+                        getLocalNodeName(),
+                        null,
+                        ODistributedServerLog.DIRECTION.NONE,
+                        "Error on creating cluster '%s' in class '%s': ",
+                        newClusterName,
+                        clazz,
+                        e);
+                    throw OException.wrapException(
+                        new ODistributedException(
+                            "Error on creating cluster '"
+                                + newClusterName
+                                + "' in class '"
+                                + clazz
+                                + "'"),
+                        e);
+                  }
+                }
+                return null;
+              }
+            });
+      }
+    }
   }
 
   public ODistributedStrategy getDistributedStrategy() {
