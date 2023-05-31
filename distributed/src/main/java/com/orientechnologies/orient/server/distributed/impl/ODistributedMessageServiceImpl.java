@@ -22,18 +22,17 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -54,8 +53,6 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   private final ODistributedPlugin manager;
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask asynchMessageManager;
-  protected final ConcurrentHashMap<String, ODistributedDatabaseImpl> databases =
-      new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
   private Thread responseThread;
   private long[] responseTimeMetrics = new long[10];
   private final Map<String, OProfilerEntry> latencies = new HashMap<String, OProfilerEntry>();
@@ -79,10 +76,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   public ODistributedDatabaseImpl getDatabase(final String iDatabaseName) {
-    if (databases != null) return databases.get(iDatabaseName);
-
-    // NOT INITIALIZED YET
-    return null;
+    return ((OrientDBDistributed) manager.getServerInstance().getDatabases())
+        .getDatabase(iDatabaseName);
   }
 
   public void shutdown() {
@@ -90,22 +85,6 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
       responseThread.interrupt();
       responseThread = null;
     }
-
-    // SET ALL DATABASES TO NOT_AVAILABLE
-    for (Entry<String, ODistributedDatabaseImpl> m : databases.entrySet()) {
-      if (OSystemDatabase.SYSTEM_DB_NAME.equals(m.getKey())) continue;
-
-      try {
-        manager.setDatabaseStatus(
-            manager.getLocalNodeName(),
-            m.getKey(),
-            ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-      } catch (Exception t) {
-        // IGNORE IT
-      }
-      m.getValue().shutdown();
-    }
-    databases.clear();
 
     asynchMessageManager.cancel();
 
@@ -145,46 +124,9 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     return total > 0 ? total / involved : 0;
   }
 
-  /** Creates a distributed database instance if not defined yet. */
-  public ODistributedDatabaseImpl registerDatabase(final String iDatabaseName) {
-    final ODistributedDatabaseImpl ddb = databases.get(iDatabaseName);
-    if (ddb != null) return ddb;
-
-    return new ODistributedDatabaseImpl(manager, this, iDatabaseName, manager.getServerInstance());
-  }
-
-  public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
-    try {
-      manager.setDatabaseStatus(
-          manager.getLocalNodeName(), iDatabaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
-    } catch (Exception t) {
-      ODistributedServerLog.warn(
-          this, manager.getLocalNodeName(), null, null, "error un-registering database", t);
-      // IGNORE IT
-    }
-
-    final ODistributedDatabaseImpl db = databases.remove(iDatabaseName);
-    if (db != null) {
-      db.onDropShutdown();
-    }
-    return db;
-  }
-
   @Override
   public Set<String> getDatabases() {
-    // We assign the ConcurrentHashMap (databases) to the Map interface for this reason:
-    // ConcurrentHashMap.keySet() in Java 8 returns a ConcurrentHashMap.KeySetView.
-    // ConcurrentHashMap.keySet() in Java 7 returns a Set.
-    // If this code is compiled with Java 8 yet is run on Java 7, you'll receive a
-    // NoSuchMethodError:
-    // java.util.concurrent.ConcurrentHashMap.keySet()Ljava/util/concurrent/ConcurrentHashMap$KeySetView.
-    // By assigning the ConcurrentHashMap variable to a Map, the call to keySet() will return a Set
-    // and not the Java 8 type, KeySetView.
-    Map<String, ODistributedDatabaseImpl> map = databases;
-
-    final Set<String> result = new HashSet<String>(map.keySet());
-    result.remove(OSystemDatabase.SYSTEM_DB_NAME);
-    return result;
+    return ((OrientDBDistributed) manager.getServerInstance().getDatabases()).getActiveDatabases();
   }
 
   /** Not synchronized, it's called when a message arrives */
@@ -360,7 +302,10 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   @Override
   public long getReceivedRequests() {
     long total = 0;
-    for (ODistributedDatabaseImpl db : databases.values()) {
+    Collection<ODistributedDatabaseImpl> dbs =
+        ((OrientDBDistributed) manager.getServerInstance().getDatabases())
+            .getDistributedDatabases();
+    for (ODistributedDatabaseImpl db : dbs) {
       total += db.getReceivedRequests();
     }
 
@@ -370,7 +315,10 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   @Override
   public long getProcessedRequests() {
     long total = 0;
-    for (ODistributedDatabaseImpl db : databases.values()) {
+    Collection<ODistributedDatabaseImpl> dbs =
+        ((OrientDBDistributed) manager.getServerInstance().getDatabases())
+            .getDistributedDatabases();
+    for (ODistributedDatabaseImpl db : dbs) {
       total += db.getProcessedRequests();
     }
 
