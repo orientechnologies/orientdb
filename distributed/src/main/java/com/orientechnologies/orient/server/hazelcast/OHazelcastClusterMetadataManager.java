@@ -943,35 +943,30 @@ public class OHazelcastClusterMetadataManager
       // AND ACTIVE NODES MAP COULD BE STILL NOT FILLED
       Thread t =
           new Thread(
-              new Runnable() {
-                @Override
-                public void run() {
-                  try {
-
-                    for (final String databaseName :
-                        distributedPlugin.getMessageService().getDatabases()) {
-                      executeInDistributedDatabaseLock(
-                          databaseName,
-                          20000,
-                          null,
-                          new OCallable<Object, OModifiableDistributedConfiguration>() {
-                            @Override
-                            public Object call(final OModifiableDistributedConfiguration cfg) {
-                              cfg.override(configurationMap.getDatabaseConfiguration(databaseName));
-
-                              return null;
-                            }
-                          });
-                    }
-                  } finally {
-                    ODistributedServerLog.warn(
-                        this,
-                        nodeName,
+              () -> {
+                try {
+                  for (final String databaseName :
+                      distributedPlugin.getMessageService().getDatabases()) {
+                    executeInDistributedDatabaseLock(
+                        databaseName,
+                        20000,
                         null,
-                        ODistributedServerLog.DIRECTION.NONE,
-                        "Network merged ...");
-                    setNodeStatus(ODistributedServerManager.NODE_STATUS.ONLINE);
+                        new OCallable<Object, OModifiableDistributedConfiguration>() {
+                          @Override
+                          public Object call(final OModifiableDistributedConfiguration cfg) {
+                            cfg.override(configurationMap.getDatabaseConfiguration(databaseName));
+                            return null;
+                          }
+                        });
                   }
+                } finally {
+                  ODistributedServerLog.warn(
+                      this,
+                      nodeName,
+                      null,
+                      ODistributedServerLog.DIRECTION.NONE,
+                      "Network merged ...");
+                  setNodeStatus(ODistributedServerManager.NODE_STATUS.ONLINE);
                 }
               });
       t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
