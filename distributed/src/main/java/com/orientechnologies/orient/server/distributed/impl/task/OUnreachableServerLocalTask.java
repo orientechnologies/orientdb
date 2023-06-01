@@ -25,8 +25,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
@@ -54,13 +52,6 @@ public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
       ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database)
       throws Exception {
-    ODistributedServerLog.debug(
-        this,
-        iManager.getLocalNodeName(),
-        getNodeSource(),
-        DIRECTION.IN,
-        "Freeing all the resources owned by the unreachable server '%s'...",
-        unreachableServer);
 
     final ODistributedDatabase dDatabase = iManager.getDatabase(database.getName());
 

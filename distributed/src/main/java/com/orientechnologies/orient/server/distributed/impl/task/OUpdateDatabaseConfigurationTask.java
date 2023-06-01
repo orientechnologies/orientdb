@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
@@ -64,15 +63,6 @@ public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
 
     ODistributedDatabase local = iManager.getDatabase(databaseName);
     if (local != null) {
-      ODistributedServerLog.debug(
-          this,
-          iManager.getLocalNodeName(),
-          getNodeSource(),
-          ODistributedServerLog.DIRECTION.IN,
-          "Replacing distributed cfg for database '%s'\nnew: %s",
-          databaseName,
-          configuration);
-
       local.setDistributedConfiguration(new OModifiableDistributedConfiguration(configuration));
     }
 

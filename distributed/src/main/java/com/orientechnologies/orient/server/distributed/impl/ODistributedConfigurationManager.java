@@ -214,15 +214,6 @@ public class ODistributedConfigurationManager {
     try {
       File file = getDistributedConfigFile();
 
-      ODistributedServerLog.debug(
-          this,
-          distributedManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Saving distributed configuration file for database '%s' to: %s",
-          databaseName,
-          file);
-
       if (!file.exists()) {
         file.getParentFile().mkdirs();
         file.createNewFile();

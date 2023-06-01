@@ -25,8 +25,6 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -34,7 +32,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
  * Task to manage the end of distributed transaction when no fix is needed (OFixTxTask) and all the
@@ -65,19 +62,6 @@ public class OGossipTask extends OAbstractRemoteTask {
       ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database)
       throws Exception {
-
-    if (ODistributedServerLog.isDebugEnabled())
-      synchronized (dateFormat) {
-        ODistributedServerLog.debug(
-            this,
-            iManager.getLocalNodeName(),
-            getNodeSource(),
-            DIRECTION.IN,
-            "Received gossip message (sourceTimeStamp=%s lockManagerServer=%s)",
-            dateFormat.format(new Date(timestamp)),
-            lockManagerServer);
-      }
-
     // RETURN LOCAL TIME
     return lockManagerServer;
   }

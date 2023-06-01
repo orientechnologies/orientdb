@@ -69,7 +69,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -686,15 +685,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     final ODistributedResponse response = new ODistributedResponse();
 
     response.fromStream(channel.getDataInput());
-
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(
-          this,
-          manager.getLocalNodeName(),
-          response.getExecutorNodeName(),
-          ODistributedServerLog.DIRECTION.IN,
-          "Executing distributed response %s",
-          response);
 
     // WHILE MSG SERVICE IS UP & RUNNING
     while (manager.getMessageService() == null)

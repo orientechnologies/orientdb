@@ -29,7 +29,6 @@ import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.map.listener.MapClearedListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -145,65 +144,21 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
 
   @Override
   public void entryAdded(final EntryEvent<String, Object> event) {
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(
-          this,
-          dManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Map entry added "
-              + event.getKey()
-              + "="
-              + event.getValue()
-              + " from server "
-              + dManager.getNodeName(event.getMember(), true));
     super.put(event.getKey(), event.getValue());
   }
 
   @Override
   public void entryUpdated(final EntryEvent<String, Object> event) {
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(
-          this,
-          dManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Map entry updated "
-              + event.getKey()
-              + "="
-              + event.getValue()
-              + " from server "
-              + dManager.getNodeName(event.getMember(), true));
-
     super.put(event.getKey(), event.getValue());
   }
 
   @Override
   public void entryRemoved(final EntryEvent<String, Object> event) {
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(
-          this,
-          dManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Map entry removed "
-              + event.getKey()
-              + "="
-              + event.getValue()
-              + " from "
-              + dManager.getNodeName(event.getMember(), true));
     super.remove(event.getKey());
   }
 
   @Override
   public void mapCleared(MapEvent event) {
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(
-          this,
-          dManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Map cleared from server " + dManager.getNodeName(event.getMember(), true));
     super.clear();
   }
 

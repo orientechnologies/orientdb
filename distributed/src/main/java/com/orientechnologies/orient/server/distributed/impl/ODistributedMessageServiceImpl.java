@@ -194,17 +194,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
       // GET ASYNCHRONOUS MSG MANAGER IF ANY
       final ODistributedResponseManager asynchMgr = responsesByRequestIds.get(msgId);
-      if (asynchMgr == null) {
-        if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(
-              this,
-              manager.getLocalNodeName(),
-              response.getExecutorNodeName(),
-              DIRECTION.IN,
-              "received response for message %d after the timeout (%dms)",
-              msgId,
-              OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
-      } else if (asynchMgr.collectResponse(response)) {
+      if (asynchMgr != null && asynchMgr.collectResponse(response)) {
         // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD
         // REMOVE THEM FOR TIMEOUT
         responsesByRequestIds.remove(msgId);

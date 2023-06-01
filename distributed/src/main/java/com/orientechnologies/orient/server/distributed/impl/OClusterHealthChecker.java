@@ -306,15 +306,6 @@ public class OClusterHealthChecker implements Runnable {
 
       if (servers.isEmpty()) continue;
 
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(
-            this,
-            manager.getLocalNodeName(),
-            servers.toString(),
-            ODistributedServerLog.DIRECTION.OUT,
-            "Sending gossip message to servers (db=%s)",
-            dbName);
-
       try {
         final ODistributedResponse response =
             manager.sendRequest(

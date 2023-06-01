@@ -187,6 +187,7 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
             getNodeSource(),
             DIRECTION.NONE,
             "Skip deploying database %s because another node is doing it",
+            e,
             databaseName);
       } finally {
         ODistributedServerLog.info(
@@ -196,13 +197,7 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
             ODistributedServerLog.DIRECTION.OUT,
             "Deploy database task completed");
       }
-    } else
-      ODistributedServerLog.debug(
-          this,
-          iManager.getLocalNodeName(),
-          getNodeSource(),
-          DIRECTION.NONE,
-          "Skip deploying database from the same node");
+    }
 
     return Boolean.FALSE;
   }

@@ -144,20 +144,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
       if (waitForLocalNode && executorNode.equals(senderNode)) receivedCurrentNode = true;
 
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(
-            this,
-            senderNode,
-            executorNode,
-            DIRECTION.IN,
-            "Received response '%s' for request (%s) (receivedCurrentNode=%s receivedResponses=%d totalExpectedResponses=%d quorum=%d)",
-            response,
-            request,
-            receivedCurrentNode,
-            receivedResponses,
-            totalExpectedResponses,
-            quorum);
-
       if (groupResponsesByResult) {
         // PUT THE RESPONSE IN THE RIGHT RESPONSE GROUP
         // TODO: AVOID TO KEEP ALL THE RESULT FOR THE SAME RESP GROUP, BUT RATHER THE FIRST ONE +
@@ -224,15 +210,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
     if (completed || isMinimumQuorumReached(false)) {
       // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
-      ODistributedServerLog.debug(
-          this,
-          dManager.getLocalNodeName(),
-          null,
-          DIRECTION.NONE,
-          "Sending signal of synchronous request completed (reqId=%s thread=%d)",
-          request.getId(),
-          Thread.currentThread().getId());
-
       synchronousResponsesArrived.countDown();
     }
     return completed;
@@ -298,47 +275,12 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
           // CUT THE TIMEOUT IN BLOCKS OF 10S EACH TO ALLOW CHECKING FOR ANY SERVER IF UNREACHABLE
           currentTimeout = 10000;
 
-        if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(
-              this,
-              dManager.getLocalNodeName(),
-              null,
-              DIRECTION.NONE,
-              "Waiting max %dms for collecting all synchronous responses... (timeout=%d reqId=%s thread=%d)",
-              currentTimeout,
-              synchTimeout,
-              request.getId(),
-              Thread.currentThread().getId());
-
         // WAIT FOR THE RESPONSES
         if (synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS)) {
           if (canceled.get()) throw new ODistributedOperationException("Request has been canceled");
-
           // COMPLETED
-          if (ODistributedServerLog.isDebugEnabled())
-            ODistributedServerLog.debug(
-                this,
-                dManager.getLocalNodeName(),
-                null,
-                DIRECTION.NONE,
-                "All synchronous responses collected in %dms (reqId=%s thread=%d)",
-                (System.currentTimeMillis() - beginTime),
-                request.getId(),
-                Thread.currentThread().getId());
-
           return true;
         }
-
-        if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(
-              this,
-              dManager.getLocalNodeName(),
-              null,
-              DIRECTION.NONE,
-              "All synchronous responses not collected in %dms, waiting again... (reqId=%s thread=%d)",
-              (System.currentTimeMillis() - beginTime),
-              request.getId(),
-              Thread.currentThread().getId());
 
         if (Thread.currentThread().isInterrupted()) {
           // INTERRUPTED
@@ -398,28 +340,11 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
           if (missingResponses == 0) {
             // ALL RESPONSE COLLECTED, BUT NO QUORUM REACHED
-            ODistributedServerLog.debug(
-                this,
-                dManager.getLocalNodeName(),
-                null,
-                DIRECTION.NONE,
-                "All responses collected %s, but no quorum reached (reqId=%s)",
-                responses,
-                request.getId());
             break;
           }
 
           if (missingActiveNodes == 0) {
             // NO MORE ACTIVE NODES TO WAIT
-            ODistributedServerLog.debug(
-                this,
-                dManager.getLocalNodeName(),
-                null,
-                DIRECTION.NONE,
-                "No more active nodes to wait for request (%s): anticipate timeout (saved %d ms). Missing servers: %s",
-                request,
-                currentTimeout,
-                missingResponseNodeStatuses);
             break;
           }
 
@@ -428,15 +353,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
               && now - lastClusterChange < (synchTimeout + ADDITIONAL_TIMEOUT_CLUSTER_SHAPE)) {
             // CHANGED CLUSTER SHAPE DURING WAIT: ENLARGE TIMEOUT
             currentTimeout = synchTimeout;
-            ODistributedServerLog.debug(
-                this,
-                dManager.getLocalNodeName(),
-                null,
-                DIRECTION.NONE,
-                "Cluster shape changed during request (%s): enlarge timeout +%dms, wait again for %dms",
-                request,
-                synchTimeout,
-                currentTimeout);
             continue;
           } else if (synchronizingNodes > 0) {
             // SOME NODE IS SYNCHRONIZING: WAIT FOR THEM
@@ -732,22 +648,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
         return null;
     }
 
-    // QUORUM HASN'T BEEN REACHED
-    if (ODistributedServerLog.isDebugEnabled()) {
-      ODistributedServerLog.debug(
-          this,
-          dManager.getLocalNodeName(),
-          null,
-          DIRECTION.NONE,
-          "Detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request (%s)",
-          conflicts,
-          quorum,
-          request);
-
-      ODistributedServerLog.debug(
-          this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
-    }
-
     // CHECK IF THERE IS AT LEAST ONE ODistributedRecordLockedException or
     // OConcurrentCreateException
     for (Object r : responses.values()) {
@@ -865,14 +765,5 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
   private void setQuorumResponse(final ODistributedResponse quorumResponse) {
     this.quorumResponse = quorumResponse;
-    ODistributedServerLog.debug(
-        this,
-        dManager.getLocalNodeName(),
-        null,
-        DIRECTION.NONE,
-        "Reached the quorum (%d) for value '%s' (reqId=%s)",
-        quorum,
-        quorumResponse,
-        request);
   }
 }

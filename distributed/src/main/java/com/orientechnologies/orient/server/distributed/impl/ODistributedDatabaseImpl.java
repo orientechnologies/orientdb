@@ -248,15 +248,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       // GET THE SENDER'S RESPONSE QUEUE
       final ORemoteServerController remoteSenderServer = manager.getRemoteServer(sender);
 
-      ODistributedServerLog.debug(
-          current,
-          local,
-          sender,
-          DIRECTION.OUT,
-          "Sending response %s back (reqId=%s)",
-          response,
-          iRequestId);
-
       remoteSenderServer.sendResponse(response);
 
     } catch (Exception e) {
@@ -492,14 +483,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final ODistributedTxContext pReq = pendingReqIterator.next();
       if (pReq != null && pReq.getReqId().getNodeId() == nodeLeftId) {
 
-        ODistributedServerLog.debug(
-            this,
-            manager.getLocalNodeName(),
-            null,
-            DIRECTION.NONE,
-            "Distributed transaction: rolling back transaction (req=%s)",
-            pReq.getReqId());
-
         try {
           pReq.rollback(database);
           pReq.destroy();
@@ -556,30 +539,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public ODistributedTxContext popTxContext(final ODistributedRequestId requestId) {
     final ODistributedTxContext ctx = activeTxContexts.remove(requestId);
-    ODistributedServerLog.debug(
-        this,
-        localNodeName,
-        null,
-        DIRECTION.NONE,
-        "Distributed transaction: pop request %s for database %s -> %s",
-        requestId,
-        databaseName,
-        ctx);
     return ctx;
   }
 
   @Override
   public ODistributedTxContext getTxContext(final ODistributedRequestId requestId) {
     final ODistributedTxContext ctx = activeTxContexts.get(requestId);
-    ODistributedServerLog.debug(
-        this,
-        localNodeName,
-        null,
-        DIRECTION.NONE,
-        "Distributed transaction: pop request %s for database %s -> %s",
-        requestId,
-        databaseName,
-        ctx);
     return ctx;
   }
 
@@ -597,13 +562,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (!running) {
       return;
     }
-    ODistributedServerLog.debug(
-        this,
-        manager.getLocalNodeName(),
-        nodeName,
-        DIRECTION.IN,
-        "Distributed transaction: rolling back all the pending transactions coordinated by the unreachable server '%s'",
-        nodeName);
 
     final OUnreachableServerLocalTask task = new OUnreachableServerLocalTask(nodeName);
     final ODistributedRequest rollbackRequest =
@@ -785,16 +743,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                     if (database == null)
                       // GET THE DATABASE THE FIRST TIME
                       database = getDatabaseInstance();
-
-                    ODistributedServerLog.debug(
-                        this,
-                        localNodeName,
-                        null,
-                        DIRECTION.NONE,
-                        "Distributed transaction %s on database '%s' is expired after %dms",
-                        ctx.getReqId(),
-                        databaseName,
-                        elapsed);
 
                     if (database != null) database.activateOnCurrentThread();
 

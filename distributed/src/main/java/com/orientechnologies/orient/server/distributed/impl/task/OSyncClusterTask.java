@@ -237,6 +237,7 @@ public class OSyncClusterTask extends OAbstractRemoteTask {
             getNodeSource(),
             DIRECTION.NONE,
             "Skip deploying cluster %s.%s because another node is doing it",
+            e,
             databaseName,
             clusterName);
       } finally {
@@ -248,13 +249,7 @@ public class OSyncClusterTask extends OAbstractRemoteTask {
             "Deploy cluster %s task completed",
             clusterName);
       }
-    } else
-      ODistributedServerLog.debug(
-          this,
-          iManager.getLocalNodeName(),
-          getNodeSource(),
-          DIRECTION.NONE,
-          "Skip deploying cluster %s.%s from the same node");
+    }
 
     return Boolean.FALSE;
   }

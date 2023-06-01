@@ -737,14 +737,6 @@ public class OHazelcastClusterMetadataManager
         return;
 
       if (OHazelcastDistributedMap.isNodeConfigKey(key)) {
-        ODistributedServerLog.debug(
-            this,
-            nodeName,
-            eventNodeName,
-            ODistributedServerLog.DIRECTION.NONE,
-            "Updated node configuration id=%s name=%s",
-            iEvent.getMember(),
-            eventNodeName);
 
         final ODocument cfg = (ODocument) iEvent.getValue();
 
@@ -812,14 +804,6 @@ public class OHazelcastClusterMetadataManager
 
       if (OHazelcastDistributedMap.isNodeConfigKey(key)) {
         if (eventNodeName != null) {
-          ODistributedServerLog.debug(
-              this,
-              nodeName,
-              null,
-              ODistributedServerLog.DIRECTION.NONE,
-              "Removed node configuration id=%s name=%s",
-              iEvent.getMember(),
-              eventNodeName);
           activeNodes.remove(eventNodeName);
           activeNodesNamesByUuid.remove(iEvent.getMember().getUuid());
           activeNodesUuidByName.remove(eventNodeName);
@@ -835,15 +819,6 @@ public class OHazelcastClusterMetadataManager
 
       } else if (OHazelcastDistributedMap.isDatabaseStatus(key)) {
         String values = OHazelcastDistributedMap.getDatabaseStatusKeyValues(key);
-        ODistributedServerLog.debug(
-            this,
-            nodeName,
-            getNodeName(iEvent.getMember(), true),
-            ODistributedServerLog.DIRECTION.IN,
-            "Received removed status %s=%s",
-            values,
-            iEvent.getValue());
-
         // CALL DATABASE EVENT
         final String nodeName = values.substring(0, values.indexOf("."));
         final String databaseName = values.substring(values.indexOf(".") + 1);
@@ -982,14 +957,6 @@ public class OHazelcastClusterMetadataManager
                           new OCallable<Object, OModifiableDistributedConfiguration>() {
                             @Override
                             public Object call(final OModifiableDistributedConfiguration cfg) {
-                              ODistributedServerLog.debug(
-                                  this,
-                                  nodeName,
-                                  null,
-                                  ODistributedServerLog.DIRECTION.NONE,
-                                  "Replacing local database '%s' configuration with the most recent from the joined cluster...",
-                                  databaseName);
-
                               cfg.override(configurationMap.getDatabaseConfiguration(databaseName));
 
                               return null;
@@ -1075,15 +1042,6 @@ public class OHazelcastClusterMetadataManager
       doc = configurationMap.getNodeConfig(iNodeId);
     }
 
-    if (doc == null)
-      ODistributedServerLog.debug(
-          this,
-          nodeName,
-          null,
-          ODistributedServerLog.DIRECTION.OUT,
-          "Cannot find node with id '%s'",
-          iNodeId);
-
     return doc;
   }
 
@@ -1165,15 +1123,6 @@ public class OHazelcastClusterMetadataManager
       final String databaseName,
       final boolean removeOnlyDynamicServers,
       final boolean statusOffline) {
-    ODistributedServerLog.debug(
-        this,
-        nodeName,
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
-        "Removing server '%s' from database configuration '%s' (removeOnlyDynamicServers=%s)...",
-        nodeLeftName,
-        databaseName,
-        removeOnlyDynamicServers);
 
     final OModifiableDistributedConfiguration cfg = getDatabaseConfiguration(databaseName).modify();
 
@@ -1478,31 +1427,11 @@ public class OHazelcastClusterMetadataManager
         // ACQUIRE CFG INSIDE THE LOCK
         lastCfg = getDatabaseConfiguration(databaseName).modify();
 
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(
-            this,
-            nodeName,
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
-            "Current distributed configuration for database '%s': %s",
-            databaseName,
-            lastCfg.getDocument().toJSON());
-
       try {
 
         result = iCallback.call(lastCfg);
 
       } finally {
-        if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(
-              this,
-              nodeName,
-              null,
-              ODistributedServerLog.DIRECTION.NONE,
-              "New distributed configuration for database '%s': %s",
-              databaseName,
-              lastCfg.getDocument().toJSON());
-
         // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
         updated = updateCachedDatabaseConfiguration(databaseName, lastCfg);
       }

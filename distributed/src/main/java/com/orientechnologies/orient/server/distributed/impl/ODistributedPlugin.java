@@ -715,15 +715,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       this.messageService.registerRequest(iRequest.getId().getMessageId(), currentResponseMgr);
 
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(
-            this,
-            this.nodeName,
-            iNodes.toString(),
-            DIRECTION.OUT,
-            "Sending request %s...",
-            iRequest);
-
       for (String node : iNodes) {
         // CATCH ANY EXCEPTION LOG IT AND IGNORE TO CONTINUE SENDING REQUESTS TO OTHER NODES
         try {
@@ -787,10 +778,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                 + (iClusterNames != null ? "." + iClusterNames : "")
                 + "' to nodes "
                 + iNodes);
-
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(
-            this, this.nodeName, iNodes.toString(), DIRECTION.OUT, "Sent request %s", iRequest);
 
       if (databaseName != null) {
         ODistributedDatabaseImpl shared = getDatabase(databaseName);
@@ -931,17 +918,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
         final long l = getMessageService().getCurrentLatency(n);
         delta = Math.max(delta, l);
       }
-
-    if (delta > 500)
-      ODistributedServerLog.debug(
-          this,
-          this.nodeName,
-          iNodes.toString(),
-          DIRECTION.OUT,
-          "Adjusted timeouts by adding +%dms because this is the maximum latency recorded against servers %s (reqId=%s)",
-          delta,
-          iNodes,
-          requestId);
 
     return timeout + delta;
   }
@@ -1333,15 +1309,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
               if (!distrDatabase.exists()) {
 
                 if (deploy == null || !deploy) {
-                  // NO AUTO DEPLOY
-                  ODistributedServerLog.debug(
-                      this,
-                      nodeName,
-                      null,
-                      DIRECTION.NONE,
-                      "Skipping download of database '%s' from the cluster because autoDeploy=false",
-                      databaseName);
-
                   distrDatabase.setOnline();
                   distrDatabase.resume();
                   return false;
@@ -1360,14 +1327,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                   } catch (ODistributedDatabaseDeltaSyncException e) {
                     if (deploy == null || !deploy) {
                       // NO AUTO DEPLOY
-                      ODistributedServerLog.debug(
-                          this,
-                          nodeName,
-                          null,
-                          DIRECTION.NONE,
-                          "Skipping download of the entire database '%s' from the cluster because autoDeploy=false",
-                          databaseName);
-
                       distrDatabase.setOnline();
                       distrDatabase.resume();
                       return false;
@@ -1679,9 +1638,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
         setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
         return false;
       }
-      ODistributedServerLog.debug(
-          this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Deploy returned: %s", results);
-
       final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
 
       for (Map.Entry<String, Object> r : results.entrySet()) {
@@ -2675,14 +2631,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     if (nodeLeftName == null) return;
     Member member = clusterManager.removeFromLocalActiveServerList(nodeLeftName);
     if (member == null) return;
-
-    ODistributedServerLog.debug(
-        this,
-        nodeName,
-        nodeLeftName,
-        DIRECTION.NONE,
-        "Distributed server '%s' is unreachable",
-        nodeLeftName);
 
     try {
       // REMOVE INTRA SERVER CONNECTION

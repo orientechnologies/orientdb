@@ -550,19 +550,6 @@ public class OClassDistributed extends OClassEmbedded {
 
     final int cluster = super.getClusterSelection().getCluster(this, bestClusterIds, doc);
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(
-          this,
-          manager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Selected cluster %d for class '%s' from %s (threadId=%d dCfgVersion=%d)",
-          cluster,
-          getName(),
-          Arrays.toString(bestClusterIds),
-          Thread.currentThread().getId(),
-          lastVersion);
-
     return cluster;
   }
 

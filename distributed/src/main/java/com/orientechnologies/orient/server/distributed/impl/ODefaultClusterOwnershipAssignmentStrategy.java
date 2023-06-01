@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -222,16 +221,6 @@ public class ODefaultClusterOwnershipAssignmentStrategy
       final OClass iClass,
       final String cluster,
       final String node) {
-    ODistributedServerLog.debug(
-        this,
-        manager.getLocalNodeName(),
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
-        "Class '%s': change mastership of cluster '%s' (id=%d) to node '%s'",
-        iClass,
-        cluster,
-        iDatabase.getClusterIdByName(cluster),
-        node);
     cfg.setServerOwner(cluster, node);
   }
 }
