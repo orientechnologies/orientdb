@@ -42,27 +42,24 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
 
   private static final int BYTE_ARRAY_OFFSET;
   private static final boolean littleEndian =
-      ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN);
+          ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN);
 
   private static final int LONG_SIZE = Long.SIZE / Byte.SIZE;
 
   static {
     unsafe =
-        (Unsafe)
-            AccessController.doPrivileged(
-                new PrivilegedAction<Object>() {
-                  public Object run() {
-                    try {
-                      Field f = Unsafe.class.getDeclaredField("theUnsafe");
-                      f.setAccessible(true);
-                      return f.get(null);
-                    } catch (NoSuchFieldException e) {
-                      throw new Error(e);
-                    } catch (IllegalAccessException e) {
-                      throw new Error(e);
-                    }
-                  }
-                });
+            (Unsafe)
+                    AccessController.doPrivileged(
+                            (PrivilegedAction<Object>)
+                                    () -> {
+                                      try {
+                                        Field f = Unsafe.class.getDeclaredField("theUnsafe");
+                                        f.setAccessible(true);
+                                        return f.get(null);
+                                      } catch (NoSuchFieldException | IllegalAccessException e) {
+                                        throw new Error(e);
+                                      }
+                                    });
 
     BYTE_ARRAY_OFFSET = unsafe.arrayBaseOffset(byte[].class);
 
@@ -72,10 +69,6 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
   }
 
   public int compare(byte[] arrayOne, byte[] arrayTwo) {
-    if (arrayOne.length > arrayTwo.length) return 1;
-
-    if (arrayOne.length < arrayTwo.length) return -1;
-
     final int WORDS = arrayOne.length / LONG_SIZE;
 
     for (int i = 0; i < WORDS * LONG_SIZE; i += LONG_SIZE) {
@@ -97,7 +90,7 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
       if (diff != 0) return diff;
     }
 
-    return 0;
+    return Integer.compare(arrayOne.length, arrayTwo.length);
   }
 
   private static boolean lessThanUnsigned(long longOne, long longTwo) {
