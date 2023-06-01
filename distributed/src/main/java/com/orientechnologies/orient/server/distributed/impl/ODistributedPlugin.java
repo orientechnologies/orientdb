@@ -83,8 +83,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
 import com.orientechnologies.orient.server.distributed.ODistributedStrategy;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
@@ -1959,6 +1957,11 @@ public class ODistributedPlugin extends OServerPluginAbstract
     return clusterManager.updateCachedDatabaseConfiguration(iDatabaseName, cfg);
   }
 
+  @Override
+  public void publishDistributedConfiguration(String iDatabaseName, ODistributedConfiguration cfg) {
+    clusterManager.publishDistributedConfiguration(iDatabaseName, cfg);
+  }
+
   public void notifyClients(String databaseName) {
     List<String> hosts = new ArrayList<>();
     for (String name : getActiveServers()) {
@@ -2774,7 +2777,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   // Called when the db config has changed
-  public void onDbConfigUpdated(String databaseName, ODocument config, boolean updated) {
+  public void onDbConfigUpdated(String databaseName, ODocument config) {
     // SEND A DISTRIBUTED MSG TO ALL THE SERVERS
     final Set<String> servers = new HashSet<String>(getActiveServers());
     servers.remove(nodeName);

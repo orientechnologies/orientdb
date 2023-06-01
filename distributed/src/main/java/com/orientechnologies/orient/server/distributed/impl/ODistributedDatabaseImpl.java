@@ -121,7 +121,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     this.manager = manager;
     this.databaseName = iDatabaseName;
     this.localNodeName = manager.getLocalNodeName();
-    this.configurationManager = new ODistributedConfigurationManager(manager, iDatabaseName);
+    this.configurationManager =
+        new ODistributedConfigurationManager(context, manager, iDatabaseName);
 
     startAcceptingRequests();
 
@@ -981,5 +982,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
     nodes.remove(localNodeName);
     return nodes;
+  }
+
+  public boolean tryUpdatingDatabaseConfigurationLocally(
+      final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
+    return this.configurationManager.tryUpdatingDatabaseConfigurationLocally(iDatabaseName, cfg);
   }
 }
