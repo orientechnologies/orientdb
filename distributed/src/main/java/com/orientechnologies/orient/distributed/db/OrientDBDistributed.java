@@ -410,7 +410,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     final ODistributedDatabaseImpl ddb = databases.get(iDatabaseName);
     if (ddb != null) return ddb;
     ODistributedDatabaseImpl ddd =
-        new ODistributedDatabaseImpl(plugin, iDatabaseName, plugin.getServerInstance());
+        new ODistributedDatabaseImpl(this, plugin, iDatabaseName, plugin.getServerInstance());
     // SELF REGISTERING ITSELF HERE BECAUSE IT'S NEEDED FURTHER IN THE CALL CHAIN
     final ODistributedDatabaseImpl prev = databases.put(iDatabaseName, ddd);
     if (prev != null) {

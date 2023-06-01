@@ -197,7 +197,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     return PRIORITY.LAST;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
     serverInstance = oServer;
