@@ -586,70 +586,44 @@ public class OHazelcastClusterMetadataManager
       final String databaseName, final OModifiableDistributedConfiguration cfg) {
     // VALIDATE THE CONFIGURATION FIRST
     distributedPlugin.getDistributedStrategy().validateConfiguration(cfg);
+    ODistributedDatabaseImpl local = distributedPlugin.getDatabase(databaseName);
+    if (local == null) return false;
 
-    boolean updated = tryUpdatingDatabaseConfigurationLocally(databaseName, cfg);
+    boolean updated = local.tryUpdatingDatabaseConfigurationLocally(databaseName, cfg);
 
     if (!updated && !getConfigurationMap().existsDatabaseConfiguration(databaseName))
       // FIRST TIME, FORCE PUBLISHING
       updated = true;
 
-    final ODocument document = cfg.getDocument();
-
     if (updated) {
-      // WRITE TO THE MAP TO BE READ BY NEW SERVERS ON JOIN
-      ORecordInternal.setRecordSerializer(
-          document, ODatabaseDocumentAbstract.getDefaultSerializer());
-      configurationMap.setDatabaseConfiguration(databaseName, document);
-      distributedPlugin.onDbConfigUpdated(databaseName, document, updated);
-
-      // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
-      serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
-
-      distributedPlugin.dumpServersStatus();
+      publishDistributedConfiguration(databaseName, cfg);
     }
 
     return updated;
   }
 
-  public boolean tryUpdatingDatabaseConfigurationLocally(
-      final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
-    ODistributedDatabaseImpl local = distributedPlugin.getDatabase(iDatabaseName);
-    if (local == null) return false;
-
-    final ODistributedConfiguration dCfg = local.getDistributedConfiguration();
-
-    ODocument oldCfg = dCfg != null ? dCfg.getDocument() : null;
-    Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
-    if (oldVersion == null) oldVersion = 0;
-
-    int currVersion = cfg.getVersion();
-
-    final boolean modified = currVersion > oldVersion;
-
-    if (oldCfg != null && !modified) {
-      // NO CHANGE, SKIP IT
-      OLogManager.instance()
-          .debug(
-              this,
-              "Skip saving of distributed configuration file for database '%s' because is unchanged (version %d)",
-              iDatabaseName,
-              currVersion);
-      return false;
-    }
-
-    // SAVE IN NODE'S LOCAL RAM
-    local.setDistributedConfiguration(cfg);
+  public void publishDistributedConfiguration(
+      final String databaseName, final ODistributedConfiguration cfg) {
 
     ODistributedServerLog.info(
         this,
-        nodeName,
+        getLocalNodeName(),
         null,
         ODistributedServerLog.DIRECTION.NONE,
         "Broadcasting new distributed configuration for database: %s (version=%d)\n",
-        iDatabaseName,
-        currVersion);
+        databaseName,
+        cfg.getVersion());
 
-    return modified;
+    final ODocument document = cfg.getDocument();
+    // WRITE TO THE MAP TO BE READ BY NEW SERVERS ON JOIN
+    ORecordInternal.setRecordSerializer(document, ODatabaseDocumentAbstract.getDefaultSerializer());
+    configurationMap.setDatabaseConfiguration(databaseName, document);
+    distributedPlugin.onDbConfigUpdated(databaseName, document);
+
+    // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
+    serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
+
+    distributedPlugin.dumpServersStatus();
   }
 
   @Override

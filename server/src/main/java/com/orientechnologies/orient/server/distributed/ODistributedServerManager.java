@@ -150,6 +150,8 @@ public interface ODistributedServerManager {
   boolean updateCachedDatabaseConfiguration(
       String iDatabaseName, OModifiableDistributedConfiguration cfg);
 
+  void publishDistributedConfiguration(String iDatabaseName, ODistributedConfiguration cfg);
+
   long getNextMessageIdCounter();
 
   String getNodeUuidByName(String name);
