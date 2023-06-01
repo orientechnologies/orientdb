@@ -5,24 +5,17 @@ import com.orientechnologies.common.comparator.OByteArrayComparator;
 import com.orientechnologies.common.comparator.OUnsafeByteArrayComparator;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Level;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.profile.StackProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+
+import java.io.IOException;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
@@ -31,18 +24,18 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @Warmup(iterations = 1, batchSize = 1)
 @Fork(1)
 public class ComparatorBenchmark {
-  KeyNormalizer keyNormalizer;
+  KeyNormalizers keyNormalizer;
 
   public static void main(String[] args) throws RunnerException {
     final Options opt =
-        new OptionsBuilder()
-            .include("ComparatorBenchmark.*")
-            .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
-            .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
-            // .result("target" + "/" + "results.csv")
-            // .param("offHeapMessages", "true""
-            // .resultFormat(ResultFormatType.CSV)
-            .build();
+            new OptionsBuilder()
+                    .include("ComparatorBenchmark.*")
+                    .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
+                    .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
+                    // .result("target" + "/" + "results.csv")
+                    // .param("offHeapMessages", "true""
+                    // .resultFormat(ResultFormatType.CSV)
+                    .build();
     new Runner(opt).run();
   }
 
@@ -55,51 +48,61 @@ public class ComparatorBenchmark {
 
   @Setup(Level.Iteration)
   public void setup() {
-    keyNormalizer = new KeyNormalizer();
+    keyNormalizer = new KeyNormalizers(Locale.getDefault(), Collator.NO_DECOMPOSITION);
 
-    negative = getNormalizedKeySingle(-62, OType.INTEGER);
-    zero = getNormalizedKeySingle(0, OType.INTEGER);
-    positive = getNormalizedKeySingle(5, OType.INTEGER);
+    try {
+      negative = getNormalizedKeySingle(-62);
+      zero = getNormalizedKeySingle(0);
+      positive = getNormalizedKeySingle(5);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @Benchmark
-  public void comparatorByteArrayNegative() throws Exception {
+  public void comparatorByteArrayNegative() {
     byteArrayComparator.compare(negative, zero);
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @Benchmark
-  public void comparatorByteArrayPositive() throws Exception {
+  public void comparatorByteArrayPositive() {
     byteArrayComparator.compare(positive, zero);
   }
 
+  @SuppressWarnings({"EqualsWithItself", "ResultOfMethodCallIgnored"})
   @Benchmark
-  public void comparatorByteArrayEqual() throws Exception {
+  public void comparatorByteArrayEqual() {
     byteArrayComparator.compare(zero, zero);
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @Benchmark
-  public void comparatorUnsafeByteArrayNegative() throws Exception {
+  public void comparatorUnsafeByteArrayNegative() {
     arrayComparator.compare(negative, zero);
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @Benchmark
-  public void comparatorUnsafeByteArrayPositive() throws Exception {
+  public void comparatorUnsafeByteArrayPositive() {
     arrayComparator.compare(positive, zero);
   }
 
+  @SuppressWarnings({"EqualsWithItself", "ResultOfMethodCallIgnored"})
   @Benchmark
-  public void comparatorUnsafeByteArrayEqual() throws Exception {
+  public void comparatorUnsafeByteArrayEqual() {
     arrayComparator.compare(zero, zero);
   }
 
-  private byte[] getNormalizedKeySingle(final int keyValue, final OType type) {
+  private byte[] getNormalizedKeySingle(final int keyValue) throws IOException {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey(keyValue);
     Assert.assertEquals(1, compositeKey.getKeys().size());
 
     final OType[] types = new OType[1];
-    types[0] = type;
+    types[0] = OType.INTEGER;
 
-    return keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+    return keyNormalizer.normalize(compositeKey, types);
   }
 }
