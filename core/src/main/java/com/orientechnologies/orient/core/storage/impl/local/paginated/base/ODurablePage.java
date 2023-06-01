@@ -79,7 +79,7 @@ public class ODurablePage {
   }
 
   public static final int MAX_PAGE_SIZE_BYTES =
-      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
   public static final int NEXT_FREE_POSITION = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
@@ -126,7 +126,7 @@ public class ODurablePage {
    */
   @SuppressWarnings("unused")
   public static void getPageData(
-      final ByteBuffer buffer, final byte[] data, final int offset, final int length) {
+          final ByteBuffer buffer, final byte[] data, final int offset, final int length) {
     buffer.position(0);
     buffer.get(data, offset, length);
   }
@@ -142,9 +142,9 @@ public class ODurablePage {
   @SuppressWarnings("unused")
   public static OLogSequenceNumber getLogSequenceNumber(final int offset, final byte[] data) {
     final long segment =
-        OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_SEGMENT_OFFSET);
+            OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_SEGMENT_OFFSET);
     final int position =
-        OIntegerSerializer.INSTANCE.deserializeNative(data, offset + WAL_POSITION_OFFSET);
+            OIntegerSerializer.INSTANCE.deserializeNative(data, offset + WAL_POSITION_OFFSET);
 
     return new OLogSequenceNumber(segment, position);
   }
@@ -185,6 +185,22 @@ public class ODurablePage {
     return changes.getLongValue(pointer.getBufferDuplicate(), pageOffset);
   }
 
+  protected final ByteBuffer getBinaryValueBuffer(final int pageOffset, final int valLen) {
+    final ByteBuffer buffer = pointer.getBufferDuplicate();
+
+    if (changes == null) {
+      assert buffer != null;
+      assert buffer.order() == ByteOrder.nativeOrder();
+
+      buffer.position(pageOffset);
+      buffer.limit(pageOffset + valLen);
+
+      return buffer.slice();
+    }
+
+    return ByteBuffer.wrap(changes.getBinaryValue(buffer, pageOffset, valLen));
+  }
+
   protected final byte[] getBinaryValue(final int pageOffset, final int valLen) {
     final ByteBuffer buffer = pointer.getBufferDuplicate();
 
@@ -203,7 +219,7 @@ public class ODurablePage {
   }
 
   protected int getObjectSizeInDirectMemory(
-      final OBinarySerializer<?> binarySerializer, final int offset) {
+          final OBinarySerializer<?> binarySerializer, final int offset) {
     final ByteBuffer buffer = pointer.getBufferDuplicate();
 
     if (changes == null) {
@@ -218,7 +234,7 @@ public class ODurablePage {
   }
 
   protected <T> T deserializeFromDirectMemory(
-      final OBinarySerializer<T> binarySerializer, final int offset) {
+          final OBinarySerializer<T> binarySerializer, final int offset) {
     final ByteBuffer buffer = pointer.getBufferDuplicate();
 
     if (changes == null) {
@@ -262,11 +278,11 @@ public class ODurablePage {
 
   protected final int setShortValue(final int pageOffset, final short value) {
     final ByteBuffer buffer = pointer.getBuffer();
-    assert buffer != null;
 
     if (changes != null) {
       changes.setIntValue(buffer, value, pageOffset);
     } else {
+      assert buffer != null;
       assert buffer.order() == ByteOrder.nativeOrder();
       buffer.putShort(pageOffset, value);
     }
@@ -391,12 +407,12 @@ public class ODurablePage {
   public String toString() {
     if (cacheEntry != null) {
       return getClass().getSimpleName()
-          + "{"
-          + "fileId="
-          + cacheEntry.getFileId()
-          + ", pageIndex="
-          + cacheEntry.getPageIndex()
-          + '}';
+              + "{"
+              + "fileId="
+              + cacheEntry.getFileId()
+              + ", pageIndex="
+              + cacheEntry.getPageIndex()
+              + '}';
     } else {
       return super.toString();
     }
