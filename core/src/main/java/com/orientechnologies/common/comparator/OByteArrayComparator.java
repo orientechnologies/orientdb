@@ -31,10 +31,6 @@ public class OByteArrayComparator implements Comparator<byte[]> {
   public static final OByteArrayComparator INSTANCE = new OByteArrayComparator();
 
   public int compare(final byte[] arrayOne, final byte[] arrayTwo) {
-    final int lenDiff = arrayOne.length - arrayTwo.length;
-
-    if (lenDiff != 0) return lenDiff;
-
     for (int i = 0; i < arrayOne.length; i++) {
       final int valOne = arrayOne[i] & 0xFF;
       final int valTwo = arrayTwo[i] & 0xFF;
@@ -43,6 +39,6 @@ public class OByteArrayComparator implements Comparator<byte[]> {
       if (diff != 0) return diff;
     }
 
-    return 0;
+    return arrayOne.length - arrayTwo.length;
   }
 }
