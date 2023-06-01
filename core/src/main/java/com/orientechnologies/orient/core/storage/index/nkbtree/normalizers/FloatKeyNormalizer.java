@@ -1,19 +1,24 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
-import java.io.IOException;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class FloatKeyNormalizer implements KeyNormalizers {
+public final class FloatKeyNormalizer implements KeyNormalizer {
   @Override
-  public byte[] execute(Object key, int decomposition) throws IOException {
-    final Float matKey = (float) key;
-    final ByteBuffer bb = ByteBuffer.allocate(5);
-    // IEEE 754 (endian sensitive), positive, big-endian to match lexicographical ordering of bytes
-    // for comparison
-    bb.order(ByteOrder.BIG_ENDIAN);
-    bb.put((byte) 0);
-    bb.putInt((Float.floatToIntBits(matKey)) + Integer.MAX_VALUE + 1);
-    return bb.array();
+  public int normalizedSize(Object key) {
+    return OIntegerSerializer.INT_SIZE;
+  }
+
+  @Override
+  public int normalize(Object key, int offset, byte[] stream) {
+    final ByteBuffer byteBuffer = ByteBuffer.wrap(stream);
+    byteBuffer.order(ByteOrder.BIG_ENDIAN);
+    byteBuffer.position(offset);
+
+    byteBuffer.putInt((Float.floatToIntBits((float) key)) + Integer.MAX_VALUE + 1);
+
+    return byteBuffer.position();
   }
 }

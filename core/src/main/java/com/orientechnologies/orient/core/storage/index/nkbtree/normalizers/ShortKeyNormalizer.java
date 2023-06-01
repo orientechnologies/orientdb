@@ -1,16 +1,24 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
-import java.io.IOException;
+import com.orientechnologies.common.serialization.types.OShortSerializer;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class ShortKeyNormalizer implements KeyNormalizers {
+public final class ShortKeyNormalizer implements KeyNormalizer {
   @Override
-  public byte[] execute(Object key, int decomposition) throws IOException {
-    final ByteBuffer bb = ByteBuffer.allocate(3);
-    bb.order(ByteOrder.BIG_ENDIAN);
-    bb.put((byte) 0);
-    bb.putShort((short) ((short) key + Short.MAX_VALUE + 1));
-    return bb.array();
+  public int normalizedSize(Object key) {
+    return OShortSerializer.SHORT_SIZE;
+  }
+
+  @Override
+  public int normalize(Object key, int offset, byte[] stream) {
+    final ByteBuffer buffer = ByteBuffer.wrap(stream);
+    buffer.order(ByteOrder.BIG_ENDIAN);
+    buffer.position(offset);
+
+    buffer.putShort((short) ((short) key + Short.MAX_VALUE + 1));
+
+    return buffer.position();
   }
 }

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
-import java.io.IOException;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -8,13 +9,21 @@ import java.nio.ByteOrder;
  * special treatment for `twos complement integer` encode as big endian unsigned integer and add
  * INT_MAX + 1 (byteswap if little endian)
  */
-public class IntegerKeyNormalizer implements KeyNormalizers {
+public final class IntegerKeyNormalizer implements KeyNormalizer {
   @Override
-  public byte[] execute(Object key, int decomposition) throws IOException {
-    final ByteBuffer bb = ByteBuffer.allocate(5);
-    bb.order(ByteOrder.BIG_ENDIAN);
-    bb.put((byte) 0);
-    bb.putInt(((int) key) + Integer.MAX_VALUE + 1);
-    return bb.array();
+  public int normalizedSize(Object key) {
+    return OIntegerSerializer.INT_SIZE;
+  }
+
+  @Override
+  public int normalize(Object key, int offset, byte[] stream) {
+    final ByteBuffer buffer = ByteBuffer.wrap(stream);
+
+    buffer.order(ByteOrder.BIG_ENDIAN);
+    buffer.position(offset);
+
+    buffer.putInt(((int) key) + Integer.MAX_VALUE + 1);
+
+    return buffer.position();
   }
 }
