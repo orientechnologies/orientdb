@@ -48,7 +48,7 @@ public class ODistributedTxCoordinator {
 
   private final ODistributedServerManager dManager;
   private final OStorage storage;
-  private final ODistributedDatabase localDistributedDatabase;
+  private final ODistributedDatabaseImpl localDistributedDatabase;
   private ODistributedTxResponseManager responseManager;
   private final ODistributedMessageService messageService;
   // ID and name of the node where this tx coordinator is running
@@ -68,7 +68,7 @@ public class ODistributedTxCoordinator {
       int retryDelay) {
     this.dManager = manager;
     this.storage = storage;
-    this.localDistributedDatabase = iDDatabase;
+    this.localDistributedDatabase = (ODistributedDatabaseImpl) iDDatabase;
     this.messageService = messageService;
     this.nodeId = nodeId;
     this.nodeName = nodeName;
@@ -80,15 +80,13 @@ public class ODistributedTxCoordinator {
       final ODatabaseDocumentDistributed database,
       final OTransactionInternal iTx,
       Set<String> clusters) {
-    ODistributedDatabaseImpl distributedDatabase =
-        (ODistributedDatabaseImpl) messageService.getDatabase(database.getName());
     int count = 0;
     do {
       final ODistributedRequestId requestId =
           new ODistributedRequestId(nodeId, dManager.getNextMessageIdCounter());
-      distributedDatabase.startOperation();
+      localDistributedDatabase.startOperation();
       try {
-        Optional<OTransactionId> genId = distributedDatabase.nextId();
+        Optional<OTransactionId> genId = localDistributedDatabase.nextId();
         if (genId.isPresent()) {
           OTransactionId txId = genId.get();
           tryCommit(database, iTx, txId, requestId, clusters);
@@ -124,7 +122,7 @@ public class ODistributedTxCoordinator {
         destroyContext(requestId);
         throw ex;
       } finally {
-        distributedDatabase.endOperation();
+        localDistributedDatabase.endOperation();
       }
       count++;
     } while (true);
@@ -146,11 +144,8 @@ public class ODistributedTxCoordinator {
 
     iTx.setStatus(OTransaction.TXSTATUS.BEGUN);
 
-    ODistributedDatabaseImpl sharedDb =
-        (ODistributedDatabaseImpl) messageService.getDatabase(database.getName());
-
     OLocalKeySource keySource = new OLocalKeySource(txId, iTx, database);
-    List<OLockGuard> guards = sharedDb.localLock(keySource);
+    List<OLockGuard> guards = localDistributedDatabase.localLock(keySource);
     OTransactionResultPayload localResult;
 
     try {
@@ -158,21 +153,21 @@ public class ODistributedTxCoordinator {
       localResult =
           OTransactionPhase1Task.executeTransaction(requestId, txId, database, iTx, true, -1);
     } finally {
-      sharedDb.localUnlock(guards);
+      localDistributedDatabase.localUnlock(guards);
     }
 
     if (localResult.getResponseType() == OTxRecordLockTimeout.ID) {
-      sharedDb.popTxContext(requestId).destroy();
+      localDistributedDatabase.popTxContext(requestId).destroy();
       throw new ODistributedRecordLockedException(
           nodeName, ((OTxRecordLockTimeout) localResult).getLockedId());
     }
     if (localResult.getResponseType() == OTxKeyLockTimeout.ID) {
-      sharedDb.popTxContext(requestId).destroy();
+      localDistributedDatabase.popTxContext(requestId).destroy();
       throw new ODistributedKeyLockedException(
           nodeName, ((OTxKeyLockTimeout) localResult).getKey());
     }
 
-    Set<String> nodes = sharedDb.getAvailableNodesButLocal(database, clusters);
+    Set<String> nodes = localDistributedDatabase.getAvailableNodesButLocal(database, clusters);
     if (nodes.isEmpty()) {
       switch (localResult.getResponseType()) {
         case OTxSuccess.ID:
@@ -439,13 +434,11 @@ public class ODistributedTxCoordinator {
       ODistributedRequestId requestId,
       ODatabaseDocumentDistributed database,
       OLockKeySource source) {
-    ODistributedDatabaseImpl dd =
-        (ODistributedDatabaseImpl) messageService.getDatabase(database.getName());
-    List<OLockGuard> guards = dd.localLock(source);
+    List<OLockGuard> guards = localDistributedDatabase.localLock(source);
     try {
       database.rollback2pc(requestId);
     } finally {
-      dd.localUnlock(guards);
+      localDistributedDatabase.localUnlock(guards);
     }
   }
 
@@ -453,13 +446,11 @@ public class ODistributedTxCoordinator {
       ODistributedRequestId requestId,
       ODatabaseDocumentDistributed database,
       OLockKeySource source) {
-    ODistributedDatabaseImpl dd =
-        (ODistributedDatabaseImpl) messageService.getDatabase(database.getName());
-    List<OLockGuard> guards = dd.localLock(source);
+    List<OLockGuard> guards = localDistributedDatabase.localLock(source);
     try {
       database.commit2pcLocal(requestId);
     } finally {
-      dd.localUnlock(guards);
+      localDistributedDatabase.localUnlock(guards);
     }
   }
 

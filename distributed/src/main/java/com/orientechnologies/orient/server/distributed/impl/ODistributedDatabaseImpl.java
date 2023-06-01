@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
@@ -33,7 +32,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
@@ -110,9 +108,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private OSyncSource lastValidBackup;
   private volatile DB_STATUS freezePrevStatus;
   private OFreezeGuard freezeGuard;
+  private final OrientDBDistributed context;
 
   public ODistributedDatabaseImpl(
-      final ODistributedPlugin manager, final String iDatabaseName, OServer server) {
+      OrientDBDistributed context,
+      final ODistributedPlugin manager,
+      final String iDatabaseName,
+      OServer server) {
+    this.context = context;
     this.manager = manager;
     this.databaseName = iDatabaseName;
     this.localNodeName = manager.getLocalNodeName();
@@ -198,11 +201,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             },
             "distributed.db.*.recordLocks");
 
-    long timeout =
-        manager
-            .getServerInstance()
-            .getContextConfiguration()
-            .getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
     int sequenceSize =
         manager
             .getServerInstance()
@@ -296,7 +294,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final ORemoteTask payload,
       int retryCount,
       int autoRetryDelay) {
-    OrientDBInternal context = manager.getServerInstance().getDatabases();
     context.scheduleOnce(
         new TimerTask() {
 
@@ -397,8 +394,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       manager.messageProcessStart(request);
       Object response;
       if (task.isUsingDatabase()) {
-        try (ODatabaseDocumentInternal db =
-            this.manager.getServerInstance().getDatabases().openNoAuthorization(databaseName)) {
+        try (ODatabaseDocumentInternal db = context.openNoAuthorization(databaseName)) {
           response = this.manager.executeOnLocalNode(request.getId(), task, db);
         }
       } else {
@@ -451,10 +447,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void fillStatus() {
-    OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage)
-            ((OrientDBDistributed) manager.getServerInstance().getDatabases())
-                .getStorage(databaseName);
+    OAbstractPaginatedStorage storage = context.getStorage(databaseName);
 
     if (storage != null) {
       sequenceManager.fill(storage.getLastMetadata());
@@ -542,7 +535,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public boolean exists() {
-    return manager.getServerInstance().existsDatabase(databaseName);
+    return context.exists(databaseName, null, null);
   }
 
   @Override
@@ -565,7 +558,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public ODatabaseDocumentInternal getDatabaseInstance() {
-    return manager.getServerInstance().getDatabases().openNoAuthorization(databaseName);
+    return context.openNoAuthorization(databaseName);
   }
 
   @Override
@@ -683,7 +676,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           "Cannot create configured distributed workers (" + totalWorkers + ")");
     else if (totalWorkers == 0) {
       // AUTOMATIC
-      final int totalDatabases = manager.getManagedDatabases().size() + 1;
+      final int totalDatabases = context.getActiveDatabases().size() + 1;
 
       final int cpus = Runtime.getRuntime().availableProcessors();
 
@@ -848,13 +841,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     List<OTransactionId> res = sequenceManager.checkSelfStatus(status);
     res.removeAll(this.inQueue);
     if (!res.isEmpty()) {
-      this.manager
-          .getServerInstance()
-          .getDatabases()
-          .execute(
-              () -> {
-                manager.installDatabase(false, databaseName, true, true);
-              });
+      context.execute(
+          () -> {
+            manager.installDatabase(false, databaseName, true, true);
+          });
     }
   }
 
