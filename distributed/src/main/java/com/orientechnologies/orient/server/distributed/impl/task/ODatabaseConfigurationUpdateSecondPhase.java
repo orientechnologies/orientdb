@@ -11,16 +11,16 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class ODistributedConfigurationUpdateSecondPhase extends OAbstractRemoteTask {
+public class ODatabaseConfigurationUpdateSecondPhase extends OAbstractRemoteTask {
 
   public static final int FACTORYID = 62;
 
   private ODistributedRequestId confirmSentRequest;
   private boolean apply;
 
-  public ODistributedConfigurationUpdateSecondPhase() {}
+  public ODatabaseConfigurationUpdateSecondPhase() {}
 
-  public ODistributedConfigurationUpdateSecondPhase(
+  public ODatabaseConfigurationUpdateSecondPhase(
       ODistributedRequestId confirmSentRequest, boolean apply) {
     this.confirmSentRequest = confirmSentRequest;
     this.apply = apply;
@@ -28,7 +28,7 @@ public class ODistributedConfigurationUpdateSecondPhase extends OAbstractRemoteT
 
   @Override
   public String getName() {
-    return "distributed_configuration_second_phase";
+    return "database_configuration_update_second_phase";
   }
 
   @Override

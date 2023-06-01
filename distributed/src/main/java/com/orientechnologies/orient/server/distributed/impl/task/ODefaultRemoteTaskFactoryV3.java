@@ -107,11 +107,14 @@ public class ODefaultRemoteTaskFactoryV3 implements ORemoteTaskFactory {
       case OSQLCommandTaskSecondPhase.FACTORYID: // 60
         return new OSQLCommandTaskSecondPhase();
 
-      case ODistributedConfigurationUpdateFirstPhase.FACTORYID: // 61
-        return new ODistributedConfigurationUpdateFirstPhase();
+      case ODatabaseConfigurationUpdateFirstPhase.FACTORYID: // 61
+        return new ODatabaseConfigurationUpdateFirstPhase();
 
-      case ODistributedConfigurationUpdateSecondPhase.FACTORYID: // 62
-        return new ODistributedConfigurationUpdateSecondPhase();
+      case ODatabaseConfigurationUpdateSecondPhase.FACTORYID: // 62
+        return new ODatabaseConfigurationUpdateSecondPhase();
+
+      case ODatabaseConfigurationFetch.FACTORYID: // 63
+        return new ODatabaseConfigurationFetch();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

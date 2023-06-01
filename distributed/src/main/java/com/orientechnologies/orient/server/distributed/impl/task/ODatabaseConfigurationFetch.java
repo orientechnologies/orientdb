@@ -2,39 +2,35 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class ODistributedConfigurationUpdateFirstPhase extends OAbstractRemoteTask {
+public class ODatabaseConfigurationFetch extends OAbstractRemoteTask {
 
-  public static final int FACTORYID = 61;
+  public static final int FACTORYID = 63;
 
-  private ODocument configuration;
-  private long version;
+  private String database;
 
-  public ODistributedConfigurationUpdateFirstPhase() {}
+  public ODatabaseConfigurationFetch() {}
 
-  public ODistributedConfigurationUpdateFirstPhase(ODocument configuration, long version) {
-    this.configuration = configuration;
-    this.version = version;
-  }
+  public ODatabaseConfigurationFetch(String database) {}
 
   @Override
   public String getName() {
-    return "distributed_configuration_update_first_phase";
+    return "database_configuration_fetch";
   }
 
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.NONE;
   }
 
   @Override
@@ -44,28 +40,26 @@ public class ODistributedConfigurationUpdateFirstPhase extends OAbstractRemoteTa
       ODistributedServerManager iManager,
       ODatabaseDocumentInternal database)
       throws Exception {
-
+    // TODO: use an API that do not create the configuration in this case
+    ODistributedConfiguration config =
+        ((ODistributedDatabaseImpl) iManager.getDatabase(this.database))
+            .getExistingDatabaseConfiguration();
+    if (config != null) {
+      return config.getDocument();
+    }
     return null;
   }
 
   @Override
   public void toStream(DataOutput out) throws IOException {
     super.toStream(out);
-    byte[] bytes = ORecordSerializerNetworkDistributed.INSTANCE.toStream(this.configuration);
-    out.writeInt(bytes.length);
-    out.write(bytes);
-    out.writeLong(this.version);
+    out.writeUTF(database);
   }
 
   @Override
   public void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException {
     super.fromStream(in, factory);
-    int lenght = in.readInt();
-    byte[] bytes = new byte[lenght];
-    in.readFully(bytes);
-    this.version = in.readLong();
-    configuration =
-        (ODocument) ORecordSerializerNetworkDistributed.INSTANCE.fromStream(bytes, new ODocument());
+    this.database = in.readUTF();
   }
 
   @Override

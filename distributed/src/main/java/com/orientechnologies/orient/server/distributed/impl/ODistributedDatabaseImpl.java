@@ -961,4 +961,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     nodes.remove(localNodeName);
     return nodes;
   }
+
+  public ODistributedConfiguration getExistingDatabaseConfiguration() {
+    return configurationManager.getExisingDistributedConfiguration();
+  }
 }
