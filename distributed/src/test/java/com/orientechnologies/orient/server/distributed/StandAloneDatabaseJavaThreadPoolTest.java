@@ -143,7 +143,7 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
                             + "' where prop2='v2-1'";
                     for (int k = 0; k < 10 && update; k++) {
                       try {
-                        graph.command(new OCommandSQL(sql)).execute();
+                        graph.command(sql).close();
                         if (isException) {
                           log(
                               "********** ["

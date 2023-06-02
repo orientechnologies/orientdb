@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import junit.framework.Assert;
@@ -26,26 +25,24 @@ public class AsyncIndexIT extends BareBoneBase2ServerTest {
     }
     ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
     try {
-      graph.command(new OCommandSQL("create class SMS")).execute();
-      graph.command(new OCommandSQL("create property SMS.type string")).execute();
-      graph.command(new OCommandSQL("create property SMS.lang string")).execute();
-      graph.command(new OCommandSQL("create property SMS.source integer")).execute();
-      graph.command(new OCommandSQL("create property SMS.content string")).execute();
-      graph.command(new OCommandSQL("alter property SMS.lang min 2")).execute();
-      graph.command(new OCommandSQL("alter property SMS.lang max 2")).execute();
-      graph.command(new OCommandSQL("create index sms_keys ON SMS (type, lang) unique")).execute();
+      graph.command("create class SMS").close();
+      graph.command("create property SMS.type string").close();
+      graph.command("create property SMS.lang string").close();
+      graph.command("create property SMS.source integer").close();
+      graph.command("create property SMS.content string").close();
+      graph.command("alter property SMS.lang min 2").close();
+      graph.command("alter property SMS.lang max 2").close();
+      graph.command("create index sms_keys ON SMS (type, lang) unique").close();
 
       graph
           .command(
-              new OCommandSQL(
-                  "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
-          .execute();
+              "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')")
+          .close();
       try {
         graph
             .command(
-                new OCommandSQL(
-                    "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
-            .execute();
+                "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')")
+            .close();
         Assert.fail("violated unique index was not raised");
       } catch (ORecordDuplicatedException e) {
       }
@@ -72,9 +69,8 @@ public class AsyncIndexIT extends BareBoneBase2ServerTest {
       try {
         graph2
             .command(
-                new OCommandSQL(
-                    "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
-            .execute();
+                "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')")
+            .close();
         Assert.fail("violated unique index was not raised");
       } catch (ORecordDuplicatedException e) {
       }

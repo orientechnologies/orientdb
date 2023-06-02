@@ -25,7 +25,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
@@ -192,7 +191,7 @@ public class DeleteAndLazarusScenarioIT extends AbstractScenarioTest {
     // delete request on server3 for r1*
     dbServer3 = getDatabase(2);
     try {
-      dbServer3.command(new OCommandSQL("delete from Person where @rid=#27:0")).execute();
+      dbServer3.command("delete from Person where @rid=#27:0").close();
     } catch (Exception e) {
       System.out.println(e.getMessage());
     } finally {
@@ -229,7 +228,7 @@ public class DeleteAndLazarusScenarioIT extends AbstractScenarioTest {
     // delete request on server1 for r1
     dbServer1 = getDatabase(0);
     try {
-      Integer result = dbServer1.command(new OCommandSQL("delete from " + r1Rid)).execute();
+      dbServer1.command("delete from " + r1Rid).close();
     } catch (Exception e) {
       e.printStackTrace();
     } finally {

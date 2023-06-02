@@ -20,17 +20,15 @@
 
 package com.orientechnologies.orient.core.sql.functions.stat;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionUUID;
-import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,11 +58,11 @@ public class OSQLFunctionUUIDTest {
     try (OrientDB ctx = new OrientDB("embedded:./", OrientDBConfig.defaultConfig())) {
       ctx.execute("create database test memory users(admin identified by 'adminpwd' role admin)");
       try (ODatabaseDocument db = ctx.open("test", "admin", "adminpwd")) {
-        final OLegacyResultSet<ODocument> result =
-            db.command(new OCommandSQL("select uuid()")).execute();
-        assertNotNull(result);
-        assertEquals(result.size(), 1);
-        assertNotNull(result.get(0).field("uuid"));
+
+        try (final OResultSet result = db.query("select uuid() as uuid")) {
+          assertNotNull(result.next().getProperty("uuid"));
+          assertFalse(result.hasNext());
+        }
       }
       ctx.drop("test");
     }

@@ -25,9 +25,9 @@ public class DistributedAggregateCollectionIT extends AbstractServerClusterTest 
 
   @Override
   protected void onAfterDatabaseCreation(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE CLASS Item extends V")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY Item.name STRING")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY Item.map EMBEDDEDMAP")).execute();
+    db.command("CREATE CLASS Item extends V").close();
+    db.command("CREATE PROPERTY Item.name STRING").close();
+    db.command("CREATE PROPERTY Item.map EMBEDDEDMAP").close();
   }
 
   @Override

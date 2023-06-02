@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -9,12 +10,11 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import java.util.List;
 import java.util.Locale;
 import org.junit.Assert;
 import org.junit.Test;
@@ -161,12 +161,14 @@ public class ClassTest extends BaseMemoryInternalDatabase {
 
   private String queryShortName() {
     String selectShortNameSQL =
-        "select shortName from ( select flatten(classes) from cluster:internal )"
+        "select shortName from ( select expand(classes) from metadata:schema )"
             + " where name = \""
             + SHORTNAME_CLASS_NAME
             + "\"";
-    List<ODocument> result = db.command(new OCommandSQL(selectShortNameSQL)).execute();
-    assertEquals(1, result.size());
-    return result.get(0).field("shortName");
+    try (OResultSet result = db.query(selectShortNameSQL)) {
+      String name = result.next().getProperty("shortName");
+      assertFalse(result.hasNext());
+      return name;
+    }
   }
 }

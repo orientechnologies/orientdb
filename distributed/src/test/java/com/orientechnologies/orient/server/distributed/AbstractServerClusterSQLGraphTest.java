@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -27,9 +29,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.Date;
 import java.util.UUID;
@@ -154,52 +155,48 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   protected OVertex createVertex(ODatabaseDocument graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-    final Object result =
-        graph
-            .command(
-                new OCommandSQL(
-                    "create vertex Person content {'id': '"
-                        + UUID.randomUUID().toString()
-                        + "', 'name': 'Billy"
-                        + uniqueId
-                        + "', 'surname': 'Mayes"
-                        + uniqueId
-                        + "', 'birthday': '"
-                        + ODatabaseRecordThreadLocal.instance()
-                            .get()
-                            .getStorage()
-                            .getConfiguration()
-                            .getDateFormatInstance()
-                            .format(new Date())
-                        + "', 'children': '"
-                        + uniqueId
-                        + "'}"))
-            .execute();
-    return ((OElement) result).asVertex().get();
+    try (final OResultSet result =
+        graph.command(
+            "create vertex Person content {'id': '"
+                + UUID.randomUUID().toString()
+                + "', 'name': 'Billy"
+                + uniqueId
+                + "', 'surname': 'Mayes"
+                + uniqueId
+                + "', 'birthday': '"
+                + ODatabaseRecordThreadLocal.instance()
+                    .get()
+                    .getStorage()
+                    .getConfiguration()
+                    .getDateFormatInstance()
+                    .format(new Date())
+                + "', 'children': '"
+                + uniqueId
+                + "'}")) {
+
+      return result.next().getVertex().get();
+    }
   }
 
   protected OEdge createEdge(ODatabaseDocument graph, OVertex v1, OVertex v2) {
-    final Iterable<OEdge> result =
-        graph
-            .command(
-                new OCommandSQL(
-                    "create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity()))
-            .execute();
-    return result.iterator().next().asEdge().get();
+    try (OResultSet result =
+        graph.command("create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity())) {
+
+      return result.next().getEdge().get();
+    }
   }
 
   protected void updateVertex(ODatabaseDocument graph, OVertex v) {
-    graph.command(new OCommandSQL("update " + v.getIdentity() + " set updated = true")).execute();
+    graph.command("update " + v.getIdentity() + " set updated = true").close();
   }
 
   protected void checkVertex(ODatabaseDocument graph, OVertex v) {
-    final Iterable<OVertex> result =
-        graph.command(new OCommandSQL("select from " + v.getIdentity())).execute();
-    Assert.assertTrue(result.iterator().hasNext());
+    try (final OResultSet result = graph.query("select from " + v.getIdentity())) {
+      assertTrue(result.hasNext());
+      final OVertex vertex = result.next().getVertex().get();
+      vertex.reload();
 
-    final OVertex vertex = result.iterator().next().asVertex().get();
-    vertex.reload();
-
-    Assert.assertTrue(Boolean.TRUE.equals(vertex.getProperty("updated")));
+      assertTrue(Boolean.TRUE.equals(vertex.getProperty("updated")));
+    }
   }
 }

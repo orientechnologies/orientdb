@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.concurrent.Callable;
@@ -136,8 +135,7 @@ public class HaSyncClusterIT extends AbstractServerClusterTest {
 
                   Assert.assertNotNull(clusterName);
 
-                  db.command(new OCommandSQL(String.format("HA sync cluster %s", clusterName)))
-                      .execute();
+                  db.command(String.format("HA sync cluster %s", clusterName)).close();
 
                   final ODistributedMessageService messageService = manager.getMessageService();
 
