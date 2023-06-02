@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.setup.ServerRun;
-import junit.framework.Assert;
 import org.junit.Test;
 
 /** Distributed test on drop database and further resync. */
@@ -42,7 +42,7 @@ public class DistributedDbDropAndResyncIT extends AbstractServerClusterTxTest {
           s.getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
 
       banner("RE-SYNC DATABASE ON SERVER " + s.getServerId());
-      db.command(new OCommandSQL("ha sync database")).execute();
+      db.command("ha sync database").close();
 
       ODistributedServerManager.DB_STATUS currentStatus = null;
 
@@ -62,7 +62,7 @@ public class DistributedDbDropAndResyncIT extends AbstractServerClusterTxTest {
         }
       }
 
-      Assert.assertEquals(currentStatus, ODistributedServerManager.DB_STATUS.ONLINE);
+      assertEquals(currentStatus, ODistributedServerManager.DB_STATUS.ONLINE);
     }
   }
 

@@ -398,7 +398,7 @@ public final class DistributedConfigReloadIT {
             "create database ? plocal users(admin identified by 'admin' role admin)", dbName);
 
         ODatabaseDocument orientGraph = orientDB.open(dbName, "admin", "admin");
-        orientGraph.command(new OCommandSQL("ALTER DATABASE custom strictSQL=false")).execute();
+        orientGraph.command("ALTER DATABASE custom strictSQL=false").close();
         orientGraph.close();
         isNewDB = true;
       } else {

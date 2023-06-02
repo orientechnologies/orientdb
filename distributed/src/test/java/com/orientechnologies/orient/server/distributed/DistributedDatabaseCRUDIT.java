@@ -544,7 +544,7 @@ public final class DistributedDatabaseCRUDIT {
 
       ODatabaseDocument orientGraph = getGraphFactory().acquire();
 
-      orientGraph.command(new OCommandSQL("ALTER DATABASE custom strictSQL=false")).execute();
+      orientGraph.command("ALTER DATABASE custom strictSQL=false").close();
       orientGraph.close();
     } catch (Exception ex) {
       log("Failed to create database", ex);

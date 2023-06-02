@@ -40,13 +40,13 @@ public class ShardingDocsAndEdgesIT extends AbstractServerClusterTest {
 
   @Override
   protected void onAfterDatabaseCreation(ODatabaseDocument db) {
-    db.command(new OCommandSQL("ALTER DATABASE CUSTOM useLightweightEdges = true")).execute();
-    db.command(new OCommandSQL("ALTER DATABASE MINIMUMCLUSTERS 2")).execute();
-    db.command(new OCommandSQL("create class `Client-Type` extends V")).execute();
-    db.command(new OCommandSQL("create property `Client-Type`.name string")).execute();
-    db.command(new OCommandSQL("alter cluster `Client-Type`   name `client-type_usa`")).execute();
-    db.command(new OCommandSQL("alter cluster `client-type_1` name `client-type_eur`")).execute();
-    db.command(new OCommandSQL("create class Follows extends E")).execute();
+    db.command("ALTER DATABASE CUSTOM useLightweightEdges = true").close();
+    db.command("ALTER DATABASE MINIMUMCLUSTERS 2").close();
+    db.command("create class `Client-Type` extends V").close();
+    db.command("create property `Client-Type`.name string").close();
+    db.command("alter cluster `Client-Type`   name 'client-type_usa'").close();
+    db.command("alter cluster `client-type_1` name 'client-type_eur'").close();
+    db.command("create class Follows extends E").close();
   }
 
   @Override

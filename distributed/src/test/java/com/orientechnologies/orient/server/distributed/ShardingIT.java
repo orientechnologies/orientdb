@@ -62,9 +62,7 @@ public class ShardingIT extends AbstractServerClusterTest {
     final OProperty prop = clientType.createProperty("name-property", OType.STRING);
     prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    graphNoTx
-        .command(new OCommandSQL("alter cluster `Client-Type` name `Client-Type_europe`"))
-        .execute();
+    graphNoTx.command("alter cluster `Client-Type` name 'Client-Type_europe'").close();
 
     clientType.addCluster("client-type_usa");
     clientType.addCluster("client-type_asia");

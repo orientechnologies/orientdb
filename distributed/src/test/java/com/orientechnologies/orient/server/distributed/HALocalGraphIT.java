@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
@@ -247,7 +246,7 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
                             + "' where prop2='v2-1'";
                     for (int k = 0; k < 10 && update; k++) {
                       try {
-                        graph.command(new OCommandSQL(sql)).execute();
+                        graph.command(sql).close();
                         if (isException) {
                           log(
                               "********** ["

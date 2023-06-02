@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -124,9 +123,7 @@ public class HaRemoveServerIT extends AbstractServerClusterTest {
                         .getServerInstance()
                         .getContext()
                         .open(getDatabaseName(), "admin", "admin")) {
-                  db.command(
-                          new OCommandSQL(String.format("HA remove server `%s`", offlineNodeName)))
-                      .execute();
+                  db.command(String.format("HA remove server `%s`", offlineNodeName)).close();
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -139,7 +136,7 @@ public class HaRemoveServerIT extends AbstractServerClusterTest {
 
   @Override
   protected void onAfterDatabaseCreation(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE CLASS Person extends V")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY Person.name STRING")).execute();
+    db.command("CREATE CLASS Person extends V").close();
+    db.command("CREATE PROPERTY Person.name STRING").close();
   }
 }

@@ -72,8 +72,7 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
 
         g.newVertex("User").save();
 
-        g.command(new OCommandSQL("insert into Post (content, timestamp) values('test', 1)"))
-            .execute();
+        g.command("insert into Post (content, timestamp) values('test', 1)").close();
       } finally {
         g.close();
       }
