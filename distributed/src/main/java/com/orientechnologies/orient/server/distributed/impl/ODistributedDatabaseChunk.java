@@ -68,7 +68,7 @@ public class ODistributedDatabaseChunk implements OStreamable {
           System.arraycopy(local, 0, buffer, 0, read);
         }
 
-        if (in.available() == 0 && backgroundBackup.getFinished().await(0, TimeUnit.NANOSECONDS)) {
+        if (backgroundBackup.getFinished().await(0, TimeUnit.NANOSECONDS) && in.available() == 0) {
           // BACKUP COMPLETED
           last = true;
         }
