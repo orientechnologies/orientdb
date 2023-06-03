@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Stream;
+import org.junit.*;
 
 public class BinaryBTreeTestIT {
     private static KeyNormalizers keyNormalizers;

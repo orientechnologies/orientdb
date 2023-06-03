@@ -312,7 +312,7 @@ public final class BinaryBTree extends ODurableComponent {
 
         final int indexToSplit;
 
-        byte[] separationKey = null;
+        byte[] separationKey;
         if (splitLeaf) {
             final int median = bucketSize >>> 1;
             int minLen = Integer.MAX_VALUE;
