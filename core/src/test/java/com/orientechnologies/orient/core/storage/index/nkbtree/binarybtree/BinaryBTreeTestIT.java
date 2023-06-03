@@ -125,7 +125,7 @@ public class BinaryBTreeTestIT {
     @Test
     public void testKeyPutRandomUniform() throws Exception {
         final TreeMap<String, ORID> keys = new TreeMap<>();
-        final long seed = System.nanoTime();
+        final long seed = 559430631165266L;//System.nanoTime();
         System.out.println("testKeyPutRandomUniform seed : " + seed);
         final Random random = new Random(seed);
         final int keysCount = 1_000_000;

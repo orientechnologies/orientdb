@@ -267,6 +267,7 @@ public final class BinaryBTree extends ODurableComponent {
                                             bucketSearchResult.path,
                                             bucketSearchResult.insertionIndexes,
                                             insertionIndex,
+                                            key,
                                             atomicOperation);
 
                             insertionIndex = bucketSearchResult.itemIndex;
@@ -303,14 +304,61 @@ public final class BinaryBTree extends ODurableComponent {
             final List<Long> path,
             final List<Integer> itemPointers,
             final int keyIndex,
+            final byte[] key,
             final OAtomicOperation atomicOperation)
             throws IOException {
         final boolean splitLeaf = bucketToSplit.isLeaf();
         final int bucketSize = bucketToSplit.size();
 
-        final int indexToSplit = bucketSize >>> 1;
-        final byte[] separationKey = bucketToSplit.getKey(indexToSplit);
+        final int indexToSplit;
 
+        byte[] separationKey = null;
+        if (splitLeaf) {
+            final int median = bucketSize >>> 1;
+            int minLen = Integer.MAX_VALUE;
+            int minIndex = Integer.MIN_VALUE;
+
+            for (int i = -1; i < 2; i++) {
+                int index = median + i;
+                final byte[] keyOne = keyIndex == index ? key : bucketToSplit.getKey(index - 1);
+                final byte[] keyTwo = bucketToSplit.getKey(index);
+
+                final int commonLen = Math.min(keyOne.length, keyTwo.length);
+
+                boolean keyFound = false;
+                for (int k = 0; k < commonLen; k++) {
+                    if (keyOne[k] < keyTwo[k]) {
+                        if (minLen > k + 1) {
+                            minLen = k + 1;
+                            minIndex = index;
+                        }
+
+                        keyFound = true;
+                        break;
+                    }
+                }
+
+                if (!keyFound && minLen > commonLen + 1) {
+                    assert keyOne.length > keyTwo.length;
+
+                    minLen = commonLen + 1;
+                    minIndex = index;
+                }
+            }
+
+            if (minIndex == Integer.MIN_VALUE) {
+                throw new IllegalStateException("Separation key was not found");
+            }
+
+            indexToSplit = minIndex;
+            separationKey = new byte[minLen];
+            System.arraycopy(bucketToSplit.getKey(indexToSplit), 0, separationKey, 0, minLen);
+        } else {
+            indexToSplit = bucketSize >>> 1;
+            separationKey = bucketToSplit.getKey(indexToSplit);
+        }
+
+        Objects.requireNonNull(separationKey);
         final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
 
         // we remove the separation key from the child in case of non-leaf node that is why skip first
@@ -402,6 +450,7 @@ public final class BinaryBTree extends ODurableComponent {
                                     path.subList(0, path.size() - 1),
                                     itemPointers.subList(0, itemPointers.size() - 1),
                                     insertionIndex,
+                                    separationKey,
                                     atomicOperation);
 
                     parentIndex = bucketSearchResult.getLastPathItem();
