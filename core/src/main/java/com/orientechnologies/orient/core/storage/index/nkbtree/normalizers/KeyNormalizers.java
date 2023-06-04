@@ -101,7 +101,7 @@ public class KeyNormalizers {
         System.arraycopy(collatedKey, 0, result, offset, collatedKey.length);
         offset += collatedKey.length;
       } else {
-        result[offset] = 1;
+        result[offset] = BinaryBTree.DATA_PREFIX;
         offset++;
 
         final KeyNormalizer keyNormalizer = normalizers.get(type);
