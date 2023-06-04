@@ -40,7 +40,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     byte[] data = new byte[OLongSerializer.LONG_SIZE];
     OLongSerializer.INSTANCE.serializeNative(value, data, 0);
 
-    updateData(pointer, offset, data);
+    updateData(pointer, offset, data, 0, data.length);
   }
 
   @Override
@@ -48,33 +48,37 @@ public class OWALPageChangesPortion implements OWALChanges {
     byte[] data = new byte[OIntegerSerializer.INT_SIZE];
     OIntegerSerializer.INSTANCE.serializeNative(value, data, 0);
 
-    updateData(pointer, offset, data);
+    updateData(pointer, offset, data, 0, data.length);
   }
 
   public void setShortValue(ByteBuffer pointer, short value, int offset) {
     byte[] data = new byte[OShortSerializer.SHORT_SIZE];
     OShortSerializer.INSTANCE.serializeNative(value, data, 0);
 
-    updateData(pointer, offset, data);
+    updateData(pointer, offset, data, 0, data.length);
   }
 
   @Override
   public void setByteValue(ByteBuffer pointer, byte value, int offset) {
     byte[] data = new byte[] {value};
 
-    updateData(pointer, offset, data);
+    updateData(pointer, offset, data, 0, data.length);
   }
 
   @Override
   public void setBinaryValue(ByteBuffer pointer, byte[] value, int offset) {
-    updateData(pointer, offset, value);
+    updateData(pointer, offset, value, 0, value.length);
   }
 
+  @Override
+  public void setBinaryValue(ByteBuffer buffer, byte[] value, int pageOffset, int offset, int len) {
+    updateData(buffer, pageOffset, value, offset, len);
+  }
   @Override
   public void moveData(ByteBuffer pointer, int from, int to, int len) {
     byte[] buff = new byte[len];
     readData(pointer, from, buff);
-    updateData(pointer, to, buff);
+    updateData(pointer, to, buff, 0, buff.length);
   }
 
   @Override
@@ -341,23 +345,40 @@ public class OWALPageChangesPortion implements OWALChanges {
     }
   }
 
-  private void updateData(ByteBuffer pointer, int offset, byte[] data) {
+  private void updateData(ByteBuffer pointer, int pageOffset,final byte[] data, final int offset,final int len) {
+    if (offset + len > data.length) {
+      throw new IllegalArgumentException(
+              "Provided data range exceeds data length offset - "
+                      + offset
+                      + ", len "
+                      + len
+                      + ", data length "
+                      + data.length);
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException("Offset can not be negative");
+    }
+
+    if (len < 0) {
+      throw new IllegalArgumentException("Len can not be negative");
+    }
+
     if (pageChunks == null) {
       pageChunks = new byte[(pageSize + (PORTION_BYTES - 1)) / PORTION_BYTES][][];
     }
 
-    int portionIndex = offset / PORTION_BYTES;
+    int portionIndex = pageOffset / PORTION_BYTES;
 
     if (pageChunks[portionIndex] == null) {
       pageChunks[portionIndex] = new byte[PORTION_SIZE][];
     }
 
-    int chunkIndex = (offset - portionIndex * PORTION_BYTES) / CHUNK_SIZE;
-    int chunkOffset = offset - (portionIndex * PORTION_BYTES + chunkIndex * CHUNK_SIZE);
+    int chunkIndex = (pageOffset - portionIndex * PORTION_BYTES) / CHUNK_SIZE;
+    int chunkOffset = pageOffset - (portionIndex * PORTION_BYTES + chunkIndex * CHUNK_SIZE);
 
     int written = 0;
 
-    while (written < data.length) {
+    while (written < len) {
       byte[] chunk = pageChunks[portionIndex][chunkIndex];
 
       if (chunk == null) {
@@ -372,14 +393,14 @@ public class OWALPageChangesPortion implements OWALChanges {
         pageChunks[portionIndex][chunkIndex] = chunk;
       }
 
-      final int wl = Math.min(CHUNK_SIZE - chunkOffset, data.length - written);
-      System.arraycopy(data, written, chunk, chunkOffset, wl);
+      final int wl = Math.min(CHUNK_SIZE - chunkOffset, len - written);
+      System.arraycopy(data, offset + written, chunk, chunkOffset, wl);
 
       written += wl;
       chunkOffset = 0;
       chunkIndex++;
 
-      if (chunkIndex == PORTION_SIZE && written < data.length) {
+      if (chunkIndex == PORTION_SIZE && written < len) {
         portionIndex++;
 
         if (pageChunks[portionIndex] == null) {

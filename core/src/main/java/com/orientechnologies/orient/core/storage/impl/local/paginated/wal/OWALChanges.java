@@ -33,6 +33,8 @@ public interface OWALChanges {
 
   void setBinaryValue(ByteBuffer buffer, byte[] value, int offset);
 
+  void setBinaryValue(ByteBuffer buffer, byte[] value, int pageOffset, int offset, int len);
+
   void moveData(ByteBuffer buffer, int from, int to, int len);
 
   boolean hasChanges();

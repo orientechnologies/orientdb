@@ -179,6 +179,11 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   @Override
+  public void setBinaryValue(ByteBuffer buffer, byte[] value, int pageOffset, int offset, int len) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void setByteValue(ByteBuffer buffer, byte value, int offset) {
     add(new byte[] {value}, offset);
   }
