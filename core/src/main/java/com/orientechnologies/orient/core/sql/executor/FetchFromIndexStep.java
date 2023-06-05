@@ -63,6 +63,21 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private long count = 0;
 
+  public FetchFromIndexStep(OIndex index, OCommandContext ctx, boolean profilingEnabled) {
+    this(index, null, null, true, ctx, profilingEnabled);
+  }
+
+  public FetchFromIndexStep(
+      IndexSearchDescriptor desc, boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
+    this(
+        desc.getIndex(),
+        desc.getKeyCondition(),
+        desc.getAdditionalRangeCondition(),
+        orderAsc,
+        ctx,
+        profilingEnabled);
+  }
+
   public FetchFromIndexStep(
       OIndex index,
       OBooleanExpression condition,

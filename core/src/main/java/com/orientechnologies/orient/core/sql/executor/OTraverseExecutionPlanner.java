@@ -218,7 +218,7 @@ public class OTraverseExecutionPlanner {
               "Index " + indexName + " does not allow iteration without a condition");
         }
 
-        result.chain(new FetchFromIndexStep(index, null, null, ctx, profilingEnabled));
+        result.chain(new FetchFromIndexStep(index, ctx, profilingEnabled));
         result.chain(new GetValueFromIndexEntryStep(ctx, null, profilingEnabled));
         break;
       case VALUES:

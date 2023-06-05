@@ -2028,14 +2028,7 @@ public class OSelectExecutionPlanner {
         IndexSearchDescriptor bestIndex = findBestIndexFor(ctx, clazz.getIndexes(), block, clazz);
         if (bestIndex != null) {
 
-          FetchFromIndexStep step =
-              new FetchFromIndexStep(
-                  bestIndex.getIndex(),
-                  bestIndex.getKeyCondition(),
-                  bestIndex.getAdditionalRangeCondition(),
-                  true,
-                  ctx,
-                  profilingEnabled);
+          FetchFromIndexStep step = new FetchFromIndexStep(bestIndex, true, ctx, profilingEnabled);
 
           OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
           subPlan.chain(step);
@@ -2467,13 +2460,7 @@ public class OSelectExecutionPlanner {
       result = new ArrayList<>();
       Boolean orderAsc = getOrderDirection(info);
       result.add(
-          new FetchFromIndexStep(
-              desc.getIndex(),
-              desc.getKeyCondition(),
-              desc.getAdditionalRangeCondition(),
-              !Boolean.FALSE.equals(orderAsc),
-              ctx,
-              profilingEnabled));
+          new FetchFromIndexStep(desc, !Boolean.FALSE.equals(orderAsc), ctx, profilingEnabled));
       int[] filterClusterIds = null;
       if (filterClusters != null) {
         filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
@@ -2624,13 +2611,7 @@ public class OSelectExecutionPlanner {
     List<OInternalExecutionPlan> subPlans = new ArrayList<>();
     for (IndexSearchDescriptor desc : indexSearchDescriptors) {
       OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
-      subPlan.chain(
-          new FetchFromIndexStep(
-              desc.getIndex(),
-              desc.getKeyCondition(),
-              desc.getAdditionalRangeCondition(),
-              ctx,
-              profilingEnabled));
+      subPlan.chain(new FetchFromIndexStep(desc, true, ctx, profilingEnabled));
       int[] filterClusterIds = null;
       if (filterClusters != null) {
         filterClusterIds =

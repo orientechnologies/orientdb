@@ -26,6 +26,13 @@ public class IndexSearchDescriptor {
     this.remainingCondition = remainingCondition;
   }
 
+  public IndexSearchDescriptor(OIndex idx, OAndBlock keyCondition) {
+    this.index = idx;
+    this.keyCondition = keyCondition;
+    this.additionalRangeCondition = null;
+    this.remainingCondition = null;
+  }
+
   public int cost(OCommandContext ctx) {
     OQueryStats stats = OQueryStats.get((ODatabaseDocumentInternal) ctx.getDatabase());
 
