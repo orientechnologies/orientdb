@@ -244,6 +244,24 @@ public class OIndexFinderTest {
     assertEquals("cl.friend->cl.friend->cl.name->", result.get().getName());
   }
 
+  @Test
+  public void testFindMultivalueMatchIndex() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createProperty("surname", OType.STRING);
+    cl.createIndex("cl.name_surname", INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    Optional<OIndexCandidate> result = finder.findExactIndex(new OPath("name"), null, ctx);
+
+    assertEquals("cl.name_surname", result.get().getName());
+
+    Optional<OIndexCandidate> result1 = finder.findExactIndex(new OPath("surname"), null, ctx);
+
+    assertEquals("cl.name_surname", result1.get().getName());
+  }
+
   @After
   public void after() {
     this.session.close();

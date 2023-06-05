@@ -107,7 +107,7 @@ public class OStatementIndexFinderTest {
     assertEquals("cl.name", required.getCanditates().get(0).getName());
     assertEquals(Operation.Eq, required.getCanditates().get(0).getOperation());
     assertEquals("cl.name", required.getCanditates().get(1).getName());
-    assertEquals(Operation.Eq, required.getCanditates().get(0).getOperation());
+    assertEquals(Operation.Eq, required.getCanditates().get(1).getOperation());
   }
 
   @Test
@@ -253,6 +253,122 @@ public class OStatementIndexFinderTest {
             "select from cl where (friend.name = 'a' and name='a') or (friend.other='b' and other='b') ");
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
 
+    assertFalse(result.isPresent());
+  }
+
+  @Test
+  public void multivalueMatchTest() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createProperty("surname", OType.STRING);
+    cl.createIndex("cl.name_surname", INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    OSelectStatement stat = parseQuery("select from cl where name = 'a' and surname = 'b'");
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertEquals("cl.name_surname", result.get().getName());
+    assertEquals(Operation.Eq, result.get().getOperation());
+  }
+
+  @Test
+  public void multivalueMatchOneTest() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createProperty("surname", OType.STRING);
+    cl.createIndex("cl.name_surname", INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    OSelectStatement stat = parseQuery("select from cl where name = 'a' and other = 'b'");
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertEquals("cl.name_surname", result.get().getName());
+    assertEquals(Operation.Eq, result.get().getOperation());
+  }
+
+  @Test
+  public void multivalueNotMatchSecondPropertyTest() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createProperty("surname", OType.STRING);
+    cl.createProperty("other", OType.STRING);
+    cl.createIndex("cl.name_surname_other", INDEX_TYPE.NOTUNIQUE, "name", "surname", "other");
+
+    OSelectStatement stat = parseQuery("select from cl where surname = 'a' and other = 'b'");
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertFalse(result.isPresent());
+  }
+
+  @Test
+  public void multivalueNotMatchSecondPropertySingleConditionTest() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createProperty("surname", OType.STRING);
+    cl.createIndex("cl.name_surname", INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    OSelectStatement stat = parseQuery("select from cl where surname = 'a'");
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertFalse(result.isPresent());
+  }
+
+  @Test
+  public void multivalueMatchPropertyORTest() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createProperty("surname", OType.STRING);
+    cl.createIndex("cl.name_surname", INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    OSelectStatement stat =
+        parseQuery(
+            "select from cl where (name = 'a' and surname = 'b') or (name='d' and surname='e')");
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertTrue(result.isPresent());
+    assertTrue((result.get() instanceof ORequiredIndexCanditate));
+    ORequiredIndexCanditate required = (ORequiredIndexCanditate) result.get();
+    assertEquals("cl.name_surname", required.getCanditates().get(0).getName());
+    assertEquals(Operation.Eq, required.getCanditates().get(0).getOperation());
+    assertEquals("cl.name_surname", required.getCanditates().get(1).getName());
+    assertEquals(Operation.Eq, required.getCanditates().get(1).getOperation());
+    assertEquals(required.getCanditates().size(), 2);
+  }
+
+  @Test
+  public void multivalueNotMatchPropertyORTest() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createProperty("surname", OType.STRING);
+    cl.createIndex("cl.name_surname", INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    OSelectStatement stat =
+        parseQuery(
+            "select from cl where (name = 'a' and surname = 'b') or (other='d' and surname='e')");
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
     assertFalse(result.isPresent());
   }
 

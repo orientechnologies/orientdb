@@ -95,7 +95,7 @@ public class OClassIndexFinder implements OIndexFinder {
             ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
             return cand;
           } else {
-            return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq));
+            return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq, prop));
           }
         }
       }
@@ -127,7 +127,7 @@ public class OClassIndexFinder implements OIndexFinder {
                   ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
                   return cand;
                 } else {
-                  return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq));
+                  return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq, prop));
                 }
               }
             }
@@ -160,7 +160,7 @@ public class OClassIndexFinder implements OIndexFinder {
             ((OIndexCandidateChain) cand.get()).setOperation(op);
             return cand;
           } else {
-            return Optional.of(new OIndexCandidateImpl(index.getName(), op));
+            return Optional.of(new OIndexCandidateImpl(index.getName(), op, prop));
           }
         }
       }
@@ -192,7 +192,7 @@ public class OClassIndexFinder implements OIndexFinder {
                   ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
                   return cand;
                 } else {
-                  return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq));
+                  return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq, prop));
                 }
               }
             }
@@ -225,7 +225,7 @@ public class OClassIndexFinder implements OIndexFinder {
             ((OIndexCandidateChain) cand.get()).setOperation(Operation.FuzzyEq);
             return cand;
           } else {
-            return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.FuzzyEq));
+            return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.FuzzyEq, prop));
           }
         }
       }

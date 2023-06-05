@@ -1,16 +1,23 @@
 package com.orientechnologies.orient.core.sql.executor.metadata;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 public class OIndexCandidateImpl implements OIndexCandidate {
 
   private String name;
   private Operation operation;
+  private OProperty property;
 
-  public OIndexCandidateImpl(String name, Operation operation) {
+  public OIndexCandidateImpl(String name, Operation operation, OProperty prop) {
     this.name = name;
     this.operation = operation;
+    this.property = prop;
   }
 
   public String getName() {
@@ -33,5 +40,20 @@ public class OIndexCandidateImpl implements OIndexCandidate {
 
   public Operation getOperation() {
     return operation;
+  }
+
+  @Override
+  public Optional<OIndexCandidate> normalize(OCommandContext ctx) {
+    OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(name);
+    if (property.getName().equals(index.getDefinition().getFields().get(0))) {
+      return Optional.of(this);
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  @Override
+  public List<OProperty> properties() {
+    return Collections.singletonList(this.property);
   }
 }
