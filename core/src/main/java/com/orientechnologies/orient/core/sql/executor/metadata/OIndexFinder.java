@@ -5,13 +5,18 @@ import java.util.Optional;
 
 public interface OIndexFinder {
 
-  enum Operation {
+  public enum Operation {
     Eq,
     Gt,
     Lt,
     Ge,
     Le,
     FuzzyEq,
+    Range;
+
+    public boolean isRange() {
+      return this == Gt || this == Lt || this == Ge || this == Le;
+    }
   }
 
   Optional<OIndexCandidate> findExactIndex(OPath fieldName, Object value, OCommandContext ctx);

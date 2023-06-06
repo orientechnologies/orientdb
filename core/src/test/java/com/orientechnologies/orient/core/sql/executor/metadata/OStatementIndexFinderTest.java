@@ -372,6 +372,23 @@ public class OStatementIndexFinderTest {
     assertFalse(result.isPresent());
   }
 
+  @Test
+  public void testMutipleConditionBetween() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createIndex("cl.name", INDEX_TYPE.NOTUNIQUE, "name");
+
+    OSelectStatement stat = parseQuery("select from cl where name < 'a' and name > 'b'");
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertTrue((result.get() instanceof ORangeIndexCanditate));
+    assertEquals("cl.name", result.get().getName());
+    assertEquals(Operation.Range, result.get().getOperation());
+  }
+
   private OSelectStatement parseQuery(String query) {
     InputStream is = new ByteArrayInputStream(query.getBytes());
     OrientSql osql = new OrientSql(is);

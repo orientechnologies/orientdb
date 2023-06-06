@@ -51,9 +51,52 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
 
   @Override
   public Optional<OIndexCandidate> normalize(OCommandContext ctx) {
+    Collection<OIndexCandidate> newCanditates = normalizeBetween(this.canditates, ctx);
+    newCanditates = normalizeComposite(newCanditates, ctx);
+    if (newCanditates.isEmpty()) {
+      return Optional.empty();
+    } else if (newCanditates.size() == 1) {
+      return Optional.of(newCanditates.iterator().next());
+    } else {
+      return Optional.of(new OMultipleIndexCanditate(newCanditates));
+    }
+  }
+
+  private Collection<OIndexCandidate> normalizeBetween(
+      List<OIndexCandidate> canditates, OCommandContext ctx) {
+    List<OIndexCandidate> newCanditates = new ArrayList<>();
+    for (int i = 0; i < canditates.size(); i++) {
+      boolean matched = false;
+      OIndexCandidate canditate = canditates.get(i);
+      List<OProperty> properties = canditate.properties();
+      for (int z = canditates.size() - 1; z > i; z--) {
+        OIndexCandidate lastCandidate = canditates.get(z);
+        List<OProperty> lastProperties = lastCandidate.properties();
+        if (properties.size() == 1
+            && lastProperties.size() == 1
+            && properties.get(0).getName() == lastProperties.get(0).getName()) {
+          if (canditate.getOperation().isRange() || lastCandidate.getOperation().isRange()) {
+            newCanditates.add(new ORangeIndexCanditate(canditate.getName(), properties.get(0)));
+            canditates.remove(z);
+            if (z != canditates.size()) {
+              z++; // Increase so it does not decrease next iteration
+            }
+            matched = true;
+          }
+        }
+      }
+      if (!matched) {
+        newCanditates.add(canditate);
+      }
+    }
+    return newCanditates;
+  }
+
+  private Collection<OIndexCandidate> normalizeComposite(
+      Collection<OIndexCandidate> canditates, OCommandContext ctx) {
     List<OProperty> propeties = properties();
     Map<String, OIndexCandidate> newCanditates = new HashMap<>();
-    for (OIndexCandidate cand : this.canditates) {
+    for (OIndexCandidate cand : canditates) {
       if (!newCanditates.containsKey(cand.getName())) {
         OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(cand.getName());
         List<OProperty> foundProps = new ArrayList<>();
@@ -79,13 +122,7 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
         }
       }
     }
-    if (newCanditates.isEmpty()) {
-      return Optional.empty();
-    } else if (newCanditates.size() == 1) {
-      return Optional.of(newCanditates.values().iterator().next());
-    } else {
-      return Optional.of(new OMultipleIndexCanditate(newCanditates.values()));
-    }
+    return newCanditates.values();
   }
 
   @Override
