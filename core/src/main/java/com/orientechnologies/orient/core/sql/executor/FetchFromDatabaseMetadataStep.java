@@ -3,8 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import java.util.Map;
-import java.util.Optional;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResult;
 
 /**
  * Returns an OResult containing metadata regarding the database
@@ -13,8 +12,8 @@ import java.util.Optional;
  */
 public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
 
-  private boolean served = false;
   private long cost = 0;
+  private OResultSet resultSet = null;
 
   public FetchFromDatabaseMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -22,85 +21,51 @@ public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return !served;
+    if (resultSet == null) {
+      getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+      resultSet = new OProduceOneResult(() -> produce(ctx), true);
+    }
+    return resultSet;
+  }
+
+  private OResult produce(OCommandContext ctx) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+
+      OResultInternal result = new OResultInternal();
+
+      ODatabaseSession db = ctx.getDatabase();
+      result.setProperty("name", db.getName());
+      result.setProperty("user", db.getUser() == null ? null : db.getUser().getName());
+      result.setProperty("type", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.TYPE)));
+      result.setProperty("status", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.STATUS)));
+      result.setProperty(
+          "defaultClusterId", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.DEFAULTCLUSTERID)));
+      result.setProperty(
+          "dateFormat", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.DATEFORMAT)));
+      result.setProperty(
+          "dateTimeFormat", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.DATETIMEFORMAT)));
+      result.setProperty("timezone", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.TIMEZONE)));
+      result.setProperty(
+          "localeCountry", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.LOCALECOUNTRY)));
+      result.setProperty(
+          "localeLanguage", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.LOCALELANGUAGE)));
+      result.setProperty("charset", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.CHARSET)));
+      result.setProperty(
+          "clusterSelection", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.CLUSTERSELECTION)));
+      result.setProperty(
+          "minimumClusters", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.MINIMUMCLUSTERS)));
+      result.setProperty(
+          "conflictStrategy", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.CONFLICTSTRATEGY)));
+      result.setProperty(
+          "validation", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.VALIDATION)));
+
+      return result;
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
       }
-
-      @Override
-      public OResult next() {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-
-          if (!served) {
-            OResultInternal result = new OResultInternal();
-
-            ODatabaseSession db = ctx.getDatabase();
-            result.setProperty("name", db.getName());
-            result.setProperty("user", db.getUser() == null ? null : db.getUser().getName());
-            result.setProperty("type", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.TYPE)));
-            result.setProperty(
-                "status", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.STATUS)));
-            result.setProperty(
-                "defaultClusterId",
-                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.DEFAULTCLUSTERID)));
-            result.setProperty(
-                "dateFormat", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.DATEFORMAT)));
-            result.setProperty(
-                "dateTimeFormat",
-                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.DATETIMEFORMAT)));
-            result.setProperty(
-                "timezone", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.TIMEZONE)));
-            result.setProperty(
-                "localeCountry", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.LOCALECOUNTRY)));
-            result.setProperty(
-                "localeLanguage",
-                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.LOCALELANGUAGE)));
-            result.setProperty(
-                "charset", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.CHARSET)));
-            result.setProperty(
-                "clusterSelection",
-                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.CLUSTERSELECTION)));
-            result.setProperty(
-                "minimumClusters",
-                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.MINIMUMCLUSTERS)));
-            result.setProperty(
-                "conflictStrategy",
-                String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.CONFLICTSTRATEGY)));
-            result.setProperty(
-                "validation", String.valueOf(db.get(ODatabaseSession.ATTRIBUTES.VALIDATION)));
-
-            served = true;
-            return result;
-          }
-          throw new IllegalStateException();
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-
-      @Override
-      public void reset() {
-        served = false;
-      }
-    };
+    }
   }
 
   @Override
@@ -111,6 +76,11 @@ public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
+  }
+
+  @Override
+  public void reset() {
+    this.resultSet = null;
   }
 
   @Override

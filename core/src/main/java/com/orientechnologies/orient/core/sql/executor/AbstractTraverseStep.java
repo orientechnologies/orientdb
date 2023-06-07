@@ -43,8 +43,6 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    // TODO
-
     return new OResultSet() {
       private int localFetched = 0;
 

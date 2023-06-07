@@ -5,8 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.Map;
-import java.util.Optional;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResult;
 
 /**
  * Returns an OResult containing metadata regarding the database
@@ -15,8 +14,8 @@ import java.util.Optional;
  */
 public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
 
-  private boolean served = false;
   private long cost = 0;
+  private OResultSet resultSet = null;
 
   public FetchFromDistributedMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -24,59 +23,40 @@ public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return !served;
-      }
+    if (resultSet != null) {
+      getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+      resultSet =
+          new OProduceOneResult(
+              () -> {
+                long begin = profilingEnabled ? System.nanoTime() : 0;
+                try {
 
-      @Override
-      public OResult next() {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
+                  ODatabaseDocumentInternal session = (ODatabaseDocumentInternal) ctx.getDatabase();
+                  OSharedContextEmbedded value =
+                      (OSharedContextEmbedded) session.getSharedContext();
+                  ODocument doc = value.loadDistributedConfig(session);
+                  OResultInternal result = new OResultInternal();
+                  doc.setTrackingChanges(false);
+                  doc.deserializeFields();
 
-          if (!served) {
+                  for (String alias : doc.getPropertyNames()) {
+                    result.setProperty(alias, doc.getProperty(alias));
+                  }
+                  return result;
+                } finally {
+                  if (profilingEnabled) {
+                    cost += (System.nanoTime() - begin);
+                  }
+                }
+              },
+              true);
+    }
+    return resultSet;
+  }
 
-            ODatabaseDocumentInternal session = (ODatabaseDocumentInternal) ctx.getDatabase();
-            OSharedContextEmbedded value = (OSharedContextEmbedded) session.getSharedContext();
-            ODocument doc = value.loadDistributedConfig(session);
-            served = true;
-            OResultInternal result = new OResultInternal();
-            doc.setTrackingChanges(false);
-            doc.deserializeFields();
-
-            for (String alias : doc.getPropertyNames()) {
-              result.setProperty(alias, doc.getProperty(alias));
-            }
-            return result;
-          }
-          throw new IllegalStateException();
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-
-      @Override
-      public void reset() {
-        served = false;
-      }
-    };
+  @Override
+  public void reset() {
+    this.resultSet = null;
   }
 
   @Override

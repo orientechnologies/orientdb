@@ -5,14 +5,14 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResult;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Returns an OResult containing metadata regarding the storage
@@ -21,8 +21,8 @@ import java.util.Optional;
  */
 public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
 
-  private boolean served = false;
   private long cost = 0;
+  private OResultSet resultSet = null;
 
   public FetchFromStorageMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -30,68 +30,42 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return !served;
+    if (resultSet == null) {
+      getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+      resultSet = new OProduceOneResult(() -> produce(ctx), true);
+    }
+    return resultSet;
+  }
+
+  private OResult produce(OCommandContext ctx) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      OResultInternal result = new OResultInternal();
+
+      if (ctx.getDatabase() instanceof ODatabaseInternal) {
+        ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+        OStorage storage = db.getStorage();
+        result.setProperty("clusters", toResult(storage.getClusterInstances()));
+        result.setProperty("defaultClusterId", storage.getDefaultClusterId());
+        result.setProperty("totalClusters", storage.getClusters());
+        result.setProperty("configuration", toResult(storage.getConfiguration()));
+        result.setProperty(
+            "conflictStrategy",
+            storage.getRecordConflictStrategy() == null
+                ? null
+                : storage.getRecordConflictStrategy().getName());
+        result.setProperty("name", storage.getName());
+        result.setProperty("size", storage.getSize());
+        result.setProperty("type", storage.getType());
+        result.setProperty("version", storage.getVersion());
+        result.setProperty("createdAtVersion", storage.getCreatedAtVersion());
       }
-
-      @Override
-      public OResult next() {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-
-          if (!served) {
-            OResultInternal result = new OResultInternal();
-
-            if (ctx.getDatabase() instanceof ODatabaseInternal) {
-              ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
-              OStorage storage = db.getStorage();
-              result.setProperty("clusters", toResult(storage.getClusterInstances()));
-              result.setProperty("defaultClusterId", storage.getDefaultClusterId());
-              result.setProperty("totalClusters", storage.getClusters());
-              result.setProperty("configuration", toResult(storage.getConfiguration()));
-              result.setProperty(
-                  "conflictStrategy",
-                  storage.getRecordConflictStrategy() == null
-                      ? null
-                      : storage.getRecordConflictStrategy().getName());
-              result.setProperty("name", storage.getName());
-              result.setProperty("size", storage.getSize());
-              result.setProperty("type", storage.getType());
-              result.setProperty("version", storage.getVersion());
-              result.setProperty("createdAtVersion", storage.getCreatedAtVersion());
-            }
-            served = true;
-            return result;
-          }
-          throw new IllegalStateException();
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
+      return result;
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
       }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-
-      @Override
-      public void reset() {
-        served = false;
-      }
-    };
+    }
   }
 
   private Object toResult(OStorageConfiguration configuration) {

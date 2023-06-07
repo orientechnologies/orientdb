@@ -6,9 +6,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResult;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Returns the number of records contained in a class (including subclasses) Executes a count(*) on
@@ -19,10 +18,8 @@ import java.util.Optional;
 public class CountFromClassStep extends AbstractExecutionStep {
   private final OIdentifier target;
   private final String alias;
-
+  private OResultSet resultSet = null;
   private long cost = 0;
-
-  private boolean executed = false;
 
   /**
    * @param targetClass An identifier containing the name of the class to count
@@ -39,68 +36,46 @@ public class CountFromClassStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return !executed;
-      }
+    if (resultSet == null) {
+      getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+      resultSet =
+          new OProduceOneResult(
+              () -> {
+                long begin = profilingEnabled ? System.nanoTime() : 0;
+                try {
 
-      @Override
-      public OResult next() {
-        if (executed) {
-          throw new IllegalStateException();
-        }
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-
-          OImmutableSchema schema =
-              ((ODatabaseDocumentInternal) ctx.getDatabase())
-                  .getMetadata()
-                  .getImmutableSchemaSnapshot();
-          OClass clazz = schema.getClass(target.getStringValue());
-          if (clazz == null) {
-            clazz = schema.getView(target.getStringValue());
-          }
-          if (clazz == null) {
-            throw new OCommandExecutionException(
-                "Class " + target.getStringValue() + " does not exist in the database schema");
-          }
-          long size = clazz.count();
-          executed = true;
-          OResultInternal result = new OResultInternal();
-          result.setProperty(alias, size);
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-
-      @Override
-      public void reset() {
-        CountFromClassStep.this.reset();
-      }
-    };
+                  OImmutableSchema schema =
+                      ((ODatabaseDocumentInternal) ctx.getDatabase())
+                          .getMetadata()
+                          .getImmutableSchemaSnapshot();
+                  OClass clazz = schema.getClass(target.getStringValue());
+                  if (clazz == null) {
+                    clazz = schema.getView(target.getStringValue());
+                  }
+                  if (clazz == null) {
+                    throw new OCommandExecutionException(
+                        "Class "
+                            + target.getStringValue()
+                            + " does not exist in the database schema");
+                  }
+                  long size = clazz.count();
+                  OResultInternal result = new OResultInternal();
+                  result.setProperty(alias, size);
+                  return result;
+                } finally {
+                  if (profilingEnabled) {
+                    cost += (System.nanoTime() - begin);
+                  }
+                }
+              },
+              true);
+    }
+    return resultSet;
   }
 
   @Override
   public void reset() {
-    executed = false;
+    resultSet = null;
   }
 
   @Override
