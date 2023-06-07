@@ -20,24 +20,24 @@ public class UpdateSetStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          if (result instanceof OResultInternal) {
-            for (OUpdateItem item : items) {
-              OClass type = result.getElement().flatMap(x -> x.getSchemaType()).orElse(null);
-              if (type == null) {
-                Object clazz = result.getProperty("@view");
-                if (clazz instanceof String) {
-                  type = ctx.getDatabase().getMetadata().getSchema().getView((String) clazz);
-                }
-              }
+    return new OResultSetMapper(upstream, (result) -> mapResult(ctx, result));
+  }
 
-              item.applyUpdate((OResultInternal) result, ctx);
-            }
+  private OResult mapResult(OCommandContext ctx, OResult result) {
+    if (result instanceof OResultInternal) {
+      for (OUpdateItem item : items) {
+        OClass type = result.getElement().flatMap(x -> x.getSchemaType()).orElse(null);
+        if (type == null) {
+          Object clazz = result.getProperty("@view");
+          if (clazz instanceof String) {
+            type = ctx.getDatabase().getMetadata().getSchema().getView((String) clazz);
           }
-          return result;
-        });
+        }
+
+        item.applyUpdate((OResultInternal) result, ctx);
+      }
+    }
+    return result;
   }
 
   @Override

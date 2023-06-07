@@ -30,34 +30,33 @@ public class InsertValuesStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          if (!(result instanceof OResultInternal)) {
-            if (!result.isElement()) {
-              throw new OCommandExecutionException(
-                  "Error executing INSERT, cannot modify element: " + result);
-            }
-            result = new OUpdatableResult((ODocument) result.getElement().get());
-          }
-          List<OExpression> currentValues = values.get(nextValueSet++);
-          if (currentValues.size() != identifiers.size()) {
-            throw new OCommandExecutionException(
-                "Cannot execute INSERT, the number of fields is different from the number of expressions: "
-                    + identifiers
-                    + " "
-                    + currentValues);
-          }
-          nextValueSet %= values.size();
-          for (int i = 0; i < currentValues.size(); i++) {
-            OIdentifier identifier = identifiers.get(i);
-            Object value = currentValues.get(i).execute(result, ctx);
-            value =
-                OUpdateItem.convertToPropertyType((OResultInternal) result, identifier, value, ctx);
-            ((OResultInternal) result).setProperty(identifier.getStringValue(), value);
-          }
-          return result;
-        });
+    return new OResultSetMapper(upstream, (result) -> mapResult(ctx, result));
+  }
+
+  private OResult mapResult(OCommandContext ctx, OResult result) {
+    if (!(result instanceof OResultInternal)) {
+      if (!result.isElement()) {
+        throw new OCommandExecutionException(
+            "Error executing INSERT, cannot modify element: " + result);
+      }
+      result = new OUpdatableResult((ODocument) result.getElement().get());
+    }
+    List<OExpression> currentValues = values.get(nextValueSet++);
+    if (currentValues.size() != identifiers.size()) {
+      throw new OCommandExecutionException(
+          "Cannot execute INSERT, the number of fields is different from the number of expressions: "
+              + identifiers
+              + " "
+              + currentValues);
+    }
+    nextValueSet %= values.size();
+    for (int i = 0; i < currentValues.size(); i++) {
+      OIdentifier identifier = identifiers.get(i);
+      Object value = currentValues.get(i).execute(result, ctx);
+      value = OUpdateItem.convertToPropertyType((OResultInternal) result, identifier, value, ctx);
+      ((OResultInternal) result).setProperty(identifier.getStringValue(), value);
+    }
+    return result;
   }
 
   @Override

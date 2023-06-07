@@ -23,14 +23,14 @@ public class UpdateEdgePointersStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          if (result instanceof OResultInternal) {
-            handleUpdateEdge((ODocument) result.getElement().get().getRecord());
-          }
-          return result;
-        });
+    return new OResultSetMapper(upstream, this::mapResult);
+  }
+
+  private OResult mapResult(OResult result) {
+    if (result instanceof OResultInternal) {
+      handleUpdateEdge((ODocument) result.getElement().get().getRecord());
+    }
+    return result;
   }
 
   @Override

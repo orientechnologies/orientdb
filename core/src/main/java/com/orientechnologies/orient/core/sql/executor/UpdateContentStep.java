@@ -34,20 +34,20 @@ public class UpdateContentStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          if (result instanceof OResultInternal) {
-            if (!(result.getElement().get() instanceof OElement)) {
-              ((OResultInternal) result).setElement(result.getElement().get().getRecord());
-            }
-            if (!(result.getElement().get() instanceof OElement)) {
-              return result;
-            }
-            handleContent((OElement) result.getElement().get(), ctx);
-          }
-          return result;
-        });
+    return new OResultSetMapper(upstream, (result) -> mapResult(ctx, result));
+  }
+
+  private OResult mapResult(OCommandContext ctx, OResult result) {
+    if (result instanceof OResultInternal) {
+      if (!(result.getElement().get() instanceof OElement)) {
+        ((OResultInternal) result).setElement(result.getElement().get().getRecord());
+      }
+      if (!(result.getElement().get() instanceof OElement)) {
+        return result;
+      }
+      handleContent((OElement) result.getElement().get(), ctx);
+    }
+    return result;
   }
 
   private boolean handleContent(OElement record, OCommandContext ctx) {

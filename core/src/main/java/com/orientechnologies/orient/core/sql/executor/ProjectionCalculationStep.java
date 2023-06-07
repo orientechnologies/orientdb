@@ -24,15 +24,15 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
     }
 
     OResultSet parentRs = prev.get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        parentRs,
-        (result) -> {
-          Object oldCurrent = ctx.getVariable("$current");
-          ctx.setVariable("$current", result);
-          OResult newResult = calculateProjections(ctx, result);
-          ctx.setVariable("$current", oldCurrent);
-          return newResult;
-        });
+    return new OResultSetMapper(parentRs, (result) -> mapResult(ctx, result));
+  }
+
+  private OResult mapResult(OCommandContext ctx, OResult result) {
+    Object oldCurrent = ctx.getVariable("$current");
+    ctx.setVariable("$current", result);
+    OResult newResult = calculateProjections(ctx, result);
+    ctx.setVariable("$current", oldCurrent);
+    return newResult;
   }
 
   private OResult calculateProjections(OCommandContext ctx, OResult next) {

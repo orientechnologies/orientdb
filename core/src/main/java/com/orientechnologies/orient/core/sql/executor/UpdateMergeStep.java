@@ -18,20 +18,20 @@ public class UpdateMergeStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          if (result instanceof OResultInternal) {
-            if (!(result.getElement().orElse(null) instanceof ODocument)) {
-              ((OResultInternal) result).setElement(result.getElement().get().getRecord());
-            }
-            if (!(result.getElement().orElse(null) instanceof ODocument)) {
-              return result;
-            }
-            handleMerge((ODocument) result.getElement().orElse(null), ctx);
-          }
-          return result;
-        });
+    return new OResultSetMapper(upstream, (result) -> extracted(ctx, result));
+  }
+
+  private OResult extracted(OCommandContext ctx, OResult result) {
+    if (result instanceof OResultInternal) {
+      if (!(result.getElement().orElse(null) instanceof ODocument)) {
+        ((OResultInternal) result).setElement(result.getElement().get().getRecord());
+      }
+      if (!(result.getElement().orElse(null) instanceof ODocument)) {
+        return result;
+      }
+      handleMerge((ODocument) result.getElement().orElse(null), ctx);
+    }
+    return result;
   }
 
   private void handleMerge(ODocument record, OCommandContext ctx) {

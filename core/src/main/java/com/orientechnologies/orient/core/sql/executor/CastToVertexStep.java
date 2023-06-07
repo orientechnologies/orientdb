@@ -18,30 +18,30 @@ public class CastToVertexStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
-            if (result.getElement().orElse(null) instanceof OVertex) {
-              return result;
-            }
-            if (result.isVertex()) {
-              if (result instanceof OResultInternal) {
-                ((OResultInternal) result).setElement(result.getElement().get().asVertex().get());
-              } else {
-                result = new OResultInternal(result.getElement().get().asVertex().get());
-              }
-            } else {
-              throw new OCommandExecutionException("Current element is not a vertex: " + result);
-            }
-            return result;
-          } finally {
-            if (profilingEnabled) {
-              cost += (System.nanoTime() - begin);
-            }
-          }
-        });
+    return new OResultSetMapper(upstream, this::mapResult);
+  }
+
+  private OResult mapResult(OResult result) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      if (result.getElement().orElse(null) instanceof OVertex) {
+        return result;
+      }
+      if (result.isVertex()) {
+        if (result instanceof OResultInternal) {
+          ((OResultInternal) result).setElement(result.getElement().get().asVertex().get());
+        } else {
+          result = new OResultInternal(result.getElement().get().asVertex().get());
+        }
+      } else {
+        throw new OCommandExecutionException("Current element is not a vertex: " + result);
+      }
+      return result;
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
   }
 
   @Override

@@ -28,39 +28,38 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet lastFetched = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        lastFetched,
-        (result) -> {
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
+    return new OResultSetMapper(lastFetched, this::mapResult);
+  }
 
-            if (result instanceof OUpdatableResult) {
-              OResultInternal prevValue = new OResultInternal();
-              ORecord rec = result.getElement().get().getRecord();
-              prevValue.setProperty("@rid", rec.getIdentity());
-              prevValue.setProperty("@version", rec.getVersion());
-              if (rec instanceof ODocument) {
-                prevValue.setProperty(
-                    "@class",
-                    ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)).getName());
-              }
-              if (!result.toElement().getIdentity().isNew()) {
-                for (String propName : result.getPropertyNames()) {
-                  prevValue.setProperty(
-                      propName, OLiveQueryHookV2.unboxRidbags(result.getProperty(propName)));
-                }
-              }
-              ((OUpdatableResult) result).previousValue = prevValue;
-            } else {
-              throw new OCommandExecutionException("Cannot fetch previous value: " + result);
-            }
-            return result;
-          } finally {
-            if (profilingEnabled) {
-              cost += (System.nanoTime() - begin);
-            }
+  private OResult mapResult(OResult result) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+
+      if (result instanceof OUpdatableResult) {
+        OResultInternal prevValue = new OResultInternal();
+        ORecord rec = result.getElement().get().getRecord();
+        prevValue.setProperty("@rid", rec.getIdentity());
+        prevValue.setProperty("@version", rec.getVersion());
+        if (rec instanceof ODocument) {
+          prevValue.setProperty(
+              "@class", ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)).getName());
+        }
+        if (!result.toElement().getIdentity().isNew()) {
+          for (String propName : result.getPropertyNames()) {
+            prevValue.setProperty(
+                propName, OLiveQueryHookV2.unboxRidbags(result.getProperty(propName)));
           }
-        });
+        }
+        ((OUpdatableResult) result).previousValue = prevValue;
+      } else {
+        throw new OCommandExecutionException("Cannot fetch previous value: " + result);
+      }
+      return result;
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
   }
 
   @Override

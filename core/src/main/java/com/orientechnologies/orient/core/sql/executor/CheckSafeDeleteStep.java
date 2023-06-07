@@ -32,36 +32,36 @@ public class CheckSafeDeleteStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
-            if (result.isElement()) {
-              OIdentifiable elem = result.getElement().get();
-              ORecord record = elem.getRecord();
-              if (record instanceof ODocument) {
-                ODocument doc = (ODocument) record;
-                OClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
-                if (clazz != null) {
-                  if (clazz.getName().equalsIgnoreCase("V") || clazz.isSubClassOf("V")) {
-                    throw new OCommandExecutionException(
-                        "Cannot safely delete a vertex, please use DELETE VERTEX or UNSAFE");
-                  }
-                  if (clazz.getName().equalsIgnoreCase("E") || clazz.isSubClassOf("E")) {
-                    throw new OCommandExecutionException(
-                        "Cannot safely delete an edge, please use DELETE EDGE or UNSAFE");
-                  }
-                }
-              }
+    return new OResultSetMapper(upstream, this::mapResult);
+  }
+
+  private OResult mapResult(OResult result) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      if (result.isElement()) {
+        OIdentifiable elem = result.getElement().get();
+        ORecord record = elem.getRecord();
+        if (record instanceof ODocument) {
+          ODocument doc = (ODocument) record;
+          OClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+          if (clazz != null) {
+            if (clazz.getName().equalsIgnoreCase("V") || clazz.isSubClassOf("V")) {
+              throw new OCommandExecutionException(
+                  "Cannot safely delete a vertex, please use DELETE VERTEX or UNSAFE");
             }
-            return result;
-          } finally {
-            if (profilingEnabled) {
-              cost += (System.nanoTime() - begin);
+            if (clazz.getName().equalsIgnoreCase("E") || clazz.isSubClassOf("E")) {
+              throw new OCommandExecutionException(
+                  "Cannot safely delete an edge, please use DELETE EDGE or UNSAFE");
             }
           }
-        });
+        }
+      }
+      return result;
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
   }
 
   @Override

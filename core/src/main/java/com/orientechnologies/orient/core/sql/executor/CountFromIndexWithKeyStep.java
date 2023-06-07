@@ -42,25 +42,24 @@ public class CountFromIndexWithKeyStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (resultSet == null) {
       getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-      return new OProduceOneResult(
-          () -> {
-            long begin = profilingEnabled ? System.nanoTime() : 0;
-            try {
-              OIndex idx =
-                  ctx.getDatabase().getMetadata().getIndexManager().getIndex(target.getIndexName());
-              Object val =
-                  idx.getDefinition().createValue(keyValue.execute(new OResultInternal(), ctx));
-              long size = idx.getInternal().getRids(val).distinct().count();
-              OResultInternal result = new OResultInternal();
-              result.setProperty(alias, size);
-              return result;
-            } finally {
-              count += (System.nanoTime() - begin);
-            }
-          },
-          true);
+      return new OProduceOneResult(() -> produce(ctx), true);
     }
     return resultSet;
+  }
+
+  private OResult produce(OCommandContext ctx) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      OIndex idx =
+          ctx.getDatabase().getMetadata().getIndexManager().getIndex(target.getIndexName());
+      Object val = idx.getDefinition().createValue(keyValue.execute(new OResultInternal(), ctx));
+      long size = idx.getInternal().getRids(val).distinct().count();
+      OResultInternal result = new OResultInternal();
+      result.setProperty(alias, size);
+      return result;
+    } finally {
+      count += (System.nanoTime() - begin);
+    }
   }
 
   @Override

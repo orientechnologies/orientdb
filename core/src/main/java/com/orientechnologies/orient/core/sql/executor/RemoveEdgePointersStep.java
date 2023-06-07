@@ -24,43 +24,40 @@ public class RemoveEdgePointersStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
+    return new OResultSetMapper(upstream, this::mapResult);
+  }
 
-            Set<String> propNames = result.getPropertyNames();
-            for (String propName :
-                propNames.stream()
-                    .filter(x -> x.startsWith("in_") || x.startsWith("out_"))
-                    .collect(Collectors.toList())) {
-              Object val = result.getProperty(propName);
-              if (val instanceof OElement) {
-                if (((OElement) val).getSchemaType().map(x -> x.isSubClassOf("E")).orElse(false)) {
-                  ((OResultInternal) result).removeProperty(propName);
-                }
-              } else if (val instanceof Iterable) {
-                for (Object o : (Iterable) val) {
-                  if (o instanceof OElement) {
-                    if (((OElement) o)
-                        .getSchemaType()
-                        .map(x -> x.isSubClassOf("E"))
-                        .orElse(false)) {
-                      ((OResultInternal) result).removeProperty(propName);
-                      break;
-                    }
-                  }
-                }
+  private OResult mapResult(OResult result) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+
+      Set<String> propNames = result.getPropertyNames();
+      for (String propName :
+          propNames.stream()
+              .filter(x -> x.startsWith("in_") || x.startsWith("out_"))
+              .collect(Collectors.toList())) {
+        Object val = result.getProperty(propName);
+        if (val instanceof OElement) {
+          if (((OElement) val).getSchemaType().map(x -> x.isSubClassOf("E")).orElse(false)) {
+            ((OResultInternal) result).removeProperty(propName);
+          }
+        } else if (val instanceof Iterable) {
+          for (Object o : (Iterable) val) {
+            if (o instanceof OElement) {
+              if (((OElement) o).getSchemaType().map(x -> x.isSubClassOf("E")).orElse(false)) {
+                ((OResultInternal) result).removeProperty(propName);
+                break;
               }
             }
-          } finally {
-            if (profilingEnabled) {
-              cost += (System.nanoTime() - begin);
-            }
           }
-          return result;
-        });
+        }
+      }
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
+    return result;
   }
 
   @Override

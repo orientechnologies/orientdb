@@ -36,10 +36,7 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OProduceOneResult(
-        () -> {
-          return produce(ctx);
-        });
+    return new OProduceOneResult(() -> produce(ctx));
   }
 
   private OResultInternal produce(OCommandContext ctx) {

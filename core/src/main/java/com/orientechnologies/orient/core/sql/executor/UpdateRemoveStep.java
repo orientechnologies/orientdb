@@ -19,16 +19,16 @@ public class UpdateRemoveStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          if (result instanceof OResultInternal) {
-            for (OUpdateRemoveItem item : items) {
-              item.applyUpdate((OResultInternal) result, ctx);
-            }
-          }
-          return result;
-        });
+    return new OResultSetMapper(upstream, (result) -> extracted(ctx, result));
+  }
+
+  private OResult extracted(OCommandContext ctx, OResult result) {
+    if (result instanceof OResultInternal) {
+      for (OUpdateRemoveItem item : items) {
+        item.applyUpdate((OResultInternal) result, ctx);
+      }
+    }
+    return result;
   }
 
   @Override

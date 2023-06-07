@@ -21,28 +21,28 @@ public class UnwrapPreviousValueStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = prev.get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
-            if (result instanceof OUpdatableResult) {
-              result = ((OUpdatableResult) result).previousValue;
-              if (result == null) {
-                throw new OCommandExecutionException(
-                    "Invalid status of record: no previous value available");
-              }
-              return result;
-            } else {
-              throw new OCommandExecutionException(
-                  "Invalid status of record: no previous value available");
-            }
-          } finally {
-            if (profilingEnabled) {
-              cost += (System.nanoTime() - begin);
-            }
-          }
-        });
+    return new OResultSetMapper(upstream, this::mapResult);
+  }
+
+  private OResult mapResult(OResult result) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      if (result instanceof OUpdatableResult) {
+        result = ((OUpdatableResult) result).previousValue;
+        if (result == null) {
+          throw new OCommandExecutionException(
+              "Invalid status of record: no previous value available");
+        }
+        return result;
+      } else {
+        throw new OCommandExecutionException(
+            "Invalid status of record: no previous value available");
+      }
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
   }
 
   @Override

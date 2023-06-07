@@ -25,33 +25,33 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = prev.get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
-            if (!result.isElement()) {
-              throw new OCommandExecutionException(
-                  "record " + result + " is not an instance of " + clazz);
-            }
-            OElement doc = result.getElement().get();
-            if (doc == null) {
-              throw new OCommandExecutionException(
-                  "record " + result + " is not an instance of " + clazz);
-            }
-            Optional<OClass> schema = doc.getSchemaType();
+    return new OResultSetMapper(upstream, this::mapResult);
+  }
 
-            if (!schema.isPresent() || !schema.get().isSubClassOf(clazz)) {
-              throw new OCommandExecutionException(
-                  "record " + result + " is not an instance of " + clazz);
-            }
-            return result;
-          } finally {
-            if (profilingEnabled) {
-              cost += (System.nanoTime() - begin);
-            }
-          }
-        });
+  private OResult mapResult(OResult result) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      if (!result.isElement()) {
+        throw new OCommandExecutionException(
+            "record " + result + " is not an instance of " + clazz);
+      }
+      OElement doc = result.getElement().get();
+      if (doc == null) {
+        throw new OCommandExecutionException(
+            "record " + result + " is not an instance of " + clazz);
+      }
+      Optional<OClass> schema = doc.getSchemaType();
+
+      if (!schema.isPresent() || !schema.get().isSubClassOf(clazz)) {
+        throw new OCommandExecutionException(
+            "record " + result + " is not an instance of " + clazz);
+      }
+      return result;
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
   }
 
   @Override

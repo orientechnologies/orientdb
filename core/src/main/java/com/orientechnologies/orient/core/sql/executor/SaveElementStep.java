@@ -22,18 +22,18 @@ public class SaveElementStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          if (result.isElement()) {
-            if (cluster == null) {
-              ctx.getDatabase().save(result.getElement().orElse(null));
-            } else {
-              ctx.getDatabase().save(result.getElement().orElse(null), cluster.getStringValue());
-            }
-          }
-          return result;
-        });
+    return new OResultSetMapper(upstream, (result) -> mapResult(ctx, result));
+  }
+
+  private OResult mapResult(OCommandContext ctx, OResult result) {
+    if (result.isElement()) {
+      if (cluster == null) {
+        ctx.getDatabase().save(result.getElement().orElse(null));
+      } else {
+        ctx.getDatabase().save(result.getElement().orElse(null), cluster.getStringValue());
+      }
+    }
+    return result;
   }
 
   @Override

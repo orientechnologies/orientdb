@@ -14,10 +14,10 @@ public class ReturnMatchPatternsStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(upstream, this::filter);
+    return new OResultSetMapper(upstream, this::mapResult);
   }
 
-  private OResult filter(OResult next) {
+  private OResult mapResult(OResult next) {
     next.getPropertyNames().stream()
         .filter(s -> s.startsWith(OMatchExecutionPlanner.DEFAULT_ALIAS_PREFIX))
         .forEach(((OResultInternal) next)::removeProperty);

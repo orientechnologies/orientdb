@@ -36,30 +36,28 @@ public class CountFromIndexStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (resultSet == null) {
       getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-      resultSet =
-          new OProduceOneResult(
-              () -> {
-                long begin = profilingEnabled ? System.nanoTime() : 0;
-                try {
-                  final ODatabaseDocumentInternal database =
-                      (ODatabaseDocumentInternal) ctx.getDatabase();
-                  OIndexInternal idx =
-                      database
-                          .getMetadata()
-                          .getIndexManagerInternal()
-                          .getIndex(database, target.getIndexName())
-                          .getInternal();
-                  long size = idx.size();
-                  OResultInternal result = new OResultInternal();
-                  result.setProperty(alias, size);
-                  return result;
-                } finally {
-                  count += (System.nanoTime() - begin);
-                }
-              },
-              true);
+      resultSet = new OProduceOneResult(() -> produce(ctx), true);
     }
     return resultSet;
+  }
+
+  private OResult produce(OCommandContext ctx) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+      OIndexInternal idx =
+          database
+              .getMetadata()
+              .getIndexManagerInternal()
+              .getIndex(database, target.getIndexName())
+              .getInternal();
+      long size = idx.size();
+      OResultInternal result = new OResultInternal();
+      result.setProperty(alias, size);
+      return result;
+    } finally {
+      count += (System.nanoTime() - begin);
+    }
   }
 
   @Override

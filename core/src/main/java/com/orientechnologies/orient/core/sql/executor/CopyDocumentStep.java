@@ -28,34 +28,34 @@ public class CopyDocumentStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
-            ORecord resultDoc = null;
-            if (result.isElement()) {
-              ORecord docToCopy = result.getElement().get().getRecord();
-              if (docToCopy instanceof ODocument) {
-                resultDoc = ((ODocument) docToCopy).copy();
-                resultDoc.getIdentity().reset();
-                ((ODocument) resultDoc).setClassName(null);
-                resultDoc.setDirty();
-              } else if (docToCopy instanceof OBlob) {
-                ORecordBytes newBlob = ((ORecordBytes) docToCopy).copy();
-                OResultInternal newResult = new OResultInternal(newBlob);
-                return newResult;
-              }
-            } else {
-              resultDoc = result.toElement().getRecord();
-            }
-            return new OUpdatableResult((ODocument) resultDoc);
-          } finally {
-            if (profilingEnabled) {
-              cost += (System.nanoTime() - begin);
-            }
-          }
-        });
+    return new OResultSetMapper(upstream, this::mapResult);
+  }
+
+  private OResult mapResult(OResult result) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      ORecord resultDoc = null;
+      if (result.isElement()) {
+        ORecord docToCopy = result.getElement().get().getRecord();
+        if (docToCopy instanceof ODocument) {
+          resultDoc = ((ODocument) docToCopy).copy();
+          resultDoc.getIdentity().reset();
+          ((ODocument) resultDoc).setClassName(null);
+          resultDoc.setDirty();
+        } else if (docToCopy instanceof OBlob) {
+          ORecordBytes newBlob = ((ORecordBytes) docToCopy).copy();
+          OResultInternal newResult = new OResultInternal(newBlob);
+          return newResult;
+        }
+      } else {
+        resultDoc = result.toElement().getRecord();
+      }
+      return new OUpdatableResult((ODocument) resultDoc);
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
   }
 
   @Override

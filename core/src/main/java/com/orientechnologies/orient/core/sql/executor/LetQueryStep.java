@@ -55,13 +55,14 @@ public class LetQueryStep extends AbstractExecutionStep {
           "Cannot execute a local LET on a query without a target");
     }
     return new OResultSetMapper(
-        getPrev().get().syncPull(ctx, nRecords),
-        (result) -> {
-          if (result != null) {
-            calculate((OResultInternal) result, ctx);
-          }
-          return result;
-        });
+        getPrev().get().syncPull(ctx, nRecords), (result) -> mapResult(ctx, result));
+  }
+
+  private OResult mapResult(OCommandContext ctx, OResult result) {
+    if (result != null) {
+      calculate((OResultInternal) result, ctx);
+    }
+    return result;
   }
 
   @Override

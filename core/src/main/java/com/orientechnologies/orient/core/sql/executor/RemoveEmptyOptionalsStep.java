@@ -20,16 +20,16 @@ public class RemoveEmptyOptionalsStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          for (String s : result.getPropertyNames()) {
-            if (OptionalMatchEdgeTraverser.isEmptyOptional(result.getProperty(s))) {
-              ((OResultInternal) result).setProperty(s, null);
-            }
-          }
-          return result;
-        });
+    return new OResultSetMapper(upstream, this::mapResult);
+  }
+
+  private OResult mapResult(OResult result) {
+    for (String s : result.getPropertyNames()) {
+      if (OptionalMatchEdgeTraverser.isEmptyOptional(result.getProperty(s))) {
+        ((OResultInternal) result).setProperty(s, null);
+      }
+    }
+    return result;
   }
 
   @Override

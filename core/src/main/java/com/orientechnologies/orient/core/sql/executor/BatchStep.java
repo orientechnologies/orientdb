@@ -20,19 +20,19 @@ public class BatchStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet prevResult = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        prevResult,
-        (result) -> {
-          if (count % batchSize == 0) {
-            ODatabaseSession db = ctx.getDatabase();
-            if (db.getTransaction().isActive()) {
-              db.commit();
-              db.begin();
-            }
-          }
-          count++;
-          return result;
-        });
+    return new OResultSetMapper(prevResult, (result) -> mapResult(ctx, result));
+  }
+
+  private OResult mapResult(OCommandContext ctx, OResult result) {
+    if (count % batchSize == 0) {
+      ODatabaseSession db = ctx.getDatabase();
+      if (db.getTransaction().isActive()) {
+        db.commit();
+        db.begin();
+      }
+    }
+    count++;
+    return result;
   }
 
   @Override

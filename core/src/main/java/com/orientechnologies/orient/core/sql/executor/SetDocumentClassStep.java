@@ -24,23 +24,23 @@ public class SetDocumentClassStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          if (result.isElement()) {
-            OIdentifiable element = result.getElement().get().getRecord();
-            if (element instanceof ODocument) {
-              ODocument doc = (ODocument) element;
-              doc.setClassName(targetClass);
-              if (!(result instanceof OResultInternal)) {
-                result = new OUpdatableResult(doc);
-              } else {
-                ((OResultInternal) result).setElement(doc);
-              }
-            }
-          }
-          return result;
-        });
+    return new OResultSetMapper(upstream, this::mapResult);
+  }
+
+  private OResult mapResult(OResult result) {
+    if (result.isElement()) {
+      OIdentifiable element = result.getElement().get().getRecord();
+      if (element instanceof ODocument) {
+        ODocument doc = (ODocument) element;
+        doc.setClassName(targetClass);
+        if (!(result instanceof OResultInternal)) {
+          result = new OUpdatableResult(doc);
+        } else {
+          ((OResultInternal) result).setElement(doc);
+        }
+      }
+    }
+    return result;
   }
 
   @Override

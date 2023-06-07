@@ -29,12 +29,12 @@ public class MoveVertexStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(
-        upstream,
-        (result) -> {
-          result.getVertex().ifPresent(x -> x.moveTo(targetClass, targetCluster));
-          return result;
-        });
+    return new OResultSetMapper(upstream, this::mapResult);
+  }
+
+  private OResult mapResult(OResult result) {
+    result.getVertex().ifPresent(x -> x.moveTo(targetClass, targetCluster));
+    return result;
   }
 
   @Override

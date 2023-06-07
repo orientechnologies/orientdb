@@ -27,12 +27,13 @@ public class LetExpressionStep extends AbstractExecutionStep {
           "Cannot execute a local LET on a query without a target");
     }
     return new OResultSetMapper(
-        getPrev().get().syncPull(ctx, nRecords),
-        (result) -> {
-          Object value = expression.execute(result, ctx);
-          ((OResultInternal) result).setMetadata(varname.getStringValue(), value);
-          return result;
-        });
+        getPrev().get().syncPull(ctx, nRecords), (result) -> mapResult(ctx, result));
+  }
+
+  private OResult mapResult(OCommandContext ctx, OResult result) {
+    Object value = expression.execute(result, ctx);
+    ((OResultInternal) result).setMetadata(varname.getStringValue(), value);
+    return result;
   }
 
   @Override

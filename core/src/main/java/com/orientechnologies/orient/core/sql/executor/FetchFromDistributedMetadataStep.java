@@ -25,33 +25,31 @@ public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (resultSet != null) {
       getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-      resultSet =
-          new OProduceOneResult(
-              () -> {
-                long begin = profilingEnabled ? System.nanoTime() : 0;
-                try {
-
-                  ODatabaseDocumentInternal session = (ODatabaseDocumentInternal) ctx.getDatabase();
-                  OSharedContextEmbedded value =
-                      (OSharedContextEmbedded) session.getSharedContext();
-                  ODocument doc = value.loadDistributedConfig(session);
-                  OResultInternal result = new OResultInternal();
-                  doc.setTrackingChanges(false);
-                  doc.deserializeFields();
-
-                  for (String alias : doc.getPropertyNames()) {
-                    result.setProperty(alias, doc.getProperty(alias));
-                  }
-                  return result;
-                } finally {
-                  if (profilingEnabled) {
-                    cost += (System.nanoTime() - begin);
-                  }
-                }
-              },
-              true);
+      resultSet = new OProduceOneResult(() -> produce(ctx), true);
     }
     return resultSet;
+  }
+
+  private OResult produce(OCommandContext ctx) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+
+      ODatabaseDocumentInternal session = (ODatabaseDocumentInternal) ctx.getDatabase();
+      OSharedContextEmbedded value = (OSharedContextEmbedded) session.getSharedContext();
+      ODocument doc = value.loadDistributedConfig(session);
+      OResultInternal result = new OResultInternal();
+      doc.setTrackingChanges(false);
+      doc.deserializeFields();
+
+      for (String alias : doc.getPropertyNames()) {
+        result.setProperty(alias, doc.getProperty(alias));
+      }
+      return result;
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
   }
 
   @Override
