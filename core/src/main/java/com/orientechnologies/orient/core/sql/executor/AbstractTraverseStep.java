@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
@@ -43,55 +44,49 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    return new OResultSet() {
-      private int localFetched = 0;
+    return new OLimitedResultSet(
+        new OResultSet() {
 
-      @Override
-      public boolean hasNext() {
-        if (localFetched >= nRecords) {
-          return false;
-        }
-        if (results.isEmpty()) {
-          fetchNextBlock(ctx, nRecords);
-        }
-        if (results.isEmpty()) {
-          return false;
-        }
-        return true;
-      }
-
-      @Override
-      public OResult next() {
-        if (localFetched >= nRecords) {
-          throw new IllegalStateException();
-        }
-        if (results.isEmpty()) {
-          fetchNextBlock(ctx, nRecords);
-          if (results.isEmpty()) {
-            throw new IllegalStateException();
+          @Override
+          public boolean hasNext() {
+            if (results.isEmpty()) {
+              fetchNextBlock(ctx, nRecords);
+            }
+            if (results.isEmpty()) {
+              return false;
+            }
+            return true;
           }
-        }
-        localFetched++;
-        OResult result = results.remove(0);
-        if (result.isElement()) {
-          traversed.add(result.getElement().get().getIdentity());
-        }
-        return result;
-      }
 
-      @Override
-      public void close() {}
+          @Override
+          public OResult next() {
+            if (results.isEmpty()) {
+              fetchNextBlock(ctx, nRecords);
+              if (results.isEmpty()) {
+                throw new IllegalStateException();
+              }
+            }
+            OResult result = results.remove(0);
+            if (result.isElement()) {
+              traversed.add(result.getElement().get().getIdentity());
+            }
+            return result;
+          }
 
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
+          @Override
+          public void close() {}
 
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          @Override
+          public Optional<OExecutionPlan> getExecutionPlan() {
+            return Optional.empty();
+          }
+
+          @Override
+          public Map<String, Long> getQueryStats() {
+            return null;
+          }
+        },
+        nRecords);
   }
 
   private void fetchNextBlock(OCommandContext ctx, int nRecords) {

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,47 +23,44 @@ public class CreateRecordStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OResultSet() {
-      private int locallyCreated = 0;
+    return new OLimitedResultSet(
+        new OResultSet() {
 
-      @Override
-      public boolean hasNext() {
-        if (locallyCreated >= nRecords) {
-          return false;
-        }
-        return created < total;
-      }
-
-      @Override
-      public OResult next() {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          if (!hasNext()) {
-            throw new IllegalStateException();
+          @Override
+          public boolean hasNext() {
+            return created < total;
           }
-          created++;
-          locallyCreated++;
-          return new OUpdatableResult((ODocument) ctx.getDatabase().newInstance());
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
+
+          @Override
+          public OResult next() {
+            long begin = profilingEnabled ? System.nanoTime() : 0;
+            try {
+              if (!hasNext()) {
+                throw new IllegalStateException();
+              }
+              created++;
+              return new OUpdatableResult((ODocument) ctx.getDatabase().newInstance());
+            } finally {
+              if (profilingEnabled) {
+                cost += (System.nanoTime() - begin);
+              }
+            }
           }
-        }
-      }
 
-      @Override
-      public void close() {}
+          @Override
+          public void close() {}
 
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
+          @Override
+          public Optional<OExecutionPlan> getExecutionPlan() {
+            return Optional.empty();
+          }
 
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          @Override
+          public Map<String, Long> getQueryStats() {
+            return null;
+          }
+        },
+        nRecords);
   }
 
   @Override

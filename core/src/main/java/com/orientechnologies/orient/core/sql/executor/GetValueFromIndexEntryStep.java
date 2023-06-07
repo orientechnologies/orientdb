@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
@@ -40,117 +41,117 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
     }
     OExecutionStepInternal prevStep = prev.get();
 
-    return new OResultSet() {
+    return new OLimitedResultSet(
+        new OResultSet() {
 
-      public boolean finished = false;
+          public boolean finished = false;
 
-      private OResult nextItem = null;
-      private int fetched = 0;
+          private OResult nextItem = null;
 
-      @Override
-      public boolean hasNext() {
+          @Override
+          public boolean hasNext() {
 
-        if (fetched >= nRecords || finished) {
-          return false;
-        }
-        if (nextItem == null) {
-          fetchNextItem();
-        }
+            if (finished) {
+              return false;
+            }
+            if (nextItem == null) {
+              fetchNextItem();
+            }
 
-        if (nextItem != null) {
-          return true;
-        }
+            if (nextItem != null) {
+              return true;
+            }
 
-        return false;
-      }
-
-      @Override
-      public OResult next() {
-        if (fetched >= nRecords || finished) {
-          throw new IllegalStateException();
-        }
-        if (nextItem == null) {
-          fetchNextItem();
-        }
-        if (nextItem == null) {
-          throw new IllegalStateException();
-        }
-        OResult result = nextItem;
-        nextItem = null;
-        fetched++;
-        ctx.setVariable("$current", result);
-        return result;
-      }
-
-      private void fetchNextItem() {
-        nextItem = null;
-        if (finished) {
-          return;
-        }
-        if (prevResult == null) {
-          prevResult = prevStep.syncPull(ctx, nRecords);
-          if (!prevResult.hasNext()) {
-            finished = true;
-            return;
+            return false;
           }
-        }
-        while (!finished) {
-          while (!prevResult.hasNext()) {
-            prevResult = prevStep.syncPull(ctx, nRecords);
-            if (!prevResult.hasNext()) {
-              finished = true;
+
+          @Override
+          public OResult next() {
+            if (finished) {
+              throw new IllegalStateException();
+            }
+            if (nextItem == null) {
+              fetchNextItem();
+            }
+            if (nextItem == null) {
+              throw new IllegalStateException();
+            }
+            OResult result = nextItem;
+            nextItem = null;
+            ctx.setVariable("$current", result);
+            return result;
+          }
+
+          private void fetchNextItem() {
+            nextItem = null;
+            if (finished) {
               return;
             }
-          }
-          OResult val = prevResult.next();
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-
-          try {
-            Object finalVal = val.getProperty("rid");
-            if (filterClusterIds != null) {
-              if (!(finalVal instanceof OIdentifiable)) {
-                continue;
+            if (prevResult == null) {
+              prevResult = prevStep.syncPull(ctx, nRecords);
+              if (!prevResult.hasNext()) {
+                finished = true;
+                return;
               }
-              ORID rid = ((OIdentifiable) finalVal).getIdentity();
-              boolean found = false;
-              for (int filterClusterId : filterClusterIds) {
-                if (rid.getClusterId() < 0 || filterClusterId == rid.getClusterId()) {
-                  found = true;
-                  break;
+            }
+            while (!finished) {
+              while (!prevResult.hasNext()) {
+                prevResult = prevStep.syncPull(ctx, nRecords);
+                if (!prevResult.hasNext()) {
+                  finished = true;
+                  return;
                 }
               }
-              if (!found) {
-                continue;
+              OResult val = prevResult.next();
+              long begin = profilingEnabled ? System.nanoTime() : 0;
+
+              try {
+                Object finalVal = val.getProperty("rid");
+                if (filterClusterIds != null) {
+                  if (!(finalVal instanceof OIdentifiable)) {
+                    continue;
+                  }
+                  ORID rid = ((OIdentifiable) finalVal).getIdentity();
+                  boolean found = false;
+                  for (int filterClusterId : filterClusterIds) {
+                    if (rid.getClusterId() < 0 || filterClusterId == rid.getClusterId()) {
+                      found = true;
+                      break;
+                    }
+                  }
+                  if (!found) {
+                    continue;
+                  }
+                }
+                if (finalVal instanceof OIdentifiable) {
+                  OResultInternal res = new OResultInternal((OIdentifiable) finalVal);
+                  nextItem = res;
+                } else if (finalVal instanceof OResult) {
+                  nextItem = (OResult) finalVal;
+                }
+                break;
+              } finally {
+                if (profilingEnabled) {
+                  cost += (System.nanoTime() - begin);
+                }
               }
             }
-            if (finalVal instanceof OIdentifiable) {
-              OResultInternal res = new OResultInternal((OIdentifiable) finalVal);
-              nextItem = res;
-            } else if (finalVal instanceof OResult) {
-              nextItem = (OResult) finalVal;
-            }
-            break;
-          } finally {
-            if (profilingEnabled) {
-              cost += (System.nanoTime() - begin);
-            }
           }
-        }
-      }
 
-      @Override
-      public void close() {}
+          @Override
+          public void close() {}
 
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
+          @Override
+          public Optional<OExecutionPlan> getExecutionPlan() {
+            return Optional.empty();
+          }
 
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          @Override
+          public Map<String, Long> getQueryStats() {
+            return null;
+          }
+        },
+        nRecords);
   }
 
   @Override

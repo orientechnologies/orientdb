@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -69,76 +70,69 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OResultSet() {
+    return new OLimitedResultSet(
+        new OResultSet() {
 
-      private int totDispatched = 0;
-
-      @Override
-      public boolean hasNext() {
-        while (true) {
-          if (totDispatched >= nRecords) {
-            return false;
-          }
-          if (currentResultSet == null || !currentResultSet.hasNext()) {
-            if (currentStep >= subSteps.size()) {
-              return false;
-            }
-            currentResultSet =
-                ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx, nRecords);
-            if (!currentResultSet.hasNext()) {
-              currentResultSet =
-                  ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx, nRecords);
-            }
-          }
-          if (!currentResultSet.hasNext()) {
-            continue;
-          }
-          return true;
-        }
-      }
-
-      @Override
-      public OResult next() {
-        while (true) {
-          if (totDispatched >= nRecords) {
-            throw new IllegalStateException();
-          }
-          if (currentResultSet == null || !currentResultSet.hasNext()) {
-            if (currentStep >= subSteps.size()) {
-              throw new IllegalStateException();
-            }
-            currentResultSet =
-                ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx, nRecords);
-            if (!currentResultSet.hasNext()) {
-              currentResultSet =
-                  ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx, nRecords);
+          @Override
+          public boolean hasNext() {
+            while (true) {
+              if (currentResultSet == null || !currentResultSet.hasNext()) {
+                if (currentStep >= subSteps.size()) {
+                  return false;
+                }
+                currentResultSet =
+                    ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx, nRecords);
+                if (!currentResultSet.hasNext()) {
+                  currentResultSet =
+                      ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx, nRecords);
+                }
+              }
+              if (!currentResultSet.hasNext()) {
+                continue;
+              }
+              return true;
             }
           }
-          if (!currentResultSet.hasNext()) {
-            continue;
+
+          @Override
+          public OResult next() {
+            while (true) {
+              if (currentResultSet == null || !currentResultSet.hasNext()) {
+                if (currentStep >= subSteps.size()) {
+                  throw new IllegalStateException();
+                }
+                currentResultSet =
+                    ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx, nRecords);
+                if (!currentResultSet.hasNext()) {
+                  currentResultSet =
+                      ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx, nRecords);
+                }
+              }
+              if (!currentResultSet.hasNext()) {
+                continue;
+              }
+              return currentResultSet.next();
+            }
           }
-          totDispatched++;
-          return currentResultSet.next();
-        }
-      }
 
-      @Override
-      public void close() {
-        for (OExecutionStep step : subSteps) {
-          ((AbstractExecutionStep) step).close();
-        }
-      }
+          @Override
+          public void close() {
+            for (OExecutionStep step : subSteps) {
+              ((AbstractExecutionStep) step).close();
+            }
+          }
 
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
+          @Override
+          public Optional<OExecutionPlan> getExecutionPlan() {
+            return Optional.empty();
+          }
 
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return new HashMap<>();
-      }
-    };
+          @Override
+          public Map<String, Long> getQueryStats() {
+            return new HashMap<>();
+          }
+        },
+        nRecords);
   }
 
   @Override

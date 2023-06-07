@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 import java.util.Map;
 import java.util.Optional;
@@ -31,101 +32,100 @@ public class FilterStep extends AbstractExecutionStep {
     }
     OExecutionStepInternal prevStep = prev.get();
 
-    return new OResultSet() {
-      public boolean finished = false;
+    return new OLimitedResultSet(
+        new OResultSet() {
+          public boolean finished = false;
+          private OResult nextItem = null;
 
-      private OResult nextItem = null;
-      private int fetched = 0;
-
-      private void fetchNextItem() {
-        long timeoutBegin = System.currentTimeMillis();
-        nextItem = null;
-        if (finished) {
-          return;
-        }
-        if (prevResult == null) {
-          prevResult = prevStep.syncPull(ctx, nRecords);
-          if (!prevResult.hasNext()) {
-            finished = true;
-            return;
-          }
-        }
-        while (!finished) {
-          while (!prevResult.hasNext()) {
-            prevResult = prevStep.syncPull(ctx, nRecords);
-            if (!prevResult.hasNext()) {
-              finished = true;
+          private void fetchNextItem() {
+            long timeoutBegin = System.currentTimeMillis();
+            nextItem = null;
+            if (finished) {
               return;
             }
+            if (prevResult == null) {
+              prevResult = prevStep.syncPull(ctx, nRecords);
+              if (!prevResult.hasNext()) {
+                finished = true;
+                return;
+              }
+            }
+            while (!finished) {
+              while (!prevResult.hasNext()) {
+                prevResult = prevStep.syncPull(ctx, nRecords);
+                if (!prevResult.hasNext()) {
+                  finished = true;
+                  return;
+                }
+              }
+              nextItem = prevResult.next();
+              long begin = profilingEnabled ? System.nanoTime() : 0;
+              try {
+                if (whereClause.matchesFilters(nextItem, ctx)) {
+                  break;
+                }
+
+                nextItem = null;
+              } finally {
+                if (profilingEnabled) {
+                  cost += (System.nanoTime() - begin);
+                }
+              }
+              if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
+                sendTimeout();
+              }
+            }
           }
-          nextItem = prevResult.next();
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
-            if (whereClause.matchesFilters(nextItem, ctx)) {
-              break;
+
+          @Override
+          public boolean hasNext() {
+
+            if (finished) {
+              return false;
+            }
+            if (nextItem == null) {
+              fetchNextItem();
             }
 
+            if (nextItem != null) {
+              return true;
+            }
+
+            return false;
+          }
+
+          @Override
+          public OResult next() {
+            if (finished) {
+              throw new IllegalStateException();
+            }
+            if (nextItem == null) {
+              fetchNextItem();
+            }
+            if (nextItem == null) {
+              throw new IllegalStateException();
+            }
+            OResult result = nextItem;
             nextItem = null;
-          } finally {
-            if (profilingEnabled) {
-              cost += (System.nanoTime() - begin);
-            }
+            return result;
           }
-          if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
-            sendTimeout();
+
+          @Override
+          public void close() {
+            FilterStep.this.close();
           }
-        }
-      }
 
-      @Override
-      public boolean hasNext() {
+          @Override
+          public Optional<OExecutionPlan> getExecutionPlan() {
+            return Optional.empty();
+          }
 
-        if (fetched >= nRecords || finished) {
-          return false;
-        }
-        if (nextItem == null) {
-          fetchNextItem();
-        }
-
-        if (nextItem != null) {
-          return true;
-        }
-
-        return false;
-      }
-
-      @Override
-      public OResult next() {
-        if (fetched >= nRecords || finished) {
-          throw new IllegalStateException();
-        }
-        if (nextItem == null) {
-          fetchNextItem();
-        }
-        if (nextItem == null) {
-          throw new IllegalStateException();
-        }
-        OResult result = nextItem;
-        nextItem = null;
-        fetched++;
-        return result;
-      }
-
-      @Override
-      public void close() {
-        FilterStep.this.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          @Override
+          public Map<String, Long> getQueryStats() {
+            return null;
+          }
+        },
+        nRecords);
   }
 
   @Override

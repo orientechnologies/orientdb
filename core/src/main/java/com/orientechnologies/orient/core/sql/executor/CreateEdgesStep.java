@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OBatch;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.ArrayList;
@@ -72,61 +73,60 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init();
-    return new OResultSet() {
-      private int currentBatch = 0;
-
-      @Override
-      public boolean hasNext() {
-        if (currentTo == null) {
-          loadNextFromTo();
-        }
-        return (currentBatch < nRecords && currentTo != null && !finished);
-      }
-
-      @Override
-      public OResult next() {
-        if (currentTo == null) {
-          loadNextFromTo();
-        }
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-
-          if (finished || currentBatch >= nRecords) {
-            throw new IllegalStateException();
-          }
-          if (currentTo == null) {
-            throw new OCommandExecutionException("Invalid TO vertex for edge");
+    return new OLimitedResultSet(
+        new OResultSet() {
+          @Override
+          public boolean hasNext() {
+            if (currentTo == null) {
+              loadNextFromTo();
+            }
+            return currentTo != null && !finished;
           }
 
-          OEdge edge =
-              edgeToUpdate != null
-                  ? edgeToUpdate
-                  : currentFrom.addEdge(currentTo, targetClass.getStringValue());
+          @Override
+          public OResult next() {
+            if (currentTo == null) {
+              loadNextFromTo();
+            }
+            long begin = profilingEnabled ? System.nanoTime() : 0;
+            try {
 
-          OUpdatableResult result = new OUpdatableResult(edge);
-          currentTo = null;
-          currentBatch++;
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
+              if (finished) {
+                throw new IllegalStateException();
+              }
+              if (currentTo == null) {
+                throw new OCommandExecutionException("Invalid TO vertex for edge");
+              }
+
+              OEdge edge =
+                  edgeToUpdate != null
+                      ? edgeToUpdate
+                      : currentFrom.addEdge(currentTo, targetClass.getStringValue());
+
+              OUpdatableResult result = new OUpdatableResult(edge);
+              currentTo = null;
+              return result;
+            } finally {
+              if (profilingEnabled) {
+                cost += (System.nanoTime() - begin);
+              }
+            }
           }
-        }
-      }
 
-      @Override
-      public void close() {}
+          @Override
+          public void close() {}
 
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
+          @Override
+          public Optional<OExecutionPlan> getExecutionPlan() {
+            return Optional.empty();
+          }
 
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          @Override
+          public Map<String, Long> getQueryStats() {
+            return null;
+          }
+        },
+        nRecords);
   }
 
   private void init() {

@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
@@ -133,67 +134,62 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init(ctx.getDatabase());
-    return new OResultSet() {
-      private int localCount = 0;
-
-      @Override
-      public boolean hasNext() {
-        if (timedOut) {
-          throw new OTimeoutException("Command execution timeout");
-        }
-
-        if (localCount >= nRecords) {
-          return false;
-        }
-        if (nextEntry == null) {
-          fetchNextEntry();
-        }
-        return nextEntry != null;
-      }
-
-      @Override
-      public OResult next() {
-        if (!hasNext()) {
-          throw new IllegalStateException();
-        }
-        if (localCount % 100 == 0 && OExecutionThreadLocal.isInterruptCurrentOperation()) {
-          throw new OCommandInterruptedException("The command has been interrupted");
-        }
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          Object key = nextEntry.first;
-          OIdentifiable value = nextEntry.second;
-
-          nextEntry = null;
-
-          localCount++;
-          OResultInternal result = new OResultInternal();
-          result.setProperty("key", convertKey(key));
-          result.setProperty("rid", value);
-          ctx.setVariable("$current", result);
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
+    return new OLimitedResultSet(
+        new OResultSet() {
+          @Override
+          public boolean hasNext() {
+            if (timedOut) {
+              throw new OTimeoutException("Command execution timeout");
+            }
+            if (nextEntry == null) {
+              fetchNextEntry();
+            }
+            return nextEntry != null;
           }
-        }
-      }
 
-      @Override
-      public void close() {
-        closeStreams();
-      }
+          @Override
+          public OResult next() {
+            if (!hasNext()) {
+              throw new IllegalStateException();
+            }
+            if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
+              throw new OCommandInterruptedException("The command has been interrupted");
+            }
+            long begin = profilingEnabled ? System.nanoTime() : 0;
+            try {
+              Object key = nextEntry.first;
+              OIdentifiable value = nextEntry.second;
 
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
+              nextEntry = null;
 
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+              OResultInternal result = new OResultInternal();
+              result.setProperty("key", convertKey(key));
+              result.setProperty("rid", value);
+              ctx.setVariable("$current", result);
+              return result;
+            } finally {
+              if (profilingEnabled) {
+                cost += (System.nanoTime() - begin);
+              }
+            }
+          }
+
+          @Override
+          public void close() {
+            closeStreams();
+          }
+
+          @Override
+          public Optional<OExecutionPlan> getExecutionPlan() {
+            return Optional.empty();
+          }
+
+          @Override
+          public Map<String, Long> getQueryStats() {
+            return null;
+          }
+        },
+        nRecords);
   }
 
   private static Object convertKey(Object key) {

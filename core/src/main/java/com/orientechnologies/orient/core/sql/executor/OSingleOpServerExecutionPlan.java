@@ -4,11 +4,10 @@ import com.orientechnologies.orient.core.command.OBasicServerCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OSimpleExecServerStatement;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
@@ -39,38 +38,7 @@ public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
         ((OInternalResultSet) result).plan = this;
       }
     }
-    return new OResultSet() {
-      private int fetched = 0;
-
-      @Override
-      public boolean hasNext() {
-        return fetched < n && result.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        if (fetched >= n) {
-          throw new IllegalStateException();
-        }
-        fetched++;
-        return result.next();
-      }
-
-      @Override
-      public void close() {
-        result.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    return new OLimitedResultSet(result, n);
   }
 
   public void reset(OCommandContext ctx) {

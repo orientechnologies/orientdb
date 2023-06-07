@@ -2,10 +2,9 @@ package com.orientechnologies.orient.core.sql.executor;
 
 /** Created by luigidellaquila on 08/08/16. */
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
@@ -38,37 +37,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   @Override
   public OResultSet fetchNext(int n) {
     doExecute(n);
-    return new OResultSet() {
-      private int totalFetched = 0;
-
-      @Override
-      public boolean hasNext() {
-        return finalResult.hasNext() && totalFetched < n;
-      }
-
-      @Override
-      public OResult next() {
-        if (!hasNext()) {
-          throw new IllegalStateException();
-        }
-        return finalResult.next();
-      }
-
-      @Override
-      public void close() {
-        finalResult.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return finalResult == null ? Optional.empty() : finalResult.getExecutionPlan();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    return new OLimitedResultSet(finalResult, n);
   }
 
   private void doExecute(int n) {

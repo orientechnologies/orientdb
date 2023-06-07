@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -39,51 +40,45 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
 
     OResultSet result =
-        new OResultSet() {
-          private int nextLocal = 0;
+        new OLimitedResultSet(
+            new OResultSet() {
 
-          @Override
-          public boolean hasNext() {
-            if (nextLocal >= nRecords) {
-              return false;
-            }
-            if (nextValue != null) {
-              return true;
-            }
-            fetchNext(nRecords);
-            return nextValue != null;
-          }
+              @Override
+              public boolean hasNext() {
+                if (nextValue != null) {
+                  return true;
+                }
+                fetchNext(nRecords);
+                return nextValue != null;
+              }
 
-          @Override
-          public OResult next() {
-            if (nextLocal >= nRecords) {
-              throw new IllegalStateException();
-            }
-            if (nextValue == null) {
-              fetchNext(nRecords);
-            }
-            if (nextValue == null) {
-              throw new IllegalStateException();
-            }
-            OResult result = nextValue;
-            nextValue = null;
-            nextLocal++;
-            return result;
-          }
+              @Override
+              public OResult next() {
+                if (nextValue == null) {
+                  fetchNext(nRecords);
+                }
+                if (nextValue == null) {
+                  throw new IllegalStateException();
+                }
+                OResult result = nextValue;
+                nextValue = null;
+                return result;
+              }
 
-          @Override
-          public void close() {}
+              @Override
+              public void close() {}
 
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
+              @Override
+              public Optional<OExecutionPlan> getExecutionPlan() {
+                return Optional.empty();
+              }
 
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        };
+              @Override
+              public Map<String, Long> getQueryStats() {
+                return null;
+              }
+            },
+            nRecords);
 
     return result;
   }

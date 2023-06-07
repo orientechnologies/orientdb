@@ -56,7 +56,6 @@ public class FindReferencesStep extends AbstractExecutionStep {
     return new OResultSet() {
       @Override
       public boolean hasNext() {
-
         return nextResult != null;
       }
 

@@ -5,6 +5,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -43,96 +44,96 @@ public class FilterByClustersStep extends AbstractExecutionStep {
     }
     OExecutionStepInternal prevStep = prev.get();
 
-    return new OResultSet() {
-      public boolean finished = false;
+    return new OLimitedResultSet(
+        new OResultSet() {
+          public boolean finished = false;
 
-      private OResult nextItem = null;
-      private int fetched = 0;
+          private OResult nextItem = null;
 
-      private void fetchNextItem() {
-        nextItem = null;
-        if (finished) {
-          return;
-        }
-        if (prevResult == null) {
-          prevResult = prevStep.syncPull(ctx, nRecords);
-          if (!prevResult.hasNext()) {
-            finished = true;
-            return;
-          }
-        }
-        while (!finished) {
-          while (!prevResult.hasNext()) {
-            prevResult = prevStep.syncPull(ctx, nRecords);
-            if (!prevResult.hasNext()) {
-              finished = true;
+          private void fetchNextItem() {
+            nextItem = null;
+            if (finished) {
               return;
             }
-          }
-          nextItem = prevResult.next();
-          if (nextItem.isElement()) {
-            int clusterId = nextItem.getIdentity().get().getClusterId();
-            if (clusterId < 0) {
-              // this record comes from a TX, it still doesn't have a cluster assigned
-              break;
+            if (prevResult == null) {
+              prevResult = prevStep.syncPull(ctx, nRecords);
+              if (!prevResult.hasNext()) {
+                finished = true;
+                return;
+              }
             }
-            if (clusterIds.contains(clusterId)) {
-              break;
+            while (!finished) {
+              while (!prevResult.hasNext()) {
+                prevResult = prevStep.syncPull(ctx, nRecords);
+                if (!prevResult.hasNext()) {
+                  finished = true;
+                  return;
+                }
+              }
+              nextItem = prevResult.next();
+              if (nextItem.isElement()) {
+                int clusterId = nextItem.getIdentity().get().getClusterId();
+                if (clusterId < 0) {
+                  // this record comes from a TX, it still doesn't have a cluster assigned
+                  break;
+                }
+                if (clusterIds.contains(clusterId)) {
+                  break;
+                }
+              }
+              nextItem = null;
             }
           }
-          nextItem = null;
-        }
-      }
 
-      @Override
-      public boolean hasNext() {
+          @Override
+          public boolean hasNext() {
 
-        if (fetched >= nRecords || finished) {
-          return false;
-        }
-        if (nextItem == null) {
-          fetchNextItem();
-        }
+            if (finished) {
+              return false;
+            }
+            if (nextItem == null) {
+              fetchNextItem();
+            }
 
-        if (nextItem != null) {
-          return true;
-        }
+            if (nextItem != null) {
+              return true;
+            }
 
-        return false;
-      }
+            return false;
+          }
 
-      @Override
-      public OResult next() {
-        if (fetched >= nRecords || finished) {
-          throw new IllegalStateException();
-        }
-        if (nextItem == null) {
-          fetchNextItem();
-        }
-        if (nextItem == null) {
-          throw new IllegalStateException();
-        }
-        OResult result = nextItem;
-        nextItem = null;
-        fetched++;
-        return result;
-      }
+          @Override
+          public OResult next() {
+            if (finished) {
+              throw new IllegalStateException();
+            }
+            if (nextItem == null) {
+              fetchNextItem();
+            }
+            if (nextItem == null) {
+              throw new IllegalStateException();
+            }
+            OResult result = nextItem;
+            nextItem = null;
+            return result;
+          }
 
-      @Override
-      public void close() {
-        FilterByClustersStep.this.close();
-      }
+          @Override
+          public void close() {
+            FilterByClustersStep.this.close();
+          }
 
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
+          @Override
+          public Optional<OExecutionPlan> getExecutionPlan() {
+            return Optional.empty();
+          }
 
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          @Override
+          public Map<String, Long> getQueryStats() {
+            return null;
+          }
+        },
+        nRecords);
   }
 
   @Override

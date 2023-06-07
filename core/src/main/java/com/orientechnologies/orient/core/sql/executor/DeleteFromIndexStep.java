@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
@@ -81,51 +82,50 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init();
 
-    return new OResultSet() {
-      private int localCount = 0;
-
-      @Override
-      public boolean hasNext() {
-        return (localCount < nRecords && nextEntry != null);
-      }
-
-      @Override
-      public OResult next() {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          if (!hasNext()) {
-            throw new IllegalStateException();
+    return new OLimitedResultSet(
+        new OResultSet() {
+          @Override
+          public boolean hasNext() {
+            return nextEntry != null;
           }
-          ORawPair<Object, ORID> entry = nextEntry;
-          OResultInternal result = new OResultInternal();
-          ORID value = entry.second;
 
-          index.remove(entry.first, value);
-          localCount++;
-          nextEntry = loadNextEntry(ctx);
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
+          @Override
+          public OResult next() {
+            long begin = profilingEnabled ? System.nanoTime() : 0;
+            try {
+              if (!hasNext()) {
+                throw new IllegalStateException();
+              }
+              ORawPair<Object, ORID> entry = nextEntry;
+              OResultInternal result = new OResultInternal();
+              ORID value = entry.second;
+
+              index.remove(entry.first, value);
+              nextEntry = loadNextEntry(ctx);
+              return result;
+            } finally {
+              if (profilingEnabled) {
+                cost += (System.nanoTime() - begin);
+              }
+            }
           }
-        }
-      }
 
-      @Override
-      public void close() {
-        closeStreams();
-      }
+          @Override
+          public void close() {
+            closeStreams();
+          }
 
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
+          @Override
+          public Optional<OExecutionPlan> getExecutionPlan() {
+            return Optional.empty();
+          }
 
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          @Override
+          public Map<String, Long> getQueryStats() {
+            return null;
+          }
+        },
+        nRecords);
   }
 
   private void closeStreams() {
