@@ -10,10 +10,10 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OInputParameter;
 import com.orientechnologies.orient.core.sql.parser.OJson;
 import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 09/08/16. */
 public class UpdateContentStep extends AbstractExecutionStep {
@@ -34,42 +34,20 @@ public class UpdateContentStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        OResult result = upstream.next();
-        if (result instanceof OResultInternal) {
-          if (!(result.getElement().get() instanceof OElement)) {
-            ((OResultInternal) result).setElement(result.getElement().get().getRecord());
+    return new OResultSetMapper(
+        upstream,
+        (result) -> {
+          if (result instanceof OResultInternal) {
+            if (!(result.getElement().get() instanceof OElement)) {
+              ((OResultInternal) result).setElement(result.getElement().get().getRecord());
+            }
+            if (!(result.getElement().get() instanceof OElement)) {
+              return result;
+            }
+            handleContent((OElement) result.getElement().get(), ctx);
           }
-          if (!(result.getElement().get() instanceof OElement)) {
-            return result;
-          }
-          handleContent((OElement) result.getElement().get(), ctx);
-        }
-        return result;
-      }
-
-      @Override
-      public void close() {
-        upstream.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          return result;
+        });
   }
 
   private boolean handleContent(OElement record, OCommandContext ctx) {

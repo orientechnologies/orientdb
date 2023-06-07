@@ -2,9 +2,8 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.storage.OStorage;
-import java.util.Map;
-import java.util.Optional;
 
 public class LockRecordStep extends AbstractExecutionStep {
   private final OStorage.LOCKING_STRATEGY lockStrategy;
@@ -18,36 +17,14 @@ public class LockRecordStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        OResult result = upstream.next();
-        result
-            .getElement()
-            .ifPresent(x -> ctx.getDatabase().getTransaction().lockRecord(x, lockStrategy));
-        return result;
-      }
-
-      @Override
-      public void close() {
-        upstream.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    return new OResultSetMapper(
+        upstream,
+        (result) -> {
+          result
+              .getElement()
+              .ifPresent(x -> ctx.getDatabase().getTransaction().lockRecord(x, lockStrategy));
+          return result;
+        });
   }
 
   @Override

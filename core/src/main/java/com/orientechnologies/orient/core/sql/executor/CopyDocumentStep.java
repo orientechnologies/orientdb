@@ -6,8 +6,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import java.util.Map;
-import java.util.Optional;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 
 /**
  * Reads an upstream result set and returns a new result set that contains copies of the original
@@ -29,56 +28,34 @@ public class CopyDocumentStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        OResult toCopy = upstream.next();
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          ORecord resultDoc = null;
-          if (toCopy.isElement()) {
-            ORecord docToCopy = toCopy.getElement().get().getRecord();
-            if (docToCopy instanceof ODocument) {
-              resultDoc = ((ODocument) docToCopy).copy();
-              resultDoc.getIdentity().reset();
-              ((ODocument) resultDoc).setClassName(null);
-              resultDoc.setDirty();
-            } else if (docToCopy instanceof OBlob) {
-              ORecordBytes newBlob = ((ORecordBytes) docToCopy).copy();
-              OResultInternal result = new OResultInternal(newBlob);
-              return result;
+    return new OResultSetMapper(
+        upstream,
+        (result) -> {
+          long begin = profilingEnabled ? System.nanoTime() : 0;
+          try {
+            ORecord resultDoc = null;
+            if (result.isElement()) {
+              ORecord docToCopy = result.getElement().get().getRecord();
+              if (docToCopy instanceof ODocument) {
+                resultDoc = ((ODocument) docToCopy).copy();
+                resultDoc.getIdentity().reset();
+                ((ODocument) resultDoc).setClassName(null);
+                resultDoc.setDirty();
+              } else if (docToCopy instanceof OBlob) {
+                ORecordBytes newBlob = ((ORecordBytes) docToCopy).copy();
+                OResultInternal newResult = new OResultInternal(newBlob);
+                return newResult;
+              }
+            } else {
+              resultDoc = result.toElement().getRecord();
             }
-          } else {
-            resultDoc = toCopy.toElement().getRecord();
+            return new OUpdatableResult((ODocument) resultDoc);
+          } finally {
+            if (profilingEnabled) {
+              cost += (System.nanoTime() - begin);
+            }
           }
-          return new OUpdatableResult((ODocument) resultDoc);
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {
-        upstream.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+        });
   }
 
   @Override

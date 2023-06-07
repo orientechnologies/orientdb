@@ -7,9 +7,8 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * after an update of an edge, this step updates edge pointers on vertices to make the graph
@@ -24,40 +23,14 @@ public class UpdateEdgePointersStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        OResult result = upstream.next();
-        if (result instanceof OResultInternal) {
-          handleUpdateEdge((ODocument) result.getElement().get().getRecord());
-        }
-        return result;
-      }
-
-      private void updateIn(OResult item) {}
-
-      private void updateOut(OResult item) {}
-
-      @Override
-      public void close() {
-        upstream.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    return new OResultSetMapper(
+        upstream,
+        (result) -> {
+          if (result instanceof OResultInternal) {
+            handleUpdateEdge((ODocument) result.getElement().get().getRecord());
+          }
+          return result;
+        });
   }
 
   @Override

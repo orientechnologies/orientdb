@@ -3,8 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import java.util.Map;
-import java.util.Optional;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 
 /**
  * for UPDATE, unwraps the current result set to return the previous value
@@ -22,51 +21,28 @@ public class UnwrapPreviousValueStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = prev.get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-
-      @Override
-      public boolean hasNext() {
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          OResult prevResult = upstream.next();
-          if (prevResult instanceof OUpdatableResult) {
-            prevResult = ((OUpdatableResult) prevResult).previousValue;
-            if (prevResult == null) {
+    return new OResultSetMapper(
+        upstream,
+        (result) -> {
+          long begin = profilingEnabled ? System.nanoTime() : 0;
+          try {
+            if (result instanceof OUpdatableResult) {
+              result = ((OUpdatableResult) result).previousValue;
+              if (result == null) {
+                throw new OCommandExecutionException(
+                    "Invalid status of record: no previous value available");
+              }
+              return result;
+            } else {
               throw new OCommandExecutionException(
                   "Invalid status of record: no previous value available");
             }
-            return prevResult;
-          } else {
-            throw new OCommandExecutionException(
-                "Invalid status of record: no previous value available");
+          } finally {
+            if (profilingEnabled) {
+              cost += (System.nanoTime() - begin);
+            }
           }
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {
-        upstream.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+        });
   }
 
   @Override

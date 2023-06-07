@@ -4,12 +4,11 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 11/08/16. */
 public class InsertValuesStep extends AbstractExecutionStep {
@@ -31,56 +30,34 @@ public class InsertValuesStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        OResult result = upstream.next();
-        if (!(result instanceof OResultInternal)) {
-          if (!result.isElement()) {
-            throw new OCommandExecutionException(
-                "Error executing INSERT, cannot modify element: " + result);
+    return new OResultSetMapper(
+        upstream,
+        (result) -> {
+          if (!(result instanceof OResultInternal)) {
+            if (!result.isElement()) {
+              throw new OCommandExecutionException(
+                  "Error executing INSERT, cannot modify element: " + result);
+            }
+            result = new OUpdatableResult((ODocument) result.getElement().get());
           }
-          result = new OUpdatableResult((ODocument) result.getElement().get());
-        }
-        List<OExpression> currentValues = values.get(nextValueSet++);
-        if (currentValues.size() != identifiers.size()) {
-          throw new OCommandExecutionException(
-              "Cannot execute INSERT, the number of fields is different from the number of expressions: "
-                  + identifiers
-                  + " "
-                  + currentValues);
-        }
-        nextValueSet %= values.size();
-        for (int i = 0; i < currentValues.size(); i++) {
-          OIdentifier identifier = identifiers.get(i);
-          Object value = currentValues.get(i).execute(result, ctx);
-          value =
-              OUpdateItem.convertToPropertyType((OResultInternal) result, identifier, value, ctx);
-          ((OResultInternal) result).setProperty(identifier.getStringValue(), value);
-        }
-        return result;
-      }
-
-      @Override
-      public void close() {
-        upstream.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          List<OExpression> currentValues = values.get(nextValueSet++);
+          if (currentValues.size() != identifiers.size()) {
+            throw new OCommandExecutionException(
+                "Cannot execute INSERT, the number of fields is different from the number of expressions: "
+                    + identifiers
+                    + " "
+                    + currentValues);
+          }
+          nextValueSet %= values.size();
+          for (int i = 0; i < currentValues.size(); i++) {
+            OIdentifier identifier = identifiers.get(i);
+            Object value = currentValues.get(i).execute(result, ctx);
+            value =
+                OUpdateItem.convertToPropertyType((OResultInternal) result, identifier, value, ctx);
+            ((OResultInternal) result).setProperty(identifier.getStringValue(), value);
+          }
+          return result;
+        });
   }
 
   @Override

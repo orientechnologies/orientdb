@@ -2,8 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import java.util.Map;
-import java.util.Optional;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 
 /**
  * Deletes records coming from upstream steps
@@ -20,43 +19,21 @@ public class DeleteStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        OResult result = upstream.next();
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          if (result.isElement()) {
-            result.getElement().get().delete();
+    return new OResultSetMapper(
+        upstream,
+        (result) -> {
+          long begin = profilingEnabled ? System.nanoTime() : 0;
+          try {
+            if (result.isElement()) {
+              result.getElement().get().delete();
+            }
+            return result;
+          } finally {
+            if (profilingEnabled) {
+              cost += (System.nanoTime() - begin);
+            }
           }
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {
-        upstream.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+        });
   }
 
   @Override

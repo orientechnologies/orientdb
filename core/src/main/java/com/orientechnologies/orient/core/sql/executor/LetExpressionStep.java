@@ -4,10 +4,9 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 03/08/16. */
 public class LetExpressionStep extends AbstractExecutionStep {
@@ -27,37 +26,13 @@ public class LetExpressionStep extends AbstractExecutionStep {
       throw new OCommandExecutionException(
           "Cannot execute a local LET on a query without a target");
     }
-    return new OResultSet() {
-      private OResultSet source = getPrev().get().syncPull(ctx, nRecords);
-
-      @Override
-      public boolean hasNext() {
-        return source.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        OResultInternal result = (OResultInternal) source.next();
-        Object value = expression.execute(result, ctx);
-        result.setMetadata(varname.getStringValue(), value);
-        return result;
-      }
-
-      @Override
-      public void close() {
-        source.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    return new OResultSetMapper(
+        getPrev().get().syncPull(ctx, nRecords),
+        (result) -> {
+          Object value = expression.execute(result, ctx);
+          ((OResultInternal) result).setMetadata(varname.getStringValue(), value);
+          return result;
+        });
   }
 
   @Override

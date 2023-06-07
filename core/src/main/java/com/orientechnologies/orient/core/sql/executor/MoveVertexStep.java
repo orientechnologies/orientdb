@@ -2,10 +2,9 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 14/02/17. */
 public class MoveVertexStep extends AbstractExecutionStep {
@@ -30,34 +29,12 @@ public class MoveVertexStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        OResult current = upstream.next();
-        current.getVertex().ifPresent(x -> x.moveTo(targetClass, targetCluster));
-        return current;
-      }
-
-      @Override
-      public void close() {
-        upstream.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    return new OResultSetMapper(
+        upstream,
+        (result) -> {
+          result.getVertex().ifPresent(x -> x.moveTo(targetClass, targetCluster));
+          return result;
+        });
   }
 
   @Override

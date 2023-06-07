@@ -3,9 +3,8 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OBatch;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 14/02/17. */
 public class BatchStep extends AbstractExecutionStep {
@@ -21,41 +20,19 @@ public class BatchStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet prevResult = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return prevResult.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        OResult res = prevResult.next();
-        if (count % batchSize == 0) {
-          ODatabaseSession db = ctx.getDatabase();
-          if (db.getTransaction().isActive()) {
-            db.commit();
-            db.begin();
+    return new OResultSetMapper(
+        prevResult,
+        (result) -> {
+          if (count % batchSize == 0) {
+            ODatabaseSession db = ctx.getDatabase();
+            if (db.getTransaction().isActive()) {
+              db.commit();
+              db.begin();
+            }
           }
-        }
-        count++;
-        return res;
-      }
-
-      @Override
-      public void close() {
-        getPrev().get().close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          count++;
+          return result;
+        });
   }
 
   @Override

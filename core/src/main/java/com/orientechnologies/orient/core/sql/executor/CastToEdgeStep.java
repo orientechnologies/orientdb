@@ -4,8 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.OEdge;
-import java.util.Map;
-import java.util.Optional;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 
 /** Created by luigidellaquila on 20/02/17. */
 public class CastToEdgeStep extends AbstractExecutionStep {
@@ -19,53 +18,30 @@ public class CastToEdgeStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-
-      @Override
-      public boolean hasNext() {
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        OResult result = upstream.next();
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          if (result.getElement().orElse(null) instanceof OEdge) {
-            return result;
-          }
-          if (result.isEdge()) {
-            if (result instanceof OResultInternal) {
-              ((OResultInternal) result).setElement(result.getElement().get().asEdge().get());
-            } else {
-              result = new OResultInternal(result.getElement().get().asEdge().get());
+    return new OResultSetMapper(
+        upstream,
+        (result) -> {
+          long begin = profilingEnabled ? System.nanoTime() : 0;
+          try {
+            if (result.getElement().orElse(null) instanceof OEdge) {
+              return result;
             }
-          } else {
-            throw new OCommandExecutionException("Current element is not a vertex: " + result);
+            if (result.isEdge()) {
+              if (result instanceof OResultInternal) {
+                ((OResultInternal) result).setElement(result.getElement().get().asEdge().get());
+              } else {
+                result = new OResultInternal(result.getElement().get().asEdge().get());
+              }
+            } else {
+              throw new OCommandExecutionException("Current element is not a vertex: " + result);
+            }
+            return result;
+          } finally {
+            if (profilingEnabled) {
+              cost += (System.nanoTime() - begin);
+            }
           }
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {
-        upstream.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+        });
   }
 
   @Override

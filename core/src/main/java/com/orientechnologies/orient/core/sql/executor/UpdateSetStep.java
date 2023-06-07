@@ -3,10 +3,9 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 09/08/16. */
 public class UpdateSetStep extends AbstractExecutionStep {
@@ -21,46 +20,24 @@ public class UpdateSetStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        OResult result = upstream.next();
-        if (result instanceof OResultInternal) {
-          for (OUpdateItem item : items) {
-            OClass type = result.getElement().flatMap(x -> x.getSchemaType()).orElse(null);
-            if (type == null) {
-              Object clazz = result.getProperty("@view");
-              if (clazz instanceof String) {
-                type = ctx.getDatabase().getMetadata().getSchema().getView((String) clazz);
+    return new OResultSetMapper(
+        upstream,
+        (result) -> {
+          if (result instanceof OResultInternal) {
+            for (OUpdateItem item : items) {
+              OClass type = result.getElement().flatMap(x -> x.getSchemaType()).orElse(null);
+              if (type == null) {
+                Object clazz = result.getProperty("@view");
+                if (clazz instanceof String) {
+                  type = ctx.getDatabase().getMetadata().getSchema().getView((String) clazz);
+                }
               }
+
+              item.applyUpdate((OResultInternal) result, ctx);
             }
-
-            item.applyUpdate((OResultInternal) result, ctx);
           }
-        }
-        return result;
-      }
-
-      @Override
-      public void close() {
-        upstream.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          return result;
+        });
   }
 
   @Override

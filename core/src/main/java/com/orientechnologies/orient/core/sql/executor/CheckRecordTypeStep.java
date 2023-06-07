@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
-import java.util.Map;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import java.util.Optional;
 
 /**
@@ -25,55 +25,33 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = prev.get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return upstream.hasNext();
-      }
+    return new OResultSetMapper(
+        upstream,
+        (result) -> {
+          long begin = profilingEnabled ? System.nanoTime() : 0;
+          try {
+            if (!result.isElement()) {
+              throw new OCommandExecutionException(
+                  "record " + result + " is not an instance of " + clazz);
+            }
+            OElement doc = result.getElement().get();
+            if (doc == null) {
+              throw new OCommandExecutionException(
+                  "record " + result + " is not an instance of " + clazz);
+            }
+            Optional<OClass> schema = doc.getSchemaType();
 
-      @Override
-      public OResult next() {
-        OResult result = upstream.next();
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          if (!result.isElement()) {
-            throw new OCommandExecutionException(
-                "record " + result + " is not an instance of " + clazz);
+            if (!schema.isPresent() || !schema.get().isSubClassOf(clazz)) {
+              throw new OCommandExecutionException(
+                  "record " + result + " is not an instance of " + clazz);
+            }
+            return result;
+          } finally {
+            if (profilingEnabled) {
+              cost += (System.nanoTime() - begin);
+            }
           }
-          OElement doc = result.getElement().get();
-          if (doc == null) {
-            throw new OCommandExecutionException(
-                "record " + result + " is not an instance of " + clazz);
-          }
-          Optional<OClass> schema = doc.getSchemaType();
-
-          if (!schema.isPresent() || !schema.get().isSubClassOf(clazz)) {
-            throw new OCommandExecutionException(
-                "record " + result + " is not an instance of " + clazz);
-          }
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {
-        upstream.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+        });
   }
 
   @Override
