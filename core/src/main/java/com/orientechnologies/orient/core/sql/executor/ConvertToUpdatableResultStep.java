@@ -4,8 +4,8 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.Map;
-import java.util.Optional;
+import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 
 /**
  * takes a normal result set and transforms it in another result set made of OUpdatableRecord
@@ -32,102 +32,35 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
     }
     OExecutionStepInternal prevStep = prev.get();
 
-    return new OResultSet() {
-      public boolean finished = false;
-
-      private OResult nextItem = null;
-      private int fetched = 0;
-
-      private void fetchNextItem() {
-        nextItem = null;
-        if (finished) {
-          return;
-        }
-        if (prevResult == null) {
-          prevResult = prevStep.syncPull(ctx, nRecords);
-          if (!prevResult.hasNext()) {
-            finished = true;
-            return;
-          }
-        }
-        while (!finished) {
-          while (!prevResult.hasNext()) {
-            prevResult = prevStep.syncPull(ctx, nRecords);
-            if (!prevResult.hasNext()) {
-              finished = true;
-              return;
-            }
-          }
-          nextItem = prevResult.next();
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
-            if (nextItem instanceof OUpdatableResult) {
-              break;
-            }
-            if (nextItem.isElement()) {
-              ORecord element = nextItem.getElement().get().getRecord();
-              if (element != null && element instanceof ODocument) {
-                nextItem = new OUpdatableResult((ODocument) element);
+    return new OLimitedResultSet(
+        new OFilterResultSet(
+            () -> {
+              if (prevResult == null) {
+                prevResult = prevStep.syncPull(ctx, nRecords);
+              } else if (!prevResult.hasNext()) {
+                prevResult = prevStep.syncPull(ctx, nRecords);
               }
-              break;
-            }
-
-            nextItem = null;
-          } finally {
-            cost = (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public boolean hasNext() {
-        if (fetched >= nRecords || finished) {
-          return false;
-        }
-        if (nextItem == null) {
-          fetchNextItem();
-        }
-
-        if (nextItem != null) {
-          return true;
-        }
-
-        return false;
-      }
-
-      @Override
-      public OResult next() {
-        if (fetched >= nRecords || finished) {
-          throw new IllegalStateException();
-        }
-        if (nextItem == null) {
-          fetchNextItem();
-        }
-        if (nextItem == null) {
-          throw new IllegalStateException();
-        }
-        OResult result = nextItem;
-        nextItem = null;
-        fetched++;
-        ctx.setVariable("$current", result);
-        return result;
-      }
-
-      @Override
-      public void close() {
-        ConvertToUpdatableResultStep.this.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+              return prevResult;
+            },
+            (result) -> {
+              long begin = profilingEnabled ? System.nanoTime() : 0;
+              try {
+                if (result instanceof OUpdatableResult) {
+                  return result;
+                }
+                if (result.isElement()) {
+                  ORecord element = result.getElement().get().getRecord();
+                  if (element != null && element instanceof ODocument) {
+                    return new OUpdatableResult((ODocument) element);
+                  }
+                  return result;
+                }
+                return null;
+              } finally {
+                cost = (System.nanoTime() - begin);
+              }
+            }),
+        nRecords);
   }
 
   @Override

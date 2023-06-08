@@ -4,10 +4,9 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 12/07/16. */
 public class FilterStep extends AbstractExecutionStep {
@@ -33,39 +32,22 @@ public class FilterStep extends AbstractExecutionStep {
     OExecutionStepInternal prevStep = prev.get();
 
     return new OLimitedResultSet(
-        new OResultSet() {
-          public boolean finished = false;
-          private OResult nextItem = null;
-
-          private void fetchNextItem() {
-            long timeoutBegin = System.currentTimeMillis();
-            nextItem = null;
-            if (finished) {
-              return;
-            }
-            if (prevResult == null) {
-              prevResult = prevStep.syncPull(ctx, nRecords);
-              if (!prevResult.hasNext()) {
-                finished = true;
-                return;
-              }
-            }
-            while (!finished) {
-              while (!prevResult.hasNext()) {
+        new OFilterResultSet(
+            () -> {
+              if (prevResult == null) {
                 prevResult = prevStep.syncPull(ctx, nRecords);
-                if (!prevResult.hasNext()) {
-                  finished = true;
-                  return;
-                }
+              } else if (!prevResult.hasNext()) {
+                prevResult = prevStep.syncPull(ctx, nRecords);
               }
-              nextItem = prevResult.next();
+              return prevResult;
+            },
+            (result) -> {
+              long timeoutBegin = System.currentTimeMillis();
               long begin = profilingEnabled ? System.nanoTime() : 0;
               try {
-                if (whereClause.matchesFilters(nextItem, ctx)) {
-                  break;
+                if (whereClause.matchesFilters(result, ctx)) {
+                  return result;
                 }
-
-                nextItem = null;
               } finally {
                 if (profilingEnabled) {
                   cost += (System.nanoTime() - begin);
@@ -74,57 +56,8 @@ public class FilterStep extends AbstractExecutionStep {
               if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
                 sendTimeout();
               }
-            }
-          }
-
-          @Override
-          public boolean hasNext() {
-
-            if (finished) {
-              return false;
-            }
-            if (nextItem == null) {
-              fetchNextItem();
-            }
-
-            if (nextItem != null) {
-              return true;
-            }
-
-            return false;
-          }
-
-          @Override
-          public OResult next() {
-            if (finished) {
-              throw new IllegalStateException();
-            }
-            if (nextItem == null) {
-              fetchNextItem();
-            }
-            if (nextItem == null) {
-              throw new IllegalStateException();
-            }
-            OResult result = nextItem;
-            nextItem = null;
-            return result;
-          }
-
-          @Override
-          public void close() {
-            FilterStep.this.close();
-          }
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
+              return null;
+            }),
         nRecords);
   }
 

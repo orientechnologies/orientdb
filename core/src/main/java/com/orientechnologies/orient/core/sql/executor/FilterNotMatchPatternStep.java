@@ -2,10 +2,9 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
@@ -29,95 +28,28 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
     OExecutionStepInternal prevStep = prev.get();
 
     return new OLimitedResultSet(
-        new OResultSet() {
-          public boolean finished = false;
-
-          private OResult nextItem = null;
-
-          private void fetchNextItem() {
-            nextItem = null;
-            if (finished) {
-              return;
-            }
-            if (prevResult == null) {
-              prevResult = prevStep.syncPull(ctx, nRecords);
-              if (!prevResult.hasNext()) {
-                finished = true;
-                return;
-              }
-            }
-            while (!finished) {
-              while (!prevResult.hasNext()) {
+        new OFilterResultSet(
+            () -> {
+              if (prevResult == null) {
                 prevResult = prevStep.syncPull(ctx, nRecords);
-                if (!prevResult.hasNext()) {
-                  finished = true;
-                  return;
-                }
+              } else if (!prevResult.hasNext()) {
+                prevResult = prevStep.syncPull(ctx, nRecords);
               }
-              nextItem = prevResult.next();
+              return prevResult;
+            },
+            (result) -> {
               long begin = profilingEnabled ? System.nanoTime() : 0;
               try {
-                if (!matchesPattern(nextItem, ctx)) {
-                  break;
+                if (!matchesPattern(result, ctx)) {
+                  return result;
                 }
-
-                nextItem = null;
               } finally {
                 if (profilingEnabled) {
                   cost += (System.nanoTime() - begin);
                 }
               }
-            }
-          }
-
-          @Override
-          public boolean hasNext() {
-
-            if (finished) {
-              return false;
-            }
-            if (nextItem == null) {
-              fetchNextItem();
-            }
-
-            if (nextItem != null) {
-              return true;
-            }
-
-            return false;
-          }
-
-          @Override
-          public OResult next() {
-            if (finished) {
-              throw new IllegalStateException();
-            }
-            if (nextItem == null) {
-              fetchNextItem();
-            }
-            if (nextItem == null) {
-              throw new IllegalStateException();
-            }
-            OResult result = nextItem;
-            nextItem = null;
-            return result;
-          }
-
-          @Override
-          public void close() {
-            FilterNotMatchPatternStep.this.close();
-          }
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
+              return null;
+            }),
         nRecords);
   }
 
