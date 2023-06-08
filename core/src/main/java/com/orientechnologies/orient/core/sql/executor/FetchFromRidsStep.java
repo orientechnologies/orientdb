@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -35,64 +34,62 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OLimitedResultSet(
-        new OResultSet() {
+    return new OResultSet() {
 
-          private void fetchNext() {
-            if (nextResult != null) {
-              return;
-            }
-            while (iterator.hasNext()) {
-              ORecordId nextRid = iterator.next();
-              if (nextRid == null) {
-                continue;
-              }
-              OIdentifiable nextDoc = (OIdentifiable) ctx.getDatabase().load(nextRid);
-              if (nextDoc == null) {
-                continue;
-              }
-              nextResult = new OResultInternal(nextDoc);
-              return;
-            }
-            return;
+      private void fetchNext() {
+        if (nextResult != null) {
+          return;
+        }
+        while (iterator.hasNext()) {
+          ORecordId nextRid = iterator.next();
+          if (nextRid == null) {
+            continue;
           }
-
-          @Override
-          public boolean hasNext() {
-            if (nextResult == null) {
-              fetchNext();
-            }
-            return nextResult != null;
+          OIdentifiable nextDoc = (OIdentifiable) ctx.getDatabase().load(nextRid);
+          if (nextDoc == null) {
+            continue;
           }
+          nextResult = new OResultInternal(nextDoc);
+          return;
+        }
+        return;
+      }
 
-          @Override
-          public OResult next() {
-            if (!hasNext()) {
-              throw new IllegalStateException();
-            }
+      @Override
+      public boolean hasNext() {
+        if (nextResult == null) {
+          fetchNext();
+        }
+        return nextResult != null;
+      }
 
-            OResult result = nextResult;
-            nextResult = null;
-            ctx.setVariable("$current", result.toElement());
-            return result;
-          }
+      @Override
+      public OResult next() {
+        if (!hasNext()) {
+          throw new IllegalStateException();
+        }
 
-          @Override
-          public void close() {}
+        OResult result = nextResult;
+        nextResult = null;
+        ctx.setVariable("$current", result.toElement());
+        return result;
+      }
 
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
+      @Override
+      public void close() {}
 
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
+      }
+
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return null;
+      }
+    };
   }
 
   @Override

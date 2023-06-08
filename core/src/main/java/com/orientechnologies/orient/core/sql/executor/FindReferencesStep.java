@@ -49,9 +49,9 @@ public class FindReferencesStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     if (!inited) {
-      init(ctx, nRecords);
+      init(ctx);
     }
     return new OResultSet() {
       @Override
@@ -84,7 +84,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
     };
   }
 
-  private void init(OCommandContext ctx, int nRecords) {
+  private void init(OCommandContext ctx) {
     fetchRidsToFind(ctx);
     initClusterIterators(ctx);
     fetchNext(ctx);

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.List;
 
 public class FilterNotMatchPatternStep extends AbstractExecutionStep {
@@ -21,12 +20,11 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx), (result) -> filterMap(ctx, result)), nRecords);
+    return new OFilterResultSet(() -> fetchNext(ctx), (result) -> filterMap(ctx, result));
   }
 
   private OResult filterMap(OCommandContext ctx, OResult result) {
@@ -67,7 +65,7 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
           private boolean executed = false;
 
           @Override
-          public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+          public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
             OInternalResultSet result = new OInternalResultSet();
             if (!executed) {
               result.add(copy(nextItem));

@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,9 +35,8 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx), (result) -> filterMap(ctx, result)), nRecords);
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+    return new OFilterResultSet(() -> fetchNext(ctx), (result) -> filterMap(ctx, result));
   }
 
   private OResultSet fetchNext(OCommandContext ctx) {

@@ -49,7 +49,7 @@ public class CheckSafeDeleteStepTest extends TestUtilsFixture {
           boolean done = false;
 
           @Override
-          public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+          public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
             OInternalResultSet result = new OInternalResultSet();
             String simpleClassName = createClassInstance().getName();
             if (!done) {
@@ -79,7 +79,7 @@ public class CheckSafeDeleteStepTest extends TestUtilsFixture {
           boolean done = false;
 
           @Override
-          public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+          public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
             OInternalResultSet result = new OInternalResultSet();
             if (!done) {
               for (int i = 0; i < 10; i++) {

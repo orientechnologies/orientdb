@@ -5,7 +5,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -27,52 +26,50 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
   public void reset() {}
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     init();
-    return new OLimitedResultSet(
-        new OResultSet() {
-          private void fetchNext() {
-            if (nextResult != null) {
-              return;
-            }
-            if (source.hasNext()) {
-              nextResult = source.next();
-            }
-          }
+    return new OResultSet() {
+      private void fetchNext() {
+        if (nextResult != null) {
+          return;
+        }
+        if (source.hasNext()) {
+          nextResult = source.next();
+        }
+      }
 
-          @Override
-          public boolean hasNext() {
-            if (nextResult == null) {
-              fetchNext();
-            }
-            return nextResult != null;
-          }
+      @Override
+      public boolean hasNext() {
+        if (nextResult == null) {
+          fetchNext();
+        }
+        return nextResult != null;
+      }
 
-          @Override
-          public OResult next() {
-            if (!hasNext()) {
-              throw new IllegalStateException();
-            }
-            OResult result = nextResult;
-            nextResult = null;
-            return result;
-          }
+      @Override
+      public OResult next() {
+        if (!hasNext()) {
+          throw new IllegalStateException();
+        }
+        OResult result = nextResult;
+        nextResult = null;
+        return result;
+      }
 
-          @Override
-          public void close() {}
+      @Override
+      public void close() {}
 
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
+      }
 
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return null;
+      }
+    };
   }
 
   private void init() {

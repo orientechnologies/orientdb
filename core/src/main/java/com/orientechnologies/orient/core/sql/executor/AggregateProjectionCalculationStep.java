@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OGroupBy;
 import com.orientechnologies.orient.core.sql.parser.OProjection;
@@ -42,46 +41,44 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     if (finalResults == null) {
       executeAggregation(ctx);
     }
 
-    return new OLimitedResultSet(
-        new OResultSet() {
+    return new OResultSet() {
 
-          @Override
-          public boolean hasNext() {
-            if (nextItem >= finalResults.size()) {
-              return false;
-            }
-            return true;
-          }
+      @Override
+      public boolean hasNext() {
+        if (nextItem >= finalResults.size()) {
+          return false;
+        }
+        return true;
+      }
 
-          @Override
-          public OResult next() {
-            if (nextItem >= finalResults.size()) {
-              throw new IllegalStateException();
-            }
-            OResult result = finalResults.get(nextItem);
-            nextItem++;
-            return result;
-          }
+      @Override
+      public OResult next() {
+        if (nextItem >= finalResults.size()) {
+          throw new IllegalStateException();
+        }
+        OResult result = finalResults.get(nextItem);
+        nextItem++;
+        return result;
+      }
 
-          @Override
-          public void close() {}
+      @Override
+      public void close() {}
 
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
+      }
 
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return null;
+      }
+    };
   }
 
   private void executeAggregation(OCommandContext ctx) {

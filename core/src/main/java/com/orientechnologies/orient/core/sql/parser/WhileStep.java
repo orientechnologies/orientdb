@@ -31,7 +31,7 @@ public class WhileStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     prev.ifPresent(x -> x.syncPull(ctx));
     if (finalResult != null) {
       return finalResult.syncPull(ctx);

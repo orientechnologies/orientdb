@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -41,57 +40,55 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     init();
 
-    return new OLimitedResultSet(
-        new OResultSet() {
+    return new OResultSet() {
 
-          @Override
-          public boolean hasNext() {
-            if (txEntries == null) {
-              return false;
-            }
-            return txEntries.hasNext();
+      @Override
+      public boolean hasNext() {
+        if (txEntries == null) {
+          return false;
+        }
+        return txEntries.hasNext();
+      }
+
+      @Override
+      public OResult next() {
+        long begin = profilingEnabled ? System.nanoTime() : 0;
+        try {
+          if (txEntries == null) {
+            throw new IllegalStateException();
           }
-
-          @Override
-          public OResult next() {
-            long begin = profilingEnabled ? System.nanoTime() : 0;
-            try {
-              if (txEntries == null) {
-                throw new IllegalStateException();
-              }
-              if (!txEntries.hasNext()) {
-                throw new IllegalStateException();
-              }
-              ORecord record = txEntries.next();
-
-              OResultInternal result = new OResultInternal(record);
-              ctx.setVariable("$current", result);
-              return result;
-            } finally {
-              if (profilingEnabled) {
-                cost += (System.nanoTime() - begin);
-              }
-            }
+          if (!txEntries.hasNext()) {
+            throw new IllegalStateException();
           }
+          ORecord record = txEntries.next();
 
-          @Override
-          public void close() {}
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
+          OResultInternal result = new OResultInternal(record);
+          ctx.setVariable("$current", result);
+          return result;
+        } finally {
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
           }
+        }
+      }
 
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+      @Override
+      public void close() {}
+
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
+      }
+
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return null;
+      }
+    };
   }
 
   private void init() {

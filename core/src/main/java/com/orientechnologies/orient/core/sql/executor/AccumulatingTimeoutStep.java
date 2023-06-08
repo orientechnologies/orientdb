@@ -21,7 +21,7 @@ public class AccumulatingTimeoutStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
 
     final OResultSet internal = getPrev().get().syncPull(ctx);
     return new OResultSet() {

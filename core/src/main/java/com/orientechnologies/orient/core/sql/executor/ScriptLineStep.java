@@ -23,7 +23,7 @@ public class ScriptLineStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     if (!executed) {
       if (plan instanceof OInsertExecutionPlan) {
         ((OInsertExecutionPlan) plan).executeInternal();

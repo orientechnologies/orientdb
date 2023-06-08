@@ -24,7 +24,7 @@ public class UpsertStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     if (applied) {
       return getPrev().get().syncPull(ctx);
     }

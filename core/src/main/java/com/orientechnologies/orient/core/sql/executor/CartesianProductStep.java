@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,42 +30,40 @@ public class CartesianProductStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     init(ctx);
     //    return new OInternalResultSet();
-    return new OLimitedResultSet(
-        new OResultSet() {
+    return new OResultSet() {
 
-          @Override
-          public boolean hasNext() {
-            return nextRecord != null;
-          }
+      @Override
+      public boolean hasNext() {
+        return nextRecord != null;
+      }
 
-          @Override
-          public OResult next() {
-            if (nextRecord == null) {
-              throw new IllegalStateException();
-            }
-            OResultInternal result = nextRecord;
-            fetchNextRecord();
-            return result;
-          }
+      @Override
+      public OResult next() {
+        if (nextRecord == null) {
+          throw new IllegalStateException();
+        }
+        OResultInternal result = nextRecord;
+        fetchNextRecord();
+        return result;
+      }
 
-          @Override
-          public void close() {}
+      @Override
+      public void close() {}
 
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
+      }
 
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return null;
+      }
+    };
     //    throw new UnsupportedOperationException("cartesian product is not yet implemented in MATCH
     // statement");
     // TODO

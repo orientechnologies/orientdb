@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import java.util.Collections;
 import java.util.Iterator;
@@ -42,47 +41,45 @@ public class MatchFirstStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     init(ctx);
-    return new OLimitedResultSet(
-        new OResultSet() {
+    return new OResultSet() {
 
-          @Override
-          public boolean hasNext() {
-            if (iterator != null) {
-              return iterator.hasNext();
-            } else {
-              return subResultSet.hasNext();
-            }
-          }
+      @Override
+      public boolean hasNext() {
+        if (iterator != null) {
+          return iterator.hasNext();
+        } else {
+          return subResultSet.hasNext();
+        }
+      }
 
-          @Override
-          public OResult next() {
-            OResultInternal result = new OResultInternal();
-            if (iterator != null) {
-              result.setProperty(getAlias(), iterator.next());
-            } else {
-              result.setProperty(getAlias(), subResultSet.next());
-            }
-            ctx.setVariable("$matched", result);
-            return result;
-          }
+      @Override
+      public OResult next() {
+        OResultInternal result = new OResultInternal();
+        if (iterator != null) {
+          result.setProperty(getAlias(), iterator.next());
+        } else {
+          result.setProperty(getAlias(), subResultSet.next());
+        }
+        ctx.setVariable("$matched", result);
+        return result;
+      }
 
-          @Override
-          public void close() {}
+      @Override
+      public void close() {}
 
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
+      }
 
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return null;
+      }
+    };
   }
 
   private Object toResult(OIdentifiable nextElement) {

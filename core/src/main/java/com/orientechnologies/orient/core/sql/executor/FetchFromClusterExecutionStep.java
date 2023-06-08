@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
@@ -52,7 +51,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
@@ -70,76 +69,74 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
         }
       }
       OResultSet rs =
-          new OLimitedResultSet(
-              new OResultSet() {
+          new OResultSet() {
 
-                @Override
-                public boolean hasNext() {
-                  if (timedOut) {
-                    throw new OTimeoutException("Command execution timeout");
-                  }
-                  long begin = profilingEnabled ? System.nanoTime() : 0;
-                  try {
-                    if (ORDER_DESC.equals(order)) {
-                      return iterator.hasPrevious();
-                    } else {
-                      return iterator.hasNext();
-                    }
-                  } finally {
-                    if (profilingEnabled) {
-                      cost += (System.nanoTime() - begin);
-                    }
-                  }
+            @Override
+            public boolean hasNext() {
+              if (timedOut) {
+                throw new OTimeoutException("Command execution timeout");
+              }
+              long begin = profilingEnabled ? System.nanoTime() : 0;
+              try {
+                if (ORDER_DESC.equals(order)) {
+                  return iterator.hasPrevious();
+                } else {
+                  return iterator.hasNext();
+                }
+              } finally {
+                if (profilingEnabled) {
+                  cost += (System.nanoTime() - begin);
+                }
+              }
+            }
+
+            @Override
+            public OResult next() {
+              if (timedOut) {
+                throw new OTimeoutException("Command execution timeout");
+              }
+              if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
+                throw new OCommandInterruptedException("The command has been interrupted");
+              }
+
+              long begin = profilingEnabled ? System.nanoTime() : 0;
+              try {
+                if (ORDER_DESC.equals(order) && !iterator.hasPrevious()) {
+                  throw new IllegalStateException();
+                } else if (!ORDER_DESC.equals(order) && !iterator.hasNext()) {
+                  throw new IllegalStateException();
                 }
 
-                @Override
-                public OResult next() {
-                  if (timedOut) {
-                    throw new OTimeoutException("Command execution timeout");
-                  }
-                  if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
-                    throw new OCommandInterruptedException("The command has been interrupted");
-                  }
-
-                  long begin = profilingEnabled ? System.nanoTime() : 0;
-                  try {
-                    if (ORDER_DESC.equals(order) && !iterator.hasPrevious()) {
-                      throw new IllegalStateException();
-                    } else if (!ORDER_DESC.equals(order) && !iterator.hasNext()) {
-                      throw new IllegalStateException();
-                    }
-
-                    ORecord record = null;
-                    if (ORDER_DESC.equals(order)) {
-                      record = iterator.previous();
-                    } else {
-                      record = iterator.next();
-                    }
-                    OResultInternal result = new OResultInternal();
-                    result.element = record;
-                    ctx.setVariable("$current", result);
-                    return result;
-                  } finally {
-                    if (profilingEnabled) {
-                      cost += (System.nanoTime() - begin);
-                    }
-                  }
+                ORecord record = null;
+                if (ORDER_DESC.equals(order)) {
+                  record = iterator.previous();
+                } else {
+                  record = iterator.next();
                 }
-
-                @Override
-                public void close() {}
-
-                @Override
-                public Optional<OExecutionPlan> getExecutionPlan() {
-                  return Optional.empty();
+                OResultInternal result = new OResultInternal();
+                result.element = record;
+                ctx.setVariable("$current", result);
+                return result;
+              } finally {
+                if (profilingEnabled) {
+                  cost += (System.nanoTime() - begin);
                 }
+              }
+            }
 
-                @Override
-                public Map<String, Long> getQueryStats() {
-                  return null;
-                }
-              },
-              nRecords);
+            @Override
+            public void close() {}
+
+            @Override
+            public Optional<OExecutionPlan> getExecutionPlan() {
+              return Optional.empty();
+            }
+
+            @Override
+            public Map<String, Long> getQueryStats() {
+              return null;
+            }
+          };
       return rs;
     } finally {
       if (profilingEnabled) {

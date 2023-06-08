@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Collections;
 import java.util.HashSet;
@@ -53,46 +52,44 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     init();
-    return new OLimitedResultSet(
-        new OResultSet() {
+    return new OResultSet() {
 
-          @Override
-          public boolean hasNext() {
-            return nextEdge != null;
-          }
+      @Override
+      public boolean hasNext() {
+        return nextEdge != null;
+      }
 
-          @Override
-          public OResult next() {
-            if (!hasNext()) {
-              throw new IllegalStateException();
-            }
-            OEdge edge = nextEdge;
-            fetchNextEdge();
-            OResultInternal result = new OResultInternal(edge);
-            return result;
-          }
+      @Override
+      public OResult next() {
+        if (!hasNext()) {
+          throw new IllegalStateException();
+        }
+        OEdge edge = nextEdge;
+        fetchNextEdge();
+        OResultInternal result = new OResultInternal(edge);
+        return result;
+      }
 
-          @Override
-          public void close() {
-            if (fromIter instanceof OResultSet) {
-              ((OResultSet) fromIter).close();
-            }
-          }
+      @Override
+      public void close() {
+        if (fromIter instanceof OResultSet) {
+          ((OResultSet) fromIter).close();
+        }
+      }
 
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
+      }
 
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return null;
+      }
+    };
   }
 
   private OVertex asVertex(Object currentFrom) {

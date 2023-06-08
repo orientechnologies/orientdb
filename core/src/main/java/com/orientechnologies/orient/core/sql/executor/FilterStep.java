@@ -5,7 +5,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
 /** Created by luigidellaquila on 12/07/16. */
@@ -25,13 +24,12 @@ public class FilterStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
 
-    return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx), (result) -> filterMap(ctx, result)), nRecords);
+    return new OFilterResultSet(() -> fetchNext(ctx), (result) -> filterMap(ctx, result));
   }
 
   private OResult filterMap(OCommandContext ctx, OResult result) {

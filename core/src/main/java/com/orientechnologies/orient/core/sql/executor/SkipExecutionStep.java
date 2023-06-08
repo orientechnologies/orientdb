@@ -18,7 +18,7 @@ public class SkipExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     if (finished == true) {
       return new OInternalResultSet(); // empty
     }

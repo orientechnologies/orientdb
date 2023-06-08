@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
 import java.util.Iterator;
@@ -34,55 +33,53 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     init(ctx);
 
-    return new OLimitedResultSet(
-        new OResultSet() {
+    return new OResultSet() {
 
-          @Override
-          public boolean hasNext() {
-            if (!fullResult.hasNext()) {
-              return false;
-            }
-            return true;
+      @Override
+      public boolean hasNext() {
+        if (!fullResult.hasNext()) {
+          return false;
+        }
+        return true;
+      }
+
+      @Override
+      public OResult next() {
+        if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
+          throw new OCommandInterruptedException("The command has been interrupted");
+        }
+        long begin = profilingEnabled ? System.nanoTime() : 0;
+        try {
+          if (!fullResult.hasNext()) {
+            throw new IllegalStateException();
           }
-
-          @Override
-          public OResult next() {
-            if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
-              throw new OCommandInterruptedException("The command has been interrupted");
-            }
-            long begin = profilingEnabled ? System.nanoTime() : 0;
-            try {
-              if (!fullResult.hasNext()) {
-                throw new IllegalStateException();
-              }
-              OResultInternal result = new OResultInternal(fullResult.next());
-              ctx.setVariable("$current", result);
-              return result;
-            } finally {
-              if (profilingEnabled) {
-                cost += (System.nanoTime() - begin);
-              }
-            }
+          OResultInternal result = new OResultInternal(fullResult.next());
+          ctx.setVariable("$current", result);
+          return result;
+        } finally {
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
           }
+        }
+      }
 
-          @Override
-          public void close() {}
+      @Override
+      public void close() {}
 
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
+      }
 
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return null;
+      }
+    };
   }
 
   private void init(OCommandContext ctx) {

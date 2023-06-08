@@ -29,11 +29,7 @@ import java.util.List;
  */
 public interface OExecutionStepInternal extends OExecutionStep {
 
-  default OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    return syncPull(ctx, 10000000);
-  }
-
-  OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException;
+  OResultSet syncPull(OCommandContext ctx) throws OTimeoutException;
 
   void sendTimeout();
 

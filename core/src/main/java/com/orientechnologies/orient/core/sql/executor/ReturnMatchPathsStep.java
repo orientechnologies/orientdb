@@ -11,7 +11,7 @@ public class ReturnMatchPathsStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     return getPrev().get().syncPull(ctx);
   }
 

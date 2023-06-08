@@ -49,7 +49,7 @@ public class LetQueryStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     if (!getPrev().isPresent()) {
       throw new OCommandExecutionException(
           "Cannot execute a local LET on a query without a target");

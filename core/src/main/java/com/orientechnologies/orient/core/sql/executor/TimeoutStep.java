@@ -16,7 +16,7 @@ public class TimeoutStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     if (this.expiryTime == null) {
       this.expiryTime = System.currentTimeMillis() + timeout.getVal().longValue();
     }

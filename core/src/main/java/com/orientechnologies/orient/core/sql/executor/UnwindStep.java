@@ -5,7 +5,6 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OUnwind;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,53 +36,51 @@ public class UnwindStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
-    return new OLimitedResultSet(
-        new OResultSet() {
+    return new OResultSet() {
 
-          @Override
-          public boolean hasNext() {
-            if (nextElement == null) {
-              fetchNext(ctx);
-            }
-            if (nextElement == null) {
-              return false;
-            }
-            return true;
-          }
+      @Override
+      public boolean hasNext() {
+        if (nextElement == null) {
+          fetchNext(ctx);
+        }
+        if (nextElement == null) {
+          return false;
+        }
+        return true;
+      }
 
-          @Override
-          public OResult next() {
-            if (nextElement == null) {
-              fetchNext(ctx);
-            }
-            if (nextElement == null) {
-              throw new IllegalStateException();
-            }
+      @Override
+      public OResult next() {
+        if (nextElement == null) {
+          fetchNext(ctx);
+        }
+        if (nextElement == null) {
+          throw new IllegalStateException();
+        }
 
-            OResult result = nextElement;
-            nextElement = null;
-            fetchNext(ctx);
-            return result;
-          }
+        OResult result = nextElement;
+        nextElement = null;
+        fetchNext(ctx);
+        return result;
+      }
 
-          @Override
-          public void close() {}
+      @Override
+      public void close() {}
 
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
+      }
 
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return null;
+      }
+    };
   }
 
   private void fetchNext(OCommandContext ctx) {

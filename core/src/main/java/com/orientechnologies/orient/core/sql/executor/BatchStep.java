@@ -18,7 +18,7 @@ public class BatchStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     OResultSet prevResult = getPrev().get().syncPull(ctx);
     return new OResultSetMapper(prevResult, (result) -> mapResult(ctx, result));
   }

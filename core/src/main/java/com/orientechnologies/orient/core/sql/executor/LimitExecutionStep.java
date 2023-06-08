@@ -17,7 +17,7 @@ public class LimitExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     int limitVal = limit.getValue(ctx);
     if (limitVal == -1) {
       return getPrev().get().syncPull(ctx);
@@ -25,10 +25,9 @@ public class LimitExecutionStep extends AbstractExecutionStep {
     if (limitVal <= loaded) {
       return new OInternalResultSet();
     }
-    int nextBlockSize = Math.min(nRecords, limitVal - loaded);
     OResultSet result = prev.get().syncPull(ctx);
-    loaded += nextBlockSize;
-    return new OLimitedResultSet(result, nextBlockSize);
+    loaded = limitVal;
+    return new OLimitedResultSet(result, limitVal);
   }
 
   @Override

@@ -4,7 +4,6 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,56 +43,54 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     if (cachedResult == null) {
       cachedResult = new ArrayList<>();
       prev.ifPresent(p -> init(p, ctx));
     }
 
-    return new OLimitedResultSet(
-        new OResultSet() {
+    return new OResultSet() {
 
-          @Override
-          public boolean hasNext() {
-            if (cachedResult.size() <= nextElement) {
-              return false;
-            }
-            return true;
-          }
+      @Override
+      public boolean hasNext() {
+        if (cachedResult.size() <= nextElement) {
+          return false;
+        }
+        return true;
+      }
 
-          @Override
-          public OResult next() {
-            long begin = profilingEnabled ? System.nanoTime() : 0;
-            try {
-              if (cachedResult.size() <= nextElement) {
-                throw new IllegalStateException();
-              }
-              OResult result = cachedResult.get(nextElement);
-              nextElement++;
-              return result;
-            } finally {
-              if (profilingEnabled) {
-                cost += (System.nanoTime() - begin);
-              }
-            }
+      @Override
+      public OResult next() {
+        long begin = profilingEnabled ? System.nanoTime() : 0;
+        try {
+          if (cachedResult.size() <= nextElement) {
+            throw new IllegalStateException();
           }
+          OResult result = cachedResult.get(nextElement);
+          nextElement++;
+          return result;
+        } finally {
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
+        }
+      }
 
-          @Override
-          public void close() {
-            prev.ifPresent(p -> p.close());
-          }
+      @Override
+      public void close() {
+        prev.ifPresent(p -> p.close());
+      }
 
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
+      }
 
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return new HashMap<>();
-          }
-        },
-        nRecords);
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return new HashMap<>();
+      }
+    };
   }
 
   private void init(OExecutionStepInternal p, OCommandContext ctx) {

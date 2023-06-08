@@ -26,7 +26,7 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     OResultSet lastFetched = getPrev().get().syncPull(ctx);
     return new OResultSetMapper(lastFetched, this::mapResult);
   }
