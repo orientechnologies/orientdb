@@ -23,7 +23,7 @@ public class TimeoutStep extends AbstractExecutionStep {
     if (System.currentTimeMillis() > expiryTime) {
       return fail();
     }
-    return getPrev().get().syncPull(ctx, nRecords); // TODO do it more granular
+    return getPrev().get().syncPull(ctx); // TODO do it more granular
   }
 
   private OResultSet fail() {

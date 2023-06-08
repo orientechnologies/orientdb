@@ -69,7 +69,7 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+    getPrev().ifPresent(x -> x.syncPull(ctx));
     return new OLimitedResultSet(
         new OResultSet() {
 
@@ -81,10 +81,10 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
                   return false;
                 }
                 currentResultSet =
-                    ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx, nRecords);
+                    ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx);
                 if (!currentResultSet.hasNext()) {
                   currentResultSet =
-                      ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx, nRecords);
+                      ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx);
                 }
               }
               if (!currentResultSet.hasNext()) {
@@ -102,10 +102,10 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
                   throw new IllegalStateException();
                 }
                 currentResultSet =
-                    ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx, nRecords);
+                    ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx);
                 if (!currentResultSet.hasNext()) {
                   currentResultSet =
-                      ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx, nRecords);
+                      ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx);
                 }
               }
               if (!currentResultSet.hasNext()) {

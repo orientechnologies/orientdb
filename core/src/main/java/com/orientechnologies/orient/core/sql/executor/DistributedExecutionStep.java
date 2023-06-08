@@ -29,7 +29,7 @@ public class DistributedExecutionStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     init(ctx);
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+    getPrev().ifPresent(x -> x.syncPull(ctx));
     return new OResultSet() {
       @Override
       public boolean hasNext() {

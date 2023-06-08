@@ -26,10 +26,10 @@ public class UpsertStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (applied) {
-      return getPrev().get().syncPull(ctx, nRecords);
+      return getPrev().get().syncPull(ctx);
     }
     applied = true;
-    OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
+    OResultSet upstream = getPrev().get().syncPull(ctx);
     if (upstream.hasNext()) {
       return upstream;
     }

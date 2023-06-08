@@ -38,7 +38,7 @@ public class CountStepTest {
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context, 100);
+    OResultSet result = step.syncPull(context);
     Assert.assertEquals(100, (long) result.next().getProperty(COUNT_PROPERTY_NAME));
     Assert.assertFalse(result.hasNext());
   }

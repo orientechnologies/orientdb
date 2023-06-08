@@ -12,8 +12,7 @@ public class ReturnMatchPathsStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return upstream;
+    return getPrev().get().syncPull(ctx);
   }
 
   @Override

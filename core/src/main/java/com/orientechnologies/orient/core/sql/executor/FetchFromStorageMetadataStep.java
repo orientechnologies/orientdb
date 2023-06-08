@@ -31,7 +31,7 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (resultSet == null) {
-      getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+      getPrev().ifPresent(x -> x.syncPull(ctx));
       resultSet = new OProduceOneResult(() -> produce(ctx), true);
     }
     return resultSet;

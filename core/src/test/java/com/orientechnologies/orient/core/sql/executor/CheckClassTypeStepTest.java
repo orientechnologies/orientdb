@@ -18,7 +18,7 @@ public class CheckClassTypeStepTest extends TestUtilsFixture {
     CheckClassTypeStep step =
         new CheckClassTypeStep(childClass.getName(), parentClass.getName(), context, false);
 
-    OResultSet result = step.syncPull(context, 20);
+    OResultSet result = step.syncPull(context);
     Assert.assertEquals(0, result.stream().count());
   }
 
@@ -29,7 +29,7 @@ public class CheckClassTypeStepTest extends TestUtilsFixture {
     String className = createClassInstance().getName();
     CheckClassTypeStep step = new CheckClassTypeStep(className, className, context, false);
 
-    OResultSet result = step.syncPull(context, 20);
+    OResultSet result = step.syncPull(context);
     Assert.assertEquals(0, result.stream().count());
   }
 
@@ -41,6 +41,6 @@ public class CheckClassTypeStepTest extends TestUtilsFixture {
         new CheckClassTypeStep(
             createClassInstance().getName(), createClassInstance().getName(), context, false);
 
-    step.syncPull(context, 20);
+    step.syncPull(context);
   }
 }

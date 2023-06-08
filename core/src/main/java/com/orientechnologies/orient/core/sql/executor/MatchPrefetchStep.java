@@ -34,7 +34,7 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!executed) {
-      getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+      getPrev().ifPresent(x -> x.syncPull(ctx));
 
       OResultSet nextBlock = prefetchExecutionPlan.fetchNext(nRecords);
       List<OResult> prefetched = new ArrayList<>();

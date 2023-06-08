@@ -102,7 +102,7 @@ public class OrderByStep extends AbstractExecutionStep {
         OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong();
     boolean sorted = true;
     do {
-      OResultSet lastBatch = p.syncPull(ctx, 100);
+      OResultSet lastBatch = p.syncPull(ctx);
       if (!lastBatch.hasNext()) {
         break;
       }

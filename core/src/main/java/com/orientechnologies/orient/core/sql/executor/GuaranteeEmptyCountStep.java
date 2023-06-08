@@ -22,7 +22,7 @@ public class GuaranteeEmptyCountStep extends AbstractExecutionStep {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OResultSet upstream = prev.get().syncPull(ctx, nRecords);
+    OResultSet upstream = prev.get().syncPull(ctx);
     return new OResultSet() {
       @Override
       public boolean hasNext() {

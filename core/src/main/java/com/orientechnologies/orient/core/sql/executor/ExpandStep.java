@@ -104,7 +104,7 @@ public class ExpandStep extends AbstractExecutionStep {
 
       if (nextSubsequence == null || !nextSubsequence.hasNext()) {
         if (lastResult == null || !lastResult.hasNext()) {
-          lastResult = getPrev().get().syncPull(ctx, n);
+          lastResult = getPrev().get().syncPull(ctx);
         }
         if (!lastResult.hasNext()) {
           return;

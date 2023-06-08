@@ -23,22 +23,25 @@ public class SkipExecutionStep extends AbstractExecutionStep {
       return new OInternalResultSet(); // empty
     }
     int skipValue = skip.getValue(ctx);
+    OResultSet rs = prev.get().syncPull(ctx);
     while (skipped < skipValue) {
-      // fetch and discard
-      OResultSet rs =
-          prev.get()
-              .syncPull(ctx, Math.min(100, skipValue - skipped)); // fetch blocks of 100, at most
+      if (!rs.hasNext()) {
+        rs = prev.get().syncPull(ctx);
+      }
       if (!rs.hasNext()) {
         finished = true;
         return new OInternalResultSet(); // empty
       }
-      while (rs.hasNext()) {
+      while (rs.hasNext() && skipped < skipValue) {
         rs.next();
         skipped++;
       }
     }
+    if (!rs.hasNext()) {
+      rs = prev.get().syncPull(ctx);
+    }
 
-    return prev.get().syncPull(ctx, nRecords);
+    return rs;
   }
 
   @Override

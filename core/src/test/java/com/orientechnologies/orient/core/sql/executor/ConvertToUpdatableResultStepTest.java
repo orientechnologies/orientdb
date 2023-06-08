@@ -44,7 +44,7 @@ public class ConvertToUpdatableResultStepTest extends TestUtilsFixture {
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context, 10);
+    OResultSet result = step.syncPull(context);
 
     int counter = 0;
     while (result.hasNext()) {

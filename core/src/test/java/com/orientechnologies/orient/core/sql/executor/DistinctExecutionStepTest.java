@@ -34,7 +34,7 @@ public class DistinctExecutionStepTest {
         };
 
     step.setPrevious(prev);
-    OResultSet res = step.syncPull(ctx, 10);
+    OResultSet res = step.syncPull(ctx);
     Assert.assertTrue(res.hasNext());
     res.next();
     Assert.assertTrue(res.hasNext());

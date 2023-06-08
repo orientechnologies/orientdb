@@ -39,9 +39,9 @@ public class ForEachStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    prev.get().syncPull(ctx, nRecords);
+    prev.get().syncPull(ctx);
     if (finalResult != null) {
-      return finalResult.syncPull(ctx, nRecords);
+      return finalResult.syncPull(ctx);
     }
     init(ctx);
     while (iterator != null && iterator.hasNext()) {
@@ -53,11 +53,11 @@ public class ForEachStep extends AbstractExecutionStep {
       OExecutionStepInternal result = plan.executeFull();
       if (result != null) {
         this.finalResult = result;
-        return result.syncPull(ctx, nRecords);
+        return result.syncPull(ctx);
       }
     }
     finalResult = new EmptyStep(ctx, false);
-    return finalResult.syncPull(ctx, nRecords);
+    return finalResult.syncPull(ctx);
   }
 
   protected void init(OCommandContext ctx) {

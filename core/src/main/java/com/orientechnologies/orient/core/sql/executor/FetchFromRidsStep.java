@@ -36,7 +36,7 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+    getPrev().ifPresent(x -> x.syncPull(ctx));
     return new OLimitedResultSet(
         new OResultSet() {
 

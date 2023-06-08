@@ -17,7 +17,7 @@ public class CastToEdgeStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
+    OResultSet upstream = getPrev().get().syncPull(ctx);
     return new OResultSetMapper(upstream, this::mapResult);
   }
 

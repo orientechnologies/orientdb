@@ -32,9 +32,9 @@ public class WhileStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    prev.ifPresent(x -> x.syncPull(ctx, nRecords));
+    prev.ifPresent(x -> x.syncPull(ctx));
     if (finalResult != null) {
-      return finalResult.syncPull(ctx, nRecords);
+      return finalResult.syncPull(ctx);
     }
 
     while (condition.evaluate(new OResultInternal(), ctx)) {
@@ -45,11 +45,11 @@ public class WhileStep extends AbstractExecutionStep {
       OExecutionStepInternal result = plan.executeFull();
       if (result != null) {
         this.finalResult = result;
-        return result.syncPull(ctx, nRecords);
+        return result.syncPull(ctx);
       }
     }
     finalResult = new EmptyStep(ctx, false);
-    return finalResult.syncPull(ctx, nRecords);
+    return finalResult.syncPull(ctx);
   }
 
   public OScriptExecutionPlan initPlan(OCommandContext ctx) {

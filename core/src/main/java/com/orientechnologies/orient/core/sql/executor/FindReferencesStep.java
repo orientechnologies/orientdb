@@ -167,7 +167,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
     ridsToFind = new HashSet<>();
 
     OExecutionStepInternal prevStep = getPrev().get();
-    OResultSet nextSlot = prevStep.syncPull(ctx, nRecords);
+    OResultSet nextSlot = prevStep.syncPull(ctx);
     while (nextSlot.hasNext()) {
       while (nextSlot.hasNext()) {
         OResult nextRes = nextSlot.next();
@@ -175,7 +175,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
           ridsToFind.add(nextRes.getElement().get().getIdentity());
         }
       }
-      nextSlot = prevStep.syncPull(ctx, nRecords);
+      nextSlot = prevStep.syncPull(ctx);
     }
   }
 

@@ -45,12 +45,12 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
       executeUntilReturn();
       executed = true;
       finalResult = new OInternalResultSet();
-      OResultSet partial = lastStep.syncPull(ctx, n);
+      OResultSet partial = lastStep.syncPull(ctx);
       while (partial.hasNext()) {
         while (partial.hasNext()) {
           ((OInternalResultSet) finalResult).add(partial.next());
         }
-        partial = lastStep.syncPull(ctx, n);
+        partial = lastStep.syncPull(ctx);
       }
       if (lastStep instanceof ScriptLineStep) {
         ((OInternalResultSet) finalResult).setPlan(((ScriptLineStep) lastStep).plan);
@@ -147,13 +147,13 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
           return lastStep;
         }
       }
-      OResultSet lastResult = step.syncPull(ctx, 100);
+      OResultSet lastResult = step.syncPull(ctx);
 
       while (lastResult.hasNext()) {
         while (lastResult.hasNext()) {
           lastResult.next();
         }
-        lastResult = step.syncPull(ctx, 100);
+        lastResult = step.syncPull(ctx);
       }
     }
     this.lastStep = steps.get(steps.size() - 1);
@@ -175,13 +175,13 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
           return returnStep;
         }
       }
-      OResultSet lastResult = step.syncPull(ctx, 100);
+      OResultSet lastResult = step.syncPull(ctx);
 
       while (lastResult.hasNext()) {
         while (lastResult.hasNext()) {
           lastResult.next();
         }
-        lastResult = step.syncPull(ctx, 100);
+        lastResult = step.syncPull(ctx);
       }
     }
 

@@ -45,9 +45,9 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
     OExecutionStepInternal prevStep = prev.get();
     if (lastResult == null) {
-      lastResult = prevStep.syncPull(ctx, nRecords);
+      lastResult = prevStep.syncPull(ctx);
     } else if (!lastResult.hasNext()) {
-      lastResult = prevStep.syncPull(ctx, nRecords);
+      lastResult = prevStep.syncPull(ctx);
     }
     return lastResult;
   }

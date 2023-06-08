@@ -36,9 +36,9 @@ public class RetryStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+    getPrev().ifPresent(x -> x.syncPull(ctx));
     if (finalResult != null) {
-      return finalResult.syncPull(ctx, nRecords);
+      return finalResult.syncPull(ctx);
     }
     for (int i = 0; i < retries; i++) {
       try {
@@ -50,7 +50,7 @@ public class RetryStep extends AbstractExecutionStep {
         OExecutionStepInternal result = plan.executeFull();
         if (result != null) {
           this.finalResult = result;
-          return result.syncPull(ctx, nRecords);
+          return result.syncPull(ctx);
         }
         break;
       } catch (ONeedRetryException ex) {
@@ -65,7 +65,7 @@ public class RetryStep extends AbstractExecutionStep {
             OExecutionStepInternal result = plan.executeFull();
             if (result != null) {
               this.finalResult = result;
-              return result.syncPull(ctx, nRecords);
+              return result.syncPull(ctx);
             }
           }
           if (elseFail) {
@@ -78,7 +78,7 @@ public class RetryStep extends AbstractExecutionStep {
     }
 
     finalResult = new EmptyStep(ctx, false);
-    return finalResult.syncPull(ctx, nRecords);
+    return finalResult.syncPull(ctx);
   }
 
   public OScriptExecutionPlan initPlan(List<OStatement> body, OCommandContext ctx) {

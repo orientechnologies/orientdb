@@ -27,7 +27,7 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
 
   @Override
   protected void fetchNextEntryPoints(OCommandContext ctx, int nRecords) {
-    OResultSet nextN = getPrev().get().syncPull(ctx, nRecords);
+    OResultSet nextN = getPrev().get().syncPull(ctx);
     while (nextN.hasNext()) {
       while (nextN.hasNext()) {
         OResult item = toTraverseResult(nextN.next());
@@ -45,7 +45,7 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
           }
         }
       }
-      nextN = getPrev().get().syncPull(ctx, nRecords);
+      nextN = getPrev().get().syncPull(ctx);
     }
   }
 

@@ -66,7 +66,7 @@ public class CountFromIndexStepTest extends TestUtilsFixture {
     context.setDatabase(db);
     CountFromIndexStep step = new CountFromIndexStep(identifier, ALIAS, context, false);
 
-    OResultSet result = step.syncPull(context, 20);
+    OResultSet result = step.syncPull(context);
     Assert.assertEquals(20, (long) result.next().getProperty(ALIAS));
     Assert.assertFalse(result.hasNext());
   }

@@ -35,7 +35,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context, 20);
+    OResultSet result = step.syncPull(context);
     Assert.assertEquals(10, result.stream().count());
     Assert.assertFalse(result.hasNext());
   }
@@ -65,7 +65,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context, 20);
+    OResultSet result = step.syncPull(context);
     Assert.assertEquals(10, result.stream().count());
     Assert.assertFalse(result.hasNext());
   }
@@ -96,7 +96,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context, 20);
+    OResultSet result = step.syncPull(context);
     while (result.hasNext()) {
       result.next();
     }

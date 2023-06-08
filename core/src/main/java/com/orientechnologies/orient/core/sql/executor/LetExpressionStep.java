@@ -27,8 +27,7 @@ public class LetExpressionStep extends AbstractExecutionStep {
       throw new OCommandExecutionException(
           "Cannot execute a local LET on a query without a target");
     }
-    return new OResultSetMapper(
-        getPrev().get().syncPull(ctx, nRecords), (result) -> mapResult(ctx, result));
+    return new OResultSetMapper(getPrev().get().syncPull(ctx), (result) -> mapResult(ctx, result));
   }
 
   private OResult mapResult(OCommandContext ctx, OResult result) {

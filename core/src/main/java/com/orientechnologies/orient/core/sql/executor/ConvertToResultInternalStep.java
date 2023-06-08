@@ -55,9 +55,9 @@ public class ConvertToResultInternalStep extends AbstractExecutionStep {
   private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
     OExecutionStepInternal prevStep = prev.get();
     if (prevResult == null) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
+      prevResult = prevStep.syncPull(ctx);
     } else if (!prevResult.hasNext()) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
+      prevResult = prevStep.syncPull(ctx);
     }
     return prevResult;
   }

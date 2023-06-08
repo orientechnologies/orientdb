@@ -23,7 +23,7 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
       throw new IllegalStateException("Cannot calculate projections without a previous source");
     }
 
-    OResultSet parentRs = prev.get().syncPull(ctx, nRecords);
+    OResultSet parentRs = prev.get().syncPull(ctx);
     return new OResultSetMapper(parentRs, (result) -> mapResult(ctx, result));
   }
 

@@ -32,7 +32,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   @Override
   public OResultSet fetchNext(int n) {
-    return lastStep.syncPull(ctx, n);
+    return lastStep.syncPull(ctx);
   }
 
   @Override

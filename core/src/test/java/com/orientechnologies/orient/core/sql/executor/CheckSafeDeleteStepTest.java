@@ -64,7 +64,7 @@ public class CheckSafeDeleteStepTest extends TestUtilsFixture {
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context, 20);
+    OResultSet result = step.syncPull(context);
     while (result.hasNext()) {
       result.next();
     }
@@ -92,7 +92,7 @@ public class CheckSafeDeleteStepTest extends TestUtilsFixture {
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context, 10);
+    OResultSet result = step.syncPull(context);
     Assert.assertEquals(10, result.stream().count());
     Assert.assertFalse(result.hasNext());
   }

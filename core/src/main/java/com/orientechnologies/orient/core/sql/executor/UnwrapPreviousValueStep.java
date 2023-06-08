@@ -20,7 +20,7 @@ public class UnwrapPreviousValueStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OResultSet upstream = prev.get().syncPull(ctx, nRecords);
+    OResultSet upstream = prev.get().syncPull(ctx);
     return new OResultSetMapper(upstream, this::mapResult);
   }
 

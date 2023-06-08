@@ -91,14 +91,14 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
           "Cannot execute an aggregation or a GROUP BY without a previous result");
     }
     OExecutionStepInternal prevStep = prev.get();
-    OResultSet lastRs = prevStep.syncPull(ctx, nRecords);
+    OResultSet lastRs = prevStep.syncPull(ctx);
     while (lastRs.hasNext()) {
       if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
         sendTimeout();
       }
       aggregate(lastRs.next(), ctx);
       if (!lastRs.hasNext()) {
-        lastRs = prevStep.syncPull(ctx, nRecords);
+        lastRs = prevStep.syncPull(ctx);
       }
     }
     finalResults = new ArrayList<>();

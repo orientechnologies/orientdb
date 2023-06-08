@@ -125,7 +125,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+    getPrev().ifPresent(x -> x.syncPull(ctx));
     init(ctx.getDatabase());
     return new OLimitedResultSet(
         new OResultSet() {
