@@ -37,7 +37,7 @@ public class MatchStep extends AbstractExecutionStep {
           @Override
           public boolean hasNext() {
             if (nextResult == null) {
-              fetchNext(ctx, nRecords);
+              fetchNext(ctx);
             }
             if (nextResult == null) {
               return false;
@@ -48,13 +48,13 @@ public class MatchStep extends AbstractExecutionStep {
           @Override
           public OResult next() {
             if (nextResult == null) {
-              fetchNext(ctx, nRecords);
+              fetchNext(ctx);
             }
             if (nextResult == null) {
               throw new IllegalStateException();
             }
             OResult result = nextResult;
-            fetchNext(ctx, nRecords);
+            fetchNext(ctx);
             ctx.setVariable("$matched", result);
             return result;
           }
@@ -75,7 +75,7 @@ public class MatchStep extends AbstractExecutionStep {
         nRecords);
   }
 
-  private void fetchNext(OCommandContext ctx, int nRecords) {
+  private void fetchNext(OCommandContext ctx) {
     nextResult = null;
     while (true) {
       if (traverser != null && traverser.hasNext(ctx)) {

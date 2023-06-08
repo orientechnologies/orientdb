@@ -38,7 +38,7 @@ public class ScriptLineStep extends AbstractExecutionStep {
       }
       executed = true;
     }
-    return plan.fetchNext(nRecords);
+    return plan.fetchNext();
   }
 
   public boolean containsReturn() {

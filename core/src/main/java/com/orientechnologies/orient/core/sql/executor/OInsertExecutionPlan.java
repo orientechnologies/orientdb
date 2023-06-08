@@ -17,14 +17,13 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
   }
 
   @Override
-  public OResultSet fetchNext(int n) {
+  public OResultSet fetchNext() {
     if (next >= result.size()) {
       return new OInternalResultSet(); // empty
     }
 
-    OIteratorResultSet nextBlock =
-        new OIteratorResultSet(result.subList(next, Math.min(next + n, result.size())).iterator());
-    next += n;
+    OIteratorResultSet nextBlock = new OIteratorResultSet(result.iterator());
+    next = result.size();
     return nextBlock;
   }
 
@@ -38,7 +37,7 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
 
   public void executeInternal() throws OCommandExecutionException {
     while (true) {
-      OResultSet nextBlock = super.fetchNext(100);
+      OResultSet nextBlock = super.fetchNext();
       if (!nextBlock.hasNext()) {
         return;
       }

@@ -33,7 +33,7 @@ public class OLocalResultSet implements OResultSet {
       if (lastFetch == null) {
         startTime = begin;
       }
-      lastFetch = executionPlan.fetchNext(100);
+      lastFetch = executionPlan.fetchNext();
       if (!lastFetch.hasNext()) {
         finished = true;
         logProfiling();

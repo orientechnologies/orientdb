@@ -31,8 +31,7 @@ public class FilterStep extends AbstractExecutionStep {
     }
 
     return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx, nRecords), (result) -> filterMap(ctx, result)),
-        nRecords);
+        new OFilterResultSet(() -> fetchNext(ctx), (result) -> filterMap(ctx, result)), nRecords);
   }
 
   private OResult filterMap(OCommandContext ctx, OResult result) {
@@ -53,7 +52,7 @@ public class FilterStep extends AbstractExecutionStep {
     return null;
   }
 
-  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
+  private OResultSet fetchNext(OCommandContext ctx) {
     OExecutionStepInternal prevStep = prev.get();
     if (prevResult == null) {
       prevResult = prevStep.syncPull(ctx);

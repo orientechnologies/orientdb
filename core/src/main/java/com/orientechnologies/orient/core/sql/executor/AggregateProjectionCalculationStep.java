@@ -44,7 +44,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (finalResults == null) {
-      executeAggregation(ctx, nRecords);
+      executeAggregation(ctx);
     }
 
     return new OLimitedResultSet(
@@ -84,7 +84,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
         nRecords);
   }
 
-  private void executeAggregation(OCommandContext ctx, int nRecords) {
+  private void executeAggregation(OCommandContext ctx) {
     long timeoutBegin = System.currentTimeMillis();
     if (!prev.isPresent()) {
       throw new OCommandExecutionException(

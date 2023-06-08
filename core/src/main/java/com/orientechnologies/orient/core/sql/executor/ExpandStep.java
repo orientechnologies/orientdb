@@ -37,7 +37,7 @@ public class ExpandStep extends AbstractExecutionStep {
           @Override
           public boolean hasNext() {
             if (nextElement == null) {
-              fetchNext(ctx, nRecords);
+              fetchNext(ctx);
             }
             if (nextElement == null) {
               return false;
@@ -48,7 +48,7 @@ public class ExpandStep extends AbstractExecutionStep {
           @Override
           public OResult next() {
             if (nextElement == null) {
-              fetchNext(ctx, nRecords);
+              fetchNext(ctx);
             }
             if (nextElement == null) {
               throw new IllegalStateException();
@@ -56,7 +56,7 @@ public class ExpandStep extends AbstractExecutionStep {
 
             OResult result = nextElement;
             nextElement = null;
-            fetchNext(ctx, nRecords);
+            fetchNext(ctx);
             return result;
           }
 
@@ -76,7 +76,7 @@ public class ExpandStep extends AbstractExecutionStep {
         nRecords);
   }
 
-  private void fetchNext(OCommandContext ctx, int n) {
+  private void fetchNext(OCommandContext ctx) {
     do {
       if (nextSubsequence != null && nextSubsequence.hasNext()) {
         long begin = profilingEnabled ? System.nanoTime() : 0;

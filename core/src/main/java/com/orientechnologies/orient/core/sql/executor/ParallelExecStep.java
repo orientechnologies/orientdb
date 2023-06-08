@@ -72,7 +72,7 @@ public class ParallelExecStep extends AbstractExecutionStep {
         currentResultSet = null;
         return;
       }
-      currentResultSet = subExecutionPlans.get(current).fetchNext(nRecords);
+      currentResultSet = subExecutionPlans.get(current).fetchNext();
       if (!currentResultSet.hasNext()) {
         current++;
       }

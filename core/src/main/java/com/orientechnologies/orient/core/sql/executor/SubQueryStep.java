@@ -32,7 +32,7 @@ public class SubQueryStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    OResultSet parentRs = subExecuitonPlan.fetchNext(nRecords);
+    OResultSet parentRs = subExecuitonPlan.fetchNext();
     return new OResultSetMapper(parentRs, (result) -> mapResult(ctx, result));
   }
 

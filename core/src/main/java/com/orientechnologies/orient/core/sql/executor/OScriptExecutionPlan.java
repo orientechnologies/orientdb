@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor;
 
 /** Created by luigidellaquila on 08/08/16. */
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,12 +34,12 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
-  public OResultSet fetchNext(int n) {
-    doExecute(n);
-    return new OLimitedResultSet(finalResult, n);
+  public OResultSet fetchNext() {
+    doExecute();
+    return finalResult;
   }
 
-  private void doExecute(int n) {
+  private void doExecute() {
     if (!executed) {
       executeUntilReturn();
       executed = true;

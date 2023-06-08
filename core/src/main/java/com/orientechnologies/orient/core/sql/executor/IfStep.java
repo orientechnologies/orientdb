@@ -26,11 +26,11 @@ public class IfStep extends AbstractExecutionStep {
     init(ctx);
     if (conditionMet) {
       initPositivePlan(ctx);
-      return positivePlan.fetchNext(nRecords);
+      return positivePlan.fetchNext();
     } else {
       initNegativePlan(ctx);
       if (negativePlan != null) {
-        return negativePlan.fetchNext(nRecords);
+        return negativePlan.fetchNext();
       }
     }
     return new OInternalResultSet();

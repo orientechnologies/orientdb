@@ -42,7 +42,7 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
           @Override
           public boolean hasNext() {
             if (nextElement == null) {
-              fetchNext(ctx, nRecords);
+              fetchNext(ctx);
             }
             if (nextElement == null) {
               return false;
@@ -53,7 +53,7 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
           @Override
           public OResult next() {
             if (nextElement == null) {
-              fetchNext(ctx, nRecords);
+              fetchNext(ctx);
             }
             if (nextElement == null) {
               throw new IllegalStateException();
@@ -61,7 +61,7 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
 
             OResult result = nextElement;
             nextElement = null;
-            fetchNext(ctx, nRecords);
+            fetchNext(ctx);
             return result;
           }
 
@@ -81,7 +81,7 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
         nRecords);
   }
 
-  private void fetchNext(OCommandContext ctx, int n) {
+  private void fetchNext(OCommandContext ctx) {
     do {
       if (nextSubsequence != null && nextSubsequence.hasNext()) {
         nextElement = nextSubsequence.next();

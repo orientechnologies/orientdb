@@ -14,10 +14,9 @@ public interface OInternalExecutionPlan extends OExecutionPlan {
    * execution contains less than N elements, then the result will contain them all, next result(s)
    * will contain zero elements
    *
-   * @param n
    * @return
    */
-  OResultSet fetchNext(int n);
+  OResultSet fetchNext();
 
   void reset(OCommandContext ctx);
 

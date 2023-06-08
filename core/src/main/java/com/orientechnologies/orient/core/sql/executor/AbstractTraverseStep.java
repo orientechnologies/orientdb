@@ -50,7 +50,7 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
           @Override
           public boolean hasNext() {
             if (results.isEmpty()) {
-              fetchNextBlock(ctx, nRecords);
+              fetchNextBlock(ctx);
             }
             if (results.isEmpty()) {
               return false;
@@ -61,7 +61,7 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
           @Override
           public OResult next() {
             if (results.isEmpty()) {
-              fetchNextBlock(ctx, nRecords);
+              fetchNextBlock(ctx);
               if (results.isEmpty()) {
                 throw new IllegalStateException();
               }
@@ -89,7 +89,7 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
         nRecords);
   }
 
-  private void fetchNextBlock(OCommandContext ctx, int nRecords) {
+  private void fetchNextBlock(OCommandContext ctx) {
     if (this.entryPoints == null) {
       this.entryPoints = new ArrayList<OResult>();
     }
@@ -98,13 +98,13 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
     }
     while (this.results.isEmpty()) {
       if (this.entryPoints.isEmpty()) {
-        fetchNextEntryPoints(ctx, nRecords);
+        fetchNextEntryPoints(ctx);
       }
       if (this.entryPoints.isEmpty()) {
         return;
       }
       long begin = profilingEnabled ? System.nanoTime() : 0;
-      fetchNextResults(ctx, nRecords);
+      fetchNextResults(ctx);
       if (profilingEnabled) {
         cost += (System.nanoTime() - begin);
       }
@@ -114,9 +114,9 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
     }
   }
 
-  protected abstract void fetchNextEntryPoints(OCommandContext ctx, int nRecords);
+  protected abstract void fetchNextEntryPoints(OCommandContext ctx);
 
-  protected abstract void fetchNextResults(OCommandContext ctx, int nRecords);
+  protected abstract void fetchNextResults(OCommandContext ctx);
 
   protected boolean isFinished() {
     return entryPoints != null && entryPoints.isEmpty() && results.isEmpty();

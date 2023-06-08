@@ -40,7 +40,7 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
     }
 
     return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx, nRecords), this::filterMap), nRecords);
+        new OFilterResultSet(() -> fetchNext(ctx), this::filterMap), nRecords);
   }
 
   private OResult filterMap(OResult result) {
@@ -77,7 +77,7 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
     }
   }
 
-  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
+  private OResultSet fetchNext(OCommandContext ctx) {
     OExecutionStepInternal prevStep = prev.get();
     if (prevResult == null) {
       prevResult = prevStep.syncPull(ctx);

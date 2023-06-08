@@ -85,7 +85,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
   }
 
   private void init(OCommandContext ctx, int nRecords) {
-    fetchRidsToFind(ctx, nRecords);
+    fetchRidsToFind(ctx);
     initClusterIterators(ctx);
     fetchNext(ctx);
 
@@ -163,7 +163,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
     this.clusterIterators = iterators.iterator();
   }
 
-  private void fetchRidsToFind(OCommandContext ctx, int nRecords) {
+  private void fetchRidsToFind(OCommandContext ctx) {
     ridsToFind = new HashSet<>();
 
     OExecutionStepInternal prevStep = getPrev().get();

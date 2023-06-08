@@ -47,7 +47,7 @@ public class UnwindStep extends AbstractExecutionStep {
           @Override
           public boolean hasNext() {
             if (nextElement == null) {
-              fetchNext(ctx, nRecords);
+              fetchNext(ctx);
             }
             if (nextElement == null) {
               return false;
@@ -58,7 +58,7 @@ public class UnwindStep extends AbstractExecutionStep {
           @Override
           public OResult next() {
             if (nextElement == null) {
-              fetchNext(ctx, nRecords);
+              fetchNext(ctx);
             }
             if (nextElement == null) {
               throw new IllegalStateException();
@@ -66,7 +66,7 @@ public class UnwindStep extends AbstractExecutionStep {
 
             OResult result = nextElement;
             nextElement = null;
-            fetchNext(ctx, nRecords);
+            fetchNext(ctx);
             return result;
           }
 
@@ -86,7 +86,7 @@ public class UnwindStep extends AbstractExecutionStep {
         nRecords);
   }
 
-  private void fetchNext(OCommandContext ctx, int n) {
+  private void fetchNext(OCommandContext ctx) {
     do {
       if (nextSubsequence != null && nextSubsequence.hasNext()) {
         nextElement = nextSubsequence.next();

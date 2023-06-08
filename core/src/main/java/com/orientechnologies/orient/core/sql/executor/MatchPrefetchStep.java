@@ -36,13 +36,13 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
     if (!executed) {
       getPrev().ifPresent(x -> x.syncPull(ctx));
 
-      OResultSet nextBlock = prefetchExecutionPlan.fetchNext(nRecords);
+      OResultSet nextBlock = prefetchExecutionPlan.fetchNext();
       List<OResult> prefetched = new ArrayList<>();
       while (nextBlock.hasNext()) {
         while (nextBlock.hasNext()) {
           prefetched.add(nextBlock.next());
         }
-        nextBlock = prefetchExecutionPlan.fetchNext(nRecords);
+        nextBlock = prefetchExecutionPlan.fetchNext();
       }
       prefetchExecutionPlan.close();
       ctx.setVariable(PREFETCHED_MATCH_ALIAS_PREFIX + alias, prefetched);

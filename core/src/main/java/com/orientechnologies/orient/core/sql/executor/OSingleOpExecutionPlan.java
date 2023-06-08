@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OSimpleExecStatement;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +25,7 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
   public void close() {}
 
   @Override
-  public OResultSet fetchNext(int n) {
+  public OResultSet fetchNext() {
     if (executed && result == null) {
       return new OInternalResultSet();
     }
@@ -37,7 +36,7 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
         ((OInternalResultSet) result).plan = this;
       }
     }
-    return new OLimitedResultSet(result, n);
+    return result;
   }
 
   public void reset(OCommandContext ctx) {

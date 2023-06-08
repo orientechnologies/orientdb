@@ -32,7 +32,7 @@ public class CountStep extends AbstractExecutionStep {
     executed = true;
     long count = 0;
     while (true) {
-      OResultSet prevResult = getPrev().get().syncPull(ctx, nRecords);
+      OResultSet prevResult = getPrev().get().syncPull(ctx);
 
       if (!prevResult.hasNext()) {
         long begin = profilingEnabled ? System.nanoTime() : 0;

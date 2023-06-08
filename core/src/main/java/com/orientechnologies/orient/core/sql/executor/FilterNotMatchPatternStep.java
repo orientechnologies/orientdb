@@ -26,8 +26,7 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx, nRecords), (result) -> filterMap(ctx, result)),
-        nRecords);
+        new OFilterResultSet(() -> fetchNext(ctx), (result) -> filterMap(ctx, result)), nRecords);
   }
 
   private OResult filterMap(OCommandContext ctx, OResult result) {
@@ -44,7 +43,7 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
     return null;
   }
 
-  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
+  private OResultSet fetchNext(OCommandContext ctx) {
     OExecutionStepInternal prevStep = prev.get();
     if (prevResult == null) {
       prevResult = prevStep.syncPull(ctx);
@@ -56,7 +55,7 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
   private boolean matchesPattern(OResult nextItem, OCommandContext ctx) {
     OSelectExecutionPlan plan = createExecutionPlan(nextItem, ctx);
-    try (OResultSet rs = plan.fetchNext(1)) {
+    try (OResultSet rs = plan.fetchNext()) {
       return rs.hasNext();
     }
   }

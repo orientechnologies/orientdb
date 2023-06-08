@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.command.OBasicServerCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OSimpleExecServerStatement;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +26,7 @@ public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
   public void close() {}
 
   @Override
-  public OResultSet fetchNext(int n) {
+  public OResultSet fetchNext() {
     if (executed && result == null) {
       return new OInternalResultSet();
     }
@@ -38,7 +37,7 @@ public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
         ((OInternalResultSet) result).plan = this;
       }
     }
-    return new OLimitedResultSet(result, n);
+    return result;
   }
 
   public void reset(OCommandContext ctx) {
