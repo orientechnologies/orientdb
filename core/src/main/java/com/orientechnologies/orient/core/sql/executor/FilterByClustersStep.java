@@ -41,32 +41,33 @@ public class FilterByClustersStep extends AbstractExecutionStep {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OExecutionStepInternal prevStep = prev.get();
 
     return new OLimitedResultSet(
-        new OFilterResultSet(
-            () -> {
-              if (prevResult == null) {
-                prevResult = prevStep.syncPull(ctx, nRecords);
-              } else if (!prevResult.hasNext()) {
-                prevResult = prevStep.syncPull(ctx, nRecords);
-              }
-              return prevResult;
-            },
-            (result) -> {
-              if (result.isElement()) {
-                int clusterId = result.getIdentity().get().getClusterId();
-                if (clusterId < 0) {
-                  // this record comes from a TX, it still doesn't have a cluster assigned
-                  return result;
-                }
-                if (clusterIds.contains(clusterId)) {
-                  return result;
-                }
-              }
-              return null;
-            }),
-        nRecords);
+        new OFilterResultSet(() -> fetchNext(ctx, nRecords), this::filterMap), nRecords);
+  }
+
+  private OResult filterMap(OResult result) {
+    if (result.isElement()) {
+      int clusterId = result.getIdentity().get().getClusterId();
+      if (clusterId < 0) {
+        // this record comes from a TX, it still doesn't have a cluster assigned
+        return result;
+      }
+      if (clusterIds.contains(clusterId)) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
+    OExecutionStepInternal prevStep = prev.get();
+    if (prevResult == null) {
+      prevResult = prevStep.syncPull(ctx, nRecords);
+    } else if (!prevResult.hasNext()) {
+      prevResult = prevStep.syncPull(ctx, nRecords);
+    }
+    return prevResult;
   }
 
   @Override

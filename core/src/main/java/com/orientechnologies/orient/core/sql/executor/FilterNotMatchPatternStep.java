@@ -25,32 +25,33 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OExecutionStepInternal prevStep = prev.get();
-
     return new OLimitedResultSet(
-        new OFilterResultSet(
-            () -> {
-              if (prevResult == null) {
-                prevResult = prevStep.syncPull(ctx, nRecords);
-              } else if (!prevResult.hasNext()) {
-                prevResult = prevStep.syncPull(ctx, nRecords);
-              }
-              return prevResult;
-            },
-            (result) -> {
-              long begin = profilingEnabled ? System.nanoTime() : 0;
-              try {
-                if (!matchesPattern(result, ctx)) {
-                  return result;
-                }
-              } finally {
-                if (profilingEnabled) {
-                  cost += (System.nanoTime() - begin);
-                }
-              }
-              return null;
-            }),
+        new OFilterResultSet(() -> fetchNext(ctx, nRecords), (result) -> filterMap(ctx, result)),
         nRecords);
+  }
+
+  private OResult filterMap(OCommandContext ctx, OResult result) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      if (!matchesPattern(result, ctx)) {
+        return result;
+      }
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
+    return null;
+  }
+
+  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
+    OExecutionStepInternal prevStep = prev.get();
+    if (prevResult == null) {
+      prevResult = prevStep.syncPull(ctx, nRecords);
+    } else if (!prevResult.hasNext()) {
+      prevResult = prevStep.syncPull(ctx, nRecords);
+    }
+    return prevResult;
   }
 
   private boolean matchesPattern(OResult nextItem, OCommandContext ctx) {

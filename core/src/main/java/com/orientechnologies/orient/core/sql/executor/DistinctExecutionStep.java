@@ -6,10 +6,9 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /** Created by luigidellaquila on 08/07/16. */
@@ -38,74 +37,33 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-
-    OResultSet result =
-        new OLimitedResultSet(
-            new OResultSet() {
-
-              @Override
-              public boolean hasNext() {
-                if (nextValue != null) {
-                  return true;
-                }
-                fetchNext(nRecords);
-                return nextValue != null;
-              }
-
-              @Override
-              public OResult next() {
-                if (nextValue == null) {
-                  fetchNext(nRecords);
-                }
-                if (nextValue == null) {
-                  throw new IllegalStateException();
-                }
-                OResult result = nextValue;
-                nextValue = null;
-                return result;
-              }
-
-              @Override
-              public void close() {}
-
-              @Override
-              public Optional<OExecutionPlan> getExecutionPlan() {
-                return Optional.empty();
-              }
-
-              @Override
-              public Map<String, Long> getQueryStats() {
-                return null;
-              }
-            },
-            nRecords);
-
-    return result;
+    return new OLimitedResultSet(
+        new OFilterResultSet(() -> fetchNext(ctx, nRecords), (result) -> filterMap(ctx, result)),
+        nRecords);
   }
 
-  private void fetchNext(int nRecords) {
-    while (true) {
-      if (nextValue != null) {
-        return;
+  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
+    OExecutionStepInternal prevStep = prev.get();
+    if (lastResult == null) {
+      lastResult = prevStep.syncPull(ctx, nRecords);
+    } else if (!lastResult.hasNext()) {
+      lastResult = prevStep.syncPull(ctx, nRecords);
+    }
+    return lastResult;
+  }
+
+  private OResult filterMap(OCommandContext ctx, OResult result) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      if (alreadyVisited(result)) {
+        return null;
+      } else {
+        markAsVisited(result);
+        return result;
       }
-      if (lastResult == null || !lastResult.hasNext()) {
-        lastResult = getPrev().get().syncPull(ctx, nRecords);
-      }
-      if (lastResult == null || !lastResult.hasNext()) {
-        return;
-      }
-      long begin = profilingEnabled ? System.nanoTime() : 0;
-      try {
-        nextValue = lastResult.next();
-        if (alreadyVisited(nextValue)) {
-          nextValue = null;
-        } else {
-          markAsVisited(nextValue);
-        }
-      } finally {
-        if (profilingEnabled) {
-          cost += (System.nanoTime() - begin);
-        }
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
       }
     }
   }

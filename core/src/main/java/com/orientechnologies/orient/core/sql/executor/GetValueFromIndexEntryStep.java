@@ -38,53 +38,53 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OExecutionStepInternal prevStep = prev.get();
 
     return new OLimitedResultSet(
-        new OFilterResultSet(
-            () -> {
-              if (prevResult == null) {
-                prevResult = prevStep.syncPull(ctx, nRecords);
-              } else if (!prevResult.hasNext()) {
-                prevResult = prevStep.syncPull(ctx, nRecords);
-              }
-              return prevResult;
-            },
-            (result) -> {
-              long begin = profilingEnabled ? System.nanoTime() : 0;
+        new OFilterResultSet(() -> fetchNext(ctx, nRecords), this::filterMap), nRecords);
+  }
 
-              try {
-                Object finalVal = result.getProperty("rid");
-                if (filterClusterIds != null) {
-                  if (!(finalVal instanceof OIdentifiable)) {
-                    return null;
-                  }
-                  ORID rid = ((OIdentifiable) finalVal).getIdentity();
-                  boolean found = false;
-                  for (int filterClusterId : filterClusterIds) {
-                    if (rid.getClusterId() < 0 || filterClusterId == rid.getClusterId()) {
-                      found = true;
-                      break;
-                    }
-                  }
-                  if (!found) {
-                    return null;
-                  }
-                }
-                if (finalVal instanceof OIdentifiable) {
-                  return new OResultInternal((OIdentifiable) finalVal);
+  private OResult filterMap(OResult result) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      Object finalVal = result.getProperty("rid");
+      if (filterClusterIds != null) {
+        if (!(finalVal instanceof OIdentifiable)) {
+          return null;
+        }
+        ORID rid = ((OIdentifiable) finalVal).getIdentity();
+        boolean found = false;
+        for (int filterClusterId : filterClusterIds) {
+          if (rid.getClusterId() < 0 || filterClusterId == rid.getClusterId()) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          return null;
+        }
+      }
+      if (finalVal instanceof OIdentifiable) {
+        return new OResultInternal((OIdentifiable) finalVal);
 
-                } else if (finalVal instanceof OResult) {
-                  return (OResult) finalVal;
-                }
-                return null;
-              } finally {
-                if (profilingEnabled) {
-                  cost += (System.nanoTime() - begin);
-                }
-              }
-            }),
-        nRecords);
+      } else if (finalVal instanceof OResult) {
+        return (OResult) finalVal;
+      }
+      return null;
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
+  }
+
+  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
+    OExecutionStepInternal prevStep = prev.get();
+    if (prevResult == null) {
+      prevResult = prevStep.syncPull(ctx, nRecords);
+    } else if (!prevResult.hasNext()) {
+      prevResult = prevStep.syncPull(ctx, nRecords);
+    }
+    return prevResult;
   }
 
   @Override

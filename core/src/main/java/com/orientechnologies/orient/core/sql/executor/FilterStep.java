@@ -29,36 +29,38 @@ public class FilterStep extends AbstractExecutionStep {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OExecutionStepInternal prevStep = prev.get();
 
     return new OLimitedResultSet(
-        new OFilterResultSet(
-            () -> {
-              if (prevResult == null) {
-                prevResult = prevStep.syncPull(ctx, nRecords);
-              } else if (!prevResult.hasNext()) {
-                prevResult = prevStep.syncPull(ctx, nRecords);
-              }
-              return prevResult;
-            },
-            (result) -> {
-              long timeoutBegin = System.currentTimeMillis();
-              long begin = profilingEnabled ? System.nanoTime() : 0;
-              try {
-                if (whereClause.matchesFilters(result, ctx)) {
-                  return result;
-                }
-              } finally {
-                if (profilingEnabled) {
-                  cost += (System.nanoTime() - begin);
-                }
-              }
-              if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
-                sendTimeout();
-              }
-              return null;
-            }),
+        new OFilterResultSet(() -> fetchNext(ctx, nRecords), (result) -> filterMap(ctx, result)),
         nRecords);
+  }
+
+  private OResult filterMap(OCommandContext ctx, OResult result) {
+    long timeoutBegin = System.currentTimeMillis();
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      if (whereClause.matchesFilters(result, ctx)) {
+        return result;
+      }
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
+    if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
+      sendTimeout();
+    }
+    return null;
+  }
+
+  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
+    OExecutionStepInternal prevStep = prev.get();
+    if (prevResult == null) {
+      prevResult = prevStep.syncPull(ctx, nRecords);
+    } else if (!prevResult.hasNext()) {
+      prevResult = prevStep.syncPull(ctx, nRecords);
+    }
+    return prevResult;
   }
 
   @Override
