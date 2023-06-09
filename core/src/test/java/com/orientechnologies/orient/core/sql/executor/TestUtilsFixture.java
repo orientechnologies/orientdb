@@ -13,14 +13,14 @@ import org.junit.BeforeClass;
 public class TestUtilsFixture {
   protected static ODatabaseSession database;
   protected static OrientDB factory;
-  private static final String PATH = "memory";
+  private static final String PATH = "embedded:";
   private static final String DB_NAME = "test_database";
   private static final String USER = "admin";
   private static final String PASSWORD = OCreateDatabaseUtil.NEW_ADMIN_PASSWORD;
 
   @BeforeClass
   public static void setUp() {
-    factory = OCreateDatabaseUtil.createDatabase(DB_NAME, PATH, OCreateDatabaseUtil.TYPE_PLOCAL);
+    factory = OCreateDatabaseUtil.createDatabase(DB_NAME, PATH, OCreateDatabaseUtil.TYPE_MEMORY);
     database = factory.open(DB_NAME, USER, PASSWORD);
   }
 

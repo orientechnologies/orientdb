@@ -26,10 +26,10 @@ public class ODatabaseSuperNodeTest {
     for (int numberEdge : numberEdges) {
       final String databaseName = "superNode_export";
       final String exportDbUrl =
-          "memory:target/export_" + ODatabaseSuperNodeTest.class.getSimpleName();
+          "embedded:target/export_" + ODatabaseSuperNodeTest.class.getSimpleName();
       OrientDB orientDB =
           OCreateDatabaseUtil.createDatabase(
-              databaseName, exportDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
+              databaseName, exportDbUrl, OCreateDatabaseUtil.TYPE_MEMORY);
 
       final ByteArrayOutputStream output = new ByteArrayOutputStream();
       try {

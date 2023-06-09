@@ -32,7 +32,7 @@ public class VersionPositionMapTestIT {
 
     orientDB =
         OCreateDatabaseUtil.createDatabase(
-            DB_NAME, "plocal:" + buildDirectory, OCreateDatabaseUtil.TYPE_PLOCAL);
+            DB_NAME, "embedded:" + buildDirectory, OCreateDatabaseUtil.TYPE_PLOCAL);
     if (orientDB.exists(DB_NAME)) {
       orientDB.drop(DB_NAME);
     }

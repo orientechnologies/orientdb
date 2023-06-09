@@ -70,7 +70,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
 
     orientDB =
         new OrientDB(
-            "plocal:" + buildDirectory,
+            "embedded:" + buildDirectory,
             OrientDBConfig.builder()
                 .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
                 .build());

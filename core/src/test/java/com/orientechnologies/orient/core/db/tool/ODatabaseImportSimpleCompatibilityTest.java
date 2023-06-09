@@ -89,10 +89,10 @@ public class ODatabaseImportSimpleCompatibilityTest {
 
   private void setup(
       final String databaseName, final InputStream input, final OutputStream output) {
-    final String importDbUrl = "memory:target/import_" + this.getClass().getSimpleName();
+    final String importDbUrl = "embedded:target/import_" + this.getClass().getSimpleName();
     orientDB =
         OCreateDatabaseUtil.createDatabase(
-            databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
+            databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_MEMORY);
     importDatabase = orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     try {
       importer =
