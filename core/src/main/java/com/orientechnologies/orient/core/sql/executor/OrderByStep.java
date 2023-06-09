@@ -98,65 +98,57 @@ public class OrderByStep extends AbstractExecutionStep {
     final long maxElementsAllowed =
         OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong();
     boolean sorted = true;
-    do {
-      OResultSet lastBatch = p.syncPull(ctx);
-      if (!lastBatch.hasNext()) {
-        break;
+    OResultSet lastBatch = p.syncPull(ctx);
+    while (lastBatch.hasNext()) {
+      if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
+        sendTimeout();
       }
-      while (lastBatch.hasNext()) {
-        if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
-          sendTimeout();
-        }
 
-        if (this.timedOut) {
-          break;
-        }
-        OResult item = lastBatch.next();
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          cachedResult.add(item);
-          if (maxElementsAllowed >= 0 && maxElementsAllowed < cachedResult.size()) {
-            this.cachedResult.clear();
-            throw new OCommandExecutionException(
-                "Limit of allowed elements for in-heap ORDER BY in a single query exceeded ("
-                    + maxElementsAllowed
-                    + ") . You can set "
-                    + OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getKey()
-                    + " to increase this limit");
-          }
-          sorted = false;
-          // compact, only at twice as the buffer, to avoid to do it at each add
-          if (this.maxResults != null) {
-            long compactThreshold = 2L * maxResults;
-            if (compactThreshold < cachedResult.size()) {
-              cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
-              cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
-              sorted = true;
-            }
-          }
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-      if (timedOut) {
+      if (this.timedOut) {
         break;
       }
-      long begin = profilingEnabled ? System.nanoTime() : 0;
+      OResult item = lastBatch.next();
+      long beginFilter = profilingEnabled ? System.nanoTime() : 0;
       try {
-        // compact at each batch, if needed
-        if (!sorted && this.maxResults != null && maxResults < cachedResult.size()) {
-          cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
-          cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
-          sorted = true;
+        cachedResult.add(item);
+        if (maxElementsAllowed >= 0 && maxElementsAllowed < cachedResult.size()) {
+          this.cachedResult.clear();
+          throw new OCommandExecutionException(
+              "Limit of allowed elements for in-heap ORDER BY in a single query exceeded ("
+                  + maxElementsAllowed
+                  + ") . You can set "
+                  + OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getKey()
+                  + " to increase this limit");
+        }
+        sorted = false;
+        // compact, only at twice as the buffer, to avoid to do it at each add
+        if (this.maxResults != null) {
+          long compactThreshold = 2L * maxResults;
+          if (compactThreshold < cachedResult.size()) {
+            cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+            cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
+            sorted = true;
+          }
         }
       } finally {
         if (profilingEnabled) {
-          cost += (System.nanoTime() - begin);
+          cost += (System.nanoTime() - beginFilter);
         }
       }
-    } while (true);
+    }
+    long beginSort = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      // compact at each batch, if needed
+      if (!sorted && this.maxResults != null && maxResults < cachedResult.size()) {
+        cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+        cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
+        sorted = true;
+      }
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - beginSort);
+      }
+    }
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (!sorted) {

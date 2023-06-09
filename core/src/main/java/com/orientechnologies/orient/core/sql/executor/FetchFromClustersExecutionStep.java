@@ -73,40 +73,22 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
 
       @Override
       public boolean hasNext() {
-        while (true) {
-          if (currentResultSet == null || !currentResultSet.hasNext()) {
-            if (currentStep >= subSteps.size()) {
-              return false;
-            }
-            if (currentResultSet == null || !currentResultSet.hasNext()) {
-              currentResultSet =
-                  ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx);
-            }
+        while (currentResultSet == null || !currentResultSet.hasNext()) {
+          if (currentStep >= subSteps.size()) {
+            return false;
           }
-          if (!currentResultSet.hasNext()) {
-            continue;
-          }
-          return true;
+          currentResultSet = ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx);
+          currentStep++;
         }
+        return true;
       }
 
       @Override
       public OResult next() {
-        while (true) {
-          if (currentResultSet == null || !currentResultSet.hasNext()) {
-            if (currentStep >= subSteps.size()) {
-              throw new IllegalStateException();
-            }
-            if (currentResultSet == null || !currentResultSet.hasNext()) {
-              currentResultSet =
-                  ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx);
-            }
-          }
-          if (!currentResultSet.hasNext()) {
-            continue;
-          }
-          return currentResultSet.next();
+        if (!hasNext()) {
+          throw new IllegalStateException();
         }
+        return currentResultSet.next();
       }
 
       @Override

@@ -36,14 +36,9 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
   }
 
   public void executeInternal() throws OCommandExecutionException {
-    while (true) {
-      OResultSet nextBlock = super.fetchNext();
-      if (!nextBlock.hasNext()) {
-        return;
-      }
-      while (nextBlock.hasNext()) {
-        result.add(nextBlock.next());
-      }
+    OResultSet nextBlock = super.fetchNext();
+    while (nextBlock.hasNext()) {
+      result.add(nextBlock.next());
     }
   }
 

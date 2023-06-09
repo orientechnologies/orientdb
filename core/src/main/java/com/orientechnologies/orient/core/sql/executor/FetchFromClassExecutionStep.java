@@ -138,38 +138,24 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
       @Override
       public boolean hasNext() {
-        while (true) {
-          if (currentResultSet != null && currentResultSet.hasNext()) {
-            return true;
-          } else {
-            if (currentStep >= getSubSteps().size()) {
-              return false;
-            }
-            if (currentResultSet == null || !currentResultSet.hasNext()) {
-              currentResultSet =
-                  ((AbstractExecutionStep) getSubSteps().get(currentStep++)).syncPull(ctx);
-            }
+        while (currentResultSet == null || !currentResultSet.hasNext()) {
+          if (currentStep >= getSubSteps().size()) {
+            return false;
           }
+          currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep)).syncPull(ctx);
+          currentStep++;
         }
+        return true;
       }
 
       @Override
       public OResult next() {
-        while (true) {
-          if (currentResultSet != null && currentResultSet.hasNext()) {
-            OResult result = currentResultSet.next();
-            ctx.setVariable("$current", result);
-            return result;
-          } else {
-            if (currentStep >= getSubSteps().size()) {
-              throw new IllegalStateException();
-            }
-            if (currentResultSet == null || !currentResultSet.hasNext()) {
-              currentResultSet =
-                  ((AbstractExecutionStep) getSubSteps().get(currentStep++)).syncPull(ctx);
-            }
-          }
+        if (!hasNext()) {
+          throw new IllegalStateException();
         }
+        OResult result = currentResultSet.next();
+        ctx.setVariable("$current", result);
+        return result;
       }
 
       @Override

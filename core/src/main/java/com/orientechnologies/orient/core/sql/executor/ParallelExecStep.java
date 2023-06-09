@@ -39,11 +39,8 @@ public class ParallelExecStep extends AbstractExecutionStep {
 
       @Override
       public OResult next() {
-        while (currentResultSet == null || !currentResultSet.hasNext()) {
-          fetchNext(ctx);
-          if (currentResultSet == null) {
-            throw new IllegalStateException();
-          }
+        if (!hasNext()) {
+          throw new IllegalStateException();
         }
         return currentResultSet.next();
       }
@@ -69,8 +66,8 @@ public class ParallelExecStep extends AbstractExecutionStep {
         currentResultSet = null;
         return;
       }
-      currentResultSet = subExecutionPlans.get(current).fetchNext();
-      if (!currentResultSet.hasNext()) {
+      if (currentResultSet == null || !currentResultSet.hasNext()) {
+        currentResultSet = subExecutionPlans.get(current).fetchNext();
         current++;
       }
     } while (!currentResultSet.hasNext());

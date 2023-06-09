@@ -54,7 +54,7 @@ public class OLocalResultSet implements OResultSet {
 
   @Override
   public OResult next() {
-    if (!lastFetch.hasNext()) {
+    if (!hasNext()) {
       throw new IllegalStateException();
     }
     return lastFetch.next();
