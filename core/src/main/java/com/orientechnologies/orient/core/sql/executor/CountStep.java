@@ -31,25 +31,20 @@ public class CountStep extends AbstractExecutionStep {
     OResultInternal resultRecord = new OResultInternal();
     executed = true;
     long count = 0;
-    while (true) {
-      OResultSet prevResult = getPrev().get().syncPull(ctx);
-
-      if (!prevResult.hasNext()) {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          OInternalResultSet result = new OInternalResultSet();
-          resultRecord.setProperty("count", count);
-          result.add(resultRecord);
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
+    OResultSet prevResult = getPrev().get().syncPull(ctx);
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
       while (prevResult.hasNext()) {
         count++;
         prevResult.next();
+      }
+      OInternalResultSet result = new OInternalResultSet();
+      resultRecord.setProperty("count", count);
+      result.add(resultRecord);
+      return result;
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
       }
     }
   }

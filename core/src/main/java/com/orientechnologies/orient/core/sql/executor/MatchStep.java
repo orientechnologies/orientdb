@@ -11,7 +11,6 @@ import java.util.Optional;
 public class MatchStep extends AbstractExecutionStep {
   protected final EdgeTraversal edge;
 
-  private OResultSet upstream;
   private OResult lastUpstreamRecord;
   private MatchEdgeTraverser traverser;
   private OResult nextResult;
@@ -23,7 +22,6 @@ public class MatchStep extends AbstractExecutionStep {
 
   @Override
   public void reset() {
-    this.upstream = null;
     this.lastUpstreamRecord = null;
     this.traverser = null;
     this.nextResult = null;
@@ -31,11 +29,12 @@ public class MatchStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+    OResultSet resultSet = getPrev().get().syncPull(ctx);
     return new OResultSet() {
       @Override
       public boolean hasNext() {
         if (nextResult == null) {
-          fetchNext(ctx);
+          fetchNext(ctx, resultSet);
         }
         if (nextResult == null) {
           return false;
@@ -46,13 +45,13 @@ public class MatchStep extends AbstractExecutionStep {
       @Override
       public OResult next() {
         if (nextResult == null) {
-          fetchNext(ctx);
+          fetchNext(ctx, resultSet);
         }
         if (nextResult == null) {
           throw new IllegalStateException();
         }
         OResult result = nextResult;
-        fetchNext(ctx);
+        fetchNext(ctx, resultSet);
         ctx.setVariable("$matched", result);
         return result;
       }
@@ -72,7 +71,7 @@ public class MatchStep extends AbstractExecutionStep {
     };
   }
 
-  private void fetchNext(OCommandContext ctx) {
+  private void fetchNext(OCommandContext ctx, OResultSet resultSet) {
     nextResult = null;
     while (true) {
       if (traverser != null && traverser.hasNext(ctx)) {
@@ -80,14 +79,11 @@ public class MatchStep extends AbstractExecutionStep {
         break;
       }
 
-      if (upstream == null || !upstream.hasNext()) {
-        upstream = getPrev().get().syncPull(ctx);
-      }
-      if (!upstream.hasNext()) {
+      if (!resultSet.hasNext()) {
         return;
       }
 
-      lastUpstreamRecord = upstream.next();
+      lastUpstreamRecord = resultSet.next();
 
       traverser = createTraverser(lastUpstreamRecord);
 

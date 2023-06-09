@@ -40,8 +40,8 @@ public class FilterByClustersStep extends AbstractExecutionStep {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-
-    return new OFilterResultSet(() -> fetchNext(ctx), this::filterMap);
+    OResultSet resultSet = prev.get().syncPull(ctx);
+    return new OFilterResultSet(() -> resultSet, this::filterMap);
   }
 
   private OResult filterMap(OResult result) {
@@ -56,16 +56,6 @@ public class FilterByClustersStep extends AbstractExecutionStep {
       }
     }
     return null;
-  }
-
-  private OResultSet fetchNext(OCommandContext ctx) {
-    OExecutionStepInternal prevStep = prev.get();
-    if (prevResult == null) {
-      prevResult = prevStep.syncPull(ctx);
-    } else if (!prevResult.hasNext()) {
-      prevResult = prevStep.syncPull(ctx);
-    }
-    return prevResult;
   }
 
   @Override

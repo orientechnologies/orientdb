@@ -145,9 +145,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
             if (currentStep >= getSubSteps().size()) {
               return false;
             }
-            currentResultSet =
-                ((AbstractExecutionStep) getSubSteps().get(currentStep)).syncPull(ctx);
-            if (!currentResultSet.hasNext()) {
+            if (currentResultSet == null || !currentResultSet.hasNext()) {
               currentResultSet =
                   ((AbstractExecutionStep) getSubSteps().get(currentStep++)).syncPull(ctx);
             }
@@ -166,9 +164,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
             if (currentStep >= getSubSteps().size()) {
               throw new IllegalStateException();
             }
-            currentResultSet =
-                ((AbstractExecutionStep) getSubSteps().get(currentStep)).syncPull(ctx);
-            if (!currentResultSet.hasNext()) {
+            if (currentResultSet == null || !currentResultSet.hasNext()) {
               currentResultSet =
                   ((AbstractExecutionStep) getSubSteps().get(currentStep++)).syncPull(ctx);
             }

@@ -17,17 +17,16 @@ public class OLocalResultSet implements OResultSet {
 
   private OResultSet lastFetch = null;
   private final OInternalExecutionPlan executionPlan;
-  private boolean finished = false;
 
   long totalExecutionTime = 0;
   long startTime = 0;
 
   public OLocalResultSet(OInternalExecutionPlan executionPlan) {
     this.executionPlan = executionPlan;
-    fetchNext();
+    start();
   }
 
-  private boolean fetchNext() {
+  private boolean start() {
     long begin = System.currentTimeMillis();
     try {
       if (lastFetch == null) {
@@ -35,7 +34,6 @@ public class OLocalResultSet implements OResultSet {
       }
       lastFetch = executionPlan.fetchNext();
       if (!lastFetch.hasNext()) {
-        finished = true;
         logProfiling();
         return false;
       }
@@ -47,25 +45,17 @@ public class OLocalResultSet implements OResultSet {
 
   @Override
   public boolean hasNext() {
-    if (finished) {
-      return false;
+    boolean next = lastFetch.hasNext();
+    if (!next) {
+      logProfiling();
     }
-    if (lastFetch.hasNext()) {
-      return true;
-    } else {
-      return fetchNext();
-    }
+    return next;
   }
 
   @Override
   public OResult next() {
-    if (finished) {
-      throw new IllegalStateException();
-    }
     if (!lastFetch.hasNext()) {
-      if (!fetchNext()) {
-        throw new IllegalStateException();
-      }
+      throw new IllegalStateException();
     }
     return lastFetch.next();
   }

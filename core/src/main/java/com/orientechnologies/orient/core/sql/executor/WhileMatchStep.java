@@ -28,10 +28,7 @@ public class WhileMatchStep extends AbstractUnrollStep {
     List<OResult> result = new ArrayList<>();
     OResultSet block = body.fetchNext();
     while (block.hasNext()) {
-      while (block.hasNext()) {
-        result.add(block.next());
-      }
-      block = body.fetchNext();
+      result.add(block.next());
     }
     return result;
   }

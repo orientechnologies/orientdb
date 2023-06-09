@@ -20,11 +20,11 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
   protected final List<OTraverseProjectionItem> projections;
   protected final OInteger maxDepth;
 
-  protected List<OResult> entryPoints = null;
-  protected List<OResult> results = new ArrayList<>();
+  private List<OResult> entryPoints = null;
+  private List<OResult> results = new ArrayList<>();
   private long cost = 0;
 
-  protected Set<ORID> traversed = new ORidSet();
+  private Set<ORID> traversed = new ORidSet();
 
   public AbstractTraverseStep(
       List<OTraverseProjectionItem> projections,
@@ -43,12 +43,13 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+    OResultSet resultSet = getPrev().get().syncPull(ctx);
     return new OResultSet() {
 
       @Override
       public boolean hasNext() {
         if (results.isEmpty()) {
-          fetchNextBlock(ctx);
+          fetchNextBlock(ctx, resultSet);
         }
         if (results.isEmpty()) {
           return false;
@@ -59,7 +60,7 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
       @Override
       public OResult next() {
         if (results.isEmpty()) {
-          fetchNextBlock(ctx);
+          fetchNextBlock(ctx, resultSet);
           if (results.isEmpty()) {
             throw new IllegalStateException();
           }
@@ -86,7 +87,7 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
     };
   }
 
-  private void fetchNextBlock(OCommandContext ctx) {
+  private void fetchNextBlock(OCommandContext ctx, OResultSet resultSet) {
     if (this.entryPoints == null) {
       this.entryPoints = new ArrayList<OResult>();
     }
@@ -95,13 +96,13 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
     }
     while (this.results.isEmpty()) {
       if (this.entryPoints.isEmpty()) {
-        fetchNextEntryPoints(ctx);
+        fetchNextEntryPoints(resultSet, ctx, this.entryPoints, this.traversed);
       }
       if (this.entryPoints.isEmpty()) {
         return;
       }
       long begin = profilingEnabled ? System.nanoTime() : 0;
-      fetchNextResults(ctx);
+      fetchNextResults(ctx, this.results, this.entryPoints, this.traversed);
       if (profilingEnabled) {
         cost += (System.nanoTime() - begin);
       }
@@ -111,9 +112,11 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
     }
   }
 
-  protected abstract void fetchNextEntryPoints(OCommandContext ctx);
+  protected abstract void fetchNextEntryPoints(
+      OResultSet toFetch, OCommandContext ctx, List<OResult> entryPoints, Set<ORID> traversed);
 
-  protected abstract void fetchNextResults(OCommandContext ctx);
+  protected abstract void fetchNextResults(
+      OCommandContext ctx, List<OResult> results, List<OResult> entryPoints, Set<ORID> traversed);
 
   protected boolean isFinished() {
     return entryPoints != null && entryPoints.isEmpty() && results.isEmpty();

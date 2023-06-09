@@ -24,7 +24,6 @@ public class UnwindStep extends AbstractExecutionStep {
   private final OUnwind unwind;
   private List<String> unwindFields;
 
-  private OResultSet lastResult = null;
   private Iterator<OResult> nextSubsequence = null;
   private OResult nextElement = null;
 
@@ -40,12 +39,13 @@ public class UnwindStep extends AbstractExecutionStep {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
+    OResultSet resultSet = getPrev().get().syncPull(ctx);
     return new OResultSet() {
 
       @Override
       public boolean hasNext() {
         if (nextElement == null) {
-          fetchNext(ctx);
+          fetchNext(ctx, resultSet);
         }
         if (nextElement == null) {
           return false;
@@ -56,7 +56,7 @@ public class UnwindStep extends AbstractExecutionStep {
       @Override
       public OResult next() {
         if (nextElement == null) {
-          fetchNext(ctx);
+          fetchNext(ctx, resultSet);
         }
         if (nextElement == null) {
           throw new IllegalStateException();
@@ -64,7 +64,7 @@ public class UnwindStep extends AbstractExecutionStep {
 
         OResult result = nextElement;
         nextElement = null;
-        fetchNext(ctx);
+        fetchNext(ctx, resultSet);
         return result;
       }
 
@@ -83,7 +83,7 @@ public class UnwindStep extends AbstractExecutionStep {
     };
   }
 
-  private void fetchNext(OCommandContext ctx) {
+  private void fetchNext(OCommandContext ctx, OResultSet resultSet) {
     do {
       if (nextSubsequence != null && nextSubsequence.hasNext()) {
         nextElement = nextSubsequence.next();
@@ -91,15 +91,12 @@ public class UnwindStep extends AbstractExecutionStep {
       }
 
       if (nextSubsequence == null || !nextSubsequence.hasNext()) {
-        if (lastResult == null || !lastResult.hasNext()) {
-          lastResult = getPrev().get().syncPull(ctx);
-        }
-        if (!lastResult.hasNext()) {
+        if (!resultSet.hasNext()) {
           return;
         }
       }
 
-      OResult nextAggregateItem = lastResult.next();
+      OResult nextAggregateItem = resultSet.next();
       nextSubsequence = unwind(nextAggregateItem, unwindFields, ctx).iterator();
 
     } while (true);

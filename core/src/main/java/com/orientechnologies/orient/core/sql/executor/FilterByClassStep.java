@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import java.util.Optional;
+
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -7,7 +9,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 01/03/17. */
 public class FilterByClassStep extends AbstractExecutionStep {
@@ -26,7 +27,9 @@ public class FilterByClassStep extends AbstractExecutionStep {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    return new OFilterResultSet(() -> fetchNext(ctx), this::filterMap);
+
+    OResultSet resultSet = prev.get().syncPull(ctx);
+    return new OFilterResultSet(() -> resultSet, this::filterMap);
   }
 
   private OResult filterMap(OResult result) {
@@ -44,16 +47,6 @@ public class FilterByClassStep extends AbstractExecutionStep {
         cost += (System.nanoTime() - begin);
       }
     }
-  }
-
-  private OResultSet fetchNext(OCommandContext ctx) {
-    OExecutionStepInternal prevStep = prev.get();
-    if (prevResult == null) {
-      prevResult = prevStep.syncPull(ctx);
-    } else if (!prevResult.hasNext()) {
-      prevResult = prevStep.syncPull(ctx);
-    }
-    return prevResult;
   }
 
   @Override

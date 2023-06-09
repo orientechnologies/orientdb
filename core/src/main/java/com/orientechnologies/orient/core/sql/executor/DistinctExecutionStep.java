@@ -36,17 +36,8 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    return new OFilterResultSet(() -> fetchNext(ctx), (result) -> filterMap(ctx, result));
-  }
-
-  private OResultSet fetchNext(OCommandContext ctx) {
-    OExecutionStepInternal prevStep = prev.get();
-    if (lastResult == null) {
-      lastResult = prevStep.syncPull(ctx);
-    } else if (!lastResult.hasNext()) {
-      lastResult = prevStep.syncPull(ctx);
-    }
-    return lastResult;
+    OResultSet resultSet = prev.get().syncPull(ctx);
+    return new OFilterResultSet(() -> resultSet, (result) -> filterMap(ctx, result));
   }
 
   private OResult filterMap(OCommandContext ctx, OResult result) {

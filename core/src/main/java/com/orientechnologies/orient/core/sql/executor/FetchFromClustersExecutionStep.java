@@ -78,8 +78,7 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
             if (currentStep >= subSteps.size()) {
               return false;
             }
-            currentResultSet = ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx);
-            if (!currentResultSet.hasNext()) {
+            if (currentResultSet == null || !currentResultSet.hasNext()) {
               currentResultSet =
                   ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx);
             }
@@ -98,8 +97,7 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
             if (currentStep >= subSteps.size()) {
               throw new IllegalStateException();
             }
-            currentResultSet = ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx);
-            if (!currentResultSet.hasNext()) {
+            if (currentResultSet == null || !currentResultSet.hasNext()) {
               currentResultSet =
                   ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx);
             }

@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 12/07/16. */
 public class AggregateProjectionCalculationStep extends ProjectionCalculationStep {
@@ -45,40 +44,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     if (finalResults == null) {
       executeAggregation(ctx);
     }
-
-    return new OResultSet() {
-
-      @Override
-      public boolean hasNext() {
-        if (nextItem >= finalResults.size()) {
-          return false;
-        }
-        return true;
-      }
-
-      @Override
-      public OResult next() {
-        if (nextItem >= finalResults.size()) {
-          throw new IllegalStateException();
-        }
-        OResult result = finalResults.get(nextItem);
-        nextItem++;
-        return result;
-      }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    return new OIteratorResultSet(finalResults.iterator());
   }
 
   private void executeAggregation(OCommandContext ctx) {
