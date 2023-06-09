@@ -9,8 +9,6 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
   private List<AbstractExecutionStep> subSteps;
 
-  private OResultSet prevResult = null;
-
   private long cost;
 
   public FilterNotMatchPatternStep(
@@ -25,7 +23,7 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(() -> resultSet, (result) -> filterMap(ctx, result));
+    return new OFilterResultSet(resultSet, (result) -> filterMap(ctx, result));
   }
 
   private OResult filterMap(OCommandContext ctx, OResult result) {

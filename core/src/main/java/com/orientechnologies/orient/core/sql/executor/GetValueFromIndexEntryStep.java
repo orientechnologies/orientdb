@@ -14,10 +14,7 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
   private final int[] filterClusterIds;
 
   // runtime
-
   private long cost = 0;
-
-  private OResultSet prevResult = null;
 
   /**
    * @param ctx the execution context
@@ -38,7 +35,7 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(() -> resultSet, this::filterMap);
+    return new OFilterResultSet(resultSet, this::filterMap);
   }
 
   private OResult filterMap(OResult result) {

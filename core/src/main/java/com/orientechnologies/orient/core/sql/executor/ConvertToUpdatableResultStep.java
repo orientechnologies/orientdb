@@ -18,8 +18,6 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  private OResultSet prevResult = null;
-
   public ConvertToUpdatableResultStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
@@ -30,7 +28,7 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(() -> resultSet, this::filterMap);
+    return new OFilterResultSet(resultSet, this::filterMap);
   }
 
   private OResult filterMap(OResult result) {

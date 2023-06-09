@@ -1,19 +1,20 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 
 /** Created by luigidellaquila on 08/07/16. */
 public class FetchFromClassExecutionStep extends AbstractExecutionStep {
@@ -22,9 +23,6 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   protected boolean orderByRidAsc = false;
   protected boolean orderByRidDesc = false;
   protected List<OExecutionStep> subSteps = new ArrayList<>();
-
-  private OResultSet currentResultSet;
-  private int currentStep = 0;
 
   protected FetchFromClassExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -134,47 +132,16 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
 
-    return new OResultSet() {
-
-      @Override
-      public boolean hasNext() {
-        while (currentResultSet == null || !currentResultSet.hasNext()) {
-          if (currentStep >= getSubSteps().size()) {
-            return false;
-          }
-          currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep)).syncPull(ctx);
-          currentStep++;
-        }
-        return true;
-      }
-
-      @Override
-      public OResult next() {
-        if (!hasNext()) {
-          throw new IllegalStateException();
-        }
-        OResult result = currentResultSet.next();
-        ctx.setVariable("$current", result);
-        return result;
-      }
-
-      @Override
-      public void close() {
-        for (OExecutionStep step : getSubSteps()) {
-          ((AbstractExecutionStep) step).close();
-        }
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return new HashMap<>();
-      }
-    };
+    Iterator<OResultSet> substeps =
+        getSubSteps().stream()
+            .map((step) -> ((AbstractExecutionStep) step).syncPull(ctx))
+            .iterator();
+    return new OResultSetMapper(
+        new OSubResultsResultSet(substeps),
+        (result) -> {
+          ctx.setVariable("$current", result);
+          return result;
+        });
   }
 
   @Override

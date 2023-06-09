@@ -2,17 +2,13 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ParallelExecStep extends AbstractExecutionStep {
   private final List<OInternalExecutionPlan> subExecutionPlans;
-
-  private int current = 0;
-  private OResultSet currentResultSet = null;
 
   public ParallelExecStep(
       List<OInternalExecutionPlan> subExecuitonPlans,
@@ -25,52 +21,8 @@ public class ParallelExecStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        while (currentResultSet == null || !currentResultSet.hasNext()) {
-          fetchNext(ctx);
-          if (currentResultSet == null) {
-            return false;
-          }
-        }
-        return true;
-      }
-
-      @Override
-      public OResult next() {
-        if (!hasNext()) {
-          throw new IllegalStateException();
-        }
-        return currentResultSet.next();
-      }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
-  }
-
-  void fetchNext(OCommandContext ctx) {
-    do {
-      if (current >= subExecutionPlans.size()) {
-        currentResultSet = null;
-        return;
-      }
-      if (currentResultSet == null || !currentResultSet.hasNext()) {
-        currentResultSet = subExecutionPlans.get(current).fetchNext();
-        current++;
-      }
-    } while (!currentResultSet.hasNext());
+    return new OSubResultsResultSet(
+        subExecutionPlans.stream().map((step) -> step.fetchNext()).iterator());
   }
 
   @Override

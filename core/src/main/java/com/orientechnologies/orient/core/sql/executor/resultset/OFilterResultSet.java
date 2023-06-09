@@ -8,46 +8,22 @@ import java.util.Optional;
 
 public class OFilterResultSet implements OResultSet {
 
-  public interface OResultSetProvider {
-    OResultSet nextSet();
-  }
-
   public interface OFilterResult {
     OResult filterMap(OResult result);
   }
 
-  public OFilterResultSet(OResultSetProvider provider, OFilterResult filter) {
+  public OFilterResultSet(OResultSet resultSet, OFilterResult filter) {
     super();
-    this.provider = provider;
+    this.prevResult = resultSet;
     this.filter = filter;
   }
 
-  private OResultSetProvider provider;
   private OResultSet prevResult;
   private OFilterResult filter;
-  public boolean finished = false;
   private OResult nextItem = null;
 
   private void fetchNextItem() {
-    nextItem = null;
-    if (finished) {
-      return;
-    }
-    if (prevResult == null) {
-      prevResult = provider.nextSet();
-      if (!prevResult.hasNext()) {
-        finished = true;
-        return;
-      }
-    }
-    while (!finished) {
-      while (!prevResult.hasNext()) {
-        prevResult = provider.nextSet();
-        if (!prevResult.hasNext()) {
-          finished = true;
-          return;
-        }
-      }
+    while (prevResult.hasNext()) {
       nextItem = prevResult.next();
       nextItem = filter.filterMap(nextItem);
       if (nextItem != null) {
@@ -58,9 +34,6 @@ public class OFilterResultSet implements OResultSet {
 
   @Override
   public boolean hasNext() {
-    if (finished) {
-      return false;
-    }
     if (nextItem == null) {
       fetchNextItem();
     }
@@ -74,9 +47,6 @@ public class OFilterResultSet implements OResultSet {
 
   @Override
   public OResult next() {
-    if (finished) {
-      throw new IllegalStateException();
-    }
     if (nextItem == null) {
       fetchNextItem();
     }

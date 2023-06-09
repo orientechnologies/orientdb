@@ -17,8 +17,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet
 public class ConvertToResultInternalStep extends AbstractExecutionStep {
   private long cost = 0;
 
-  private OResultSet prevResult = null;
-
   public ConvertToResultInternalStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
@@ -29,7 +27,7 @@ public class ConvertToResultInternalStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(() -> resultSet, this::filterMap);
+    return new OFilterResultSet(resultSet, this::filterMap);
   }
 
   private OResult filterMap(OResult result) {

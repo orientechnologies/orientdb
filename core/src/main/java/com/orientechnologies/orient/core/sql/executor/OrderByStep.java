@@ -4,12 +4,10 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 11/07/16. */
 public class OrderByStep extends AbstractExecutionStep {
@@ -48,49 +46,7 @@ public class OrderByStep extends AbstractExecutionStep {
       cachedResult = new ArrayList<>();
       prev.ifPresent(p -> init(p, ctx));
     }
-
-    return new OResultSet() {
-
-      @Override
-      public boolean hasNext() {
-        if (cachedResult.size() <= nextElement) {
-          return false;
-        }
-        return true;
-      }
-
-      @Override
-      public OResult next() {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          if (cachedResult.size() <= nextElement) {
-            throw new IllegalStateException();
-          }
-          OResult result = cachedResult.get(nextElement);
-          nextElement++;
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {
-        prev.ifPresent(p -> p.close());
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return new HashMap<>();
-      }
-    };
+    return new OIteratorResultSet(cachedResult.iterator());
   }
 
   private void init(OExecutionStepInternal p, OCommandContext ctx) {

@@ -6,15 +6,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.OElement;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 22/07/16. */
 public class FetchFromVariableStep extends AbstractExecutionStep {
 
   private String variableName;
   private OResultSet source;
-  private OResult nextResult = null;
   private boolean inited = false;
 
   public FetchFromVariableStep(String variableName, OCommandContext ctx, boolean profilingEnabled) {
@@ -29,47 +26,7 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     init();
-    return new OResultSet() {
-      private void fetchNext() {
-        if (nextResult != null) {
-          return;
-        }
-        if (source.hasNext()) {
-          nextResult = source.next();
-        }
-      }
-
-      @Override
-      public boolean hasNext() {
-        if (nextResult == null) {
-          fetchNext();
-        }
-        return nextResult != null;
-      }
-
-      @Override
-      public OResult next() {
-        if (!hasNext()) {
-          throw new IllegalStateException();
-        }
-        OResult result = nextResult;
-        nextResult = null;
-        return result;
-      }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    return source;
   }
 
   private void init() {
@@ -108,7 +65,6 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
     } else {
       throw new OCommandExecutionException("Cannot use variable as query target: " + variableName);
     }
-    nextResult = null;
   }
 
   @Override

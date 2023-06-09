@@ -14,8 +14,6 @@ public class FilterByClustersStep extends AbstractExecutionStep {
   private Set<String> clusters;
   private Set<Integer> clusterIds;
 
-  private OResultSet prevResult = null;
-
   public FilterByClustersStep(
       Set<String> filterClusters, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -41,7 +39,7 @@ public class FilterByClustersStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(() -> resultSet, this::filterMap);
+    return new OFilterResultSet(resultSet, this::filterMap);
   }
 
   private OResult filterMap(OResult result) {

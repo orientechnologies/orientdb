@@ -16,9 +16,6 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   private Set<OResult> pastItems = new HashSet<>();
   private ORidSet pastRids = new ORidSet();
 
-  private OResultSet lastResult = null;
-  private OResult nextValue;
-
   long maxElementsAllowed;
 
   private long cost = 0;
@@ -37,7 +34,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(() -> resultSet, (result) -> filterMap(ctx, result));
+    return new OFilterResultSet(resultSet, (result) -> filterMap(ctx, result));
   }
 
   private OResult filterMap(OCommandContext ctx, OResult result) {

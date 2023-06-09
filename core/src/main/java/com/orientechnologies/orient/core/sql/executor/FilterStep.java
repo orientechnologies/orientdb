@@ -11,9 +11,6 @@ import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 public class FilterStep extends AbstractExecutionStep {
   private final long timeoutMillis;
   private OWhereClause whereClause;
-
-  private OResultSet prevResult = null;
-
   private long cost;
 
   public FilterStep(
@@ -30,7 +27,7 @@ public class FilterStep extends AbstractExecutionStep {
     }
 
     OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(() -> resultSet, (result) -> filterMap(ctx, result));
+    return new OFilterResultSet(resultSet, (result) -> filterMap(ctx, result));
   }
 
   private OResult filterMap(OCommandContext ctx, OResult result) {

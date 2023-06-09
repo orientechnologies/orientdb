@@ -14,7 +14,6 @@ import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 public class FilterByClassStep extends AbstractExecutionStep {
 
   private OIdentifier identifier;
-  private OResultSet prevResult = null;
   private long cost;
 
   public FilterByClassStep(OIdentifier identifier, OCommandContext ctx, boolean profilingEnabled) {
@@ -29,7 +28,7 @@ public class FilterByClassStep extends AbstractExecutionStep {
     }
 
     OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(() -> resultSet, this::filterMap);
+    return new OFilterResultSet(resultSet, this::filterMap);
   }
 
   private OResult filterMap(OResult result) {

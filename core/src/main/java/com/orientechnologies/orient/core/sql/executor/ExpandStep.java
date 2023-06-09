@@ -31,6 +31,7 @@ public class ExpandStep extends AbstractExecutionStep {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
     OResultSet resultSet = getPrev().get().syncPull(ctx);
+
     return new OResultSet() {
       @Override
       public boolean hasNext() {
