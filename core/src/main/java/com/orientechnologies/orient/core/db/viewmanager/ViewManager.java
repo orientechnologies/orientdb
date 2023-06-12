@@ -524,7 +524,9 @@ public class ViewManager {
           }
           try {
             OView view = databaseSession.getMetadata().getSchema().getView(name);
-            updateView(view, (ODatabaseDocumentInternal) databaseSession);
+            if (view != null) {
+              updateView(view, (ODatabaseDocumentInternal) databaseSession);
+            }
             if (listener != null) {
               listener.afterCreate(databaseSession, name);
             }
