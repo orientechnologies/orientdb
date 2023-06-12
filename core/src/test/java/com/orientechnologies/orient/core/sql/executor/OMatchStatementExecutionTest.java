@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.graph.sql;
+package com.orientechnologies.orient.core.sql.executor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;

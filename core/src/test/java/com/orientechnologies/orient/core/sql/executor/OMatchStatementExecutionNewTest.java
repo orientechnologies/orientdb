@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.graph.sql;
+package com.orientechnologies.orient.core.sql.executor;
 
 import static org.junit.Assert.fail;
 
@@ -11,9 +11,6 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.executor.MatchPrefetchStep;
-import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

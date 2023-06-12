@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.graph.sql;
+package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
@@ -57,14 +56,15 @@ public class SQLUpdateEdgeTest {
 
     // VERTEXES
     ODocument v1 = database.command(new OCommandSQL("create vertex")).execute();
-    Assert.assertEquals(v1.getClassName(), OrientVertexType.CLASS_NAME);
+    Assert.assertEquals(v1.getClassName(), "V");
 
     ODocument v2 = database.command(new OCommandSQL("create vertex V1")).execute();
     Assert.assertEquals(v2.getClassName(), "V1");
 
     ODocument v3 =
         database.command(new OCommandSQL("create vertex set vid = 'v3', brand = 'fiat'")).execute();
-    Assert.assertEquals(v3.getClassName(), OrientVertexType.CLASS_NAME);
+
+    Assert.assertEquals(v3.getClassName(), "V");
     Assert.assertEquals(v3.field("brand"), "fiat");
 
     ODocument v4 =

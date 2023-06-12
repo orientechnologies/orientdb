@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.graph.sql;
+package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
@@ -70,13 +68,13 @@ public class SQLCreateVertexAndEdgeTest {
 
     // VERTEXES
     ODocument v1 = database.command(new OCommandSQL("create vertex")).execute();
-    Assert.assertEquals(v1.getClassName(), OrientVertexType.CLASS_NAME);
+    Assert.assertEquals(v1.getClassName(), "V");
 
     ODocument v2 = database.command(new OCommandSQL("create vertex V1")).execute();
     Assert.assertEquals(v2.getClassName(), "V1");
 
     ODocument v3 = database.command(new OCommandSQL("create vertex set brand = 'fiat'")).execute();
-    Assert.assertEquals(v3.getClassName(), OrientVertexType.CLASS_NAME);
+    Assert.assertEquals(v3.getClassName(), "V");
     Assert.assertEquals(v3.field("brand"), "fiat");
 
     ODocument v4 =
@@ -119,7 +117,7 @@ public class SQLCreateVertexAndEdgeTest {
             .execute();
     Assert.assertFalse(edges.isEmpty());
     ODocument e3 = ((OIdentifiable) edges.get(0)).getRecord();
-    Assert.assertEquals(e3.getClassName(), OrientEdgeType.CLASS_NAME);
+    Assert.assertEquals(e3.getClassName(), "E");
     Assert.assertEquals(e3.field("out"), v1);
     Assert.assertEquals(e3.field("in"), v4);
     Assert.assertEquals(e3.<Object>field("weight"), 3);
@@ -170,13 +168,13 @@ public class SQLCreateVertexAndEdgeTest {
       cmd += "commit retry 100\n";
       cmd += "return $e";
 
-      List<Vertex> result = database.query(new OSQLSynchQuery<Vertex>("select from V"));
+      List<OVertex> result = database.query(new OSQLSynchQuery<OVertex>("select from V"));
 
       int before = result.size();
 
       database.command(new OCommandScript("sql", cmd)).execute();
 
-      result = database.query(new OSQLSynchQuery<Vertex>("select from V"));
+      result = database.query(new OSQLSynchQuery<OVertex>("select from V"));
 
       Assert.assertEquals(result.size(), before + 1);
     } catch (Exception ex) {
@@ -191,7 +189,7 @@ public class SQLCreateVertexAndEdgeTest {
   public void testNewParser() {
     ODocument v1 = database.command(new OCommandSQL("create vertex")).execute();
 
-    Assert.assertEquals(v1.getClassName(), OrientVertexType.CLASS_NAME);
+    Assert.assertEquals(v1.getClassName(), "V");
 
     ORID vid = v1.getIdentity();
     // TODO remove this
@@ -253,7 +251,7 @@ public class SQLCreateVertexAndEdgeTest {
 
       List<?> edges =
           database.query(
-              new OSQLSynchQuery<Vertex>(
+              new OSQLSynchQuery<OVertex>(
                   "select from E where name = 'testSqlScriptThatDeletesEdge'"));
 
       Assert.assertEquals(edges.size(), 0);
