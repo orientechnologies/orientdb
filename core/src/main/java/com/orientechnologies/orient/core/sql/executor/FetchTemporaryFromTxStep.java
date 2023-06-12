@@ -10,13 +10,14 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.sql.executor.resultset.OCostMeasureResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Created by luigidellaquila on 12/01/17.
@@ -31,8 +32,7 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
 
   private Iterator<ORecord> txEntries;
   private Object order;
-
-  private long cost = 0;
+  private OCostMeasureResultSet cost;
 
   public FetchTemporaryFromTxStep(OCommandContext ctx, String className, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -42,56 +42,29 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    init();
-
-    return new OResultSet() {
-
-      @Override
-      public boolean hasNext() {
-        if (txEntries == null) {
-          return false;
-        }
-        return txEntries.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          if (txEntries == null) {
-            throw new IllegalStateException();
-          }
-          if (!txEntries.hasNext()) {
-            throw new IllegalStateException();
-          }
-          ORecord record = txEntries.next();
-
-          OResultInternal result = new OResultInternal(record);
-          ctx.setVariable("$current", result);
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    long cost = init();
+    Iterator<ORecord> data;
+    if (txEntries != null) {
+      data = txEntries;
+    } else {
+      data = Collections.emptyIterator();
+    }
+    OResultSet resultSet =
+        new OResultSetMapper(
+            new OIteratorResultSet(data),
+            (result) -> {
+              ctx.setVariable("$current", result);
+              return result;
+            });
+    if (profilingEnabled) {
+      this.cost = new OCostMeasureResultSet(resultSet, cost);
+      resultSet = this.cost;
+    }
+    return resultSet;
   }
 
-  private void init() {
+  private long init() {
+    long cost = 0;
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (this.txEntries == null) {
@@ -147,6 +120,7 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
         cost += (System.nanoTime() - begin);
       }
     }
+    return cost;
   }
 
   private boolean hasCluster(ORecord record) {
@@ -207,6 +181,11 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
+  }
+
+  @Override
+  public long getCost() {
+    return cost != null ? cost.getCost() : 0;
   }
 
   @Override

@@ -61,9 +61,6 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
         sendTimeout();
       }
       aggregate(lastRs.next(), ctx);
-      if (!lastRs.hasNext()) {
-        lastRs = prevStep.syncPull(ctx);
-      }
     }
     finalResults = new ArrayList<>();
     finalResults.addAll(aggregateResults.values());

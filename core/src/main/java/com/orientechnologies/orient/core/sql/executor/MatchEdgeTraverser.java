@@ -325,25 +325,11 @@ public class MatchEdgeTraverser {
   protected Iterable<OResultInternal> traversePatternEdge(
       OIdentifiable startingPoint, OCommandContext iCommandContext) {
 
-    Iterable possibleResults = null;
-    if (this.item.getFilter() != null) {
-      String alias = getEndpointAlias();
-      Object matchedNodes =
-          iCommandContext.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
-      if (matchedNodes != null) {
-        if (matchedNodes instanceof Iterable) {
-          possibleResults = (Iterable) matchedNodes;
-        } else {
-          possibleResults = Collections.singleton(matchedNodes);
-        }
-      }
-    }
-
     Object prevCurrent = iCommandContext.getVariable("$current");
     iCommandContext.setVariable("$current", startingPoint);
     Object qR;
     try {
-      qR = this.item.getMethod().execute(startingPoint, possibleResults, iCommandContext);
+      qR = this.item.getMethod().execute(startingPoint, iCommandContext);
     } finally {
       iCommandContext.setVariable("$current", prevCurrent);
     }

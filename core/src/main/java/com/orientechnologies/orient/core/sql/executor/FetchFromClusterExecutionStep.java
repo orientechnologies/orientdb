@@ -4,13 +4,14 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.sql.executor.resultset.OCostMeasureResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OInterruptResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
@@ -19,8 +20,7 @@ import com.orientechnologies.orient.core.sql.parser.OGtOperator;
 import com.orientechnologies.orient.core.sql.parser.OLeOperator;
 import com.orientechnologies.orient.core.sql.parser.OLtOperator;
 import com.orientechnologies.orient.core.sql.parser.ORid;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Iterator;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
@@ -33,7 +33,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   private Object order;
 
   private ORecordIteratorCluster iterator;
-  private long cost = 0;
+  private OCostMeasureResultSet costMeasure = null;
 
   public FetchFromClusterExecutionStep(
       int clusterId, OCommandContext ctx, boolean profilingEnabled) {
@@ -54,95 +54,39 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (iterator == null) {
-        long minClusterPosition = calculateMinClusterPosition();
-        long maxClusterPosition = calculateMaxClusterPosition();
-        iterator =
-            new ORecordIteratorCluster(
-                (ODatabaseDocumentInternal) ctx.getDatabase(),
-                clusterId,
-                minClusterPosition,
-                maxClusterPosition);
-        if (ORDER_DESC.equals(order)) {
-          iterator.last();
-        }
-      }
-      OResultSet rs =
-          new OResultSet() {
-
-            @Override
-            public boolean hasNext() {
-              if (timedOut) {
-                throw new OTimeoutException("Command execution timeout");
-              }
-              long begin = profilingEnabled ? System.nanoTime() : 0;
-              try {
-                if (ORDER_DESC.equals(order)) {
-                  return iterator.hasPrevious();
-                } else {
-                  return iterator.hasNext();
-                }
-              } finally {
-                if (profilingEnabled) {
-                  cost += (System.nanoTime() - begin);
-                }
-              }
-            }
-
-            @Override
-            public OResult next() {
-              if (timedOut) {
-                throw new OTimeoutException("Command execution timeout");
-              }
-              if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
-                throw new OCommandInterruptedException("The command has been interrupted");
-              }
-
-              long begin = profilingEnabled ? System.nanoTime() : 0;
-              try {
-                if (ORDER_DESC.equals(order) && !iterator.hasPrevious()) {
-                  throw new IllegalStateException();
-                } else if (!ORDER_DESC.equals(order) && !iterator.hasNext()) {
-                  throw new IllegalStateException();
-                }
-
-                ORecord record = null;
-                if (ORDER_DESC.equals(order)) {
-                  record = iterator.previous();
-                } else {
-                  record = iterator.next();
-                }
-                OResultInternal result = new OResultInternal();
-                result.element = record;
-                ctx.setVariable("$current", result);
-                return result;
-              } finally {
-                if (profilingEnabled) {
-                  cost += (System.nanoTime() - begin);
-                }
-              }
-            }
-
-            @Override
-            public void close() {}
-
-            @Override
-            public Optional<OExecutionPlan> getExecutionPlan() {
-              return Optional.empty();
-            }
-
-            @Override
-            public Map<String, Long> getQueryStats() {
-              return null;
-            }
-          };
-      return rs;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+    if (iterator == null) {
+      long minClusterPosition = calculateMinClusterPosition();
+      long maxClusterPosition = calculateMaxClusterPosition();
+      iterator =
+          new ORecordIteratorCluster(
+              (ODatabaseDocumentInternal) ctx.getDatabase(),
+              clusterId,
+              minClusterPosition,
+              maxClusterPosition);
+      if (ORDER_DESC.equals(order)) {
+        iterator.last();
       }
     }
+    Iterator<OIdentifiable> iter;
+    if (ORDER_DESC.equals(order)) {
+      iter = iterator.reversed();
+    } else {
+      iter = iterator;
+    }
+
+    OResultSet set =
+        new OResultSetMapper(
+            new OIteratorResultSet(iter),
+            (result) -> {
+              ctx.setVariable("$current", result);
+              return result;
+            });
+    set = new OInterruptResultSet(set);
+    if (profilingEnabled) {
+      costMeasure = new OCostMeasureResultSet(set, System.nanoTime() - begin);
+      set = costMeasure;
+    }
+    return set;
   }
 
   private long calculateMinClusterPosition() {
@@ -244,7 +188,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
   @Override
   public long getCost() {
-    return cost;
+    return costMeasure != null ? costMeasure.getCost() : 0;
   }
 
   @Override
