@@ -2,11 +2,10 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetEdgeTraverser;
 import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import com.orientechnologies.orient.core.sql.parser.OFieldMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.OMultiMatchPathItem;
-import java.util.Map;
-import java.util.Optional;
 
 /** @author Luigi Dell'Aquila */
 public class MatchStep extends AbstractExecutionStep {
@@ -36,48 +35,7 @@ public class MatchStep extends AbstractExecutionStep {
 
   public OResultSet createNextResultSet(OResult lastUpstreamRecord, OCommandContext ctx) {
     MatchEdgeTraverser trav = createTraverser(lastUpstreamRecord);
-    return new OResultSet() {
-      private OResult nextResult;
-
-      private void fetchNext() {
-        if (nextResult == null) {
-          while (trav.hasNext(ctx)) {
-            nextResult = trav.next(ctx);
-            if (nextResult != null) {
-              break;
-            }
-          }
-        }
-      }
-
-      @Override
-      public OResult next() {
-        fetchNext();
-        OResult result = nextResult;
-        ctx.setVariable("$matched", result);
-        nextResult = null;
-        return result;
-      }
-
-      @Override
-      public boolean hasNext() {
-        fetchNext();
-        return nextResult != null;
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public void close() {}
-    };
+    return new OResultSetEdgeTraverser(ctx, trav);
   }
 
   protected MatchEdgeTraverser createTraverser(OResult lastUpstreamRecord) {

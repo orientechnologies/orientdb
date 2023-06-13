@@ -8,14 +8,15 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterators;
+import java.util.stream.StreamSupport;
 
 /** Created by luigidellaquila on 21/02/17. */
 public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
@@ -23,19 +24,6 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
   private final OIdentifier targetCluster;
   private final String fromAlias;
   private final String toAlias;
-
-  // operation stuff
-
-  // iterator of FROM vertices
-  private Iterator fromIter;
-  // iterator of edges on current from
-  private Iterator<OEdge> currentFromEdgesIter;
-  private Iterator toIterator;
-
-  private Set<ORID> toList;
-  private boolean inited = false;
-
-  private OEdge nextEdge = null;
 
   public FetchEdgesFromToVerticesStep(
       String fromAlias,
@@ -54,77 +42,31 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    init();
-    return new OResultSet() {
 
-      @Override
-      public boolean hasNext() {
-        return nextEdge != null;
-      }
+    Iterator fromIter = loadFrom();
 
-      @Override
-      public OResult next() {
-        if (!hasNext()) {
-          throw new IllegalStateException();
-        }
-        OEdge edge = nextEdge;
-        fetchNextEdge();
-        OResultInternal result = new OResultInternal(edge);
-        return result;
-      }
+    Set<ORID> toList = loadTo();
 
-      @Override
-      public void close() {
-        if (fromIter instanceof OResultSet) {
-          ((OResultSet) fromIter).close();
-        }
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    OResultSet result =
+        new OSubResultsResultSet(
+            StreamSupport.stream(Spliterators.spliteratorUnknownSize(fromIter, 0), false)
+                .map((val) -> createResultSet(toList, val))
+                .iterator());
+    return result;
   }
 
-  private OVertex asVertex(Object currentFrom) {
-    if (currentFrom instanceof ORID) {
-      currentFrom = ((ORID) currentFrom).getRecord();
-    }
-    if (currentFrom instanceof OResult) {
-      return ((OResult) currentFrom).getVertex().orElse(null);
-    }
-    if (currentFrom instanceof OVertex) {
-      return (OVertex) currentFrom;
-    }
-    if (currentFrom instanceof OElement) {
-      return ((OElement) currentFrom).asVertex().orElse(null);
-    }
-    return null;
+  private OResultSet createResultSet(Set<ORID> toList, Object val) {
+    return new OIteratorResultSet(
+        StreamSupport.stream(this.loadNextResults(val).spliterator(), false)
+            .filter((e) -> filterResult(e, toList))
+            .map(
+                (edge) -> {
+                  return new OResultInternal(edge);
+                })
+            .iterator());
   }
 
-  private void init() {
-    synchronized (this) {
-      if (this.inited) {
-        return;
-      }
-      inited = true;
-    }
-
-    Object fromValues = null;
-
-    fromValues = ctx.getVariable(fromAlias);
-    if (fromValues instanceof Iterable && !(fromValues instanceof OIdentifiable)) {
-      fromValues = ((Iterable) fromValues).iterator();
-    } else if (!(fromValues instanceof Iterator) && fromValues != null) {
-      fromValues = Collections.singleton(fromValues).iterator();
-    }
-
+  private Set<ORID> loadTo() {
     Object toValues = null;
 
     toValues = ctx.getVariable(toAlias);
@@ -134,11 +76,9 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
       toValues = Collections.singleton(toValues).iterator();
     }
 
-    fromIter = (Iterator) fromValues;
-
     Iterator toIter = (Iterator) toValues;
     if (toIter != null) {
-      toList = new HashSet<ORID>();
+      final Set<ORID> toList = new HashSet<ORID>();
       while (toIter.hasNext()) {
         Object elem = toIter.next();
         if (elem instanceof OResult) {
@@ -153,44 +93,46 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
         ((OElement) elem).asVertex().ifPresent(x -> toList.add(x.getIdentity()));
       }
 
-      toIterator = toList.iterator();
+      return toList;
     }
-
-    fetchNextEdge();
+    return null;
   }
 
-  private void fetchNextEdge() {
-    this.nextEdge = null;
-    while (true) {
-      while (this.currentFromEdgesIter == null || !this.currentFromEdgesIter.hasNext()) {
-        if (this.fromIter == null) {
-          return;
-        }
-        if (this.fromIter.hasNext()) {
-          Object from = fromIter.next();
-          if (from instanceof OResult) {
-            from = ((OResult) from).toElement();
-          }
-          if (from instanceof OIdentifiable && !(from instanceof OElement)) {
-            from = ((OIdentifiable) from).getRecord();
-          }
-          if (from instanceof OElement && ((OElement) from).isVertex()) {
-            Iterable<OEdge> edges = ((OElement) from).asVertex().get().getEdges(ODirection.OUT);
-            currentFromEdgesIter = edges.iterator();
-          } else {
-            throw new OCommandExecutionException("Invalid vertex: " + from);
-          }
-        } else {
-          return;
-        }
+  private Iterator loadFrom() {
+    Object fromValues = null;
+
+    fromValues = ctx.getVariable(fromAlias);
+    if (fromValues instanceof Iterable && !(fromValues instanceof OIdentifiable)) {
+      fromValues = ((Iterable) fromValues).iterator();
+    } else if (!(fromValues instanceof Iterator)) {
+      fromValues = Collections.singleton(fromValues).iterator();
+    }
+    return (Iterator) fromValues;
+  }
+
+  private boolean filterResult(OEdge edge, Set<ORID> toList) {
+    if (toList == null || toList.contains(edge.getTo().getIdentity())) {
+      if (matchesClass(edge) && matchesCluster(edge)) {
+        return true;
+      } else {
+        return false;
       }
-      OEdge edge = this.currentFromEdgesIter.next();
-      if (toList == null || toList.contains(edge.getTo().getIdentity())) {
-        if (matchesClass(edge) && matchesCluster(edge)) {
-          this.nextEdge = edge;
-          return;
-        }
-      }
+    }
+    return true;
+  }
+
+  private Iterable<OEdge> loadNextResults(Object from) {
+    if (from instanceof OResult) {
+      from = ((OResult) from).toElement();
+    }
+    if (from instanceof OIdentifiable && !(from instanceof OElement)) {
+      from = ((OIdentifiable) from).getRecord();
+    }
+    if (from instanceof OElement && ((OElement) from).isVertex()) {
+      Iterable<OEdge> edges = ((OElement) from).asVertex().get().getEdges(ODirection.OUT);
+      return edges;
+    } else {
+      throw new OCommandExecutionException("Invalid vertex: " + from);
     }
   }
 
