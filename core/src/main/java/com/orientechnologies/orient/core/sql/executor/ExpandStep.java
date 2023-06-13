@@ -5,10 +5,10 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Expands a result-set. The pre-requisite is that the input element contains only one field (no
@@ -17,9 +17,6 @@ import java.util.Optional;
 public class ExpandStep extends AbstractExecutionStep {
 
   private long cost = 0;
-
-  private Iterator nextSubsequence = null;
-  private OResult nextElement = null;
 
   public ExpandStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -32,80 +29,38 @@ public class ExpandStep extends AbstractExecutionStep {
     }
     OResultSet resultSet = getPrev().get().syncPull(ctx);
 
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        if (nextElement == null) {
-          fetchNext(ctx, resultSet);
-        }
-        if (nextElement == null) {
-          return false;
-        }
-        return true;
-      }
+    OResultSet result =
+        new OSubResultsResultSet(
+            new Iterator<OResultSet>() {
+              private OResultSet next;
 
-      @Override
-      public OResult next() {
-        if (nextElement == null) {
-          fetchNext(ctx, resultSet);
-        }
-        if (nextElement == null) {
-          throw new IllegalStateException();
-        }
+              @Override
+              public boolean hasNext() {
+                fetchNext();
+                return next != null;
+              }
 
-        OResult result = nextElement;
-        nextElement = null;
-        fetchNext(ctx, resultSet);
-        return result;
-      }
+              private void fetchNext() {
+                if (next == null) {
+                  next = nextSequence(ctx, resultSet);
+                }
+              }
 
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+              @Override
+              public OResultSet next() {
+                if (!hasNext()) {
+                  throw new IllegalStateException();
+                }
+                OResultSet n = next;
+                this.next = null;
+                return n;
+              }
+            });
+    return result;
   }
 
-  private void fetchNext(OCommandContext ctx, OResultSet resultSet) {
-    do {
-      if (nextSubsequence != null && nextSubsequence.hasNext()) {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          Object nextElementObj = nextSubsequence.next();
-          if (nextElementObj instanceof OResult) {
-            nextElement = (OResult) nextElementObj;
-          } else if (nextElementObj instanceof OIdentifiable) {
-            ORecord record = ((OIdentifiable) nextElementObj).getRecord();
-            if (record == null) {
-              continue;
-            }
-            nextElement = new OResultInternal(record);
-          } else {
-            nextElement = new OResultInternal();
-            ((OResultInternal) nextElement).setProperty("value", nextElementObj);
-          }
-          break;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      if (nextSubsequence == null || !nextSubsequence.hasNext()) {
-        if (!resultSet.hasNext()) {
-          return;
-        }
-      }
-
+  public OResultSet nextSequence(OCommandContext ctx, OResultSet resultSet) {
+    while (resultSet.hasNext()) {
       OResult nextAggregateItem = resultSet.next();
       long begin = profilingEnabled ? System.nanoTime() : 0;
       try {
@@ -128,20 +83,21 @@ public class ExpandStep extends AbstractExecutionStep {
           }
           OResultInternal res = new OResultInternal(rec);
 
-          nextSubsequence = Collections.singleton(res).iterator();
+          return new OIteratorResultSet(Collections.singleton(res).iterator());
         } else if (projValue instanceof OResult) {
-          nextSubsequence = Collections.singleton((OResult) projValue).iterator();
+          return new OIteratorResultSet(Collections.singleton((OResult) projValue).iterator());
         } else if (projValue instanceof Iterator) {
-          nextSubsequence = (Iterator) projValue;
+          return new OIteratorResultSet((Iterator) projValue);
         } else if (projValue instanceof Iterable) {
-          nextSubsequence = ((Iterable) projValue).iterator();
+          return new OIteratorResultSet(((Iterable) projValue).iterator());
         }
       } finally {
         if (profilingEnabled) {
           cost += (System.nanoTime() - begin);
         }
       }
-    } while (true);
+    }
+    return null;
   }
 
   @Override

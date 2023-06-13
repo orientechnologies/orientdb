@@ -2,8 +2,8 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import java.util.Map;
-import java.util.Optional;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceResultSet;
 
 /** Created by luigidellaquila on 08/07/16. */
 public class EmptyDataGeneratorStep extends AbstractExecutionStep {
@@ -11,7 +11,6 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
   private long cost = 0;
 
   private int size;
-  private int served = 0;
 
   public EmptyDataGeneratorStep(int size, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -21,49 +20,20 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return served < size;
+    return new OLimitedResultSet(new OProduceResultSet(() -> create(ctx)), size);
+  }
+
+  private OResult create(OCommandContext ctx) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      OResultInternal result = new OResultInternal();
+      ctx.setVariable("$current", result);
+      return result;
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
       }
-
-      @Override
-      public OResult next() {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-
-          if (served < size) {
-            served++;
-            OResultInternal result = new OResultInternal();
-            ctx.setVariable("$current", result);
-            return result;
-          }
-          throw new IllegalStateException();
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-
-      @Override
-      public void reset() {
-        served = 0;
-      }
-    };
+    }
   }
 
   @Override
