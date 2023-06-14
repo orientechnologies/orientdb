@@ -5,7 +5,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResult;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceResultSet;
 
 /**
  * Returns an OResult containing metadata regarding the database
@@ -15,7 +16,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResul
 public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
 
   private long cost = 0;
-  private OResultSet resultSet = null;
 
   public FetchFromDistributedMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -23,11 +23,8 @@ public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (resultSet != null) {
-      getPrev().ifPresent(x -> x.syncPull(ctx));
-      resultSet = new OProduceOneResult(() -> produce(ctx), true);
-    }
-    return resultSet;
+    getPrev().ifPresent(x -> x.syncPull(ctx));
+    return new OLimitedResultSet(new OProduceResultSet(() -> produce(ctx)), 1);
   }
 
   private OResult produce(OCommandContext ctx) {
@@ -50,11 +47,6 @@ public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
         cost += (System.nanoTime() - begin);
       }
     }
-  }
-
-  @Override
-  public void reset() {
-    this.resultSet = null;
   }
 
   @Override

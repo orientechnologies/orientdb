@@ -7,7 +7,8 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResult;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceResultSet;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.ArrayList;
@@ -22,7 +23,6 @@ import java.util.List;
 public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
 
   private long cost = 0;
-  private OResultSet resultSet = null;
 
   public FetchFromStorageMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -30,11 +30,8 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (resultSet == null) {
-      getPrev().ifPresent(x -> x.syncPull(ctx));
-      resultSet = new OProduceOneResult(() -> produce(ctx), true);
-    }
-    return resultSet;
+    getPrev().ifPresent(x -> x.syncPull(ctx));
+    return new OLimitedResultSet(new OProduceResultSet(() -> produce(ctx)), 1);
   }
 
   private OResult produce(OCommandContext ctx) {

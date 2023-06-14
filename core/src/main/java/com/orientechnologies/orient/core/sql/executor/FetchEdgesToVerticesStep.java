@@ -7,22 +7,20 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /** Created by luigidellaquila on 21/02/17. */
 public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
   private final String toAlias;
   private final OIdentifier targetCluster;
   private final OIdentifier targetClass;
-
-  private boolean inited = false;
-  private Iterator toIter;
-  private OEdge nextEdge;
-  private Iterator<OEdge> currentToEdgesIter;
 
   public FetchEdgesToVerticesStep(
       String toAlias,
@@ -39,53 +37,12 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    init();
+    Stream<Object> source = init();
 
-    return new OResultSet() {
-
-      @Override
-      public boolean hasNext() {
-        return nextEdge != null;
-      }
-
-      @Override
-      public OResult next() {
-        if (!hasNext()) {
-          throw new IllegalStateException();
-        }
-        OEdge edge = nextEdge;
-        fetchNextEdge();
-        OResultInternal result = new OResultInternal(edge);
-        return result;
-      }
-
-      @Override
-      public void close() {
-        if (toIter instanceof OResultSet) {
-          ((OResultSet) toIter).close();
-        }
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    return new OSubResultsResultSet(source.map(this::edges).iterator());
   }
 
-  private void init() {
-    synchronized (this) {
-      if (this.inited) {
-        return;
-      }
-      inited = true;
-    }
-
+  private Stream<Object> init() {
     Object toValues = null;
 
     toValues = ctx.getVariable(toAlias);
@@ -95,41 +52,28 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
       toValues = Collections.singleton(toValues).iterator();
     }
 
-    this.toIter = (Iterator) toValues;
-
-    fetchNextEdge();
+    return StreamSupport.stream(Spliterators.spliteratorUnknownSize((Iterator) toValues, 0), false);
   }
 
-  private void fetchNextEdge() {
-    this.nextEdge = null;
-    while (true) {
-      while (this.currentToEdgesIter == null || !this.currentToEdgesIter.hasNext()) {
-        if (this.toIter == null) {
-          return;
-        }
-        if (this.toIter.hasNext()) {
-          Object from = toIter.next();
-          if (from instanceof OResult) {
-            from = ((OResult) from).toElement();
-          }
-          if (from instanceof OIdentifiable && !(from instanceof OElement)) {
-            from = ((OIdentifiable) from).getRecord();
-          }
-          if (from instanceof OElement && ((OElement) from).isVertex()) {
-            Iterable<OEdge> edges = ((OElement) from).asVertex().get().getEdges(ODirection.IN);
-            currentToEdgesIter = edges.iterator();
-          } else {
-            throw new OCommandExecutionException("Invalid vertex: " + from);
-          }
-        } else {
-          return;
-        }
-      }
-      OEdge edge = this.currentToEdgesIter.next();
-      if (matchesClass(edge) && matchesCluster(edge)) {
-        this.nextEdge = edge;
-        return;
-      }
+  private OResultSet edges(Object from) {
+    if (from instanceof OResult) {
+      from = ((OResult) from).toElement();
+    }
+    if (from instanceof OIdentifiable && !(from instanceof OElement)) {
+      from = ((OIdentifiable) from).getRecord();
+    }
+    if (from instanceof OElement && ((OElement) from).isVertex()) {
+      Iterable<OEdge> edges = ((OElement) from).asVertex().get().getEdges(ODirection.IN);
+      Stream<Object> stream =
+          StreamSupport.stream(edges.spliterator(), false)
+              .filter(
+                  (edge) -> {
+                    return matchesClass(edge) && matchesCluster(edge);
+                  })
+              .map((e) -> new OResultInternal(e));
+      return new OIteratorResultSet(stream.iterator());
+    } else {
+      throw new OCommandExecutionException("Invalid vertex: " + from);
     }
   }
 

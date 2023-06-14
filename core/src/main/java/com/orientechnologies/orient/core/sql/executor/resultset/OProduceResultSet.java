@@ -14,6 +14,9 @@ public class OProduceResultSet implements OResultSet {
   private OProduceResult producer;
 
   public OProduceResultSet(OProduceResult producer) {
+    if (producer == null) {
+      throw new NullPointerException();
+    }
     this.producer = producer;
   }
 

@@ -2,14 +2,14 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Collections;
 
 public class GuaranteeEmptyCountStep extends AbstractExecutionStep {
 
   private final OProjectionItem item;
-  private boolean executed = false;
 
   public GuaranteeEmptyCountStep(
       OProjectionItem oProjectionItem, OCommandContext ctx, boolean enableProfiling) {
@@ -23,49 +23,13 @@ public class GuaranteeEmptyCountStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OResultSet upstream = prev.get().syncPull(ctx);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        if (!executed) {
-          return true;
-        }
-
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        if (!hasNext()) {
-          throw new IllegalStateException();
-        }
-
-        try {
-          if (upstream.hasNext()) {
-            return upstream.next();
-          }
-          OResultInternal result = new OResultInternal();
-          result.setProperty(item.getProjectionAliasAsString(), 0L);
-          return result;
-        } finally {
-          executed = true;
-        }
-      }
-
-      @Override
-      public void close() {
-        prev.get().close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    if (upstream.hasNext()) {
+      return new OLimitedResultSet(upstream, 1);
+    } else {
+      OResultInternal result = new OResultInternal();
+      result.setProperty(item.getProjectionAliasAsString(), 0L);
+      return new OIteratorResultSet(Collections.singleton(result).iterator());
+    }
   }
 
   @Override

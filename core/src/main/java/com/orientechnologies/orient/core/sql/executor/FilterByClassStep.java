@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import java.util.Optional;
-
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -9,6 +7,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import java.util.Optional;
 
 /** Created by luigidellaquila on 01/03/17. */
 public class FilterByClassStep extends AbstractExecutionStep {

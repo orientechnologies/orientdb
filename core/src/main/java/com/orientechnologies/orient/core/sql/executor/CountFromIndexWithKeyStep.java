@@ -3,7 +3,8 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResult;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceResultSet;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
 
@@ -17,7 +18,6 @@ public class CountFromIndexWithKeyStep extends AbstractExecutionStep {
   private final String alias;
   private final OExpression keyValue;
 
-  private OResultSet resultSet = null;
   private long count = 0;
 
   /**
@@ -40,11 +40,8 @@ public class CountFromIndexWithKeyStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (resultSet == null) {
-      getPrev().ifPresent(x -> x.syncPull(ctx));
-      resultSet = new OProduceOneResult(() -> produce(ctx), true);
-    }
-    return resultSet;
+    getPrev().ifPresent(x -> x.syncPull(ctx));
+    return new OLimitedResultSet(new OProduceResultSet(() -> produce(ctx)), 1);
   }
 
   private OResult produce(OCommandContext ctx) {
@@ -60,11 +57,6 @@ public class CountFromIndexWithKeyStep extends AbstractExecutionStep {
     } finally {
       count += (System.nanoTime() - begin);
     }
-  }
-
-  @Override
-  public void reset() {
-    this.resultSet = null;
   }
 
   @Override

@@ -6,7 +6,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResult;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceResultSet;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
 /**
@@ -18,7 +19,6 @@ import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 public class CountFromClassStep extends AbstractExecutionStep {
   private final OIdentifier target;
   private final String alias;
-  private OResultSet resultSet = null;
   private long cost = 0;
 
   /**
@@ -36,11 +36,8 @@ public class CountFromClassStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (resultSet == null) {
-      getPrev().ifPresent(x -> x.syncPull(ctx));
-      resultSet = new OProduceOneResult(() -> produce(ctx), true);
-    }
-    return resultSet;
+    getPrev().ifPresent(x -> x.syncPull(ctx));
+    return new OLimitedResultSet(new OProduceResultSet(() -> produce(ctx)), 1);
   }
 
   private OResult produce(OCommandContext ctx) {
@@ -68,11 +65,6 @@ public class CountFromClassStep extends AbstractExecutionStep {
         cost += (System.nanoTime() - begin);
       }
     }
-  }
-
-  @Override
-  public void reset() {
-    resultSet = null;
   }
 
   @Override

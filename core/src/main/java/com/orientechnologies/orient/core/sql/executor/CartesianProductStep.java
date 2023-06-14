@@ -86,7 +86,6 @@ public class CartesianProductStep extends AbstractExecutionStep {
   }
 
   private void fetchFirstRecord() {
-    int i = 0;
     for (OResultSet rs : resultSets) {
       if (!rs.hasNext()) {
         nextRecord = null;

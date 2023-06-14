@@ -3,7 +3,8 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResult;
+import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceResultSet;
 
 /**
  * Returns an OResult containing metadata regarding the database
@@ -13,7 +14,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResul
 public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
 
   private long cost = 0;
-  private OResultSet resultSet = null;
 
   public FetchFromDatabaseMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -21,11 +21,8 @@ public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (resultSet == null) {
-      getPrev().ifPresent(x -> x.syncPull(ctx));
-      resultSet = new OProduceOneResult(() -> produce(ctx), true);
-    }
-    return resultSet;
+    getPrev().ifPresent(x -> x.syncPull(ctx));
+    return new OLimitedResultSet(new OProduceResultSet(() -> produce(ctx)), 1);
   }
 
   private OResult produce(OCommandContext ctx) {
@@ -76,11 +73,6 @@ public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public void reset() {
-    this.resultSet = null;
   }
 
   @Override
