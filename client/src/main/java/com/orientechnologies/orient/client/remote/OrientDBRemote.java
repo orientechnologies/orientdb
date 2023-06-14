@@ -131,6 +131,9 @@ public class OrientDBRemote implements OrientDBInternal {
     if (size == -1) {
       size = Runtime.getRuntime().availableProcessors() / 2;
     }
+    if (size <= 0) {
+      size = 1;
+    }
 
     executor =
         OThreadPoolExecutors.newScalingThreadPool(
