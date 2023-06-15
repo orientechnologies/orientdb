@@ -10,15 +10,16 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
 import com.orientechnologies.orient.core.sql.parser.OBatch;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Spliterators;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /** Created by luigidellaquila on 28/11/16. */
 public class CreateEdgesStep extends AbstractExecutionStep {
@@ -31,18 +32,6 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   private final Number wait;
   private final Number retry;
   private final OBatch batch;
-
-  // operation stuff
-  private Iterator fromIter;
-  private Iterator toIterator;
-  private OVertex currentFrom;
-  private OVertex currentTo;
-  private OEdge edgeToUpdate; // for upsert
-  private boolean finished = false;
-  private List toList = new ArrayList<>();
-  private OIndex uniqueIndex;
-
-  private boolean inited = false;
 
   private long cost = 0;
 
@@ -71,78 +60,34 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    init();
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        if (currentTo == null) {
-          loadNextFromTo();
-        }
-        return currentTo != null && !finished;
-      }
 
-      @Override
-      public OResult next() {
-        if (currentTo == null) {
-          loadNextFromTo();
-        }
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-
-          if (finished) {
-            throw new IllegalStateException();
-          }
-          if (currentTo == null) {
-            throw new OCommandExecutionException("Invalid TO vertex for edge");
-          }
-
-          OEdge edge =
-              edgeToUpdate != null
-                  ? edgeToUpdate
-                  : currentFrom.addEdge(currentTo, targetClass.getStringValue());
-
-          OUpdatableResult result = new OUpdatableResult(edge);
-          currentTo = null;
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    Iterator fromIter = fetchFroms();
+    List<Object> toList = fetchTo();
+    OIndex uniqueIndex = findIndex(this.uniqueIndexName);
+    Stream<OResult> stream =
+        StreamSupport.stream(Spliterators.spliteratorUnknownSize(fromIter, 0), false)
+            .map(this::asVertex)
+            .flatMap(
+                (currentFrom) -> {
+                  return mapTo(toList, (OVertex) currentFrom, uniqueIndex);
+                });
+    return new OIteratorResultSet(stream.iterator());
   }
 
-  private void init() {
-    synchronized (this) {
-      if (this.inited) {
-        return;
+  private OIndex findIndex(String uniqueIndexName) {
+    if (uniqueIndexName != null) {
+      final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+      OIndex uniqueIndex =
+          database.getMetadata().getIndexManagerInternal().getIndex(database, uniqueIndexName);
+      if (uniqueIndex == null) {
+        throw new OCommandExecutionException("Index not found for upsert: " + uniqueIndexName);
       }
-      inited = true;
+      return uniqueIndex;
     }
-    Object fromValues = ctx.getVariable(fromAlias.getStringValue());
-    if (fromValues instanceof Iterable && !(fromValues instanceof OIdentifiable)) {
-      fromValues = ((Iterable) fromValues).iterator();
-    } else if (!(fromValues instanceof Iterator)) {
-      fromValues = Collections.singleton(fromValues).iterator();
-    }
-    if (fromValues instanceof OInternalResultSet) {
-      fromValues = ((OInternalResultSet) fromValues).copy();
-    }
+    return null;
+  }
 
+  private List<Object> fetchTo() {
     Object toValues = ctx.getVariable(toAlias.getStringValue());
     if (toValues instanceof Iterable && !(toValues instanceof OIdentifiable)) {
       toValues = ((Iterable) toValues).iterator();
@@ -153,14 +98,6 @@ public class CreateEdgesStep extends AbstractExecutionStep {
       toValues = ((OInternalResultSet) toValues).copy();
     }
 
-    fromIter = (Iterator) fromValues;
-    if (fromIter instanceof OResultSet) {
-      try {
-        ((OResultSet) fromIter).reset();
-      } catch (Exception ignore) {
-      }
-    }
-
     Iterator toIter = (Iterator) toValues;
 
     if (toIter instanceof OResultSet) {
@@ -169,72 +106,56 @@ public class CreateEdgesStep extends AbstractExecutionStep {
       } catch (Exception ignore) {
       }
     }
+    List<Object> toList = new ArrayList<>();
     while (toIter != null && toIter.hasNext()) {
       toList.add(toIter.next());
     }
-
-    toIterator = toList.iterator();
-
-    currentFrom = fromIter != null && fromIter.hasNext() ? asVertex(fromIter.next()) : null;
-
-    if (uniqueIndexName != null) {
-      final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-      uniqueIndex =
-          database.getMetadata().getIndexManagerInternal().getIndex(database, uniqueIndexName);
-      if (uniqueIndex == null) {
-        throw new OCommandExecutionException("Index not found for upsert: " + uniqueIndexName);
-      }
-    }
+    return toList;
   }
 
-  protected void loadNextFromTo() {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      edgeToUpdate = null;
-      this.currentTo = null;
-      if (!toIterator.hasNext()) {
-        toIterator = toList.iterator();
-        if (!fromIter.hasNext()) {
-          finished = true;
-          return;
-        }
-        currentFrom = fromIter.hasNext() ? asVertex(fromIter.next()) : null;
-      }
-      if (toIterator.hasNext() || (toList.size() > 0 && fromIter.hasNext())) {
-        if (currentFrom == null) {
-          if (!fromIter.hasNext()) {
-            finished = true;
-            return;
-          }
-        }
-
-        Object obj = toIterator.next();
-
-        currentTo = asVertex(obj);
-        if (currentTo == null) {
-          throw new OCommandExecutionException("Invalid TO vertex for edge");
-        }
-
-        if (isUpsert()) {
-          OEdge existingEdge = getExistingEdge(currentFrom, currentTo);
-          if (existingEdge != null) {
-            edgeToUpdate = existingEdge;
-          }
-        }
-        return;
-
-      } else {
-        this.currentTo = null;
-        return;
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+  private Iterator fetchFroms() {
+    Object fromValues = ctx.getVariable(fromAlias.getStringValue());
+    if (fromValues instanceof Iterable && !(fromValues instanceof OIdentifiable)) {
+      fromValues = ((Iterable) fromValues).iterator();
+    } else if (!(fromValues instanceof Iterator)) {
+      fromValues = Collections.singleton(fromValues).iterator();
+    }
+    if (fromValues instanceof OInternalResultSet) {
+      fromValues = ((OInternalResultSet) fromValues).copy();
+    }
+    Iterator fromIter = (Iterator) fromValues;
+    if (fromIter instanceof OResultSet) {
+      try {
+        ((OResultSet) fromIter).reset();
+      } catch (Exception ignore) {
       }
     }
+    return fromIter;
   }
 
-  private OEdge getExistingEdge(OVertex currentFrom, OVertex currentTo) {
+  public Stream<OResult> mapTo(List<Object> to, OVertex currentFrom, OIndex uniqueIndex) {
+    return to.stream()
+        .map(
+            (obj) -> {
+              OVertex currentTo = asVertex(obj);
+              if (currentTo == null) {
+                throw new OCommandExecutionException("Invalid TO vertex for edge");
+              }
+              OEdge edgeToUpdate = null;
+              if (uniqueIndex != null) {
+                OEdge existingEdge = getExistingEdge(currentFrom, currentTo, uniqueIndex);
+                if (existingEdge != null) {
+                  edgeToUpdate = existingEdge;
+                }
+              }
+              if (edgeToUpdate == null) {
+                edgeToUpdate = currentFrom.addEdge(currentTo, targetClass.getStringValue());
+              }
+              return new OUpdatableResult(edgeToUpdate);
+            });
+  }
+
+  private OEdge getExistingEdge(OVertex currentFrom, OVertex currentTo, OIndex uniqueIndex) {
     Object key =
         uniqueIndex.getDefinition().createValue(currentFrom.getIdentity(), currentTo.getIdentity());
 
@@ -247,10 +168,6 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     }
 
     return null;
-  }
-
-  private boolean isUpsert() {
-    return uniqueIndex != null;
   }
 
   private OVertex asVertex(Object currentFrom) {
