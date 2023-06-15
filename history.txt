@@ -28,6 +28,27 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.20 - (June, 15 2023)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3220---15-June-2023
+
+## Core
+
+- Refactor in query engines for execution simplification
+- Corrected failure to wait for migration when storage is reused, issue #9974
+- Made last refresh time of views persistent
+- Minor fix in views to skip refresh of deleted views
+
+## Distributed
+
+- Reduced logging logic that is not used anymore
+- Inverted order of finish check for chunks to avoid leaving data in the buffer, issue #9985
+
+
+## Client
+- Make sure that client executor pool size never have size 0
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.19 - (May, 11 2023)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3219---11-May-2023
 
