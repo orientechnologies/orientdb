@@ -2,27 +2,15 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 /** Created by luigidellaquila on 11/10/16. */
 public class CartesianProductStep extends AbstractExecutionStep {
 
   private List<OInternalExecutionPlan> subPlans = new ArrayList<>();
-
-  private boolean inited = false;
-  private List<Boolean> completedPrefetch = new ArrayList<>();
-  private List<OInternalResultSet> preFetches =
-      new ArrayList<>(); // consider using resultset.reset() instead of buffering
-
-  private List<OResultSet> resultSets = new ArrayList<>();
-  private List<OResult> currentTuple = new ArrayList<>();
-
-  private OResultInternal nextRecord;
-
   private long cost = 0;
 
   public CartesianProductStep(OCommandContext ctx, boolean profilingEnabled) {
@@ -32,124 +20,53 @@ public class CartesianProductStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    init(ctx);
-    //    return new OInternalResultSet();
-    return new OResultSet() {
-
-      @Override
-      public boolean hasNext() {
-        return nextRecord != null;
-      }
-
-      @Override
-      public OResult next() {
-        if (nextRecord == null) {
-          throw new IllegalStateException();
-        }
-        OResultInternal result = nextRecord;
-        fetchNextRecord();
-        return result;
-      }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
-    //    throw new UnsupportedOperationException("cartesian product is not yet implemented in MATCH
-    // statement");
-    // TODO
-  }
-
-  private void init(OCommandContext ctx) {
-    if (subPlans == null || subPlans.isEmpty()) {
-      return;
-    }
-    if (inited) {
-      return;
-    }
-
-    for (OInternalExecutionPlan plan : subPlans) {
-      resultSets.add(new OLocalResultSet(plan));
-      this.preFetches.add(new OInternalResultSet());
-    }
-    fetchFirstRecord();
-    inited = true;
-  }
-
-  private void fetchFirstRecord() {
-    for (OResultSet rs : resultSets) {
-      if (!rs.hasNext()) {
-        nextRecord = null;
-        return;
-      }
-      OResult item = rs.next();
-      currentTuple.add(item);
-      completedPrefetch.add(false);
-    }
-    buildNextRecord();
-  }
-
-  private void fetchNextRecord() {
-    fetchNextRecord(resultSets.size() - 1);
-  }
-
-  private void fetchNextRecord(int level) {
-    OResultSet currentRs = resultSets.get(level);
-    if (!currentRs.hasNext()) {
-      if (level <= 0) {
-        nextRecord = null;
-        currentTuple = null;
-        return;
-      }
-      currentRs = preFetches.get(level);
-      currentRs.reset();
-      //noinspection resource
-      resultSets.set(level, currentRs);
-      currentTuple.set(level, currentRs.next());
-      fetchNextRecord(level - 1);
-    } else {
-      currentTuple.set(level, currentRs.next());
-    }
-    buildNextRecord();
-  }
-
-  private void buildNextRecord() {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (currentTuple == null) {
-        nextRecord = null;
-        return;
-      }
-      nextRecord = new OResultInternal();
-
-      for (int i = 0; i < this.currentTuple.size(); i++) {
-        OResult res = this.currentTuple.get(i);
-        for (String s : res.getPropertyNames()) {
-          nextRecord.setProperty(s, res.getProperty(s));
-        }
-        if (!completedPrefetch.get(i)) {
-          //noinspection resource
-          preFetches.get(i).add(res);
-          //noinspection resource
-          if (!resultSets.get(i).hasNext()) {
-            completedPrefetch.set(i, true);
-          }
-        }
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+    Stream<List<OResult>> stream = null;
+    for (OInternalExecutionPlan ep : this.subPlans) {
+      if (stream == null) {
+        stream =
+            ep.fetchNext().stream()
+                .map(
+                    (value) -> {
+                      List<OResult> result = new ArrayList<>();
+                      result.add(value);
+                      return result;
+                    });
+      } else {
+        stream =
+            stream.flatMap(
+                (val) -> {
+                  return ep.fetchNext().stream()
+                      .map(
+                          (value) -> {
+                            List<OResult> result = new ArrayList<>(val);
+                            result.add(value);
+                            return result;
+                          });
+                });
       }
     }
+    Stream<OResult> finalStream =
+        stream.map(
+            (path) -> {
+              long begin = profilingEnabled ? System.nanoTime() : 0;
+              try {
+
+                OResultInternal nextRecord = new OResultInternal();
+
+                for (int i = 0; i < path.size(); i++) {
+                  OResult res = path.get(i);
+                  for (String s : res.getPropertyNames()) {
+                    nextRecord.setProperty(s, res.getProperty(s));
+                  }
+                }
+                return nextRecord;
+              } finally {
+                if (profilingEnabled) {
+                  cost += (System.nanoTime() - begin);
+                }
+              }
+            });
+    return new OIteratorResultSet(finalStream.iterator());
   }
 
   public void addSubPlan(OInternalExecutionPlan subPlan) {
