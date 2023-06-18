@@ -345,7 +345,8 @@ public class OWALPageChangesPortion implements OWALChanges {
     }
   }
 
-  private void updateData(ByteBuffer pointer, int pageOffset,final byte[] data, final int offset,final int len) {
+  private void updateData(
+          ByteBuffer pointer, int pageOffset,final byte[] data, final int offset,final int len) {
     if (offset + len > data.length) {
       throw new IllegalArgumentException(
               "Provided data range exceeds data length offset - "
