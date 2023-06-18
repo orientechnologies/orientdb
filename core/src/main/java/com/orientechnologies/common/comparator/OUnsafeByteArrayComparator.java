@@ -69,7 +69,8 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
   }
 
   public int compare(byte[] arrayOne, byte[] arrayTwo) {
-    final int WORDS = arrayOne.length / LONG_SIZE;
+    final int commonLen = Math.min(arrayOne.length, arrayTwo.length);
+    final int WORDS = commonLen / LONG_SIZE;
 
     for (int i = 0; i < WORDS * LONG_SIZE; i += LONG_SIZE) {
       final long index = i + BYTE_ARRAY_OFFSET;
@@ -85,7 +86,7 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
       return lessThanUnsigned(wOne, wTwo) ? -1 : 1;
     }
 
-    for (int i = WORDS * LONG_SIZE; i < arrayOne.length; i++) {
+    for (int i = WORDS * LONG_SIZE; i < commonLen; i++) {
       int diff = compareUnsignedByte(arrayOne[i], arrayTwo[i]);
       if (diff != 0) return diff;
     }
