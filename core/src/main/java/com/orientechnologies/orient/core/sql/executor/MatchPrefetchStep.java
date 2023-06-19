@@ -13,8 +13,6 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
   private final String alias;
   private final OInternalExecutionPlan prefetchExecutionPlan;
 
-  private boolean executed = false;
-
   public MatchPrefetchStep(
       OCommandContext ctx,
       OInternalExecutionPlan prefetchExecPlan,
@@ -27,24 +25,20 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
 
   @Override
   public void reset() {
-    executed = false;
     prefetchExecutionPlan.reset(ctx);
   }
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (!executed) {
-      getPrev().ifPresent(x -> x.syncPull(ctx));
+    getPrev().ifPresent(x -> x.syncPull(ctx));
 
-      OResultSet nextBlock = prefetchExecutionPlan.start();
-      List<OResult> prefetched = new ArrayList<>();
-      while (nextBlock.hasNext()) {
-        prefetched.add(nextBlock.next());
-      }
-      prefetchExecutionPlan.close();
-      ctx.setVariable(PREFETCHED_MATCH_ALIAS_PREFIX + alias, prefetched);
-      executed = true;
+    OResultSet nextBlock = prefetchExecutionPlan.start();
+    List<OResult> prefetched = new ArrayList<>();
+    while (nextBlock.hasNext()) {
+      prefetched.add(nextBlock.next());
     }
+    prefetchExecutionPlan.close();
+    ctx.setVariable(PREFETCHED_MATCH_ALIAS_PREFIX + alias, prefetched);
     return new OInternalResultSet();
   }
 

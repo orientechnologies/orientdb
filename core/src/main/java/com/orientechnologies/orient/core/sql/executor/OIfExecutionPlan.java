@@ -76,23 +76,16 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
     return false;
   }
 
-  public boolean containsReturn() {
-    step.init(ctx);
-    return step.getPositivePlan().containsReturn()
-        || step.getNegativePlan() != null && step.getPositivePlan().containsReturn();
+  public OExecutionStepInternal executeUntilReturn() {
+    OScriptExecutionPlan plan = step.producePlan(ctx);
+    if (plan != null) {
+      return plan.executeUntilReturn();
+    } else {
+      return null;
+    }
   }
 
-  public OExecutionStepInternal executeUntilReturn() {
-    step.init(ctx);
-    if (step.condition.evaluate(new OResultInternal(), ctx)) {
-      step.initPositivePlan(ctx);
-      return step.positivePlan.executeUntilReturn();
-    } else {
-      step.initNegativePlan(ctx);
-      if (step.negativePlan != null) {
-        return step.negativePlan.executeUntilReturn();
-      }
-    }
-    return null;
+  public boolean containsReturn() {
+    return step.containsReturn();
   }
 }

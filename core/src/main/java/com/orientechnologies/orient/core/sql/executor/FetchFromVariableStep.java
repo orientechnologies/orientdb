@@ -11,8 +11,6 @@ import java.util.Iterator;
 public class FetchFromVariableStep extends AbstractExecutionStep {
 
   private String variableName;
-  private OResultSet source;
-  private boolean inited = false;
 
   public FetchFromVariableStep(String variableName, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -25,16 +23,8 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    init();
-    return source;
-  }
-
-  private void init() {
-    if (inited) {
-      return;
-    }
-    inited = true;
     Object src = ctx.getVariable(variableName);
+    OResultSet source;
     if (src instanceof OInternalResultSet) {
       source = ((OInternalResultSet) src).copy();
     } else if (src instanceof OResultSet) {
@@ -65,6 +55,7 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
     } else {
       throw new OCommandExecutionException("Cannot use variable as query target: " + variableName);
     }
+    return source;
   }
 
   @Override

@@ -4,16 +4,14 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
+import com.orientechnologies.orient.core.sql.parser.OIfStatement;
+import com.orientechnologies.orient.core.sql.parser.OReturnStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import java.util.List;
 
 /** Created by luigidellaquila on 19/09/16. */
 public class IfStep extends AbstractExecutionStep {
   protected OBooleanExpression condition;
-  protected OScriptExecutionPlan positivePlan;
-  protected OScriptExecutionPlan negativePlan;
-
-  private Boolean conditionMet = null;
   public List<OStatement> positiveStatements;
   public List<OStatement> negativeStatements;
 
@@ -23,39 +21,39 @@ public class IfStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    init(ctx);
-    if (conditionMet) {
-      initPositivePlan(ctx);
-      return positivePlan.start();
+    OScriptExecutionPlan plan = producePlan(ctx);
+    if (plan != null) {
+      return plan.start();
     } else {
-      initNegativePlan(ctx);
+      return new OInternalResultSet();
+    }
+  }
+
+  public OScriptExecutionPlan producePlan(OCommandContext ctx) {
+    if (condition.evaluate((OResult) null, ctx)) {
+      OScriptExecutionPlan positivePlan = initPositivePlan(ctx);
+      return positivePlan;
+    } else {
+      OScriptExecutionPlan negativePlan = initNegativePlan(ctx);
       if (negativePlan != null) {
-        return negativePlan.start();
+        return negativePlan;
       }
     }
-    return new OInternalResultSet();
+    return null;
   }
 
-  protected void init(OCommandContext ctx) {
-    if (conditionMet == null) {
-      conditionMet = condition.evaluate((OResult) null, ctx);
+  public OScriptExecutionPlan initPositivePlan(OCommandContext ctx) {
+    OBasicCommandContext subCtx1 = new OBasicCommandContext();
+    subCtx1.setParent(ctx);
+    OScriptExecutionPlan positivePlan = new OScriptExecutionPlan(subCtx1);
+    for (OStatement stm : positiveStatements) {
+      positivePlan.chain(stm.createExecutionPlan(subCtx1, profilingEnabled), profilingEnabled);
     }
+    return positivePlan;
   }
 
-  public void initPositivePlan(OCommandContext ctx) {
-    if (positivePlan == null) {
-      OBasicCommandContext subCtx1 = new OBasicCommandContext();
-      subCtx1.setParent(ctx);
-      OScriptExecutionPlan positivePlan = new OScriptExecutionPlan(subCtx1);
-      for (OStatement stm : positiveStatements) {
-        positivePlan.chain(stm.createExecutionPlan(subCtx1, profilingEnabled), profilingEnabled);
-      }
-      setPositivePlan(positivePlan);
-    }
-  }
-
-  public void initNegativePlan(OCommandContext ctx) {
-    if (negativePlan == null && negativeStatements != null) {
+  public OScriptExecutionPlan initNegativePlan(OCommandContext ctx) {
+    if (negativeStatements != null) {
       if (negativeStatements.size() > 0) {
         OBasicCommandContext subCtx2 = new OBasicCommandContext();
         subCtx2.setParent(ctx);
@@ -63,9 +61,10 @@ public class IfStep extends AbstractExecutionStep {
         for (OStatement stm : negativeStatements) {
           negativePlan.chain(stm.createExecutionPlan(subCtx2, profilingEnabled), profilingEnabled);
         }
-        setNegativePlan(negativePlan);
+        return negativePlan;
       }
     }
+    return null;
   }
 
   public OBooleanExpression getCondition() {
@@ -76,19 +75,35 @@ public class IfStep extends AbstractExecutionStep {
     this.condition = condition;
   }
 
-  public OScriptExecutionPlan getPositivePlan() {
-    return positivePlan;
+  public boolean containsReturn() {
+    if (positiveStatements != null) {
+      for (OStatement stm : positiveStatements) {
+        if (containsReturn(stm)) {
+          return true;
+        }
+      }
+    }
+    if (negativeStatements != null) {
+      for (OStatement stm : negativeStatements) {
+        if (containsReturn(stm)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
-  public void setPositivePlan(OScriptExecutionPlan positivePlan) {
-    this.positivePlan = positivePlan;
-  }
-
-  public OScriptExecutionPlan getNegativePlan() {
-    return negativePlan;
-  }
-
-  public void setNegativePlan(OScriptExecutionPlan negativePlan) {
-    this.negativePlan = negativePlan;
+  private boolean containsReturn(OStatement stm) {
+    if (stm instanceof OReturnStatement) {
+      return true;
+    }
+    if (stm instanceof OIfStatement) {
+      for (OStatement o : ((OIfStatement) stm).getStatements()) {
+        if (containsReturn(o)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.sql.parser.OSimpleExecStatement;
 /** Created by luigidellaquila on 11/10/16. */
 public class ReturnStep extends AbstractExecutionStep {
   private final OSimpleExecStatement statement;
-  private boolean executed = false;
 
   public ReturnStep(OSimpleExecStatement statement, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -16,10 +15,6 @@ public class ReturnStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (executed) {
-      return new OInternalResultSet();
-    }
-    executed = true;
     return statement.executeSimple(ctx);
   }
 }

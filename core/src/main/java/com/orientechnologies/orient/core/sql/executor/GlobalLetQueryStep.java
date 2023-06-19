@@ -16,8 +16,6 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
   private final OIdentifier varName;
   private final OInternalExecutionPlan subExecutionPlan;
 
-  private boolean executed = false;
-
   public GlobalLetQueryStep(
       OIdentifier varName,
       OStatement query,
@@ -50,11 +48,7 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
   }
 
   private void calculate(OCommandContext ctx) {
-    if (executed) {
-      return;
-    }
     ctx.setVariable(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
-    executed = true;
   }
 
   private List<OResult> toList(OLocalResultSet oLocalResultSet) {
