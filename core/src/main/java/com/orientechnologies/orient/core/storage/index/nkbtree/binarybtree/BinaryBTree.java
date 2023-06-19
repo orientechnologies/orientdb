@@ -35,7 +35,7 @@ public final class BinaryBTree extends ODurableComponent {
   private static final byte[] ROOT_SMALLEST_UPPER_BOUND = new byte[] {ALWAYS_GREATER_PREFIX};
 
   private static final Comparator<byte[]> COMPARATOR =
-          OComparatorFactory.INSTANCE.getComparator(byte[].class);
+      OComparatorFactory.INSTANCE.getComparator(byte[].class);
 
   private final int spliteratorCacheSize;
   private final int maxKeySize;
@@ -44,12 +44,12 @@ public final class BinaryBTree extends ODurableComponent {
   private long fileId;
 
   public BinaryBTree(
-          final int spliteratorCacheSize,
-          final int maxKeySize,
-          final int maxPathLength,
-          final OAbstractPaginatedStorage storage,
-          final String name,
-          final String extension) {
+      final int spliteratorCacheSize,
+      final int maxKeySize,
+      final int maxPathLength,
+      final OAbstractPaginatedStorage storage,
+      final String name,
+      final String extension) {
     super(storage, name, extension, name + extension);
 
     this.spliteratorCacheSize = spliteratorCacheSize;
@@ -59,31 +59,31 @@ public final class BinaryBTree extends ODurableComponent {
 
   public void create(final OAtomicOperation atomicOperation) {
     executeInsideComponentOperation(
-            atomicOperation,
-            operation -> {
-              acquireExclusiveLock();
-              try {
-                fileId = addFile(atomicOperation, getFullName());
+        atomicOperation,
+        operation -> {
+          acquireExclusiveLock();
+          try {
+            fileId = addFile(atomicOperation, getFullName());
 
-                final OCacheEntry entryPointCacheEntry = addPage(atomicOperation, fileId);
-                try {
-                  final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
-                  entryPoint.init();
-                } finally {
-                  releasePageFromWrite(atomicOperation, entryPointCacheEntry);
-                }
+            final OCacheEntry entryPointCacheEntry = addPage(atomicOperation, fileId);
+            try {
+              final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
+              entryPoint.init();
+            } finally {
+              releasePageFromWrite(atomicOperation, entryPointCacheEntry);
+            }
 
-                final OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId);
-                try {
-                  final Bucket rootBucket = new Bucket(rootCacheEntry);
-                  rootBucket.init(true);
-                } finally {
-                  releasePageFromWrite(atomicOperation, rootCacheEntry);
-                }
-              } finally {
-                releaseExclusiveLock();
-              }
-            });
+            final OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId);
+            try {
+              final Bucket rootBucket = new Bucket(rootCacheEntry);
+              rootBucket.init(true);
+            } finally {
+              releasePageFromWrite(atomicOperation, rootCacheEntry);
+            }
+          } finally {
+            releaseExclusiveLock();
+          }
+        });
   }
 
   public ORID get(byte[] key) {
@@ -99,7 +99,7 @@ public final class BinaryBTree extends ODurableComponent {
 
         final long pageIndex = bucketSearchResult.pageIndex;
         final OCacheEntry keyBucketCacheEntry =
-                loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            loadPageForRead(atomicOperation, fileId, pageIndex, false);
         try {
           final Bucket keyBucket = new Bucket(keyBucketCacheEntry);
           return keyBucket.getValue(bucketSearchResult.itemIndex);
@@ -111,16 +111,16 @@ public final class BinaryBTree extends ODurableComponent {
       }
     } catch (final IOException e) {
       throw OException.wrapException(
-              new BinaryBTreeException(
-                      "Error during retrieving  of binary btree with name " + getName(), this),
-              e);
+          new BinaryBTreeException(
+              "Error during retrieving  of binary btree with name " + getName(), this),
+          e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   private BucketSearchResult findBucket(final byte[] key, final OAtomicOperation atomicOperation)
-          throws IOException {
+      throws IOException {
     long pageIndex = ROOT_INDEX;
 
     int depth = 0;
@@ -134,9 +134,9 @@ public final class BinaryBTree extends ODurableComponent {
       depth++;
       if (depth > maxPathLength) {
         throw new BinaryBTreeException(
-                "We reached max level of depth of binary BTree but still found nothing, "
-                        + "seems like tree is in corrupted state. You should rebuild index related to given query.",
-                this);
+            "We reached max level of depth of binary BTree but still found nothing, "
+                + "seems like tree is in corrupted state. You should rebuild index related to given query.",
+            this);
       }
 
       final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
@@ -160,15 +160,15 @@ public final class BinaryBTree extends ODurableComponent {
             pageIndex = bucket.getRight(insertionIndex - 1);
 
             bucketLLB =
-                    calculateLargestLowerBoundary(
-                            insertionIndex - 1, bucket, keyPrefix, bucketLLB, false);
+                calculateLargestLowerBoundary(
+                    insertionIndex - 1, bucket, keyPrefix, bucketLLB, false);
           } else {
             pageIndex = bucket.getLeft(insertionIndex);
 
             bucketLLB =
-                    calculateLargestLowerBoundary(insertionIndex, bucket, keyPrefix, bucketLLB, true);
+                calculateLargestLowerBoundary(insertionIndex, bucket, keyPrefix, bucketLLB, true);
             bucketSUB =
-                    calculateSmallestUpperBoundary(insertionIndex, bucket, keyPrefix, bucketSUB, true);
+                calculateSmallestUpperBoundary(insertionIndex, bucket, keyPrefix, bucketSUB, true);
           }
         }
 
@@ -180,7 +180,7 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private byte[] extractCommonPrefix(
-          final byte[] largestLowerBound, final byte[] smallestUpperBound) {
+      final byte[] largestLowerBound, final byte[] smallestUpperBound) {
     final int commonLen = Math.min(largestLowerBound.length, smallestUpperBound.length);
     int keyPrefixLen = 0;
     for (int i = 0; i < commonLen; i++) {
@@ -192,8 +192,8 @@ public final class BinaryBTree extends ODurableComponent {
     }
 
     if (keyPrefixLen < commonLen
-            && smallestUpperBound.length == keyPrefixLen + 1
-            && smallestUpperBound[keyPrefixLen] - largestLowerBound[keyPrefixLen] == 1) {
+        && smallestUpperBound.length == keyPrefixLen + 1
+        && smallestUpperBound[keyPrefixLen] - largestLowerBound[keyPrefixLen] == 1) {
       keyPrefixLen++;
     }
 
@@ -203,7 +203,7 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private UpdateBucketSearchResult findBucketForUpdate(
-          final byte[] key, final OAtomicOperation atomicOperation) throws IOException {
+      final byte[] key, final OAtomicOperation atomicOperation) throws IOException {
     long pageIndex = ROOT_INDEX;
 
     final ArrayList<Long> path = new ArrayList<>(8);
@@ -220,9 +220,9 @@ public final class BinaryBTree extends ODurableComponent {
     while (true) {
       if (path.size() > maxPathLength) {
         throw new BinaryBTreeException(
-                "We reached max level of depth of binary BTree but still found nothing,"
-                        + " seems like tree is in corrupted state. You should rebuild index related to given query.",
-                this);
+            "We reached max level of depth of binary BTree but still found nothing,"
+                + " seems like tree is in corrupted state. You should rebuild index related to given query.",
+            this);
       }
 
       path.add(pageIndex);
@@ -239,7 +239,7 @@ public final class BinaryBTree extends ODurableComponent {
         if (bucket.isLeaf()) {
           itemIndexes.add(index);
           return new UpdateBucketSearchResult(
-                  itemIndexes, keyPrefixes, largestLowerBounds, smallestUpperBounds, path, index);
+              itemIndexes, keyPrefixes, largestLowerBounds, smallestUpperBounds, path, index);
         }
 
         if (index >= 0) {
@@ -256,15 +256,15 @@ public final class BinaryBTree extends ODurableComponent {
             pageIndex = bucket.getRight(insertionIndex - 1);
 
             bucketLLB =
-                    calculateLargestLowerBoundary(
-                            insertionIndex - 1, bucket, keyPrefix, bucketLLB, false);
+                calculateLargestLowerBoundary(
+                    insertionIndex - 1, bucket, keyPrefix, bucketLLB, false);
           } else {
             pageIndex = bucket.getLeft(insertionIndex);
 
             bucketLLB =
-                    calculateLargestLowerBoundary(insertionIndex, bucket, keyPrefix, bucketLLB, true);
+                calculateLargestLowerBoundary(insertionIndex, bucket, keyPrefix, bucketLLB, true);
             bucketSUB =
-                    calculateSmallestUpperBoundary(insertionIndex, bucket, keyPrefix, bucketSUB, true);
+                calculateSmallestUpperBoundary(insertionIndex, bucket, keyPrefix, bucketSUB, true);
           }
 
           itemIndexes.add(insertionIndex);
@@ -278,7 +278,7 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private Optional<RemoveSearchResult> findBucketForRemove(
-          final byte[] key, final OAtomicOperation atomicOperation) throws IOException {
+      final byte[] key, final OAtomicOperation atomicOperation) throws IOException {
 
     final ArrayList<RemovalPathItem> path = new ArrayList<>(8);
     final ArrayList<byte[]> keyPrefixes = new ArrayList<>(8);
@@ -297,9 +297,9 @@ public final class BinaryBTree extends ODurableComponent {
       depth++;
       if (depth > maxPathLength) {
         throw new BinaryBTreeException(
-                "We reached max level of depth of BTree but still found nothing, seems like tree is in corrupted state."
-                        + " You should rebuild index related to given query.",
-                this);
+            "We reached max level of depth of BTree but still found nothing, seems like tree is in corrupted state."
+                + " You should rebuild index related to given query.",
+            this);
       }
 
       final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
@@ -314,14 +314,14 @@ public final class BinaryBTree extends ODurableComponent {
           }
 
           return Optional.of(
-                  new RemoveSearchResult(
-                          pageIndex,
-                          index,
-                          path,
-                          largestLowerBoundaries,
-                          smallestUpperBoundaries,
-                          keyPrefixes,
-                          keyPrefix.length));
+              new RemoveSearchResult(
+                  pageIndex,
+                  index,
+                  path,
+                  largestLowerBoundaries,
+                  smallestUpperBoundaries,
+                  keyPrefixes,
+                  keyPrefix.length));
         }
 
         if (index >= 0) {
@@ -346,7 +346,7 @@ public final class BinaryBTree extends ODurableComponent {
 
             pageIndex = bucket.getRight(insertionIndex - 1);
 
-            bucketLLB = calculateLargestLowerBoundary(index, bucket, keyPrefix, bucketLLB, false);
+            bucketLLB = calculateLargestLowerBoundary(insertionIndex - 1, bucket, keyPrefix, bucketLLB, false);
           } else {
             path.add(new RemovalPathItem(pageIndex, insertionIndex, true));
 
@@ -356,8 +356,8 @@ public final class BinaryBTree extends ODurableComponent {
 
             pageIndex = bucket.getLeft(insertionIndex);
 
-            bucketLLB = calculateLargestLowerBoundary(index, bucket, keyPrefix, bucketLLB, true);
-            bucketSUB = calculateSmallestUpperBoundary(index, bucket, keyPrefix, bucketSUB, true);
+            bucketLLB = calculateLargestLowerBoundary(insertionIndex, bucket, keyPrefix, bucketLLB, true);
+            bucketSUB = calculateSmallestUpperBoundary(insertionIndex, bucket, keyPrefix, bucketSUB, true);
           }
         }
 
@@ -369,10 +369,10 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   public boolean validatedPut(
-          OAtomicOperation atomicOperation,
-          final byte[] key,
-          final ORID value,
-          final OBaseIndexEngine.Validator<byte[], ORID> validator) {
+      OAtomicOperation atomicOperation,
+      final byte[] key,
+      final ORID value,
+      final OBaseIndexEngine.Validator<byte[], ORID> validator) {
     return update(atomicOperation, key, value, validator);
   }
 
@@ -381,176 +381,176 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private boolean update(
-          final OAtomicOperation atomicOperation,
-          final byte[] key,
-          final ORID rid,
-          final OBaseIndexEngine.Validator<byte[], ORID> validator) {
+      final OAtomicOperation atomicOperation,
+      final byte[] key,
+      final ORID rid,
+      final OBaseIndexEngine.Validator<byte[], ORID> validator) {
     return calculateInsideComponentOperation(
-            atomicOperation,
-            operation -> {
-              acquireExclusiveLock();
+        atomicOperation,
+        operation -> {
+          acquireExclusiveLock();
+          try {
+            ORID value = rid;
+
+            if (key.length + OShortSerializer.SHORT_SIZE > maxKeySize) {
+              throw new OTooBigIndexKeyException(
+                  "Key size is more than allowed, operation was canceled. Current key size "
+                      + (key.length + OShortSerializer.SHORT_SIZE)
+                      + ", allowed  "
+                      + maxKeySize,
+                  getName());
+            }
+            UpdateBucketSearchResult bucketSearchResult = findBucketForUpdate(key, atomicOperation);
+
+            OCacheEntry keyBucketCacheEntry =
+                loadPageForWrite(
+                    atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false, true);
+            Bucket keyBucket = new Bucket(keyBucketCacheEntry);
+            final byte[] oldRawValue;
+            if (bucketSearchResult.itemIndex > -1) {
+              oldRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex);
+            } else {
+              oldRawValue = null;
+            }
+            final ORID oldValue;
+            if (oldRawValue == null) {
+              oldValue = null;
+            } else {
+              final int clusterId = OShortSerializer.INSTANCE.deserializeNative(oldRawValue, 0);
+              final long clusterPosition =
+                  OLongSerializer.INSTANCE.deserializeNative(
+                      oldRawValue, OShortSerializer.SHORT_SIZE);
+              oldValue = new ORecordId(clusterId, clusterPosition);
+            }
+
+            if (validator != null) {
+              boolean failure = true; // assuming validation throws by default
+              boolean ignored = false;
+
               try {
-                ORID value = rid;
 
-                if (key.length + OShortSerializer.SHORT_SIZE > maxKeySize) {
-                  throw new OTooBigIndexKeyException(
-                          "Key size is more than allowed, operation was canceled. Current key size "
-                                  + (key.length + OShortSerializer.SHORT_SIZE)
-                                  + ", allowed  "
-                                  + maxKeySize,
-                          getName());
-                }
-                UpdateBucketSearchResult bucketSearchResult = findBucketForUpdate(key, atomicOperation);
-
-                OCacheEntry keyBucketCacheEntry =
-                        loadPageForWrite(
-                                atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false, true);
-                Bucket keyBucket = new Bucket(keyBucketCacheEntry);
-                final byte[] oldRawValue;
-                if (bucketSearchResult.itemIndex > -1) {
-                  oldRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex);
-                } else {
-                  oldRawValue = null;
-                }
-                final ORID oldValue;
-                if (oldRawValue == null) {
-                  oldValue = null;
-                } else {
-                  final int clusterId = OShortSerializer.INSTANCE.deserializeNative(oldRawValue, 0);
-                  final long clusterPosition =
-                          OLongSerializer.INSTANCE.deserializeNative(
-                                  oldRawValue, OShortSerializer.SHORT_SIZE);
-                  oldValue = new ORecordId(clusterId, clusterPosition);
+                final Object result = validator.validate(key, oldValue, value);
+                if (result == OBaseIndexEngine.Validator.IGNORE) {
+                  ignored = true;
+                  failure = false;
+                  return false;
                 }
 
-                if (validator != null) {
-                  boolean failure = true; // assuming validation throws by default
-                  boolean ignored = false;
-
-                  try {
-
-                    final Object result = validator.validate(key, oldValue, value);
-                    if (result == OBaseIndexEngine.Validator.IGNORE) {
-                      ignored = true;
-                      failure = false;
-                      return false;
-                    }
-
-                    value = (ORID) result;
-                    failure = false;
-                  } finally {
-                    if (failure || ignored) {
-                      releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
-                    }
-                  }
+                value = (ORID) result;
+                failure = false;
+              } finally {
+                if (failure || ignored) {
+                  releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
                 }
+              }
+            }
 
-                final byte[] serializedValue = serializeValue(value);
+            final byte[] serializedValue = serializeValue(value);
 
-                int insertionIndex;
-                final int sizeDiff;
-                if (bucketSearchResult.itemIndex >= 0) {
-                  assert oldRawValue != null;
+            int insertionIndex;
+            final int sizeDiff;
+            if (bucketSearchResult.itemIndex >= 0) {
+              assert oldRawValue != null;
 
-                  final int keyPrefixLen =
-                          bucketSearchResult.keyPrefixes.get(bucketSearchResult.keyPrefixes.size() - 1)
-                                  .length;
+              final int keyPrefixLen =
+                  bucketSearchResult.keyPrefixes.get(bucketSearchResult.keyPrefixes.size() - 1)
+                      .length;
 
-                  if (oldRawValue.length == serializedValue.length) {
-                    keyBucket.updateValue(
-                            bucketSearchResult.itemIndex, serializedValue, key.length - keyPrefixLen);
-                    releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
-                    return true;
-                  } else {
-                    keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, key.length - keyPrefixLen);
-                    insertionIndex = bucketSearchResult.itemIndex;
-                    sizeDiff = 0;
-                  }
-                } else {
-                  insertionIndex = -bucketSearchResult.itemIndex - 1;
-                  sizeDiff = 1;
-                }
+              if (oldRawValue.length == serializedValue.length) {
+                keyBucket.updateValue(
+                    bucketSearchResult.itemIndex, serializedValue, key.length - keyPrefixLen);
+                releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
+                return true;
+              } else {
+                keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, key.length - keyPrefixLen);
+                insertionIndex = bucketSearchResult.itemIndex;
+                sizeDiff = 0;
+              }
+            } else {
+              insertionIndex = -bucketSearchResult.itemIndex - 1;
+              sizeDiff = 1;
+            }
 
-                byte[] keyPrefix =
-                        bucketSearchResult.keyPrefixes.get(bucketSearchResult.keyPrefixes.size() - 1);
-                if (!keyBucket.addLeafEntry(
-                        insertionIndex,
-                        key,
-                        keyPrefix.length,
-                        key.length - keyPrefix.length,
-                        serializedValue)) {
-                  final SplitBucketResult splitBucketResult =
-                          splitBucket(
-                                  keyBucket,
-                                  keyBucketCacheEntry,
-                                  bucketSearchResult.path,
-                                  bucketSearchResult.insertionIndexes,
-                                  bucketSearchResult.keyPrefixes,
-                                  bucketSearchResult.largestLowerBounds,
-                                  bucketSearchResult.smallestUpperBounds,
-                                  insertionIndex,
-                                  key,
-                                  atomicOperation);
+            byte[] keyPrefix =
+                bucketSearchResult.keyPrefixes.get(bucketSearchResult.keyPrefixes.size() - 1);
+            if (!keyBucket.addLeafEntry(
+                insertionIndex,
+                key,
+                keyPrefix.length,
+                key.length - keyPrefix.length,
+                serializedValue)) {
+              final SplitBucketResult splitBucketResult =
+                  splitBucket(
+                      keyBucket,
+                      keyBucketCacheEntry,
+                      bucketSearchResult.path,
+                      bucketSearchResult.insertionIndexes,
+                      bucketSearchResult.keyPrefixes,
+                      bucketSearchResult.largestLowerBounds,
+                      bucketSearchResult.smallestUpperBounds,
+                      insertionIndex,
+                      key,
+                      atomicOperation);
 
-                  insertionIndex = splitBucketResult.insertionIndex;
-                  keyPrefix = splitBucketResult.keyPrefix;
+              insertionIndex = splitBucketResult.insertionIndex;
+              keyPrefix = splitBucketResult.keyPrefix;
 
-                  final long pageIndex = splitBucketResult.pageIndex;
+              final long pageIndex = splitBucketResult.pageIndex;
 
-                  if (pageIndex != keyBucketCacheEntry.getPageIndex()) {
-                    releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
-
-                    keyBucketCacheEntry =
-                            loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
-                  }
-
-                  keyBucket = new Bucket(keyBucketCacheEntry);
-                  final boolean added =
-                          keyBucket.addLeafEntry(
-                                  insertionIndex,
-                                  key,
-                                  keyPrefix.length,
-                                  key.length - keyPrefix.length,
-                                  serializedValue);
-                  if (!added) {
-                    throw new BinaryBTreeException("Index is broken and needs to be rebuilt", this);
-                  }
-                }
-
+              if (pageIndex != keyBucketCacheEntry.getPageIndex()) {
                 releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
-                if (sizeDiff != 0) {
-                  updateSize(sizeDiff, atomicOperation);
-                }
-
-                return true;
-              } finally {
-                releaseExclusiveLock();
+                keyBucketCacheEntry =
+                    loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
               }
-            });
+
+              keyBucket = new Bucket(keyBucketCacheEntry);
+              final boolean added =
+                  keyBucket.addLeafEntry(
+                      insertionIndex,
+                      key,
+                      keyPrefix.length,
+                      key.length - keyPrefix.length,
+                      serializedValue);
+              if (!added) {
+                throw new BinaryBTreeException("Index is broken and needs to be rebuilt", this);
+              }
+            }
+
+            releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
+
+            if (sizeDiff != 0) {
+              updateSize(sizeDiff, atomicOperation);
+            }
+
+            return true;
+          } finally {
+            releaseExclusiveLock();
+          }
+        });
   }
 
   private byte[] serializeValue(ORID value) {
     final byte[] serializedValue =
-            new byte[OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE];
+        new byte[OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE];
     OShortSerializer.INSTANCE.serializeNative((short) value.getClusterId(), serializedValue, 0);
     OLongSerializer.INSTANCE.serializeNative(
-            value.getClusterPosition(), serializedValue, OShortSerializer.SHORT_SIZE);
+        value.getClusterPosition(), serializedValue, OShortSerializer.SHORT_SIZE);
     return serializedValue;
   }
 
   private SplitBucketResult splitBucket(
-          final Bucket bucketToSplit,
-          final OCacheEntry entryToSplit,
-          final List<Long> path,
-          final List<Integer> insertionIndexes,
-          final List<byte[]> keyPrefixes,
-          final List<byte[]> largestLowerBounds,
-          final List<byte[]> smallestUpperBounds,
-          final int keyIndex,
-          final byte[] key,
-          final OAtomicOperation atomicOperation)
-          throws IOException {
+      final Bucket bucketToSplit,
+      final OCacheEntry entryToSplit,
+      final List<Long> path,
+      final List<Integer> insertionIndexes,
+      final List<byte[]> keyPrefixes,
+      final List<byte[]> largestLowerBounds,
+      final List<byte[]> smallestUpperBounds,
+      final int keyIndex,
+      final byte[] key,
+      final OAtomicOperation atomicOperation)
+      throws IOException {
     final boolean splitLeaf = bucketToSplit.isLeaf();
     final int bucketSize = bucketToSplit.size();
 
@@ -635,49 +635,49 @@ public final class BinaryBTree extends ODurableComponent {
 
     if (entryToSplit.getPageIndex() != ROOT_INDEX) {
       return splitNonRootBucket(
-              path,
-              insertionIndexes,
-              leftEntries,
-              rightEntries,
-              keyPrefixes,
-              largestLowerBounds,
-              smallestUpperBounds,
-              keyIndex,
-              entryToSplit.getPageIndex(),
-              bucketToSplit,
-              splitLeaf,
-              indexToSplit,
-              separationKey,
-              atomicOperation);
+          path,
+          insertionIndexes,
+          leftEntries,
+          rightEntries,
+          keyPrefixes,
+          largestLowerBounds,
+          smallestUpperBounds,
+          keyIndex,
+          entryToSplit.getPageIndex(),
+          bucketToSplit,
+          splitLeaf,
+          indexToSplit,
+          separationKey,
+          atomicOperation);
     } else {
       return splitRootBucket(
-              keyIndex,
-              entryToSplit,
-              splitLeaf,
-              indexToSplit,
-              separationKey,
-              leftEntries,
-              rightEntries,
-              atomicOperation);
+          keyIndex,
+          entryToSplit,
+          splitLeaf,
+          indexToSplit,
+          separationKey,
+          leftEntries,
+          rightEntries,
+          atomicOperation);
     }
   }
 
   private SplitBucketResult splitNonRootBucket(
-          final List<Long> path,
-          final List<Integer> insertionIndexes,
-          final List<Bucket.Entry> leftEntries,
-          final List<Bucket.Entry> rightEntries,
-          final List<byte[]> keyPrefixes,
-          final List<byte[]> largestLowerBounds,
-          final List<byte[]> smallestUpperBounds,
-          final int keyIndex,
-          final long pageIndex,
-          final Bucket bucketToSplit,
-          final boolean splitLeaf,
-          final int indexToSplit,
-          final byte[] separationKeyBase,
-          final OAtomicOperation atomicOperation)
-          throws IOException {
+      final List<Long> path,
+      final List<Integer> insertionIndexes,
+      final List<Bucket.Entry> leftEntries,
+      final List<Bucket.Entry> rightEntries,
+      final List<byte[]> keyPrefixes,
+      final List<byte[]> largestLowerBounds,
+      final List<byte[]> smallestUpperBounds,
+      final int keyIndex,
+      final long pageIndex,
+      final Bucket bucketToSplit,
+      final boolean splitLeaf,
+      final int indexToSplit,
+      final byte[] separationKeyBase,
+      final OAtomicOperation atomicOperation)
+      throws IOException {
 
     final byte[] rightBucketPrefix;
     final byte[] leftBucketPrefix;
@@ -704,7 +704,7 @@ public final class BinaryBTree extends ODurableComponent {
 
         if (rightSiblingPageIndex >= 0) {
           final OCacheEntry rightSiblingBucketEntry =
-                  loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, false, true);
+              loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, false, true);
           final Bucket rightSiblingBucket = new Bucket(rightSiblingBucketEntry);
           try {
             rightSiblingBucket.setLeftSibling(rightBucketEntry.getPageIndex());
@@ -716,7 +716,7 @@ public final class BinaryBTree extends ODurableComponent {
 
       long parentIndex = path.get(path.size() - 2);
       OCacheEntry parentCacheEntry =
-              loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
+          loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
       try {
         Bucket parentBucket = new Bucket(parentCacheEntry);
         int parentInsertionIndex = insertionIndexes.get(insertionIndexes.size() - 2);
@@ -731,25 +731,25 @@ public final class BinaryBTree extends ODurableComponent {
         // child prefix
         // into the begging
         byte[] separationKey =
-                calculateSeparationKey(separationKeyBase, commonPrefix, parentKeyPrefix);
+            calculateSeparationKey(separationKeyBase, commonPrefix, parentKeyPrefix);
 
         if (!parentBucket.addNonLeafEntry(
-                parentInsertionIndex,
-                (int) pageIndex,
-                rightBucketEntry.getPageIndex(),
-                separationKey)) {
+            parentInsertionIndex,
+            (int) pageIndex,
+            rightBucketEntry.getPageIndex(),
+            separationKey)) {
           final SplitBucketResult splitBucketResult =
-                  splitBucket(
-                          parentBucket,
-                          parentCacheEntry,
-                          path.subList(0, path.size() - 1),
-                          insertionIndexes.subList(0, insertionIndexes.size() - 1),
-                          keyPrefixes.subList(0, keyPrefixes.size() - 1),
-                          largestLowerBounds.subList(0, largestLowerBounds.size() - 1),
-                          smallestUpperBounds.subList(0, smallestUpperBounds.size() - 1),
-                          parentInsertionIndex,
-                          separationKeyBase,
-                          atomicOperation);
+              splitBucket(
+                  parentBucket,
+                  parentCacheEntry,
+                  path.subList(0, path.size() - 1),
+                  insertionIndexes.subList(0, insertionIndexes.size() - 1),
+                  keyPrefixes.subList(0, keyPrefixes.size() - 1),
+                  largestLowerBounds.subList(0, largestLowerBounds.size() - 1),
+                  smallestUpperBounds.subList(0, smallestUpperBounds.size() - 1),
+                  parentInsertionIndex,
+                  separationKeyBase,
+                  atomicOperation);
 
           parentIndex = splitBucketResult.pageIndex;
           parentInsertionIndex = splitBucketResult.insertionIndex;
@@ -768,11 +768,11 @@ public final class BinaryBTree extends ODurableComponent {
 
           parentBucket = new Bucket(parentCacheEntry);
           final boolean added =
-                  parentBucket.addNonLeafEntry(
-                          parentInsertionIndex,
-                          (int) pageIndex,
-                          rightBucketEntry.getPageIndex(),
-                          separationKey);
+              parentBucket.addNonLeafEntry(
+                  parentInsertionIndex,
+                  (int) pageIndex,
+                  rightBucketEntry.getPageIndex(),
+                  separationKey);
           if (!added) {
             throw new BinaryBTreeException("Index is broken and needs to be rebuilt", this);
           }
@@ -821,19 +821,19 @@ public final class BinaryBTree extends ODurableComponent {
 
           if (splitLeaf) {
             bucketToSplit.addLeafEntry(
-                    i,
-                    entry.key,
-                    leftKeyOffset,
-                    entry.key.length - leftKeyOffset,
-                    serializeValue(entry.value));
+                i,
+                entry.key,
+                leftKeyOffset,
+                entry.key.length - leftKeyOffset,
+                serializeValue(entry.value));
           } else {
             bucketToSplit.addNonLeafEntry(
-                    i,
-                    entry.leftChild,
-                    entry.rightChild,
-                    entry.key,
-                    leftKeyOffset,
-                    entry.key.length - leftKeyOffset);
+                i,
+                entry.leftChild,
+                entry.rightChild,
+                entry.key,
+                leftKeyOffset,
+                entry.key.length - leftKeyOffset);
           }
         }
 
@@ -841,19 +841,19 @@ public final class BinaryBTree extends ODurableComponent {
           final Bucket.Entry entry = rightEntries.get(i);
           if (splitLeaf) {
             newRightBucket.addLeafEntry(
-                    i,
-                    entry.key,
-                    rightKeyOffset,
-                    entry.key.length - rightKeyOffset,
-                    serializeValue(entry.value));
+                i,
+                entry.key,
+                rightKeyOffset,
+                entry.key.length - rightKeyOffset,
+                serializeValue(entry.value));
           } else {
             newRightBucket.addNonLeafEntry(
-                    i,
-                    entry.leftChild,
-                    entry.rightChild,
-                    entry.key,
-                    rightKeyOffset,
-                    entry.key.length - rightKeyOffset);
+                i,
+                entry.leftChild,
+                entry.rightChild,
+                entry.key,
+                rightKeyOffset,
+                entry.key.length - rightKeyOffset);
           }
         }
       } finally {
@@ -873,11 +873,11 @@ public final class BinaryBTree extends ODurableComponent {
       // key to insert is bigger than separation key and is going to be inserted into the right
       // bucket
       return new SplitBucketResult(
-              rightBucketEntry.getPageIndex(),
-              keyIndex - indexToSplit,
-              rightLLB,
-              rightSUB,
-              rightBucketPrefix);
+          rightBucketEntry.getPageIndex(),
+          keyIndex - indexToSplit,
+          rightLLB,
+          rightSUB,
+          rightBucketPrefix);
     }
 
     // key to insert is smaller than separation key, entry is going to be inserted into the left
@@ -888,31 +888,31 @@ public final class BinaryBTree extends ODurableComponent {
 
     // key to insert is bigger than separation key and is going to be inserted into the right bucket
     return new SplitBucketResult(
-            rightBucketEntry.getPageIndex(),
-            keyIndex - indexToSplit - 1,
-            rightLLB,
-            rightSUB,
-            rightBucketPrefix);
+        rightBucketEntry.getPageIndex(),
+        keyIndex - indexToSplit - 1,
+        rightLLB,
+        rightSUB,
+        rightBucketPrefix);
   }
 
   private byte[] calculateSeparationKey(
-          byte[] separationKeyBase, byte[] commonPrefix, byte[] parentKeyPrefix) {
+      byte[] separationKeyBase, byte[] commonPrefix, byte[] parentKeyPrefix) {
     byte[] separationKey;
     if (commonPrefix.length > parentKeyPrefix.length) {
       separationKey =
-              new byte[separationKeyBase.length + commonPrefix.length - parentKeyPrefix.length];
+          new byte[separationKeyBase.length + commonPrefix.length - parentKeyPrefix.length];
       System.arraycopy(
-              commonPrefix,
-              parentKeyPrefix.length,
-              separationKey,
-              0,
-              commonPrefix.length - parentKeyPrefix.length);
+          commonPrefix,
+          parentKeyPrefix.length,
+          separationKey,
+          0,
+          commonPrefix.length - parentKeyPrefix.length);
       System.arraycopy(
-              separationKeyBase,
-              0,
-              separationKey,
-              commonPrefix.length - parentKeyPrefix.length,
-              separationKeyBase.length);
+          separationKeyBase,
+          0,
+          separationKey,
+          commonPrefix.length - parentKeyPrefix.length,
+          separationKeyBase.length);
     } else {
       separationKey = separationKeyBase;
     }
@@ -922,7 +922,7 @@ public final class BinaryBTree extends ODurableComponent {
   private OCacheEntry allocateNewPage(OAtomicOperation atomicOperation) throws IOException {
     final OCacheEntry rightBucketEntry;
     final OCacheEntry entryPointCacheEntry =
-            loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
       final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
       final int freeListHead = entryPoint.getFreeListHead();
@@ -951,13 +951,13 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private void updateSize(final long diffSize, final OAtomicOperation atomicOperation)
-          throws IOException {
+      throws IOException {
     if (diffSize == 0) {
       return;
     }
 
     final OCacheEntry entryPointCacheEntry =
-            loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
       final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
       entryPoint.setTreeSize(entryPoint.getTreeSize() + diffSize);
@@ -967,15 +967,15 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private SplitBucketResult splitRootBucket(
-          final int keyIndex,
-          final OCacheEntry bucketEntry,
-          final boolean splitLeaf,
-          final int indexToSplit,
-          final byte[] separationKey,
-          final List<Bucket.Entry> leftEntries,
-          final List<Bucket.Entry> rightEntries,
-          final OAtomicOperation atomicOperation)
-          throws IOException {
+      final int keyIndex,
+      final OCacheEntry bucketEntry,
+      final boolean splitLeaf,
+      final int indexToSplit,
+      final byte[] separationKey,
+      final List<Bucket.Entry> leftEntries,
+      final List<Bucket.Entry> rightEntries,
+      final OAtomicOperation atomicOperation)
+      throws IOException {
 
     final OCacheEntry leftBucketEntry;
     final OCacheEntry rightBucketEntry;
@@ -1004,19 +1004,19 @@ public final class BinaryBTree extends ODurableComponent {
         final Bucket.Entry entry = leftEntries.get(i);
         if (splitLeaf) {
           newLeftBucket.addLeafEntry(
-                  i,
-                  entry.key,
-                  leftPrefix.length,
-                  entry.key.length - leftPrefix.length,
-                  serializeValue(entry.value));
+              i,
+              entry.key,
+              leftPrefix.length,
+              entry.key.length - leftPrefix.length,
+              serializeValue(entry.value));
         } else {
           newLeftBucket.addNonLeafEntry(
-                  i,
-                  entry.leftChild,
-                  entry.rightChild,
-                  entry.key,
-                  leftPrefix.length,
-                  entry.key.length - leftPrefix.length);
+              i,
+              entry.leftChild,
+              entry.rightChild,
+              entry.key,
+              leftPrefix.length,
+              entry.key.length - leftPrefix.length);
         }
       }
 
@@ -1036,19 +1036,19 @@ public final class BinaryBTree extends ODurableComponent {
         final Bucket.Entry entry = rightEntries.get(i);
         if (splitLeaf) {
           newRightBucket.addLeafEntry(
-                  i,
-                  entry.key,
-                  rightPrefix.length,
-                  entry.key.length - rightPrefix.length,
-                  serializeValue(entry.value));
+              i,
+              entry.key,
+              rightPrefix.length,
+              entry.key.length - rightPrefix.length,
+              serializeValue(entry.value));
         } else {
           newRightBucket.addNonLeafEntry(
-                  i,
-                  entry.leftChild,
-                  entry.rightChild,
-                  entry.key,
-                  rightPrefix.length,
-                  entry.key.length - rightPrefix.length);
+              i,
+              entry.leftChild,
+              entry.rightChild,
+              entry.key,
+              rightPrefix.length,
+              entry.key.length - rightPrefix.length);
         }
       }
 
@@ -1065,33 +1065,33 @@ public final class BinaryBTree extends ODurableComponent {
       bucketToSplit.switchBucketType();
     }
     bucketToSplit.addNonLeafEntry(
-            0, leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(), separationKey);
+        0, leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(), separationKey);
 
     if (splitLeaf) {
       if (keyIndex <= indexToSplit) {
         return new SplitBucketResult(
-                leftBucketEntry.getPageIndex(), keyIndex, leftLLB, leftSUB, leftPrefix);
+            leftBucketEntry.getPageIndex(), keyIndex, leftLLB, leftSUB, leftPrefix);
       }
 
       return new SplitBucketResult(
-              rightBucketEntry.getPageIndex(),
-              keyIndex - indexToSplit,
-              rightLLB,
-              rightSUB,
-              rightPrefix);
+          rightBucketEntry.getPageIndex(),
+          keyIndex - indexToSplit,
+          rightLLB,
+          rightSUB,
+          rightPrefix);
     }
 
     if (keyIndex <= indexToSplit) {
       return new SplitBucketResult(
-              leftBucketEntry.getPageIndex(), keyIndex, leftLLB, leftSUB, leftPrefix);
+          leftBucketEntry.getPageIndex(), keyIndex, leftLLB, leftSUB, leftPrefix);
     }
 
     return new SplitBucketResult(
-            rightBucketEntry.getPageIndex(),
-            keyIndex - indexToSplit - 1,
-            rightLLB,
-            rightSUB,
-            rightPrefix);
+        rightBucketEntry.getPageIndex(),
+        keyIndex - indexToSplit - 1,
+        rightLLB,
+        rightSUB,
+        rightPrefix);
   }
 
   public long size() {
@@ -1102,7 +1102,7 @@ public final class BinaryBTree extends ODurableComponent {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
         final OCacheEntry entryPointCacheEntry =
-                loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
+            loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
         try {
           final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
           return entryPoint.getTreeSize();
@@ -1114,8 +1114,8 @@ public final class BinaryBTree extends ODurableComponent {
       }
     } catch (final IOException e) {
       throw OException.wrapException(
-              new BinaryBTreeException("Error during retrieving of size of index " + getName(), this),
-              e);
+          new BinaryBTreeException("Error during retrieving of size of index " + getName(), this),
+          e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -1123,24 +1123,24 @@ public final class BinaryBTree extends ODurableComponent {
 
   public void delete(final OAtomicOperation atomicOperation) {
     executeInsideComponentOperation(
-            atomicOperation,
-            operation -> {
-              acquireExclusiveLock();
-              try {
-                final long size = size();
-                if (size > 0) {
-                  throw new NotEmptyComponentCanNotBeRemovedException(
-                          getName()
-                                  + " : Not empty index can not be deleted. Index has "
-                                  + size
-                                  + " records");
-                }
+        atomicOperation,
+        operation -> {
+          acquireExclusiveLock();
+          try {
+            final long size = size();
+            if (size > 0) {
+              throw new NotEmptyComponentCanNotBeRemovedException(
+                  getName()
+                      + " : Not empty index can not be deleted. Index has "
+                      + size
+                      + " records");
+            }
 
-                deleteFile(atomicOperation, fileId);
-              } finally {
-                releaseExclusiveLock();
-              }
-            });
+            deleteFile(atomicOperation, fileId);
+          } finally {
+            releaseExclusiveLock();
+          }
+        });
   }
 
   public void load(final String name) {
@@ -1151,7 +1151,7 @@ public final class BinaryBTree extends ODurableComponent {
       fileId = openFile(atomicOperation, getFullName());
     } catch (final IOException e) {
       throw OException.wrapException(
-              new BinaryBTreeException("Exception during loading of binary BTree " + name, this), e);
+          new BinaryBTreeException("Exception during loading of binary BTree " + name, this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -1159,58 +1159,58 @@ public final class BinaryBTree extends ODurableComponent {
 
   public ORID remove(final OAtomicOperation atomicOperation, final byte[] key) {
     return calculateInsideComponentOperation(
-            atomicOperation,
-            operation -> {
-              acquireExclusiveLock();
+        atomicOperation,
+        operation -> {
+          acquireExclusiveLock();
+          try {
+            final ORID removedValue;
+
+            final Optional<RemoveSearchResult> bucketSearchResult =
+                findBucketForRemove(key, atomicOperation);
+
+            if (bucketSearchResult.isPresent()) {
+              final RemoveSearchResult removeSearchResult = bucketSearchResult.get();
+              final OCacheEntry keyBucketCacheEntry =
+                  loadPageForWrite(
+                      atomicOperation, fileId, removeSearchResult.leafPageIndex, false, true);
+
+              final byte[] rawValue;
+              final int bucketSize;
               try {
-                final ORID removedValue;
+                final Bucket keyBucket = new Bucket(keyBucketCacheEntry);
+                rawValue = keyBucket.getRawValue(removeSearchResult.leafEntryPageIndex);
+                bucketSize =
+                    keyBucket.removeLeafEntry(
+                        removeSearchResult.leafEntryPageIndex,
+                        key.length - removeSearchResult.keyPrefixLen);
+                updateSize(-1, atomicOperation);
 
-                final Optional<RemoveSearchResult> bucketSearchResult =
-                        findBucketForRemove(key, atomicOperation);
+                final int clusterId = OShortSerializer.INSTANCE.deserializeNative(rawValue, 0);
+                final long clusterPosition =
+                    OLongSerializer.INSTANCE.deserializeNative(
+                        rawValue, OShortSerializer.SHORT_SIZE);
 
-                if (bucketSearchResult.isPresent()) {
-                  final RemoveSearchResult removeSearchResult = bucketSearchResult.get();
-                  final OCacheEntry keyBucketCacheEntry =
-                          loadPageForWrite(
-                                  atomicOperation, fileId, removeSearchResult.leafPageIndex, false, true);
+                removedValue = new ORecordId(clusterId, clusterPosition);
 
-                  final byte[] rawValue;
-                  final int bucketSize;
-                  try {
-                    final Bucket keyBucket = new Bucket(keyBucketCacheEntry);
-                    rawValue = keyBucket.getRawValue(removeSearchResult.leafEntryPageIndex);
-                    bucketSize =
-                            keyBucket.removeLeafEntry(
-                                    removeSearchResult.leafEntryPageIndex,
-                                    key.length - removeSearchResult.keyPrefixLen);
-                    updateSize(-1, atomicOperation);
-
-                    final int clusterId = OShortSerializer.INSTANCE.deserializeNative(rawValue, 0);
-                    final long clusterPosition =
-                            OLongSerializer.INSTANCE.deserializeNative(
-                                    rawValue, OShortSerializer.SHORT_SIZE);
-
-                    removedValue = new ORecordId(clusterId, clusterPosition);
-
-                    // skip balancing of the tree if leaf is a root.
-                    if (bucketSize == 0 && removeSearchResult.path.size() > 0) {
-                      if (balanceLeafNodeAfterItemDelete(
-                              atomicOperation, removeSearchResult, keyBucket)) {
-                        addToFreeList(atomicOperation, (int) removeSearchResult.leafPageIndex);
-                      }
-                    }
-                  } finally {
-                    releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
+                // skip balancing of the tree if leaf is a root.
+                if (bucketSize == 0 && removeSearchResult.path.size() > 0) {
+                  if (balanceLeafNodeAfterItemDelete(
+                      atomicOperation, removeSearchResult, keyBucket)) {
+                    addToFreeList(atomicOperation, (int) removeSearchResult.leafPageIndex);
                   }
-                } else {
-                  return null;
                 }
-
-                return removedValue;
               } finally {
-                releaseExclusiveLock();
+                releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
               }
-            });
+            } else {
+              return null;
+            }
+
+            return removedValue;
+          } finally {
+            releaseExclusiveLock();
+          }
+        });
   }
 
   public byte[] firstKey() {
@@ -1227,7 +1227,7 @@ public final class BinaryBTree extends ODurableComponent {
 
         final BucketSearchResult result = searchResult.get();
         final OCacheEntry cacheEntry =
-                loadPageForRead(atomicOperation, fileId, result.pageIndex, false);
+            loadPageForRead(atomicOperation, fileId, result.pageIndex, false);
         try {
           final Bucket bucket = new Bucket(cacheEntry);
           return bucket.getKey(result.itemIndex);
@@ -1239,14 +1239,14 @@ public final class BinaryBTree extends ODurableComponent {
       }
     } catch (final IOException e) {
       throw OException.wrapException(
-              new BinaryBTreeException("Error during finding first key", this), e);
+          new BinaryBTreeException("Error during finding first key", this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   private Optional<BucketSearchResult> firstItem(final OAtomicOperation atomicOperation)
-          throws IOException {
+      throws IOException {
     final LinkedList<PagePathItemUnit> path = new LinkedList<>();
 
     long bucketIndex = ROOT_INDEX;
@@ -1319,7 +1319,7 @@ public final class BinaryBTree extends ODurableComponent {
 
         final BucketSearchResult result = searchResult.get();
         final OCacheEntry cacheEntry =
-                loadPageForRead(atomicOperation, fileId, result.pageIndex, false);
+            loadPageForRead(atomicOperation, fileId, result.pageIndex, false);
         try {
           final Bucket bucket = new Bucket(cacheEntry);
           return bucket.getKey(result.itemIndex);
@@ -1331,14 +1331,14 @@ public final class BinaryBTree extends ODurableComponent {
       }
     } catch (final IOException e) {
       throw OException.wrapException(
-              new BinaryBTreeException("Error during finding last key", this), e);
+          new BinaryBTreeException("Error during finding last key", this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   private Optional<BucketSearchResult> lastItem(final OAtomicOperation atomicOperation)
-          throws IOException {
+      throws IOException {
     final LinkedList<PagePathItemUnit> path = new LinkedList<>();
 
     long bucketIndex = ROOT_INDEX;
@@ -1418,7 +1418,7 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   public Stream<ORawPair<byte[], ORID>> iterateEntriesMinor(
-          final byte[] key, final boolean inclusive, final boolean ascSortOrder) {
+      final byte[] key, final boolean inclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -1437,17 +1437,17 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private Spliterator<ORawPair<byte[], ORID>> iterateEntriesMinorDesc(
-          byte[] key, final boolean inclusive) {
+      byte[] key, final boolean inclusive) {
     return new SpliteratorBackward(null, key, false, inclusive);
   }
 
   private Spliterator<ORawPair<byte[], ORID>> iterateEntriesMinorAsc(
-          byte[] key, final boolean inclusive) {
+      byte[] key, final boolean inclusive) {
     return new SpliteratorForward(null, key, false, inclusive);
   }
 
   public Stream<ORawPair<byte[], ORID>> iterateEntriesMajor(
-          final byte[] key, final boolean inclusive, final boolean ascSortOrder) {
+      final byte[] key, final boolean inclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -1465,12 +1465,12 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private Spliterator<ORawPair<byte[], ORID>> iterateEntriesMajorAsc(
-          byte[] key, final boolean inclusive) {
+      byte[] key, final boolean inclusive) {
     return new SpliteratorForward(key, null, inclusive, false);
   }
 
   private Spliterator<ORawPair<byte[], ORID>> iterateEntriesMajorDesc(
-          byte[] key, final boolean inclusive) {
+      byte[] key, final boolean inclusive) {
     acquireSharedLock();
     try {
       return new SpliteratorBackward(key, null, inclusive, false);
@@ -1480,21 +1480,21 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   public Stream<ORawPair<byte[], ORID>> iterateEntriesBetween(
-          final byte[] keyFrom,
-          final boolean fromInclusive,
-          final byte[] keyTo,
-          final boolean toInclusive,
-          final boolean ascSortOrder) {
+      final byte[] keyFrom,
+      final boolean fromInclusive,
+      final byte[] keyTo,
+      final boolean toInclusive,
+      final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
       try {
         if (ascSortOrder) {
           return StreamSupport.stream(
-                  iterateEntriesBetweenAscOrder(keyFrom, fromInclusive, keyTo, toInclusive), false);
+              iterateEntriesBetweenAscOrder(keyFrom, fromInclusive, keyTo, toInclusive), false);
         } else {
           return StreamSupport.stream(
-                  iterateEntriesBetweenDescOrder(keyFrom, fromInclusive, keyTo, toInclusive), false);
+              iterateEntriesBetweenDescOrder(keyFrom, fromInclusive, keyTo, toInclusive), false);
         }
       } finally {
         releaseSharedLock();
@@ -1505,59 +1505,59 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private Spliterator<ORawPair<byte[], ORID>> iterateEntriesBetweenAscOrder(
-          byte[] keyFrom, final boolean fromInclusive, byte[] keyTo, final boolean toInclusive) {
+      byte[] keyFrom, final boolean fromInclusive, byte[] keyTo, final boolean toInclusive) {
     return new SpliteratorForward(keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
   private Spliterator<ORawPair<byte[], ORID>> iterateEntriesBetweenDescOrder(
-          byte[] keyFrom, final boolean fromInclusive, byte[] keyTo, final boolean toInclusive) {
+      byte[] keyFrom, final boolean fromInclusive, byte[] keyTo, final boolean toInclusive) {
     return new SpliteratorBackward(keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
   private boolean balanceLeafNodeAfterItemDelete(
-          final OAtomicOperation atomicOperation,
-          final RemoveSearchResult removeSearchResult,
-          final Bucket keyBucket)
-          throws IOException {
+      final OAtomicOperation atomicOperation,
+      final RemoveSearchResult removeSearchResult,
+      final Bucket keyBucket)
+      throws IOException {
     final RemovalPathItem parentItem =
-            removeSearchResult.path.get(removeSearchResult.path.size() - 1);
+        removeSearchResult.path.get(removeSearchResult.path.size() - 1);
     final byte[] parentSUB =
-            removeSearchResult.smallestUpperBoundaries.get(
-                    removeSearchResult.smallestUpperBoundaries.size() - 1);
+        removeSearchResult.smallestUpperBoundaries.get(
+            removeSearchResult.smallestUpperBoundaries.size() - 1);
     final byte[] parentLLB =
-            removeSearchResult.largestLowerBoundaries.get(
-                    removeSearchResult.largestLowerBoundaries.size() - 1);
+        removeSearchResult.largestLowerBoundaries.get(
+            removeSearchResult.largestLowerBoundaries.size() - 1);
     final byte[] parentPrefix =
-            removeSearchResult.keyPrefixes.get(removeSearchResult.keyPrefixes.size() - 1);
+        removeSearchResult.keyPrefixes.get(removeSearchResult.keyPrefixes.size() - 1);
 
     final OCacheEntry parentCacheEntry =
-            loadPageForWrite(atomicOperation, fileId, parentItem.pageIndex, true, true);
+        loadPageForWrite(atomicOperation, fileId, parentItem.pageIndex, true, true);
     try {
       final Bucket parentBucket = new Bucket(parentCacheEntry);
 
       if (parentItem.leftChild) {
         final int rightSiblingPageIndex = parentBucket.getRight(parentItem.indexInsidePage);
         final byte[] rightSiblingLLB =
-                calculateLargestLowerBoundary(
-                        parentItem.indexInsidePage, parentBucket, parentPrefix, parentLLB, false);
+            calculateLargestLowerBoundary(
+                parentItem.indexInsidePage, parentBucket, parentPrefix, parentLLB, false);
         final byte[] rightSiblingSUB =
-                calculateSmallestUpperBoundary(
-                        parentItem.indexInsidePage, parentBucket, parentPrefix, parentSUB, false);
+            calculateSmallestUpperBoundary(
+                parentItem.indexInsidePage, parentBucket, parentPrefix, parentSUB, false);
         final byte[] rightSiblingPrefix = extractCommonPrefix(rightSiblingLLB, rightSiblingSUB);
 
         // merge with left sibling
         final OCacheEntry rightSiblingEntry =
-                loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, true, true);
+            loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, true, true);
         try {
           final Bucket rightSiblingBucket = new Bucket(rightSiblingEntry);
           final Optional<byte[]> oNewRightSiblingPrefix =
-                  deleteFromNonLeafNode(
-                          atomicOperation,
-                          parentBucket,
-                          removeSearchResult.path,
-                          removeSearchResult.largestLowerBoundaries,
-                          removeSearchResult.smallestUpperBoundaries,
-                          removeSearchResult.keyPrefixes);
+              deleteFromNonLeafNode(
+                  atomicOperation,
+                  parentBucket,
+                  removeSearchResult.path,
+                  removeSearchResult.largestLowerBoundaries,
+                  removeSearchResult.smallestUpperBoundaries,
+                  removeSearchResult.keyPrefixes);
 
           if (oNewRightSiblingPrefix.isPresent()) {
             final long leftSiblingIndex = keyBucket.getLeftSibling();
@@ -1567,7 +1567,7 @@ public final class BinaryBTree extends ODurableComponent {
 
             if (leftSiblingIndex > 0) {
               final OCacheEntry leftSiblingEntry =
-                      loadPageForWrite(atomicOperation, fileId, leftSiblingIndex, true, true);
+                  loadPageForWrite(atomicOperation, fileId, leftSiblingIndex, true, true);
               try {
                 final Bucket leftSiblingBucket = new Bucket(leftSiblingEntry);
 
@@ -1611,26 +1611,26 @@ public final class BinaryBTree extends ODurableComponent {
 
       final int leftSiblingPageIndex = parentBucket.getLeft(parentItem.indexInsidePage);
       final byte[] leftSiblingLLB =
-              calculateLargestLowerBoundary(
-                      parentItem.indexInsidePage, parentBucket, parentPrefix, parentLLB, true);
+          calculateLargestLowerBoundary(
+              parentItem.indexInsidePage, parentBucket, parentPrefix, parentLLB, true);
       final byte[] leftSiblingSUB =
-              calculateSmallestUpperBoundary(
-                      parentItem.indexInsidePage, parentBucket, parentPrefix, parentSUB, true);
+          calculateSmallestUpperBoundary(
+              parentItem.indexInsidePage, parentBucket, parentPrefix, parentSUB, true);
       final byte[] leftSiblingPrefix = extractCommonPrefix(leftSiblingLLB, leftSiblingSUB);
 
       final OCacheEntry leftSiblingEntry =
-              loadPageForWrite(atomicOperation, fileId, leftSiblingPageIndex, true, true);
+          loadPageForWrite(atomicOperation, fileId, leftSiblingPageIndex, true, true);
       try {
         // merge with right sibling
         final Bucket leftSiblingBucket = new Bucket(leftSiblingEntry);
         final Optional<byte[]> oNewLeftSiblingPrefix =
-                deleteFromNonLeafNode(
-                        atomicOperation,
-                        parentBucket,
-                        removeSearchResult.path,
-                        removeSearchResult.largestLowerBoundaries,
-                        removeSearchResult.smallestUpperBoundaries,
-                        removeSearchResult.keyPrefixes);
+            deleteFromNonLeafNode(
+                atomicOperation,
+                parentBucket,
+                removeSearchResult.path,
+                removeSearchResult.largestLowerBoundaries,
+                removeSearchResult.smallestUpperBoundaries,
+                removeSearchResult.keyPrefixes);
 
         if (oNewLeftSiblingPrefix.isPresent()) {
           final long rightSiblingIndex = keyBucket.getRightSibling();
@@ -1640,7 +1640,7 @@ public final class BinaryBTree extends ODurableComponent {
 
           if (rightSiblingIndex > 0) {
             final OCacheEntry rightSiblingEntry =
-                    loadPageForWrite(atomicOperation, fileId, rightSiblingIndex, true, true);
+                loadPageForWrite(atomicOperation, fileId, rightSiblingIndex, true, true);
             try {
               final Bucket rightSibling = new Bucket(rightSiblingEntry);
               rightSibling.setLeftSibling(leftSiblingPageIndex);
@@ -1684,13 +1684,13 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private Optional<byte[]> deleteFromNonLeafNode(
-          final OAtomicOperation atomicOperation,
-          final Bucket bucket,
-          final List<RemovalPathItem> path,
-          final List<byte[]> largestLowerBounds,
-          final List<byte[]> smallestUpperBounds,
-          final List<byte[]> keyPrefixes)
-          throws IOException {
+      final OAtomicOperation atomicOperation,
+      final Bucket bucket,
+      final List<RemovalPathItem> path,
+      final List<byte[]> largestLowerBounds,
+      final List<byte[]> smallestUpperBounds,
+      final List<byte[]> keyPrefixes)
+      throws IOException {
     final int bucketSize = bucket.size();
     assert bucketSize > 0;
 
@@ -1723,11 +1723,11 @@ public final class BinaryBTree extends ODurableComponent {
 
       } else {
         llb =
-                calculateLargestLowerBoundary(
-                        currentItem.indexInsidePage - 1, bucket, currentPrefix, currentLLB, false);
+            calculateLargestLowerBoundary(
+                currentItem.indexInsidePage - 1, bucket, currentPrefix, currentLLB, false);
         sub =
-                calculateSmallestUpperBoundary(
-                        currentItem.indexInsidePage - 1, bucket, currentPrefix, currentSUB, false);
+            calculateSmallestUpperBoundary(
+                currentItem.indexInsidePage - 1, bucket, currentPrefix, currentSUB, false);
       }
 
       newChildPrefix = extractCommonPrefix(llb, sub);
@@ -1740,7 +1740,7 @@ public final class BinaryBTree extends ODurableComponent {
     final byte[] parentPrefix = keyPrefixes.get(keyPrefixes.size() - 2);
 
     final OCacheEntry parentCacheEntry =
-            loadPageForWrite(atomicOperation, fileId, parentItem.pageIndex, true, true);
+        loadPageForWrite(atomicOperation, fileId, parentItem.pageIndex, true, true);
     try {
       final Bucket parentBucket = new Bucket(parentCacheEntry);
 
@@ -1755,45 +1755,45 @@ public final class BinaryBTree extends ODurableComponent {
         final int rightSiblingPageIndex = parentBucket.getRight(parentItem.indexInsidePage);
 
         final byte[] rightSiblingLLB =
-                calculateLargestLowerBoundary(
-                        parentItem.indexInsidePage, parentBucket, parentPrefix, parentLLB, false);
+            calculateLargestLowerBoundary(
+                parentItem.indexInsidePage, parentBucket, parentPrefix, parentLLB, false);
         final byte[] rightSiblingSUB =
-                calculateSmallestUpperBoundary(
-                        parentItem.indexInsidePage, parentBucket, parentPrefix, parentSUB, false);
+            calculateSmallestUpperBoundary(
+                parentItem.indexInsidePage, parentBucket, parentPrefix, parentSUB, false);
         final byte[] rightSiblingPrefix = extractCommonPrefix(rightSiblingLLB, rightSiblingSUB);
 
         final OCacheEntry rightSiblingEntry =
-                loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, true, true);
+            loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, true, true);
         try {
           final Bucket rightSiblingBucket = new Bucket(rightSiblingEntry);
 
           final int rightSiblingBucketSize = rightSiblingBucket.size();
           if (rightSiblingBucketSize > 1) {
             return rotateNoneLeafLeftAndRemoveItem(
-                    parentItem,
-                    parentBucket,
-                    parentPrefix,
-                    parentLLB,
-                    parentSUB,
-                    bucket,
-                    rightSiblingBucket,
-                    rightSiblingPrefix,
-                    orphanPointer);
+                parentItem,
+                parentBucket,
+                parentPrefix,
+                parentLLB,
+                parentSUB,
+                bucket,
+                rightSiblingBucket,
+                rightSiblingPrefix,
+                orphanPointer);
           } else if (rightSiblingBucketSize == 1) {
             return mergeNoneLeafWithRightSiblingAndRemoveItem(
-                    atomicOperation,
-                    parentItem,
-                    parentBucket,
-                    parentPrefix,
-                    parentLLB,
-                    bucket,
-                    rightSiblingBucket,
-                    rightSiblingPrefix,
-                    orphanPointer,
-                    path,
-                    largestLowerBounds,
-                    smallestUpperBounds,
-                    keyPrefixes);
+                atomicOperation,
+                parentItem,
+                parentBucket,
+                parentPrefix,
+                parentLLB,
+                bucket,
+                rightSiblingBucket,
+                rightSiblingPrefix,
+                orphanPointer,
+                path,
+                largestLowerBounds,
+                smallestUpperBounds,
+                keyPrefixes);
           }
 
           return Optional.empty();
@@ -1803,15 +1803,15 @@ public final class BinaryBTree extends ODurableComponent {
       } else {
         final int leftSiblingPageIndex = parentBucket.getLeft(parentItem.indexInsidePage);
         final byte[] leftSiblingLLB =
-                calculateLargestLowerBoundary(
-                        parentItem.indexInsidePage, parentBucket, parentPrefix, parentLLB, true);
+            calculateLargestLowerBoundary(
+                parentItem.indexInsidePage, parentBucket, parentPrefix, parentLLB, true);
         final byte[] leftSiblingSUB =
-                calculateLargestLowerBoundary(
-                        parentItem.indexInsidePage, parentBucket, parentPrefix, parentSUB, true);
+            calculateLargestLowerBoundary(
+                parentItem.indexInsidePage, parentBucket, parentPrefix, parentSUB, true);
         final byte[] leftSiblingPrefix = extractCommonPrefix(leftSiblingLLB, leftSiblingSUB);
 
         final OCacheEntry leftSiblingEntry =
-                loadPageForWrite(atomicOperation, fileId, leftSiblingPageIndex, true, true);
+            loadPageForWrite(atomicOperation, fileId, leftSiblingPageIndex, true, true);
         try {
           final Bucket leftSiblingBucket = new Bucket(leftSiblingEntry);
           assert leftSiblingBucket.size() > 0;
@@ -1819,30 +1819,30 @@ public final class BinaryBTree extends ODurableComponent {
           final int leftSiblingBucketSize = leftSiblingBucket.size();
           if (leftSiblingBucketSize > 1) {
             return rotateNoneLeafRightAndRemoveItem(
-                    parentItem,
-                    parentBucket,
-                    parentPrefix,
-                    parentLLB,
-                    parentSUB,
-                    bucket,
-                    leftSiblingBucket,
-                    leftSiblingPrefix,
-                    orphanPointer);
+                parentItem,
+                parentBucket,
+                parentPrefix,
+                parentLLB,
+                parentSUB,
+                bucket,
+                leftSiblingBucket,
+                leftSiblingPrefix,
+                orphanPointer);
           } else if (leftSiblingBucketSize == 1) {
             return mergeNoneLeafWithLeftSiblingAndRemoveItem(
-                    atomicOperation,
-                    parentItem,
-                    parentBucket,
-                    parentPrefix,
-                    parentSUB,
-                    bucket,
-                    leftSiblingBucket,
-                    leftSiblingPrefix,
-                    orphanPointer,
-                    path,
-                    largestLowerBounds,
-                    smallestUpperBounds,
-                    keyPrefixes);
+                atomicOperation,
+                parentItem,
+                parentBucket,
+                parentPrefix,
+                parentSUB,
+                bucket,
+                leftSiblingBucket,
+                leftSiblingPrefix,
+                orphanPointer,
+                path,
+                largestLowerBounds,
+                smallestUpperBounds,
+                keyPrefixes);
           }
 
           return Optional.empty();
@@ -1857,15 +1857,15 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private Optional<byte[]> rotateNoneLeafRightAndRemoveItem(
-          final RemovalPathItem parentItem,
-          final Bucket parentBucket,
-          final byte[] parentKeyPrefix,
-          final byte[] parentLargestLowerBound,
-          final byte[] parentSmallestUpperBound,
-          final Bucket bucket,
-          final Bucket leftSibling,
-          final byte[] leftSiblingKeyPrefix,
-          final int orhanPointer) {
+      final RemovalPathItem parentItem,
+      final Bucket parentBucket,
+      final byte[] parentKeyPrefix,
+      final byte[] parentLargestLowerBound,
+      final byte[] parentSmallestUpperBound,
+      final Bucket bucket,
+      final Bucket leftSibling,
+      final byte[] leftSiblingKeyPrefix,
+      final int orhanPointer) {
     if (bucket.size() != 1 || leftSibling.size() <= 1) {
       throw new BinaryBTreeException("BTree is broken", this);
     }
@@ -1893,16 +1893,16 @@ public final class BinaryBTree extends ODurableComponent {
     bucket.removeNonLeafEntry(0, true);
 
     final byte[] leftSiblingLargestLowerBound =
-            calculateLargestLowerBoundary(
-                    parentItem.indexInsidePage,
-                    parentBucket,
-                    parentKeyPrefix,
-                    parentLargestLowerBound,
-                    true);
+        calculateLargestLowerBoundary(
+            parentItem.indexInsidePage,
+            parentBucket,
+            parentKeyPrefix,
+            parentLargestLowerBound,
+            true);
 
     final byte[] leftSiblingSmallestUpperBound = restoreKey(parentKeyPrefix, separatorKey);
     final byte[] newLeftSiblingKeyPrefix =
-            extractCommonPrefix(leftSiblingLargestLowerBound, leftSiblingSmallestUpperBound);
+        extractCommonPrefix(leftSiblingLargestLowerBound, leftSiblingSmallestUpperBound);
     assert newLeftSiblingKeyPrefix.length >= leftSiblingKeyPrefix.length;
 
     if (newLeftSiblingKeyPrefix.length > leftSiblingKeyPrefix.length) {
@@ -1918,39 +1918,39 @@ public final class BinaryBTree extends ODurableComponent {
       for (int i = 0; i < leftSiblingSize; i++) {
         final Bucket.Entry entry = entries.get(i);
         leftSibling.addNonLeafEntry(
-                i,
-                entry.leftChild,
-                entry.rightChild,
-                entry.key,
-                leftSiblingDiff,
-                entry.key.length - leftSiblingDiff);
+            i,
+            entry.leftChild,
+            entry.rightChild,
+            entry.key,
+            leftSiblingDiff,
+            entry.key.length - leftSiblingDiff);
       }
     }
 
     @SuppressWarnings("UnnecessaryLocalVariable")
     final byte[] bucketLargestLowerBound = leftSiblingSmallestUpperBound;
     final byte[] bucketSmallestUpperBound =
-            calculateSmallestUpperBoundary(
-                    parentItem.indexInsidePage,
-                    parentBucket,
-                    parentKeyPrefix,
-                    parentSmallestUpperBound,
-                    false);
+        calculateSmallestUpperBoundary(
+            parentItem.indexInsidePage,
+            parentBucket,
+            parentKeyPrefix,
+            parentSmallestUpperBound,
+            false);
 
     final byte[] bucketPrefix =
-            extractCommonPrefix(bucketLargestLowerBound, bucketSmallestUpperBound);
+        extractCommonPrefix(bucketLargestLowerBound, bucketSmallestUpperBound);
 
     assert bucketPrefix.length >= parentKeyPrefix.length;
     final int bucketDiff = bucketPrefix.length - parentKeyPrefix.length;
 
     final boolean result =
-            bucket.addNonLeafEntry(
-                    0,
-                    bucketLeft,
-                    orhanPointer,
-                    partialBucketKey,
-                    bucketDiff,
-                    partialBucketKey.length - bucketDiff);
+        bucket.addNonLeafEntry(
+            0,
+            bucketLeft,
+            orhanPointer,
+            partialBucketKey,
+            bucketDiff,
+            partialBucketKey.length - bucketDiff);
     assert result;
 
     final byte[] rightChildLargestLowerBound = restoreKey(parentKeyPrefix, partialBucketKey);
@@ -1958,21 +1958,21 @@ public final class BinaryBTree extends ODurableComponent {
     @SuppressWarnings("UnnecessaryLocalVariable")
     final byte[] rightChildSmallestUpperBound = bucketSmallestUpperBound;
     final byte[] rightChildKeyPrefix =
-            extractCommonPrefix(rightChildLargestLowerBound, rightChildSmallestUpperBound);
+        extractCommonPrefix(rightChildLargestLowerBound, rightChildSmallestUpperBound);
 
     return Optional.of(rightChildKeyPrefix);
   }
 
   private Optional<byte[]> rotateNoneLeafLeftAndRemoveItem(
-          final RemovalPathItem parentItem,
-          final Bucket parentBucket,
-          final byte[] parentKeyPrefix,
-          final byte[] parentLargestLowerBound,
-          final byte[] parentSmallestUpperBound,
-          final Bucket bucket,
-          final Bucket rightSibling,
-          final byte[] rightSiblingPrefix,
-          final int orphanPointer) {
+      final RemovalPathItem parentItem,
+      final Bucket parentBucket,
+      final byte[] parentKeyPrefix,
+      final byte[] parentLargestLowerBound,
+      final byte[] parentSmallestUpperBound,
+      final Bucket bucket,
+      final Bucket rightSibling,
+      final byte[] rightSiblingPrefix,
+      final int orphanPointer) {
     if (bucket.size() != 1 || rightSibling.size() <= 1) {
       throw new BinaryBTreeException("BTree is broken", this);
     }
@@ -1998,28 +1998,28 @@ public final class BinaryBTree extends ODurableComponent {
     bucket.removeNonLeafEntry(0, true);
 
     final byte[] bucketLargestLowerBound =
-            calculateLargestLowerBoundary(
-                    parentItem.indexInsidePage,
-                    parentBucket,
-                    parentKeyPrefix,
-                    parentLargestLowerBound,
-                    true);
+        calculateLargestLowerBoundary(
+            parentItem.indexInsidePage,
+            parentBucket,
+            parentKeyPrefix,
+            parentLargestLowerBound,
+            true);
 
     final byte[] bucketSmallestUpperBound = restoreKey(parentKeyPrefix, separatorKey);
     final byte[] bucketKeyPrefix =
-            extractCommonPrefix(bucketLargestLowerBound, bucketSmallestUpperBound);
+        extractCommonPrefix(bucketLargestLowerBound, bucketSmallestUpperBound);
 
     assert bucketKeyPrefix.length >= parentKeyPrefix.length;
     final int bucketKeyDiff = bucketKeyPrefix.length - parentKeyPrefix.length;
 
     final boolean result =
-            bucket.addNonLeafEntry(
-                    0,
-                    orphanPointer,
-                    bucketRight,
-                    partialBucketKey,
-                    bucketKeyDiff,
-                    partialBucketKey.length - bucketKeyDiff);
+        bucket.addNonLeafEntry(
+            0,
+            orphanPointer,
+            bucketRight,
+            partialBucketKey,
+            bucketKeyDiff,
+            partialBucketKey.length - bucketKeyDiff);
     assert result;
 
     rightSibling.removeNonLeafEntry(0, true);
@@ -2027,15 +2027,15 @@ public final class BinaryBTree extends ODurableComponent {
     @SuppressWarnings("UnnecessaryLocalVariable")
     final byte[] rightSiblingLargestLowerBound = bucketSmallestUpperBound;
     final byte[] rightSiblingSmallestUpperBound =
-            calculateSmallestUpperBoundary(
-                    parentItem.indexInsidePage,
-                    parentBucket,
-                    parentKeyPrefix,
-                    parentSmallestUpperBound,
-                    false);
+        calculateSmallestUpperBoundary(
+            parentItem.indexInsidePage,
+            parentBucket,
+            parentKeyPrefix,
+            parentSmallestUpperBound,
+            false);
 
     final byte[] newRightSiblingPrefix =
-            extractCommonPrefix(rightSiblingLargestLowerBound, rightSiblingSmallestUpperBound);
+        extractCommonPrefix(rightSiblingLargestLowerBound, rightSiblingSmallestUpperBound);
     assert newRightSiblingPrefix.length >= rightSiblingPrefix.length;
 
     if (newRightSiblingPrefix.length > rightSiblingPrefix.length) {
@@ -2052,12 +2052,12 @@ public final class BinaryBTree extends ODurableComponent {
       for (int i = 0; i < bucketSize; i++) {
         final Bucket.Entry entry = entries.get(i);
         rightSibling.addNonLeafEntry(
-                i,
-                entry.leftChild,
-                entry.rightChild,
-                entry.key,
-                siblingDiff,
-                entry.key.length - siblingDiff);
+            i,
+            entry.leftChild,
+            entry.rightChild,
+            entry.key,
+            siblingDiff,
+            entry.key.length - siblingDiff);
       }
     }
 
@@ -2066,38 +2066,38 @@ public final class BinaryBTree extends ODurableComponent {
     final byte[] leftChildSmallestUpperBound = restoreKey(parentKeyPrefix, partialBucketKey);
 
     final byte[] leftChildPrefix =
-            extractCommonPrefix(leftChildLargestLowerBound, leftChildSmallestUpperBound);
+        extractCommonPrefix(leftChildLargestLowerBound, leftChildSmallestUpperBound);
     return Optional.of(leftChildPrefix);
   }
 
   private Optional<byte[]> mergeNoneLeafWithRightSiblingAndRemoveItem(
-          final OAtomicOperation atomicOperation,
-          final RemovalPathItem parentItem,
-          final Bucket parentBucket,
-          final byte[] parentBucketPrefix,
-          final byte[] parentLargestLowerBoundary,
-          final Bucket bucket,
-          final Bucket rightSibling,
-          final byte[] rightSiblingPrefix,
-          final int orphanPointer,
-          final List<RemovalPathItem> path,
-          final List<byte[]> largestLowerBoundaries,
-          final List<byte[]> smallestUpperBoundaries,
-          final List<byte[]> keyPrefixes)
-          throws IOException {
+      final OAtomicOperation atomicOperation,
+      final RemovalPathItem parentItem,
+      final Bucket parentBucket,
+      final byte[] parentBucketPrefix,
+      final byte[] parentLargestLowerBoundary,
+      final Bucket bucket,
+      final Bucket rightSibling,
+      final byte[] rightSiblingPrefix,
+      final int orphanPointer,
+      final List<RemovalPathItem> path,
+      final List<byte[]> largestLowerBoundaries,
+      final List<byte[]> smallestUpperBoundaries,
+      final List<byte[]> keyPrefixes)
+      throws IOException {
 
     if (rightSibling.size() != 1 || bucket.size() != 1) {
       throw new BinaryBTreeException("BTree is broken", this);
     }
 
     final Optional<byte[]> oNewRightSiblingPrefix =
-            deleteFromNonLeafNode(
-                    atomicOperation,
-                    parentBucket,
-                    path.subList(0, path.size() - 1),
-                    largestLowerBoundaries.subList(0, largestLowerBoundaries.size() - 1),
-                    smallestUpperBoundaries.subList(0, smallestUpperBoundaries.size() - 1),
-                    keyPrefixes.subList(0, keyPrefixes.size() - 1));
+        deleteFromNonLeafNode(
+            atomicOperation,
+            parentBucket,
+            path.subList(0, path.size() - 1),
+            largestLowerBoundaries.subList(0, largestLowerBoundaries.size() - 1),
+            smallestUpperBoundaries.subList(0, smallestUpperBoundaries.size() - 1),
+            keyPrefixes.subList(0, keyPrefixes.size() - 1));
 
     if (oNewRightSiblingPrefix.isPresent()) {
       final byte[] partialKey = parentBucket.getKey(parentItem.indexInsidePage);
@@ -2107,13 +2107,13 @@ public final class BinaryBTree extends ODurableComponent {
       final int siblingPrefixDiff = rightSiblingPrefix.length - parentBucketPrefix.length;
 
       final boolean result =
-              rightSibling.addNonLeafEntry(
-                      0,
-                      orphanPointer,
-                      rightChild,
-                      partialKey,
-                      siblingPrefixDiff,
-                      partialKey.length - siblingPrefixDiff);
+          rightSibling.addNonLeafEntry(
+              0,
+              orphanPointer,
+              rightChild,
+              partialKey,
+              siblingPrefixDiff,
+              partialKey.length - siblingPrefixDiff);
       assert result;
 
       final byte[] newRightSiblingPrefix = oNewRightSiblingPrefix.get();
@@ -2144,7 +2144,7 @@ public final class BinaryBTree extends ODurableComponent {
       @SuppressWarnings("UnnecessaryLocalVariable")
       final byte[] leftChildLargestLowerBoundary = parentLargestLowerBoundary;
       final byte[] leftChildKeyPrefix =
-              extractCommonPrefix(leftChildLargestLowerBoundary, leftChildSmallestUpperBoundary);
+          extractCommonPrefix(leftChildLargestLowerBoundary, leftChildSmallestUpperBoundary);
 
       return Optional.of(leftChildKeyPrefix);
     }
@@ -2153,33 +2153,33 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private Optional<byte[]> mergeNoneLeafWithLeftSiblingAndRemoveItem(
-          final OAtomicOperation atomicOperation,
-          final RemovalPathItem parentItem,
-          final Bucket parentBucket,
-          final byte[] parentBucketPrefix,
-          final byte[] parentSmallestUpperBoundary,
-          final Bucket bucket,
-          final Bucket leftSibling,
-          final byte[] leftSiblingPrefix,
-          final int orphanPointer,
-          final List<RemovalPathItem> path,
-          final List<byte[]> largestLowerBounds,
-          final List<byte[]> smallestUpperBounds,
-          final List<byte[]> keyPrefixes)
-          throws IOException {
+      final OAtomicOperation atomicOperation,
+      final RemovalPathItem parentItem,
+      final Bucket parentBucket,
+      final byte[] parentBucketPrefix,
+      final byte[] parentSmallestUpperBoundary,
+      final Bucket bucket,
+      final Bucket leftSibling,
+      final byte[] leftSiblingPrefix,
+      final int orphanPointer,
+      final List<RemovalPathItem> path,
+      final List<byte[]> largestLowerBounds,
+      final List<byte[]> smallestUpperBounds,
+      final List<byte[]> keyPrefixes)
+      throws IOException {
 
     if (leftSibling.size() != 1 || bucket.size() != 1) {
       throw new BinaryBTreeException("BTree is broken", this);
     }
 
     final Optional<byte[]> oNewLeftSiblingPrefix =
-            deleteFromNonLeafNode(
-                    atomicOperation,
-                    parentBucket,
-                    path.subList(0, path.size() - 1),
-                    largestLowerBounds.subList(0, largestLowerBounds.size() - 1),
-                    smallestUpperBounds.subList(0, smallestUpperBounds.size() - 1),
-                    keyPrefixes.subList(0, keyPrefixes.size() - 1));
+        deleteFromNonLeafNode(
+            atomicOperation,
+            parentBucket,
+            path.subList(0, path.size() - 1),
+            largestLowerBounds.subList(0, largestLowerBounds.size() - 1),
+            smallestUpperBounds.subList(0, smallestUpperBounds.size() - 1),
+            keyPrefixes.subList(0, keyPrefixes.size() - 1));
 
     if (oNewLeftSiblingPrefix.isPresent()) {
       final byte[] partialKey = parentBucket.getKey(parentItem.indexInsidePage);
@@ -2225,7 +2225,7 @@ public final class BinaryBTree extends ODurableComponent {
       @SuppressWarnings("UnnecessaryLocalVariable")
       final byte[] rightChildSmallestUpperBoundary = parentSmallestUpperBoundary;
       final byte[] rightChildPrefix =
-              extractCommonPrefix(rightChildLargestLowerBoundary, rightChildSmallestUpperBoundary);
+          extractCommonPrefix(rightChildLargestLowerBoundary, rightChildSmallestUpperBoundary);
       return Optional.of(rightChildPrefix);
     }
 
@@ -2233,11 +2233,11 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private byte[] calculateLargestLowerBoundary(
-          final int parentIndex,
-          final Bucket parent,
-          final byte[] parentPrefix,
-          final byte[] parentLargestLowerBoundary,
-          final boolean leftChild) {
+      final int parentIndex,
+      final Bucket parent,
+      final byte[] parentPrefix,
+      final byte[] parentLargestLowerBoundary,
+      final boolean leftChild) {
     if (leftChild) {
       if (parentIndex > 0) {
         final byte[] key = parent.getKey(parentIndex - 1);
@@ -2252,11 +2252,11 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private byte[] calculateSmallestUpperBoundary(
-          final int parentIndex,
-          final Bucket parent,
-          final byte[] parentPrefix,
-          final byte[] parentSmallestUpperBoundary,
-          final boolean leftChild) {
+      final int parentIndex,
+      final Bucket parent,
+      final byte[] parentPrefix,
+      final byte[] parentSmallestUpperBoundary,
+      final boolean leftChild) {
     if (leftChild) {
       final byte[] key = parent.getKey(parentIndex);
       return restoreKey(parentPrefix, key);
@@ -2281,13 +2281,13 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private byte[] extendKey(
-          final byte[] previousKeyPrefix, final byte[] newKeyPrefix, final byte[] partialKey) {
+      final byte[] previousKeyPrefix, final byte[] newKeyPrefix, final byte[] partialKey) {
     if (previousKeyPrefix.length < newKeyPrefix.length) {
       throw new IllegalArgumentException(
-              "Length of previous key prefix should be bigger than length of new key prefix. "
-                      + previousKeyPrefix.length
-                      + " vs. "
-                      + newKeyPrefix.length);
+          "Length of previous key prefix should be bigger than length of new key prefix. "
+              + previousKeyPrefix.length
+              + " vs. "
+              + newKeyPrefix.length);
     }
 
     final int prefixLenDiff = previousKeyPrefix.length - newKeyPrefix.length;
@@ -2301,12 +2301,12 @@ public final class BinaryBTree extends ODurableComponent {
 
   private void addToFreeList(OAtomicOperation atomicOperation, int pageIndex) throws IOException {
     final OCacheEntry cacheEntry =
-            loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+        loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
     try {
       final Bucket bucket = new Bucket(cacheEntry);
 
       final OCacheEntry entryPointEntry =
-              loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
+          loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
       try {
         final EntryPoint entryPoint = new EntryPoint(entryPointEntry);
 
@@ -2346,18 +2346,18 @@ public final class BinaryBTree extends ODurableComponent {
       }
     } catch (final IOException e) {
       throw OException.wrapException(
-              new BinaryBTreeException("Error during checking  of btree with name " + getName(), this),
-              e);
+          new BinaryBTreeException("Error during checking  of btree with name " + getName(), this),
+          e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   private void removePagesStoredInFreeList(
-          OAtomicOperation atomicOperation, Set<Integer> pages, int filledUpTo) throws IOException {
+      OAtomicOperation atomicOperation, Set<Integer> pages, int filledUpTo) throws IOException {
     final int freeListHead;
     final OCacheEntry entryCacheEntry =
-            loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, true);
+        loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, true);
     try {
       final EntryPoint entryPoint = new EntryPoint(entryCacheEntry);
       assert entryPoint.getPagesSize() == filledUpTo - 1;
@@ -2382,8 +2382,8 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private void removeUsedPages(
-          final int pageIndex, final Set<Integer> pages, final OAtomicOperation atomicOperation)
-          throws IOException {
+      final int pageIndex, final Set<Integer> pages, final OAtomicOperation atomicOperation)
+      throws IOException {
     final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, true);
     try {
       final Bucket bucket = new Bucket(cacheEntry);
@@ -2429,10 +2429,10 @@ public final class BinaryBTree extends ODurableComponent {
     private Iterator<ORawPair<byte[], ORID>> cacheIterator = Collections.emptyIterator();
 
     private SpliteratorForward(
-            final byte[] fromKey,
-            final byte[] toKey,
-            final boolean fromKeyInclusive,
-            final boolean toKeyInclusive) {
+        final byte[] fromKey,
+        final byte[] toKey,
+        final boolean fromKeyInclusive,
+        final boolean toKeyInclusive) {
       this.fromKey = fromKey;
       this.toKey = toKey;
 
@@ -2535,7 +2535,7 @@ public final class BinaryBTree extends ODurableComponent {
         }
       } catch (final IOException e) {
         throw OException.wrapException(
-                new BinaryBTreeException("Error during element iteration", BinaryBTree.this), e);
+            new BinaryBTreeException("Error during element iteration", BinaryBTree.this), e);
       } finally {
         atomicOperationsManager.releaseReadLock(BinaryBTree.this);
       }
@@ -2630,10 +2630,10 @@ public final class BinaryBTree extends ODurableComponent {
     private Iterator<ORawPair<byte[], ORID>> cacheIterator = Collections.emptyIterator();
 
     private SpliteratorBackward(
-            final byte[] fromKey,
-            final byte[] toKey,
-            final boolean fromKeyInclusive,
-            final boolean toKeyInclusive) {
+        final byte[] fromKey,
+        final byte[] toKey,
+        final boolean fromKeyInclusive,
+        final boolean toKeyInclusive) {
       this.fromKey = fromKey;
       this.toKey = toKey;
       this.fromKeyInclusive = fromKeyInclusive;
@@ -2735,7 +2735,7 @@ public final class BinaryBTree extends ODurableComponent {
         }
       } catch (final IOException e) {
         throw OException.wrapException(
-                new BinaryBTreeException("Error during element iteration", BinaryBTree.this), e);
+            new BinaryBTreeException("Error during element iteration", BinaryBTree.this), e);
       } finally {
         atomicOperationsManager.releaseReadLock(BinaryBTree.this);
       }
@@ -2823,11 +2823,11 @@ public final class BinaryBTree extends ODurableComponent {
     private final byte[] keyPrefix;
 
     private SplitBucketResult(
-            final long pageIndex,
-            final int insertionIndex,
-            final byte[] largestLowerBound,
-            final byte[] smallestUpperBound,
-            final byte[] keyPrefix) {
+        final long pageIndex,
+        final int insertionIndex,
+        final byte[] largestLowerBound,
+        final byte[] smallestUpperBound,
+        final byte[] keyPrefix) {
       this.pageIndex = pageIndex;
       this.insertionIndex = insertionIndex;
       this.largestLowerBound = largestLowerBound;
@@ -2866,12 +2866,12 @@ public final class BinaryBTree extends ODurableComponent {
     private final int itemIndex;
 
     private UpdateBucketSearchResult(
-            final List<Integer> insertionIndexes,
-            ArrayList<byte[]> keyPrefixes,
-            ArrayList<byte[]> largestLowerBounds,
-            ArrayList<byte[]> smallestUpperBounds,
-            final ArrayList<Long> path,
-            final int itemIndex) {
+        final List<Integer> insertionIndexes,
+        ArrayList<byte[]> keyPrefixes,
+        ArrayList<byte[]> largestLowerBounds,
+        ArrayList<byte[]> smallestUpperBounds,
+        final ArrayList<Long> path,
+        final int itemIndex) {
       this.insertionIndexes = insertionIndexes;
       this.keyPrefixes = keyPrefixes;
       this.largestLowerBounds = largestLowerBounds;
@@ -2898,13 +2898,13 @@ public final class BinaryBTree extends ODurableComponent {
     private final int keyPrefixLen;
 
     private RemoveSearchResult(
-            final long leafPageIndex,
-            final int leafEntryPageIndex,
-            final ArrayList<RemovalPathItem> path,
-            final ArrayList<byte[]> largestLowerBoundaries,
-            final ArrayList<byte[]> smallestUpperBoundaries,
-            final ArrayList<byte[]> keyPrefixes,
-            int keyPrefixLen) {
+        final long leafPageIndex,
+        final int leafEntryPageIndex,
+        final ArrayList<RemovalPathItem> path,
+        final ArrayList<byte[]> largestLowerBoundaries,
+        final ArrayList<byte[]> smallestUpperBoundaries,
+        final ArrayList<byte[]> keyPrefixes,
+        int keyPrefixLen) {
       this.leafPageIndex = leafPageIndex;
       this.leafEntryPageIndex = leafEntryPageIndex;
       this.path = path;

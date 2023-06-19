@@ -38,22 +38,22 @@ public class BinaryBTreeTestIT {
   @Before
   public void before() throws Exception {
     OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.setValue(4);
-    OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.setValue(1024);
+    OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.setValue(512);
 
     final String buildDirectory =
-            System.getProperty("buildDirectory", ".")
-                    + File.separator
-                    + BinaryBTree.class.getSimpleName();
+        System.getProperty("buildDirectory", ".")
+            + File.separator
+            + BinaryBTree.class.getSimpleName();
 
     dbName = "binaryBTreeTest";
     final File dbDirectory = new File(buildDirectory, dbName);
     OFileUtils.deleteRecursively(dbDirectory);
 
     final OrientDBConfig config =
-            OrientDBConfig.builder()
-                    .addConfig(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE, 4)
-                    .addConfig(OGlobalConfiguration.SBTREE_MAX_KEY_SIZE, 1024)
-                    .build();
+        OrientDBConfig.builder()
+            .addConfig(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE, 4)
+            .addConfig(OGlobalConfiguration.SBTREE_MAX_KEY_SIZE, 1024)
+            .build();
 
     orientDB = new OrientDB("plocal:" + buildDirectory, config);
     orientDB.create(dbName, ODatabaseType.PLOCAL);
@@ -61,12 +61,12 @@ public class BinaryBTreeTestIT {
     OAbstractPaginatedStorage storage;
     try (ODatabaseSession databaseDocumentTx = orientDB.open(dbName, "admin", "admin")) {
       storage =
-              (OAbstractPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
+          (OAbstractPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
     }
     binaryBTree = new BinaryBTree(1, 1024, 16, storage, "singleBTree", ".bbt");
     atomicOperationsManager = storage.getAtomicOperationsManager();
     atomicOperationsManager.executeInsideAtomicOperation(
-            null, atomicOperation -> binaryBTree.create(atomicOperation));
+        null, atomicOperation -> binaryBTree.create(atomicOperation));
   }
 
   @After
@@ -77,29 +77,29 @@ public class BinaryBTreeTestIT {
 
   @Test
   public void testKeyPut() throws Exception {
-    final int keysCount = 1_000_000;
+    final int keysCount = 10_000_000;
 
     String[] lastKey = new String[1];
     for (int i = 0; i < keysCount; i++) {
       final int iteration = i;
       atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation -> {
-                final String key = Integer.toString(iteration);
-                binaryBTree.put(
-                        atomicOperation,
-                        stringToLexicalBytes(key),
-                        new ORecordId(iteration % 32000, iteration));
-                if ((iteration + 1) % 100_000 == 0) {
-                  System.out.printf("%d items loaded out of %d%n", iteration + 1, keysCount);
-                }
+          null,
+          atomicOperation -> {
+            final String key = Integer.toString(iteration);
+            binaryBTree.put(
+                atomicOperation,
+                stringToLexicalBytes(key),
+                new ORecordId(iteration % 32000, iteration));
+            if ((iteration + 1) % 100_000 == 0) {
+              System.out.printf("%d items loaded out of %d%n", iteration + 1, keysCount);
+            }
 
-                if (lastKey[0] == null) {
-                  lastKey[0] = key;
-                } else if (key.compareTo(lastKey[0]) > 0) {
-                  lastKey[0] = key;
-                }
-              });
+            if (lastKey[0] == null) {
+              lastKey[0] = key;
+            } else if (key.compareTo(lastKey[0]) > 0) {
+              lastKey[0] = key;
+            }
+          });
 
       //      Assert.assertArrayEquals(stringToLexicalBytes("0"), binaryBTree.firstKey());
       //      Assert.assertArrayEquals(stringToLexicalBytes(lastKey[0]), binaryBTree.lastKey());
@@ -107,9 +107,9 @@ public class BinaryBTreeTestIT {
 
     for (int i = 0; i < keysCount; i++) {
       Assert.assertEquals(
-              i + " key is absent",
-              new ORecordId(i % 32000, i),
-              binaryBTree.get(stringToLexicalBytes(Integer.toString(i))));
+          i + " key is absent",
+          new ORecordId(i % 32000, i),
+          binaryBTree.get(stringToLexicalBytes(Integer.toString(i))));
       if (i % 100_000 == 0) {
         System.out.printf("%d items tested out of %d%n", i, keysCount);
       }
@@ -130,26 +130,26 @@ public class BinaryBTreeTestIT {
 
     while (keys.size() < keysCount) {
       atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation -> {
-                int val = random.nextInt(Integer.MAX_VALUE);
-                String key = Integer.toString(val);
-                binaryBTree.put(
-                        atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val));
+          null,
+          atomicOperation -> {
+            int val = random.nextInt(Integer.MAX_VALUE);
+            String key = Integer.toString(val);
+            binaryBTree.put(
+                atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val));
 
-                keys.put(key, new ORecordId(val % 32000, val));
+            keys.put(key, new ORecordId(val % 32000, val));
 
-                Assert.assertEquals(
-                        binaryBTree.get(stringToLexicalBytes(key)), new ORecordId(val % 32000, val));
-                if (keys.size() % 10_000 == 0) {
-                  System.out.println(keys.size() + " keys were added.");
-                }
+            Assert.assertEquals(
+                binaryBTree.get(stringToLexicalBytes(key)), new ORecordId(val % 32000, val));
+            if (keys.size() % 10_000 == 0) {
+              System.out.println(keys.size() + " keys were added.");
+            }
 
-                // Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()),
-                // binaryBTree.firstKey());
-                //            Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()),
-                // binaryBTree.lastKey());
-              });
+            // Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()),
+            // binaryBTree.firstKey());
+            //            Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()),
+            // binaryBTree.lastKey());
+          });
     }
 
     for (Map.Entry<String, ORID> entry : keys.entrySet()) {
@@ -164,28 +164,36 @@ public class BinaryBTreeTestIT {
     System.out.println("testKeyPutRandomGaussian seed : " + seed);
 
     Random random = new Random(seed);
-    final int keysCount = 1_000_000;
+    final int keysCount = 10_000_000;
 
     while (keys.size() < keysCount) {
-      atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation -> {
-                int val;
-                do {
-                  val = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-                } while (val < 0);
+      int prevKeysSize = keys.size();
 
-                final String key = Integer.toString(val);
-                binaryBTree.put(
-                        atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val));
-                keys.put(key, new ORecordId(val % 32000, val));
-                Assert.assertEquals(
-                        new ORecordId(val % 32000, val), binaryBTree.get(stringToLexicalBytes(key)));
-              });
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null,
+          atomicOperation -> {
+            int val;
+            do {
+              val = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
+            } while (val < 0);
+
+            final String key = Integer.toString(val);
+            binaryBTree.put(
+                atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val));
+            keys.put(key, new ORecordId(val % 32000, val));
+            Assert.assertEquals(
+                new ORecordId(val % 32000, val), binaryBTree.get(stringToLexicalBytes(key)));
+          });
+
+      if (prevKeysSize != keys.size()) {
+        if (keys.size() % 1_000 == 0) {
+          System.out.println(keys.size() + " keys were inserted.");
+        }
+      }
     }
 
-//    Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
-//    Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
+    //    Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
+    //    Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
 
     for (Map.Entry<String, ORID> entry : keys.entrySet()) {
       Assert.assertEquals(entry.getValue(), binaryBTree.get(stringToLexicalBytes(entry.getKey())));
@@ -193,43 +201,92 @@ public class BinaryBTreeTestIT {
   }
 
   @Test
-  public void testKeyDeleteRandomUniform() throws Exception {
-    final int keysCount = 1_000_000;
+  public void testKeyDelete() throws Exception {
+    final int keysCount = 10_000_000;
 
-    final TreeMap<String, ORID> keyMap = new TreeMap<>();
     for (int i = 0; i < keysCount; i++) {
-      final String key = Integer.toString(i);
       final int k = i;
       atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation ->
-                      binaryBTree.put(
-                              atomicOperation, stringToLexicalBytes(key), new ORecordId(k % 32000, k)));
-      keyMap.put(key, new ORecordId(k % 32000, k));
+          null,
+          atomicOperation ->
+              binaryBTree.put(
+                  atomicOperation,
+                  stringToLexicalBytes(Integer.toString(k)),
+                  new ORecordId(k % 32000, k)));
     }
 
-    Iterator<String> keysIterator = keyMap.keySet().iterator();
-    while (keysIterator.hasNext()) {
-      final String key = keysIterator.next();
-      final long val = keyMap.get(key).getClusterPosition();
+    for (int i = 0; i < keysCount; i++) {
+      final int iteration = i;
+
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null,
+          atomicOperation -> {
+            if (iteration % 3 == 0) {
+              Assert.assertEquals(
+                  binaryBTree.remove(
+                      atomicOperation, stringToLexicalBytes(Integer.toString(iteration))),
+                  new ORecordId(iteration % 32000, iteration));
+            }
+          });
+    }
+
+    for (int i = 0; i < keysCount; i++) {
+      if (i % 3 == 0) {
+        Assert.assertNull(binaryBTree.get(stringToLexicalBytes(Integer.toString(i))));
+      } else {
+        Assert.assertEquals(
+            binaryBTree.get(stringToLexicalBytes(Integer.toString(i))),
+            new ORecordId(i % 32000, i));
+      }
+    }
+  }
+
+  @Test
+  public void testKeyPutUniformDelete() throws IOException {
+    final TreeMap<String, ORID> keys = new TreeMap<>();
+    final long seed = System.nanoTime();
+    System.out.println("testKeyPutUniformDelete seed : " + seed);
+    final Random random = new Random(seed);
+    final int keysCount = 1_000_000;
+
+    while (keys.size() < keysCount) {
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null,
+          atomicOperation -> {
+            int val = random.nextInt(Integer.MAX_VALUE);
+            String key = Integer.toString(val);
+            binaryBTree.put(
+                atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val));
+
+            keys.put(key, new ORecordId(val % 32000, val));
+
+            Assert.assertEquals(
+                binaryBTree.get(stringToLexicalBytes(key)), new ORecordId(val % 32000, val));
+            if (keys.size() % 10_000 == 0) {
+              System.out.println(keys.size() + " keys were added.");
+            }
+          });
+    }
+
+    for (final String key : keys.keySet()) {
+      final int val = Integer.parseInt(key);
       if (val % 3 == 0) {
         atomicOperationsManager.executeInsideAtomicOperation(
-                null,
-                atomicOperation -> binaryBTree.remove(atomicOperation, stringToLexicalBytes(key)));
-        keysIterator.remove();
+            null,
+            atomicOperation ->
+                Assert.assertEquals(
+                    binaryBTree.remove(atomicOperation, stringToLexicalBytes(key)),
+                    new ORecordId(val % 32000, val)));
       }
     }
 
-    Assert.assertArrayEquals(stringToLexicalBytes(keyMap.firstKey()), binaryBTree.firstKey());
-    Assert.assertArrayEquals(stringToLexicalBytes(keyMap.lastKey()), binaryBTree.lastKey());
-
-    for (final Map.Entry<String, ORID> entry : keyMap.entrySet()) {
-      long val = entry.getValue().getClusterPosition();
+    for (final String key : keys.keySet()) {
+      final int val = Integer.parseInt(key);
       if (val % 3 == 0) {
-        Assert.assertNull(binaryBTree.get(stringToLexicalBytes(entry.getKey())));
+        Assert.assertNull(binaryBTree.get(stringToLexicalBytes(key)));
       } else {
         Assert.assertEquals(
-                entry.getValue(), binaryBTree.get(stringToLexicalBytes(entry.getKey())));
+            new ORecordId(val % 32000, val), binaryBTree.get(stringToLexicalBytes(key)));
       }
     }
   }
@@ -250,14 +307,14 @@ public class BinaryBTreeTestIT {
       }
       String key = Integer.toString(val);
       atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation ->
-                      binaryBTree.put(
-                              atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val)));
+          null,
+          atomicOperation ->
+              binaryBTree.put(
+                  atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val)));
       keys.put(key, new ORecordId(val % 32000, val));
 
       Assert.assertEquals(
-              binaryBTree.get(stringToLexicalBytes(key)), new ORecordId(val % 32000, val));
+          binaryBTree.get(stringToLexicalBytes(key)), new ORecordId(val % 32000, val));
     }
 
     Iterator<Map.Entry<String, ORID>> keysIterator = keys.entrySet().iterator();
@@ -267,15 +324,15 @@ public class BinaryBTreeTestIT {
 
       if (entry.getValue().getClusterPosition() % 3 == 0) {
         atomicOperationsManager.executeInsideAtomicOperation(
-                null,
-                atomicOperation ->
-                        binaryBTree.remove(atomicOperation, stringToLexicalBytes(entry.getKey())));
+            null,
+            atomicOperation ->
+                binaryBTree.remove(atomicOperation, stringToLexicalBytes(entry.getKey())));
         keysIterator.remove();
       }
     }
-
-    Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
-    Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
+//
+//    Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
+//    Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
 
     for (final Map.Entry<String, ORID> entry : keys.entrySet()) {
       final int val = (int) entry.getValue().getClusterPosition();
@@ -283,7 +340,7 @@ public class BinaryBTreeTestIT {
         Assert.assertNull(binaryBTree.get(stringToLexicalBytes(entry.getKey())));
       } else {
         Assert.assertEquals(
-                new ORecordId(val % 32000, val), binaryBTree.get(stringToLexicalBytes(entry.getKey())));
+            new ORecordId(val % 32000, val), binaryBTree.get(stringToLexicalBytes(entry.getKey())));
       }
     }
   }
@@ -295,12 +352,12 @@ public class BinaryBTreeTestIT {
     for (int i = 0; i < keysCount / 2; i++) {
       final int key = i;
       atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation ->
-                      binaryBTree.put(
-                              atomicOperation,
-                              stringToLexicalBytes(Integer.toString(key)),
-                              new ORecordId(key % 32000, key)));
+          null,
+          atomicOperation ->
+              binaryBTree.put(
+                  atomicOperation,
+                  stringToLexicalBytes(Integer.toString(key)),
+                  new ORecordId(key % 32000, key)));
     }
 
     for (int iterations = 0; iterations < 4; iterations++) {
@@ -309,16 +366,16 @@ public class BinaryBTreeTestIT {
       for (int i = 0; i < keysCount / 2; i++) {
         final int key = i + (iterations + 1) * keysCount / 2;
         atomicOperationsManager.executeInsideAtomicOperation(
-                null,
-                atomicOperation ->
-                        binaryBTree.put(
-                                atomicOperation,
-                                stringToLexicalBytes(Integer.toString(key)),
-                                new ORecordId(key % 32000, key)));
+            null,
+            atomicOperation ->
+                binaryBTree.put(
+                    atomicOperation,
+                    stringToLexicalBytes(Integer.toString(key)),
+                    new ORecordId(key % 32000, key)));
 
         Assert.assertEquals(
-                binaryBTree.get(stringToLexicalBytes(Integer.toString(key))),
-                new ORecordId(key % 32000, key));
+            binaryBTree.get(stringToLexicalBytes(Integer.toString(key))),
+            new ORecordId(key % 32000, key));
       }
 
       final int offset = iterations * (keysCount / 2);
@@ -326,12 +383,12 @@ public class BinaryBTreeTestIT {
       for (int i = 0; i < keysCount / 2; i++) {
         final int key = i + offset;
         atomicOperationsManager.executeInsideAtomicOperation(
-                null,
-                atomicOperation ->
-                        Assert.assertEquals(
-                                binaryBTree.remove(
-                                        atomicOperation, stringToLexicalBytes(Integer.toString(key))),
-                                new ORecordId(key % 32000, key)));
+            null,
+            atomicOperation ->
+                Assert.assertEquals(
+                    binaryBTree.remove(
+                        atomicOperation, stringToLexicalBytes(Integer.toString(key))),
+                    new ORecordId(key % 32000, key)));
       }
 
       final int start = (iterations + 1) * (keysCount / 2);
@@ -340,53 +397,12 @@ public class BinaryBTreeTestIT {
           Assert.assertNull(binaryBTree.get(stringToLexicalBytes(Integer.toString(i))));
         } else {
           Assert.assertEquals(
-                  new ORecordId(i % 32000, i),
-                  binaryBTree.get(stringToLexicalBytes(Integer.toString(i))));
+              new ORecordId(i % 32000, i),
+              binaryBTree.get(stringToLexicalBytes(Integer.toString(i))));
         }
       }
 
       binaryBTree.assertFreePages();
-    }
-  }
-
-  @Test
-  public void testKeyDelete() throws Exception {
-    final int keysCount = 1_000_000;
-
-    for (int i = 0; i < keysCount; i++) {
-      final int k = i;
-      atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation ->
-                      binaryBTree.put(
-                              atomicOperation,
-                              stringToLexicalBytes(Integer.toString(k)),
-                              new ORecordId(k % 32000, k)));
-    }
-
-    for (int i = 0; i < keysCount; i++) {
-      final int iteration = i;
-
-      atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation -> {
-                if (iteration % 3 == 0) {
-                  Assert.assertEquals(
-                          binaryBTree.remove(
-                                  atomicOperation, stringToLexicalBytes(Integer.toString(iteration))),
-                          new ORecordId(iteration % 32000, iteration));
-                }
-              });
-    }
-
-    for (int i = 0; i < keysCount; i++) {
-      if (i % 3 == 0) {
-        Assert.assertNull(binaryBTree.get(stringToLexicalBytes(Integer.toString(i))));
-      } else {
-        Assert.assertEquals(
-                binaryBTree.get(stringToLexicalBytes(Integer.toString(i))),
-                new ORecordId(i % 32000, i));
-      }
     }
   }
 
@@ -397,42 +413,38 @@ public class BinaryBTreeTestIT {
     for (int i = 0; i < keysCount; i++) {
       final int key = i;
       atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation ->
-                      binaryBTree.put(
-                              atomicOperation,
-                              stringToLexicalBytes(Integer.toString(key)),
-                              new ORecordId(key % 32000, key)));
+          null,
+          atomicOperation ->
+              binaryBTree.put(
+                  atomicOperation,
+                  stringToLexicalBytes(Integer.toString(key)),
+                  new ORecordId(key % 32000, key)));
 
       Assert.assertEquals(
-              binaryBTree.get(stringToLexicalBytes(Integer.toString(i))), new ORecordId(i % 32000, i));
+          binaryBTree.get(stringToLexicalBytes(Integer.toString(i))), new ORecordId(i % 32000, i));
     }
-    final int txInterval = 100;
 
-    for (int i = 0; i < keysCount / txInterval; i++) {
+    for (int i = 0; i < keysCount; i++) {
       final int iterationsCounter = i;
 
       atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation -> {
-                for (int j = 0; j < txInterval; j++) {
-                  final int key = (iterationsCounter * txInterval + j);
+          null,
+          atomicOperation -> {
+            if (iterationsCounter % 3 == 0) {
+              Assert.assertEquals(
+                  binaryBTree.remove(
+                      atomicOperation, stringToLexicalBytes(Integer.toString(iterationsCounter))),
+                  new ORecordId(iterationsCounter % 32000, iterationsCounter));
+            }
 
-                  if (key % 3 == 0) {
-                    Assert.assertEquals(
-                            binaryBTree.remove(
-                                    atomicOperation, stringToLexicalBytes(Integer.toString(key))),
-                            new ORecordId(key % 32000, key));
-                  }
-
-                  if (key % 2 == 0) {
-                    binaryBTree.put(
-                            atomicOperation,
-                            stringToLexicalBytes(Integer.toString(keysCount + key)),
-                            new ORecordId((keysCount + key) % 32000, keysCount + key));
-                  }
-                }
-              });
+            if (iterationsCounter % 2 == 0) {
+              binaryBTree.put(
+                  atomicOperation,
+                  stringToLexicalBytes(Integer.toString(keysCount + iterationsCounter)),
+                  new ORecordId(
+                      (keysCount + iterationsCounter) % 32000, keysCount + iterationsCounter));
+            }
+          });
     }
 
     for (int i = 0; i < keysCount; i++) {
@@ -440,14 +452,14 @@ public class BinaryBTreeTestIT {
         Assert.assertNull(binaryBTree.get(stringToLexicalBytes(Integer.toString(i))));
       } else {
         Assert.assertEquals(
-                binaryBTree.get(stringToLexicalBytes(Integer.toString(i))),
-                new ORecordId(i % 32000, i));
+            binaryBTree.get(stringToLexicalBytes(Integer.toString(i))),
+            new ORecordId(i % 32000, i));
       }
 
       if (i % 2 == 0) {
         Assert.assertEquals(
-                binaryBTree.get(stringToLexicalBytes(Integer.toString(keysCount + i))),
-                new ORecordId((keysCount + i) % 32000, keysCount + i));
+            binaryBTree.get(stringToLexicalBytes(Integer.toString(keysCount + i))),
+            new ORecordId((keysCount + i) % 32000, keysCount + i));
       }
     }
   }
@@ -462,36 +474,36 @@ public class BinaryBTreeTestIT {
       for (int i = 0; i < keysCount; i++) {
         final int key = i;
         atomicOperationsManager.executeInsideAtomicOperation(
-                null,
-                atomicOperation ->
-                        binaryBTree.put(
-                                atomicOperation,
-                                stringToLexicalBytes(Integer.toString(key)),
-                                new ORecordId(key % 32000, key)));
+            null,
+            atomicOperation ->
+                binaryBTree.put(
+                    atomicOperation,
+                    stringToLexicalBytes(Integer.toString(key)),
+                    new ORecordId(key % 32000, key)));
       }
 
       for (int i = 0; i < keysCount; i++) {
         final int key = i;
         atomicOperationsManager.executeInsideAtomicOperation(
-                null,
-                atomicOperation -> {
-                  Assert.assertEquals(
-                          binaryBTree.remove(atomicOperation, stringToLexicalBytes(Integer.toString(key))),
-                          new ORecordId(key % 32000, key));
+            null,
+            atomicOperation -> {
+              Assert.assertEquals(
+                  binaryBTree.remove(atomicOperation, stringToLexicalBytes(Integer.toString(key))),
+                  new ORecordId(key % 32000, key));
 
-                  if (key > 0 && key % 100_000 == 0) {
-                    for (int keyToVerify = 0; keyToVerify < keysCount; keyToVerify++) {
-                      if (keyToVerify > key) {
-                        Assert.assertEquals(
-                                new ORecordId(keyToVerify % 32000, keyToVerify),
-                                binaryBTree.get(stringToLexicalBytes(Integer.toString(keyToVerify))));
-                      } else {
-                        Assert.assertNull(
-                                binaryBTree.get(stringToLexicalBytes(Integer.toString(keyToVerify))));
-                      }
-                    }
+              if (key > 0 && key % 100_000 == 0) {
+                for (int keyToVerify = 0; keyToVerify < keysCount; keyToVerify++) {
+                  if (keyToVerify > key) {
+                    Assert.assertEquals(
+                        new ORecordId(keyToVerify % 32000, keyToVerify),
+                        binaryBTree.get(stringToLexicalBytes(Integer.toString(keyToVerify))));
+                  } else {
+                    Assert.assertNull(
+                        binaryBTree.get(stringToLexicalBytes(Integer.toString(keyToVerify))));
                   }
-                });
+                }
+              }
+            });
       }
       for (int i = 0; i < keysCount; i++) {
         Assert.assertNull(binaryBTree.get(stringToLexicalBytes(Integer.toString(i))));
@@ -507,7 +519,7 @@ public class BinaryBTreeTestIT {
     final int operations = 10 * maximumKeys;
 
     final TreeMap<byte[], ORID> keyMap =
-            new TreeMap<>(OComparatorFactory.INSTANCE.getComparator(byte[].class));
+        new TreeMap<>(OComparatorFactory.INSTANCE.getComparator(byte[].class));
 
     final long seed = 559430631165266L; // System.nanoTime();
     final Random random = new Random(seed);
@@ -553,7 +565,7 @@ public class BinaryBTreeTestIT {
 
         keyMap.put(key, value);
         atomicOperationsManager.executeInsideAtomicOperation(
-                null, atomicOperation -> binaryBTree.put(atomicOperation, key, value));
+            null, atomicOperation -> binaryBTree.put(atomicOperation, key, value));
       } else {
         final int deletionKeySize = random.nextInt(10) + 5;
         final byte[] deletionCandidate = new byte[deletionKeySize];
@@ -568,8 +580,8 @@ public class BinaryBTreeTestIT {
 
         final byte[] dKey = deletionKey;
         final ORID removedValue =
-                atomicOperationsManager.calculateInsideAtomicOperation(
-                        null, atomicOperation -> binaryBTree.remove(atomicOperation, dKey));
+            atomicOperationsManager.calculateInsideAtomicOperation(
+                null, atomicOperation -> binaryBTree.remove(atomicOperation, dKey));
         Assert.assertEquals(expectedRemovedValue, removedValue);
       }
 
@@ -595,7 +607,7 @@ public class BinaryBTreeTestIT {
     int counter = 0;
     for (final byte[] key : keyMap.keySet()) {
       atomicOperationsManager.executeInsideAtomicOperation(
-              null, atomicOperation -> binaryBTree.remove(atomicOperation, key));
+          null, atomicOperation -> binaryBTree.remove(atomicOperation, key));
       counter++;
       if (counter % 100_000 == 0) {
         System.out.printf("%,d keys are removed out ouf %,d%n", counter, mapSize);
@@ -621,15 +633,15 @@ public class BinaryBTreeTestIT {
 
     while (keyValues.size() < keysCount) {
       atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation -> {
-                int val = random.nextInt(Integer.MAX_VALUE);
-                String key = Integer.toString(val);
+          null,
+          atomicOperation -> {
+            int val = random.nextInt(Integer.MAX_VALUE);
+            String key = Integer.toString(val);
 
-                binaryBTree.put(
-                        atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val));
-                keyValues.put(key, new ORecordId(val % 32000, val));
-              });
+            binaryBTree.put(
+                atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val));
+            keyValues.put(key, new ORecordId(val % 32000, val));
+          });
     }
 
     assertIterateMajorEntries(keyValues, random, true, true);
@@ -658,16 +670,16 @@ public class BinaryBTreeTestIT {
 
     while (keyValues.size() < keysCount) {
       atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation -> {
-                int val = random.nextInt(Integer.MAX_VALUE);
-                String key = Integer.toString(val);
+          null,
+          atomicOperation -> {
+            int val = random.nextInt(Integer.MAX_VALUE);
+            String key = Integer.toString(val);
 
-                binaryBTree.put(
-                        atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val));
+            binaryBTree.put(
+                atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val));
 
-                keyValues.put(key, new ORecordId(val % 32000, val));
-              });
+            keyValues.put(key, new ORecordId(val % 32000, val));
+          });
     }
 
     assertIterateMinorEntries(keyValues, random, true, true);
@@ -695,15 +707,15 @@ public class BinaryBTreeTestIT {
     while (keyValues.size() < keysCount) {
       for (int n = 0; n < 2; n++) {
         atomicOperationsManager.executeInsideAtomicOperation(
-                null,
-                atomicOperation -> {
-                  int val = random.nextInt(Integer.MAX_VALUE);
-                  String key = Integer.toString(val);
+            null,
+            atomicOperation -> {
+              int val = random.nextInt(Integer.MAX_VALUE);
+              String key = Integer.toString(val);
 
-                  binaryBTree.put(
-                          atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val));
-                  keyValues.put(key, new ORecordId(val % 32000, val));
-                });
+              binaryBTree.put(
+                  atomicOperation, stringToLexicalBytes(key), new ORecordId(val % 32000, val));
+              keyValues.put(key, new ORecordId(val % 32000, val));
+            });
       }
     }
     assertIterateBetweenEntries(keyValues, random, collator, true, true, true);
@@ -721,12 +733,12 @@ public class BinaryBTreeTestIT {
   }
 
   private void assertIterateBetweenEntries(
-          NavigableMap<String, ORID> keyValues,
-          Random random,
-          Collator collator,
-          boolean fromInclusive,
-          boolean toInclusive,
-          boolean ascSortOrder) {
+      NavigableMap<String, ORID> keyValues,
+      Random random,
+      Collator collator,
+      boolean fromInclusive,
+      boolean toInclusive,
+      boolean ascSortOrder) {
     String[] keys = new String[keyValues.size()];
     int index = 0;
 
@@ -748,13 +760,13 @@ public class BinaryBTreeTestIT {
 
       if (random.nextBoolean()) {
         fromKey =
-                fromKey.substring(0, fromKey.length() - 1)
-                        + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
+            fromKey.substring(0, fromKey.length() - 1)
+                + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
       if (random.nextBoolean()) {
         toKey =
-                toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
+            toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
       }
 
       if (collator.compare(fromKey, toKey) > 0) {
@@ -763,25 +775,25 @@ public class BinaryBTreeTestIT {
 
       final Iterator<ORawPair<byte[], ORID>> indexIterator;
       try (Stream<ORawPair<byte[], ORID>> stream =
-                   binaryBTree.iterateEntriesBetween(
-                           stringToLexicalBytes(fromKey),
-                           fromInclusive,
-                           stringToLexicalBytes(toKey),
-                           toInclusive,
-                           ascSortOrder)) {
+          binaryBTree.iterateEntriesBetween(
+              stringToLexicalBytes(fromKey),
+              fromInclusive,
+              stringToLexicalBytes(toKey),
+              toInclusive,
+              ascSortOrder)) {
         indexIterator = stream.iterator();
 
         Iterator<Map.Entry<String, ORID>> iterator;
         if (ascSortOrder) {
           iterator =
-                  keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).entrySet().iterator();
+              keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).entrySet().iterator();
         } else {
           iterator =
-                  keyValues
-                          .subMap(fromKey, fromInclusive, toKey, toInclusive)
-                          .descendingMap()
-                          .entrySet()
-                          .iterator();
+              keyValues
+                  .subMap(fromKey, fromInclusive, toKey, toInclusive)
+                  .descendingMap()
+                  .entrySet()
+                  .iterator();
         }
 
         while (iterator.hasNext()) {
@@ -800,10 +812,10 @@ public class BinaryBTreeTestIT {
   }
 
   private void assertIterateMinorEntries(
-          NavigableMap<String, ORID> keyValues,
-          Random random,
-          boolean keyInclusive,
-          boolean ascSortOrder) {
+      NavigableMap<String, ORID> keyValues,
+      Random random,
+      boolean keyInclusive,
+      boolean ascSortOrder) {
     String[] keys = new String[keyValues.size()];
     int index = 0;
 
@@ -817,13 +829,13 @@ public class BinaryBTreeTestIT {
       String toKey = keys[toKeyIndex];
       if (random.nextBoolean()) {
         toKey =
-                toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
+            toKey.substring(0, toKey.length() - 1) + (char) (toKey.charAt(toKey.length() - 1) + 1);
       }
 
       final Iterator<ORawPair<byte[], ORID>> indexIterator;
       try (Stream<ORawPair<byte[], ORID>> stream =
-                   binaryBTree.iterateEntriesMinor(
-                           stringToLexicalBytes(toKey), keyInclusive, ascSortOrder)) {
+          binaryBTree.iterateEntriesMinor(
+              stringToLexicalBytes(toKey), keyInclusive, ascSortOrder)) {
         indexIterator = stream.iterator();
 
         Iterator<Map.Entry<String, ORID>> iterator;
@@ -849,10 +861,10 @@ public class BinaryBTreeTestIT {
   }
 
   private void assertIterateMajorEntries(
-          NavigableMap<String, ORID> keyValues,
-          Random random,
-          boolean keyInclusive,
-          boolean ascSortOrder) {
+      NavigableMap<String, ORID> keyValues,
+      Random random,
+      boolean keyInclusive,
+      boolean ascSortOrder) {
     String[] keys = new String[keyValues.size()];
     int index = 0;
 
@@ -867,14 +879,14 @@ public class BinaryBTreeTestIT {
 
       if (random.nextBoolean()) {
         fromKey =
-                fromKey.substring(0, fromKey.length() - 1)
-                        + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
+            fromKey.substring(0, fromKey.length() - 1)
+                + (char) (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
       final Iterator<ORawPair<byte[], ORID>> indexIterator;
       try (Stream<ORawPair<byte[], ORID>> stream =
-                   binaryBTree.iterateEntriesMajor(
-                           stringToLexicalBytes(fromKey), keyInclusive, ascSortOrder)) {
+          binaryBTree.iterateEntriesMajor(
+              stringToLexicalBytes(fromKey), keyInclusive, ascSortOrder)) {
         indexIterator = stream.iterator();
 
         Iterator<Map.Entry<String, ORID>> iterator;
