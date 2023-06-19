@@ -24,7 +24,7 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
   public void close() {}
 
   @Override
-  public OResultSet fetchNext() {
+  public OResultSet start() {
     return new OInternalResultSet();
   }
 

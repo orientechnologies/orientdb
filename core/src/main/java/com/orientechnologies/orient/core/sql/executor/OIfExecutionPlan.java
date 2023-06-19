@@ -30,7 +30,7 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
-  public OResultSet fetchNext() {
+  public OResultSet start() {
     return step.syncPull(ctx);
   }
 

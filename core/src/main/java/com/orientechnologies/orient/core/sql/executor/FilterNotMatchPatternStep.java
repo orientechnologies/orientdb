@@ -42,7 +42,7 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
   private boolean matchesPattern(OResult nextItem, OCommandContext ctx) {
     OSelectExecutionPlan plan = createExecutionPlan(nextItem, ctx);
-    try (OResultSet rs = plan.fetchNext()) {
+    try (OResultSet rs = plan.start()) {
       return rs.hasNext();
     }
   }

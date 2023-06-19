@@ -18,7 +18,7 @@ public class OUpdateExecutionPlan extends OSelectExecutionPlan {
   }
 
   @Override
-  public OResultSet fetchNext() {
+  public OResultSet start() {
     if (next >= result.size()) {
       return new OInternalResultSet(); // empty
     }
@@ -37,7 +37,7 @@ public class OUpdateExecutionPlan extends OSelectExecutionPlan {
   }
 
   public void executeInternal() throws OCommandExecutionException {
-    OResultSet nextBlock = super.fetchNext();
+    OResultSet nextBlock = super.start();
     while (nextBlock.hasNext()) {
       result.add(nextBlock.next());
     }

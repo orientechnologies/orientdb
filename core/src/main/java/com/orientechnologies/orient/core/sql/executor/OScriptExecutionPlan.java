@@ -1,6 +1,6 @@
+/** Created by luigidellaquila on 08/08/16. */
 package com.orientechnologies.orient.core.sql.executor;
 
-/** Created by luigidellaquila on 08/08/16. */
 import com.orientechnologies.orient.core.command.OCommandContext;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
-  public OResultSet fetchNext() {
+  public OResultSet start() {
     doExecute();
     return finalResult;
   }
@@ -44,12 +44,9 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
       executeUntilReturn();
       executed = true;
       finalResult = new OInternalResultSet();
-      OResultSet partial = lastStep.syncPull(ctx);
-      while (partial.hasNext()) {
-        while (partial.hasNext()) {
-          ((OInternalResultSet) finalResult).add(partial.next());
-        }
-        partial = lastStep.syncPull(ctx);
+      OResultSet results = lastStep.syncPull(ctx);
+      while (results.hasNext()) {
+        ((OInternalResultSet) finalResult).add(results.next());
       }
       if (lastStep instanceof ScriptLineStep) {
         ((OInternalResultSet) finalResult).setPlan(((ScriptLineStep) lastStep).plan);

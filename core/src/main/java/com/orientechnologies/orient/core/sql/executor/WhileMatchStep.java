@@ -26,7 +26,7 @@ public class WhileMatchStep extends AbstractUnrollStep {
   protected Collection<OResult> unroll(OResult doc, OCommandContext iContext) {
     body.reset(iContext);
     List<OResult> result = new ArrayList<>();
-    OResultSet block = body.fetchNext();
+    OResultSet block = body.start();
     while (block.hasNext()) {
       result.add(block.next());
     }

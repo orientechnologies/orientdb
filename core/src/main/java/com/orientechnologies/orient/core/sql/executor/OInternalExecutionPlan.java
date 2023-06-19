@@ -16,7 +16,7 @@ public interface OInternalExecutionPlan extends OExecutionPlan {
    *
    * @return
    */
-  OResultSet fetchNext();
+  OResultSet start();
 
   void reset(OCommandContext ctx);
 

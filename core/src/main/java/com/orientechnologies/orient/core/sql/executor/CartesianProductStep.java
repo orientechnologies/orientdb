@@ -28,7 +28,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
       final int pos = i;
       if (stream == null) {
         stream =
-            ep.fetchNext().stream()
+            ep.start().stream()
                 .map(
                     (value) -> {
                       productTuple[pos] = value;
@@ -38,7 +38,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
         stream =
             stream.flatMap(
                 (val) -> {
-                  return ep.fetchNext().stream()
+                  return ep.start().stream()
                       .map(
                           (value) -> {
                             val[pos] = value;

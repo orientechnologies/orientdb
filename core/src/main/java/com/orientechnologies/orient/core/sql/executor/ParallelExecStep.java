@@ -22,7 +22,7 @@ public class ParallelExecStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     return new OSubResultsResultSet(
-        subExecutionPlans.stream().map((step) -> step.fetchNext()).iterator());
+        subExecutionPlans.stream().map((step) -> step.start()).iterator());
   }
 
   @Override

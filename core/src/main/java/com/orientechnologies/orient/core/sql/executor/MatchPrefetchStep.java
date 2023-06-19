@@ -36,7 +36,7 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
     if (!executed) {
       getPrev().ifPresent(x -> x.syncPull(ctx));
 
-      OResultSet nextBlock = prefetchExecutionPlan.fetchNext();
+      OResultSet nextBlock = prefetchExecutionPlan.start();
       List<OResult> prefetched = new ArrayList<>();
       while (nextBlock.hasNext()) {
         prefetched.add(nextBlock.next());
