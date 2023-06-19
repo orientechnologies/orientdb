@@ -3,18 +3,12 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 08/05/17. */
 public class DistributedExecutionStep extends AbstractExecutionStep {
 
   private final OSelectExecutionPlan subExecuitonPlan;
   private final String nodeName;
-
-  private boolean inited;
-
-  private OResultSet remoteResultSet;
 
   public DistributedExecutionStep(
       OSelectExecutionPlan subExecutionPlan,
@@ -28,41 +22,9 @@ public class DistributedExecutionStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    init(ctx);
+    OResultSet remote = sendSerializedExecutionPlan(nodeName, subExecuitonPlan, ctx);
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        throw new UnsupportedOperationException("Implement distributed execution step!");
-      }
-
-      @Override
-      public OResult next() {
-        throw new UnsupportedOperationException("Implement distributed execution step!");
-      }
-
-      @Override
-      public void close() {
-        DistributedExecutionStep.this.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
-  }
-
-  public void init(OCommandContext ctx) {
-    if (!inited) {
-      inited = true;
-      this.remoteResultSet = sendSerializedExecutionPlan(nodeName, subExecuitonPlan, ctx);
-    }
+    return remote;
   }
 
   private OResultSet sendSerializedExecutionPlan(
@@ -74,9 +36,6 @@ public class DistributedExecutionStep extends AbstractExecutionStep {
   @Override
   public void close() {
     super.close();
-    if (this.remoteResultSet != null) {
-      this.remoteResultSet.close();
-    }
   }
 
   @Override

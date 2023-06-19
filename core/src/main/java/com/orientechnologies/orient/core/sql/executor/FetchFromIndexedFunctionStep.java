@@ -20,7 +20,6 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
 
   private long cost = 0;
   // runtime
-  private Iterator<OIdentifiable> fullResult = null;
 
   public FetchFromIndexedFunctionStep(
       OBinaryCondition functionCondition,
@@ -35,7 +34,7 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    init(ctx);
+    Iterator<OIdentifiable> fullResult = init(ctx);
     return new OResultSetMapper(
         new OIteratorResultSet(fullResult),
         (result) -> {
@@ -54,15 +53,13 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
         });
   }
 
-  private void init(OCommandContext ctx) {
-    if (fullResult == null) {
-      long begin = profilingEnabled ? System.nanoTime() : 0;
-      try {
-        fullResult = functionCondition.executeIndexedFunction(queryTarget, ctx).iterator();
-      } finally {
-        if (profilingEnabled) {
-          cost += (System.nanoTime() - begin);
-        }
+  private Iterator<OIdentifiable> init(OCommandContext ctx) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      return functionCondition.executeIndexedFunction(queryTarget, ctx).iterator();
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
       }
     }
   }
@@ -80,9 +77,7 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void reset() {
-    this.fullResult = null;
-  }
+  public void reset() {}
 
   @Override
   public long getCost() {

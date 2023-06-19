@@ -31,9 +31,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
   private int clusterId;
   private Object order;
-
-  private ORecordIteratorCluster iterator;
-  private OCostMeasureResultSet costMeasure = null;
+  private OCostMeasureResultSet costMeasure;
 
   public FetchFromClusterExecutionStep(
       int clusterId, OCommandContext ctx, boolean profilingEnabled) {
@@ -54,19 +52,14 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     long begin = profilingEnabled ? System.nanoTime() : 0;
-    if (iterator == null) {
-      long minClusterPosition = calculateMinClusterPosition();
-      long maxClusterPosition = calculateMaxClusterPosition();
-      iterator =
-          new ORecordIteratorCluster(
-              (ODatabaseDocumentInternal) ctx.getDatabase(),
-              clusterId,
-              minClusterPosition,
-              maxClusterPosition);
-      if (ORDER_DESC.equals(order)) {
-        iterator.last();
-      }
-    }
+    long minClusterPosition = calculateMinClusterPosition();
+    long maxClusterPosition = calculateMaxClusterPosition();
+    ORecordIteratorCluster iterator =
+        new ORecordIteratorCluster(
+            (ODatabaseDocumentInternal) ctx.getDatabase(),
+            clusterId,
+            minClusterPosition,
+            maxClusterPosition);
     Iterator<OIdentifiable> iter;
     if (ORDER_DESC.equals(order)) {
       iter = iterator.reversed();

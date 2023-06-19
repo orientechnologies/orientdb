@@ -21,10 +21,6 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   private final long limit;
 
   // the key is the GROUP BY key, the value is the (partially) aggregated value
-  private Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
-  private List<OResultInternal> finalResults = null;
-
-  private int nextItem = 0;
   private long cost = 0;
 
   public AggregateProjectionCalculationStep(
@@ -42,13 +38,11 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (finalResults == null) {
-      executeAggregation(ctx);
-    }
+    List<OResultInternal> finalResults = executeAggregation(ctx);
     return new OIteratorResultSet(finalResults.iterator());
   }
 
-  private void executeAggregation(OCommandContext ctx) {
+  private List<OResultInternal> executeAggregation(OCommandContext ctx) {
     long timeoutBegin = System.currentTimeMillis();
     if (!prev.isPresent()) {
       throw new OCommandExecutionException(
@@ -56,13 +50,14 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     }
     OExecutionStepInternal prevStep = prev.get();
     OResultSet lastRs = prevStep.syncPull(ctx);
+    Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
     while (lastRs.hasNext()) {
       if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
         sendTimeout();
       }
-      aggregate(lastRs.next(), ctx);
+      aggregate(lastRs.next(), ctx, aggregateResults);
     }
-    finalResults = new ArrayList<>();
+    List<OResultInternal> finalResults = new ArrayList<>();
     finalResults.addAll(aggregateResults.values());
     aggregateResults.clear();
     for (OResultInternal item : finalResults) {
@@ -76,9 +71,11 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
         }
       }
     }
+    return finalResults;
   }
 
-  private void aggregate(OResult next, OCommandContext ctx) {
+  private void aggregate(
+      OResult next, OCommandContext ctx, Map<List, OResultInternal> aggregateResults) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       List<Object> key = new ArrayList<>();

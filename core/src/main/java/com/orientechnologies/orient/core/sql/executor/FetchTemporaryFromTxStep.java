@@ -28,9 +28,6 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
 
   private String className;
 
-  // runtime
-
-  private Iterator<ORecord> txEntries;
   private Object order;
   private OCostMeasureResultSet cost;
 
@@ -42,11 +39,19 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    long cost = init();
-    Iterator<ORecord> data;
-    if (txEntries != null) {
-      data = txEntries;
-    } else {
+    long cost = 0;
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    Iterator<ORecord> data = null;
+    try {
+
+      data = init(ctx);
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
+
+    if (data == null) {
       data = Collections.emptyIterator();
     }
     OResultSet resultSet =
@@ -63,64 +68,53 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
     return resultSet;
   }
 
-  private long init() {
-    long cost = 0;
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (this.txEntries == null) {
-        Iterable<? extends ORecordOperation> iterable =
-            ctx.getDatabase().getTransaction().getRecordOperations();
+  private Iterator<ORecord> init(OCommandContext ctx) {
+    Iterable<? extends ORecordOperation> iterable =
+        ctx.getDatabase().getTransaction().getRecordOperations();
 
-        List<ORecord> records = new ArrayList<>();
-        if (iterable != null) {
-          for (ORecordOperation op : iterable) {
-            ORecord record = op.getRecord();
-            if (matchesClass(record, className) && !hasCluster(record)) records.add(record);
-          }
-        }
-        if (order == FetchFromClusterExecutionStep.ORDER_ASC) {
-          Collections.sort(
-              records,
-              new Comparator<ORecord>() {
-                @Override
-                public int compare(ORecord o1, ORecord o2) {
-                  long p1 = o1.getIdentity().getClusterPosition();
-                  long p2 = o2.getIdentity().getClusterPosition();
-                  if (p1 == p2) {
-                    return 0;
-                  } else if (p1 > p2) {
-                    return 1;
-                  } else {
-                    return -1;
-                  }
-                }
-              });
-        } else {
-          Collections.sort(
-              records,
-              new Comparator<ORecord>() {
-                @Override
-                public int compare(ORecord o1, ORecord o2) {
-                  long p1 = o1.getIdentity().getClusterPosition();
-                  long p2 = o2.getIdentity().getClusterPosition();
-                  if (p1 == p2) {
-                    return 0;
-                  } else if (p1 > p2) {
-                    return -1;
-                  } else {
-                    return 1;
-                  }
-                }
-              });
-        }
-        this.txEntries = records.iterator();
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+    List<ORecord> records = new ArrayList<>();
+    if (iterable != null) {
+      for (ORecordOperation op : iterable) {
+        ORecord record = op.getRecord();
+        if (matchesClass(record, className) && !hasCluster(record)) records.add(record);
       }
     }
-    return cost;
+    if (order == FetchFromClusterExecutionStep.ORDER_ASC) {
+      Collections.sort(
+          records,
+          new Comparator<ORecord>() {
+            @Override
+            public int compare(ORecord o1, ORecord o2) {
+              long p1 = o1.getIdentity().getClusterPosition();
+              long p2 = o2.getIdentity().getClusterPosition();
+              if (p1 == p2) {
+                return 0;
+              } else if (p1 > p2) {
+                return 1;
+              } else {
+                return -1;
+              }
+            }
+          });
+    } else {
+      Collections.sort(
+          records,
+          new Comparator<ORecord>() {
+            @Override
+            public int compare(ORecord o1, ORecord o2) {
+              long p1 = o1.getIdentity().getClusterPosition();
+              long p2 = o2.getIdentity().getClusterPosition();
+              if (p1 == p2) {
+                return 0;
+              } else if (p1 > p2) {
+                return -1;
+              } else {
+                return 1;
+              }
+            }
+          });
+    }
+    return records.iterator();
   }
 
   private boolean hasCluster(ORecord record) {

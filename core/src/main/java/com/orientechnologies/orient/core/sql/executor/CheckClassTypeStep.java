@@ -24,8 +24,6 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  private boolean found = false;
-
   /**
    * @param targetClass a class to be checked
    * @param parentClass a class that is supposed to be the same or a parent class of the target
@@ -45,9 +43,6 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
-      if (found) {
-        return new OInternalResultSet();
-      }
       if (this.targetClass.equals(this.parentClass)) {
         return new OInternalResultSet();
       }
@@ -63,12 +58,13 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
         throw new OCommandExecutionException("Class not found: " + this.targetClass);
       }
 
+      boolean found = false;
       if (parentClazz.equals(targetClazz)) {
         found = true;
       } else {
         for (OClass sublcass : parentClazz.getAllSubclasses()) {
           if (sublcass.equals(targetClazz)) {
-            this.found = true;
+            found = true;
             break;
           }
         }

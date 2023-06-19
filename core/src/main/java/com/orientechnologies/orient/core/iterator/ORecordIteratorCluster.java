@@ -268,6 +268,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   }
 
   public Iterator<REC> reversed() {
+    this.last();
     return new Iterator<REC>() {
       @Override
       public boolean hasNext() {

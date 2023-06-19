@@ -22,7 +22,6 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
   private String clusterName;
   private String targetClass;
   private long cost = 0;
-  private boolean found = false;
 
   public CheckClusterTypeStep(
       String targetClusterName, String clazz, OCommandContext ctx, boolean profilingEnabled) {
@@ -43,9 +42,6 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
-      if (found) {
-        return new OInternalResultSet();
-      }
       ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
 
       int clusterId;
@@ -68,6 +64,7 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
         throw new OCommandExecutionException("Class not found: " + targetClass);
       }
 
+      boolean found = false;
       for (int clust : clazz.getPolymorphicClusterIds()) {
         if (clust == clusterId) {
           found = true;
