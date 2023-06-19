@@ -4,8 +4,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
-import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OForEachBlock;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
@@ -20,10 +18,6 @@ public class ForEachStep extends AbstractExecutionStep {
   private final OIdentifier loopVariable;
   private final OExpression source;
   public List<OStatement> body;
-
-  private Iterator iterator;
-  private OExecutionStepInternal finalResult = null;
-  private boolean inited = false;
 
   public ForEachStep(
       OIdentifier loopVariable,
@@ -40,32 +34,22 @@ public class ForEachStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     prev.get().syncPull(ctx);
-    if (finalResult != null) {
-      return finalResult.syncPull(ctx);
-    }
-    init(ctx);
-    while (iterator != null && iterator.hasNext()) {
-      if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
-        throw new OCommandInterruptedException("The command has been interrupted");
-      }
+    Iterator<Object> iterator = init(ctx);
+    while (iterator.hasNext()) {
       ctx.setVariable(loopVariable.getStringValue(), iterator.next());
       OScriptExecutionPlan plan = initPlan(ctx);
       OExecutionStepInternal result = plan.executeFull();
       if (result != null) {
-        this.finalResult = result;
         return result.syncPull(ctx);
       }
     }
-    finalResult = new EmptyStep(ctx, false);
-    return finalResult.syncPull(ctx);
+
+    return new EmptyStep(ctx, false).syncPull(ctx);
   }
 
-  protected void init(OCommandContext ctx) {
-    if (!this.inited) {
-      Object val = source.execute(new OResultInternal(), ctx);
-      this.iterator = OMultiValue.getMultiValueIterator(val);
-      this.inited = true;
-    }
+  protected Iterator<Object> init(OCommandContext ctx) {
+    Object val = source.execute(new OResultInternal(), ctx);
+    return OMultiValue.getMultiValueIterator(val);
   }
 
   public OScriptExecutionPlan initPlan(OCommandContext ctx) {

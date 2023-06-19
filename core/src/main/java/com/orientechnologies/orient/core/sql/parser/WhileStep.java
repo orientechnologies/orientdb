@@ -18,8 +18,6 @@ public class WhileStep extends AbstractExecutionStep {
   private final OBooleanExpression condition;
   private final List<OStatement> statements;
 
-  private OExecutionStepInternal finalResult = null;
-
   public WhileStep(
       OBooleanExpression condition,
       List<OStatement> statements,
@@ -33,9 +31,6 @@ public class WhileStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     prev.ifPresent(x -> x.syncPull(ctx));
-    if (finalResult != null) {
-      return finalResult.syncPull(ctx);
-    }
 
     while (condition.evaluate(new OResultInternal(), ctx)) {
       if (OExecutionThreadLocal.isInterruptCurrentOperation())
@@ -44,12 +39,10 @@ public class WhileStep extends AbstractExecutionStep {
       OScriptExecutionPlan plan = initPlan(ctx);
       OExecutionStepInternal result = plan.executeFull();
       if (result != null) {
-        this.finalResult = result;
         return result.syncPull(ctx);
       }
     }
-    finalResult = new EmptyStep(ctx, false);
-    return finalResult.syncPull(ctx);
+    return new EmptyStep(ctx, false).syncPull(ctx);
   }
 
   public OScriptExecutionPlan initPlan(OCommandContext ctx) {

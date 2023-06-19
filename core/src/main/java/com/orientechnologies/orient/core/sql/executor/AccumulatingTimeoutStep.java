@@ -22,7 +22,6 @@ public class AccumulatingTimeoutStep extends AbstractExecutionStep {
   }
 
   private void fail() {
-    this.timedOut = true;
     if (OTimeout.RETURN.equals(this.timeout.getFailureStrategy())) {
       // do nothing
     } else {

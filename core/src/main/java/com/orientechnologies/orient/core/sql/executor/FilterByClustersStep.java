@@ -12,37 +12,31 @@ import java.util.stream.Collectors;
 /** Created by luigidellaquila on 01/03/17. */
 public class FilterByClustersStep extends AbstractExecutionStep {
   private Set<String> clusters;
-  private Set<Integer> clusterIds;
 
   public FilterByClustersStep(
       Set<String> filterClusters, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.clusters = filterClusters;
-    ODatabaseSession db = ctx.getDatabase();
-    init(db);
   }
 
-  private void init(ODatabaseSession db) {
-    if (this.clusterIds == null) {
-      this.clusterIds =
-          clusters.stream()
-              .map(x -> db.getClusterIdByName(x))
-              .filter(x -> x != null)
-              .collect(Collectors.toSet());
-    }
+  private Set<Integer> init(ODatabaseSession db) {
+    return clusters.stream()
+        .map(x -> db.getClusterIdByName(x))
+        .filter(x -> x != null)
+        .collect(Collectors.toSet());
   }
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    init(ctx.getDatabase());
+    Set<Integer> ids = init(ctx.getDatabase());
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(resultSet, this::filterMap);
+    return new OFilterResultSet(resultSet, (value) -> this.filterMap(value, ids));
   }
 
-  private OResult filterMap(OResult result) {
+  private OResult filterMap(OResult result, Set<Integer> clusterIds) {
     if (result.isElement()) {
       int clusterId = result.getIdentity().get().getClusterId();
       if (clusterId < 0) {

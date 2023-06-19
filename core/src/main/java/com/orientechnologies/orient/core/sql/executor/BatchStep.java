@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.sql.parser.OBatch;
 public class BatchStep extends AbstractExecutionStep {
 
   private Integer batchSize;
-  private int count = 0;
 
   public BatchStep(OBatch batch, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -24,21 +23,18 @@ public class BatchStep extends AbstractExecutionStep {
   }
 
   private OResult mapResult(OCommandContext ctx, OResult result) {
-    if (count % batchSize == 0) {
-      ODatabaseSession db = ctx.getDatabase();
-      if (db.getTransaction().isActive()) {
+    ODatabaseSession db = ctx.getDatabase();
+    if (db.getTransaction().isActive()) {
+      if (db.getTransaction().getEntryCount() % batchSize == 0) {
         db.commit();
         db.begin();
       }
     }
-    count++;
     return result;
   }
 
   @Override
-  public void reset() {
-    this.count = 0;
-  }
+  public void reset() {}
 
   @Override
   public String prettyPrint(int depth, int indent) {

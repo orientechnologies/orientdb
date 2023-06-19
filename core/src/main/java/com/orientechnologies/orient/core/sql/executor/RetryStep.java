@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-import java.util.Iterator;
 import java.util.List;
 
 /** Created by luigidellaquila on 19/09/16. */
@@ -16,9 +15,6 @@ public class RetryStep extends AbstractExecutionStep {
   public List<OStatement> elseBody;
   public boolean elseFail;
   private final int retries;
-
-  private Iterator iterator;
-  private OExecutionStepInternal finalResult = null;
 
   public RetryStep(
       List<OStatement> statements,
@@ -37,9 +33,6 @@ public class RetryStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    if (finalResult != null) {
-      return finalResult.syncPull(ctx);
-    }
     for (int i = 0; i < retries; i++) {
       try {
 
@@ -49,7 +42,6 @@ public class RetryStep extends AbstractExecutionStep {
         OScriptExecutionPlan plan = initPlan(body, ctx);
         OExecutionStepInternal result = plan.executeFull();
         if (result != null) {
-          this.finalResult = result;
           return result.syncPull(ctx);
         }
         break;
@@ -64,7 +56,6 @@ public class RetryStep extends AbstractExecutionStep {
             OScriptExecutionPlan plan = initPlan(elseBody, ctx);
             OExecutionStepInternal result = plan.executeFull();
             if (result != null) {
-              this.finalResult = result;
               return result.syncPull(ctx);
             }
           }
@@ -77,8 +68,7 @@ public class RetryStep extends AbstractExecutionStep {
       }
     }
 
-    finalResult = new EmptyStep(ctx, false);
-    return finalResult.syncPull(ctx);
+    return new EmptyStep(ctx, false).syncPull(ctx);
   }
 
   public OScriptExecutionPlan initPlan(List<OStatement> body, OCommandContext ctx) {

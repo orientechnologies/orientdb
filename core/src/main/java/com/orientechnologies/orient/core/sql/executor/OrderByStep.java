@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /** Created by luigidellaquila on 11/07/16. */
@@ -16,9 +17,6 @@ public class OrderByStep extends AbstractExecutionStep {
   private Integer maxResults;
 
   private long cost = 0;
-
-  private List<OResult> cachedResult = null;
-  private int nextElement = 0;
 
   public OrderByStep(
       OOrderBy orderBy, OCommandContext ctx, long timeoutMillis, boolean profilingEnabled) {
@@ -42,15 +40,18 @@ public class OrderByStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (cachedResult == null) {
-      cachedResult = new ArrayList<>();
-      prev.ifPresent(p -> init(p, ctx));
+    List<OResult> results;
+    if (prev.isPresent()) {
+      results = init(prev.get(), ctx);
+    } else {
+      results = Collections.emptyList();
     }
-    return new OIteratorResultSet(cachedResult.iterator());
+    return new OIteratorResultSet(results.iterator());
   }
 
-  private void init(OExecutionStepInternal p, OCommandContext ctx) {
+  private List<OResult> init(OExecutionStepInternal p, OCommandContext ctx) {
     long timeoutBegin = System.currentTimeMillis();
+    List<OResult> cachedResult = new ArrayList<>();
     final long maxElementsAllowed =
         OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong();
     boolean sorted = true;
@@ -60,15 +61,11 @@ public class OrderByStep extends AbstractExecutionStep {
         sendTimeout();
       }
 
-      if (this.timedOut) {
-        break;
-      }
       OResult item = lastBatch.next();
       long beginFilter = profilingEnabled ? System.nanoTime() : 0;
       try {
         cachedResult.add(item);
         if (maxElementsAllowed >= 0 && maxElementsAllowed < cachedResult.size()) {
-          this.cachedResult.clear();
           throw new OCommandExecutionException(
               "Limit of allowed elements for in-heap ORDER BY in a single query exceeded ("
                   + maxElementsAllowed
@@ -110,6 +107,7 @@ public class OrderByStep extends AbstractExecutionStep {
       if (!sorted) {
         cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
       }
+      return cachedResult;
     } finally {
       if (profilingEnabled) {
         cost += (System.nanoTime() - begin);

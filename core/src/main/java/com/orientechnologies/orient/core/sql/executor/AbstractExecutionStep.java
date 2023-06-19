@@ -10,7 +10,6 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
   protected final OCommandContext ctx;
   protected Optional<OExecutionStepInternal> prev = Optional.empty();
   protected Optional<OExecutionStepInternal> next = Optional.empty();
-  protected boolean timedOut = false;
 
   protected boolean profilingEnabled = false;
 
@@ -43,7 +42,6 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
 
   @Override
   public void sendTimeout() {
-    this.timedOut = true;
     prev.ifPresent(p -> p.sendTimeout());
   }
 

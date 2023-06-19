@@ -13,8 +13,6 @@ public class CountStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  private boolean executed = false;
-
   /**
    * @param ctx the query context
    * @param profilingEnabled true to enable the profiling of the execution (for SQL PROFILE)
@@ -25,11 +23,7 @@ public class CountStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (executed) {
-      return new OInternalResultSet();
-    }
     OResultInternal resultRecord = new OResultInternal();
-    executed = true;
     long count = 0;
     OResultSet prevResult = getPrev().get().syncPull(ctx);
     long begin = profilingEnabled ? System.nanoTime() : 0;

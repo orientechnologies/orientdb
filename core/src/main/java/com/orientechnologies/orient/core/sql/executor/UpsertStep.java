@@ -6,15 +6,17 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.OAndBlock;
+import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
+import com.orientechnologies.orient.core.sql.parser.OCluster;
+import com.orientechnologies.orient.core.sql.parser.OFromClause;
+import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 import java.util.List;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class UpsertStep extends AbstractExecutionStep {
   private final OFromClause commandTarget;
   private final OWhereClause initialFilter;
-
-  private boolean applied = false;
 
   public UpsertStep(
       OFromClause target, OWhereClause where, OCommandContext ctx, boolean profilingEnabled) {
@@ -25,10 +27,6 @@ public class UpsertStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (applied) {
-      return getPrev().get().syncPull(ctx);
-    }
-    applied = true;
     OResultSet upstream = getPrev().get().syncPull(ctx);
     if (upstream.hasNext()) {
       return upstream;

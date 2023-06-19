@@ -9,8 +9,6 @@ import com.orientechnologies.orient.core.sql.parser.OLimit;
 public class LimitExecutionStep extends AbstractExecutionStep {
   private final OLimit limit;
 
-  private int loaded = 0;
-
   public LimitExecutionStep(OLimit limit, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.limit = limit;
@@ -22,11 +20,7 @@ public class LimitExecutionStep extends AbstractExecutionStep {
     if (limitVal == -1) {
       return getPrev().get().syncPull(ctx);
     }
-    if (limitVal <= loaded) {
-      return new OInternalResultSet();
-    }
     OResultSet result = prev.get().syncPull(ctx);
-    loaded = limitVal;
     return new OLimitedResultSet(result, limitVal);
   }
 

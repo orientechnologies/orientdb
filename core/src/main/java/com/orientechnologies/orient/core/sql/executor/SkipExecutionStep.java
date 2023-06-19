@@ -8,10 +8,6 @@ import com.orientechnologies.orient.core.sql.parser.OSkip;
 public class SkipExecutionStep extends AbstractExecutionStep {
   private final OSkip skip;
 
-  private int skipped = 0;
-
-  private boolean finished;
-
   public SkipExecutionStep(OSkip skip, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.skip = skip;
@@ -19,18 +15,14 @@ public class SkipExecutionStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    if (finished == true) {
-      return new OInternalResultSet(); // empty
-    }
     int skipValue = skip.getValue(ctx);
     OResultSet rs = prev.get().syncPull(ctx);
-
+    int skipped = 0;
     while (rs.hasNext() && skipped < skipValue) {
       rs.next();
       skipped++;
     }
     if (!rs.hasNext()) {
-      finished = true;
       return new OInternalResultSet(); // empty
     }
 

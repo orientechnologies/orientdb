@@ -8,7 +8,6 @@ import java.util.List;
 public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
   private List<AbstractExecutionStep> subSteps;
-
   private long cost;
 
   public FilterNotMatchPatternStep(

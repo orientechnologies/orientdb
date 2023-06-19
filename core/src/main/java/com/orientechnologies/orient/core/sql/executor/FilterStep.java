@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExpireResultSet;
 import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
@@ -27,11 +28,14 @@ public class FilterStep extends AbstractExecutionStep {
     }
 
     OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(resultSet, (result) -> filterMap(ctx, result));
+    resultSet = new OFilterResultSet(resultSet, (result) -> filterMap(ctx, result));
+    if (timeoutMillis > 0) {
+      resultSet = new OExpireResultSet(resultSet, timeoutMillis, this::sendTimeout);
+    }
+    return resultSet;
   }
 
   private OResult filterMap(OCommandContext ctx, OResult result) {
-    long timeoutBegin = System.currentTimeMillis();
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (whereClause.matchesFilters(result, ctx)) {
@@ -41,9 +45,6 @@ public class FilterStep extends AbstractExecutionStep {
       if (profilingEnabled) {
         cost += (System.nanoTime() - begin);
       }
-    }
-    if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
-      sendTimeout();
     }
     return null;
   }

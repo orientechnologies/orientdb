@@ -13,10 +13,7 @@ import java.util.Set;
 /** Created by luigidellaquila on 08/07/16. */
 public class DistinctExecutionStep extends AbstractExecutionStep {
 
-  private Set<OResult> pastItems = new HashSet<>();
-  private ORidSet pastRids = new ORidSet();
-
-  long maxElementsAllowed;
+  private long maxElementsAllowed;
 
   private long cost = 0;
 
@@ -34,16 +31,20 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(resultSet, (result) -> filterMap(ctx, result));
+    Set<OResult> pastItems = new HashSet<>();
+    ORidSet pastRids = new ORidSet();
+
+    return new OFilterResultSet(resultSet, (result) -> filterMap(ctx, result, pastRids, pastItems));
   }
 
-  private OResult filterMap(OCommandContext ctx, OResult result) {
+  private OResult filterMap(
+      OCommandContext ctx, OResult result, Set<ORID> pastRids, Set<OResult> pastItems) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
-      if (alreadyVisited(result)) {
+      if (alreadyVisited(result, pastRids, pastItems)) {
         return null;
       } else {
-        markAsVisited(result);
+        markAsVisited(result, pastRids, pastItems);
         return result;
       }
     } finally {
@@ -53,7 +54,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
     }
   }
 
-  private void markAsVisited(OResult nextValue) {
+  private void markAsVisited(OResult nextValue, Set<ORID> pastRids, Set<OResult> pastItems) {
     if (nextValue.isElement()) {
       ORID identity = nextValue.getElement().get().getIdentity();
       int cluster = identity.getClusterId();
@@ -65,7 +66,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
     }
     pastItems.add(nextValue);
     if (maxElementsAllowed > 0 && maxElementsAllowed < pastItems.size()) {
-      this.pastItems.clear();
+      pastItems.clear();
       throw new OCommandExecutionException(
           "Limit of allowed elements for in-heap DISTINCT in a single query exceeded ("
               + maxElementsAllowed
@@ -75,7 +76,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
     }
   }
 
-  private boolean alreadyVisited(OResult nextValue) {
+  private boolean alreadyVisited(OResult nextValue, Set<ORID> pastRids, Set<OResult> pastItems) {
     if (nextValue.isElement()) {
       ORID identity = nextValue.getElement().get().getIdentity();
       int cluster = identity.getClusterId();

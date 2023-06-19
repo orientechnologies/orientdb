@@ -146,10 +146,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
       OResultSet lastResult = step.syncPull(ctx);
 
       while (lastResult.hasNext()) {
-        while (lastResult.hasNext()) {
-          lastResult.next();
-        }
-        lastResult = step.syncPull(ctx);
+        lastResult.next();
       }
     }
     this.lastStep = steps.get(steps.size() - 1);
@@ -174,10 +171,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
       OResultSet lastResult = step.syncPull(ctx);
 
       while (lastResult.hasNext()) {
-        while (lastResult.hasNext()) {
-          lastResult.next();
-        }
-        lastResult = step.syncPull(ctx);
+        lastResult.next();
       }
     }
 
