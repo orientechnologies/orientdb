@@ -20,16 +20,19 @@ public class CartesianProductStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    Stream<List<OResult>> stream = null;
-    for (OInternalExecutionPlan ep : this.subPlans) {
+    Stream<OResult[]> stream = null;
+    OResult[] productTuple = new OResult[this.subPlans.size()];
+
+    for (int i = 0; i < this.subPlans.size(); i++) {
+      OInternalExecutionPlan ep = this.subPlans.get(i);
+      final int pos = i;
       if (stream == null) {
         stream =
             ep.fetchNext().stream()
                 .map(
                     (value) -> {
-                      List<OResult> result = new ArrayList<>();
-                      result.add(value);
-                      return result;
+                      productTuple[pos] = value;
+                      return productTuple;
                     });
       } else {
         stream =
@@ -38,35 +41,34 @@ public class CartesianProductStep extends AbstractExecutionStep {
                   return ep.fetchNext().stream()
                       .map(
                           (value) -> {
-                            List<OResult> result = new ArrayList<>(val);
-                            result.add(value);
-                            return result;
+                            val[pos] = value;
+                            return val;
                           });
                 });
       }
     }
-    Stream<OResult> finalStream =
-        stream.map(
-            (path) -> {
-              long begin = profilingEnabled ? System.nanoTime() : 0;
-              try {
-
-                OResultInternal nextRecord = new OResultInternal();
-
-                for (int i = 0; i < path.size(); i++) {
-                  OResult res = path.get(i);
-                  for (String s : res.getPropertyNames()) {
-                    nextRecord.setProperty(s, res.getProperty(s));
-                  }
-                }
-                return nextRecord;
-              } finally {
-                if (profilingEnabled) {
-                  cost += (System.nanoTime() - begin);
-                }
-              }
-            });
+    Stream<OResult> finalStream = stream.map(this::produceResult);
     return new OIteratorResultSet(finalStream.iterator());
+  }
+
+  private OResult produceResult(OResult[] path) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+
+      OResultInternal nextRecord = new OResultInternal();
+
+      for (int i = 0; i < path.length; i++) {
+        OResult res = path[i];
+        for (String s : res.getPropertyNames()) {
+          nextRecord.setProperty(s, res.getProperty(s));
+        }
+      }
+      return nextRecord;
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
   }
 
   public void addSubPlan(OInternalExecutionPlan subPlan) {
