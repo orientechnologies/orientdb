@@ -3,6 +3,9 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -19,8 +22,8 @@ public class DistinctExecutionStepTest {
           boolean done = false;
 
           @Override
-          public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-            OInternalResultSet result = new OInternalResultSet();
+          public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+            List<OResult> result = new ArrayList<>();
             if (!done) {
               for (int i = 0; i < 10; i++) {
                 OResultInternal item = new OResultInternal();
@@ -29,16 +32,16 @@ public class DistinctExecutionStepTest {
               }
               done = true;
             }
-            return result;
+            return OExecutionStream.resultIterator(result.iterator());
           }
         };
 
     step.setPrevious(prev);
-    OResultSet res = step.syncPull(ctx);
-    Assert.assertTrue(res.hasNext());
-    res.next();
-    Assert.assertTrue(res.hasNext());
-    res.next();
-    Assert.assertFalse(res.hasNext());
+    OExecutionStream res = step.syncPull(ctx);
+    Assert.assertTrue(res.hasNext(ctx));
+    res.next(ctx);
+    Assert.assertTrue(res.hasNext(ctx));
+    res.next(ctx);
+    Assert.assertFalse(res.hasNext(ctx));
   }
 }

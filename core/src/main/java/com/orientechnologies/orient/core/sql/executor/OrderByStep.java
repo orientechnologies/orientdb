@@ -4,7 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,14 +39,14 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     List<OResult> results;
     if (prev.isPresent()) {
       results = init(prev.get(), ctx);
     } else {
       results = Collections.emptyList();
     }
-    return new OIteratorResultSet(results.iterator());
+    return OExecutionStream.resultIterator(results.iterator());
   }
 
   private List<OResult> init(OExecutionStepInternal p, OCommandContext ctx) {
@@ -55,13 +55,13 @@ public class OrderByStep extends AbstractExecutionStep {
     final long maxElementsAllowed =
         OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong();
     boolean sorted = true;
-    OResultSet lastBatch = p.syncPull(ctx);
-    while (lastBatch.hasNext()) {
+    OExecutionStream lastBatch = p.syncPull(ctx);
+    while (lastBatch.hasNext(ctx)) {
       if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
         sendTimeout();
       }
 
-      OResult item = lastBatch.next();
+      OResult item = lastBatch.next(ctx);
       long beginFilter = profilingEnabled ? System.nanoTime() : 0;
       try {
         cachedResult.add(item);

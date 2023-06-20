@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.ArrayList;
@@ -46,7 +46,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     Set<ORID> rids = fetchRidsToFind(ctx);
     List<ORecordIteratorCluster<ORecord>> clustersIterators = initClusterIterators(ctx);
     Stream<OResult> stream =
@@ -57,7 +57,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
                           Spliterators.spliteratorUnknownSize(iterator, 0), false)
                       .flatMap((record) -> findMatching(rids, record));
                 });
-    return new OIteratorResultSet(stream.iterator());
+    return OExecutionStream.resultIterator(stream.iterator());
   }
 
   private Stream<? extends OResult> findMatching(Set<ORID> rids, ORecord record) {
@@ -124,9 +124,9 @@ public class FindReferencesStep extends AbstractExecutionStep {
     Set<ORID> ridsToFind = new HashSet<>();
 
     OExecutionStepInternal prevStep = getPrev().get();
-    OResultSet nextSlot = prevStep.syncPull(ctx);
-    while (nextSlot.hasNext()) {
-      OResult nextRes = nextSlot.next();
+    OExecutionStream nextSlot = prevStep.syncPull(ctx);
+    while (nextSlot.hasNext(ctx)) {
+      OResult nextRes = nextSlot.next(ctx);
       if (nextRes.isElement()) {
         ridsToFind.add(nextRes.getElement().get().getIdentity());
       }

@@ -4,6 +4,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OForEachBlock;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
@@ -32,7 +33,7 @@ public class ForEachStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     prev.get().syncPull(ctx);
     Iterator<Object> iterator = init(ctx);
     while (iterator.hasNext()) {

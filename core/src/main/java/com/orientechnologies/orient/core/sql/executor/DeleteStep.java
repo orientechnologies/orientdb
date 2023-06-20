@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Optional;
 
 /**
@@ -19,9 +19,9 @@ public class DeleteStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx);
-    return new OResultSetMapper(upstream, (result) -> this.mapResult(result, ctx));
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().syncPull(ctx);
+    return upstream.map(this::mapResult);
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {

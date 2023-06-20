@@ -3,9 +3,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,14 +31,12 @@ public class OCommitStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     ctx.getDatabase()
         .commit(); // no RETRY and ELSE here, that case is allowed only for batch scripts;
-    OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();
     item.setProperty("operation", "commit");
-    result.add(item);
-    return result;
+    return OExecutionStream.singleton(item);
   }
 
   @Override

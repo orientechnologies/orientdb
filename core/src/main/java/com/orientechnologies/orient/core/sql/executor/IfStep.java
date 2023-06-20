@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 import com.orientechnologies.orient.core.sql.parser.OIfStatement;
 import com.orientechnologies.orient.core.sql.parser.OReturnStatement;
@@ -20,12 +21,12 @@ public class IfStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     OScriptExecutionPlan plan = producePlan(ctx);
     if (plan != null) {
       return plan.start();
     } else {
-      return new OInternalResultSet();
+      return OExecutionStream.empty();
     }
   }
 

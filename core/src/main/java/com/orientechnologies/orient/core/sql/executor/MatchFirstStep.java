@@ -2,9 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
-import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.List;
 
 /** Created by luigidellaquila on 20/09/16. */
@@ -34,24 +32,23 @@ public class MatchFirstStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    OResultSet data;
+    OExecutionStream data;
     String alias = getAlias();
     List<OResult> matchedNodes =
         (List<OResult>) ctx.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
     if (matchedNodes != null) {
-      data = new OIteratorResultSet(matchedNodes.iterator());
+      data = OExecutionStream.resultIterator(matchedNodes.iterator());
     } else {
-      data = new OLocalResultSet(executionPlan);
+      data = executionPlan.start();
     }
 
-    return new OResultSetMapper(
-        data,
-        (result) -> {
+    return data.map(
+        (result, context) -> {
           OResultInternal newResult = new OResultInternal();
           newResult.setProperty(getAlias(), result);
-          ctx.setVariable("$matched", newResult);
+          context.setVariable("$matched", newResult);
           return newResult;
         });
   }

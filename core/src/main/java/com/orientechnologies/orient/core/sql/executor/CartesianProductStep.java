@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -18,7 +18,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     Stream<OResult[]> stream = null;
     OResult[] productTuple = new OResult[this.subPlans.size()];
@@ -28,7 +28,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
       final int pos = i;
       if (stream == null) {
         stream =
-            ep.start().stream()
+            ep.start().stream(ctx)
                 .map(
                     (value) -> {
                       productTuple[pos] = value;
@@ -38,7 +38,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
         stream =
             stream.flatMap(
                 (val) -> {
-                  return ep.start().stream()
+                  return ep.start().stream(ctx)
                       .map(
                           (value) -> {
                             val[pos] = value;
@@ -48,7 +48,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
       }
     }
     Stream<OResult> finalStream = stream.map(this::produceResult);
-    return new OIteratorResultSet(finalStream.iterator());
+    return OExecutionStream.resultIterator(finalStream.iterator());
   }
 
   private OResult produceResult(OResult[] path) {

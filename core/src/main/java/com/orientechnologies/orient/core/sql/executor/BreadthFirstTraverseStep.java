@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
@@ -28,10 +29,10 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
 
   @Override
   protected void fetchNextEntryPoints(
-      OResultSet nextN, OCommandContext ctx, List<OResult> entryPoints, Set<ORID> traversed) {
+      OExecutionStream nextN, OCommandContext ctx, List<OResult> entryPoints, Set<ORID> traversed) {
     // Doing max batch of 100 entry points for now
-    while (nextN.hasNext() && entryPoints.size() < 100) {
-      OResult item = toTraverseResult(nextN.next());
+    while (nextN.hasNext(ctx) && entryPoints.size() < 100) {
+      OResult item = toTraverseResult(nextN.next(ctx));
       if (item != null) {
         List<ORID> stack = new ArrayList<>();
         item.getIdentity().ifPresent(x -> stack.add(x));

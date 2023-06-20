@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /**
  * Counts the records from the previous steps. Returns a record with a single property, called
@@ -22,20 +23,18 @@ public class CountStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultInternal resultRecord = new OResultInternal();
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     long count = 0;
-    OResultSet prevResult = getPrev().get().syncPull(ctx);
+    OExecutionStream prevResult = getPrev().get().syncPull(ctx);
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
-      while (prevResult.hasNext()) {
+      while (prevResult.hasNext(ctx)) {
         count++;
-        prevResult.next();
+        prevResult.next(ctx);
       }
-      OInternalResultSet result = new OInternalResultSet();
+      OResultInternal resultRecord = new OResultInternal();
       resultRecord.setProperty("count", count);
-      result.add(resultRecord);
-      return result;
+      return OExecutionStream.singleton(resultRecord);
     } finally {
       if (profilingEnabled) {
         cost += (System.nanoTime() - begin);

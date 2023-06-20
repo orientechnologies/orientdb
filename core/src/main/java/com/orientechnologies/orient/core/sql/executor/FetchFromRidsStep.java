@@ -5,6 +5,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetLoader;
 import java.util.Collection;
 import java.util.List;
@@ -21,9 +22,9 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OResultSetLoader(ctx, this.rids.iterator());
+    return new OResultSetLoader(this.rids.iterator());
   }
 
   @Override

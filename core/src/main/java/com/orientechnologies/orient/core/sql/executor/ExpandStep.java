@@ -5,9 +5,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
-import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -23,16 +22,16 @@ public class ExpandStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
-    OResultSet resultSet = getPrev().get().syncPull(ctx);
+    OExecutionStream resultSet = getPrev().get().syncPull(ctx);
 
-    OResultSet result =
+    OExecutionStream result =
         new OSubResultsResultSet(
-            new Iterator<OResultSet>() {
-              private OResultSet next;
+            new Iterator<OExecutionStream>() {
+              private OExecutionStream next;
 
               @Override
               public boolean hasNext() {
@@ -47,11 +46,11 @@ public class ExpandStep extends AbstractExecutionStep {
               }
 
               @Override
-              public OResultSet next() {
+              public OExecutionStream next() {
                 if (!hasNext()) {
                   throw new IllegalStateException();
                 }
-                OResultSet n = next;
+                OExecutionStream n = next;
                 this.next = null;
                 return n;
               }
@@ -59,9 +58,9 @@ public class ExpandStep extends AbstractExecutionStep {
     return result;
   }
 
-  public OResultSet nextSequence(OCommandContext ctx, OResultSet resultSet) {
-    while (resultSet.hasNext()) {
-      OResult nextAggregateItem = resultSet.next();
+  public OExecutionStream nextSequence(OCommandContext ctx, OExecutionStream resultSet) {
+    while (resultSet.hasNext(ctx)) {
+      OResult nextAggregateItem = resultSet.next(ctx);
       long begin = profilingEnabled ? System.nanoTime() : 0;
       try {
         if (nextAggregateItem.getPropertyNames().size() == 0) {
@@ -83,13 +82,13 @@ public class ExpandStep extends AbstractExecutionStep {
           }
           OResultInternal res = new OResultInternal(rec);
 
-          return new OIteratorResultSet(Collections.singleton(res).iterator());
+          return OExecutionStream.singleton((OResult) res);
         } else if (projValue instanceof OResult) {
-          return new OIteratorResultSet(Collections.singleton((OResult) projValue).iterator());
+          return OExecutionStream.singleton((OResult) projValue);
         } else if (projValue instanceof Iterator) {
-          return new OIteratorResultSet((Iterator) projValue);
+          return OExecutionStream.iterator((Iterator) projValue);
         } else if (projValue instanceof Iterable) {
-          return new OIteratorResultSet(((Iterable) projValue).iterator());
+          return OExecutionStream.iterator(((Iterable) projValue).iterator());
         }
       } finally {
         if (profilingEnabled) {

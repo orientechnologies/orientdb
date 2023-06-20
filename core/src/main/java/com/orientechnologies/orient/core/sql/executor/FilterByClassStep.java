@@ -5,6 +5,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Optional;
@@ -21,12 +22,12 @@ public class FilterByClassStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
 
-    OResultSet resultSet = prev.get().syncPull(ctx);
+    OExecutionStream resultSet = prev.get().syncPull(ctx);
     return new OFilterResultSet(resultSet, this::filterMap);
   }
 

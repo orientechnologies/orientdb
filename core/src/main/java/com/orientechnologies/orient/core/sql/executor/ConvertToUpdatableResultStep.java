@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 
 /**
@@ -23,11 +24,11 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OResultSet resultSet = prev.get().syncPull(ctx);
+    OExecutionStream resultSet = prev.get().syncPull(ctx);
     return new OFilterResultSet(resultSet, this::filterMap);
   }
 

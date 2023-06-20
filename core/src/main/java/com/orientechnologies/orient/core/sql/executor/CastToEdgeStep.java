@@ -4,7 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /** Created by luigidellaquila on 20/02/17. */
 public class CastToEdgeStep extends AbstractExecutionStep {
@@ -16,12 +16,12 @@ public class CastToEdgeStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx);
-    return new OResultSetMapper(upstream, this::mapResult);
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().syncPull(ctx);
+    return upstream.map(this::mapResult);
   }
 
-  private OResult mapResult(OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (result.getElement().orElse(null) instanceof OEdge) {

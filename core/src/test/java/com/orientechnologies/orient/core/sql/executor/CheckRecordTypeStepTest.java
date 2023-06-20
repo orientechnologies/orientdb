@@ -6,6 +6,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -22,22 +25,22 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
           boolean done = false;
 
           @Override
-          public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-            OInternalResultSet result = new OInternalResultSet();
+          public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+            List<OResult> result = new ArrayList<>();
             if (!done) {
               for (int i = 0; i < 10; i++) {
                 result.add(new OResultInternal(new ODocument(className)));
               }
               done = true;
             }
-            return result;
+            return OExecutionStream.resultIterator(result.iterator());
           }
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context);
-    Assert.assertEquals(10, result.stream().count());
-    Assert.assertFalse(result.hasNext());
+    OExecutionStream result = step.syncPull(context);
+    Assert.assertEquals(10, result.stream(context).count());
+    Assert.assertFalse(result.hasNext(context));
   }
 
   @Test
@@ -51,8 +54,8 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
           boolean done = false;
 
           @Override
-          public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-            OInternalResultSet result = new OInternalResultSet();
+          public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+            List<OResult> result = new ArrayList<>();
             if (!done) {
               for (int i = 0; i < 10; i++) {
                 result.add(
@@ -60,14 +63,14 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
               }
               done = true;
             }
-            return result;
+            return OExecutionStream.resultIterator(result.iterator());
           }
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context);
-    Assert.assertEquals(10, result.stream().count());
-    Assert.assertFalse(result.hasNext());
+    OExecutionStream result = step.syncPull(context);
+    Assert.assertEquals(10, result.stream(context).count());
+    Assert.assertFalse(result.hasNext(context));
   }
 
   @Test(expected = OCommandExecutionException.class)
@@ -81,8 +84,8 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
           boolean done = false;
 
           @Override
-          public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-            OInternalResultSet result = new OInternalResultSet();
+          public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+            List<OResult> result = new ArrayList<>();
             if (!done) {
               for (int i = 0; i < 10; i++) {
                 result.add(
@@ -91,14 +94,14 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
               }
               done = true;
             }
-            return result;
+            return OExecutionStream.resultIterator(result.iterator());
           }
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context);
-    while (result.hasNext()) {
-      result.next();
+    OExecutionStream result = step.syncPull(context);
+    while (result.hasNext(context)) {
+      result.next(context);
     }
   }
 }

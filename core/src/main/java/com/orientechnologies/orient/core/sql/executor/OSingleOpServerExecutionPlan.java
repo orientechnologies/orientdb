@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.command.OBasicServerCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OSimpleExecServerStatement;
 import java.util.Collections;
 import java.util.List;
@@ -15,7 +16,7 @@ public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
   private OServerCommandContext ctx;
 
   private boolean executed = false;
-  private OResultSet result;
+  private OExecutionStream result;
 
   public OSingleOpServerExecutionPlan(OServerCommandContext ctx, OSimpleExecServerStatement stm) {
     this.ctx = ctx;
@@ -23,12 +24,17 @@ public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
+  public OCommandContext getContext() {
+    return ctx;
+  }
+
+  @Override
   public void close() {}
 
   @Override
-  public OResultSet start() {
+  public OExecutionStream start() {
     if (executed && result == null) {
-      return new OInternalResultSet();
+      return OExecutionStream.empty();
     }
     if (!executed) {
       executed = true;
@@ -54,7 +60,7 @@ public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
     return false;
   }
 
-  public OResultSet executeInternal(OBasicServerCommandContext ctx)
+  public OExecutionStream executeInternal(OBasicServerCommandContext ctx)
       throws OCommandExecutionException {
     if (executed) {
       throw new OCommandExecutionException(

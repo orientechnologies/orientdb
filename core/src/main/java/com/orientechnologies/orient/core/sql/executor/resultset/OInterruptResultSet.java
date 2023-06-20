@@ -1,49 +1,36 @@
 package com.orientechnologies.orient.core.sql.executor.resultset;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.util.Map;
-import java.util.Optional;
 
-public class OInterruptResultSet implements OResultSet {
+public class OInterruptResultSet implements OExecutionStream {
 
-  private OResultSet source;
+  private OExecutionStream source;
 
-  public OInterruptResultSet(OResultSet source) {
+  public OInterruptResultSet(OExecutionStream source) {
     this.source = source;
   }
 
   @Override
-  public boolean hasNext() {
+  public boolean hasNext(OCommandContext ctx) {
     if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
       throw new OCommandInterruptedException("The command has been interrupted");
     }
-    return source.hasNext();
+    return source.hasNext(ctx);
   }
 
   @Override
-  public OResult next() {
+  public OResult next(OCommandContext ctx) {
     if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
       throw new OCommandInterruptedException("The command has been interrupted");
     }
-    return source.next();
+    return source.next(ctx);
   }
 
   @Override
-  public void close() {
-    source.close();
-  }
-
-  @Override
-  public Optional<OExecutionPlan> getExecutionPlan() {
-    return source.getExecutionPlan();
-  }
-
-  @Override
-  public Map<String, Long> getQueryStats() {
-    return source.getQueryStats();
+  public void close(OCommandContext ctx) {
+    source.close(ctx);
   }
 }

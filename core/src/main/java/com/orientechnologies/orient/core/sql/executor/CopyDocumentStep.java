@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /**
  * Reads an upstream result set and returns a new result set that contains copies of the original
@@ -26,12 +26,12 @@ public class CopyDocumentStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx);
-    return new OResultSetMapper(upstream, this::mapResult);
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().syncPull(ctx);
+    return upstream.map(this::mapResult);
   }
 
-  private OResult mapResult(OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       ORecord resultDoc = null;

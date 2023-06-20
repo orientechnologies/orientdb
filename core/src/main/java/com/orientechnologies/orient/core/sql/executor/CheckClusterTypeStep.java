@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
 
 /**
@@ -38,7 +39,7 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
@@ -75,7 +76,7 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
         throw new OCommandExecutionException(
             "Cluster " + clusterId + " does not belong to class " + targetClass);
       }
-      return new OInternalResultSet();
+      return OExecutionStream.empty();
     } finally {
       if (profilingEnabled) {
         cost += (System.nanoTime() - begin);

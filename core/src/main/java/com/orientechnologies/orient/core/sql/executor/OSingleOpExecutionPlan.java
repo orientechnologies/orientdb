@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OSimpleExecStatement;
 import java.util.Collections;
 import java.util.List;
@@ -14,7 +15,7 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
   private OCommandContext ctx;
 
   private boolean executed = false;
-  private OResultSet result;
+  private OExecutionStream result;
 
   public OSingleOpExecutionPlan(OCommandContext ctx, OSimpleExecStatement stm) {
     this.ctx = ctx;
@@ -22,12 +23,17 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
+  public OCommandContext getContext() {
+    return ctx;
+  }
+
+  @Override
   public void close() {}
 
   @Override
-  public OResultSet start() {
+  public OExecutionStream start() {
     if (executed && result == null) {
-      return new OInternalResultSet();
+      return OExecutionStream.empty();
     }
     if (!executed) {
       executed = true;
@@ -53,7 +59,8 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
     return false;
   }
 
-  public OResultSet executeInternal(OBasicCommandContext ctx) throws OCommandExecutionException {
+  public OExecutionStream executeInternal(OBasicCommandContext ctx)
+      throws OCommandExecutionException {
     if (executed) {
       throw new OCommandExecutionException(
           "Trying to execute a result-set twice. Please use reset()");

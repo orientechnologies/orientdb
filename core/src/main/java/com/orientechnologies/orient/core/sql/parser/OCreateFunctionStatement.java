@@ -6,9 +6,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +38,7 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     ODatabaseSession database = ctx.getDatabase();
     final OFunction f =
         database.getMetadata().getFunctionLibrary().createFunction(name.getStringValue());
@@ -56,9 +55,7 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
     result.setProperty("functionName", name.getStringValue());
     result.setProperty("finalId", functionId);
 
-    OInternalResultSet rs = new OInternalResultSet();
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   @Override

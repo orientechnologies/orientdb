@@ -18,7 +18,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
@@ -108,14 +108,14 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     Set<Stream<ORawPair<Object, ORID>>> streams = init(ctx.getDatabase());
-    Stream<OResultSet> resultStreams =
+    Stream<OExecutionStream> resultStreams =
         streams.stream()
             .map(
                 (s) -> {
-                  return new OIteratorResultSet(
+                  return OExecutionStream.resultIterator(
                       s.map((nextEntry) -> readResult(ctx, nextEntry)).iterator());
                 });
     // TODO: this should go at the end of the iteration;
@@ -123,7 +123,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return new OSubResultsResultSet(resultStreams.iterator());
   }
 
-  private OResultInternal readResult(OCommandContext ctx, ORawPair<Object, ORID> nextEntry) {
+  private OResult readResult(OCommandContext ctx, ORawPair<Object, ORID> nextEntry) {
     if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
       throw new OCommandInterruptedException("The command has been interrupted");
     }

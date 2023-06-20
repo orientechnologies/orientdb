@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OIndexName;
 import java.util.Arrays;
@@ -66,8 +67,8 @@ public class CountFromIndexStepTest extends TestUtilsFixture {
     context.setDatabase(db);
     CountFromIndexStep step = new CountFromIndexStep(identifier, ALIAS, context, false);
 
-    OResultSet result = step.syncPull(context);
-    Assert.assertEquals(20, (long) result.next().getProperty(ALIAS));
-    Assert.assertFalse(result.hasNext());
+    OExecutionStream result = step.syncPull(context);
+    Assert.assertEquals(20, (long) result.next(context).getProperty(ALIAS));
+    Assert.assertFalse(result.hasNext(context));
   }
 }

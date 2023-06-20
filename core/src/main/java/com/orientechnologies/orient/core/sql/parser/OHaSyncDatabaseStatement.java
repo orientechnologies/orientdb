@@ -6,9 +6,8 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class OHaSyncDatabaseStatement extends OSimpleExecStatement {
@@ -25,16 +24,14 @@ public class OHaSyncDatabaseStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
 
     try {
       boolean result = database.sync(force, !full);
       OResultInternal r = new OResultInternal();
       r.setProperty("result", result);
-      OInternalResultSet rs = new OInternalResultSet();
-      rs.add(r);
-      return rs;
+      return OExecutionStream.singleton(r);
     } catch (Exception e) {
       throw OException.wrapException(
           new OCommandExecutionException("Cannot execute HA SYNC DATABASE"), e);

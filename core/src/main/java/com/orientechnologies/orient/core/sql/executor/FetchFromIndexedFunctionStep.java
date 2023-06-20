@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
@@ -32,18 +32,18 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     Iterator<OIdentifiable> fullResult = init(ctx);
     return new OResultSetMapper(
-        new OIteratorResultSet(fullResult),
-        (result) -> {
+        OExecutionStream.iterator((Iterator) fullResult),
+        (result, context) -> {
           if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
             throw new OCommandInterruptedException("The command has been interrupted");
           }
           long begin = profilingEnabled ? System.nanoTime() : 0;
           try {
-            ctx.setVariable("$current", result);
+            context.setVariable("$current", result);
             return result;
           } finally {
             if (profilingEnabled) {

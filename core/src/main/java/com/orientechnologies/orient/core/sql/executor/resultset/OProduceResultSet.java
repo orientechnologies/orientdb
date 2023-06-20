@@ -1,12 +1,9 @@
 package com.orientechnologies.orient.core.sql.executor.resultset;
 
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.util.Map;
-import java.util.Optional;
 
-public class OProduceResultSet implements OResultSet {
+public class OProduceResultSet implements OExecutionStream {
   public interface OProduceResult {
     OResult produce();
   }
@@ -21,25 +18,15 @@ public class OProduceResultSet implements OResultSet {
   }
 
   @Override
-  public boolean hasNext() {
+  public boolean hasNext(OCommandContext ctx) {
     return true;
   }
 
   @Override
-  public OResult next() {
+  public OResult next(OCommandContext ctx) {
     return producer.produce();
   }
 
   @Override
-  public void close() {}
-
-  @Override
-  public Optional<OExecutionPlan> getExecutionPlan() {
-    return Optional.empty();
-  }
-
-  @Override
-  public Map<String, Long> getQueryStats() {
-    return null;
-  }
+  public void close(OCommandContext ctx) {}
 }

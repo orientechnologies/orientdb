@@ -4,8 +4,8 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OResultMapper;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
@@ -27,16 +27,15 @@ public class InsertValuesStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx);
-    return new OResultSetMapper(
-        upstream,
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().syncPull(ctx);
+    return upstream.map(
         new OResultMapper() {
 
           private int nextValueSet = 0;
 
           @Override
-          public OResult map(OResult result) {
+          public OResult map(OResult result, OCommandContext ctx) {
             if (!(result instanceof OResultInternal)) {
               if (!result.isElement()) {
                 throw new OCommandExecutionException(

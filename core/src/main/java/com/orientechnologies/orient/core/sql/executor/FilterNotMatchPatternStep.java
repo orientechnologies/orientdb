@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import java.util.List;
 
@@ -17,11 +18,11 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OResultSet resultSet = prev.get().syncPull(ctx);
+    OExecutionStream resultSet = prev.get().syncPull(ctx);
     return new OFilterResultSet(resultSet, (result) -> filterMap(ctx, result));
   }
 
@@ -41,8 +42,11 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
   private boolean matchesPattern(OResult nextItem, OCommandContext ctx) {
     OSelectExecutionPlan plan = createExecutionPlan(nextItem, ctx);
-    try (OResultSet rs = plan.start()) {
-      return rs.hasNext();
+    OExecutionStream rs = plan.start();
+    try {
+      return rs.hasNext(ctx);
+    } finally {
+      rs.close(ctx);
     }
   }
 
@@ -50,16 +54,10 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
     OSelectExecutionPlan plan = new OSelectExecutionPlan(ctx);
     plan.chain(
         new AbstractExecutionStep(ctx, profilingEnabled) {
-          private boolean executed = false;
 
           @Override
-          public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-            OInternalResultSet result = new OInternalResultSet();
-            if (!executed) {
-              result.add(copy(nextItem));
-              executed = true;
-            }
-            return result;
+          public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+            return OExecutionStream.singleton(copy(nextItem));
           }
 
           private OResult copy(OResult nextItem) {

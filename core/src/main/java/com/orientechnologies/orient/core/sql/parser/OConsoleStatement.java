@@ -6,9 +6,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class OConsoleStatement extends OSimpleExecStatement {
@@ -24,8 +23,7 @@ public class OConsoleStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
-    OInternalResultSet result = new OInternalResultSet();
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     OResultInternal item = new OResultInternal();
     Object msg = "" + message.execute((OIdentifiable) null, ctx);
 
@@ -47,8 +45,7 @@ public class OConsoleStatement extends OSimpleExecStatement {
     item.setProperty("operation", "console");
     item.setProperty("level", logLevel.getStringValue());
     item.setProperty("message", msg);
-    result.add(item);
-    return result;
+    return OExecutionStream.singleton(item);
   }
 
   @Override

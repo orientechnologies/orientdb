@@ -9,9 +9,9 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityPolicyImpl;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +50,8 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
-    OInternalResultSet rs = new OInternalResultSet();
+  public OExecutionStream executeSimple(OCommandContext ctx) {
+    List<OResult> rs = new ArrayList<>();
     ODatabaseSession db = (ODatabaseSession) ctx.getDatabase();
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
@@ -85,7 +85,7 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
       }
       rs.add(result);
     }
-    return rs;
+    return OExecutionStream.resultIterator(rs.iterator());
   }
 
   @Override

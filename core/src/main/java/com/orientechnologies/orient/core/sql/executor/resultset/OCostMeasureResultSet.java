@@ -1,54 +1,41 @@
 package com.orientechnologies.orient.core.sql.executor.resultset;
 
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.util.Map;
-import java.util.Optional;
 
-public class OCostMeasureResultSet implements OResultSet {
+public class OCostMeasureResultSet implements OExecutionStream {
 
-  private OResultSet set;
+  private OExecutionStream set;
   private long cost;
 
-  public OCostMeasureResultSet(OResultSet set, long base) {
+  public OCostMeasureResultSet(OExecutionStream set, long base) {
     this.set = set;
     this.cost = base;
   }
 
   @Override
-  public boolean hasNext() {
+  public boolean hasNext(OCommandContext ctx) {
     long begin = System.nanoTime();
     try {
-      return set.hasNext();
+      return set.hasNext(ctx);
     } finally {
       cost += (System.nanoTime() - begin);
     }
   }
 
   @Override
-  public OResult next() {
+  public OResult next(OCommandContext ctx) {
     long begin = System.nanoTime();
     try {
-      return set.next();
+      return set.next(ctx);
     } finally {
       cost += (System.nanoTime() - begin);
     }
   }
 
   @Override
-  public void close() {
-    set.close();
-  }
-
-  @Override
-  public Optional<OExecutionPlan> getExecutionPlan() {
-    return set.getExecutionPlan();
-  }
-
-  @Override
-  public Map<String, Long> getQueryStats() {
-    return set.getQueryStats();
+  public void close(OCommandContext ctx) {
+    set.close(ctx);
   }
 
   public long getCost() {

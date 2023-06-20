@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /**
  * Reads an upstream result set and returns a new result set that contains copies of the original
@@ -26,12 +26,12 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet lastFetched = getPrev().get().syncPull(ctx);
-    return new OResultSetMapper(lastFetched, this::mapResult);
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream lastFetched = getPrev().get().syncPull(ctx);
+    return lastFetched.map(this::mapResult);
   }
 
-  private OResult mapResult(OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
 

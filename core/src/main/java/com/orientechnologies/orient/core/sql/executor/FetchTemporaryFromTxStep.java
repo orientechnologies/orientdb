@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.resultset.OCostMeasureResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,7 +37,7 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     long cost = 0;
     long begin = profilingEnabled ? System.nanoTime() : 0;
@@ -54,11 +54,11 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
     if (data == null) {
       data = Collections.emptyIterator();
     }
-    OResultSet resultSet =
+    OExecutionStream resultSet =
         new OResultSetMapper(
-            new OIteratorResultSet(data),
-            (result) -> {
-              ctx.setVariable("$current", result);
+            OExecutionStream.iterator((Iterator) data),
+            (result, context) -> {
+              context.setVariable("$current", result);
               return result;
             });
     if (profilingEnabled) {

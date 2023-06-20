@@ -4,7 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -29,13 +29,13 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
 
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OResultSet resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(resultSet, this::filterMap);
+    OExecutionStream resultSet = prev.get().syncPull(ctx);
+    return resultSet.filter(this::filterMap);
   }
 
   private OResult filterMap(OResult result) {

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,17 +30,17 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
 
-    OResultSet nextBlock = prefetchExecutionPlan.start();
+    OExecutionStream nextBlock = prefetchExecutionPlan.start();
     List<OResult> prefetched = new ArrayList<>();
-    while (nextBlock.hasNext()) {
-      prefetched.add(nextBlock.next());
+    while (nextBlock.hasNext(ctx)) {
+      prefetched.add(nextBlock.next(ctx));
     }
     prefetchExecutionPlan.close();
     ctx.setVariable(PREFETCHED_MATCH_ALIAS_PREFIX + alias, prefetched);
-    return new OInternalResultSet();
+    return OExecutionStream.empty();
   }
 
   @Override

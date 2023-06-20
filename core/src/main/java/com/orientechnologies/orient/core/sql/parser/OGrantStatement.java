@@ -8,9 +8,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityPolicyImpl;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 import java.util.Objects;
 
@@ -29,7 +28,7 @@ public class OGrantStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     ODatabaseDocumentInternal db = getDatabase();
     ORole role = db.getMetadata().getSecurity().getRole(actor.getStringValue());
     if (role == null)
@@ -45,7 +44,6 @@ public class OGrantStatement extends OSimpleExecStatement {
       security.setSecurityPolicy(db, role, securityResource.toString(), policy);
     }
 
-    OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "grant");
     result.setProperty("role", actor.getStringValue());
@@ -55,8 +53,7 @@ public class OGrantStatement extends OSimpleExecStatement {
       result.setProperty("policy", policyName.getStringValue());
     }
     result.setProperty("resource", resourcePath);
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   protected int toPrivilege(String privilegeName) {

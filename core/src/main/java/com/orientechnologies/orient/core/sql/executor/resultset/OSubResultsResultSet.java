@@ -1,26 +1,22 @@
 package com.orientechnologies.orient.core.sql.executor.resultset;
 
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
 
-public final class OSubResultsResultSet implements OResultSet {
-  private final Iterator<OResultSet> subSteps;
-  private OResultSet currentResultSet;
+public final class OSubResultsResultSet implements OExecutionStream {
+  private final Iterator<OExecutionStream> subSteps;
+  private OExecutionStream currentResultSet;
 
-  public OSubResultsResultSet(Iterator<OResultSet> subSteps) {
+  public OSubResultsResultSet(Iterator<OExecutionStream> subSteps) {
     this.subSteps = subSteps;
   }
 
   @Override
-  public boolean hasNext() {
-    while (currentResultSet == null || !currentResultSet.hasNext()) {
+  public boolean hasNext(OCommandContext ctx) {
+    while (currentResultSet == null || !currentResultSet.hasNext(ctx)) {
       if (currentResultSet != null) {
-        currentResultSet.close();
+        currentResultSet.close(ctx);
       }
       if (!subSteps.hasNext()) {
         return false;
@@ -31,30 +27,20 @@ public final class OSubResultsResultSet implements OResultSet {
   }
 
   @Override
-  public OResult next() {
-    if (!hasNext()) {
+  public OResult next(OCommandContext ctx) {
+    if (!hasNext(ctx)) {
       throw new IllegalStateException();
     }
-    return currentResultSet.next();
+    return currentResultSet.next(ctx);
   }
 
   @Override
-  public void close() {
+  public void close(OCommandContext ctx) {
     if (currentResultSet != null) {
-      currentResultSet.close();
+      currentResultSet.close(ctx);
     }
     while (subSteps.hasNext()) {
-      subSteps.next().close();
+      subSteps.next().close(ctx);
     }
-  }
-
-  @Override
-  public Optional<OExecutionPlan> getExecutionPlan() {
-    return Optional.empty();
-  }
-
-  @Override
-  public Map<String, Long> getQueryStats() {
-    return new HashMap<>();
   }
 }

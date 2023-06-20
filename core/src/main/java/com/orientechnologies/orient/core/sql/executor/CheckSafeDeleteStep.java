@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /**
  * Checks if a record can be safely deleted (throws OCommandExecutionException in case). A record
@@ -30,12 +30,12 @@ public class CheckSafeDeleteStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx);
-    return new OResultSetMapper(upstream, this::mapResult);
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().syncPull(ctx);
+    return upstream.map(this::mapResult);
   }
 
-  private OResult mapResult(OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (result.isElement()) {

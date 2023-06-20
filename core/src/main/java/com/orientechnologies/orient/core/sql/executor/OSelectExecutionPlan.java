@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,7 +13,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   private String location;
 
-  private OCommandContext ctx;
+  protected OCommandContext ctx;
 
   protected List<OExecutionStepInternal> steps = new ArrayList<>();
 
@@ -26,12 +27,17 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
+  public OCommandContext getContext() {
+    return ctx;
+  }
+
+  @Override
   public void close() {
     lastStep.close();
   }
 
   @Override
-  public OResultSet start() {
+  public OExecutionStream start() {
     return lastStep.syncPull(ctx);
   }
 

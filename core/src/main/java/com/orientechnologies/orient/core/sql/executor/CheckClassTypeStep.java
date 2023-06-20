@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /**
  * This step is used just as a gate check for classes (eg. for CREATE VERTEX to make sure that the
@@ -39,12 +40,12 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (this.targetClass.equals(this.parentClass)) {
-        return new OInternalResultSet();
+        return OExecutionStream.empty();
       }
       ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
 
@@ -73,7 +74,7 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
         throw new OCommandExecutionException(
             "Class  " + this.targetClass + " is not a subclass of " + this.parentClass);
       }
-      return new OInternalResultSet();
+      return OExecutionStream.empty();
     } finally {
       if (profilingEnabled) {
         cost += (System.nanoTime() - begin);

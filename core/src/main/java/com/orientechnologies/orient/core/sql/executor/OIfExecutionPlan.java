@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 /** Created by luigidellaquila on 08/08/16. */
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -11,6 +12,11 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
   private String location;
 
   private final OCommandContext ctx;
+
+  @Override
+  public OCommandContext getContext() {
+    return ctx;
+  }
 
   protected IfStep step;
 
@@ -30,7 +36,7 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
-  public OResultSet start() {
+  public OExecutionStream start() {
     return step.syncPull(ctx);
   }
 

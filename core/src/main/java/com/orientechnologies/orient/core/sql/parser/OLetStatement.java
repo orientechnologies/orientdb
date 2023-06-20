@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class OLetStatement extends OSimpleExecStatement {
@@ -23,7 +24,7 @@ public class OLetStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     Object result;
     if (expression != null) {
       result = expression.execute((OResult) null, ctx);
@@ -50,7 +51,7 @@ public class OLetStatement extends OSimpleExecStatement {
         ctx.setVariable(name.getStringValue(), result);
       }
     }
-    return new OInternalResultSet();
+    return OExecutionStream.empty();
   }
 
   @Override

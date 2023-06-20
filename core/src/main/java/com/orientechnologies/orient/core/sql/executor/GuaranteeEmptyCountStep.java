@@ -2,8 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
 import java.util.Collections;
 
@@ -18,17 +17,17 @@ public class GuaranteeEmptyCountStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OResultSet upstream = prev.get().syncPull(ctx);
-    if (upstream.hasNext()) {
-      return new OLimitedResultSet(upstream, 1);
+    OExecutionStream upstream = prev.get().syncPull(ctx);
+    if (upstream.hasNext(ctx)) {
+      return upstream.limit(1);
     } else {
       OResultInternal result = new OResultInternal();
       result.setProperty(item.getProjectionAliasAsString(), 0L);
-      return new OIteratorResultSet(Collections.singleton(result).iterator());
+      return OExecutionStream.resultIterator(Collections.singleton((OResult) result).iterator());
     }
   }
 

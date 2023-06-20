@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class RetryStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     for (int i = 0; i < retries; i++) {
       try {
@@ -62,7 +63,7 @@ public class RetryStep extends AbstractExecutionStep {
           if (elseFail) {
             throw ex;
           } else {
-            return new OInternalResultSet();
+            return OExecutionStream.empty();
           }
         }
       }

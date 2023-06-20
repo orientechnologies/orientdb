@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -15,7 +16,7 @@ import java.util.Optional;
 /** Created by luigidellaquila on 07/07/16. */
 public class OLocalResultSet implements OResultSet {
 
-  private OResultSet lastFetch = null;
+  private OExecutionStream stream = null;
   private final OInternalExecutionPlan executionPlan;
 
   long totalExecutionTime = 0;
@@ -29,11 +30,11 @@ public class OLocalResultSet implements OResultSet {
   private boolean start() {
     long begin = System.currentTimeMillis();
     try {
-      if (lastFetch == null) {
+      if (stream == null) {
         startTime = begin;
       }
-      lastFetch = executionPlan.start();
-      if (!lastFetch.hasNext()) {
+      stream = executionPlan.start();
+      if (!stream.hasNext(executionPlan.getContext())) {
         logProfiling();
         return false;
       }
@@ -45,7 +46,7 @@ public class OLocalResultSet implements OResultSet {
 
   @Override
   public boolean hasNext() {
-    boolean next = lastFetch.hasNext();
+    boolean next = stream.hasNext(executionPlan.getContext());
     if (!next) {
       logProfiling();
     }
@@ -57,7 +58,7 @@ public class OLocalResultSet implements OResultSet {
     if (!hasNext()) {
       throw new IllegalStateException();
     }
-    return lastFetch.next();
+    return stream.next(executionPlan.getContext());
   }
 
   private void logProfiling() {

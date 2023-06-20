@@ -4,10 +4,12 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class OReturnStatement extends OSimpleExecStatement {
@@ -22,8 +24,8 @@ public class OReturnStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
-    OInternalResultSet rs = new OInternalResultSet();
+  public OExecutionStream executeSimple(OCommandContext ctx) {
+    List<OResult> rs = new ArrayList<>();
 
     Object result = expression == null ? null : expression.execute((OResult) null, ctx);
     if (result instanceof OResult) {
@@ -44,13 +46,15 @@ public class OReturnStatement extends OSimpleExecStatement {
           // this operation does not hurt
         }
       }
-      return (OResultSet) result;
+      return OExecutionStream.resultIterator(((OResultSet) result).stream().iterator());
+    } else if (result instanceof OExecutionStream) {
+      return (OExecutionStream) result;
     } else {
       OResultInternal res = new OResultInternal();
       res.setProperty("value", result);
       rs.add(res);
     }
-    return rs;
+    return OExecutionStream.resultIterator(rs.iterator());
   }
 
   @Override

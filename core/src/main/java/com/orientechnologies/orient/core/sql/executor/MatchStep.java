@@ -2,8 +2,8 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetEdgeTraverser;
-import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import com.orientechnologies.orient.core.sql.parser.OFieldMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.OMultiMatchPathItem;
 
@@ -20,22 +20,14 @@ public class MatchStep extends AbstractExecutionStep {
   public void reset() {}
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet resultSet = getPrev().get().syncPull(ctx);
-    OResultSet resSet =
-        new OSubResultsResultSet(
-            resultSet.stream()
-                .map(
-                    (res) -> {
-                      return createNextResultSet(res, ctx);
-                    })
-                .iterator());
-    return resSet;
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream resultSet = getPrev().get().syncPull(ctx);
+    return resultSet.flatMap(this::createNextResultSet);
   }
 
-  public OResultSet createNextResultSet(OResult lastUpstreamRecord, OCommandContext ctx) {
+  public OExecutionStream createNextResultSet(OResult lastUpstreamRecord, OCommandContext ctx) {
     MatchEdgeTraverser trav = createTraverser(lastUpstreamRecord);
-    return new OResultSetEdgeTraverser(ctx, trav);
+    return new OResultSetEdgeTraverser(trav);
   }
 
   protected MatchEdgeTraverser createTraverser(OResult lastUpstreamRecord) {

@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OGroupBy;
 import com.orientechnologies.orient.core.sql.parser.OProjection;
@@ -37,30 +37,31 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    List<OResultInternal> finalResults = executeAggregation(ctx);
-    return new OIteratorResultSet(finalResults.iterator());
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    List<OResult> finalResults = executeAggregation(ctx);
+    return OExecutionStream.resultIterator(finalResults.iterator());
   }
 
-  private List<OResultInternal> executeAggregation(OCommandContext ctx) {
+  private List<OResult> executeAggregation(OCommandContext ctx) {
     long timeoutBegin = System.currentTimeMillis();
     if (!prev.isPresent()) {
       throw new OCommandExecutionException(
           "Cannot execute an aggregation or a GROUP BY without a previous result");
     }
     OExecutionStepInternal prevStep = prev.get();
-    OResultSet lastRs = prevStep.syncPull(ctx);
+    OExecutionStream lastRs = prevStep.syncPull(ctx);
     Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
-    while (lastRs.hasNext()) {
+    while (lastRs.hasNext(ctx)) {
       if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
         sendTimeout();
       }
-      aggregate(lastRs.next(), ctx, aggregateResults);
+      aggregate(lastRs.next(ctx), ctx, aggregateResults);
     }
-    List<OResultInternal> finalResults = new ArrayList<>();
+    List<OResult> finalResults = new ArrayList<>();
     finalResults.addAll(aggregateResults.values());
     aggregateResults.clear();
-    for (OResultInternal item : finalResults) {
+    for (OResult ele : finalResults) {
+      OResultInternal item = (OResultInternal) ele;
       if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
         sendTimeout();
       }

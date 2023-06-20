@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class LockRecordStep extends AbstractExecutionStep {
@@ -15,12 +15,12 @@ public class LockRecordStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx);
-    return new OResultSetMapper(upstream, (result) -> mapResult(ctx, result));
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().syncPull(ctx);
+    return upstream.map(this::mapResult);
   }
 
-  private OResult mapResult(OCommandContext ctx, OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     result
         .getElement()
         .ifPresent(x -> ctx.getDatabase().getTransaction().lockRecord(x, lockStrategy));

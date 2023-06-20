@@ -3,9 +3,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 import java.util.Objects;
 
@@ -22,13 +21,11 @@ public class OExpressionStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
-    OInternalResultSet result = new OInternalResultSet();
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     Object expResult = expression.execute(new OResultInternal(), ctx);
     OResultInternal item = new OResultInternal();
     item.setProperty("result", expResult);
-    result.add(item);
-    return result;
+    return OExecutionStream.singleton(item);
   }
 
   @Override

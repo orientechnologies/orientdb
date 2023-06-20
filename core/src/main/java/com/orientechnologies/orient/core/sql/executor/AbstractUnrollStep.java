@@ -3,8 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Collection;
 
 /**
@@ -19,19 +18,16 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
-    OResultSet resultSet = getPrev().get().syncPull(ctx);
-    OResultSet result =
-        new OSubResultsResultSet(
-            resultSet.stream().map((res) -> fetchNextResults(ctx, res)).iterator());
-    return result;
+    OExecutionStream resultSet = getPrev().get().syncPull(ctx);
+    return resultSet.flatMap(this::fetchNextResults);
   }
 
-  private OResultSet fetchNextResults(OCommandContext ctx, OResult res) {
-    return (OResultSet) new OIteratorResultSet(unroll(res, ctx).iterator());
+  private OExecutionStream fetchNextResults(OResult res, OCommandContext ctx) {
+    return OExecutionStream.resultIterator(unroll(res, ctx).iterator());
   }
 
   protected abstract Collection<OResult> unroll(final OResult doc, final OCommandContext iContext);

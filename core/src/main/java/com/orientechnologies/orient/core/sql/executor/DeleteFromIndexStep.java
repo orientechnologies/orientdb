@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
@@ -68,14 +68,14 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     Set<Stream<ORawPair<Object, ORID>>> streams = init();
-    Stream<OResultSet> resultStreams =
+    Stream<OExecutionStream> resultStreams =
         streams.stream()
             .map(
                 (s) -> {
-                  return new OIteratorResultSet(
+                  return OExecutionStream.resultIterator(
                       s.filter(
                               (entry) -> {
                                 return filter(entry, ctx);

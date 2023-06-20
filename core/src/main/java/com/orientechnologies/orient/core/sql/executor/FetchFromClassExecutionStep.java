@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -128,19 +128,19 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
 
-    Iterator<OResultSet> substeps =
+    Iterator<OExecutionStream> substeps =
         getSubSteps().stream()
             .map((step) -> ((AbstractExecutionStep) step).syncPull(ctx))
             .iterator();
-    return new OResultSetMapper(
-        new OSubResultsResultSet(substeps),
-        (result) -> {
-          ctx.setVariable("$current", result);
-          return result;
-        });
+    return new OSubResultsResultSet(substeps)
+        .map(
+            (result, context) -> {
+              context.setVariable("$current", result);
+              return result;
+            });
   }
 
   @Override

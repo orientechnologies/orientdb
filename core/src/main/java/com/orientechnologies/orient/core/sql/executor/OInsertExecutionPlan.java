@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-/** Created by luigidellaquila on 08/08/16. */
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,14 +17,13 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
   }
 
   @Override
-  public OResultSet start() {
+  public OExecutionStream start() {
     if (next >= result.size()) {
-      return new OInternalResultSet(); // empty
+      return OExecutionStream.empty(); // empty
     }
 
-    OIteratorResultSet nextBlock = new OIteratorResultSet(result.iterator());
     next = result.size();
-    return nextBlock;
+    return OExecutionStream.resultIterator(result.iterator());
   }
 
   @Override
@@ -37,9 +35,9 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
   }
 
   public void executeInternal() throws OCommandExecutionException {
-    OResultSet nextBlock = super.start();
-    while (nextBlock.hasNext()) {
-      result.add(nextBlock.next());
+    OExecutionStream nextBlock = super.start();
+    while (nextBlock.hasNext(ctx)) {
+      result.add(nextBlock.next(ctx));
     }
   }
 

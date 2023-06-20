@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Collections;
@@ -40,14 +40,14 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
 
     Iterator fromIter = loadFrom();
 
     Set<ORID> toList = loadTo();
 
-    OResultSet result =
+    OExecutionStream result =
         new OSubResultsResultSet(
             StreamSupport.stream(Spliterators.spliteratorUnknownSize(fromIter, 0), false)
                 .map((val) -> createResultSet(toList, val))
@@ -55,13 +55,13 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
     return result;
   }
 
-  private OResultSet createResultSet(Set<ORID> toList, Object val) {
-    return new OIteratorResultSet(
+  private OExecutionStream createResultSet(Set<ORID> toList, Object val) {
+    return OExecutionStream.resultIterator(
         StreamSupport.stream(this.loadNextResults(val).spliterator(), false)
             .filter((e) -> filterResult(e, toList))
             .map(
                 (edge) -> {
-                  return new OResultInternal(edge);
+                  return (OResult) new OResultInternal(edge);
                 })
             .iterator());
   }

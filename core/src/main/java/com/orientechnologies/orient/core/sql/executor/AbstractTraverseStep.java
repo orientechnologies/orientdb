@@ -3,13 +3,12 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,15 +37,15 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet resultSet = getPrev().get().syncPull(ctx);
-    return new OResultSet() {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream resultSet = getPrev().get().syncPull(ctx);
+    return new OExecutionStream() {
       private List<OResult> entryPoints = new ArrayList<>();
       private List<OResult> results = new ArrayList<>();
       private Set<ORID> traversed = new ORidSet();
 
       @Override
-      public boolean hasNext() {
+      public boolean hasNext(OCommandContext ctx) {
         if (results.isEmpty()) {
           fetchNextBlock(ctx, this.entryPoints, this.results, this.traversed, resultSet);
         }
@@ -57,8 +56,8 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
       }
 
       @Override
-      public OResult next() {
-        if (!hasNext()) {
+      public OResult next(OCommandContext ctx) {
+        if (!hasNext(ctx)) {
           throw new IllegalStateException();
         }
         OResult result = results.remove(0);
@@ -69,17 +68,7 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
+      public void close(OCommandContext ctx) {}
     };
   }
 
@@ -88,7 +77,7 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
       List<OResult> entryPoints,
       List<OResult> results,
       Set<ORID> traversed,
-      OResultSet resultSet) {
+      OExecutionStream resultSet) {
     if (!results.isEmpty()) {
       return;
     }
@@ -111,7 +100,10 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
   }
 
   protected abstract void fetchNextEntryPoints(
-      OResultSet toFetch, OCommandContext ctx, List<OResult> entryPoints, Set<ORID> traversed);
+      OExecutionStream toFetch,
+      OCommandContext ctx,
+      List<OResult> entryPoints,
+      Set<ORID> traversed);
 
   protected abstract void fetchNextResults(
       OCommandContext ctx, List<OResult> results, List<OResult> entryPoints, Set<ORID> traversed);

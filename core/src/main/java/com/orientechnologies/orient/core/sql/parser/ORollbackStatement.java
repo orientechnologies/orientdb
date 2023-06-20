@@ -3,9 +3,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class ORollbackStatement extends OSimpleExecStatement {
@@ -18,13 +17,11 @@ public class ORollbackStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     ctx.getDatabase().rollback();
-    OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();
     item.setProperty("operation", "rollback");
-    result.add(item);
-    return result;
+    return OExecutionStream.singleton(item);
   }
 
   @Override

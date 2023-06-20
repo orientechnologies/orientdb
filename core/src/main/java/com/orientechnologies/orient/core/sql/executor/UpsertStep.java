@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
@@ -26,14 +27,12 @@ public class UpsertStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx);
-    if (upstream.hasNext()) {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().syncPull(ctx);
+    if (upstream.hasNext(ctx)) {
       return upstream;
     }
-    OInternalResultSet result = new OInternalResultSet();
-    result.add(createNewRecord(ctx, commandTarget, initialFilter));
-    return result;
+    return OExecutionStream.singleton(createNewRecord(ctx, commandTarget, initialFilter));
   }
 
   private OResult createNewRecord(

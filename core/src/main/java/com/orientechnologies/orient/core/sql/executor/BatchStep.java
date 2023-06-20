@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OBatch;
 
 /** Created by luigidellaquila on 14/02/17. */
@@ -17,12 +17,12 @@ public class BatchStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet prevResult = getPrev().get().syncPull(ctx);
-    return new OResultSetMapper(prevResult, (result) -> mapResult(ctx, result));
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream prevResult = getPrev().get().syncPull(ctx);
+    return prevResult.map(this::mapResult);
   }
 
-  private OResult mapResult(OCommandContext ctx, OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     ODatabaseSession db = ctx.getDatabase();
     if (db.getTransaction().isActive()) {
       if (db.getTransaction().getEntryCount() % batchSize == 0) {

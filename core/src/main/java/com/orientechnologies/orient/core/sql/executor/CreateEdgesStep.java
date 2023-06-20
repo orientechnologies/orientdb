@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OBatch;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.ArrayList;
@@ -58,7 +58,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
 
     Iterator fromIter = fetchFroms();
@@ -71,7 +71,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
                 (currentFrom) -> {
                   return mapTo(toList, (OVertex) currentFrom, uniqueIndex);
                 });
-    return new OIteratorResultSet(stream.iterator());
+    return OExecutionStream.resultIterator(stream.iterator());
   }
 
   private OIndex findIndex(String uniqueIndexName) {

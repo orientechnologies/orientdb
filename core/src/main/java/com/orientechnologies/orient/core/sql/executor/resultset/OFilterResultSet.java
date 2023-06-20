@@ -1,41 +1,28 @@
 package com.orientechnologies.orient.core.sql.executor.resultset;
 
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.util.Map;
-import java.util.Optional;
 
-public class OFilterResultSet implements OResultSet {
+public class OFilterResultSet implements OExecutionStream {
+
+  private OExecutionStream prevResult;
+  private OFilterResult filter;
+  private OResult nextItem = null;
 
   public interface OFilterResult {
     OResult filterMap(OResult result);
   }
 
-  public OFilterResultSet(OResultSet resultSet, OFilterResult filter) {
+  public OFilterResultSet(OExecutionStream resultSet, OFilterResult filter) {
     super();
     this.prevResult = resultSet;
     this.filter = filter;
   }
 
-  private OResultSet prevResult;
-  private OFilterResult filter;
-  private OResult nextItem = null;
-
-  private void fetchNextItem() {
-    while (prevResult.hasNext()) {
-      nextItem = prevResult.next();
-      nextItem = filter.filterMap(nextItem);
-      if (nextItem != null) {
-        break;
-      }
-    }
-  }
-
   @Override
-  public boolean hasNext() {
+  public boolean hasNext(OCommandContext ctx) {
     if (nextItem == null) {
-      fetchNextItem();
+      fetchNextItem(ctx);
     }
 
     if (nextItem != null) {
@@ -46,9 +33,9 @@ public class OFilterResultSet implements OResultSet {
   }
 
   @Override
-  public OResult next() {
+  public OResult next(OCommandContext ctx) {
     if (nextItem == null) {
-      fetchNextItem();
+      fetchNextItem(ctx);
     }
     if (nextItem == null) {
       throw new IllegalStateException();
@@ -59,15 +46,17 @@ public class OFilterResultSet implements OResultSet {
   }
 
   @Override
-  public void close() {}
-
-  @Override
-  public Optional<OExecutionPlan> getExecutionPlan() {
-    return Optional.empty();
+  public void close(OCommandContext ctx) {
+    this.prevResult.close(ctx);
   }
 
-  @Override
-  public Map<String, Long> getQueryStats() {
-    return null;
+  private void fetchNextItem(OCommandContext ctx) {
+    while (prevResult.hasNext(ctx)) {
+      nextItem = prevResult.next(ctx);
+      nextItem = filter.filterMap(nextItem);
+      if (nextItem != null) {
+        break;
+      }
+    }
   }
 }

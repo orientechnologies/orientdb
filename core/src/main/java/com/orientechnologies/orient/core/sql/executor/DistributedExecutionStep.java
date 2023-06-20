@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /** Created by luigidellaquila on 08/05/17. */
 public class DistributedExecutionStep extends AbstractExecutionStep {
@@ -21,16 +22,18 @@ public class DistributedExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    OResultSet remote = sendSerializedExecutionPlan(nodeName, subExecuitonPlan, ctx);
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream remote = sendSerializedExecutionPlan(nodeName, subExecuitonPlan, ctx);
     getPrev().ifPresent(x -> x.syncPull(ctx));
     return remote;
   }
 
-  private OResultSet sendSerializedExecutionPlan(
+  private OExecutionStream sendSerializedExecutionPlan(
       String nodeName, OExecutionPlan serializedExecutionPlan, OCommandContext ctx) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
-    return db.queryOnNode(nodeName, serializedExecutionPlan, ctx.getInputParameters());
+    return OExecutionStream.resultIterator(
+        db.queryOnNode(nodeName, serializedExecutionPlan, ctx.getInputParameters()).stream()
+            .iterator());
   }
 
   @Override

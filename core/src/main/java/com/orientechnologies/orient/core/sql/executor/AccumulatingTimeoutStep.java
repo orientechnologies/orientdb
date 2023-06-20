@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OTimeoutResultSet;
 import com.orientechnologies.orient.core.sql.parser.OTimeout;
 
@@ -16,8 +17,8 @@ public class AccumulatingTimeoutStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
-    final OResultSet internal = getPrev().get().syncPull(ctx);
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+    final OExecutionStream internal = getPrev().get().syncPull(ctx);
     return new OTimeoutResultSet(internal, this.timeout.getVal().longValue(), this::fail);
   }
 

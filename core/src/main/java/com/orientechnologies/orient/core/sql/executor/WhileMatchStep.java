@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,9 +27,9 @@ public class WhileMatchStep extends AbstractUnrollStep {
   protected Collection<OResult> unroll(OResult doc, OCommandContext iContext) {
     body.reset(iContext);
     List<OResult> result = new ArrayList<>();
-    OResultSet block = body.start();
-    while (block.hasNext()) {
-      result.add(block.next());
+    OExecutionStream block = body.start();
+    while (block.hasNext(iContext)) {
+      result.add(block.next(iContext));
     }
     return result;
   }

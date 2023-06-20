@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Collections;
@@ -35,7 +35,7 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     Stream<Object> source = init();
 
@@ -55,7 +55,7 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
     return StreamSupport.stream(Spliterators.spliteratorUnknownSize((Iterator) toValues, 0), false);
   }
 
-  private OResultSet edges(Object from) {
+  private OExecutionStream edges(Object from) {
     if (from instanceof OResult) {
       from = ((OResult) from).toElement();
     }
@@ -64,14 +64,14 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
     }
     if (from instanceof OElement && ((OElement) from).isVertex()) {
       Iterable<OEdge> edges = ((OElement) from).asVertex().get().getEdges(ODirection.IN);
-      Stream<Object> stream =
+      Stream<OResult> stream =
           StreamSupport.stream(edges.spliterator(), false)
               .filter(
                   (edge) -> {
                     return matchesClass(edge) && matchesCluster(edge);
                   })
               .map((e) -> new OResultInternal(e));
-      return new OIteratorResultSet(stream.iterator());
+      return OExecutionStream.resultIterator(stream.iterator());
     } else {
       throw new OCommandExecutionException("Invalid vertex: " + from);
     }

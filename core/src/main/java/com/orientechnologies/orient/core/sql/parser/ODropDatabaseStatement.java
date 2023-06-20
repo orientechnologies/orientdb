@@ -5,9 +5,8 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class ODropDatabaseStatement extends OSimpleExecServerStatement {
@@ -25,7 +24,7 @@ public class ODropDatabaseStatement extends OSimpleExecServerStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OServerCommandContext ctx) {
+  public OExecutionStream executeSimple(OServerCommandContext ctx) {
     String nameString;
     if (name != null) {
       nameString = name.getStringValue();
@@ -50,9 +49,7 @@ public class ODropDatabaseStatement extends OSimpleExecServerStatement {
       }
     }
 
-    OInternalResultSet rs = new OInternalResultSet();
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   @Override

@@ -1,53 +1,40 @@
 package com.orientechnologies.orient.core.sql.executor.resultset;
 
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.util.Map;
-import java.util.Optional;
 
-public class OLimitedResultSet implements OResultSet {
-  private final OResultSet upstream;
-  private final int limit;
-  private int count = 0;
+public class OLimitedResultSet implements OExecutionStream {
+  private final OExecutionStream upstream;
+  private final long limit;
+  private long count = 0;
 
-  public OLimitedResultSet(OResultSet upstream, int limit) {
+  public OLimitedResultSet(OExecutionStream upstream, long limit) {
     this.upstream = upstream;
     this.limit = limit;
   }
 
   @Override
-  public boolean hasNext() {
+  public boolean hasNext(OCommandContext ctx) {
     if (count >= limit) {
       return false;
     } else {
-      return upstream.hasNext();
+      return upstream.hasNext(ctx);
     }
   }
 
   @Override
-  public OResult next() {
+  public OResult next(OCommandContext ctx) {
     if (count >= limit) {
       throw new IllegalStateException();
     } else {
-      OResult read = upstream.next();
+      OResult read = upstream.next(ctx);
       this.count += 1;
       return read;
     }
   }
 
   @Override
-  public void close() {
-    upstream.close();
-  }
-
-  @Override
-  public Optional<OExecutionPlan> getExecutionPlan() {
-    return upstream.getExecutionPlan();
-  }
-
-  @Override
-  public Map<String, Long> getQueryStats() {
-    return upstream.getQueryStats();
+  public void close(OCommandContext ctx) {
+    upstream.close(ctx);
   }
 }

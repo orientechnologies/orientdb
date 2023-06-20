@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OProjection;
 
 /** Created by luigidellaquila on 12/07/16. */
@@ -18,16 +18,16 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("Cannot calculate projections without a previous source");
     }
 
-    OResultSet parentRs = prev.get().syncPull(ctx);
-    return new OResultSetMapper(parentRs, (result) -> mapResult(ctx, result));
+    OExecutionStream parentRs = prev.get().syncPull(ctx);
+    return parentRs.map(this::mapResult);
   }
 
-  private OResult mapResult(OCommandContext ctx, OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     Object oldCurrent = ctx.getVariable("$current");
     ctx.setVariable("$current", result);
     OResult newResult = calculateProjections(ctx, result);

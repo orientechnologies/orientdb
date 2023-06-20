@@ -9,8 +9,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.sql.executor.resultset.OCostMeasureResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OInterruptResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
@@ -49,7 +48,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
     long begin = profilingEnabled ? System.nanoTime() : 0;
     long minClusterPosition = calculateMinClusterPosition();
@@ -67,14 +66,14 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
       iter = iterator;
     }
 
-    OResultSet set =
+    OExecutionStream set =
         new OResultSetMapper(
-            new OIteratorResultSet(iter),
-            (result) -> {
-              ctx.setVariable("$current", result);
+            OExecutionStream.iterator((Iterator) iter),
+            (result, context) -> {
+              context.setVariable("$current", result);
               return result;
             });
-    set = new OInterruptResultSet(set);
+    set = set.interruptable();
     if (profilingEnabled) {
       costMeasure = new OCostMeasureResultSet(set, System.nanoTime() - begin);
       set = costMeasure;
