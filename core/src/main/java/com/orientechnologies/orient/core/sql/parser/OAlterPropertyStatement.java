@@ -10,9 +10,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
@@ -37,7 +36,7 @@ public class OAlterPropertyStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
+  public OExecutionStream executeDDL(OCommandContext ctx) {
     ODatabaseSession db = ctx.getDatabase();
     OClass clazz = db.getMetadata().getSchema().getClass(className.getStringValue());
 
@@ -104,9 +103,7 @@ public class OAlterPropertyStatement extends ODDLStatement {
       result.setProperty("oldValue", oldValue != null ? oldValue.toString() : null);
       result.setProperty("newValue", finalValue != null ? finalValue.toString() : null);
     }
-    OInternalResultSet rs = new OInternalResultSet();
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   @Override

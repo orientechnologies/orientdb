@@ -48,16 +48,14 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
     return false;
   }
 
-  public OResultSet executeInternal(OBasicCommandContext ctx) throws OCommandExecutionException {
+  public OExecutionStream executeInternal(OBasicCommandContext ctx)
+      throws OCommandExecutionException {
     if (executed) {
       throw new OCommandExecutionException(
           "Trying to execute a result-set twice. Please use reset()");
     }
     executed = true;
-    OResultSet result = statement.executeDDL(this.ctx);
-    if (result instanceof OInternalResultSet) {
-      ((OInternalResultSet) result).plan = this;
-    }
+    OExecutionStream result = statement.executeDDL(this.ctx);
     return result;
   }
 

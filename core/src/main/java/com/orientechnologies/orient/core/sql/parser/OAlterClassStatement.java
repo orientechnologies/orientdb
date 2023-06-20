@@ -8,9 +8,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -304,7 +303,7 @@ public class OAlterClassStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
+  public OExecutionStream executeDDL(OCommandContext ctx) {
     OClass oClass = ctx.getDatabase().getMetadata().getSchema().getClass(name.getStringValue());
     if (oClass == null) {
       throw new OCommandExecutionException("Class not found: " + name);
@@ -418,12 +417,11 @@ public class OAlterClassStatement extends ODDLStatement {
       int clusterId = ctx.getDatabase().getClusterIdByName(defaultClusterName.getStringValue());
       oClass.setDefaultClusterId(clusterId);
     }
-    OInternalResultSet resultSet = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "ALTER CLASS");
     result.setProperty("className", name.getStringValue());
     result.setProperty("result", "OK");
-    return resultSet;
+    return OExecutionStream.singleton(result);
   }
 
   private void checkNotIndexed(OClass oClass) {

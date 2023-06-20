@@ -9,9 +9,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,11 +33,11 @@ public class OCreateViewStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
+  public OExecutionStream executeDDL(OCommandContext ctx) {
     OSchema schema = ctx.getDatabase().getMetadata().getSchema();
     if (schema.existsView(name.getStringValue())) {
       if (ifNotExists) {
-        return new OInternalResultSet();
+        return OExecutionStream.empty();
       } else {
         throw new OCommandExecutionException("View " + name + " already exists");
       }
@@ -59,9 +58,7 @@ public class OCreateViewStatement extends ODDLStatement {
         statement.toString(),
         metadata == null ? new HashMap<>() : metadata.toMap(new OResultInternal(), ctx));
 
-    OInternalResultSet rs = new OInternalResultSet();
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   public void checkMetadataSyntax() throws OCommandSQLParsingException {

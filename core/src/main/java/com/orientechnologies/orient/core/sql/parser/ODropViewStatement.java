@@ -6,9 +6,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class ODropViewStatement extends ODDLStatement {
@@ -25,12 +24,12 @@ public class ODropViewStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
+  public OExecutionStream executeDDL(OCommandContext ctx) {
     OSchema schema = ctx.getDatabase().getMetadata().getSchema();
     OView view = schema.getView(name.getStringValue());
     if (view == null) {
       if (ifExists) {
-        return new OInternalResultSet();
+        return OExecutionStream.empty();
       }
       throw new OCommandExecutionException("View " + name.getStringValue() + " does not exist");
     }
@@ -52,12 +51,10 @@ public class ODropViewStatement extends ODDLStatement {
 
     schema.dropView(name.getStringValue());
 
-    OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "drop view");
     result.setProperty("viewName", name.getStringValue());
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   @Override

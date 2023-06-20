@@ -7,10 +7,12 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class OTruncateClassStatement extends ODDLStatement {
@@ -28,7 +30,7 @@ public class OTruncateClassStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
+  public OExecutionStream executeDDL(OCommandContext ctx) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.getClass(className.getStringValue());
@@ -47,7 +49,7 @@ public class OTruncateClassStatement extends ODDLStatement {
       }
     }
 
-    OInternalResultSet rs = new OInternalResultSet();
+    List<OResult> rs = new ArrayList();
     Collection<OClass> subclasses = clazz.getAllSubclasses();
     if (polymorphic && !unsafe) { // for multiple inheritance
       for (OClass subclass : subclasses) {
@@ -85,7 +87,7 @@ public class OTruncateClassStatement extends ODDLStatement {
       }
     }
 
-    return rs;
+    return OExecutionStream.resultIterator(rs.iterator());
   }
 
   @Override

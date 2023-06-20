@@ -5,9 +5,8 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class OTruncateClusterStatement extends ODDLStatement {
@@ -25,9 +24,8 @@ public class OTruncateClusterStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
+  public OExecutionStream executeDDL(OCommandContext ctx) {
     ODatabaseDocumentAbstract database = (ODatabaseDocumentAbstract) ctx.getDatabase();
-    OInternalResultSet rs = new OInternalResultSet();
 
     Integer clusterId = null;
     if (clusterNumber != null) {
@@ -49,8 +47,7 @@ public class OTruncateClusterStatement extends ODDLStatement {
     result.setProperty("clusterId", clusterId);
     result.setProperty("count", count);
 
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   @Override

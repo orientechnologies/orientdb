@@ -33,7 +33,7 @@ public class LetExpressionStep extends AbstractExecutionStep {
   private OResult mapResult(OResult result, OCommandContext ctx) {
     Object value = expression.execute(result, ctx);
     ((OResultInternal) result)
-        .setMetadata(varname.getStringValue(), OProjectionItem.convert(value));
+        .setMetadata(varname.getStringValue(), OProjectionItem.convert(value, ctx));
     return result;
   }
 

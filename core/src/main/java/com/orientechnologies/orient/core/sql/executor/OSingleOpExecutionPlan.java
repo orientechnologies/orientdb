@@ -38,9 +38,6 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
     if (!executed) {
       executed = true;
       result = statement.executeSimple(this.ctx);
-      if (result instanceof OInternalResultSet) {
-        ((OInternalResultSet) result).plan = this;
-      }
     }
     return result;
   }
@@ -67,9 +64,6 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
     }
     executed = true;
     result = statement.executeSimple(this.ctx);
-    if (result instanceof OInternalResultSet) {
-      ((OInternalResultSet) result).plan = this;
-    }
     return result;
   }
 

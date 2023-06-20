@@ -8,9 +8,8 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class ODropSequenceStatement extends ODDLStatement {
@@ -27,13 +26,13 @@ public class ODropSequenceStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
+  public OExecutionStream executeDDL(OCommandContext ctx) {
     final ODatabaseSession database = ctx.getDatabase();
     OSequence sequence =
         database.getMetadata().getSequenceLibrary().getSequence(this.name.getStringValue());
     if (sequence == null) {
       if (ifExists) {
-        return new OInternalResultSet();
+        return OExecutionStream.empty();
       } else {
         throw new OCommandExecutionException("Sequence not found: " + name);
       }
@@ -47,12 +46,10 @@ public class ODropSequenceStatement extends ODDLStatement {
       throw new OCommandExecutionException(message);
     }
 
-    OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "drop sequence");
     result.setProperty("sequenceName", name.getStringValue());
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   @Override

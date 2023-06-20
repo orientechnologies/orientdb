@@ -21,10 +21,10 @@ public class TimeoutStep extends AbstractExecutionStep {
         getPrev().get().syncPull(ctx), timeout.getVal().longValue(), this::fail);
   }
 
-  private OResultSet fail() {
+  private void fail() {
     sendTimeout();
     if (OTimeout.RETURN.equals(this.timeout.getFailureStrategy())) {
-      return new OInternalResultSet();
+      return;
     } else {
       throw new OTimeoutException("Timeout expired");
     }
