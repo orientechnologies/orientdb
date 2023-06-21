@@ -3,11 +3,11 @@ package com.orientechnologies.orient.core.sql.executor.resultset;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-public class OResultSetMapper implements OExecutionStream {
+public class OMapperExecutionStream implements OExecutionStream {
   private final OExecutionStream upstream;
   private final OResultMapper mapper;
 
-  public OResultSetMapper(OExecutionStream upstream, OResultMapper mapper) {
+  public OMapperExecutionStream(OExecutionStream upstream, OResultMapper mapper) {
     if (upstream == null || mapper == null) {
       throw new NullPointerException();
     }

@@ -24,7 +24,7 @@ public class LetQueryStep extends AbstractExecutionStep {
     this.query = query;
   }
 
-  private void calculate(OResultInternal result, OCommandContext ctx) {
+  private OResultInternal calculate(OResultInternal result, OCommandContext ctx) {
     OBasicCommandContext subCtx = new OBasicCommandContext();
     subCtx.setDatabase(ctx.getDatabase());
     subCtx.setParentWithoutOverridingChild(ctx);
@@ -37,6 +37,7 @@ public class LetQueryStep extends AbstractExecutionStep {
       subExecutionPlan = query.createExecutionPlan(subCtx, profilingEnabled);
     }
     result.setMetadata(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
+    return result;
   }
 
   private List<OResult> toList(OLocalResultSet oLocalResultSet) {
@@ -58,10 +59,7 @@ public class LetQueryStep extends AbstractExecutionStep {
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {
-    if (result != null) {
-      calculate((OResultInternal) result, ctx);
-    }
-    return result;
+    return calculate((OResultInternal) result, ctx);
   }
 
   @Override

@@ -5,7 +5,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsExecutionStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -65,7 +65,7 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OSubResultsResultSet(
+    return new OSubResultsExecutionStream(
         this.subSteps.stream()
             .map((step) -> ((AbstractExecutionStep) step).syncPull(ctx))
             .iterator());

@@ -13,13 +13,6 @@ public class OExecutionResultSet implements OResultSet {
   private final OCommandContext context;
   private final Optional<OExecutionPlan> plan;
 
-  public OExecutionResultSet(OExecutionStream stream, OCommandContext context) {
-    super();
-    this.stream = stream;
-    this.context = context;
-    this.plan = Optional.empty();
-  }
-
   public OExecutionResultSet(
       OExecutionStream stream, OCommandContext context, OExecutionPlan plan) {
     super();

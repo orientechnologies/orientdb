@@ -38,7 +38,7 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
     return resultSet.filter(this::filterMap);
   }
 
-  private OResult filterMap(OResult result) {
+  private OResult filterMap(OResult result, OCommandContext ctx) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       Object finalVal = result.getProperty("rid");

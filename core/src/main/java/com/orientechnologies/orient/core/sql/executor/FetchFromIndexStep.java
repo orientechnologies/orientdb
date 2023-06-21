@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
@@ -120,7 +120,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
                 });
     // TODO: this should go at the end of the iteration;
     updateIndexStats();
-    return new OSubResultsResultSet(resultStreams.iterator());
+    return new OSubResultsExecutionStream(resultStreams.iterator());
   }
 
   private OResult readResult(OCommandContext ctx, ORawPair<Object, ORID> nextEntry) {

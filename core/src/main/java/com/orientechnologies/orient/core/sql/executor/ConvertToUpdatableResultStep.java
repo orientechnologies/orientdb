@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 
 /**
  * takes a normal result set and transforms it in another result set made of OUpdatableRecord
@@ -29,10 +28,10 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OExecutionStream resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(resultSet, this::filterMap);
+    return resultSet.filter(this::filterMap);
   }
 
-  private OResult filterMap(OResult result) {
+  private OResult filterMap(OResult result, OCommandContext ctx) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (result instanceof OUpdatableResult) {

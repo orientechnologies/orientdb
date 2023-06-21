@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import java.util.List;
 
 public class FilterNotMatchPatternStep extends AbstractExecutionStep {
@@ -23,10 +22,10 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OExecutionStream resultSet = prev.get().syncPull(ctx);
-    return new OFilterResultSet(resultSet, (result) -> filterMap(ctx, result));
+    return resultSet.filter(this::filterMap);
   }
 
-  private OResult filterMap(OCommandContext ctx, OResult result) {
+  private OResult filterMap(OResult result, OCommandContext ctx) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (!matchesPattern(result, ctx)) {

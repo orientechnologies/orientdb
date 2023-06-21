@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,7 +34,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
     Set<OResult> pastItems = new HashSet<>();
     ORidSet pastRids = new ORidSet();
 
-    return new OFilterResultSet(resultSet, (result) -> filterMap(ctx, result, pastRids, pastItems));
+    return resultSet.filter((result, context) -> filterMap(context, result, pastRids, pastItems));
   }
 
   private OResult filterMap(

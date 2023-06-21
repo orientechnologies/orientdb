@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.sql.executor.resultset;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet.OFilterResult;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
@@ -19,11 +19,11 @@ public interface OExecutionStream {
   void close(OCommandContext ctx);
 
   public default OExecutionStream map(OResultMapper mapper) {
-    return new OResultSetMapper(this, mapper);
+    return new OMapperExecutionStream(this, mapper);
   }
 
   public default OExecutionStream filter(OFilterResult filter) {
-    return new OFilterResultSet(this, filter);
+    return new OFilterExecutionStream(this, filter);
   }
 
   public default OExecutionStream flatMap(OMapExecutionStream map) {
@@ -35,7 +35,7 @@ public interface OExecutionStream {
   }
 
   public default OExecutionStream limit(long limit) {
-    return new OLimitedResultSet(this, limit);
+    return new OLimitedExecutionStream(this, limit);
   }
 
   public static OExecutionStream iterator(Iterator<Object> iterator) {
@@ -44,6 +44,10 @@ public interface OExecutionStream {
 
   public static OExecutionStream resultIterator(Iterator<OResult> iterator) {
     return new OResultIteratorExecutionStream(iterator);
+  }
+
+  public static OExecutionStream loadIterator(Iterator<OIdentifiable> iterator) {
+    return new OLoaderExecutionStream(iterator);
   }
 
   public static OExecutionStream empty() {

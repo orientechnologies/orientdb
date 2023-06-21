@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsExecutionStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -135,7 +135,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
         getSubSteps().stream()
             .map((step) -> ((AbstractExecutionStep) step).syncPull(ctx))
             .iterator();
-    return new OSubResultsResultSet(substeps)
+    return new OSubResultsExecutionStream(substeps)
         .map(
             (result, context) -> {
               context.setVariable("$current", result);

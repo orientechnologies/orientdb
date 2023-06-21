@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.sql.executor.resultset.OCostMeasureResultSet;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
@@ -66,13 +65,8 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
       iter = iterator;
     }
 
-    OExecutionStream set =
-        new OResultSetMapper(
-            OExecutionStream.iterator((Iterator) iter),
-            (result, context) -> {
-              context.setVariable("$current", result);
-              return result;
-            });
+    OExecutionStream set = OExecutionStream.loadIterator(iter);
+
     set = set.interruptable();
     if (profilingEnabled) {
       costMeasure = new OCostMeasureResultSet(set, System.nanoTime() - begin);

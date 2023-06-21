@@ -4,7 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutionStream;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class CreateRecordStep extends AbstractExecutionStep {
@@ -20,7 +20,7 @@ public class CreateRecordStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OProduceResultSet(() -> produce(ctx)).limit(total);
+    return new OProduceExecutionStream(this::produce).limit(total);
   }
 
   private OResult produce(OCommandContext ctx) {

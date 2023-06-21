@@ -3,17 +3,13 @@ package com.orientechnologies.orient.core.sql.executor.resultset;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-public class OFilterResultSet implements OExecutionStream {
+public class OFilterExecutionStream implements OExecutionStream {
 
   private OExecutionStream prevResult;
   private OFilterResult filter;
   private OResult nextItem = null;
 
-  public interface OFilterResult {
-    OResult filterMap(OResult result);
-  }
-
-  public OFilterResultSet(OExecutionStream resultSet, OFilterResult filter) {
+  public OFilterExecutionStream(OExecutionStream resultSet, OFilterResult filter) {
     super();
     this.prevResult = resultSet;
     this.filter = filter;
@@ -53,7 +49,7 @@ public class OFilterResultSet implements OExecutionStream {
   private void fetchNextItem(OCommandContext ctx) {
     while (prevResult.hasNext(ctx)) {
       nextItem = prevResult.next(ctx);
-      nextItem = filter.filterMap(nextItem);
+      nextItem = filter.filterMap(nextItem, ctx);
       if (nextItem != null) {
         break;
       }

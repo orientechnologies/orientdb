@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutionStream;
 
 /**
  * Returns an OResult containing metadata regarding the database
@@ -24,7 +24,7 @@ public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OProduceResultSet(() -> produce(ctx)).limit(1);
+    return new OProduceExecutionStream(this::produce).limit(1);
   }
 
   private OResult produce(OCommandContext ctx) {

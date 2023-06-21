@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Collections;
 import java.util.HashSet;
@@ -48,7 +48,7 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
     Set<ORID> toList = loadTo();
 
     OExecutionStream result =
-        new OSubResultsResultSet(
+        new OSubResultsExecutionStream(
             StreamSupport.stream(Spliterators.spliteratorUnknownSize(fromIter, 0), false)
                 .map((val) -> createResultSet(toList, val))
                 .iterator());

@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsResultSet;
 import java.util.Iterator;
 
 /**
@@ -27,76 +26,46 @@ public class ExpandStep extends AbstractExecutionStep {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
     OExecutionStream resultSet = getPrev().get().syncPull(ctx);
-
-    OExecutionStream result =
-        new OSubResultsResultSet(
-            new Iterator<OExecutionStream>() {
-              private OExecutionStream next;
-
-              @Override
-              public boolean hasNext() {
-                fetchNext();
-                return next != null;
-              }
-
-              private void fetchNext() {
-                if (next == null) {
-                  next = nextSequence(ctx, resultSet);
-                }
-              }
-
-              @Override
-              public OExecutionStream next() {
-                if (!hasNext()) {
-                  throw new IllegalStateException();
-                }
-                OExecutionStream n = next;
-                this.next = null;
-                return n;
-              }
-            });
-    return result;
+    return resultSet.flatMap(this::nextResults);
   }
 
-  public OExecutionStream nextSequence(OCommandContext ctx, OExecutionStream resultSet) {
-    while (resultSet.hasNext(ctx)) {
-      OResult nextAggregateItem = resultSet.next(ctx);
-      long begin = profilingEnabled ? System.nanoTime() : 0;
-      try {
-        if (nextAggregateItem.getPropertyNames().size() == 0) {
-          continue;
-        }
-        if (nextAggregateItem.getPropertyNames().size() > 1) {
-          throw new IllegalStateException("Invalid EXPAND on record " + nextAggregateItem);
-        }
+  private OExecutionStream nextResults(OResult nextAggregateItem, OCommandContext ctx) {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      if (nextAggregateItem.getPropertyNames().size() == 0) {
+        return OExecutionStream.empty();
+      }
+      if (nextAggregateItem.getPropertyNames().size() > 1) {
+        throw new IllegalStateException("Invalid EXPAND on record " + nextAggregateItem);
+      }
 
-        String propName = nextAggregateItem.getPropertyNames().iterator().next();
-        Object projValue = nextAggregateItem.getProperty(propName);
-        if (projValue == null) {
-          continue;
+      String propName = nextAggregateItem.getPropertyNames().iterator().next();
+      Object projValue = nextAggregateItem.getProperty(propName);
+      if (projValue == null) {
+        return OExecutionStream.empty();
+      }
+      if (projValue instanceof OIdentifiable) {
+        ORecord rec = ((OIdentifiable) projValue).getRecord();
+        if (rec == null) {
+          return OExecutionStream.empty();
         }
-        if (projValue instanceof OIdentifiable) {
-          ORecord rec = ((OIdentifiable) projValue).getRecord();
-          if (rec == null) {
-            continue;
-          }
-          OResultInternal res = new OResultInternal(rec);
+        OResultInternal res = new OResultInternal(rec);
 
-          return OExecutionStream.singleton((OResult) res);
-        } else if (projValue instanceof OResult) {
-          return OExecutionStream.singleton((OResult) projValue);
-        } else if (projValue instanceof Iterator) {
-          return OExecutionStream.iterator((Iterator) projValue);
-        } else if (projValue instanceof Iterable) {
-          return OExecutionStream.iterator(((Iterable) projValue).iterator());
-        }
-      } finally {
-        if (profilingEnabled) {
-          cost += (System.nanoTime() - begin);
-        }
+        return OExecutionStream.singleton((OResult) res);
+      } else if (projValue instanceof OResult) {
+        return OExecutionStream.singleton((OResult) projValue);
+      } else if (projValue instanceof Iterator) {
+        return OExecutionStream.iterator((Iterator) projValue);
+      } else if (projValue instanceof Iterable) {
+        return OExecutionStream.iterator(((Iterable) projValue).iterator());
+      } else {
+        return OExecutionStream.empty();
+      }
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
       }
     }
-    return null;
   }
 
   @Override

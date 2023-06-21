@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExpireResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
 /** Created by luigidellaquila on 12/07/16. */
@@ -29,14 +28,14 @@ public class FilterStep extends AbstractExecutionStep {
     }
 
     OExecutionStream resultSet = prev.get().syncPull(ctx);
-    resultSet = new OFilterResultSet(resultSet, (result) -> filterMap(ctx, result));
+    resultSet = resultSet.filter(this::filterMap);
     if (timeoutMillis > 0) {
       resultSet = new OExpireResultSet(resultSet, timeoutMillis, this::sendTimeout);
     }
     return resultSet;
   }
 
-  private OResult filterMap(OCommandContext ctx, OResult result) {
+  private OResult filterMap(OResult result, OCommandContext ctx) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (whereClause.matchesFilters(result, ctx)) {

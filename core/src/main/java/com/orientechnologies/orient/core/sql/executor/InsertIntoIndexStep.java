@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
@@ -21,8 +21,6 @@ import java.util.List;
 public class InsertIntoIndexStep extends AbstractExecutionStep {
   private final OIndexIdentifier targetIndex;
   private final OInsertBody body;
-
-  private OExecutionStream result;
 
   public InsertIntoIndexStep(
       OIndexIdentifier targetIndex,
@@ -37,10 +35,7 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    if (result == null) {
-      result = new OProduceResultSet(() -> produce(ctx)).limit(1);
-    }
-    return result;
+    return new OProduceExecutionStream(this::produce).limit(1);
   }
 
   private OResultInternal produce(OCommandContext ctx) {

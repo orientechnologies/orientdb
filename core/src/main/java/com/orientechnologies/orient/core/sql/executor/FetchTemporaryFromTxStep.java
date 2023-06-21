@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.resultset.OCostMeasureResultSet;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -54,18 +53,17 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
     if (data == null) {
       data = Collections.emptyIterator();
     }
-    OExecutionStream resultSet =
-        new OResultSetMapper(
-            OExecutionStream.iterator((Iterator) data),
-            (result, context) -> {
-              context.setVariable("$current", result);
-              return result;
-            });
+    OExecutionStream resultSet = OExecutionStream.iterator((Iterator) data).map(this::setContext);
     if (profilingEnabled) {
       this.cost = new OCostMeasureResultSet(resultSet, cost);
       resultSet = this.cost;
     }
     return resultSet;
+  }
+
+  private OResult setContext(OResult result, OCommandContext context) {
+    context.setVariable("$current", result);
+    return result;
   }
 
   private Iterator<ORecord> init(OCommandContext ctx) {

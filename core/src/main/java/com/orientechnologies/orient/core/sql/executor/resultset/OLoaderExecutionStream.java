@@ -2,16 +2,16 @@ package com.orientechnologies.orient.core.sql.executor.resultset;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.Iterator;
 
-public final class OResultSetLoader implements OExecutionStream {
+public final class OLoaderExecutionStream implements OExecutionStream {
   private OResult nextResult = null;
-  private final Iterator<ORecordId> iterator;
+  private final Iterator<OIdentifiable> iterator;
 
-  public OResultSetLoader(Iterator<ORecordId> iterator) {
+  public OLoaderExecutionStream(Iterator<OIdentifiable> iterator) {
     this.iterator = iterator;
   }
 
@@ -43,16 +43,19 @@ public final class OResultSetLoader implements OExecutionStream {
       return;
     }
     while (iterator.hasNext()) {
-      ORecordId nextRid = iterator.next();
-      if (nextRid == null) {
-        continue;
+      OIdentifiable nextRid = iterator.next();
+      if (nextRid != null) {
+        if (nextRid instanceof ORecord) {
+          nextResult = new OResultInternal(nextRid);
+          return;
+        } else {
+          OIdentifiable nextDoc = (OIdentifiable) ctx.getDatabase().load(nextRid.getIdentity());
+          if (nextDoc != null) {
+            nextResult = new OResultInternal(nextDoc);
+            return;
+          }
+        }
       }
-      OIdentifiable nextDoc = (OIdentifiable) ctx.getDatabase().load(nextRid);
-      if (nextDoc == null) {
-        continue;
-      }
-      nextResult = new OResultInternal(nextDoc);
-      return;
     }
     return;
   }
