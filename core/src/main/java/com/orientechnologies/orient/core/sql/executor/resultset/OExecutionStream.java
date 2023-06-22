@@ -47,8 +47,8 @@ public interface OExecutionStream {
     return new OResultIteratorExecutionStream(iterator);
   }
 
-  public default OCostMeasureResultSet profile(OExecutionStep step, long baseCost) {
-    return new OCostMeasureResultSet(this, baseCost);
+  public default OCostMeasureExecutionStream profile(OExecutionStep step, long baseCost) {
+    return new OCostMeasureExecutionStream(this, step, baseCost);
   }
 
   public static OExecutionStream loadIterator(Iterator<OIdentifiable> iterator) {

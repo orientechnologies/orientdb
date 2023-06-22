@@ -76,4 +76,5 @@ public class OInfoExecutionStep implements OExecutionStep {
   public void setJavaType(String javaType) {
     this.javaType = javaType;
   }
+
 }

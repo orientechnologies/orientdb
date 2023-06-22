@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OCostMeasureResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OCostMeasureExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.text.DecimalFormat;
 import java.util.Optional;
@@ -13,7 +13,7 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
   protected Optional<OExecutionStepInternal> prev = Optional.empty();
   protected Optional<OExecutionStepInternal> next = Optional.empty();
   protected boolean profilingEnabled = false;
-  private OCostMeasureResultSet costMeasure = null;
+  private OCostMeasureExecutionStream costMeasure = null;
 
   public AbstractExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
     this.ctx = ctx;
@@ -83,7 +83,7 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
   @Override
   public long getCost() {
     if (costMeasure != null) {
-      return costMeasure.getCost();
+      return this.ctx.getStats(this).getCost();
     } else {
       return OExecutionStepInternal.super.getCost();
     }
@@ -95,13 +95,11 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
 
   protected <T> T measure(OCommandContext context, Measure<T> measure) {
     if (profilingEnabled) {
-      long begin = System.nanoTime();
+      context.startProfiling(this);
       try {
         return measure.measure(context);
       } finally {
-        if (profilingEnabled) {
-          this.baseCost += (System.nanoTime() - begin);
-        }
+        context.endProfiling(this);
       }
     } else {
       return measure.measure(context);
