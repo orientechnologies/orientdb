@@ -12,8 +12,8 @@ public class ReturnMatchPathsStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    return getPrev().get().syncPull(ctx);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    return getPrev().get().start(ctx);
   }
 
   @Override

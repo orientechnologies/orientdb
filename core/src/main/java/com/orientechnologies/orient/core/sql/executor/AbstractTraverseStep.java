@@ -35,40 +35,39 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    OExecutionStream resultSet = getPrev().get().syncPull(ctx);
-    return attachProfile(
-        new OExecutionStream() {
-          private List<OResult> entryPoints = new ArrayList<>();
-          private List<OResult> results = new ArrayList<>();
-          private Set<ORID> traversed = new ORidSet();
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream resultSet = getPrev().get().start(ctx);
+    return new OExecutionStream() {
+      private List<OResult> entryPoints = new ArrayList<>();
+      private List<OResult> results = new ArrayList<>();
+      private Set<ORID> traversed = new ORidSet();
 
-          @Override
-          public boolean hasNext(OCommandContext ctx) {
-            if (results.isEmpty()) {
-              fetchNextBlock(ctx, this.entryPoints, this.results, this.traversed, resultSet);
-            }
-            if (results.isEmpty()) {
-              return false;
-            }
-            return true;
-          }
+      @Override
+      public boolean hasNext(OCommandContext ctx) {
+        if (results.isEmpty()) {
+          fetchNextBlock(ctx, this.entryPoints, this.results, this.traversed, resultSet);
+        }
+        if (results.isEmpty()) {
+          return false;
+        }
+        return true;
+      }
 
-          @Override
-          public OResult next(OCommandContext ctx) {
-            if (!hasNext(ctx)) {
-              throw new IllegalStateException();
-            }
-            OResult result = results.remove(0);
-            if (result.isElement()) {
-              this.traversed.add(result.getElement().get().getIdentity());
-            }
-            return result;
-          }
+      @Override
+      public OResult next(OCommandContext ctx) {
+        if (!hasNext(ctx)) {
+          throw new IllegalStateException();
+        }
+        OResult result = results.remove(0);
+        if (result.isElement()) {
+          this.traversed.add(result.getElement().get().getIdentity());
+        }
+        return result;
+      }
 
-          @Override
-          public void close(OCommandContext ctx) {}
-        });
+      @Override
+      public void close(OCommandContext ctx) {}
+    };
   }
 
   private void fetchNextBlock(

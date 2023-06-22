@@ -33,19 +33,19 @@ public class ForEachStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    prev.get().syncPull(ctx);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    prev.get().start(ctx);
     Iterator<Object> iterator = init(ctx);
     while (iterator.hasNext()) {
       ctx.setVariable(loopVariable.getStringValue(), iterator.next());
       OScriptExecutionPlan plan = initPlan(ctx);
       OExecutionStepInternal result = plan.executeFull();
       if (result != null) {
-        return result.syncPull(ctx);
+        return result.start(ctx);
       }
     }
 
-    return new EmptyStep(ctx, false).syncPull(ctx);
+    return new EmptyStep(ctx, false).start(ctx);
   }
 
   protected Iterator<Object> init(OCommandContext ctx) {

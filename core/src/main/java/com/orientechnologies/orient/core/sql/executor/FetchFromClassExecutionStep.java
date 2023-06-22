@@ -128,13 +128,11 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
 
     Iterator<OExecutionStream> substeps =
-        getSubSteps().stream()
-            .map((step) -> ((AbstractExecutionStep) step).syncPull(ctx))
-            .iterator();
+        getSubSteps().stream().map((step) -> ((AbstractExecutionStep) step).start(ctx)).iterator();
     return new OSubResultsExecutionStream(substeps)
         .map(
             (result, context) -> {

@@ -30,7 +30,7 @@ import java.util.List;
  */
 public interface OExecutionStepInternal extends OExecutionStep {
 
-  OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException;
+  OExecutionStream start(OCommandContext ctx) throws OTimeoutException;
 
   void sendTimeout();
 

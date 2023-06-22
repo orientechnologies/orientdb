@@ -21,17 +21,17 @@ public class FilterStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
 
-    OExecutionStream resultSet = prev.get().syncPull(ctx);
+    OExecutionStream resultSet = prev.get().start(ctx);
     resultSet = resultSet.filter(this::filterMap);
     if (timeoutMillis > 0) {
       resultSet = new OExpireResultSet(resultSet, timeoutMillis, this::sendTimeout);
     }
-    return attachProfile(resultSet);
+    return resultSet;
   }
 
   private OResult filterMap(OResult result, OCommandContext ctx) {

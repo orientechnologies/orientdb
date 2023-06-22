@@ -34,15 +34,14 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
     Iterator<ORecord> data = null;
-    data = measure(ctx, (context) -> init(context));
+    data = init(ctx);
     if (data == null) {
       data = Collections.emptyIterator();
     }
     OExecutionStream resultSet = OExecutionStream.iterator((Iterator) data).map(this::setContext);
-    resultSet = attachProfile(resultSet);
     return resultSet;
   }
 

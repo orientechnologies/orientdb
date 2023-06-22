@@ -17,8 +17,8 @@ public class UpdateRemoveStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    OExecutionStream upstream = getPrev().get().syncPull(ctx);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().start(ctx);
     return upstream.map(this::mapResult);
   }
 

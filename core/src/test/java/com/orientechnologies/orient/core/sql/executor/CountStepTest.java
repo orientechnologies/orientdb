@@ -26,7 +26,7 @@ public class CountStepTest {
           boolean done = false;
 
           @Override
-          public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+          public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
             List<OResult> result = new ArrayList<>();
             if (!done) {
               for (int i = 0; i < 100; i++) {
@@ -41,7 +41,7 @@ public class CountStepTest {
         };
 
     step.setPrevious(previous);
-    OExecutionStream result = step.syncPull(context);
+    OExecutionStream result = step.start(context);
     Assert.assertEquals(100, (long) result.next(context).getProperty(COUNT_PROPERTY_NAME));
     Assert.assertFalse(result.hasNext(context));
   }

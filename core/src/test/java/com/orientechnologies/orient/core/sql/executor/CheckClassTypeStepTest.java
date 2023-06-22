@@ -19,7 +19,7 @@ public class CheckClassTypeStepTest extends TestUtilsFixture {
     CheckClassTypeStep step =
         new CheckClassTypeStep(childClass.getName(), parentClass.getName(), context, false);
 
-    OExecutionStream result = step.syncPull(context);
+    OExecutionStream result = step.start(context);
     Assert.assertEquals(0, result.stream(context).count());
   }
 
@@ -30,7 +30,7 @@ public class CheckClassTypeStepTest extends TestUtilsFixture {
     String className = createClassInstance().getName();
     CheckClassTypeStep step = new CheckClassTypeStep(className, className, context, false);
 
-    OExecutionStream result = step.syncPull(context);
+    OExecutionStream result = step.start(context);
     Assert.assertEquals(0, result.stream(context).count());
   }
 
@@ -42,6 +42,6 @@ public class CheckClassTypeStepTest extends TestUtilsFixture {
         new CheckClassTypeStep(
             createClassInstance().getName(), createClassInstance().getName(), context, false);
 
-    step.syncPull(context);
+    step.start(context);
   }
 }

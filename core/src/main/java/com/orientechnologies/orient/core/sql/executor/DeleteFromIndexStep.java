@@ -66,9 +66,9 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
-    Set<Stream<ORawPair<Object, ORID>>> streams = measure(ctx, (c) -> init(condition));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
+    Set<Stream<ORawPair<Object, ORID>>> streams = init(condition);
     Stream<OExecutionStream> resultStreams =
         streams.stream()
             .map(
@@ -81,7 +81,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
                           .map((nextEntry) -> readResult(ctx, nextEntry))
                           .iterator());
                 });
-    return attachProfile(new OSubResultsExecutionStream(resultStreams.iterator()));
+    return new OSubResultsExecutionStream(resultStreams.iterator());
   }
 
   private OResult readResult(OCommandContext ctx, ORawPair<Object, ORID> entry) {

@@ -32,8 +32,8 @@ public class MatchFirstStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
     OExecutionStream data;
     String alias = getAlias();
     List<OResult> matchedNodes =

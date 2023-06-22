@@ -45,9 +45,8 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
-    long begin = profilingEnabled ? System.nanoTime() : 0;
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
     long minClusterPosition = calculateMinClusterPosition();
     long maxClusterPosition = calculateMaxClusterPosition();
     ORecordIteratorCluster iterator =
@@ -66,9 +65,6 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
     OExecutionStream set = OExecutionStream.loadIterator(iter);
 
     set = set.interruptable();
-    if (profilingEnabled) {
-      set = attachProfile(set, System.nanoTime() - begin);
-    }
     return set;
   }
 

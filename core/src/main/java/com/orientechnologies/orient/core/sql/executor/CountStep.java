@@ -21,20 +21,16 @@ public class CountStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    OExecutionStream prevResult = getPrev().get().syncPull(ctx);
-    return measure(
-        ctx,
-        (context) -> {
-          long count = 0;
-          while (prevResult.hasNext(ctx)) {
-            count++;
-            prevResult.next(ctx);
-          }
-          OResultInternal resultRecord = new OResultInternal();
-          resultRecord.setProperty("count", count);
-          return OExecutionStream.singleton(resultRecord);
-        });
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream prevResult = getPrev().get().start(ctx);
+    long count = 0;
+    while (prevResult.hasNext(ctx)) {
+      count++;
+      prevResult.next(ctx);
+    }
+    OResultInternal resultRecord = new OResultInternal();
+    resultRecord.setProperty("count", count);
+    return OExecutionStream.singleton(resultRecord);
   }
 
   @Override

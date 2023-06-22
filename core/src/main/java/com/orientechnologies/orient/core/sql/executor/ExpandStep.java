@@ -19,12 +19,12 @@ public class ExpandStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
-    OExecutionStream resultSet = getPrev().get().syncPull(ctx);
-    return attachProfile(resultSet.flatMap(this::nextResults));
+    OExecutionStream resultSet = getPrev().get().start(ctx);
+    return resultSet.flatMap(this::nextResults);
   }
 
   private OExecutionStream nextResults(OResult nextAggregateItem, OCommandContext ctx) {

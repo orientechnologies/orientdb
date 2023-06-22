@@ -18,9 +18,9 @@ public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
-    return attachProfile(new OProduceExecutionStream(this::produce).limit(1));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
+    return new OProduceExecutionStream(this::produce).limit(1);
   }
 
   private OResult produce(OCommandContext ctx) {

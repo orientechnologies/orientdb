@@ -46,7 +46,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     Set<ORID> rids = fetchRidsToFind(ctx);
     List<ORecordIteratorCluster<ORecord>> clustersIterators = initClusterIterators(ctx);
     Stream<OResult> stream =
@@ -124,7 +124,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
     Set<ORID> ridsToFind = new HashSet<>();
 
     OExecutionStepInternal prevStep = getPrev().get();
-    OExecutionStream nextSlot = prevStep.syncPull(ctx);
+    OExecutionStream nextSlot = prevStep.start(ctx);
     while (nextSlot.hasNext(ctx)) {
       OResult nextRes = nextSlot.next(ctx);
       if (nextRes.isElement()) {

@@ -29,8 +29,8 @@ public class WhileStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    prev.ifPresent(x -> x.syncPull(ctx));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    prev.ifPresent(x -> x.start(ctx));
 
     while (condition.evaluate(new OResultInternal(), ctx)) {
       if (OExecutionThreadLocal.isInterruptCurrentOperation())
@@ -39,10 +39,10 @@ public class WhileStep extends AbstractExecutionStep {
       OScriptExecutionPlan plan = initPlan(ctx);
       OExecutionStepInternal result = plan.executeFull();
       if (result != null) {
-        return result.syncPull(ctx);
+        return result.start(ctx);
       }
     }
-    return new EmptyStep(ctx, false).syncPull(ctx);
+    return new EmptyStep(ctx, false).start(ctx);
   }
 
   public OScriptExecutionPlan initPlan(OCommandContext ctx) {

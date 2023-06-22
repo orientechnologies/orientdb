@@ -22,8 +22,8 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
   public void reset() {}
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
     Object src = ctx.getVariable(variableName);
     OExecutionStream source;
     if (src instanceof OExecutionStream) {

@@ -17,11 +17,11 @@ public class GuaranteeEmptyCountStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OExecutionStream upstream = prev.get().syncPull(ctx);
+    OExecutionStream upstream = prev.get().start(ctx);
     if (upstream.hasNext(ctx)) {
       return upstream.limit(1);
     } else {

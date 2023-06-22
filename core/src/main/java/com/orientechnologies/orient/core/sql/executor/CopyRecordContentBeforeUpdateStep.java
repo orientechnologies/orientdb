@@ -24,9 +24,9 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    OExecutionStream lastFetched = getPrev().get().syncPull(ctx);
-    return attachProfile(lastFetched.map(this::mapResult));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream lastFetched = getPrev().get().start(ctx);
+    return lastFetched.map(this::mapResult);
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {

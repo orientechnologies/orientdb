@@ -38,43 +38,39 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
-    return measure(
-        ctx,
-        (context) -> {
-          if (this.targetClass.equals(this.parentClass)) {
-            return OExecutionStream.empty();
-          }
-          ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) context.getDatabase();
+  public OExecutionStream internalStart(OCommandContext context) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(context));
+    if (this.targetClass.equals(this.parentClass)) {
+      return OExecutionStream.empty();
+    }
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) context.getDatabase();
 
-          OSchema schema = db.getMetadata().getImmutableSchemaSnapshot();
-          OClass parentClazz = schema.getClass(this.parentClass);
-          if (parentClazz == null) {
-            throw new OCommandExecutionException("Class not found: " + this.parentClass);
-          }
-          OClass targetClazz = schema.getClass(this.targetClass);
-          if (targetClazz == null) {
-            throw new OCommandExecutionException("Class not found: " + this.targetClass);
-          }
+    OSchema schema = db.getMetadata().getImmutableSchemaSnapshot();
+    OClass parentClazz = schema.getClass(this.parentClass);
+    if (parentClazz == null) {
+      throw new OCommandExecutionException("Class not found: " + this.parentClass);
+    }
+    OClass targetClazz = schema.getClass(this.targetClass);
+    if (targetClazz == null) {
+      throw new OCommandExecutionException("Class not found: " + this.targetClass);
+    }
 
-          boolean found = false;
-          if (parentClazz.equals(targetClazz)) {
-            found = true;
-          } else {
-            for (OClass sublcass : parentClazz.getAllSubclasses()) {
-              if (sublcass.equals(targetClazz)) {
-                found = true;
-                break;
-              }
-            }
-          }
-          if (!found) {
-            throw new OCommandExecutionException(
-                "Class  " + this.targetClass + " is not a subclass of " + this.parentClass);
-          }
-          return OExecutionStream.empty();
-        });
+    boolean found = false;
+    if (parentClazz.equals(targetClazz)) {
+      found = true;
+    } else {
+      for (OClass sublcass : parentClazz.getAllSubclasses()) {
+        if (sublcass.equals(targetClazz)) {
+          found = true;
+          break;
+        }
+      }
+    }
+    if (!found) {
+      throw new OCommandExecutionException(
+          "Class  " + this.targetClass + " is not a subclass of " + this.parentClass);
+    }
+    return OExecutionStream.empty();
   }
 
   @Override

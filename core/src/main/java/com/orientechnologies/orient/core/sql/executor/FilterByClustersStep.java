@@ -27,12 +27,12 @@ public class FilterByClustersStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     Set<Integer> ids = init(ctx.getDatabase());
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OExecutionStream resultSet = prev.get().syncPull(ctx);
+    OExecutionStream resultSet = prev.get().start(ctx);
     return resultSet.filter((value, context) -> this.filterMap(value, ids));
   }
 

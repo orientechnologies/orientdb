@@ -21,9 +21,9 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    OExecutionStream upstream = prev.get().syncPull(ctx);
-    return attachProfile(upstream.map(this::mapResult));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = prev.get().start(ctx);
+    return upstream.map(this::mapResult);
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {

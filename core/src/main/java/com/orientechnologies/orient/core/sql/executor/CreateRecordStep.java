@@ -17,9 +17,9 @@ public class CreateRecordStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
-    return attachProfile(new OProduceExecutionStream(this::produce).limit(total));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
+    return new OProduceExecutionStream(this::produce).limit(total);
   }
 
   private OResult produce(OCommandContext ctx) {

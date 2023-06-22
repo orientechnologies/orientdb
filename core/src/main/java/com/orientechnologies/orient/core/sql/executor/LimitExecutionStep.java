@@ -15,12 +15,12 @@ public class LimitExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     int limitVal = limit.getValue(ctx);
     if (limitVal == -1) {
-      return getPrev().get().syncPull(ctx);
+      return getPrev().get().start(ctx);
     }
-    OExecutionStream result = prev.get().syncPull(ctx);
+    OExecutionStream result = prev.get().start(ctx);
     return result.limit(limitVal);
   }
 

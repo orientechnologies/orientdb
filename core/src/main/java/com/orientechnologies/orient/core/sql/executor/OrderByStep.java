@@ -37,10 +37,10 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     List<OResult> results;
     if (prev.isPresent()) {
-      results = measure(ctx, (context) -> init(prev.get(), context));
+      results = init(prev.get(), ctx);
     } else {
       results = Collections.emptyList();
     }
@@ -53,7 +53,7 @@ public class OrderByStep extends AbstractExecutionStep {
     final long maxElementsAllowed =
         OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong();
     boolean sorted = true;
-    OExecutionStream lastBatch = p.syncPull(ctx);
+    OExecutionStream lastBatch = p.start(ctx);
     while (lastBatch.hasNext(ctx)) {
       if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
         sendTimeout();

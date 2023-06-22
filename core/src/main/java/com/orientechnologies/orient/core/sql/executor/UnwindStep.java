@@ -31,11 +31,11 @@ public class UnwindStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
-    OExecutionStream resultSet = getPrev().get().syncPull(ctx);
+    OExecutionStream resultSet = getPrev().get().start(ctx);
     return resultSet.flatMap(this::fetchNextResults);
   }
 

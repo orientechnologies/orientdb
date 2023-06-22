@@ -100,5 +100,4 @@ public interface OCommandContext {
   void endProfiling(OExecutionStep step);
 
   OStepStats getStats(OExecutionStep step);
-
 }

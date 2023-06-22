@@ -20,7 +20,7 @@ public class ScriptLineStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (plan instanceof OInsertExecutionPlan) {
       ((OInsertExecutionPlan) plan).executeInternal();
     } else if (plan instanceof ODeleteExecutionPlan) {

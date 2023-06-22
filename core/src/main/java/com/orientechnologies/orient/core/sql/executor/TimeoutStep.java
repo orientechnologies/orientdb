@@ -16,9 +16,9 @@ public class TimeoutStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     return new OExpireResultSet(
-        getPrev().get().syncPull(ctx), timeout.getVal().longValue(), this::fail);
+        getPrev().get().start(ctx), timeout.getVal().longValue(), this::fail);
   }
 
   private void fail() {

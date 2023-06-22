@@ -15,7 +15,7 @@ public class ReturnStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     return statement.executeSimple(ctx);
   }
 }

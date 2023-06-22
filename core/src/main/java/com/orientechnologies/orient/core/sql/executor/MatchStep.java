@@ -20,8 +20,8 @@ public class MatchStep extends AbstractExecutionStep {
   public void reset() {}
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    OExecutionStream resultSet = getPrev().get().syncPull(ctx);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream resultSet = getPrev().get().start(ctx);
     return resultSet.flatMap(this::createNextResultSet);
   }
 

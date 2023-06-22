@@ -17,8 +17,8 @@ public class BatchStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    OExecutionStream prevResult = getPrev().get().syncPull(ctx);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream prevResult = getPrev().get().start(ctx);
     return prevResult.map(this::mapResult);
   }
 

@@ -37,7 +37,7 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
 
   @Override
   public OExecutionStream start() {
-    return step.syncPull(ctx);
+    return step.start(ctx);
   }
 
   @Override

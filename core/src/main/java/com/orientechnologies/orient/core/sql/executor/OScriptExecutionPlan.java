@@ -50,7 +50,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
       executeUntilReturn();
       executed = true;
       List<OResult> collected = new ArrayList<>();
-      OExecutionStream results = lastStep.syncPull(ctx);
+      OExecutionStream results = lastStep.start(ctx);
       while (results.hasNext(ctx)) {
         collected.add(results.next(ctx));
       }
@@ -150,7 +150,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
           return lastStep;
         }
       }
-      OExecutionStream lastResult = step.syncPull(ctx);
+      OExecutionStream lastResult = step.start(ctx);
 
       while (lastResult.hasNext(ctx)) {
         lastResult.next(ctx);
@@ -175,7 +175,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
           return returnStep;
         }
       }
-      OExecutionStream lastResult = step.syncPull(ctx);
+      OExecutionStream lastResult = step.start(ctx);
 
       while (lastResult.hasNext(ctx)) {
         lastResult.next(ctx);

@@ -27,13 +27,12 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    OExecutionStream resultSet = prev.get().syncPull(ctx);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream resultSet = prev.get().start(ctx);
     Set<OResult> pastItems = new HashSet<>();
     ORidSet pastRids = new ORidSet();
 
-    return attachProfile(
-        resultSet.filter((result, context) -> filterMap(context, result, pastRids, pastItems)));
+    return resultSet.filter((result, context) -> filterMap(context, result, pastRids, pastItems));
   }
 
   private OResult filterMap(

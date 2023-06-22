@@ -21,7 +21,7 @@ public class IfStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     OScriptExecutionPlan plan = producePlan(ctx);
     if (plan != null) {
       return plan.start();

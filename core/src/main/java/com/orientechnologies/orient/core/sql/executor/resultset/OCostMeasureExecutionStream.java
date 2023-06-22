@@ -10,9 +10,9 @@ public class OCostMeasureExecutionStream implements OExecutionStream {
   private OExecutionStep step;
   private long cost;
 
-  public OCostMeasureExecutionStream(OExecutionStream set, OExecutionStep step, long base) {
+  public OCostMeasureExecutionStream(OExecutionStream set, OExecutionStep step) {
     this.set = set;
-    this.cost = base;
+    this.cost = 0;
     this.step = step;
   }
 

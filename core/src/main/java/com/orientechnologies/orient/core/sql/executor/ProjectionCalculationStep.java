@@ -16,13 +16,13 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("Cannot calculate projections without a previous source");
     }
 
-    OExecutionStream parentRs = prev.get().syncPull(ctx);
-    return attachProfile(parentRs.map(this::mapResult));
+    OExecutionStream parentRs = prev.get().start(ctx);
+    return parentRs.map(this::mapResult);
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {

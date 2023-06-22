@@ -38,7 +38,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   @Override
   public OExecutionStream start() {
-    return lastStep.syncPull(ctx);
+    return lastStep.start(ctx);
   }
 
   @Override

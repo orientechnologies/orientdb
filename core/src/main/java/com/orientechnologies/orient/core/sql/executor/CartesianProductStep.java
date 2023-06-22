@@ -17,8 +17,8 @@ public class CartesianProductStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
     Stream<OResult[]> stream = null;
     OResult[] productTuple = new OResult[this.subPlans.size()];
 
@@ -47,7 +47,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
       }
     }
     Stream<OResult> finalStream = stream.map(this::produceResult);
-    return attachProfile(OExecutionStream.resultIterator(finalStream.iterator()));
+    return OExecutionStream.resultIterator(finalStream.iterator());
   }
 
   private OResult produceResult(OResult[] path) {

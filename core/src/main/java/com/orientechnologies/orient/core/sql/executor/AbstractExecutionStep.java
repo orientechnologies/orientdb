@@ -1,7 +1,8 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OCostMeasureExecutionStream;
+import com.orientechnologies.orient.core.command.OStepStats;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.text.DecimalFormat;
 import java.util.Optional;
@@ -13,7 +14,6 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
   protected Optional<OExecutionStepInternal> prev = Optional.empty();
   protected Optional<OExecutionStepInternal> next = Optional.empty();
   protected boolean profilingEnabled = false;
-  private OCostMeasureExecutionStream costMeasure = null;
 
   public AbstractExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
     this.ctx = ctx;
@@ -67,42 +67,28 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
     this.profilingEnabled = profilingEnabled;
   }
 
-  protected OExecutionStream attachProfile(OExecutionStream stream) {
-    return attachProfile(stream, baseCost);
-  }
-
-  protected OExecutionStream attachProfile(OExecutionStream stream, long baseCost) {
+  public OExecutionStream start(OCommandContext ctx) throws OTimeoutException {
     if (profilingEnabled) {
-      this.costMeasure = stream.profile(this, baseCost);
-      return this.costMeasure;
+      ctx.startProfiling(this);
+      try {
+        return internalStart(ctx).profile(this);
+      } finally {
+        ctx.endProfiling(this);
+      }
     } else {
-      return stream;
+      return internalStart(ctx);
     }
-  }
+  };
+
+  protected abstract OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException;
 
   @Override
   public long getCost() {
-    if (costMeasure != null) {
-      return this.ctx.getStats(this).getCost();
+    OStepStats stats = this.ctx.getStats(this);
+    if (stats != null) {
+      return stats.getCost();
     } else {
       return OExecutionStepInternal.super.getCost();
-    }
-  }
-
-  protected interface Measure<T> {
-    public T measure(OCommandContext context);
-  }
-
-  protected <T> T measure(OCommandContext context, Measure<T> measure) {
-    if (profilingEnabled) {
-      context.startProfiling(this);
-      try {
-        return measure.measure(context);
-      } finally {
-        context.endProfiling(this);
-      }
-    } else {
-      return measure.measure(context);
     }
   }
 

@@ -22,7 +22,7 @@ public class DistinctExecutionStepTest {
           boolean done = false;
 
           @Override
-          public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+          public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
             List<OResult> result = new ArrayList<>();
             if (!done) {
               for (int i = 0; i < 10; i++) {
@@ -37,7 +37,7 @@ public class DistinctExecutionStepTest {
         };
 
     step.setPrevious(prev);
-    OExecutionStream res = step.syncPull(ctx);
+    OExecutionStream res = step.start(ctx);
     Assert.assertTrue(res.hasNext(ctx));
     res.next(ctx);
     Assert.assertTrue(res.hasNext(ctx));

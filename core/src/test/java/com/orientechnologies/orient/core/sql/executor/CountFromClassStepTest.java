@@ -26,7 +26,7 @@ public class CountFromClassStepTest extends TestUtilsFixture {
     context.setDatabase(db);
     CountFromClassStep step = new CountFromClassStep(classIdentifier, ALIAS, context, false);
 
-    OExecutionStream result = step.syncPull(context);
+    OExecutionStream result = step.start(context);
     Assert.assertEquals(20, (long) result.next(context).getProperty(ALIAS));
     Assert.assertFalse(result.hasNext(context));
   }

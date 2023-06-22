@@ -16,9 +16,9 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
-    return attachProfile(new OProduceExecutionStream(this::create).limit(size));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
+    return new OProduceExecutionStream(this::create).limit(size);
   }
 
   private OResult create(OCommandContext ctx) {

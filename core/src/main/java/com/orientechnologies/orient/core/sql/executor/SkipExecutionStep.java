@@ -15,9 +15,9 @@ public class SkipExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     int skipValue = skip.getValue(ctx);
-    OExecutionStream rs = prev.get().syncPull(ctx);
+    OExecutionStream rs = prev.get().start(ctx);
     int skipped = 0;
     while (rs.hasNext(ctx) && skipped < skipValue) {
       rs.next(ctx);

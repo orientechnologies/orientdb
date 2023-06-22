@@ -25,7 +25,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
           boolean done = false;
 
           @Override
-          public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+          public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
             List<OResult> result = new ArrayList<>();
             if (!done) {
               for (int i = 0; i < 10; i++) {
@@ -38,7 +38,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
         };
 
     step.setPrevious(previous);
-    OExecutionStream result = step.syncPull(context);
+    OExecutionStream result = step.start(context);
     Assert.assertEquals(10, result.stream(context).count());
     Assert.assertFalse(result.hasNext(context));
   }
@@ -54,7 +54,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
           boolean done = false;
 
           @Override
-          public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+          public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
             List<OResult> result = new ArrayList<>();
             if (!done) {
               for (int i = 0; i < 10; i++) {
@@ -68,7 +68,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
         };
 
     step.setPrevious(previous);
-    OExecutionStream result = step.syncPull(context);
+    OExecutionStream result = step.start(context);
     Assert.assertEquals(10, result.stream(context).count());
     Assert.assertFalse(result.hasNext(context));
   }
@@ -84,7 +84,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
           boolean done = false;
 
           @Override
-          public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+          public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
             List<OResult> result = new ArrayList<>();
             if (!done) {
               for (int i = 0; i < 10; i++) {
@@ -99,7 +99,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
         };
 
     step.setPrevious(previous);
-    OExecutionStream result = step.syncPull(context);
+    OExecutionStream result = step.start(context);
     while (result.hasNext(context)) {
       result.next(context);
     }

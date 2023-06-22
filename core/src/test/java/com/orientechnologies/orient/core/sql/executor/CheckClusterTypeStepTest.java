@@ -21,7 +21,7 @@ public class CheckClusterTypeStepTest extends TestUtilsFixture {
     CheckClusterTypeStep step =
         new CheckClusterTypeStep(CLASS_CLUSTER_NAME, clazz.getName(), context, false);
 
-    OExecutionStream result = step.syncPull(context);
+    OExecutionStream result = step.start(context);
     Assert.assertEquals(0, result.stream(context).count());
   }
 
@@ -33,6 +33,6 @@ public class CheckClusterTypeStepTest extends TestUtilsFixture {
     CheckClusterTypeStep step =
         new CheckClusterTypeStep(CLUSTER_NAME, createClassInstance().getName(), context, false);
 
-    step.syncPull(context);
+    step.start(context);
   }
 }

@@ -107,10 +107,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
-    Set<Stream<ORawPair<Object, ORID>>> streams =
-        measure(ctx, (context) -> init(context.getDatabase()));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
+    Set<Stream<ORawPair<Object, ORID>>> streams = init(ctx.getDatabase());
     Stream<OExecutionStream> resultStreams =
         streams.stream()
             .map(
@@ -120,7 +119,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
                 });
     // TODO: this should go at the end of the iteration;
     updateIndexStats();
-    return attachProfile(new OSubResultsExecutionStream(resultStreams.iterator()));
+    return new OSubResultsExecutionStream(resultStreams.iterator());
   }
 
   private OResult readResult(OCommandContext ctx, ORawPair<Object, ORID> nextEntry) {

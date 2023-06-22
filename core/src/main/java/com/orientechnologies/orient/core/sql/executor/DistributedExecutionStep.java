@@ -22,9 +22,9 @@ public class DistributedExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     OExecutionStream remote = sendSerializedExecutionPlan(nodeName, subExecuitonPlan, ctx);
-    getPrev().ifPresent(x -> x.syncPull(ctx));
+    getPrev().ifPresent(x -> x.start(ctx));
     return remote;
   }
 

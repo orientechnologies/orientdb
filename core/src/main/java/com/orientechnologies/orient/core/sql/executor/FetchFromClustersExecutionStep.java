@@ -63,12 +63,10 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
     return new OSubResultsExecutionStream(
-        this.subSteps.stream()
-            .map((step) -> ((AbstractExecutionStep) step).syncPull(ctx))
-            .iterator());
+        this.subSteps.stream().map((step) -> ((AbstractExecutionStep) step).start(ctx)).iterator());
   }
 
   @Override

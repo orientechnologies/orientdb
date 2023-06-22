@@ -20,8 +20,8 @@ public class ParallelExecStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx));
     return new OSubResultsExecutionStream(
         subExecutionPlans.stream().map((step) -> step.start()).iterator());
   }

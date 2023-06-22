@@ -50,12 +50,12 @@ public class LetQueryStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!getPrev().isPresent()) {
       throw new OCommandExecutionException(
           "Cannot execute a local LET on a query without a target");
     }
-    return getPrev().get().syncPull(ctx).map(this::mapResult);
+    return getPrev().get().start(ctx).map(this::mapResult);
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {

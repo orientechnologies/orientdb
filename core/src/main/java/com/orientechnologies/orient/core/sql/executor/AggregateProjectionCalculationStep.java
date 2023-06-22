@@ -34,8 +34,8 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    List<OResult> finalResults = measure(ctx, (context) -> executeAggregation(context));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    List<OResult> finalResults = executeAggregation(ctx);
     return OExecutionStream.resultIterator(finalResults.iterator());
   }
 
@@ -46,7 +46,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
           "Cannot execute an aggregation or a GROUP BY without a previous result");
     }
     OExecutionStepInternal prevStep = prev.get();
-    OExecutionStream lastRs = prevStep.syncPull(ctx);
+    OExecutionStream lastRs = prevStep.start(ctx);
     Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
     while (lastRs.hasNext(ctx)) {
       if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {

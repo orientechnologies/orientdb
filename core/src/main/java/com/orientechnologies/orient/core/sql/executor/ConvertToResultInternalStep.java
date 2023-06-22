@@ -21,12 +21,12 @@ public class ConvertToResultInternalStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OExecutionStream resultSet = prev.get().syncPull(ctx);
-    return attachProfile(resultSet.filter(this::filterMap));
+    OExecutionStream resultSet = prev.get().start(ctx);
+    return resultSet.filter(this::filterMap);
   }
 
   private OResult filterMap(OResult result, OCommandContext ctx) {
