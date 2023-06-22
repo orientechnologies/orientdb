@@ -39,8 +39,6 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
   private final OBooleanExpression condition;
 
-  private long cost = 0;
-
   public DeleteFromIndexStep(
       OIndex index,
       OBooleanExpression condition,
@@ -70,7 +68,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    Set<Stream<ORawPair<Object, ORID>>> streams = init();
+    Set<Stream<ORawPair<Object, ORID>>> streams = measure(ctx, (c) -> init(condition));
     Stream<OExecutionStream> resultStreams =
         streams.stream()
             .map(
@@ -83,58 +81,32 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
                           .map((nextEntry) -> readResult(ctx, nextEntry))
                           .iterator());
                 });
-    return new OSubResultsExecutionStream(resultStreams.iterator());
+    return attachProfile(new OSubResultsExecutionStream(resultStreams.iterator()));
   }
 
   private OResult readResult(OCommandContext ctx, ORawPair<Object, ORID> entry) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      OResultInternal result = new OResultInternal();
-      ORID value = entry.second;
-      index.remove(entry.first, value);
-      return result;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
+    OResultInternal result = new OResultInternal();
+    ORID value = entry.second;
+    index.remove(entry.first, value);
+    return result;
   }
 
   private boolean filter(ORawPair<Object, ORID> entry, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-
-      if (ridCondition == null) {
-        OResultInternal res = new OResultInternal();
-        res.setProperty("rid", entry.second);
-        if (ridCondition.evaluate(res, ctx)) {
-          return true;
-        }
-        return false;
-      } else {
+    if (ridCondition == null) {
+      OResultInternal res = new OResultInternal();
+      res.setProperty("rid", entry.second);
+      if (ridCondition.evaluate(res, ctx)) {
         return true;
       }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+      return false;
+    } else {
+      return true;
     }
   }
 
   @Override
   public void close() {
     super.close();
-  }
-
-  private Set<Stream<ORawPair<Object, ORID>>> init() {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      return init(condition);
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
   }
 
   private Set<Stream<ORawPair<Object, ORID>>> init(OBooleanExpression condition) {
@@ -433,10 +405,5 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
                         + additional))
             .orElse(""));
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

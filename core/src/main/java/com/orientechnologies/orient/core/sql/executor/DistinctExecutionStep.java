@@ -15,8 +15,6 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
 
   private long maxElementsAllowed;
 
-  private long cost = 0;
-
   public DistinctExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     ODatabaseSession db = ctx == null ? null : ctx.getDatabase();
@@ -34,23 +32,17 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
     Set<OResult> pastItems = new HashSet<>();
     ORidSet pastRids = new ORidSet();
 
-    return resultSet.filter((result, context) -> filterMap(context, result, pastRids, pastItems));
+    return attachProfile(
+        resultSet.filter((result, context) -> filterMap(context, result, pastRids, pastItems)));
   }
 
   private OResult filterMap(
       OCommandContext ctx, OResult result, Set<ORID> pastRids, Set<OResult> pastItems) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (alreadyVisited(result, pastRids, pastItems)) {
-        return null;
-      } else {
-        markAsVisited(result, pastRids, pastItems);
-        return result;
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+    if (alreadyVisited(result, pastRids, pastItems)) {
+      return null;
+    } else {
+      markAsVisited(result, pastRids, pastItems);
+      return result;
     }
   }
 
@@ -103,10 +95,5 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

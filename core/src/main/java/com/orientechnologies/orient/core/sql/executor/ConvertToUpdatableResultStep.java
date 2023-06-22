@@ -16,8 +16,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
  */
 public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-
   public ConvertToUpdatableResultStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
@@ -28,26 +26,21 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OExecutionStream resultSet = prev.get().syncPull(ctx);
-    return resultSet.filter(this::filterMap);
+    return attachProfile(resultSet.filter(this::filterMap));
   }
 
   private OResult filterMap(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (result instanceof OUpdatableResult) {
-        return result;
-      }
-      if (result.isElement()) {
-        ORecord element = result.getElement().get().getRecord();
-        if (element != null && element instanceof ODocument) {
-          return new OUpdatableResult((ODocument) element);
-        }
-        return result;
-      }
-      return null;
-    } finally {
-      cost = (System.nanoTime() - begin);
+    if (result instanceof OUpdatableResult) {
+      return result;
     }
+    if (result.isElement()) {
+      ORecord element = result.getElement().get().getRecord();
+      if (element != null && element instanceof ODocument) {
+        return new OUpdatableResult((ODocument) element);
+      }
+      return result;
+    }
+    return null;
   }
 
   @Override
@@ -57,10 +50,5 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

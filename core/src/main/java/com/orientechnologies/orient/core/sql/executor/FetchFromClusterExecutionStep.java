@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.sql.executor.resultset.OCostMeasureResultSet;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
@@ -29,7 +28,6 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
   private int clusterId;
   private Object order;
-  private OCostMeasureResultSet costMeasure;
 
   public FetchFromClusterExecutionStep(
       int clusterId, OCommandContext ctx, boolean profilingEnabled) {
@@ -69,8 +67,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
     set = set.interruptable();
     if (profilingEnabled) {
-      costMeasure = new OCostMeasureResultSet(set, System.nanoTime() - begin);
-      set = costMeasure;
+      set = attachProfile(set, System.nanoTime() - begin);
     }
     return set;
   }
@@ -170,11 +167,6 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
   public void setOrder(Object order) {
     this.order = order;
-  }
-
-  @Override
-  public long getCost() {
-    return costMeasure != null ? costMeasure.getCost() : 0;
   }
 
   @Override

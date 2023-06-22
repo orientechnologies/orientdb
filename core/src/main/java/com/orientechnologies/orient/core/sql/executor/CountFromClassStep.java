@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 public class CountFromClassStep extends AbstractExecutionStep {
   private final OIdentifier target;
   private final String alias;
-  private long cost = 0;
 
   /**
    * @param targetClass An identifier containing the name of the class to count
@@ -37,34 +36,24 @@ public class CountFromClassStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OProduceExecutionStream(this::produce).limit(1);
+    return attachProfile(new OProduceExecutionStream(this::produce).limit(1));
   }
 
   private OResult produce(OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-
-      OImmutableSchema schema =
-          ((ODatabaseDocumentInternal) ctx.getDatabase())
-              .getMetadata()
-              .getImmutableSchemaSnapshot();
-      OClass clazz = schema.getClass(target.getStringValue());
-      if (clazz == null) {
-        clazz = schema.getView(target.getStringValue());
-      }
-      if (clazz == null) {
-        throw new OCommandExecutionException(
-            "Class " + target.getStringValue() + " does not exist in the database schema");
-      }
-      long size = clazz.count();
-      OResultInternal result = new OResultInternal();
-      result.setProperty(alias, size);
-      return result;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+    OImmutableSchema schema =
+        ((ODatabaseDocumentInternal) ctx.getDatabase()).getMetadata().getImmutableSchemaSnapshot();
+    OClass clazz = schema.getClass(target.getStringValue());
+    if (clazz == null) {
+      clazz = schema.getView(target.getStringValue());
     }
+    if (clazz == null) {
+      throw new OCommandExecutionException(
+          "Class " + target.getStringValue() + " does not exist in the database schema");
+    }
+    long size = clazz.count();
+    OResultInternal result = new OResultInternal();
+    result.setProperty(alias, size);
+    return result;
   }
 
   @Override
@@ -75,11 +64,6 @@ public class CountFromClassStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

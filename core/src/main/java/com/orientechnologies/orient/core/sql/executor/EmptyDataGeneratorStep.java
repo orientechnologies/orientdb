@@ -8,8 +8,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutio
 /** Created by luigidellaquila on 08/07/16. */
 public class EmptyDataGeneratorStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-
   private int size;
 
   public EmptyDataGeneratorStep(int size, OCommandContext ctx, boolean profilingEnabled) {
@@ -20,20 +18,13 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OProduceExecutionStream(this::create).limit(size);
+    return attachProfile(new OProduceExecutionStream(this::create).limit(size));
   }
 
   private OResult create(OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      OResultInternal result = new OResultInternal();
-      ctx.setVariable("$current", result);
-      return result;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
+    OResultInternal result = new OResultInternal();
+    ctx.setVariable("$current", result);
+    return result;
   }
 
   @Override
@@ -44,10 +35,5 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

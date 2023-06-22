@@ -8,7 +8,6 @@ import java.util.List;
 public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
   private List<AbstractExecutionStep> subSteps;
-  private long cost;
 
   public FilterNotMatchPatternStep(
       List<AbstractExecutionStep> steps, OCommandContext ctx, boolean enableProfiling) {
@@ -22,19 +21,12 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OExecutionStream resultSet = prev.get().syncPull(ctx);
-    return resultSet.filter(this::filterMap);
+    return attachProfile(resultSet.filter(this::filterMap));
   }
 
   private OResult filterMap(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (!matchesPattern(result, ctx)) {
-        return result;
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+    if (!matchesPattern(result, ctx)) {
+      return result;
     }
     return null;
   }

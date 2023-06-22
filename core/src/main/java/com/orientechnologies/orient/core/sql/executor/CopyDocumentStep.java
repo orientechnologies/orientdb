@@ -19,8 +19,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
  */
 public class CopyDocumentStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-
   public CopyDocumentStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
@@ -28,34 +26,27 @@ public class CopyDocumentStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     OExecutionStream upstream = getPrev().get().syncPull(ctx);
-    return upstream.map(this::mapResult);
+    return attachProfile(upstream.map(this::mapResult));
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      ORecord resultDoc = null;
-      if (result.isElement()) {
-        ORecord docToCopy = result.getElement().get().getRecord();
-        if (docToCopy instanceof ODocument) {
-          resultDoc = ((ODocument) docToCopy).copy();
-          resultDoc.getIdentity().reset();
-          ((ODocument) resultDoc).setClassName(null);
-          resultDoc.setDirty();
-        } else if (docToCopy instanceof OBlob) {
-          ORecordBytes newBlob = ((ORecordBytes) docToCopy).copy();
-          OResultInternal newResult = new OResultInternal(newBlob);
-          return newResult;
-        }
-      } else {
-        resultDoc = result.toElement().getRecord();
+    ORecord resultDoc = null;
+    if (result.isElement()) {
+      ORecord docToCopy = result.getElement().get().getRecord();
+      if (docToCopy instanceof ODocument) {
+        resultDoc = ((ODocument) docToCopy).copy();
+        resultDoc.getIdentity().reset();
+        ((ODocument) resultDoc).setClassName(null);
+        resultDoc.setDirty();
+      } else if (docToCopy instanceof OBlob) {
+        ORecordBytes newBlob = ((ORecordBytes) docToCopy).copy();
+        OResultInternal newResult = new OResultInternal(newBlob);
+        return newResult;
       }
-      return new OUpdatableResult((ODocument) resultDoc);
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+    } else {
+      resultDoc = result.toElement().getRecord();
     }
+    return new OUpdatableResult((ODocument) resultDoc);
   }
 
   @Override
@@ -68,10 +59,5 @@ public class CopyDocumentStep extends AbstractExecutionStep {
       result.append(" (" + getCostFormatted() + ")");
     }
     return result.toString();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

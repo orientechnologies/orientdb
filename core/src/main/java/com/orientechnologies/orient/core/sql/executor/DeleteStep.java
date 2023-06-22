@@ -12,7 +12,6 @@ import java.util.Optional;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class DeleteStep extends AbstractExecutionStep {
-  private long cost = 0;
 
   public DeleteStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -21,22 +20,15 @@ public class DeleteStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     OExecutionStream upstream = getPrev().get().syncPull(ctx);
-    return upstream.map(this::mapResult);
+    return attachProfile(upstream.map(this::mapResult));
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      Optional<ORID> id = result.getIdentity();
-      if (id.isPresent()) {
-        ctx.getDatabase().delete(id.get());
-      }
-      return result;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+    Optional<ORID> id = result.getIdentity();
+    if (id.isPresent()) {
+      ctx.getDatabase().delete(id.get());
     }
+    return result;
   }
 
   @Override
@@ -49,11 +41,6 @@ public class DeleteStep extends AbstractExecutionStep {
       result.append(" (" + getCostFormatted() + ")");
     }
     return result.toString();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

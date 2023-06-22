@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutio
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class CreateRecordStep extends AbstractExecutionStep {
 
-  private long cost = 0;
   private int total = 0;
 
   public CreateRecordStep(OCommandContext ctx, int total, boolean profilingEnabled) {
@@ -20,18 +19,11 @@ public class CreateRecordStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OProduceExecutionStream(this::produce).limit(total);
+    return attachProfile(new OProduceExecutionStream(this::produce).limit(total));
   }
 
   private OResult produce(OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      return new OUpdatableResult((ODocument) ctx.getDatabase().newInstance());
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
+    return new OUpdatableResult((ODocument) ctx.getDatabase().newInstance());
   }
 
   @Override
@@ -51,10 +43,5 @@ public class CreateRecordStep extends AbstractExecutionStep {
       result.append("  " + total + " record");
     }
     return result.toString();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

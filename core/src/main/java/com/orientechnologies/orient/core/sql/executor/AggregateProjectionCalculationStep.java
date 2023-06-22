@@ -20,9 +20,6 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   private final long timeoutMillis;
   private final long limit;
 
-  // the key is the GROUP BY key, the value is the (partially) aggregated value
-  private long cost = 0;
-
   public AggregateProjectionCalculationStep(
       OProjection projection,
       OGroupBy groupBy,
@@ -38,7 +35,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
 
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    List<OResult> finalResults = executeAggregation(ctx);
+    List<OResult> finalResults = measure(ctx, (context) -> executeAggregation(context));
     return OExecutionStream.resultIterator(finalResults.iterator());
   }
 
@@ -77,45 +74,38 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
 
   private void aggregate(
       OResult next, OCommandContext ctx, Map<List, OResultInternal> aggregateResults) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      List<Object> key = new ArrayList<>();
-      if (groupBy != null) {
-        for (OExpression item : groupBy.getItems()) {
-          Object val = item.execute(next, ctx);
-          key.add(val);
-        }
+    List<Object> key = new ArrayList<>();
+    if (groupBy != null) {
+      for (OExpression item : groupBy.getItems()) {
+        Object val = item.execute(next, ctx);
+        key.add(val);
       }
-      OResultInternal preAggr = aggregateResults.get(key);
-      if (preAggr == null) {
-        if (limit > 0 && aggregateResults.size() > limit) {
-          return;
-        }
-        preAggr = new OResultInternal();
-
-        for (OProjectionItem proj : this.projection.getItems()) {
-          String alias = proj.getProjectionAlias().getStringValue();
-          if (!proj.isAggregate()) {
-            preAggr.setProperty(alias, proj.execute(next, ctx));
-          }
-        }
-        aggregateResults.put(key, preAggr);
+    }
+    OResultInternal preAggr = aggregateResults.get(key);
+    if (preAggr == null) {
+      if (limit > 0 && aggregateResults.size() > limit) {
+        return;
       }
+      preAggr = new OResultInternal();
 
       for (OProjectionItem proj : this.projection.getItems()) {
         String alias = proj.getProjectionAlias().getStringValue();
-        if (proj.isAggregate()) {
-          AggregationContext aggrCtx = (AggregationContext) preAggr.getTemporaryProperty(alias);
-          if (aggrCtx == null) {
-            aggrCtx = proj.getAggregationContext(ctx);
-            preAggr.setTemporaryProperty(alias, aggrCtx);
-          }
-          aggrCtx.apply(next, ctx);
+        if (!proj.isAggregate()) {
+          preAggr.setProperty(alias, proj.execute(next, ctx));
         }
       }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+      aggregateResults.put(key, preAggr);
+    }
+
+    for (OProjectionItem proj : this.projection.getItems()) {
+      String alias = proj.getProjectionAlias().getStringValue();
+      if (proj.isAggregate()) {
+        AggregationContext aggrCtx = (AggregationContext) preAggr.getTemporaryProperty(alias);
+        if (aggrCtx == null) {
+          aggrCtx = proj.getAggregationContext(ctx);
+          preAggr.setTemporaryProperty(alias, aggrCtx);
+        }
+        aggrCtx.apply(next, ctx);
       }
     }
   }
@@ -146,10 +136,5 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
         ctx,
         timeoutMillis,
         profilingEnabled);
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

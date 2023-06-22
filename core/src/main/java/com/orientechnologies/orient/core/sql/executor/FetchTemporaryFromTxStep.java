@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.sql.executor.resultset.OCostMeasureResultSet;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,7 +27,6 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
   private String className;
 
   private Object order;
-  private OCostMeasureResultSet cost;
 
   public FetchTemporaryFromTxStep(OCommandContext ctx, String className, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -38,26 +36,13 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    long cost = 0;
-    long begin = profilingEnabled ? System.nanoTime() : 0;
     Iterator<ORecord> data = null;
-    try {
-
-      data = init(ctx);
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
-
+    data = measure(ctx, (context) -> init(context));
     if (data == null) {
       data = Collections.emptyIterator();
     }
     OExecutionStream resultSet = OExecutionStream.iterator((Iterator) data).map(this::setContext);
-    if (profilingEnabled) {
-      this.cost = new OCostMeasureResultSet(resultSet, cost);
-      resultSet = this.cost;
-    }
+    resultSet = attachProfile(resultSet);
     return resultSet;
   }
 
@@ -173,11 +158,6 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
-  }
-
-  @Override
-  public long getCost() {
-    return cost != null ? cost.getCost() : 0;
   }
 
   @Override

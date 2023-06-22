@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor.resultset;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OExecutionStep;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.Iterator;
 import java.util.Spliterator;
@@ -44,6 +45,10 @@ public interface OExecutionStream {
 
   public static OExecutionStream resultIterator(Iterator<OResult> iterator) {
     return new OResultIteratorExecutionStream(iterator);
+  }
+
+  public default OCostMeasureResultSet profile(OExecutionStep step, long baseCost) {
+    return new OCostMeasureResultSet(this, baseCost);
   }
 
   public static OExecutionStream loadIterator(Iterator<OIdentifiable> iterator) {

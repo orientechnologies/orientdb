@@ -16,8 +16,6 @@ public class OrderByStep extends AbstractExecutionStep {
   private final long timeoutMillis;
   private Integer maxResults;
 
-  private long cost = 0;
-
   public OrderByStep(
       OOrderBy orderBy, OCommandContext ctx, long timeoutMillis, boolean profilingEnabled) {
     this(orderBy, null, ctx, timeoutMillis, profilingEnabled);
@@ -42,7 +40,7 @@ public class OrderByStep extends AbstractExecutionStep {
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     List<OResult> results;
     if (prev.isPresent()) {
-      results = init(prev.get(), ctx);
+      results = measure(ctx, (context) -> init(prev.get(), context));
     } else {
       results = Collections.emptyList();
     }
@@ -62,57 +60,36 @@ public class OrderByStep extends AbstractExecutionStep {
       }
 
       OResult item = lastBatch.next(ctx);
-      long beginFilter = profilingEnabled ? System.nanoTime() : 0;
-      try {
-        cachedResult.add(item);
-        if (maxElementsAllowed >= 0 && maxElementsAllowed < cachedResult.size()) {
-          throw new OCommandExecutionException(
-              "Limit of allowed elements for in-heap ORDER BY in a single query exceeded ("
-                  + maxElementsAllowed
-                  + ") . You can set "
-                  + OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getKey()
-                  + " to increase this limit");
-        }
-        sorted = false;
-        // compact, only at twice as the buffer, to avoid to do it at each add
-        if (this.maxResults != null) {
-          long compactThreshold = 2L * maxResults;
-          if (compactThreshold < cachedResult.size()) {
-            cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
-            cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
-            sorted = true;
-          }
-        }
-      } finally {
-        if (profilingEnabled) {
-          cost += (System.nanoTime() - beginFilter);
+      cachedResult.add(item);
+      if (maxElementsAllowed >= 0 && maxElementsAllowed < cachedResult.size()) {
+        throw new OCommandExecutionException(
+            "Limit of allowed elements for in-heap ORDER BY in a single query exceeded ("
+                + maxElementsAllowed
+                + ") . You can set "
+                + OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getKey()
+                + " to increase this limit");
+      }
+      sorted = false;
+      // compact, only at twice as the buffer, to avoid to do it at each add
+      if (this.maxResults != null) {
+        long compactThreshold = 2L * maxResults;
+        if (compactThreshold < cachedResult.size()) {
+          cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+          cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
+          sorted = true;
         }
       }
     }
-    long beginSort = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      // compact at each batch, if needed
-      if (!sorted && this.maxResults != null && maxResults < cachedResult.size()) {
-        cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
-        cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
-        sorted = true;
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - beginSort);
-      }
+    // compact at each batch, if needed
+    if (!sorted && this.maxResults != null && maxResults < cachedResult.size()) {
+      cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+      cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
+      sorted = true;
     }
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (!sorted) {
-        cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
-      }
-      return cachedResult;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+    if (!sorted) {
+      cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
     }
+    return cachedResult;
   }
 
   @Override
@@ -123,10 +100,5 @@ public class OrderByStep extends AbstractExecutionStep {
     }
     result += (maxResults != null ? "\n  (buffer size: " + maxResults + ")" : "");
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

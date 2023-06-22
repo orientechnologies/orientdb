@@ -14,8 +14,6 @@ import java.util.Iterator;
  */
 public class ExpandStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-
   public ExpandStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
@@ -26,45 +24,38 @@ public class ExpandStep extends AbstractExecutionStep {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
     OExecutionStream resultSet = getPrev().get().syncPull(ctx);
-    return resultSet.flatMap(this::nextResults);
+    return attachProfile(resultSet.flatMap(this::nextResults));
   }
 
   private OExecutionStream nextResults(OResult nextAggregateItem, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (nextAggregateItem.getPropertyNames().size() == 0) {
-        return OExecutionStream.empty();
-      }
-      if (nextAggregateItem.getPropertyNames().size() > 1) {
-        throw new IllegalStateException("Invalid EXPAND on record " + nextAggregateItem);
-      }
+    if (nextAggregateItem.getPropertyNames().size() == 0) {
+      return OExecutionStream.empty();
+    }
+    if (nextAggregateItem.getPropertyNames().size() > 1) {
+      throw new IllegalStateException("Invalid EXPAND on record " + nextAggregateItem);
+    }
 
-      String propName = nextAggregateItem.getPropertyNames().iterator().next();
-      Object projValue = nextAggregateItem.getProperty(propName);
-      if (projValue == null) {
+    String propName = nextAggregateItem.getPropertyNames().iterator().next();
+    Object projValue = nextAggregateItem.getProperty(propName);
+    if (projValue == null) {
+      return OExecutionStream.empty();
+    }
+    if (projValue instanceof OIdentifiable) {
+      ORecord rec = ((OIdentifiable) projValue).getRecord();
+      if (rec == null) {
         return OExecutionStream.empty();
       }
-      if (projValue instanceof OIdentifiable) {
-        ORecord rec = ((OIdentifiable) projValue).getRecord();
-        if (rec == null) {
-          return OExecutionStream.empty();
-        }
-        OResultInternal res = new OResultInternal(rec);
+      OResultInternal res = new OResultInternal(rec);
 
-        return OExecutionStream.singleton((OResult) res);
-      } else if (projValue instanceof OResult) {
-        return OExecutionStream.singleton((OResult) projValue);
-      } else if (projValue instanceof Iterator) {
-        return OExecutionStream.iterator((Iterator) projValue);
-      } else if (projValue instanceof Iterable) {
-        return OExecutionStream.iterator(((Iterable) projValue).iterator());
-      } else {
-        return OExecutionStream.empty();
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+      return OExecutionStream.singleton((OResult) res);
+    } else if (projValue instanceof OResult) {
+      return OExecutionStream.singleton((OResult) projValue);
+    } else if (projValue instanceof Iterator) {
+      return OExecutionStream.iterator((Iterator) projValue);
+    } else if (projValue instanceof Iterable) {
+      return OExecutionStream.iterator(((Iterable) projValue).iterator());
+    } else {
+      return OExecutionStream.empty();
     }
   }
 
@@ -76,10 +67,5 @@ public class ExpandStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

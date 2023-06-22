@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class CheckSafeDeleteStep extends AbstractExecutionStep {
-  private long cost = 0;
 
   public CheckSafeDeleteStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -32,36 +31,29 @@ public class CheckSafeDeleteStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     OExecutionStream upstream = getPrev().get().syncPull(ctx);
-    return upstream.map(this::mapResult);
+    return attachProfile(upstream.map(this::mapResult));
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (result.isElement()) {
-        OIdentifiable elem = result.getElement().get();
-        ORecord record = elem.getRecord();
-        if (record instanceof ODocument) {
-          ODocument doc = (ODocument) record;
-          OClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
-          if (clazz != null) {
-            if (clazz.getName().equalsIgnoreCase("V") || clazz.isSubClassOf("V")) {
-              throw new OCommandExecutionException(
-                  "Cannot safely delete a vertex, please use DELETE VERTEX or UNSAFE");
-            }
-            if (clazz.getName().equalsIgnoreCase("E") || clazz.isSubClassOf("E")) {
-              throw new OCommandExecutionException(
-                  "Cannot safely delete an edge, please use DELETE EDGE or UNSAFE");
-            }
+    if (result.isElement()) {
+      OIdentifiable elem = result.getElement().get();
+      ORecord record = elem.getRecord();
+      if (record instanceof ODocument) {
+        ODocument doc = (ODocument) record;
+        OClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+        if (clazz != null) {
+          if (clazz.getName().equalsIgnoreCase("V") || clazz.isSubClassOf("V")) {
+            throw new OCommandExecutionException(
+                "Cannot safely delete a vertex, please use DELETE VERTEX or UNSAFE");
+          }
+          if (clazz.getName().equalsIgnoreCase("E") || clazz.isSubClassOf("E")) {
+            throw new OCommandExecutionException(
+                "Cannot safely delete an edge, please use DELETE EDGE or UNSAFE");
           }
         }
       }
-      return result;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
     }
+    return result;
   }
 
   @Override
@@ -74,10 +66,5 @@ public class CheckSafeDeleteStep extends AbstractExecutionStep {
       result.append(" (" + getCostFormatted() + ")");
     }
     return result.toString();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

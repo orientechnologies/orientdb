@@ -12,8 +12,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
  */
 public class CountStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-
   /**
    * @param ctx the query context
    * @param profilingEnabled true to enable the profiling of the execution (for SQL PROFILE)
@@ -24,22 +22,19 @@ public class CountStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
-    long count = 0;
     OExecutionStream prevResult = getPrev().get().syncPull(ctx);
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      while (prevResult.hasNext(ctx)) {
-        count++;
-        prevResult.next(ctx);
-      }
-      OResultInternal resultRecord = new OResultInternal();
-      resultRecord.setProperty("count", count);
-      return OExecutionStream.singleton(resultRecord);
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
+    return measure(
+        ctx,
+        (context) -> {
+          long count = 0;
+          while (prevResult.hasNext(ctx)) {
+            count++;
+            prevResult.next(ctx);
+          }
+          OResultInternal resultRecord = new OResultInternal();
+          resultRecord.setProperty("count", count);
+          return OExecutionStream.singleton(resultRecord);
+        });
   }
 
   @Override
@@ -52,11 +47,6 @@ public class CountStep extends AbstractExecutionStep {
       result.append(" (" + getCostFormatted() + ")");
     }
     return result.toString();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

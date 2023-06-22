@@ -11,7 +11,6 @@ import java.util.stream.Stream;
 public class CartesianProductStep extends AbstractExecutionStep {
 
   private List<OInternalExecutionPlan> subPlans = new ArrayList<>();
-  private long cost = 0;
 
   public CartesianProductStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -48,27 +47,20 @@ public class CartesianProductStep extends AbstractExecutionStep {
       }
     }
     Stream<OResult> finalStream = stream.map(this::produceResult);
-    return OExecutionStream.resultIterator(finalStream.iterator());
+    return attachProfile(OExecutionStream.resultIterator(finalStream.iterator()));
   }
 
   private OResult produceResult(OResult[] path) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
 
-      OResultInternal nextRecord = new OResultInternal();
+    OResultInternal nextRecord = new OResultInternal();
 
-      for (int i = 0; i < path.length; i++) {
-        OResult res = path[i];
-        for (String s : res.getPropertyNames()) {
-          nextRecord.setProperty(s, res.getProperty(s));
-        }
-      }
-      return nextRecord;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+    for (int i = 0; i < path.length; i++) {
+      OResult res = path[i];
+      for (String s : res.getPropertyNames()) {
+        nextRecord.setProperty(s, res.getProperty(s));
       }
     }
+    return nextRecord;
   }
 
   public void addSubPlan(OInternalExecutionPlan subPlan) {
@@ -184,10 +176,5 @@ public class CartesianProductStep extends AbstractExecutionStep {
 
   private String appendPipe(String p) {
     return "| " + p;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

@@ -15,8 +15,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutio
  */
 public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-
   public FetchFromDistributedMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
@@ -24,29 +22,21 @@ public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OProduceExecutionStream(this::produce).limit(1);
+    return attachProfile(new OProduceExecutionStream(this::produce).limit(1));
   }
 
   private OResult produce(OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
+    ODatabaseDocumentInternal session = (ODatabaseDocumentInternal) ctx.getDatabase();
+    OSharedContextEmbedded value = (OSharedContextEmbedded) session.getSharedContext();
+    ODocument doc = value.loadDistributedConfig(session);
+    OResultInternal result = new OResultInternal();
+    doc.setTrackingChanges(false);
+    doc.deserializeFields();
 
-      ODatabaseDocumentInternal session = (ODatabaseDocumentInternal) ctx.getDatabase();
-      OSharedContextEmbedded value = (OSharedContextEmbedded) session.getSharedContext();
-      ODocument doc = value.loadDistributedConfig(session);
-      OResultInternal result = new OResultInternal();
-      doc.setTrackingChanges(false);
-      doc.deserializeFields();
-
-      for (String alias : doc.getPropertyNames()) {
-        result.setProperty(alias, doc.getProperty(alias));
-      }
-      return result;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+    for (String alias : doc.getPropertyNames()) {
+      result.setProperty(alias, doc.getProperty(alias));
     }
+    return result;
   }
 
   @Override
@@ -57,10 +47,5 @@ public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

@@ -12,8 +12,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
  */
 public class UnwrapPreviousValueStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-
   public UnwrapPreviousValueStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
@@ -21,27 +19,19 @@ public class UnwrapPreviousValueStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     OExecutionStream upstream = prev.get().syncPull(ctx);
-    return upstream.map(this::mapResult);
+    return attachProfile(upstream.map(this::mapResult));
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (result instanceof OUpdatableResult) {
-        result = ((OUpdatableResult) result).previousValue;
-        if (result == null) {
-          throw new OCommandExecutionException(
-              "Invalid status of record: no previous value available");
-        }
-        return result;
-      } else {
+    if (result instanceof OUpdatableResult) {
+      result = ((OUpdatableResult) result).previousValue;
+      if (result == null) {
         throw new OCommandExecutionException(
             "Invalid status of record: no previous value available");
       }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+      return result;
+    } else {
+      throw new OCommandExecutionException("Invalid status of record: no previous value available");
     }
   }
 
@@ -52,10 +42,5 @@ public class UnwrapPreviousValueStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

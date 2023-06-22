@@ -15,9 +15,6 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   private OBinaryCondition functionCondition;
   private OFromClause queryTarget;
 
-  private long cost = 0;
-  // runtime
-
   public FetchFromIndexedFunctionStep(
       OBinaryCondition functionCondition,
       OFromClause queryTarget,
@@ -31,19 +28,12 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    Iterator<OIdentifiable> fullResult = init(ctx);
+    Iterator<OIdentifiable> fullResult = measure(ctx, (context) -> init(context));
     return OExecutionStream.loadIterator(fullResult).interruptable();
   }
 
   private Iterator<OIdentifiable> init(OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      return functionCondition.executeIndexedFunction(queryTarget, ctx).iterator();
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
+    return functionCondition.executeIndexedFunction(queryTarget, ctx).iterator();
   }
 
   @Override
@@ -60,11 +50,6 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
 
   @Override
   public void reset() {}
-
-  @Override
-  public long getCost() {
-    return cost;
-  }
 
   @Override
   public OResult serialize() {

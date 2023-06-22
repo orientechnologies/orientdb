@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 public class FilterStep extends AbstractExecutionStep {
   private final long timeoutMillis;
   private OWhereClause whereClause;
-  private long cost;
 
   public FilterStep(
       OWhereClause whereClause, OCommandContext ctx, long timeoutMillis, boolean profilingEnabled) {
@@ -32,19 +31,12 @@ public class FilterStep extends AbstractExecutionStep {
     if (timeoutMillis > 0) {
       resultSet = new OExpireResultSet(resultSet, timeoutMillis, this::sendTimeout);
     }
-    return resultSet;
+    return attachProfile(resultSet);
   }
 
   private OResult filterMap(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (whereClause.matchesFilters(result, ctx)) {
-        return result;
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+    if (whereClause.matchesFilters(result, ctx)) {
+      return result;
     }
     return null;
   }
@@ -82,11 +74,6 @@ public class FilterStep extends AbstractExecutionStep {
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

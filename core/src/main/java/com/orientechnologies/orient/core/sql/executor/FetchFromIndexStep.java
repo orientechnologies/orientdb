@@ -61,7 +61,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   protected String indexName;
 
-  private long cost = 0;
   private long count = 0;
 
   public FetchFromIndexStep(
@@ -110,7 +109,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    Set<Stream<ORawPair<Object, ORID>>> streams = init(ctx.getDatabase());
+    Set<Stream<ORawPair<Object, ORID>>> streams =
+        measure(ctx, (context) -> init(context.getDatabase()));
     Stream<OExecutionStream> resultStreams =
         streams.stream()
             .map(
@@ -120,31 +120,24 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
                 });
     // TODO: this should go at the end of the iteration;
     updateIndexStats();
-    return new OSubResultsExecutionStream(resultStreams.iterator());
+    return attachProfile(new OSubResultsExecutionStream(resultStreams.iterator()));
   }
 
   private OResult readResult(OCommandContext ctx, ORawPair<Object, ORID> nextEntry) {
     if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
       throw new OCommandInterruptedException("The command has been interrupted");
     }
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      count++;
-      Object key = nextEntry.first;
-      OIdentifiable value = nextEntry.second;
+    count++;
+    Object key = nextEntry.first;
+    OIdentifiable value = nextEntry.second;
 
-      nextEntry = null;
+    nextEntry = null;
 
-      OResultInternal result = new OResultInternal();
-      result.setProperty("key", convertKey(key));
-      result.setProperty("rid", value);
-      ctx.setVariable("$current", result);
-      return result;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
+    OResultInternal result = new OResultInternal();
+    result.setProperty("key", convertKey(key));
+    result.setProperty("rid", value);
+    ctx.setVariable("$current", result);
+    return result;
   }
 
   private static Object convertKey(Object key) {
@@ -200,35 +193,28 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       OBooleanExpression condition, ODatabaseDocumentInternal db) {
     Set<Stream<ORawPair<Object, ORID>>> acquiredStreams =
         Collections.newSetFromMap(new IdentityHashMap<>());
-    long begin = profilingEnabled ? System.nanoTime() : 0;
     if (index == null) {
       index = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName).getInternal();
     }
-    try {
-      if (index.getDefinition() == null) {
-        return acquiredStreams;
-      }
-      if (condition == null) {
-        processFlatIteration(acquiredStreams);
-      } else if (condition instanceof OBinaryCondition) {
-        processBinaryCondition(acquiredStreams);
-      } else if (condition instanceof OBetweenCondition) {
-        processBetweenCondition(acquiredStreams);
-      } else if (condition instanceof OAndBlock) {
-        processAndBlock(acquiredStreams);
-      } else if (condition instanceof OInCondition) {
-        processInCondition(acquiredStreams);
-      } else {
-        // TODO process containsAny
-        throw new OCommandExecutionException(
-            "search for index for " + condition + " is not supported yet");
-      }
+    if (index.getDefinition() == null) {
       return acquiredStreams;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
     }
+    if (condition == null) {
+      processFlatIteration(acquiredStreams);
+    } else if (condition instanceof OBinaryCondition) {
+      processBinaryCondition(acquiredStreams);
+    } else if (condition instanceof OBetweenCondition) {
+      processBetweenCondition(acquiredStreams);
+    } else if (condition instanceof OAndBlock) {
+      processAndBlock(acquiredStreams);
+    } else if (condition instanceof OInCondition) {
+      processInCondition(acquiredStreams);
+    } else {
+      // TODO process containsAny
+      throw new OCommandExecutionException(
+          "search for index for " + condition + " is not supported yet");
+    }
+    return acquiredStreams;
   }
 
   private void processInCondition(Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
@@ -751,11 +737,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   @Override
-  public long getCost() {
-    return cost;
-  }
-
-  @Override
   public OResult serialize() {
     OResultInternal result = OExecutionStepInternal.basicSerialize(this);
     result.setProperty("indexName", index.getName());
@@ -794,7 +775,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     additionalRangeCondition =
         Optional.ofNullable(additionalRangeCondition).map(OBinaryCondition::copy).orElse(null);
 
-    cost = 0;
     count = 0;
   }
 

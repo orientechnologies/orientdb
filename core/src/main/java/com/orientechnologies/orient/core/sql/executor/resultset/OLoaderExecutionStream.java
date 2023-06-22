@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor.resultset;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -31,7 +32,7 @@ public final class OLoaderExecutionStream implements OExecutionStream {
 
     OResult result = nextResult;
     nextResult = null;
-    ctx.setVariable("$current", result.toElement());
+    ctx.setVariable("$current", result);
     return result;
   }
 
@@ -46,12 +47,16 @@ public final class OLoaderExecutionStream implements OExecutionStream {
       OIdentifiable nextRid = iterator.next();
       if (nextRid != null) {
         if (nextRid instanceof ORecord) {
-          nextResult = new OResultInternal(nextRid);
+          nextResult = new OResultInternal((ORecord) nextRid);
           return;
         } else {
-          OIdentifiable nextDoc = (OIdentifiable) ctx.getDatabase().load(nextRid.getIdentity());
+          ORecord nextDoc = ctx.getDatabase().load(nextRid.getIdentity());
           if (nextDoc != null) {
-            nextResult = new OResultInternal(nextDoc);
+            OResultInternal res = new OResultInternal(nextDoc);
+            if (nextRid instanceof OContextualRecordId) {
+              res.addMetadata(((OContextualRecordId) nextRid).getContext());
+            }
+            nextResult = res;
             return;
           }
         }

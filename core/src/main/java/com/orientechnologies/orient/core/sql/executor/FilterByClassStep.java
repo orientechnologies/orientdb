@@ -13,11 +13,12 @@ import java.util.Optional;
 public class FilterByClassStep extends AbstractExecutionStep {
 
   private OIdentifier identifier;
-  private long cost;
+  private String className;
 
   public FilterByClassStep(OIdentifier identifier, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.identifier = identifier;
+    this.className = identifier.getStringValue();
   }
 
   @Override
@@ -27,24 +28,17 @@ public class FilterByClassStep extends AbstractExecutionStep {
     }
 
     OExecutionStream resultSet = prev.get().syncPull(ctx);
-    return resultSet.filter(this::filterMap);
+    return attachProfile(resultSet.filter(this::filterMap));
   }
 
   private OResult filterMap(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (result.isElement()) {
-        Optional<OClass> clazz = result.getElement().get().getSchemaType();
-        if (clazz.isPresent() && clazz.get().isSubClassOf(identifier.getStringValue())) {
-          return result;
-        }
-      }
-      return null;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+    if (result.isElement()) {
+      Optional<OClass> clazz = result.getElement().get().getSchemaType();
+      if (clazz.isPresent() && clazz.get().isSubClassOf(className)) {
+        return result;
       }
     }
+    return null;
   }
 
   @Override
@@ -78,11 +72,6 @@ public class FilterByClassStep extends AbstractExecutionStep {
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

@@ -33,8 +33,6 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   private final Number retry;
   private final OBatch batch;
 
-  private long cost = 0;
-
   public CreateEdgesStep(
       OIdentifier targetClass,
       OIdentifier targetClusterName,
@@ -214,11 +212,6 @@ public class CreateEdgesStep extends AbstractExecutionStep {
       result += "\n" + spaces + "       (target cluster " + targetCluster + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

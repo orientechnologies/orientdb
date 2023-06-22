@@ -15,8 +15,6 @@ import java.util.stream.Collectors;
  */
 public class RemoveEdgePointersStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-
   public RemoveEdgePointersStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
@@ -24,37 +22,29 @@ public class RemoveEdgePointersStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     OExecutionStream upstream = getPrev().get().syncPull(ctx);
-    return upstream.map(this::mapResult);
+    return attachProfile(upstream.map(this::mapResult));
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-
-      Set<String> propNames = result.getPropertyNames();
-      for (String propName :
-          propNames.stream()
-              .filter(x -> x.startsWith("in_") || x.startsWith("out_"))
-              .collect(Collectors.toList())) {
-        Object val = result.getProperty(propName);
-        if (val instanceof OElement) {
-          if (((OElement) val).getSchemaType().map(x -> x.isSubClassOf("E")).orElse(false)) {
-            ((OResultInternal) result).removeProperty(propName);
-          }
-        } else if (val instanceof Iterable) {
-          for (Object o : (Iterable) val) {
-            if (o instanceof OElement) {
-              if (((OElement) o).getSchemaType().map(x -> x.isSubClassOf("E")).orElse(false)) {
-                ((OResultInternal) result).removeProperty(propName);
-                break;
-              }
+    Set<String> propNames = result.getPropertyNames();
+    for (String propName :
+        propNames.stream()
+            .filter(x -> x.startsWith("in_") || x.startsWith("out_"))
+            .collect(Collectors.toList())) {
+      Object val = result.getProperty(propName);
+      if (val instanceof OElement) {
+        if (((OElement) val).getSchemaType().map(x -> x.isSubClassOf("E")).orElse(false)) {
+          ((OResultInternal) result).removeProperty(propName);
+        }
+      } else if (val instanceof Iterable) {
+        for (Object o : (Iterable) val) {
+          if (o instanceof OElement) {
+            if (((OElement) o).getSchemaType().map(x -> x.isSubClassOf("E")).orElse(false)) {
+              ((OResultInternal) result).removeProperty(propName);
+              break;
             }
           }
         }
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
       }
     }
     return result;
@@ -70,10 +60,5 @@ public class RemoveEdgePointersStep extends AbstractExecutionStep {
       result.append(" (" + getCostFormatted() + ")");
     }
     return result.toString();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

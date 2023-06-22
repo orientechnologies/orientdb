@@ -15,8 +15,6 @@ import java.util.Optional;
 public class CheckRecordTypeStep extends AbstractExecutionStep {
   private final String clazz;
 
-  private long cost = 0;
-
   public CheckRecordTypeStep(OCommandContext ctx, String className, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.clazz = className;
@@ -25,33 +23,23 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     OExecutionStream upstream = prev.get().syncPull(ctx);
-    return upstream.map(this::mapResult);
+    return attachProfile(upstream.map(this::mapResult));
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (!result.isElement()) {
-        throw new OCommandExecutionException(
-            "record " + result + " is not an instance of " + clazz);
-      }
-      OElement doc = result.getElement().get();
-      if (doc == null) {
-        throw new OCommandExecutionException(
-            "record " + result + " is not an instance of " + clazz);
-      }
-      Optional<OClass> schema = doc.getSchemaType();
-
-      if (!schema.isPresent() || !schema.get().isSubClassOf(clazz)) {
-        throw new OCommandExecutionException(
-            "record " + result + " is not an instance of " + clazz);
-      }
-      return result;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+    if (!result.isElement()) {
+      throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
     }
+    OElement doc = result.getElement().get();
+    if (doc == null) {
+      throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
+    }
+    Optional<OClass> schema = doc.getSchemaType();
+
+    if (!schema.isPresent() || !schema.get().isSubClassOf(clazz)) {
+      throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
+    }
+    return result;
   }
 
   @Override
@@ -62,10 +50,5 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
     }
     result += (OExecutionStepInternal.getIndent(depth, indent) + "  " + clazz);
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

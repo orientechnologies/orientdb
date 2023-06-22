@@ -9,8 +9,6 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
 /** Created by luigidellaquila on 20/02/17. */
 public class CastToVertexStep extends AbstractExecutionStep {
 
-  private long cost;
-
   public CastToVertexStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
@@ -18,30 +16,23 @@ public class CastToVertexStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     OExecutionStream upstream = getPrev().get().syncPull(ctx);
-    return upstream.map(this::mapResult);
+    return attachProfile(upstream.map(this::mapResult));
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (result.getElement().orElse(null) instanceof OVertex) {
-        return result;
-      }
-      if (result.isVertex()) {
-        if (result instanceof OResultInternal) {
-          ((OResultInternal) result).setElement(result.getElement().get().asVertex().get());
-        } else {
-          result = new OResultInternal(result.getElement().get().asVertex().get());
-        }
-      } else {
-        throw new OCommandExecutionException("Current element is not a vertex: " + result);
-      }
+    if (result.getElement().orElse(null) instanceof OVertex) {
       return result;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
     }
+    if (result.isVertex()) {
+      if (result instanceof OResultInternal) {
+        ((OResultInternal) result).setElement(result.getElement().get().asVertex().get());
+      } else {
+        result = new OResultInternal(result.getElement().get().asVertex().get());
+      }
+    } else {
+      throw new OCommandExecutionException("Current element is not a vertex: " + result);
+    }
+    return result;
   }
 
   @Override
@@ -51,10 +42,5 @@ public class CastToVertexStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

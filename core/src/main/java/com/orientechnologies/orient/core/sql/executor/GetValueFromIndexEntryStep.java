@@ -13,9 +13,6 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
 
   private final int[] filterClusterIds;
 
-  // runtime
-  private long cost = 0;
-
   /**
    * @param ctx the execution context
    * @param filterClusterIds only extract values from these clusters. Pass null if no filtering is
@@ -35,41 +32,34 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OExecutionStream resultSet = prev.get().syncPull(ctx);
-    return resultSet.filter(this::filterMap);
+    return attachProfile(resultSet.filter(this::filterMap));
   }
 
   private OResult filterMap(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      Object finalVal = result.getProperty("rid");
-      if (filterClusterIds != null) {
-        if (!(finalVal instanceof OIdentifiable)) {
-          return null;
-        }
-        ORID rid = ((OIdentifiable) finalVal).getIdentity();
-        boolean found = false;
-        for (int filterClusterId : filterClusterIds) {
-          if (rid.getClusterId() < 0 || filterClusterId == rid.getClusterId()) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          return null;
+    Object finalVal = result.getProperty("rid");
+    if (filterClusterIds != null) {
+      if (!(finalVal instanceof OIdentifiable)) {
+        return null;
+      }
+      ORID rid = ((OIdentifiable) finalVal).getIdentity();
+      boolean found = false;
+      for (int filterClusterId : filterClusterIds) {
+        if (rid.getClusterId() < 0 || filterClusterId == rid.getClusterId()) {
+          found = true;
+          break;
         }
       }
-      if (finalVal instanceof OIdentifiable) {
-        return new OResultInternal((OIdentifiable) finalVal);
-
-      } else if (finalVal instanceof OResult) {
-        return (OResult) finalVal;
-      }
-      return null;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+      if (!found) {
+        return null;
       }
     }
+    if (finalVal instanceof OIdentifiable) {
+      return new OResultInternal((OIdentifiable) finalVal);
+
+    } else if (finalVal instanceof OResult) {
+      return (OResult) finalVal;
+    }
+    return null;
   }
 
   @Override
@@ -88,11 +78,6 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
       result += "]";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

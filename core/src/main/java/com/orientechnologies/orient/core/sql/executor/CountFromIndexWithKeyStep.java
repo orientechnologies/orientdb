@@ -18,8 +18,6 @@ public class CountFromIndexWithKeyStep extends AbstractExecutionStep {
   private final String alias;
   private final OExpression keyValue;
 
-  private long count = 0;
-
   /**
    * @param targetIndex the index name as it is parsed by the SQL parsed
    * @param alias the name of the property returned in the result-set
@@ -41,22 +39,16 @@ public class CountFromIndexWithKeyStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    return new OProduceExecutionStream(this::produce).limit(1);
+    return attachProfile(new OProduceExecutionStream(this::produce).limit(1));
   }
 
   private OResult produce(OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      OIndex idx =
-          ctx.getDatabase().getMetadata().getIndexManager().getIndex(target.getIndexName());
-      Object val = idx.getDefinition().createValue(keyValue.execute(new OResultInternal(), ctx));
-      long size = idx.getInternal().getRids(val).distinct().count();
-      OResultInternal result = new OResultInternal();
-      result.setProperty(alias, size);
-      return result;
-    } finally {
-      count += (System.nanoTime() - begin);
-    }
+    OIndex idx = ctx.getDatabase().getMetadata().getIndexManager().getIndex(target.getIndexName());
+    Object val = idx.getDefinition().createValue(keyValue.execute(new OResultInternal(), ctx));
+    long size = idx.getInternal().getRids(val).distinct().count();
+    OResultInternal result = new OResultInternal();
+    result.setProperty(alias, size);
+    return result;
   }
 
   @Override

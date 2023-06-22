@@ -22,7 +22,6 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
   private OCluster cluster;
   private String clusterName;
   private String targetClass;
-  private long cost = 0;
 
   public CheckClusterTypeStep(
       String targetClusterName, String clazz, OCommandContext ctx, boolean profilingEnabled) {
@@ -41,47 +40,44 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream syncPull(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx));
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+    return measure(
+        ctx,
+        (context) -> {
+          ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) context.getDatabase();
 
-      int clusterId;
-      if (clusterName != null) {
-        clusterId = db.getClusterIdByName(clusterName);
-      } else if (cluster.getClusterName() != null) {
-        clusterId = db.getClusterIdByName(cluster.getClusterName());
-      } else {
-        clusterId = cluster.getClusterNumber();
-        if (db.getClusterNameById(clusterId) == null) {
-          throw new OCommandExecutionException("Cluster not found: " + clusterId);
-        }
-      }
-      if (clusterId < 0) {
-        throw new OCommandExecutionException("Cluster not found: " + clusterName);
-      }
+          int clusterId;
+          if (clusterName != null) {
+            clusterId = db.getClusterIdByName(clusterName);
+          } else if (cluster.getClusterName() != null) {
+            clusterId = db.getClusterIdByName(cluster.getClusterName());
+          } else {
+            clusterId = cluster.getClusterNumber();
+            if (db.getClusterNameById(clusterId) == null) {
+              throw new OCommandExecutionException("Cluster not found: " + clusterId);
+            }
+          }
+          if (clusterId < 0) {
+            throw new OCommandExecutionException("Cluster not found: " + clusterName);
+          }
 
-      OClass clazz = db.getMetadata().getImmutableSchemaSnapshot().getClass(targetClass);
-      if (clazz == null) {
-        throw new OCommandExecutionException("Class not found: " + targetClass);
-      }
+          OClass clazz = db.getMetadata().getImmutableSchemaSnapshot().getClass(targetClass);
+          if (clazz == null) {
+            throw new OCommandExecutionException("Class not found: " + targetClass);
+          }
 
-      boolean found = false;
-      for (int clust : clazz.getPolymorphicClusterIds()) {
-        if (clust == clusterId) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        throw new OCommandExecutionException(
-            "Cluster " + clusterId + " does not belong to class " + targetClass);
-      }
-      return OExecutionStream.empty();
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
+          boolean found = false;
+          for (int clust : clazz.getPolymorphicClusterIds()) {
+            if (clust == clusterId) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            throw new OCommandExecutionException(
+                "Cluster " + clusterId + " does not belong to class " + targetClass);
+          }
+          return OExecutionStream.empty();
+        });
   }
 
   @Override
@@ -97,10 +93,5 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
     result.append(spaces);
     result.append("  " + this.targetClass);
     return result.toString();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }
