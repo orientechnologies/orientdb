@@ -5,6 +5,8 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 
 public class OEmptyExecutionStream implements OExecutionStream {
 
+  protected static final OExecutionStream EMPTY = new OEmptyExecutionStream();
+
   @Override
   public boolean hasNext(OCommandContext ctx) {
     return false;

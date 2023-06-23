@@ -11,8 +11,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public interface OExecutionStream {
-  public static final OExecutionStream EMPTY = new OEmptyExecutionStream();
-
   boolean hasNext(OCommandContext ctx);
 
   OResult next(OCommandContext ctx);
@@ -56,11 +54,19 @@ public interface OExecutionStream {
   }
 
   public static OExecutionStream empty() {
-    return EMPTY;
+    return OEmptyExecutionStream.EMPTY;
   }
 
   static OExecutionStream singleton(OResult result) {
     return new OSingletonExecutionStream(result);
+  }
+
+  public interface OnClose {
+    void close(OCommandContext ctx);
+  }
+
+  public default OExecutionStream onClose(OnClose onClose) {
+    return new OnCloseExecutionStream(this, onClose);
   }
 
   public default Stream<OResult> stream(OCommandContext ctx) {

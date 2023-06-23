@@ -38,6 +38,7 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
     while (nextBlock.hasNext(ctx)) {
       prefetched.add(nextBlock.next(ctx));
     }
+    nextBlock.close(ctx);
     prefetchExecutionPlan.close();
     ctx.setVariable(PREFETCHED_MATCH_ALIAS_PREFIX + alias, prefetched);
     return OExecutionStream.empty();

@@ -93,6 +93,7 @@ public class OLocalResultSet implements OResultSet {
 
   @Override
   public void close() {
+    stream.close(executionPlan.getContext());
     executionPlan.close();
   }
 
