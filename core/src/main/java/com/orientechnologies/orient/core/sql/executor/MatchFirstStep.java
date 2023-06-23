@@ -33,7 +33,7 @@ public class MatchFirstStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.start(ctx));
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     OExecutionStream data;
     String alias = getAlias();
     List<OResult> matchedNodes =

@@ -24,7 +24,7 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.start(ctx));
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     return OExecutionStream.loadIterator((Iterator<OIdentifiable>) (Iterator) this.rids.iterator());
   }
 

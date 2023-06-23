@@ -131,6 +131,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
         ridsToFind.add(nextRes.getElement().get().getIdentity());
       }
     }
+    nextSlot.close(ctx);
     return ridsToFind;
   }
 

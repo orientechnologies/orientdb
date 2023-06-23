@@ -80,6 +80,7 @@ public class OrderByStep extends AbstractExecutionStep {
         }
       }
     }
+    lastBatch.close(ctx);
     // compact at each batch, if needed
     if (!sorted && this.maxResults != null && maxResults < cachedResult.size()) {
       cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));

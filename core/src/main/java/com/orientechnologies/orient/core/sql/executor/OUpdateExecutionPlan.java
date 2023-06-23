@@ -34,6 +34,7 @@ public class OUpdateExecutionPlan extends OSelectExecutionPlan {
     while (nextBlock.hasNext(ctx)) {
       result.add(nextBlock.next(ctx));
     }
+    nextBlock.close(ctx);
   }
 
   @Override

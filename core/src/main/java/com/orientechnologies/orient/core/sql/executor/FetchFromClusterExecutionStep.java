@@ -46,7 +46,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.start(ctx));
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     long minClusterPosition = calculateMinClusterPosition();
     long maxClusterPosition = calculateMaxClusterPosition();
     ORecordIteratorCluster iterator =

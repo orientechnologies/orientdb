@@ -23,13 +23,15 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.start(ctx));
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     Object src = ctx.getVariable(variableName);
     OExecutionStream source;
     if (src instanceof OExecutionStream) {
       source = (OExecutionStream) src;
     } else if (src instanceof OResultSet) {
-      source = OExecutionStream.resultIterator(((OResultSet) src).stream().iterator());
+      source =
+          OExecutionStream.resultIterator(((OResultSet) src).stream().iterator())
+              .onClose((context) -> ((OResultSet) src).close());
     } else if (src instanceof OElement) {
       source =
           OExecutionStream.resultIterator(

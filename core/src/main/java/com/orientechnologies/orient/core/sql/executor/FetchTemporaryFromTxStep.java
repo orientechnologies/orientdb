@@ -35,7 +35,7 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.start(ctx));
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     Iterator<ORecord> data = null;
     data = init(ctx);
     if (data == null) {

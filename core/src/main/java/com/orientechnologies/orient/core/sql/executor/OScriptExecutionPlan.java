@@ -54,6 +54,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
       while (results.hasNext(ctx)) {
         collected.add(results.next(ctx));
       }
+      results.close(ctx);
       if (lastStep instanceof ScriptLineStep) {
         // collected.setPlan(((ScriptLineStep) lastStep).plan);
       }
@@ -155,6 +156,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
       while (lastResult.hasNext(ctx)) {
         lastResult.next(ctx);
       }
+      lastResult.close(ctx);
     }
     this.lastStep = steps.get(steps.size() - 1);
     return lastStep;
@@ -180,6 +182,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
       while (lastResult.hasNext(ctx)) {
         lastResult.next(ctx);
       }
+      lastResult.close(ctx);
     }
 
     return null;

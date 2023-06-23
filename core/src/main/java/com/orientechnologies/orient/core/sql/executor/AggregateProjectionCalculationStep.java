@@ -54,6 +54,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
       }
       aggregate(lastRs.next(ctx), ctx, aggregateResults);
     }
+    lastRs.close(ctx);
     List<OResult> finalResults = new ArrayList<>();
     finalResults.addAll(aggregateResults.values());
     aggregateResults.clear();

@@ -39,7 +39,7 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream internalStart(OCommandContext context) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.start(context));
+    getPrev().ifPresent(x -> x.start(context).close(ctx));
     if (this.targetClass.equals(this.parentClass)) {
       return OExecutionStream.empty();
     }

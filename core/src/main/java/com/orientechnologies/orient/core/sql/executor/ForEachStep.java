@@ -34,7 +34,8 @@ public class ForEachStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
-    prev.get().start(ctx);
+    OExecutionStream prevStream = prev.get().start(ctx);
+    prevStream.close(ctx);
     Iterator<Object> iterator = init(ctx);
     while (iterator.hasNext()) {
       ctx.setVariable(loopVariable.getStringValue(), iterator.next());

@@ -28,6 +28,7 @@ public class CountStep extends AbstractExecutionStep {
       count++;
       prevResult.next(ctx);
     }
+    prevResult.close(ctx);
     OResultInternal resultRecord = new OResultInternal();
     resultRecord.setProperty("count", count);
     return OExecutionStream.singleton(resultRecord);

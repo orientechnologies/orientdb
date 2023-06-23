@@ -31,6 +31,7 @@ public class WhileMatchStep extends AbstractUnrollStep {
     while (block.hasNext(iContext)) {
       result.add(block.next(iContext));
     }
+    block.close(iContext);
     return result;
   }
 

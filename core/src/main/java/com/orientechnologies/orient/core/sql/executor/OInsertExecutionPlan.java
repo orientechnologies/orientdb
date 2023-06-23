@@ -10,7 +10,6 @@ import java.util.List;
 public class OInsertExecutionPlan extends OSelectExecutionPlan {
 
   private List<OResult> result = new ArrayList<>();
-  private int next = 0;
 
   public OInsertExecutionPlan(OCommandContext ctx) {
     super(ctx);
@@ -18,18 +17,12 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
 
   @Override
   public OExecutionStream start() {
-    if (next >= result.size()) {
-      return OExecutionStream.empty(); // empty
-    }
-
-    next = result.size();
     return OExecutionStream.resultIterator(result.iterator());
   }
 
   @Override
   public void reset(OCommandContext ctx) {
     result.clear();
-    next = 0;
     super.reset(ctx);
     executeInternal();
   }
@@ -39,6 +32,7 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
     while (nextBlock.hasNext(ctx)) {
       result.add(nextBlock.next(ctx));
     }
+    nextBlock.close(ctx);
   }
 
   @Override

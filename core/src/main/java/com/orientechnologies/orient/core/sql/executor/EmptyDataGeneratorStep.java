@@ -17,7 +17,7 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.start(ctx));
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     return new OProduceExecutionStream(this::create).limit(size);
   }
 

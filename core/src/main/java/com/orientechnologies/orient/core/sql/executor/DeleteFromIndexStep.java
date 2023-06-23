@@ -67,7 +67,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.start(ctx));
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     Set<Stream<ORawPair<Object, ORID>>> streams = init(condition);
     Stream<OExecutionStream> resultStreams =
         streams.stream()

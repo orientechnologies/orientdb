@@ -41,7 +41,7 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.start(ctx));
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
 
     Iterator fromIter = loadFrom();
 

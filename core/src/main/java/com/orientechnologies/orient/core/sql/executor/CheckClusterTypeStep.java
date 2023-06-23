@@ -39,7 +39,7 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStream internalStart(OCommandContext context) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.start(context));
+    getPrev().ifPresent(x -> x.start(context).close(ctx));
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) context.getDatabase();
 
     int clusterId;
