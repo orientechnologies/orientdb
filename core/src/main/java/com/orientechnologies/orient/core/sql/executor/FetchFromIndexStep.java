@@ -62,10 +62,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private long count = 0;
 
-  public FetchFromIndexStep(OIndex index, OCommandContext ctx, boolean profilingEnabled) {
-    this(index, null, null, true, ctx, profilingEnabled);
-  }
-
   public FetchFromIndexStep(
       IndexSearchDescriptor desc, boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
     this(
@@ -75,15 +71,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         orderAsc,
         ctx,
         profilingEnabled);
-  }
-
-  public FetchFromIndexStep(
-      OIndex index,
-      OBooleanExpression condition,
-      OBinaryCondition additionalRangeCondition,
-      OCommandContext ctx,
-      boolean profilingEnabled) {
-    this(index, condition, additionalRangeCondition, true, ctx, profilingEnabled);
   }
 
   public FetchFromIndexStep(
@@ -279,7 +266,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     OCollection toKey = indexKeyTo((OAndBlock) condition, additionalRangeCondition);
     boolean fromKeyIncluded = indexKeyFromIncluded((OAndBlock) condition, additionalRangeCondition);
     boolean toKeyIncluded = indexKeyToIncluded((OAndBlock) condition, additionalRangeCondition);
-    return init(
+    return multipleRange(
         index,
         fromKey,
         fromKeyIncluded,
@@ -313,7 +300,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return getStreamForNullKey(index);
   }
 
-  private static Set<Stream<ORawPair<Object, ORID>>> init(
+  private static Set<Stream<ORawPair<Object, ORID>>> multipleRange(
       OIndexInternal index,
       OCollection fromKey,
       boolean fromKeyIncluded,
