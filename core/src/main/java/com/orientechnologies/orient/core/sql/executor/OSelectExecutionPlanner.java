@@ -2689,6 +2689,8 @@ public class OSelectExecutionPlanner {
 
     descriptors.addAll(fullTextIndexDescriptors);
 
+    descriptors = removeGenericIndexes(descriptors, clazz);
+
     // remove the redundant descriptors (eg. if I have one on [a] and one on [a, b], the first one
     // is redundant, just discard it)
     descriptors = removePrefixIndexes(descriptors);
@@ -2719,6 +2721,47 @@ public class OSelectExecutionPlanner {
 
     // get the one that has more indexed fields
     return descriptors.isEmpty() ? null : descriptors.get(descriptors.size() - 1);
+  }
+
+  /**
+   * If between the index candidates there are for the same property target class index and super
+   * class index prefer the target class.
+   */
+  private List<IndexSearchDescriptor> removeGenericIndexes(
+      List<IndexSearchDescriptor> descriptors, OClass clazz) {
+    List<IndexSearchDescriptor> results = new ArrayList<>();
+    for (IndexSearchDescriptor desc : descriptors) {
+      IndexSearchDescriptor matching = null;
+      for (IndexSearchDescriptor result : results) {
+        if (isSameCondition(desc, result)) {
+          matching = result;
+          break;
+        }
+      }
+      if (matching != null) {
+        if (clazz.getName().equals(desc.getIndex().getDefinition().getClassName())) {
+          results.remove(matching);
+          results.add(desc);
+        }
+      } else {
+        results.add(desc);
+      }
+    }
+    return results;
+  }
+
+  private boolean isSameCondition(IndexSearchDescriptor item, IndexSearchDescriptor desc) {
+    List<OBooleanExpression> left = item.getKeyCondition().getSubBlocks();
+    List<OBooleanExpression> right = desc.getKeyCondition().getSubBlocks();
+    if (left.size() != right.size()) {
+      return false;
+    }
+    for (int i = 0; i < left.size(); i++) {
+      if (!left.get(i).equals(right.get(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private List<IndexSearchDescriptor> removePrefixIndexes(List<IndexSearchDescriptor> descriptors) {

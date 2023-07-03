@@ -1157,6 +1157,50 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
+  public void testFetchFromIndexHierarchy() {
+    String className = "testFetchFromIndexHierarchy";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    String classNameExt = "testFetchFromIndexHierarchyExt";
+    OClass clazzExt = db.getMetadata().getSchema().createClass(classNameExt, clazz);
+    clazzExt.createIndex(classNameExt + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 5; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+
+    for (int i = 5; i < 10; i++) {
+      ODocument doc = db.newInstance(classNameExt);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+
+    OResultSet result = db.query("select from " + classNameExt + " where name = 'name6'");
+    printExecutionPlan(result);
+
+    Assert.assertTrue(result.hasNext());
+    OResult next = result.next();
+    Assert.assertNotNull(next);
+
+    Assert.assertFalse(result.hasNext());
+
+    Optional<OExecutionPlan> p = result.getExecutionPlan();
+    Assert.assertTrue(p.isPresent());
+    OExecutionPlan p2 = p.get();
+    Assert.assertTrue(p2 instanceof OSelectExecutionPlan);
+    OSelectExecutionPlan plan = (OSelectExecutionPlan) p2;
+    Assert.assertEquals(FetchFromIndexStep.class, plan.getSteps().get(0).getClass());
+
+    Assert.assertEquals(
+        ((FetchFromIndexStep) plan.getSteps().get(0)).getIndexName(), classNameExt + ".name");
+    result.close();
+  }
+
+  @Test
   public void testFetchFromClassWithIndexes() {
     String className = "testFetchFromClassWithIndexes";
     OClass clazz = db.getMetadata().getSchema().createClass(className);

@@ -980,4 +980,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     ViewManager viewManager = sharedContext.getViewManager();
     viewManager.endUsingViewIndex(indexName);
   }
+
+  public String getIndexName() {
+    return indexName;
+  }
 }
