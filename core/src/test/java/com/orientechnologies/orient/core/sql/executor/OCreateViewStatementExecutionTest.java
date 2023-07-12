@@ -1,8 +1,9 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
@@ -17,17 +18,21 @@ import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCreateViewStatementExecutionTest {
-  static ODatabaseDocument db;
+  private static OrientDB context;
+  private static ODatabaseDocument db;
 
   @BeforeClass
   public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:OCreateViewStatementExecutionTest");
-    db.create();
+    context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    context.execute(
+        "create database OCreateViewStatementExecutionTest memory users(admin identified by 'adminpwd' role admin)");
+    db = context.open("OCreateViewStatementExecutionTest", "admin", "adminpwd");
   }
 
   @AfterClass
   public static void afterClass() {
     db.close();
+    context.close();
   }
 
   @Test
@@ -248,6 +253,53 @@ public class OCreateViewStatementExecutionTest {
     db.command("DELETE FROM " + className + " WHERE name = 'name3'");
 
     Thread.sleep(1000);
+    result = db.query("SELECT FROM " + viewName);
+    for (int i = 0; i < 9; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotEquals("name3", item.getProperty("name"));
+    }
+    result.close();
+  }
+
+  @Test
+  public void testUpdateDeleteIndex() throws InterruptedException {
+    String className = "testUpdateDeleteIndexClass";
+    String viewName = "testUpdateDeleteIndex";
+    db.createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("name", "name" + i);
+      elem.setProperty("surname", "surname" + i);
+      elem.save();
+    }
+
+    String statement =
+        "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    statement += "updateIntervalSeconds:1, ";
+    statement += "indexes: [{type:'NOTUNIQUE', properties:{name:'STRING'}}]}";
+
+    db.command(statement);
+
+    Thread.sleep(2000);
+
+    OResultSet result = db.query("SELECT FROM " + viewName);
+    Assert.assertEquals(10, result.stream().count());
+    result.close();
+
+    result = db.query("SELECT FROM " + viewName + " WHERE name = 'name3'");
+    Assert.assertTrue(
+        result.getExecutionPlan().get().prettyPrint(0, 0).contains("FETCH FROM INDEX"));
+    Assert.assertEquals(1, result.stream().count());
+
+    db.command("DELETE FROM " + className + " WHERE name = 'name3'");
+
+    Thread.sleep(2000);
+    result = db.query("SELECT FROM " + viewName + " WHERE name = 'name3'");
+    Assert.assertTrue(
+        result.getExecutionPlan().get().prettyPrint(0, 0).contains("FETCH FROM INDEX"));
+    Assert.assertEquals(0, result.stream().count());
     result = db.query("SELECT FROM " + viewName);
     for (int i = 0; i < 9; i++) {
       Assert.assertTrue(result.hasNext());
