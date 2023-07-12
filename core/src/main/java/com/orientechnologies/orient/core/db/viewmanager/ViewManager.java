@@ -411,6 +411,7 @@ public class ViewManager {
           db.commit();
           db.begin();
         }
+        iterationCount++;
       }
     }
     db.commit();
