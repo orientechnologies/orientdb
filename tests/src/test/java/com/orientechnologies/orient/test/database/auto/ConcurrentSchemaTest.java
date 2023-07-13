@@ -22,7 +22,6 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
 import com.orientechnologies.orient.test.TestFactory;
 import java.util.concurrent.Callable;
@@ -62,7 +61,7 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
           Assert.assertEquals(cls.getName(), clsName);
           Assert.assertTrue(database.getMetadata().getSchema().existsClass(clsName));
 
-          db.command(new OCommandSQL("select from " + clsName)).execute();
+          db.command("select from " + clsName).close();
 
           counter.incrementAndGet();
         } finally {

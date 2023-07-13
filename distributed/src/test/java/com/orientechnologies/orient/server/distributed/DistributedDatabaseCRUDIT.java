@@ -277,7 +277,7 @@ public final class DistributedDatabaseCRUDIT {
                   int k = 1;
                   for (; k <= 100 && update; k++) {
                     try {
-                      graph.command(new OCommandSQL(sql)).execute();
+                      graph.command(sql).close();
                       if (isException) {
                         // log("********** [" + id + "][" + k + "] Update success after distributed
                         // lock Exception");

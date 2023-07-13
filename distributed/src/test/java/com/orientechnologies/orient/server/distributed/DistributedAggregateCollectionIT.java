@@ -36,7 +36,7 @@ public class DistributedAggregateCollectionIT extends AbstractServerClusterTest 
     ODatabaseDocument db = orientDB.open(getDatabaseName(), "admin", "admin");
 
     try {
-      db.command(new OCommandSQL("INSERT into Item (name) values ('foo')")).execute();
+      db.command("INSERT into Item (name) values ('foo')").close();
 
       Iterable<ODocument> result =
           db.command(new OCommandSQL("select set(name) as names from Item")).execute();
@@ -46,8 +46,7 @@ public class DistributedAggregateCollectionIT extends AbstractServerClusterTest 
       Assert.assertEquals(
           Collections.singletonList("foo"), result.iterator().next().field("names"));
 
-      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this"))
-          .execute();
+      db.command("INSERT into Item (map) values ({'a':'b'}) return @this").close();
 
       result = db.command(new OCommandSQL("select map(map) as names from Item")).execute();
       Assert.assertEquals(

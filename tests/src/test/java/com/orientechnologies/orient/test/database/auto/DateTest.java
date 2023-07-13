@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import java.text.ParseException;
@@ -101,14 +100,15 @@ public class DateTest extends DocumentDBBaseTest {
   /** https://github.com/orientechnologies/orientjs/issues/48 */
   @Test
   public void testDateGregorianCalendar() throws ParseException {
-    database.command(new OCommandSQL("CREATE CLASS TimeTest EXTENDS V")).execute();
+    database.command("CREATE CLASS TimeTest EXTENDS V").close();
 
     final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     final Date date = df.parse("1200-11-11 00:00:00.000");
 
     database
-        .command(new OCommandSQL("CREATE VERTEX TimeTest SET firstname = ?, birthDate = ?"))
-        .execute("Robert", date);
+        .command("CREATE VERTEX TimeTest SET firstname = ?, birthDate = ?", "Robert", date)
+        .close();
+    ;
 
     final List<ODocument> result =
         database.query(

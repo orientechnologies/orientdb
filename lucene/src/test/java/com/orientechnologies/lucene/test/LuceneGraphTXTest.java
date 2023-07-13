@@ -21,8 +21,7 @@ package com.orientechnologies.lucene.test;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import java.util.Collection;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,26 +45,25 @@ public class LuceneGraphTXTest extends BaseLuceneTest {
 
     db.save(v);
 
-    Collection results =
-        db.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
-    Assert.assertEquals(results.size(), 1);
+    OResultSet results = db.command("select from City where name lucene 'London'");
+    Assert.assertEquals(results.stream().count(), 1);
 
     v.setProperty("name", "Berlin");
 
     v.save();
 
-    results = db.command(new OCommandSQL("select from City where name lucene 'Berlin'")).execute();
-    Assert.assertEquals(results.size(), 1);
+    results = db.command("select from City where name lucene 'Berlin'");
+    Assert.assertEquals(results.stream().count(), 1);
 
-    results = db.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
-    Assert.assertEquals(results.size(), 0);
+    results = db.command("select from City where name lucene 'London'");
+    Assert.assertEquals(results.stream().count(), 0);
 
     db.commit();
 
     // Assert After Commit
-    results = db.command(new OCommandSQL("select from City where name lucene 'Berlin'")).execute();
-    Assert.assertEquals(results.size(), 1);
-    results = db.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
-    Assert.assertEquals(results.size(), 0);
+    results = db.command("select from City where name lucene 'Berlin'");
+    Assert.assertEquals(results.stream().count(), 1);
+    results = db.command("select from City where name lucene 'London'");
+    Assert.assertEquals(results.stream().count(), 0);
   }
 }
