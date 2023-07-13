@@ -122,33 +122,20 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
       database.getMetadata().getSchema().reload();
     }
 
-    database.command(new OCommandSQL("CREATE CLASS MyTestClass")).execute();
-    database.command(new OCommandSQL("CREATE PROPERTY MyTestClass.keyField STRING")).execute();
-    database
-        .command(new OCommandSQL("ALTER PROPERTY MyTestClass.keyField MANDATORY true"))
-        .execute();
-    database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.keyField NOTNULL true")).execute();
-    database
-        .command(new OCommandSQL("CREATE PROPERTY MyTestClass.dateTimeField DATETIME"))
-        .execute();
-    database
-        .command(new OCommandSQL("ALTER PROPERTY MyTestClass.dateTimeField MANDATORY true"))
-        .execute();
-    database
-        .command(new OCommandSQL("ALTER PROPERTY MyTestClass.dateTimeField NOTNULL false"))
-        .execute();
-    database.command(new OCommandSQL("CREATE PROPERTY MyTestClass.stringField STRING")).execute();
-    database
-        .command(new OCommandSQL("ALTER PROPERTY MyTestClass.stringField MANDATORY true"))
-        .execute();
-    database
-        .command(new OCommandSQL("ALTER PROPERTY MyTestClass.stringField NOTNULL false"))
-        .execute();
+    database.command("CREATE CLASS MyTestClass").close();
+    database.command("CREATE PROPERTY MyTestClass.keyField STRING").close();
+    database.command("ALTER PROPERTY MyTestClass.keyField MANDATORY true").close();
+    database.command("ALTER PROPERTY MyTestClass.keyField NOTNULL true").close();
+    database.command("CREATE PROPERTY MyTestClass.dateTimeField DATETIME").close();
+    database.command("ALTER PROPERTY MyTestClass.dateTimeField MANDATORY true").close();
+    database.command("ALTER PROPERTY MyTestClass.dateTimeField NOTNULL false").close();
+    database.command("CREATE PROPERTY MyTestClass.stringField STRING").close();
+    database.command("ALTER PROPERTY MyTestClass.stringField MANDATORY true").close();
+    database.command("ALTER PROPERTY MyTestClass.stringField NOTNULL false").close();
     database
         .command(
-            new OCommandSQL(
-                "INSERT INTO MyTestClass (keyField,dateTimeField,stringField) VALUES (\"K1\",null,null)"))
-        .execute();
+            "INSERT INTO MyTestClass (keyField,dateTimeField,stringField) VALUES (\"K1\",null,null)")
+        .close();
     database.reload();
     database.getMetadata().reload();
     database.close();
@@ -243,7 +230,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "validationDisabledAdDatabaseLevel")
   public void dropSchemaForMandatoryNullableTest() throws ParseException {
-    database.command(new OCommandSQL("DROP CLASS MyTestClass")).execute();
+    database.command("DROP CLASS MyTestClass").close();
     database.getMetadata().reload();
   }
 

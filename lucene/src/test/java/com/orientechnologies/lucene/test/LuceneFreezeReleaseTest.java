@@ -7,9 +7,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.File;
-import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,22 +39,19 @@ public class LuceneFreezeReleaseTest {
 
     try {
 
-      Collection results =
-          db.command(new OCommandSQL("select from Person where name lucene 'John'")).execute();
-      Assert.assertEquals(1, results.size());
+      OResultSet results = db.query("select from Person where name lucene 'John'");
+      Assert.assertEquals(1, results.stream().count());
       db.freeze();
 
-      results =
-          db.command(new OCommandSQL("select from Person where name lucene 'John'")).execute();
-      Assert.assertEquals(1, results.size());
+      results = db.query("select from Person where name lucene 'John'");
+      Assert.assertEquals(1, results.stream().count());
 
       db.release();
 
       db.save(new ODocument("Person").field("name", "John"));
 
-      results =
-          db.command(new OCommandSQL("select from Person where name lucene 'John'")).execute();
-      Assert.assertEquals(2, results.size());
+      results = db.query("select from Person where name lucene 'John'");
+      Assert.assertEquals(2, results.stream().count());
 
     } finally {
 
@@ -82,26 +78,23 @@ public class LuceneFreezeReleaseTest {
 
     try {
 
-      Collection results =
-          db.command(new OCommandSQL("select from Person where name lucene 'John'")).execute();
-      Assert.assertEquals(1, results.size());
+      OResultSet results = db.query("select from Person where name lucene 'John'");
+      Assert.assertEquals(1, results.stream().count());
 
       db.freeze();
 
       db.freeze();
 
-      results =
-          db.command(new OCommandSQL("select from Person where name lucene 'John'")).execute();
-      Assert.assertEquals(1, results.size());
+      results = db.query("select from Person where name lucene 'John'");
+      Assert.assertEquals(1, results.stream().count());
 
       db.release();
       db.release();
 
       db.save(new ODocument("Person").field("name", "John"));
 
-      results =
-          db.command(new OCommandSQL("select from Person where name lucene 'John'")).execute();
-      Assert.assertEquals(2, results.size());
+      results = db.query("select from Person where name lucene 'John'");
+      Assert.assertEquals(2, results.stream().count());
 
     } finally {
       db.drop();

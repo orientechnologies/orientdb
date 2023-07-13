@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -124,12 +123,10 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
   @AfterMethod
   public void afterMethod() throws Exception {
-    //noinspection deprecation
-    database.command(new OCommandSQL("delete from classIndexManagerTestClass")).execute();
-    //noinspection deprecation
-    database.command(new OCommandSQL("delete from classIndexManagerTestClassTwo")).execute();
-    //noinspection deprecation
-    database.command(new OCommandSQL("delete from classIndexManagerTestSuperClass")).execute();
+    database.command("delete from classIndexManagerTestClass").close();
+    ;
+    database.command("delete from classIndexManagerTestClassTwo").close();
+    database.command("delete from classIndexManagerTestSuperClass").close();
 
     if (!database.getStorage().isRemote()) {
       Assert.assertEquals(

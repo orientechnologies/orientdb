@@ -23,8 +23,8 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.HashMap;
 import java.util.List;
@@ -46,50 +46,34 @@ public class LuceneMiscTest extends BaseLuceneTest {
     db.command("insert into Test set attr1='foo', attr2='bar'").close();
     db.command("insert into Test set attr1='bar', attr2='foo'").close();
 
-    List<ODocument> results =
-        db.command(
-                new OCommandSQL(
-                    "select from Test where attr1 lucene 'foo*' OR attr2 lucene 'foo*'"))
-            .execute();
-    Assert.assertEquals(2, results.size());
+    OResultSet results =
+        db.command("select from Test where attr1 lucene 'foo*' OR attr2 lucene 'foo*'");
+    Assert.assertEquals(2, results.stream().count());
 
-    results =
-        db.command(
-                new OCommandSQL(
-                    "select from Test where attr1 lucene 'bar*' OR attr2 lucene 'bar*'"))
-            .execute();
+    results = db.command("select from Test where attr1 lucene 'bar*' OR attr2 lucene 'bar*'");
 
-    Assert.assertEquals(2, results.size());
+    Assert.assertEquals(2, results.stream().count());
 
-    results =
-        db.command(
-                new OCommandSQL(
-                    "select from Test where attr1 lucene 'foo*' AND attr2 lucene 'bar*'"))
-            .execute();
+    results = db.command("select from Test where attr1 lucene 'foo*' AND attr2 lucene 'bar*'");
 
-    Assert.assertEquals(1, results.size());
+    Assert.assertEquals(1, results.stream().count());
 
-    results =
-        db.command(
-                new OCommandSQL(
-                    "select from Test where attr1 lucene 'bar*' AND attr2 lucene 'foo*'"))
-            .execute();
+    results = db.command("select from Test where attr1 lucene 'bar*' AND attr2 lucene 'foo*'");
 
-    Assert.assertEquals(1, results.size());
+    Assert.assertEquals(1, results.stream().count());
   }
 
   // TODO Re-enable when removed check syntax on ODB
   @Test
   public void testSubLucene() {
 
-    db.command(new OCommandSQL("create class Person extends V")).execute();
+    db.command("create class Person extends V").close();
 
-    db.command(new OCommandSQL("create property Person.name string")).execute();
+    db.command("create property Person.name string").close();
 
-    db.command(new OCommandSQL("create index Person.name on Person (name) fulltext engine lucene"))
-        .execute();
+    db.command("create index Person.name on Person (name) fulltext engine lucene").close();
 
-    db.command(new OCommandSQL("insert into Person set name='Enrico', age=18")).execute();
+    db.command("insert into Person set name='Enrico', age=18").close();
 
     OSQLSynchQuery query =
         new OSQLSynchQuery(
@@ -108,20 +92,19 @@ public class LuceneMiscTest extends BaseLuceneTest {
   @Test
   public void testNamedParams() {
 
-    db.command(new OCommandSQL("create class Test extends V")).execute();
+    db.command("create class Test extends V").close();
+    ;
 
-    db.command(new OCommandSQL("create property Test.attr1 string")).execute();
+    db.command("create property Test.attr1 string").close();
 
-    db.command(new OCommandSQL("create index Test.attr1 on Test (attr1) fulltext engine lucene"))
-        .execute();
+    db.command("create index Test.attr1 on Test (attr1) fulltext engine lucene").close();
 
-    db.command(new OCommandSQL("insert into Test set attr1='foo', attr2='bar'")).execute();
+    db.command("insert into Test set attr1='foo', attr2='bar'").close();
 
-    OSQLSynchQuery query = new OSQLSynchQuery("select from Test where attr1 lucene :name");
     Map params = new HashMap();
     params.put("name", "FOO or");
-    List results = db.command(query).execute(params);
-    Assert.assertEquals(1, results.size());
+    OResultSet results = db.query("select from Test where attr1 lucene :name", params);
+    Assert.assertEquals(1, results.stream().count());
   }
 
   @Test
@@ -175,10 +158,9 @@ public class LuceneMiscTest extends BaseLuceneTest {
 
     db.command("insert into Test set _attr1='anyPerson', attr2='bar'").close();
 
-    OSQLSynchQuery query = new OSQLSynchQuery("select from Test where _attr1 lucene :name");
     Map params = new HashMap();
     params.put("name", "anyPerson");
-    List results = db.command(query).execute(params);
-    Assert.assertEquals(results.size(), 1);
+    OResultSet results = db.command("select from Test where _attr1 lucene :name", params);
+    Assert.assertEquals(results.stream().count(), 1);
   }
 }

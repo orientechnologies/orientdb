@@ -141,15 +141,15 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
     }
     database.open("admin", "admin");
     if (database.getMetadata().getSchema().existsClass("Company"))
-      database.command(new OCommandSQL("delete from Company")).execute();
+      database.command("delete from Company").close();
     if (database.getMetadata().getSchema().existsClass("Account"))
-      database.command(new OCommandSQL("delete from Account")).execute();
+      database.command("delete from Account").close();
     if (database.getMetadata().getSchema().existsClass("JavaComplexTestClass"))
-      database.command(new OCommandSQL("delete from JavaComplexTestClass")).execute();
+      database.command("delete from JavaComplexTestClass").close();
     if (database.getMetadata().getSchema().existsClass("Profile"))
-      database.command(new OCommandSQL("delete from Profile")).execute();
+      database.command("delete from Profile").close();
     if (database.getMetadata().getSchema().existsClass("IdentityChild"))
-      database.command(new OCommandSQL("delete from IdentityChild")).execute();
+      database.command("delete from IdentityChild").close();
     database.close();
   }
 

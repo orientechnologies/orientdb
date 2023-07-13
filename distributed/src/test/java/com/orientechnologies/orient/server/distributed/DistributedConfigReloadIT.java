@@ -155,7 +155,7 @@ public final class DistributedConfigReloadIT {
                 String sql = "SELECT FROM " + className;
                 int deleteErrorCounter = 0;
                 try {
-                  graph.command(new OCommandSQL(sql)).execute();
+                  graph.command(sql).close();
                   Iterable<OVertex> vtxs = graph.command(new OCommandSQL(sql)).execute();
                   for (OVertex vtx : vtxs) {
                     boolean needRetry = true;

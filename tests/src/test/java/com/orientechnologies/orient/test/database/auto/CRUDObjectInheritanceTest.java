@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
@@ -58,7 +57,7 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
         .getEntityManager()
         .registerEntityClasses("com.orientechnologies.orient.test.domain.business");
 
-    database.command(new OCommandSQL("delete from Company")).execute();
+    database.command("delete from Company").close();
 
     startRecordNumber = database.countClass("Company");
 
