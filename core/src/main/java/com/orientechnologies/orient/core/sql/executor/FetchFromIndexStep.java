@@ -9,9 +9,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
-import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -105,10 +103,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this.additionalRangeCondition = additionalRangeCondition;
     this.orderAsc = orderAsc;
 
-    OSharedContext sharedContext =
-        ((ODatabaseDocumentInternal) ctx.getDatabase()).getSharedContext();
-    ViewManager viewManager = sharedContext.getViewManager();
-    viewManager.startUsingViewIndex(indexName);
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+    database.queryStartUsingViewIndex(indexName);
   }
 
   private FetchFromIndexStep(
@@ -123,11 +119,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this.condition = condition;
     this.additionalRangeCondition = additionalRangeCondition;
     this.orderAsc = orderAsc;
-
-    OSharedContext sharedContext =
-        ((ODatabaseDocumentInternal) ctx.getDatabase()).getSharedContext();
-    ViewManager viewManager = sharedContext.getViewManager();
-    viewManager.startUsingViewIndex(indexName);
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+    database.queryStartUsingViewIndex(indexName);
   }
 
   @Override
@@ -975,10 +968,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     super.close();
 
     closeStreams();
-    OSharedContext sharedContext =
-        ((ODatabaseDocumentInternal) ctx.getDatabase()).getSharedContext();
-    ViewManager viewManager = sharedContext.getViewManager();
-    viewManager.endUsingViewIndex(indexName);
   }
 
   public String getIndexName() {

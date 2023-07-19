@@ -23,12 +23,12 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.OQueryDatabaseState;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -349,9 +349,9 @@ public class OClientConnection {
   private List<String> getActiveQueries(ODatabaseDocumentInternal database) {
     try {
       List<String> result = new ArrayList<>();
-      Map<String, OResultSet> queries = database.getActiveQueries();
-      for (OResultSet oResultSet : queries.values()) {
-        Optional<OExecutionPlan> plan = oResultSet.getExecutionPlan();
+      Map<String, OQueryDatabaseState> queries = database.getActiveQueries();
+      for (OQueryDatabaseState oResultSet : queries.values()) {
+        Optional<OExecutionPlan> plan = oResultSet.getResultSet().getExecutionPlan();
         if (!plan.isPresent()) {
           continue;
         }

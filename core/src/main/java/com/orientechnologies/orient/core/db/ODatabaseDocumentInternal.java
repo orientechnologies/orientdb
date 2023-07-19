@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.db.document.OQueryDatabaseState;
 import com.orientechnologies.orient.core.db.document.RecordReader;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -160,7 +161,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     throw new UnsupportedOperationException();
   }
 
-  default Map<String, OResultSet> getActiveQueries() {
+  default Map<String, OQueryDatabaseState> getActiveQueries() {
     throw new UnsupportedOperationException();
   }
 
@@ -293,4 +294,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   default void startEsclusiveMetadataChange() {}
 
   default void endEsclusiveMetadataChange() {}
+
+  default void queryStartUsingViewCluster(int cluster) {}
+
+  default void queryStartUsingViewIndex(String index) {}
 }

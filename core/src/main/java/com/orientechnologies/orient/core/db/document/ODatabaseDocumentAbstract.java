@@ -105,7 +105,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   private boolean prefetchRecords;
 
-  protected Map<String, OResultSet> activeQueries = new ConcurrentHashMap<>();
+  protected Map<String, OQueryDatabaseState> activeQueries = new ConcurrentHashMap<>();
+  protected LinkedList<OQueryDatabaseState> queryState = new LinkedList<>();
   private Map<UUID, OBonsaiCollectionPointer> collectionsChanges;
 
   // database stats!
@@ -1976,7 +1977,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return addEdgeInternal(from, to, iClassName, true);
   }
 
-  public synchronized void queryStarted(String id, OResultSet rs) {
+  public synchronized void queryStarted(String id, OQueryDatabaseState state) {
     if (this.activeQueries.size() > 1 && this.activeQueries.size() % 10 == 0) {
       StringBuilder msg = new StringBuilder();
       msg.append("This database instance has ");
@@ -1986,19 +1987,20 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       OLogManager.instance().warn(this, msg.toString(), null);
       if (OLogManager.instance().isDebugEnabled()) {
         activeQueries.values().stream()
-            .map(pendingQuery -> pendingQuery.getExecutionPlan())
+            .map(pendingQuery -> pendingQuery.getResultSet().getExecutionPlan())
             .filter(plan -> plan != null)
             .forEach(plan -> OLogManager.instance().debug(this, plan.toString()));
       }
     }
-    this.activeQueries.put(id, rs);
+    this.activeQueries.put(id, state);
 
-    getListeners().forEach((it) -> it.onCommandStart(this, rs));
+    getListeners().forEach((it) -> it.onCommandStart(this, state.getResultSet()));
   }
 
   public void queryClosed(String id) {
-    OResultSet removed = this.activeQueries.remove(id);
-    getListeners().forEach((it) -> it.onCommandEnd(this, removed));
+    OQueryDatabaseState removed = this.activeQueries.remove(id);
+    getListeners().forEach((it) -> it.onCommandEnd(this, removed.getResultSet()));
+    removed.closeInternal(this);
   }
 
   protected synchronized void closeActiveQueries() {
@@ -2007,16 +2009,21 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           .values()
           .iterator()
           .next()
-          .close(); // the query automatically unregisters itself
+          .close(this); // the query automatically unregisters itself
     }
   }
 
-  public Map<String, OResultSet> getActiveQueries() {
+  public Map<String, OQueryDatabaseState> getActiveQueries() {
     return activeQueries;
   }
 
   public OResultSet getActiveQuery(String id) {
-    return activeQueries.get(id);
+    OQueryDatabaseState state = activeQueries.get(id);
+    if (state != null) {
+      return state.getResultSet();
+    } else {
+      return null;
+    }
   }
 
   @Override

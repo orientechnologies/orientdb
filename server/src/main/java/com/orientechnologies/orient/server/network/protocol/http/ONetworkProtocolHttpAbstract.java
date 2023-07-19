@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.OQueryDatabaseState;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -35,7 +36,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
@@ -291,9 +291,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
     }
     try {
 
-      Map<String, OResultSet> queries = database.getActiveQueries();
+      Map<String, OQueryDatabaseState> queries = database.getActiveQueries();
       return queries.values().stream()
-          .map(x -> x.getExecutionPlan())
+          .map(x -> x.getResultSet().getExecutionPlan())
           .filter(x -> (x.isPresent() && x.get() instanceof OInternalExecutionPlan))
           .map(OInternalExecutionPlan.class::cast)
           .map(x -> x.getStatement())

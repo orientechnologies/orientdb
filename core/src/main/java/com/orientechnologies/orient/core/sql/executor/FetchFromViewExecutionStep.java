@@ -2,8 +2,6 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
-import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import java.util.ArrayList;
@@ -24,16 +22,14 @@ public class FetchFromViewExecutionStep extends FetchFromClassExecutionStep {
       boolean profilingEnabled) {
     super(className, clusters, planningInfo, ctx, ridOrder, profilingEnabled);
 
-    OSharedContextEmbedded sharedContext =
-        (OSharedContextEmbedded) ((ODatabaseDocumentInternal) ctx.getDatabase()).getSharedContext();
-    ViewManager viewManager = sharedContext.getViewManager();
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     OView view = loadClassFromSchema(className, ctx);
     int[] classClusters = view.getPolymorphicClusterIds();
     for (int clusterId : classClusters) {
       String clusterName = ctx.getDatabase().getClusterNameById(clusterId);
       if (clusters == null || clusters.contains(clusterName)) {
         usedClusters.add(clusterId);
-        viewManager.startUsingViewCluster(clusterId);
+        database.queryStartUsingViewCluster(clusterId);
       }
     }
   }
@@ -41,10 +37,6 @@ public class FetchFromViewExecutionStep extends FetchFromClassExecutionStep {
   @Override
   public void close() {
     super.close();
-    OSharedContextEmbedded sharedContext =
-        (OSharedContextEmbedded) ((ODatabaseDocumentInternal) ctx.getDatabase()).getSharedContext();
-    ViewManager viewManager = sharedContext.getViewManager();
-    usedClusters.forEach(x -> viewManager.endUsingViewCluster(x));
   }
 
   protected OView loadClassFromSchema(String className, OCommandContext ctx) {

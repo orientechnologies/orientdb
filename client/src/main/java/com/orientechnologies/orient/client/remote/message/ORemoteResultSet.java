@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.orient.client.remote.db.document.ODatabaseDocumentRemote;
+import com.orientechnologies.orient.core.db.document.OQueryDatabaseState;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -34,7 +35,7 @@ public class ORemoteResultSet implements OResultSet {
     this.queryStats = queryStats;
     this.hasNextPage = hasNextPage;
     if (db != null) {
-      db.queryStarted(queryId, this);
+      db.queryStarted(queryId, new OQueryDatabaseState(this));
       for (OResultInternal result : currentPage) {
         result.bindToCache(db);
       }
