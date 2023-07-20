@@ -3,12 +3,10 @@ package com.orientechnologies.orient.server.distributed.impl.metadata;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -111,10 +109,6 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
 
     sendCommand(database, createIndexDDL);
 
-    ORecordInternal.setIdentity(
-        getDocument(),
-        new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId()));
-
     if (progressListener != null) progressListener.onCompletition(this, true);
 
     reload();
@@ -139,9 +133,6 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
     String dropIndexDDL = "DROP INDEX `" + iName + "`";
 
     sendCommand(database, dropIndexDDL);
-    ORecordInternal.setIdentity(
-        getDocument(),
-        new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId()));
 
     reload();
   }

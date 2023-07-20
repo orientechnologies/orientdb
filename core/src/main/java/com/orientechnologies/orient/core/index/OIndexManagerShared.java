@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -83,12 +84,11 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   protected String manualClusterName = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
   protected final AtomicInteger writeLockNesting = new AtomicInteger();
   protected final ReadWriteLock lock = new ReentrantReadWriteLock();
-  protected ODocument document;
+  protected ORID identity;
 
   public OIndexManagerShared(OStorage storage) {
     super();
     this.storage = storage;
-    this.document = new ODocument().setTrackingChanges(false);
   }
 
   public void load(ODatabaseDocumentInternal database) {
@@ -98,12 +98,11 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         if (database.getStorageInfo().getConfiguration().getIndexMgrRecordId() == null)
           // @COMPATIBILITY: CREATE THE INDEX MGR
           create(database);
-
+        identity =
+            new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
         // RELOAD IT
-        ((ORecordId) document.getIdentity())
-            .fromString(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
-        database.reload(document, "*:-1 index:0", true);
-        fromStream();
+        ODocument document = database.load(identity, "*:-1 index:0", true);
+        fromStream(document);
       } finally {
         releaseExclusiveLock();
       }
@@ -113,10 +112,9 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   public void reload() {
     acquireExclusiveLock();
     try {
-      ((ORecordId) document.getIdentity())
-          .fromString(getStorage().getConfiguration().getIndexMgrRecordId());
-      document.reload();
-      fromStream();
+      ODatabaseDocumentInternal database = getDatabase();
+      ODocument document = database.load(identity, "*:-1 index:0", true);
+      fromStream(document);
     } finally {
       releaseExclusiveLock();
     }
@@ -190,22 +188,8 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   public void create(ODatabaseDocumentInternal database) {
     acquireExclusiveLock();
     try {
-      try {
-        database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      } catch (Exception e) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Error during storing of index manager metadata,"
-                    + " will try to allocate new document to store index manager metadata",
-                e);
-
-        // RESET RID TO ALLOCATE A NEW ONE
-        if (ORecordId.isPersistent(document.getIdentity().getClusterPosition())) {
-          document.getIdentity().reset();
-          database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
-        }
-      }
+      ODocument document = database.save(new ODocument(), OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      identity = document.getIdentity();
       database.getStorage().setIndexMgrRecordId(document.getIdentity().toString());
     } finally {
       releaseExclusiveLock();
@@ -279,15 +263,6 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   public void close() {
     indexes.clear();
     classPropertyIndex.clear();
-  }
-
-  void setDirty() {
-    acquireExclusiveLock();
-    try {
-      document.setDirty();
-    } finally {
-      releaseExclusiveLock();
-    }
   }
 
   public Set<OIndex> getClassInvolvedIndexes(
@@ -429,7 +404,6 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     try {
       if (val == 0 && database != null) {
         if (save) {
-          document.setDirty();
           OScenarioThreadLocal.executeAsDistributed(
               () -> {
                 internalSave();
@@ -845,6 +819,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   public ODocument toStream() {
     internalAcquireExclusiveLock();
     try {
+      ODocument document = new ODocument(identity);
       final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
 
       for (final OIndex i : this.indexes.values()) {
@@ -866,10 +841,6 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       if (recreateIndexesThread != null && recreateIndexesThread.isAlive())
         // BUILDING ALREADY IN PROGRESS
         return;
-
-      document =
-          database.load(
-              new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId()));
 
       Runnable recreateIndexesTask = new ORecreateIndexesTask(this, database.getSharedContext());
       recreateIndexesThread = new Thread(recreateIndexesTask, "OrientDB rebuild indexes");
@@ -916,7 +887,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     return false;
   }
 
-  protected void fromStream() {
+  protected void fromStream(ODocument document) {
     internalAcquireExclusiveLock();
     try {
       final Map<String, OIndex> oldIndexes = new HashMap<>(indexes);
@@ -1072,7 +1043,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   public ODocument getDocument() {
-    return document;
+    return toStream();
   }
 
   private void internalSave() {
@@ -1080,7 +1051,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     for (int retry = 0; retry < 10; retry++)
       try {
 
-        toStream();
+        ODocument document = toStream();
         document.save();
         saved = true;
         break;
@@ -1088,7 +1059,6 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       } catch (OConcurrentModificationException e) {
         OLogManager.instance()
             .debug(this, "concurrent modification while saving index manager configuration", e);
-        document.reload(null, true);
       }
 
     if (!saved)

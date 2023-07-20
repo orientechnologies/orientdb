@@ -178,15 +178,14 @@ public class OIndexFullText extends OIndexMultiValues {
 
   @Override
   public ODocument updateConfiguration() {
-    super.updateConfiguration();
-    return ((FullTextIndexConfiguration) configuration)
-        .updateFullTextIndexConfiguration(
-            separatorChars, ignoreChars, stopWords, minWordLength, indexRadix);
-  }
+    ODocument document = super.updateConfiguration();
+    document.field(CONFIG_SEPARATOR_CHARS, separatorChars);
+    document.field(CONFIG_IGNORE_CHARS, ignoreChars);
+    document.field(CONFIG_STOP_WORDS, stopWords);
+    document.field(CONFIG_MIN_WORD_LEN, minWordLength);
+    document.field(CONFIG_INDEX_RADIX, indexRadix);
 
-  @Override
-  protected IndexConfiguration indexConfigurationInstance(ODocument document) {
-    return new FullTextIndexConfiguration(document);
+    return document;
   }
 
   public boolean canBeUsedInEqualityOperators() {
@@ -280,26 +279,5 @@ public class OIndexFullText extends OIndexMultiValues {
     }
 
     return result;
-  }
-
-  private static final class FullTextIndexConfiguration extends IndexConfiguration {
-    private FullTextIndexConfiguration(ODocument document) {
-      super(document);
-    }
-
-    private synchronized ODocument updateFullTextIndexConfiguration(
-        String separatorChars,
-        String ignoreChars,
-        Set<String> stopWords,
-        int minWordLength,
-        boolean indexRadix) {
-      document.field(CONFIG_SEPARATOR_CHARS, separatorChars);
-      document.field(CONFIG_IGNORE_CHARS, ignoreChars);
-      document.field(CONFIG_STOP_WORDS, stopWords);
-      document.field(CONFIG_MIN_WORD_LEN, minWordLength);
-      document.field(CONFIG_INDEX_RADIX, indexRadix);
-
-      return document;
-    }
   }
 }

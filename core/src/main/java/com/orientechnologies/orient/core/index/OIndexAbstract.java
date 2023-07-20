@@ -86,7 +86,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
   private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
   private final AtomicLong rebuildVersion = new AtomicLong();
   private final int version;
-  protected volatile IndexConfiguration configuration;
   protected volatile String valueContainerAlgorithm;
 
   protected volatile int indexId = -1;
@@ -218,7 +217,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     final OBinarySerializer valueSerializer = determineValueSerializer();
     acquireExclusiveLock();
     try {
-      configuration = indexConfigurationInstance(new ODocument().setTrackingChanges(false));
       Set<String> clustersToIndex = indexMetadata.getClustersToIndex();
       this.indexDefinition = indexMetadata.getIndexDefinition();
 
@@ -278,7 +276,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public boolean loadFromConfiguration(final ODocument config) {
     acquireExclusiveLock();
     try {
-      configuration = indexConfigurationInstance(config);
       clustersToIndex.clear();
 
       final OIndexMetadata indexMetadata = loadMetadata(config);
@@ -490,7 +487,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         OLogManager.instance().error(this, "Error during index '%s' delete", e, name);
       }
 
-      OIndexMetadata indexMetadata = this.configuration.getIndexMetadata(this);
+      OIndexMetadata indexMetadata = this.loadMetadata(updateConfiguration());
       indexId =
           storage.addIndexEngine(
               indexMetadata, determineValueSerializer(), version, engineProperties);
@@ -769,11 +766,29 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   public ODocument updateConfiguration() {
-    configuration.updateConfiguration(
-        type, name, version, indexDefinition, clustersToIndex, algorithm, valueContainerAlgorithm);
-    if (metadata != null)
-      configuration.document.field(OIndexInternal.METADATA, metadata, OType.EMBEDDED);
-    return configuration.getDocument();
+    ODocument document = new ODocument();
+    document.field(OIndexInternal.CONFIG_TYPE, type);
+    document.field(OIndexInternal.CONFIG_NAME, name);
+    document.field(OIndexInternal.INDEX_VERSION, version);
+
+    if (indexDefinition != null) {
+
+      final ODocument indexDefDocument = indexDefinition.toStream();
+      if (!indexDefDocument.hasOwners()) ODocumentInternal.addOwner(indexDefDocument, document);
+
+      document.field(OIndexInternal.INDEX_DEFINITION, indexDefDocument, OType.EMBEDDED);
+      document.field(OIndexInternal.INDEX_DEFINITION_CLASS, indexDefinition.getClass().getName());
+    } else {
+      document.removeField(OIndexInternal.INDEX_DEFINITION);
+      document.removeField(OIndexInternal.INDEX_DEFINITION_CLASS);
+    }
+
+    document.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
+    document.field(ALGORITHM, algorithm);
+    document.field(VALUE_CONTAINER_ALGORITHM, valueContainerAlgorithm);
+    if (metadata != null) document.field(OIndexInternal.METADATA, metadata, OType.EMBEDDED);
+
+    return document;
   }
 
   public void addTxOperation(IndexTxSnapshot snapshots, final OTransactionIndexChanges changes) {
@@ -843,7 +858,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public void postCommit(IndexTxSnapshot snapshots) {}
 
   public ODocument getConfiguration() {
-    return configuration.getDocument();
+    return updateConfiguration();
   }
 
   @Override
@@ -1105,58 +1120,9 @@ public abstract class OIndexAbstract implements OIndexInternal {
       }
   }
 
-  IndexConfiguration indexConfigurationInstance(final ODocument document) {
-    return new IndexConfiguration(document);
-  }
-
   public static final class IndexTxSnapshot {
     public Map<Object, Object> indexSnapshot = new HashMap<>();
     public boolean clear = false;
-  }
-
-  protected static class IndexConfiguration {
-    protected final ODocument document;
-
-    public IndexConfiguration(ODocument document) {
-      this.document = document;
-    }
-
-    private ODocument getDocument() {
-      return document;
-    }
-
-    public OIndexMetadata getIndexMetadata(OIndexAbstract index) {
-      return index.loadMetadata(document);
-    }
-
-    private synchronized void updateConfiguration(
-        String type,
-        String name,
-        int version,
-        OIndexDefinition indexDefinition,
-        Set<String> clustersToIndex,
-        String algorithm,
-        String valueContainerAlgorithm) {
-      document.field(OIndexInternal.CONFIG_TYPE, type);
-      document.field(OIndexInternal.CONFIG_NAME, name);
-      document.field(OIndexInternal.INDEX_VERSION, version);
-
-      if (indexDefinition != null) {
-
-        final ODocument indexDefDocument = indexDefinition.toStream();
-        if (!indexDefDocument.hasOwners()) ODocumentInternal.addOwner(indexDefDocument, document);
-
-        document.field(OIndexInternal.INDEX_DEFINITION, indexDefDocument, OType.EMBEDDED);
-        document.field(OIndexInternal.INDEX_DEFINITION_CLASS, indexDefinition.getClass().getName());
-      } else {
-        document.removeField(OIndexInternal.INDEX_DEFINITION);
-        document.removeField(OIndexInternal.INDEX_DEFINITION_CLASS);
-      }
-
-      document.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
-      document.field(ALGORITHM, algorithm);
-      document.field(VALUE_CONTAINER_ALGORITHM, valueContainerAlgorithm);
-    }
   }
 
   public static void manualIndexesWarning() {

@@ -37,7 +37,7 @@ public class ORecreateIndexesTask implements Runnable {
       indexManager.acquireExclusiveLock();
       try {
         final Collection<ODocument> knownIndexes =
-            indexManager.document.field(OIndexManagerShared.CONFIG_INDEXES);
+            indexManager.getDocument().field(OIndexManagerShared.CONFIG_INDEXES);
         if (knownIndexes == null) {
           OLogManager.instance().warn(this, "List of indexes is empty");
           indexesToRebuild = Collections.emptyList();
@@ -163,8 +163,6 @@ public class ORecreateIndexesTask implements Runnable {
 
       index.rebuild(new OIndexRebuildOutputListener(index));
 
-      indexManager.setDirty();
-
       ok++;
 
       OLogManager.instance()
@@ -188,7 +186,6 @@ public class ORecreateIndexesTask implements Runnable {
       ODocument indexDocument, OIndexInternal index, ODatabaseDocumentEmbedded database) {
     if (index.loadFromConfiguration(indexDocument)) {
       indexManager.addIndexInternal(index);
-      indexManager.setDirty();
 
       ok++;
       OLogManager.instance().info(this, "Index '%s' was added in DB index list", index.getName());
