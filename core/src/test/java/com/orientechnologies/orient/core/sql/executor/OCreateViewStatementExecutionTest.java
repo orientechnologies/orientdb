@@ -288,7 +288,7 @@ public class OCreateViewStatementExecutionTest {
     db.command(statement);
 
     Thread.sleep(2000);
-
+    db.getLocalCache().clear();
     OResultSet result = db.query("SELECT FROM " + viewName);
     Assert.assertEquals(10, result.stream().count());
     result.close();
@@ -301,6 +301,7 @@ public class OCreateViewStatementExecutionTest {
     db.command("DELETE FROM " + className + " WHERE name = 'name3'").close();
 
     Thread.sleep(2000);
+    db.getLocalCache().clear();
     result = db.query("SELECT FROM " + viewName + " WHERE name = 'name3'");
     Assert.assertTrue(
         result.getExecutionPlan().get().prettyPrint(0, 0).contains("FETCH FROM INDEX"));
@@ -335,6 +336,7 @@ public class OCreateViewStatementExecutionTest {
     db.command(statement);
 
     Thread.sleep(2000);
+    db.getLocalCache().clear();
     OResultSet result = db.query("SELECT FROM " + viewName);
     Assert.assertEquals(10, result.stream().count());
     result.close();
@@ -349,6 +351,7 @@ public class OCreateViewStatementExecutionTest {
     db.command("update " + className + " set name='name33' WHERE name = 'name3'").close();
 
     Thread.sleep(4000);
+    db.getLocalCache().clear();
     db.getLocalCache().clear();
 
     for (String index : indexes) {
