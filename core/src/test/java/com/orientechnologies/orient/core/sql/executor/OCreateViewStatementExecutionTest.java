@@ -1,15 +1,20 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.record.OElement;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -293,7 +298,7 @@ public class OCreateViewStatementExecutionTest {
         result.getExecutionPlan().get().prettyPrint(0, 0).contains("FETCH FROM INDEX"));
     Assert.assertEquals(1, result.stream().count());
 
-    db.command("DELETE FROM " + className + " WHERE name = 'name3'");
+    db.command("DELETE FROM " + className + " WHERE name = 'name3'").close();
 
     Thread.sleep(2000);
     result = db.query("SELECT FROM " + viewName + " WHERE name = 'name3'");
@@ -306,6 +311,65 @@ public class OCreateViewStatementExecutionTest {
       OResult item = result.next();
       Assert.assertNotEquals("name3", item.getProperty("name"));
     }
+    result.close();
+  }
+
+  @Test
+  public void testViewRefreshIndexUnique() throws InterruptedException {
+    String className = "testViewRefreshIndexUniqueClass";
+    String viewName = "testViewRefreshIndexUnique";
+    db.createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("name", "name" + i);
+      elem.setProperty("surname", "surname" + i);
+      elem.save();
+    }
+
+    String statement =
+        "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    statement += "updateIntervalSeconds:1, ";
+    statement += "indexes: [{type:'UNIQUE', properties:{name:'STRING'}}]}";
+
+    db.command(statement);
+
+    Thread.sleep(2000);
+    OResultSet result = db.query("SELECT FROM " + viewName);
+    Assert.assertEquals(10, result.stream().count());
+    result.close();
+    Set<String> indexes = db.getMetadata().getSchema().getView(viewName).getActiveIndexNames();
+    assertEquals(indexes.size(), 1);
+
+    result = db.query("SELECT FROM " + viewName + " WHERE name = 'name3'");
+    Assert.assertTrue(
+        result.getExecutionPlan().get().prettyPrint(0, 0).contains("FETCH FROM INDEX"));
+    Assert.assertEquals(1, result.stream().count());
+
+    db.command("update " + className + " set name='name33' WHERE name = 'name3'").close();
+
+    Thread.sleep(4000);
+    db.getLocalCache().clear();
+
+    for (String index : indexes) {
+      assertFalse(
+          ((OMetadataInternal) db.getMetadata()).getIndexManagerInternal().existsIndex(index));
+    }
+
+    result = db.query("SELECT FROM " + viewName + " WHERE name = 'name33'");
+    Assert.assertTrue(
+        result.getExecutionPlan().get().prettyPrint(0, 0).contains("FETCH FROM INDEX"));
+    Assert.assertEquals(1, result.stream().count());
+    indexes = db.getMetadata().getSchema().getView(viewName).getActiveIndexNames();
+    assertEquals(indexes.size(), 1);
+
+    result = db.query("SELECT FROM " + viewName);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotEquals("name3", item.getProperty("name"));
+    }
+    Assert.assertFalse(result.hasNext());
     result.close();
   }
 }

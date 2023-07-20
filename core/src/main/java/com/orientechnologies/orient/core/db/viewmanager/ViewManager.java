@@ -401,9 +401,10 @@ public class ViewManager {
       String originRidField,
       String clusterName,
       List<OIndex> indexes) {
+    db.getLocalCache().clear();
     int iterationCount = 0;
-    db.begin();
     try (OResultSet rs = db.query(query)) {
+      db.begin();
       while (rs.hasNext()) {
         OResult item = rs.next();
         addItemToView(item, db, originRidField, viewName, clusterName, indexes);
@@ -413,8 +414,8 @@ public class ViewManager {
         }
         iterationCount++;
       }
+      db.commit();
     }
-    db.commit();
   }
 
   private void addItemToView(

@@ -288,7 +288,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       int cluster, List<OIndex> indexes, long lastRefreshTime);
 
   public Set<String> getActiveIndexNames() {
-    return activeIndexNames;
+    return new HashSet<>(activeIndexNames);
   }
 
   public long getLastRefreshTime() {
