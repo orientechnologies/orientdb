@@ -23,10 +23,6 @@ public class OPropertyEmbedded extends OPropertyImpl {
     super(owner);
   }
 
-  protected OPropertyEmbedded(OClassImpl owner, ODocument document) {
-    super(owner, document);
-  }
-
   protected OPropertyEmbedded(OClassImpl oClassImpl, OGlobalProperty global) {
     super(oClassImpl, global);
   }

@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.metadata.schema.OIndexConfigProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.metadata.schema.OViewIndexConfig;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,8 +24,8 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   }
 
   @Override
-  protected OClassImpl createClassInstance(ODocument c) {
-    return new OClassDistributed(this, c, (String) c.field("name"));
+  protected OClassImpl createClassInstance(String name) {
+    return new OClassDistributed(this, name);
   }
 
   public void acquireSchemaWriteLock(ODatabaseDocumentInternal database) {

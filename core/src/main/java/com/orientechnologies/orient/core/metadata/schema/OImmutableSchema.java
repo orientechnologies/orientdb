@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -57,10 +56,6 @@ public class OImmutableSchema implements OSchema {
   private final OClusterSelectionFactory clusterSelectionFactory;
 
   public OImmutableSchema(OSchemaShared schemaShared, ODatabaseDocumentInternal database) {
-    assert schemaShared.getDocument().getInternalStatus() == ORecordElement.STATUS.LOADED;
-    assert database.getSharedContext().getIndexManager().getDocument().getInternalStatus()
-        == ORecordElement.STATUS.LOADED;
-
     version = schemaShared.getVersion();
     identity = schemaShared.getIdentity();
     clusterSelectionFactory = schemaShared.getClusterSelectionFactory();

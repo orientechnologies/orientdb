@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,8 +19,8 @@ public class OViewEmbedded extends OViewImpl {
     super(iOwner, iName, cfg, iClusterIds);
   }
 
-  protected OViewEmbedded(OSchemaShared iOwner, ODocument iDocument, String iName) {
-    super(iOwner, iDocument, iName);
+  protected OViewEmbedded(OSchemaShared iOwner, String iName) {
+    super(iOwner, iName);
   }
 
   public OProperty addProperty(
@@ -155,8 +154,8 @@ public class OViewEmbedded extends OViewImpl {
     throw new UnsupportedOperationException();
   }
 
-  protected OPropertyImpl createPropertyInstance(ODocument p) {
-    return new OPropertyEmbedded(this, p);
+  protected OPropertyImpl createPropertyInstance() {
+    return new OPropertyEmbedded(this);
   }
 
   /** {@inheritDoc} */

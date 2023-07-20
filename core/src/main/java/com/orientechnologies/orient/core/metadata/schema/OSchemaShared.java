@@ -27,9 +27,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSchemaNotCreatedException;
@@ -85,8 +83,8 @@ public abstract class OSchemaShared implements OCloseable {
   private Set<Integer> blobClusters = new HashSet<Integer>();
   private volatile int version = 0;
   private volatile boolean acquiredDistributed = false;
+  private volatile ORID identity;
   protected volatile OImmutableSchema snapshot;
-  protected volatile ODocument document;
 
   protected static Set<String> internalClasses = new HashSet<String>();
 
@@ -104,9 +102,7 @@ public abstract class OSchemaShared implements OCloseable {
 
   protected static final class ClusterIdsAreEmptyException extends Exception {}
 
-  public OSchemaShared() {
-    document = new ODocument().setTrackingChanges(false);
-  }
+  public OSchemaShared() {}
 
   public static Character checkClassNameIfValid(String iName) throws OSchemaException {
     if (iName == null) throw new IllegalArgumentException("Name is null");
@@ -165,9 +161,7 @@ public abstract class OSchemaShared implements OCloseable {
   public void forceSnapshot(ODatabaseDocumentInternal database) {
     acquireSchemaReadLock();
     try {
-      if (document.getInternalStatus() == ORecordElement.STATUS.LOADED) {
-        snapshot = new OImmutableSchema(this, database);
-      }
+      snapshot = new OImmutableSchema(this, database);
     } finally {
       releaseSchemaReadLock();
     }
@@ -348,11 +342,11 @@ public abstract class OSchemaShared implements OCloseable {
   public void reload(ODatabaseDocumentInternal database) {
     lock.writeLock().lock();
     try {
-      ((ORecordId) document.getIdentity())
-          .fromString(database.getStorageInfo().getConfiguration().getSchemaRecordId());
+      identity = new ORecordId(database.getStorageInfo().getConfiguration().getSchemaRecordId());
+      ODocument document = new ODocument(identity);
       //noinspection NonAtomicOperationOnVolatileField
-      this.document = database.reload(this.document, null, true, true);
-      fromStream();
+      document = database.reload(document, null, true, true);
+      fromStream(document);
       forceSnapshot(database);
     } finally {
       lock.writeLock().unlock();
@@ -524,7 +518,7 @@ public abstract class OSchemaShared implements OCloseable {
   }
 
   /** Binds ODocument to POJO. */
-  public void fromStream() {
+  public void fromStream(ODocument document) {
     lock.writeLock().lock();
     modificationCounter.increment();
     try {
@@ -574,8 +568,8 @@ public abstract class OSchemaShared implements OCloseable {
           cls = (OClassImpl) classes.get(name.toLowerCase(Locale.ENGLISH));
           cls.fromStream(c);
         } else {
-          cls = createClassInstance(c);
-          cls.fromStream();
+          cls = createClassInstance(name);
+          cls.fromStream(c);
         }
 
         newClasses.put(cls.getName().toLowerCase(Locale.ENGLISH), cls);
@@ -641,8 +635,8 @@ public abstract class OSchemaShared implements OCloseable {
             view = (OViewImpl) views.get(name.toLowerCase(Locale.ENGLISH));
             view.fromStream(v);
           } else {
-            view = createViewInstance(v);
-            view.fromStream();
+            view = createViewInstance(name);
+            view.fromStream(v);
           }
 
           newViews.put(view.getName().toLowerCase(Locale.ENGLISH), view);
@@ -671,9 +665,9 @@ public abstract class OSchemaShared implements OCloseable {
     }
   }
 
-  protected abstract OClassImpl createClassInstance(ODocument c);
+  protected abstract OClassImpl createClassInstance(String name);
 
-  protected abstract OViewImpl createViewInstance(ODocument c);
+  protected abstract OViewImpl createViewInstance(String name);
 
   public ODocument toNetworkStream() {
     lock.readLock().lock();
@@ -710,17 +704,24 @@ public abstract class OSchemaShared implements OCloseable {
   public ODocument toStream() {
     lock.readLock().lock();
     try {
+      ODocument document = new ODocument(getIdentity());
       document.field("schemaVersion", CURRENT_VERSION_NUMBER);
 
-      Set<ODocument> cc = new HashSet<ODocument>();
-      for (OClass c : classes.values()) cc.add(((OClassImpl) c).toStream());
+      // This steps is needed because in classes there are duplicate due to aliases
+      Set<OClassImpl> realClases = new HashSet<OClassImpl>();
+      for (OClass c : classes.values()) realClases.add(((OClassImpl) c));
 
-      document.field("classes", cc, OType.EMBEDDEDSET);
+      Set<ODocument> classesDocuments = new HashSet<ODocument>();
+      for (OClassImpl c : realClases) classesDocuments.add(c.toStream());
+      document.field("classes", classesDocuments, OType.EMBEDDEDSET);
 
-      Set<ODocument> vv = new HashSet<ODocument>();
-      for (OView v : views.values()) vv.add(((OViewImpl) v).toStream());
+      // This steps is needed because in views there are duplicate due to aliases
+      Set<OViewImpl> realViews = new HashSet<OViewImpl>();
+      for (OView v : views.values()) realViews.add(((OViewImpl) v));
 
-      document.field("views", vv, OType.EMBEDDEDSET);
+      Set<ODocument> viewsDocuments = new HashSet<ODocument>();
+      for (OClassImpl c : realViews) viewsDocuments.add(c.toStream());
+      document.field("views", viewsDocuments, OType.EMBEDDEDSET);
 
       List<ODocument> globalProperties = new ArrayList<ODocument>();
       for (OGlobalProperty globalProperty : properties) {
@@ -729,7 +730,6 @@ public abstract class OSchemaShared implements OCloseable {
       }
       document.field("globalProperties", globalProperties, OType.EMBEDDEDLIST);
       document.field("blobClusters", blobClusters, OType.EMBEDDEDSET);
-
       return document;
     } finally {
       lock.readLock().unlock();
@@ -796,14 +796,12 @@ public abstract class OSchemaShared implements OCloseable {
 
     lock.writeLock().lock();
     try {
-      if (!new ORecordId(database.getStorageInfo().getConfiguration().getSchemaRecordId())
-          .isValid())
+      identity = new ORecordId(database.getStorageInfo().getConfiguration().getSchemaRecordId());
+      if (!identity.isValid())
         throw new OSchemaNotCreatedException("Schema is not created and cannot be loaded");
-
-      ((ORecordId) document.getIdentity())
-          .fromString(database.getStorageInfo().getConfiguration().getSchemaRecordId());
+      ODocument document = new ODocument(identity);
       document = database.reload(document, "*:-1 index:0", true);
-      fromStream();
+      fromStream(document);
 
       return this;
     } finally {
@@ -814,7 +812,8 @@ public abstract class OSchemaShared implements OCloseable {
   public void create(final ODatabaseDocumentInternal database) {
     lock.writeLock().lock();
     try {
-      document = database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      ODocument document = database.save(new ODocument(), OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      this.identity = document.getIdentity();
       database.getStorage().setSchemaRecordId(document.getIdentity().toString());
       snapshot = new OImmutableSchema(this, database);
     } finally {
@@ -833,19 +832,9 @@ public abstract class OSchemaShared implements OCloseable {
   public ORID getIdentity() {
     acquireSchemaReadLock();
     try {
-      return document.getIdentity();
+      return identity;
     } finally {
       releaseSchemaReadLock();
-    }
-  }
-
-  public OSchemaShared setDirty() {
-    lock.writeLock().lock();
-    try {
-      document.setDirty();
-      return this;
-    } finally {
-      lock.writeLock().unlock();
     }
   }
 
@@ -892,25 +881,16 @@ public abstract class OSchemaShared implements OCloseable {
   private void saveInternal(ODatabaseDocumentInternal database) {
 
     if (database.getTransaction().isActive()) {
-      document = database.reload(document, null, true);
       throw new OSchemaException(
           "Cannot change the schema while a transaction is active. Schema changes are not transactional");
     }
-
-    setDirty();
 
     OScenarioThreadLocal.executeAsDistributed(
         new Callable<Object>() {
           @Override
           public Object call() {
-            try {
-              toStream();
-              document.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-            } catch (OConcurrentModificationException e) {
-              OSchemaShared.this.document =
-                  database.reload(OSchemaShared.this.document, null, true);
-              throw e;
-            }
+            ODocument document = toStream();
+            database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
             return null;
           }
         });
@@ -990,10 +970,6 @@ public abstract class OSchemaShared implements OCloseable {
 
   public Set<Integer> getBlobClusters() {
     return Collections.unmodifiableSet(blobClusters);
-  }
-
-  public ODocument getDocument() {
-    return document;
   }
 
   public void sendCommand(ODatabaseDocumentInternal database, String command) {

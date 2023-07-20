@@ -25,10 +25,6 @@ public class OPropertyRemote extends OPropertyImpl {
     super(owner);
   }
 
-  OPropertyRemote(OClassImpl owner, ODocument document) {
-    super(owner, document);
-  }
-
   public OPropertyRemote(OClassImpl oClassImpl, OGlobalProperty global) {
     super(oClassImpl, global);
   }

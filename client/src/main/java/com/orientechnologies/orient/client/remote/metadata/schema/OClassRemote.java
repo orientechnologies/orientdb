@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,10 +23,6 @@ public class OClassRemote extends OClassImpl {
 
   protected OClassRemote(OSchemaShared iOwner, String iName, int[] iClusterIds) {
     super(iOwner, iName, iClusterIds);
-  }
-
-  protected OClassRemote(OSchemaShared iOwner, ODocument iDocument, String iName) {
-    super(iOwner, iDocument, iName);
   }
 
   protected OProperty addProperty(
@@ -265,8 +260,8 @@ public class OClassRemote extends OClassImpl {
     return this;
   }
 
-  protected OPropertyImpl createPropertyInstance(ODocument p) {
-    return new OPropertyRemote(this, p);
+  protected OPropertyImpl createPropertyInstance() {
+    return new OPropertyRemote(this);
   }
 
   /** {@inheritDoc} */

@@ -28,13 +28,13 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     this.cfg = cfg.copy();
   }
 
-  protected OViewImpl(OSchemaShared iOwner, ODocument iDocument, String iName) {
-    super(iOwner, iDocument, iName);
+  protected OViewImpl(OSchemaShared iOwner, String iName) {
+    super(iOwner, iName);
   }
 
   @Override
-  public void fromStream() {
-    super.fromStream();
+  public void fromStream(ODocument document) {
+    super.fromStream(document);
     String query = document.getProperty("query");
     this.cfg = new OViewConfig(getName(), query);
     this.cfg.setUpdatable(Boolean.TRUE.equals(document.getProperty("updatable")));

@@ -14,14 +14,13 @@ import com.orientechnologies.orient.core.metadata.schema.OViewImpl;
 import com.orientechnologies.orient.core.metadata.schema.OViewRemovedMetadata;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.List;
 
 /** Created by tglman on 14/06/17. */
 public class OViewRemote extends OViewImpl {
 
-  protected OViewRemote(OSchemaShared iOwner, ODocument iDocument, String iName) {
-    super(iOwner, iDocument, iName);
+  protected OViewRemote(OSchemaShared iOwner, String iName) {
+    super(iOwner, iName);
   }
 
   protected OProperty addProperty(
@@ -199,8 +198,8 @@ public class OViewRemote extends OViewImpl {
     return this;
   }
 
-  protected OPropertyImpl createPropertyInstance(ODocument p) {
-    return new OPropertyRemote(this, p);
+  protected OPropertyImpl createPropertyInstance() {
+    return new OPropertyRemote(this);
   }
 
   /** {@inheritDoc} */

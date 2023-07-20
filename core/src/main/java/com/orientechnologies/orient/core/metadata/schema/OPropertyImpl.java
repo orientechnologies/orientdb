@@ -69,18 +69,11 @@ public abstract class OPropertyImpl implements OProperty {
   protected Map<String, String> customFields;
   protected OCollate collate = new ODefaultCollate();
   protected OGlobalProperty globalRef;
-  protected ODocument document;
 
   private volatile int hashCode;
 
   public OPropertyImpl(final OClassImpl owner) {
-    document = new ODocument().setTrackingChanges(false);
     this.owner = owner;
-  }
-
-  public OPropertyImpl(final OClassImpl owner, final ODocument document) {
-    this(owner);
-    this.document = document;
   }
 
   public OPropertyImpl(OClassImpl oClassImpl, OGlobalProperty global) {
@@ -622,9 +615,7 @@ public abstract class OPropertyImpl implements OProperty {
     }
   }
 
-  @SuppressWarnings("unchecked")
-  public void fromStream() {
-
+  public void fromStream(ODocument document) {
     String name = document.field("name");
     OType type = null;
     if (document.field("type") != null)
@@ -679,6 +670,7 @@ public abstract class OPropertyImpl implements OProperty {
   }
 
   public ODocument toStream() {
+    ODocument document = new ODocument();
     document.field("name", getName());
     document.field("type", getType().id);
     document.field("globalId", globalRef.getId());
@@ -766,11 +758,6 @@ public abstract class OPropertyImpl implements OProperty {
   @Override
   public Integer getId() {
     return globalRef.getId();
-  }
-
-  public void fromStream(ODocument document) {
-    this.document = document;
-    fromStream();
   }
 
   public ODocument toNetworkStream() {

@@ -41,13 +41,9 @@ public class OClassDistributed extends OClassEmbedded {
     super(iOwner, iName, iClusterIds);
   }
 
-  public OClassDistributed(OSchemaShared iOwner, ODocument iDocument, String iName) {
-    super(iOwner, iDocument, iName);
-  }
-
   @Override
-  protected OPropertyImpl createPropertyInstance(ODocument p) {
-    return new OPropertyDistributed(this, p);
+  protected OPropertyImpl createPropertyInstance() {
+    return new OPropertyDistributed(this);
   }
 
   @Override

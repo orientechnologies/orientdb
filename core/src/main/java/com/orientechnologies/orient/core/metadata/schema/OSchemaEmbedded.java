@@ -762,12 +762,12 @@ public class OSchemaEmbedded extends OSchemaShared {
     }
   }
 
-  protected OClassImpl createClassInstance(ODocument c) {
-    return new OClassEmbedded(this, c, (String) c.field("name"));
+  protected OClassImpl createClassInstance(String name) {
+    return new OClassEmbedded(this, name);
   }
 
-  protected OViewImpl createViewInstance(ODocument c) {
-    return new OViewEmbedded(this, c, (String) c.field("name"));
+  protected OViewImpl createViewInstance(String name) {
+    return new OViewEmbedded(this, name);
   }
 
   private void dropClassIndexes(ODatabaseDocumentInternal database, final OClass cls) {

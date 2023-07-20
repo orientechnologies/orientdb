@@ -63,12 +63,12 @@ public class OSchemaRemote extends OSchemaShared {
     return cls;
   }
 
-  protected OClassImpl createClassInstance(ODocument c) {
-    return new OClassRemote(this, c, (String) c.field("name"));
+  protected OClassImpl createClassInstance(String name) {
+    return new OClassRemote(this, name);
   }
 
-  protected OViewImpl createViewInstance(ODocument c) {
-    return new OViewRemote(this, c, (String) c.field("name"));
+  protected OViewImpl createViewInstance(String name) {
+    return new OViewRemote(this, name);
   }
 
   public OClass createClass(
@@ -440,8 +440,7 @@ public class OSchemaRemote extends OSchemaShared {
 
   public void update(ODocument schema) {
     if (!skipPush.get()) {
-      this.document = schema;
-      super.fromStream();
+      fromStream(schema);
       this.snapshot = null;
     }
   }

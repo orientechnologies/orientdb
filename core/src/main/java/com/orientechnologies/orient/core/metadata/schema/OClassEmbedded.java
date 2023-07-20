@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.ArrayList;
@@ -29,10 +28,6 @@ public class OClassEmbedded extends OClassImpl {
 
   protected OClassEmbedded(OSchemaShared iOwner, String iName, int[] iClusterIds) {
     super(iOwner, iName, iClusterIds);
-  }
-
-  protected OClassEmbedded(OSchemaShared iOwner, ODocument iDocument, String iName) {
-    super(iOwner, iDocument, iName);
   }
 
   public OProperty addProperty(
@@ -396,8 +391,8 @@ public class OClassEmbedded extends OClassImpl {
     }
   }
 
-  protected OPropertyImpl createPropertyInstance(ODocument p) {
-    return new OPropertyEmbedded(this, p);
+  protected OPropertyImpl createPropertyInstance() {
+    return new OPropertyEmbedded(this);
   }
 
   public OPropertyImpl addPropertyInternal(

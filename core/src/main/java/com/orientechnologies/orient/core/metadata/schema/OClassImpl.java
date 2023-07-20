@@ -91,7 +91,6 @@ public abstract class OClassImpl implements OClass {
   protected volatile int hashCode;
 
   private static Set<String> reserved = new HashSet<String>();
-  protected ODocument document;
 
   static {
     // reserved.add("select");
@@ -104,11 +103,6 @@ public abstract class OClassImpl implements OClass {
     reserved.add("skip");
     reserved.add("limit");
     reserved.add("timeout");
-  }
-
-  /** Constructor used in unmarshalling. */
-  protected OClassImpl(final OSchemaShared iOwner, final String iName) {
-    this(iOwner, new ODocument().setTrackingChanges(false), iName);
   }
 
   protected OClassImpl(final OSchemaShared iOwner, final String iName, final int[] iClusterIds) {
@@ -124,9 +118,8 @@ public abstract class OClassImpl implements OClass {
   }
 
   /** Constructor used in unmarshalling. */
-  protected OClassImpl(final OSchemaShared iOwner, final ODocument iDocument, final String iName) {
+  protected OClassImpl(final OSchemaShared iOwner, final String iName) {
     name = iName;
-    document = iDocument;
     owner = iOwner;
   }
 
@@ -470,7 +463,7 @@ public abstract class OClassImpl implements OClass {
     }
   }
 
-  public void fromStream() {
+  public void fromStream(ODocument document) {
     subclasses = null;
     superClasses.clear();
 
@@ -517,8 +510,8 @@ public abstract class OClassImpl implements OClass {
           prop = (OPropertyImpl) properties.get(name);
           prop.fromStream(p);
         } else {
-          prop = createPropertyInstance(p);
-          prop.fromStream();
+          prop = createPropertyInstance();
+          prop.fromStream(p);
         }
 
         newProperties.put(prop.getName(), prop);
@@ -531,9 +524,10 @@ public abstract class OClassImpl implements OClass {
         owner.getClusterSelectionFactory().getStrategy((String) document.field("clusterSelection"));
   }
 
-  protected abstract OPropertyImpl createPropertyInstance(ODocument p);
+  protected abstract OPropertyImpl createPropertyInstance();
 
   public ODocument toStream() {
+    ODocument document = new ODocument();
     document.field("name", name);
     document.field("shortName", shortName);
     document.field("description", description);
@@ -1754,11 +1748,6 @@ public abstract class OClassImpl implements OClass {
       return s.substring(1, s.length() - 1);
     }
     return s;
-  }
-
-  public void fromStream(ODocument document) {
-    this.document = document;
-    fromStream();
   }
 
   public ODocument toNetworkStream() {

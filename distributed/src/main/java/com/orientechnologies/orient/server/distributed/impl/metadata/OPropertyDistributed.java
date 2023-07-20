@@ -11,16 +11,11 @@ import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /** Created by tglman on 22/06/17. */
 public class OPropertyDistributed extends OPropertyEmbedded {
   public OPropertyDistributed(OClassImpl owner) {
     super(owner);
-  }
-
-  public OPropertyDistributed(OClassImpl owner, ODocument document) {
-    super(owner, document);
   }
 
   public OPropertyDistributed(OClassImpl oClassImpl, OGlobalProperty global) {
