@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexFactory;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
@@ -64,12 +63,10 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
   protected String defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
   protected final AtomicInteger writeLockNesting = new AtomicInteger();
   protected final ReadWriteLock lock = new ReentrantReadWriteLock();
-  protected ODocument document;
 
   public OIndexManagerRemote(OStorageInfo storage) {
     super();
     this.storage = storage;
-    this.document = new ODocument().setTrackingChanges(false);
   }
 
   public void load(ODatabaseDocumentInternal database) {
@@ -81,10 +78,11 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
           create(database);
 
         // RELOAD IT
-        ((ORecordId) document.getIdentity())
-            .fromString(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
-        database.reload(document, "*:-1 index:0", true);
-        fromStream();
+        ORecordId id =
+            new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
+
+        ODocument document = database.load(id, "*:-1 index:0", true);
+        fromStream(document);
       } finally {
         releaseExclusiveLock();
       }
@@ -94,10 +92,13 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
   public void reload() {
     acquireExclusiveLock();
     try {
-      ((ORecordId) document.getIdentity())
-          .fromString(getStorage().getConfiguration().getIndexMgrRecordId());
-      document.reload();
-      fromStream();
+      ODatabaseDocumentInternal database = getDatabase();
+      ORecordId id =
+          new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
+
+      ODocument document = database.load(id, "*:-1 index:0", true);
+
+      fromStream(document);
     } finally {
       releaseExclusiveLock();
     }
@@ -188,15 +189,6 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
   public void close() {
     indexes.clear();
     classPropertyIndex.clear();
-  }
-
-  void setDirty() {
-    acquireExclusiveLock();
-    try {
-      document.setDirty();
-    } finally {
-      releaseExclusiveLock();
-    }
   }
 
   public Set<OIndex> getClassInvolvedIndexes(
@@ -433,10 +425,6 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
 
       database.command(createIndexDDL).close();
 
-      ORecordInternal.setIdentity(
-          document,
-          new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId()));
-
       if (progressListener != null) progressListener.onCompletition(this, true);
 
       reload();
@@ -541,7 +529,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
         getStorage().getName());
   }
 
-  protected void fromStream() {
+  protected void fromStream(ODocument document) {
     acquireExclusiveLock();
     try {
       clearMetadata();
@@ -616,8 +604,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
     if (!skipPush.get()) {
       realAcquireExclusiveLock();
       try {
-        this.document = indexManager;
-        fromStream();
+        fromStream(indexManager);
       } finally {
         realReleaseExclusiveLock();
       }
@@ -629,7 +616,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
   }
 
   public ODocument getDocument() {
-    return document;
+    return null;
   }
 
   public OIndex preProcessBeforeReturn(ODatabaseDocumentInternal database, OIndex index) {
