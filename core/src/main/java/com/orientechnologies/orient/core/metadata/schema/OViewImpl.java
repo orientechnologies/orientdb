@@ -39,7 +39,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     this.cfg = new OViewConfig(getName(), query);
     this.cfg.setUpdatable(Boolean.TRUE.equals(document.getProperty("updatable")));
 
-    if (document.getProperty("indexes") instanceof Map) {
+    if (document.getProperty("indexes") instanceof List) {
       List<Map<String, Object>> idxData = document.getProperty("indexes");
       for (Map<String, Object> idx : idxData) {
         String type = (String) idx.get("type");
