@@ -26,6 +26,16 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.21 - (July, 25 2023)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3221---25-June-2023
+
+## Core
+ - Make sure to reload correctly view index informations on context restart
+ - Changed logic for tracking the cluster and index views in the queries
+ - Optimized view refresh using batch transactions
+ - use everytime the most specific index when multiple are found
+ - Update build dependencies to most recente versions
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.20 - (June, 15 2023)
