@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
+import com.orientechnologies.orient.core.db.document.OQueryDatabaseState;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -303,7 +304,7 @@ public class OEnterpriseServerImpl
                             (k) -> {
                               OResultInternal internal = new OResultInternal();
                               internal.setProperty("queryId", k.getKey());
-                              OResultSet resultSet = k.getValue();
+                              OQueryDatabaseState resultSet = k.getValue();
 
                               String user = "-";
 
@@ -314,7 +315,7 @@ public class OEnterpriseServerImpl
                               internal.setProperty("user", user);
                               internal.setProperty("database", c.getDatabase().getName());
 
-                              Optional<QueryInfo> info = getQueryInfo(resultSet);
+                              Optional<QueryInfo> info = getQueryInfo(resultSet.getResultSet());
 
                               info.ifPresent(
                                   (it) -> {
