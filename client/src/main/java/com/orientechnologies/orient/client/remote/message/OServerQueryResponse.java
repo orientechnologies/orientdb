@@ -21,7 +21,7 @@ public class OServerQueryResponse implements OBinaryResponse {
 
   private String queryId;
   private boolean txChanges;
-  private List<OResultInternal> result;
+  private List<OResult> result;
   private Optional<OExecutionPlan> executionPlan;
   private boolean hasNextPage;
   private Map<String, Long> queryStats;
@@ -30,7 +30,7 @@ public class OServerQueryResponse implements OBinaryResponse {
   public OServerQueryResponse(
       String queryId,
       boolean txChanges,
-      List<OResultInternal> result,
+      List<OResult> result,
       Optional<OExecutionPlan> executionPlan,
       boolean hasNextPage,
       Map<String, Long> queryStats,
@@ -141,7 +141,7 @@ public class OServerQueryResponse implements OBinaryResponse {
     return queryId;
   }
 
-  public List<OResultInternal> getResult() {
+  public List<OResult> getResult() {
     return result;
   }
 

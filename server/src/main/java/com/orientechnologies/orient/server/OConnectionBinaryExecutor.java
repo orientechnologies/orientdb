@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -1300,16 +1299,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
 
     // copy the result-set to make sure that the execution is successful
-    Stream<OResult> stream = rs.stream();
-    List<OResultInternal> rsCopy =
-        stream.map((r) -> (OResultInternal) r).collect(Collectors.toList());
-
-    boolean hasNext = rs.hasNext();
-    boolean txChanges = false;
+    List<OResult> rsCopy = rs.stream().collect(Collectors.toList());
 
     return new OServerQueryResponse(
         ((OLocalResultSetLifecycleDecorator) rs).getQueryId(),
-        txChanges,
+        false,
         rsCopy,
         rs.getExecutionPlan(),
         false,
@@ -1358,8 +1352,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         .containsKey(((OLocalResultSetLifecycleDecorator) rs).getQueryId())) {
       stream = stream.limit(request.getRecordsPerPage());
     }
-    List<OResultInternal> rsCopy =
-        stream.map((r) -> (OResultInternal) r).collect(Collectors.toList());
+    List<OResult> rsCopy = stream.collect(Collectors.toList());
 
     boolean hasNext = rs.hasNext();
     boolean txChanges = false;
@@ -1405,13 +1398,13 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     try {
       orientDB.startCommand(Optional.empty());
       // copy the result-set to make sure that the execution is successful
-      List<OResultInternal> rsCopy = new ArrayList<>(request.getRecordsPerPage());
+      List<OResult> rsCopy = new ArrayList<>(request.getRecordsPerPage());
       int i = 0;
       // if it's OInternalResultSet it means that it's a Command, not a Query, so the result has to
       // be
       // sent as it is, not streamed
       while (rs.hasNext() && (rs.isDetached() || i < request.getRecordsPerPage())) {
-        rsCopy.add((OResultInternal) rs.next());
+        rsCopy.add((OResult) rs.next());
         i++;
       }
       boolean hasNext = rs.hasNext();

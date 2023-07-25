@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionStep;
 import com.orientechnologies.orient.core.sql.executor.OInfoExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInfoExecutionStep;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 import java.io.IOException;
@@ -30,7 +29,7 @@ public class OQueryResponse implements OBinaryResponse {
 
   private String queryId;
   private boolean txChanges;
-  private List<OResultInternal> result;
+  private List<OResult> result;
   private Optional<OExecutionPlan> executionPlan;
   private boolean hasNextPage;
   private Map<String, Long> queryStats;
@@ -39,7 +38,7 @@ public class OQueryResponse implements OBinaryResponse {
   public OQueryResponse(
       String queryId,
       boolean txChanges,
-      List<OResultInternal> result,
+      List<OResult> result,
       Optional<OExecutionPlan> executionPlan,
       boolean hasNextPage,
       Map<String, Long> queryStats,
@@ -150,7 +149,7 @@ public class OQueryResponse implements OBinaryResponse {
     return queryId;
   }
 
-  public List<OResultInternal> getResult() {
+  public List<OResult> getResult() {
     return result;
   }
 

@@ -19,7 +19,7 @@ public class OQueryResponseTest {
   @Test
   public void test() throws IOException {
 
-    List<OResultInternal> resuls = new ArrayList<>();
+    List<OResult> resuls = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
       OResultInternal item = new OResultInternal();
       item.setProperty("name", "foo");
@@ -40,7 +40,7 @@ public class OQueryResponseTest {
     OQueryResponse newResponse = new OQueryResponse();
 
     newResponse.read(channel, null);
-    Iterator<OResultInternal> responseRs = newResponse.getResult().iterator();
+    Iterator<OResult> responseRs = newResponse.getResult().iterator();
 
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(responseRs.hasNext());

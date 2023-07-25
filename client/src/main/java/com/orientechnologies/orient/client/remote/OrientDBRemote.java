@@ -596,8 +596,7 @@ public class OrientDBRemote implements OrientDBInternal {
             response.getExecutionPlan(),
             response.getQueryStats(),
             response.isHasNextPage());
-    return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata())
-        .getResult();
+    return rs;
   }
 
   @Override
@@ -628,8 +627,7 @@ public class OrientDBRemote implements OrientDBInternal {
             response.getQueryStats(),
             response.isHasNextPage());
 
-    return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata())
-        .getResult();
+    return rs;
   }
 
   public OContextConfiguration getContextConfiguration() {

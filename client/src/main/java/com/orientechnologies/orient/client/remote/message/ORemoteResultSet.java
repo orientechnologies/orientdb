@@ -16,7 +16,7 @@ public class ORemoteResultSet implements OResultSet {
 
   private final ODatabaseDocumentRemote db;
   private final String queryId;
-  private List<OResultInternal> currentPage;
+  private List<OResult> currentPage;
   private Optional<OExecutionPlan> executionPlan;
   private Map<String, Long> queryStats;
   private boolean hasNextPage;
@@ -24,7 +24,7 @@ public class ORemoteResultSet implements OResultSet {
   public ORemoteResultSet(
       ODatabaseDocumentRemote db,
       String queryId,
-      List<OResultInternal> currentPage,
+      List<OResult> currentPage,
       Optional<OExecutionPlan> executionPlan,
       Map<String, Long> queryStats,
       boolean hasNextPage) {
@@ -36,8 +36,10 @@ public class ORemoteResultSet implements OResultSet {
     this.hasNextPage = hasNextPage;
     if (db != null) {
       db.queryStarted(queryId, new OQueryDatabaseState(this));
-      for (OResultInternal result : currentPage) {
-        result.bindToCache(db);
+      for (OResult result : currentPage) {
+        if (result instanceof OResultInternal) {
+          ((OResultInternal) result).bindToCache(db);
+        }
       }
     }
   }
@@ -71,7 +73,7 @@ public class ORemoteResultSet implements OResultSet {
     if (currentPage.isEmpty()) {
       throw new IllegalStateException();
     }
-    OResultInternal internal = currentPage.remove(0);
+    OResult internal = currentPage.remove(0);
 
     if (internal.isRecord() && db != null && db.getTransaction().isActive()) {
       ORecord record = db.getTransaction().getRecord(internal.getRecord().get().getIdentity());
@@ -114,7 +116,7 @@ public class ORemoteResultSet implements OResultSet {
   }
 
   public void fetched(
-      List<OResultInternal> result,
+      List<OResult> result,
       boolean hasNextPage,
       Optional<OExecutionPlan> executionPlan,
       Map<String, Long> queryStats) {
