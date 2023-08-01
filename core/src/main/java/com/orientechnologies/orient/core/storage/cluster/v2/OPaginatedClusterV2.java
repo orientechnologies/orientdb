@@ -64,6 +64,8 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
   private static final int MAX_ENTRY_SIZE =
       OClusterPage.MAX_RECORD_SIZE - OByteSerializer.BYTE_SIZE - OLongSerializer.LONG_SIZE;
 
+  private static final int MIN_ENTRY_SIZE = OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE;
+
   private static final int STATE_ENTRY_INDEX = 0;
   private static final int BINARY_VERSION = 2;
 
@@ -433,34 +435,37 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
 
       int maxRecordSize;
       try {
-        final int pageChunkSize = Math.min(page.getMaxRecordSize(), chunkSize);
+        int availableInPage = page.getMaxRecordSize();
+        if (availableInPage > MIN_ENTRY_SIZE) {
 
-        final ORawPair<byte[], Integer> pair =
-            serializeEntryChunk(
-                content, pageChunkSize, bytesToWrite, nextRecordPointers, recordType);
-        final byte[] chunk = pair.first;
+          final int pageChunkSize = Math.min(availableInPage, chunkSize);
 
-        final OCacheEntry cacheEntry = page.getCacheEntry();
-        nextPageOffset =
-            page.appendRecord(
-                recordVersion,
-                chunk,
-                -1,
-                atomicOperation.getBookedRecordPositions(id, cacheEntry.getPageIndex()));
-        assert nextPageOffset >= 0;
+          final ORawPair<byte[], Integer> pair =
+              serializeEntryChunk(
+                  content, pageChunkSize, bytesToWrite, nextRecordPointers, recordType);
+          final byte[] chunk = pair.first;
 
-        maxRecordSize = page.getMaxRecordSize();
+          final OCacheEntry cacheEntry = page.getCacheEntry();
+          nextPageOffset =
+              page.appendRecord(
+                  recordVersion,
+                  chunk,
+                  -1,
+                  atomicOperation.getBookedRecordPositions(id, cacheEntry.getPageIndex()));
+          assert nextPageOffset >= 0;
 
-        bytesToWrite -= pair.second;
-        assert bytesToWrite >= 0;
+          bytesToWrite -= pair.second;
+          assert bytesToWrite >= 0;
 
-        nextPageIndex = cacheEntry.getPageIndex();
+          nextPageIndex = cacheEntry.getPageIndex();
 
-        if (bytesToWrite > 0) {
-          chunkSize = calculateChunkSize(bytesToWrite);
+          if (bytesToWrite > 0) {
+            chunkSize = calculateChunkSize(bytesToWrite);
 
-          nextRecordPointers = createPagePointer(nextPageIndex, nextPageOffset);
+            nextRecordPointers = createPagePointer(nextPageIndex, nextPageOffset);
+          }
         }
+        maxRecordSize = page.getMaxRecordSize();
       } finally {
         pagePostProcessor.accept(page);
       }
