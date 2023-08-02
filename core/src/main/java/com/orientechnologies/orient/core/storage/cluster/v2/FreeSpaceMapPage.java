@@ -56,8 +56,7 @@ public final class FreeSpaceMapPage extends ODurablePage {
           return -1;
         }
 
-        final int rightNodeOffset = nodeOffset(level, rightNodeIndex);
-        assert (0xFF & getByteValue(rightNodeOffset)) >= requiredSize;
+        assert (0xFF & getByteValue(nodeOffset(level, rightNodeIndex))) >= requiredSize;
         nodeIndex = (nodeIndex << 1) + 1;
       }
     }
@@ -76,8 +75,6 @@ public final class FreeSpaceMapPage extends ODurablePage {
     int nodeOffset = LEAVES_START_OFFSET + pageIndex * CELL_SIZE;
     int nodeIndex = pageIndex;
     int nodeValue = freeSpace;
-
-    final int oldFreeSpace = 0xFF & getByteValue(nodeOffset);
 
     for (int level = LEVELS; level > 0; level--) {
       final int prevValue = 0xFF & getByteValue(nodeOffset);
