@@ -1027,6 +1027,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
       }
       if (documentIndexed % 1000 == 0) {
         database.commit();
+        database.begin();
       }
       documentNum++;
 
