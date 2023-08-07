@@ -96,6 +96,18 @@ public class OScriptDatabaseWrapper {
     this.database.delete(record);
   }
 
+  public void commit() {
+    database.commit();
+  }
+
+  public void rollback() {
+    database.rollback();
+  }
+
+  public void begin() {
+    database.begin();
+  }
+
   public OBlob newBlob() {
     return this.database.newBlob();
   }
