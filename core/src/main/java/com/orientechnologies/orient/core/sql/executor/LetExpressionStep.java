@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
 
 /** Created by luigidellaquila on 03/08/16. */
 public class LetExpressionStep extends AbstractExecutionStep {
@@ -32,7 +33,8 @@ public class LetExpressionStep extends AbstractExecutionStep {
 
   private OResult mapResult(OCommandContext ctx, OResult result) {
     Object value = expression.execute(result, ctx);
-    ((OResultInternal) result).setMetadata(varname.getStringValue(), value);
+    ((OResultInternal) result)
+        .setMetadata(varname.getStringValue(), OProjectionItem.convert(value));
     return result;
   }
 

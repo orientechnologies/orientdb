@@ -144,7 +144,7 @@ public class OProjection extends SimpleNode {
           if (this.excludes.contains(alias)) {
             continue;
           }
-          Object val = item.convert(iRecord.getProperty(alias));
+          Object val = OProjectionItem.convert(iRecord.getProperty(alias));
           if (item.nestedProjection != null) {
             val = item.nestedProjection.apply(item.expression, val, iContext);
           }

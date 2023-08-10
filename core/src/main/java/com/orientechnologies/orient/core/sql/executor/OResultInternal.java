@@ -366,6 +366,7 @@ public class OResultInternal implements OResult {
     if (key == null) {
       return;
     }
+    checkType(value);
     if (metadata == null) {
       metadata = new HashMap<>();
     }
