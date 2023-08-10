@@ -271,6 +271,21 @@ public class RemoteQuerySupportTest {
     rs.close();
   }
 
+  @Test
+  public void testLetOut() {
+    session.command("create class letVertex extends V");
+    session.command("create class letEdge extends E");
+    session.command("create vertex letVertex set name = 'a'");
+    session.command("create vertex letVertex set name = 'b'");
+    session.command(
+        "create edge letEdge from (select from letVertex where name = 'a') TO (select from letVertex where name = 'b');");
+
+    OResultSet rs =
+        session.query(
+            "select $someNode.in('letEdge') from letVertex LET $someNode =out('letEdge');");
+    assertEquals(rs.stream().count(), 2);
+  }
+
   @After
   public void after() {
     QUERY_REMOTE_RESULTSET_PAGE_SIZE.setValue(oldPageSize);
