@@ -215,7 +215,11 @@ public class OJSONWriter {
   }
 
   public static Object encode(final Object iValue) {
-    return OIOUtils.encode(iValue);
+    if (iValue instanceof String) {
+      return OIOUtils.encodeJsonString((String) iValue);
+    } else {
+      return iValue;
+    }
   }
 
   public static String listToJSON(

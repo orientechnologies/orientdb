@@ -259,6 +259,54 @@ public class OIOUtils {
     return result.toString();
   }
 
+  public static String encodeJsonString(final String iInput) {
+
+    final StringBuilder result = new StringBuilder(iInput.length() * 2);
+    final int inputSize = iInput.length();
+
+    char ch;
+    String hex;
+    for (int i = 0; i < inputSize; i++) {
+      ch = iInput.charAt(i);
+
+      if (ch >= 0x0020 && ch <= 0x007e) { // Does the char need to be converted to unicode?
+        if (ch == '\\') {
+          // escape \ with \\
+          result.append(ch);
+          result.append(ch);
+        } else if (ch == '"') {
+          // escape " with \"
+          result.append('\\');
+          result.append(ch);
+        } else if (ch == '\n') {
+          // escape newline with \"
+          result.append('\\');
+          result.append(ch);
+        } else if (ch == '\t') {
+          // escape tab with \"
+          result.append('\\');
+          result.append(ch);
+        } else if (ch == '\r') {
+          // escape carriage return with \"
+          result.append('\\');
+          result.append(ch);
+        } else {
+          result.append(ch);
+        }
+      } else {
+        result.append("\\u"); // standard unicode format.
+        hex = Integer.toHexString(ch & 0xFFFF); // Get hex value of the char.
+        for (int j = 0; j < 4 - hex.length(); j++)
+          // Prepend zeros because unicode requires 4 digits
+          result.append('0');
+        result.append(hex.toLowerCase(Locale.ENGLISH)); // standard unicode format.
+        // ostr.append(hex.toLowerCase(Locale.ENGLISH));
+      }
+    }
+
+    return result.toString();
+  }
+
   public static boolean isStringContent(final Object iValue) {
     if (iValue == null) return false;
 

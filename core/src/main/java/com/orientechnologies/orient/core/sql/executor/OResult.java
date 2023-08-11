@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
@@ -224,12 +225,7 @@ public interface OResult {
   }
 
   default String encode(String s) {
-    String result = s.replaceAll("\\\\", "\\\\\\\\");
-    result = result.replaceAll("\"", "\\\\\"");
-    result = result.replaceAll("\n", "\\\\n");
-    result = result.replaceAll("\t", "\\\\t");
-    result = result.replaceAll("\r", "\\\\r");
-    return result;
+    return OIOUtils.encodeJsonString(s);
   }
 
   boolean hasProperty(String varName);
