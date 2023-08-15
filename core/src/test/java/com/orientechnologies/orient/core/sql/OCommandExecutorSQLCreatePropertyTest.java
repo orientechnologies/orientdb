@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryInternalDatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -45,8 +46,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testBasicCreateProperty() throws Exception {
 
-    db.command(new OCommandSQL("CREATE class company")).execute();
-    db.command(new OCommandSQL("CREATE property company.name STRING")).execute();
+    db.command("CREATE class company").close();
+    db.command("CREATE property company.name STRING").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -62,8 +63,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testBasicUnsafeCreateProperty() throws Exception {
 
-    db.command(new OCommandSQL("CREATE class company")).execute();
-    db.command(new OCommandSQL("CREATE property company.name STRING UNSAFE")).execute();
+    db.command("CREATE class company").close();
+    db.command("CREATE property company.name STRING UNSAFE").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -79,9 +80,9 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testCreatePropertyWithLinkedClass() throws Exception {
 
-    db.command(new OCommandSQL("CREATE class division")).execute();
-    db.command(new OCommandSQL("CREATE class company")).execute();
-    db.command(new OCommandSQL("CREATE property company.division LINK division")).execute();
+    db.command("CREATE class division").close();
+    db.command("CREATE class company").close();
+    db.command("CREATE property company.division LINK division").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_DIVISION);
@@ -98,8 +99,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testCreatePropertyWithEmbeddedType() throws Exception {
 
-    db.command(new OCommandSQL("CREATE Class company")).execute();
-    db.command(new OCommandSQL("CREATE Property company.officers EMBEDDEDLIST STRING")).execute();
+    db.command("CREATE Class company").close();
+    db.command("CREATE Property company.officers EMBEDDEDLIST STRING").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
@@ -116,8 +117,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testCreateMandatoryProperty() throws Exception {
 
-    db.command(new OCommandSQL("CREATE class company")).execute();
-    db.command(new OCommandSQL("CREATE property company.name STRING (MANDATORY)")).execute();
+    db.command("CREATE class company").close();
+    db.command("CREATE property company.name STRING (MANDATORY)").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -132,8 +133,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testCreateNotNullProperty() throws Exception {
 
-    db.command(new OCommandSQL("CREATE class company")).execute();
-    db.command(new OCommandSQL("CREATE property company.name STRING (NOTNULL)")).execute();
+    db.command("CREATE class company").close();
+    db.command("CREATE property company.name STRING (NOTNULL)").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -148,8 +149,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testCreateReadOnlyProperty() throws Exception {
 
-    db.command(new OCommandSQL("CREATE class company")).execute();
-    db.command(new OCommandSQL("CREATE property company.name STRING (READONLY)")).execute();
+    db.command("CREATE class company").close();
+    db.command("CREATE property company.name STRING (READONLY)").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -164,8 +165,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testCreateReadOnlyFalseProperty() throws Exception {
 
-    db.command(new OCommandSQL("CREATE class company")).execute();
-    db.command(new OCommandSQL("CREATE property company.name STRING (READONLY false)")).execute();
+    db.command("CREATE class company").close();
+    db.command("CREATE property company.name STRING (READONLY false)").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -178,9 +179,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testCreateMandatoryPropertyWithEmbeddedType() throws Exception {
 
-    db.command(new OCommandSQL("CREATE Class company")).execute();
-    db.command(new OCommandSQL("CREATE Property company.officers EMBEDDEDLIST STRING (MANDATORY)"))
-        .execute();
+    db.command("CREATE Class company").close();
+    db.command("CREATE Property company.officers EMBEDDEDLIST STRING (MANDATORY)").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
@@ -197,9 +197,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testCreateUnsafePropertyWithEmbeddedType() throws Exception {
 
-    db.command(new OCommandSQL("CREATE Class company")).execute();
-    db.command(new OCommandSQL("CREATE Property company.officers EMBEDDEDLIST STRING UNSAFE"))
-        .execute();
+    db.command("CREATE Class company").close();
+    db.command("CREATE Property company.officers EMBEDDEDLIST STRING UNSAFE").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
@@ -213,11 +212,10 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testComplexCreateProperty() throws Exception {
 
-    db.command(new OCommandSQL("CREATE Class company")).execute();
+    db.command("CREATE Class company").close();
     db.command(
-            new OCommandSQL(
-                "CREATE Property company.officers EMBEDDEDLIST STRING (MANDATORY, READONLY, NOTNULL) UNSAFE"))
-        .execute();
+            "CREATE Property company.officers EMBEDDEDLIST STRING (MANDATORY, READONLY, NOTNULL) UNSAFE")
+        .close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
@@ -234,11 +232,9 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testLinkedTypeDefaultAndMinMaxUnsafeProperty() throws Exception {
 
-    db.command(new OCommandSQL("CREATE CLASS company")).execute();
-    db.command(
-            new OCommandSQL(
-                "CREATE PROPERTY company.id EMBEDDEDLIST Integer (DEFAULT 5, MIN 1, MAX 10) UNSAFE"))
-        .execute();
+    db.command("CREATE CLASS company").close();
+    db.command("CREATE PROPERTY company.id EMBEDDEDLIST Integer (DEFAULT 5, MIN 1, MAX 10) UNSAFE")
+        .close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty idProperty = companyClass.getProperty(PROP_ID);
@@ -258,10 +254,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testDefaultAndMinMaxUnsafeProperty() throws Exception {
 
-    db.command(new OCommandSQL("CREATE CLASS company")).execute();
-    db.command(
-            new OCommandSQL("CREATE PROPERTY company.id INTEGER (DEFAULT 5, MIN 1, MAX 10) UNSAFE"))
-        .execute();
+    db.command("CREATE CLASS company").close();
+    db.command("CREATE PROPERTY company.id INTEGER (DEFAULT 5, MIN 1, MAX 10) UNSAFE").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty idProperty = companyClass.getProperty(PROP_ID);
@@ -281,11 +275,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testExtraSpaces() throws Exception {
 
-    db.command(new OCommandSQL("CREATE CLASS company")).execute();
-    db.command(
-            new OCommandSQL(
-                "CREATE PROPERTY company.id INTEGER  ( DEFAULT  5 ,  MANDATORY  )  UNSAFE "))
-        .execute();
+    db.command("CREATE CLASS company").close();
+    db.command("CREATE PROPERTY company.id INTEGER  ( DEFAULT  5 ,  MANDATORY  )  UNSAFE ").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty idProperty = companyClass.getProperty(PROP_ID);
@@ -301,13 +292,14 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testNonStrict() throws Exception {
 
-    db.getStorage().setProperty(OStatement.CUSTOM_STRICT_SQL, "false");
+    ((ODatabaseDocumentInternal) db)
+        .getStorage()
+        .setProperty(OStatement.CUSTOM_STRICT_SQL, "false");
 
-    db.command(new OCommandSQL("CREATE CLASS company")).execute();
+    db.command("CREATE CLASS company").close();
     db.command(
-            new OCommandSQL(
-                "CREATE PROPERTY company.id INTEGER (MANDATORY, NOTNULL false, READONLY true, MAX 10, MIN 4, DEFAULT 6)  UNSAFE"))
-        .execute();
+            "CREATE PROPERTY company.id INTEGER (MANDATORY, NOTNULL false, READONLY true, MAX 10, MIN 4, DEFAULT 6)  UNSAFE")
+        .close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty idProperty = companyClass.getProperty(PROP_ID);
@@ -326,8 +318,7 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
 
   @Test(expected = OCommandSQLParsingException.class)
   public void testInvalidAttributeName() throws Exception {
-
-    db.command(new OCommandSQL("CREATE CLASS company")).execute();
+    db.command("CREATE CLASS company").close();
     db.command(
             new OCommandSQL(
                 "CREATE PROPERTY company.id INTEGER (MANDATORY, INVALID, NOTNULL)  UNSAFE"))
@@ -337,25 +328,22 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test(expected = OCommandSQLParsingException.class)
   public void testMissingAttributeValue() throws Exception {
 
-    db.command(new OCommandSQL("CREATE CLASS company")).execute();
+    db.command("CREATE CLASS company").close();
     db.command(new OCommandSQL("CREATE PROPERTY company.id INTEGER (DEFAULT)  UNSAFE")).execute();
   }
 
   @Test(expected = OCommandSQLParsingException.class)
   public void tooManyAttributeParts() throws Exception {
 
-    db.command(new OCommandSQL("CREATE CLASS company")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY company.id INTEGER (DEFAULT 5 10)  UNSAFE"))
-        .execute();
+    db.command("CREATE CLASS company").close();
+    db.command("CREATE PROPERTY company.id INTEGER (DEFAULT 5 10)  UNSAFE").close();
   }
 
   @Test
   public void testMandatoryAsLinkedName() throws Exception {
-
-    db.command(new OCommandSQL("CREATE CLASS company")).execute();
-    db.command(new OCommandSQL("CREATE CLASS Mandatory")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY company.id EMBEDDEDLIST Mandatory UNSAFE"))
-        .execute();
+    db.command("CREATE CLASS company").close();
+    db.command("CREATE CLASS Mandatory").close();
+    db.command("CREATE PROPERTY company.id EMBEDDEDLIST Mandatory UNSAFE").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OClass mandatoryClass = db.getMetadata().getSchema().getClass("Mandatory");
@@ -371,16 +359,14 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
   @Test
   public void testIfNotExists() throws Exception {
 
-    db.command(new OCommandSQL("CREATE class testIfNotExists")).execute();
-    db.command(new OCommandSQL("CREATE property testIfNotExists.name if not exists STRING"))
-        .execute();
+    db.command("CREATE class testIfNotExists").close();
+    db.command("CREATE property testIfNotExists.name if not exists STRING").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testIfNotExists");
     OProperty property = companyClass.getProperty("name");
     assertEquals(property.getName(), PROP_NAME);
 
-    db.command(new OCommandSQL("CREATE property testIfNotExists.name if not exists STRING"))
-        .execute();
+    db.command("CREATE property testIfNotExists.name if not exists STRING").close();
 
     companyClass = db.getMetadata().getSchema().getClass("testIfNotExists");
     property = companyClass.getProperty("name");

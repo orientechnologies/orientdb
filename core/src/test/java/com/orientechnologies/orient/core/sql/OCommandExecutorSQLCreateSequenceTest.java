@@ -32,7 +32,7 @@ public class OCommandExecutorSQLCreateSequenceTest extends BaseMemoryDatabase {
 
   @Test
   public void testSimple() {
-    db.command(new OCommandSQL("CREATE SEQUENCE Sequence1 TYPE ORDERED")).execute();
+    db.command("CREATE SEQUENCE Sequence1 TYPE ORDERED").close();
 
     List<ODocument> results =
         db.query(new OSQLSynchQuery("select sequence('Sequence1').next() as val"));
@@ -54,8 +54,7 @@ public class OCommandExecutorSQLCreateSequenceTest extends BaseMemoryDatabase {
 
   @Test
   public void testIncrement() {
-    db.command(new OCommandSQL("CREATE SEQUENCE SequenceIncrement TYPE ORDERED INCREMENT 3"))
-        .execute();
+    db.command("CREATE SEQUENCE SequenceIncrement TYPE ORDERED INCREMENT 3").close();
 
     List<ODocument> results =
         db.query(new OSQLSynchQuery("select sequence('SequenceIncrement').next() as val"));
@@ -77,7 +76,7 @@ public class OCommandExecutorSQLCreateSequenceTest extends BaseMemoryDatabase {
 
   @Test
   public void testStart() {
-    db.command(new OCommandSQL("CREATE SEQUENCE SequenceStart TYPE ORDERED START 3")).execute();
+    db.command("CREATE SEQUENCE SequenceStart TYPE ORDERED START 3").close();
 
     List<ODocument> results =
         db.query(new OSQLSynchQuery("select sequence('SequenceStart').next() as val"));
@@ -99,10 +98,7 @@ public class OCommandExecutorSQLCreateSequenceTest extends BaseMemoryDatabase {
 
   @Test
   public void testStartIncrement() {
-    db.command(
-            new OCommandSQL(
-                "CREATE SEQUENCE SequenceStartIncrement TYPE ORDERED START 3 INCREMENT 10"))
-        .execute();
+    db.command("CREATE SEQUENCE SequenceStartIncrement TYPE ORDERED START 3 INCREMENT 10").close();
 
     List<ODocument> results =
         db.query(new OSQLSynchQuery("select sequence('SequenceStartIncrement').next() as val"));

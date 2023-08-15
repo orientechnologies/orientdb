@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
@@ -291,8 +290,8 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testIdFieldInheritance")
   public void testIdFieldInheritanceFirstSubClass() {
     database.setAutomaticSchemaGeneration(true);
-    database.command(new OCommandSQL("delete from InheritanceTestBaseClass")).execute();
-    database.command(new OCommandSQL("delete from InheritanceTestClass")).execute();
+    database.command("delete from InheritanceTestBaseClass").close();
+    database.command("delete from InheritanceTestClass").close();
 
     database.getEntityManager().registerEntityClass(InheritanceTestClass.class);
     database.getEntityManager().registerEntityClass(InheritanceTestBaseClass.class);

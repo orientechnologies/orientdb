@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,45 +26,42 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
     getProfilerInstance().startRecording();
 
-    db.command(new OCommandSQL("CREATE class Person extends V")).execute();
-    db.command(new OCommandSQL("CREATE class Friend extends E")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n1'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n2'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n3'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n4'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n5'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n6'")).execute();
+    db.command("CREATE class Person extends V").close();
+    db.command("CREATE class Friend extends E").close();
+    db.command("CREATE VERTEX Person set name = 'n1'").close();
+    db.command("CREATE VERTEX Person set name = 'n2'").close();
+    db.command("CREATE VERTEX Person set name = 'n3'").close();
+    db.command("CREATE VERTEX Person set name = 'n4'").close();
+    db.command("CREATE VERTEX Person set name = 'n5'").close();
+    db.command("CREATE VERTEX Person set name = 'n6'").close();
 
     String[][] friendList =
         new String[][] {{"n1", "n2"}, {"n1", "n3"}, {"n2", "n4"}, {"n4", "n5"}, {"n4", "n6"}};
 
     for (String[] pair : friendList) {
       db.command(
-              new OCommandSQL(
-                  "CREATE EDGE Friend from (select from Person where name = ?) to (select from Person where name = ?)"))
-          .execute(pair[0], pair[1]);
+          "CREATE EDGE Friend from (select from Person where name = ?) to (select from Person where name = ?)",
+          pair[0],
+          pair[1]);
     }
 
-    db.command(new OCommandSQL("CREATE class MathOp extends V")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX MathOp set a = 1, b = 3, c = 2")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX MathOp set a = 5, b = 3, c = 2")).execute();
+    db.command("CREATE class MathOp extends V").close();
+    db.command("CREATE VERTEX MathOp set a = 1, b = 3, c = 2").close();
+    db.command("CREATE VERTEX MathOp set a = 5, b = 3, c = 2").close();
 
     //    initOrgChart();
 
   }
 
   private void initEdgeIndexTest() {
-    db.command(new OCommandSQL("CREATE class IndexedVertex extends V")).execute();
-    db.command(new OCommandSQL("CREATE property IndexedVertex.uid INTEGER")).execute();
-    db.command(new OCommandSQL("CREATE index IndexedVertex_uid on IndexedVertex (uid) NOTUNIQUE"))
-        .execute();
+    db.command("CREATE class IndexedVertex extends V").close();
+    db.command("CREATE property IndexedVertex.uid INTEGER").close();
+    db.command("CREATE index IndexedVertex_uid on IndexedVertex (uid) NOTUNIQUE").close();
 
-    db.command(new OCommandSQL("CREATE class IndexedEdge extends E")).execute();
-    db.command(new OCommandSQL("CREATE property IndexedEdge.out LINK")).execute();
-    db.command(new OCommandSQL("CREATE property IndexedEdge.in LINK")).execute();
-    db.command(
-            new OCommandSQL("CREATE index IndexedEdge_out_in on IndexedEdge (out, in) NOTUNIQUE"))
-        .execute();
+    db.command("CREATE class IndexedEdge extends E").close();
+    db.command("CREATE property IndexedEdge.out LINK").close();
+    db.command("CREATE property IndexedEdge.in LINK").close();
+    db.command("CREATE index IndexedEdge_out_in on IndexedEdge (out, in) NOTUNIQUE").close();
 
     int nodes = 1000;
     for (int i = 0; i < nodes; i++) {
@@ -81,7 +77,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
               + " and uid <"
               + ((i + 1) * nodes / 100)
               + ")";
-      db.command(new OCommandSQL(cmd)).execute();
+      db.command(cmd).close();
       //      break;
     }
 
@@ -127,11 +123,11 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
     // p12 works at department 9, this department has no direct manager, so p12's manager is c (the
     // upper manager)
 
-    db.command(new OCommandSQL("CREATE class Employee extends V")).execute();
-    db.command(new OCommandSQL("CREATE class Department extends V")).execute();
-    db.command(new OCommandSQL("CREATE class ParentDepartment extends E")).execute();
-    db.command(new OCommandSQL("CREATE class WorksAt extends E")).execute();
-    db.command(new OCommandSQL("CREATE class ManagerOf extends E")).execute();
+    db.command("CREATE class Employee extends V").close();
+    db.command("CREATE class Department extends V").close();
+    db.command("CREATE class ParentDepartment extends E").close();
+    db.command("CREATE class WorksAt extends E").close();
+    db.command("CREATE class ManagerOf extends E").close();
 
     int[][] deptHierarchy = new int[10][];
     deptHierarchy[0] = new int[] {1, 2};
@@ -160,69 +156,62 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
     employees[9] = new String[] {"p12", "p13"};
 
     for (int i = 0; i < deptHierarchy.length; i++) {
-      db.command(new OCommandSQL("CREATE VERTEX Department set name = 'department" + i + "' "))
-          .execute();
+      db.command("CREATE VERTEX Department set name = 'department" + i + "' ").close();
     }
 
     for (int parent = 0; parent < deptHierarchy.length; parent++) {
       int[] children = deptHierarchy[parent];
       for (int child : children) {
         db.command(
-                new OCommandSQL(
-                    "CREATE EDGE ParentDepartment from (select from Department where name = 'department"
-                        + child
-                        + "') to (select from Department where name = 'department"
-                        + parent
-                        + "') "))
-            .execute();
+                "CREATE EDGE ParentDepartment from (select from Department where name = 'department"
+                    + child
+                    + "') to (select from Department where name = 'department"
+                    + parent
+                    + "') ")
+            .close();
       }
     }
 
     for (int dept = 0; dept < deptManagers.length; dept++) {
       String manager = deptManagers[dept];
       if (manager != null) {
-        db.command(new OCommandSQL("CREATE Vertex Employee set name = '" + manager + "' "))
-            .execute();
+        db.command("CREATE Vertex Employee set name = '" + manager + "' ").close();
 
         db.command(
-                new OCommandSQL(
-                    "CREATE EDGE ManagerOf from (select from Employee where name = '"
-                        + manager
-                        + ""
-                        + "') to (select from Department where name = 'department"
-                        + dept
-                        + "') "))
-            .execute();
+                "CREATE EDGE ManagerOf from (select from Employee where name = '"
+                    + manager
+                    + ""
+                    + "') to (select from Department where name = 'department"
+                    + dept
+                    + "') ")
+            .close();
       }
     }
 
     for (int dept = 0; dept < employees.length; dept++) {
       String[] employeesForDept = employees[dept];
       for (String employee : employeesForDept) {
-        db.command(new OCommandSQL("CREATE Vertex Employee set name = '" + employee + "' "))
-            .execute();
+        db.command("CREATE Vertex Employee set name = '" + employee + "' ").close();
 
         db.command(
-                new OCommandSQL(
-                    "CREATE EDGE WorksAt from (select from Employee where name = '"
-                        + employee
-                        + ""
-                        + "') to (select from Department where name = 'department"
-                        + dept
-                        + "') "))
-            .execute();
+                "CREATE EDGE WorksAt from (select from Employee where name = '"
+                    + employee
+                    + ""
+                    + "') to (select from Department where name = 'department"
+                    + dept
+                    + "') ")
+            .close();
       }
     }
   }
 
   private void initTriangleTest() {
-    db.command(new OCommandSQL("CREATE class TriangleV extends V")).execute();
-    db.command(new OCommandSQL("CREATE property TriangleV.uid INTEGER")).execute();
-    db.command(new OCommandSQL("CREATE index TriangleV_uid on TriangleV (uid) UNIQUE_HASH_INDEX"))
-        .execute();
-    db.command(new OCommandSQL("CREATE class TriangleE extends E")).execute();
+    db.command("CREATE class TriangleV extends V").close();
+    db.command("CREATE property TriangleV.uid INTEGER").close();
+    db.command("CREATE index TriangleV_uid on TriangleV (uid) UNIQUE_HASH_INDEX").close();
+    db.command("CREATE class TriangleE extends E").close();
     for (int i = 0; i < 10; i++) {
-      db.command(new OCommandSQL("CREATE VERTEX TriangleV set uid = ?")).execute(i);
+      db.command("CREATE VERTEX TriangleV set uid = ?", i).close();
     }
     int[][] edges = {
       {0, 1}, {0, 2}, {1, 2}, {1, 3}, {2, 4}, {3, 4}, {3, 5}, {4, 0}, {4, 7}, {6, 7}, {7, 8},
@@ -230,24 +219,26 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
     };
     for (int[] edge : edges) {
       db.command(
-              new OCommandSQL(
-                  "CREATE EDGE TriangleE from (select from TriangleV where uid = ?) to (select from TriangleV where uid = ?)"))
-          .execute(edge[0], edge[1]);
+              "CREATE EDGE TriangleE from (select from TriangleV where uid = ?) to (select from TriangleV where uid = ?)",
+              edge[0],
+              edge[1])
+          .close();
     }
   }
 
   private void initDiamondTest() {
-    db.command(new OCommandSQL("CREATE class DiamondV extends V")).execute();
-    db.command(new OCommandSQL("CREATE class DiamondE extends E")).execute();
+    db.command("CREATE class DiamondV extends V").close();
+    db.command("CREATE class DiamondE extends E").close();
     for (int i = 0; i < 4; i++) {
-      db.command(new OCommandSQL("CREATE VERTEX DiamondV set uid = ?")).execute(i);
+      db.command("CREATE VERTEX DiamondV set uid = ?", i).close();
     }
     int[][] edges = {{0, 1}, {0, 2}, {1, 3}, {2, 3}};
     for (int[] edge : edges) {
       db.command(
-              new OCommandSQL(
-                  "CREATE EDGE DiamondE from (select from DiamondV where uid = ?) to (select from DiamondV where uid = ?)"))
-          .execute(edge[0], edge[1]);
+              "CREATE EDGE DiamondE from (select from DiamondV where uid = ?) to (select from DiamondV where uid = ?)",
+              edge[0],
+              edge[1])
+          .close();
     }
   }
 
@@ -1355,7 +1346,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
     OResult doc = result.next();
     Object foo = db.load((ORID) doc.getProperty("foo"));
     Assert.assertNotNull(foo);
-    Assert.assertTrue(foo instanceof OVertex);
+    Assert.assertTrue(((OElement) foo).isVertex());
     result.close();
   }
 
@@ -1737,12 +1728,12 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testOrderByAsc() {
-    db.command(new OCommandSQL("CREATE CLASS testOrderByAsc EXTENDS V")).execute();
+    db.command("CREATE CLASS testOrderByAsc EXTENDS V").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX testOrderByAsc SET name = 'bbb'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testOrderByAsc SET name = 'zzz'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testOrderByAsc SET name = 'aaa'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testOrderByAsc SET name = 'ccc'")).execute();
+    db.command("CREATE VERTEX testOrderByAsc SET name = 'bbb'").close();
+    db.command("CREATE VERTEX testOrderByAsc SET name = 'zzz'").close();
+    db.command("CREATE VERTEX testOrderByAsc SET name = 'aaa'").close();
+    db.command("CREATE VERTEX testOrderByAsc SET name = 'ccc'").close();
 
     String query = "MATCH { class: testOrderByAsc, as:a} RETURN a.name as name order by name asc";
 
@@ -1760,12 +1751,12 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testOrderByDesc() {
-    db.command(new OCommandSQL("CREATE CLASS testOrderByDesc EXTENDS V")).execute();
+    db.command("CREATE CLASS testOrderByDesc EXTENDS V").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX testOrderByDesc SET name = 'bbb'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testOrderByDesc SET name = 'zzz'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testOrderByDesc SET name = 'aaa'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testOrderByDesc SET name = 'ccc'")).execute();
+    db.command("CREATE VERTEX testOrderByDesc SET name = 'bbb'").close();
+    db.command("CREATE VERTEX testOrderByDesc SET name = 'zzz'").close();
+    db.command("CREATE VERTEX testOrderByDesc SET name = 'aaa'").close();
+    db.command("CREATE VERTEX testOrderByDesc SET name = 'ccc'").close();
 
     String query = "MATCH { class: testOrderByDesc, as:a} RETURN a.name as name order by name desc";
 
@@ -1785,10 +1776,9 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
   @Test
   public void testNestedProjections() {
     String clazz = "testNestedProjections";
-    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb', surname = 'ccc'"))
-        .execute();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'bbb', surname = 'ccc'").close();
 
     String query = "MATCH { class: " + clazz + ", as:a} RETURN a:{name}, 'x' ";
 
@@ -1805,14 +1795,14 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
   @Test
   public void testAggregate() {
     String clazz = "testAggregate";
-    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 1")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 2")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 3")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb', num = 4")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb', num = 5")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb', num = 6")).execute();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 1").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 2").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 3").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'bbb', num = 4").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'bbb', num = 5").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'bbb', num = 6").close();
 
     String query =
         "MATCH { class: "
@@ -1837,14 +1827,11 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
   @Test
   public void testOrderByOutOfProjAsc() {
     String clazz = "testOrderByOutOfProjAsc";
-    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 0, num2 = 1"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 1, num2 = 2"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 2, num2 = 3"))
-        .execute();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 0, num2 = 1").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 1, num2 = 2").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 2, num2 = 3").close();
 
     String query =
         "MATCH { class: "
@@ -1866,14 +1853,11 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
   @Test
   public void testOrderByOutOfProjDesc() {
     String clazz = "testOrderByOutOfProjDesc";
-    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 0, num2 = 1"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 1, num2 = 2"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 2, num2 = 3"))
-        .execute();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 0, num2 = 1").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 1, num2 = 2").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 2, num2 = 3").close();
 
     String query =
         "MATCH { class: "
@@ -1895,12 +1879,10 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
   @Test
   public void testUnwind() {
     String clazz = "testUnwind";
-    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', coll = [1, 2]"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb', coll = [3, 4]"))
-        .execute();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa', coll = [1, 2]").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'bbb', coll = [3, 4]").close();
 
     String query =
         "MATCH { class: " + clazz + ", as:a} RETURN a.name as name, a.coll as num unwind num";
@@ -1922,12 +1904,12 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
   @Test
   public void testSkip() {
     String clazz = "testSkip";
-    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ccc'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ddd'")).execute();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa'").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'bbb'").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'ccc'").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'ddd'").close();
 
     String query =
         "MATCH { class: "
@@ -1952,37 +1934,34 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
   @Test
   public void testDepthAlias() {
     String clazz = "testDepthAlias";
-    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ccc'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ddd'")).execute();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa'").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'bbb'").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'ccc'").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'ddd'").close();
 
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'aaa') TO (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'bbb')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM "
+                + clazz
+                + " WHERE name = 'aaa') TO (SELECT FROM "
+                + clazz
+                + " WHERE name = 'bbb')")
+        .close();
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'bbb') TO (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'ccc')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM "
+                + clazz
+                + " WHERE name = 'bbb') TO (SELECT FROM "
+                + clazz
+                + " WHERE name = 'ccc')")
+        .close();
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'ccc') TO (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'ddd')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM "
+                + clazz
+                + " WHERE name = 'ccc') TO (SELECT FROM "
+                + clazz
+                + " WHERE name = 'ddd')")
+        .close();
 
     String query =
         "MATCH { class: "
@@ -2025,37 +2004,34 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
   @Test
   public void testPathAlias() {
     String clazz = "testPathAlias";
-    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ccc'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ddd'")).execute();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'aaa'").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'bbb'").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'ccc'").close();
+    db.command("CREATE VERTEX " + clazz + " SET name = 'ddd'").close();
 
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'aaa') TO (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'bbb')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM "
+                + clazz
+                + " WHERE name = 'aaa') TO (SELECT FROM "
+                + clazz
+                + " WHERE name = 'bbb')")
+        .close();
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'bbb') TO (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'ccc')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM "
+                + clazz
+                + " WHERE name = 'bbb') TO (SELECT FROM "
+                + clazz
+                + " WHERE name = 'ccc')")
+        .close();
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'ccc') TO (SELECT FROM "
-                    + clazz
-                    + " WHERE name = 'ddd')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM "
+                + clazz
+                + " WHERE name = 'ccc') TO (SELECT FROM "
+                + clazz
+                + " WHERE name = 'ddd')")
+        .close();
 
     String query =
         "MATCH { class: "
@@ -2301,8 +2277,8 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
   @Test
   public void testQuotedClassName() {
     String className = "testQuotedClassName";
-    db.command(new OCommandSQL("CREATE CLASS " + className + " EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX " + className + " SET name = 'a'")).execute();
+    db.command("CREATE CLASS " + className + " EXTENDS V").close();
+    db.command("CREATE VERTEX " + className + " SET name = 'a'").close();
 
     String query = "MATCH {class: `" + className + "`, as:foo} RETURN $elements";
 

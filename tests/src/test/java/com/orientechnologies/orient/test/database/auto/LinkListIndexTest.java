@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,13 +50,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   @AfterMethod
   public void afterMethod() throws Exception {
-    //noinspection deprecation
-    database.command(new OCommandSQL("DELETE FROM LinkListIndexTestClass")).execute();
+    database.command("DELETE FROM LinkListIndexTestClass").close();
 
-    @SuppressWarnings("deprecation")
-    List<ODocument> result =
-        database.command(new OCommandSQL("select from LinkListIndexTestClass")).execute();
-    Assert.assertEquals(result.size(), 0);
+    OResultSet result = database.query("select from LinkListIndexTestClass");
+    Assert.assertEquals(result.stream().count(), 0);
 
     if (!database.getStorage().isRemote()) {
       final OIndex index = getIndex("linkCollectionIndex");

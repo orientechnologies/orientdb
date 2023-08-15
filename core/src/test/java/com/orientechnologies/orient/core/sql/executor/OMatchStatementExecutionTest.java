@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -20,6 +21,8 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
@@ -28,28 +31,29 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     super.beforeTest();
     getProfilerInstance().startRecording();
 
-    db.command(new OCommandSQL("CREATE class Person extends V")).execute();
-    db.command(new OCommandSQL("CREATE class Friend extends E")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n1'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n2'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n3'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n4'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n5'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person set name = 'n6'")).execute();
+    db.command("CREATE class Person extends V").close();
+    db.command("CREATE class Friend extends E").close();
+    db.command("CREATE VERTEX Person set name = 'n1'").close();
+    db.command("CREATE VERTEX Person set name = 'n2'").close();
+    db.command("CREATE VERTEX Person set name = 'n3'").close();
+    db.command("CREATE VERTEX Person set name = 'n4'").close();
+    db.command("CREATE VERTEX Person set name = 'n5'").close();
+    db.command("CREATE VERTEX Person set name = 'n6'").close();
 
     String[][] friendList =
         new String[][] {{"n1", "n2"}, {"n1", "n3"}, {"n2", "n4"}, {"n4", "n5"}, {"n4", "n6"}};
 
     for (String[] pair : friendList) {
       db.command(
-              new OCommandSQL(
-                  "CREATE EDGE Friend from (select from Person where name = ?) to (select from Person where name = ?)"))
-          .execute(pair[0], pair[1]);
+              "CREATE EDGE Friend from (select from Person where name = ?) to (select from Person where name = ?)",
+              pair[0],
+              pair[1])
+          .close();
     }
 
-    db.command(new OCommandSQL("CREATE class MathOp extends V")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX MathOp set a = 1, b = 3, c = 2")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX MathOp set a = 5, b = 3, c = 2")).execute();
+    db.command("CREATE class MathOp extends V").close();
+    db.command("CREATE VERTEX MathOp set a = 1, b = 3, c = 2").close();
+    db.command("CREATE VERTEX MathOp set a = 5, b = 3, c = 2").close();
 
     initOrgChart();
 
@@ -61,17 +65,14 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   private void initEdgeIndexTest() {
-    db.command(new OCommandSQL("CREATE class IndexedVertex extends V")).execute();
-    db.command(new OCommandSQL("CREATE property IndexedVertex.uid INTEGER")).execute();
-    db.command(new OCommandSQL("CREATE index IndexedVertex_uid on IndexedVertex (uid) NOTUNIQUE"))
-        .execute();
+    db.command("CREATE class IndexedVertex extends V").close();
+    db.command("CREATE property IndexedVertex.uid INTEGER").close();
+    db.command("CREATE index IndexedVertex_uid on IndexedVertex (uid) NOTUNIQUE").close();
 
-    db.command(new OCommandSQL("CREATE class IndexedEdge extends E")).execute();
-    db.command(new OCommandSQL("CREATE property IndexedEdge.out LINK")).execute();
-    db.command(new OCommandSQL("CREATE property IndexedEdge.in LINK")).execute();
-    db.command(
-            new OCommandSQL("CREATE index IndexedEdge_out_in on IndexedEdge (out, in) NOTUNIQUE"))
-        .execute();
+    db.command("CREATE class IndexedEdge extends E").close();
+    db.command("CREATE property IndexedEdge.out LINK").close();
+    db.command("CREATE property IndexedEdge.in LINK").close();
+    db.command("CREATE index IndexedEdge_out_in on IndexedEdge (out, in) NOTUNIQUE").close();
 
     int nodes = 1000;
     for (int i = 0; i < nodes; i++) {
@@ -82,24 +83,22 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
 
     for (int i = 0; i < 100; i++) {
       db.command(
-              new OCommandSQL(
-                  "CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid = 0) TO (SELECT FROM IndexedVertex WHERE uid > "
-                      + (i * nodes / 100)
-                      + " and uid <"
-                      + ((i + 1) * nodes / 100)
-                      + ")"))
-          .execute();
+              "CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid = 0) TO (SELECT FROM IndexedVertex WHERE uid > "
+                  + (i * nodes / 100)
+                  + " and uid <"
+                  + ((i + 1) * nodes / 100)
+                  + ")")
+          .close();
     }
 
     for (int i = 0; i < 100; i++) {
       db.command(
-              new OCommandSQL(
-                  "CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid > "
-                      + ((i * nodes / 100) + 1)
-                      + " and uid < "
-                      + (((i + 1) * nodes / 100) + 1)
-                      + ") TO (SELECT FROM IndexedVertex WHERE uid = 1)"))
-          .execute();
+              "CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid > "
+                  + ((i * nodes / 100) + 1)
+                  + " and uid < "
+                  + (((i + 1) * nodes / 100) + 1)
+                  + ") TO (SELECT FROM IndexedVertex WHERE uid = 1)")
+          .close();
     }
   }
 
@@ -132,11 +131,11 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     // p12 works at department 9, this department has no direct manager, so p12's manager is c (the
     // upper manager)
 
-    db.command(new OCommandSQL("CREATE class Employee extends V")).execute();
-    db.command(new OCommandSQL("CREATE class Department extends V")).execute();
-    db.command(new OCommandSQL("CREATE class ParentDepartment extends E")).execute();
-    db.command(new OCommandSQL("CREATE class WorksAt extends E")).execute();
-    db.command(new OCommandSQL("CREATE class ManagerOf extends E")).execute();
+    db.command("CREATE class Employee extends V").close();
+    db.command("CREATE class Department extends V").close();
+    db.command("CREATE class ParentDepartment extends E").close();
+    db.command("CREATE class WorksAt extends E").close();
+    db.command("CREATE class ManagerOf extends E").close();
 
     int[][] deptHierarchy = new int[10][];
     deptHierarchy[0] = new int[] {1, 2};
@@ -165,69 +164,63 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     employees[9] = new String[] {"p12", "p13"};
 
     for (int i = 0; i < deptHierarchy.length; i++) {
-      db.command(new OCommandSQL("CREATE VERTEX Department set name = 'department" + i + "' "))
-          .execute();
+      db.command("CREATE VERTEX Department set name = 'department" + i + "' ").close();
     }
 
     for (int parent = 0; parent < deptHierarchy.length; parent++) {
       int[] children = deptHierarchy[parent];
       for (int child : children) {
         db.command(
-                new OCommandSQL(
-                    "CREATE EDGE ParentDepartment from (select from Department where name = 'department"
-                        + child
-                        + "') to (select from Department where name = 'department"
-                        + parent
-                        + "') "))
-            .execute();
+                "CREATE EDGE ParentDepartment from (select from Department where name = 'department"
+                    + child
+                    + "') to (select from Department where name = 'department"
+                    + parent
+                    + "') ")
+            .close();
       }
     }
 
     for (int dept = 0; dept < deptManagers.length; dept++) {
       String manager = deptManagers[dept];
       if (manager != null) {
-        db.command(new OCommandSQL("CREATE Vertex Employee set name = '" + manager + "' "))
-            .execute();
+        db.command("CREATE Vertex Employee set name = '" + manager + "' ").close();
 
         db.command(
-                new OCommandSQL(
-                    "CREATE EDGE ManagerOf from (select from Employee where name = '"
-                        + manager
-                        + ""
-                        + "') to (select from Department where name = 'department"
-                        + dept
-                        + "') "))
-            .execute();
+                "CREATE EDGE ManagerOf from (select from Employee where name = '"
+                    + manager
+                    + ""
+                    + "') to (select from Department where name = 'department"
+                    + dept
+                    + "') ")
+            .close();
       }
     }
 
     for (int dept = 0; dept < employees.length; dept++) {
       String[] employeesForDept = employees[dept];
       for (String employee : employeesForDept) {
-        db.command(new OCommandSQL("CREATE Vertex Employee set name = '" + employee + "' "))
-            .execute();
+        db.command("CREATE Vertex Employee set name = '" + employee + "' ").close();
 
         db.command(
-                new OCommandSQL(
-                    "CREATE EDGE WorksAt from (select from Employee where name = '"
-                        + employee
-                        + ""
-                        + "') to (select from Department where name = 'department"
-                        + dept
-                        + "') "))
-            .execute();
+                "CREATE EDGE WorksAt from (select from Employee where name = '"
+                    + employee
+                    + ""
+                    + "') to (select from Department where name = 'department"
+                    + dept
+                    + "') ")
+            .close();
       }
     }
   }
 
   private void initTriangleTest() {
-    db.command(new OCommandSQL("CREATE class TriangleV extends V")).execute();
-    db.command(new OCommandSQL("CREATE property TriangleV.uid INTEGER")).execute();
-    db.command(new OCommandSQL("CREATE index TriangleV_uid on TriangleV (uid) UNIQUE_HASH_INDEX"))
-        .execute();
-    db.command(new OCommandSQL("CREATE class TriangleE extends E")).execute();
+    db.command("CREATE class TriangleV extends V").close();
+    db.command("CREATE property TriangleV.uid INTEGER").close();
+    db.command("CREATE index TriangleV_uid on TriangleV (uid) UNIQUE_HASH_INDEX").close();
+    db.command("CREATE class TriangleE extends E").close();
     for (int i = 0; i < 10; i++) {
-      db.command(new OCommandSQL("CREATE VERTEX TriangleV set uid = ?")).execute(i);
+      db.command("CREATE VERTEX TriangleV set uid = ?", i).close();
+      ;
     }
     int[][] edges = {
       {0, 1}, {0, 2}, {1, 2}, {1, 3}, {2, 4}, {3, 4}, {3, 5}, {4, 0}, {4, 7}, {6, 7}, {7, 8},
@@ -235,31 +228,35 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     };
     for (int[] edge : edges) {
       db.command(
-              new OCommandSQL(
-                  "CREATE EDGE TriangleE from (select from TriangleV where uid = ?) to (select from TriangleV where uid = ?)"))
-          .execute(edge[0], edge[1]);
+              "CREATE EDGE TriangleE from (select from TriangleV where uid = ?) to (select from TriangleV where uid = ?)",
+              edge[0],
+              edge[1])
+          .close();
+      ;
     }
   }
 
   private void initDiamondTest() {
-    db.command(new OCommandSQL("CREATE class DiamondV extends V")).execute();
-    db.command(new OCommandSQL("CREATE class DiamondE extends E")).execute();
+    db.command("CREATE class DiamondV extends V").close();
+    db.command("CREATE class DiamondE extends E").close();
     for (int i = 0; i < 4; i++) {
-      db.command(new OCommandSQL("CREATE VERTEX DiamondV set uid = ?")).execute(i);
+      db.command("CREATE VERTEX DiamondV set uid = ?", i).close();
+      ;
     }
     int[][] edges = {{0, 1}, {0, 2}, {1, 3}, {2, 3}};
     for (int[] edge : edges) {
       db.command(
-              new OCommandSQL(
-                  "CREATE EDGE DiamondE from (select from DiamondV where uid = ?) to (select from DiamondV where uid = ?)"))
-          .execute(edge[0], edge[1]);
+              "CREATE EDGE DiamondE from (select from DiamondV where uid = ?) to (select from DiamondV where uid = ?)",
+              edge[0],
+              edge[1])
+          .close();
+      ;
     }
   }
 
   @Test
   public void testSimple() throws Exception {
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("match {class:Person, as: person} return person")).execute();
+    List<ODocument> qResult = collect(db.command("match {class:Person, as: person} return person"));
     assertEquals(6, qResult.size());
     for (ODocument doc : qResult) {
       assertTrue(doc.fieldNames().length == 1);
@@ -273,10 +270,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testSimpleWhere() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person"));
 
     assertEquals(2, qResult.size());
     for (ODocument doc : qResult) {
@@ -291,10 +287,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testSimpleLimit() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit 1"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit 1"));
 
     assertEquals(1, qResult.size());
   }
@@ -302,10 +297,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testSimpleLimit2() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit -1"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit -1"));
 
     assertEquals(2, qResult.size());
   }
@@ -313,10 +307,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testSimpleLimit3() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit 3"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit 3"));
 
     assertEquals(2, qResult.size());
   }
@@ -324,10 +317,11 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testSimpleUnnamedParams() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, as: person, where: (name = ? or name = ?)} return person"))
-            .execute("n1", "n2");
+        collect(
+            db.command(
+                "match {class:Person, as: person, where: (name = ? or name = ?)} return person",
+                "n1",
+                "n2"));
 
     assertEquals(2, qResult.size());
     for (ODocument doc : qResult) {
@@ -343,10 +337,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testCommonFriends() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return $matches)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return $matches)"));
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).field("name"));
   }
@@ -355,10 +348,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testCommonFriendsArrows() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return $matches)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return $matches)"));
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).field("name"));
   }
@@ -367,10 +359,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testCommonFriends2() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name as name"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name as name"));
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).field("name"));
   }
@@ -379,10 +370,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testCommonFriends2Arrows() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name as name"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name as name"));
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).field("name"));
   }
@@ -390,10 +380,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testReturnMethod() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name.toUpperCase(Locale.ENGLISH) as name"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name.toUpperCase(Locale.ENGLISH) as name"));
     assertEquals(1, qResult.size());
     assertEquals("N2", qResult.get(0).field("name"));
   }
@@ -401,10 +390,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testReturnMethodArrows() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name.toUpperCase(Locale.ENGLISH) as name"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name.toUpperCase(Locale.ENGLISH) as name"));
     assertEquals(1, qResult.size());
     assertEquals("N2", qResult.get(0).field("name"));
   }
@@ -412,10 +400,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testReturnExpression() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name + ' ' +friend.name as name"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name + ' ' +friend.name as name"));
     assertEquals(1, qResult.size());
     assertEquals("n2 n2", qResult.get(0).field("name"));
   }
@@ -423,10 +410,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testReturnExpressionArrows() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name + ' ' +friend.name as name"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name + ' ' +friend.name as name"));
     assertEquals(1, qResult.size());
     assertEquals("n2 n2", qResult.get(0).field("name"));
   }
@@ -434,10 +420,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testReturnDefaultAlias() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name"));
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).getProperty("friend.name"));
   }
@@ -445,10 +430,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testReturnDefaultAliasArrows() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name"));
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).getProperty("friend.name"));
   }
@@ -457,10 +441,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testFriendsOfFriends() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend').out('Friend'){as:friend} return $matches)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend').out('Friend'){as:friend} return $matches)"));
     assertEquals(1, qResult.size());
     assertEquals("n4", qResult.get(0).field("name"));
   }
@@ -469,10 +452,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testFriendsOfFriendsArrows() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{}-Friend->{as:friend} return $matches)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{}-Friend->{as:friend} return $matches)"));
     assertEquals(1, qResult.size());
     assertEquals("n4", qResult.get(0).field("name"));
   }
@@ -481,10 +463,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testFriendsOfFriends2() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1'), as: me}.both('Friend').both('Friend'){as:friend, where: ($matched.me != $currentMatch)} return $matches)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1'), as: me}.both('Friend').both('Friend'){as:friend, where: ($matched.me != $currentMatch)} return $matches)"));
 
     for (ODocument doc : qResult) {
       assertNotEquals(doc.field("name"), "n1");
@@ -495,10 +476,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testFriendsOfFriends2Arrows() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1'), as: me}-Friend-{}-Friend-{as:friend, where: ($matched.me != $currentMatch)} return $matches)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1'), as: me}-Friend-{}-Friend-{as:friend, where: ($matched.me != $currentMatch)} return $matches)"));
 
     for (ODocument doc : qResult) {
       assertNotEquals(doc.field("name"), "n1");
@@ -509,10 +489,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testFriendsWithName() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1' and 1 + 1 = 2)}.out('Friend'){as:friend, where:(name = 'n2' and 1 + 1 = 2)} return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1' and 1 + 1 = 2)}.out('Friend'){as:friend, where:(name = 'n2' and 1 + 1 = 2)} return friend)"));
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).field("name"));
   }
@@ -521,10 +500,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testFriendsWithNameArrows() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1' and 1 + 1 = 2)}-Friend->{as:friend, where:(name = 'n2' and 1 + 1 = 2)} return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1' and 1 + 1 = 2)}-Friend->{as:friend, where:(name = 'n2' and 1 + 1 = 2)} return friend)"));
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).field("name"));
   }
@@ -533,45 +511,39 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testWhile() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 1)} return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 1)} return friend)"));
     assertEquals(3, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 2), where: ($depth=1) } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 2), where: ($depth=1) } return friend)"));
     assertEquals(2, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 4), where: ($depth=1) } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 4), where: ($depth=1) } return friend)"));
     assertEquals(2, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend)"));
     assertEquals(6, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend limit 3)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend limit 3)"));
     assertEquals(3, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend) limit 3"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend) limit 3"));
     assertEquals(3, qResult.size());
   }
 
@@ -579,93 +551,81 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testWhileArrows() throws Exception {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 1)} return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 1)} return friend)"));
     assertEquals(3, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 2), where: ($depth=1) } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 2), where: ($depth=1) } return friend)"));
     assertEquals(2, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 4), where: ($depth=1) } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 4), where: ($depth=1) } return friend)"));
     assertEquals(2, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: (true) } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: (true) } return friend)"));
     assertEquals(6, qResult.size());
   }
 
   @Test
   public void testMaxDepth() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1, where: ($depth=1) } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1, where: ($depth=1) } return friend)"));
     assertEquals(2, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1 } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1 } return friend)"));
     assertEquals(3, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 0 } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 0 } return friend)"));
     assertEquals(1, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1, where: ($depth > 0) } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1, where: ($depth > 0) } return friend)"));
     assertEquals(2, qResult.size());
   }
 
   @Test
   public void testMaxDepthArrow() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1, where: ($depth=1) } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1, where: ($depth=1) } return friend)"));
     assertEquals(2, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1 } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1 } return friend)"));
     assertEquals(3, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 0 } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 0 } return friend)"));
     assertEquals(1, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1, where: ($depth > 0) } return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1, where: ($depth > 0) } return friend)"));
     assertEquals(2, qResult.size());
   }
 
@@ -697,7 +657,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  return manager");
     query.append(")");
 
-    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
+    List<OIdentifiable> qResult = collectIdentifiable(db.command(query.toString()));
     assertEquals(1, qResult.size());
     return qResult.get(0).getRecord();
   }
@@ -713,7 +673,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  return manager");
     query.append(")");
 
-    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
+    List<OIdentifiable> qResult = collectIdentifiable(db.command(query.toString()));
     assertEquals(1, qResult.size());
     return qResult.get(0).getRecord();
   }
@@ -747,7 +707,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  return manager");
     query.append(")");
 
-    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
+    List<OIdentifiable> qResult = collectIdentifiable(db.command(query.toString()));
     assertEquals(1, qResult.size());
     return qResult.get(0).getRecord();
   }
@@ -764,7 +724,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  return manager");
     query.append(")");
 
-    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
+    List<OIdentifiable> qResult = collectIdentifiable(db.command(query.toString()));
     assertEquals(1, qResult.size());
     return qResult.get(0).getRecord();
   }
@@ -807,7 +767,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  return managed");
     query.append(")");
 
-    return db.command(new OCommandSQL(query.toString())).execute();
+    return collectIdentifiable(db.command(query.toString()));
   }
 
   @Test
@@ -846,7 +806,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  return managed");
     query.append(")");
 
-    return db.command(new OCommandSQL(query.toString())).execute();
+    return collectIdentifiable(db.command(query.toString()));
   }
 
   @Test
@@ -887,7 +847,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  return managed");
     query.append(")");
 
-    return db.command(new OCommandSQL(query.toString())).execute();
+    return collectIdentifiable(db.command(query.toString()));
   }
 
   @Test
@@ -927,7 +887,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  return managed");
     query.append(")");
 
-    return db.command(new OCommandSQL(query.toString())).execute();
+    return collectIdentifiable(db.command(query.toString()));
   }
 
   @Test
@@ -941,7 +901,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  .out('TriangleE'){as: friend3}");
     query.append("return $matches");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
   }
 
@@ -954,7 +914,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:TriangleV, as: friend1} -TriangleE-> {as: friend3}");
     query.append("return $matches");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
   }
 
@@ -969,7 +929,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  .out('TriangleE'){as: friend3}");
     query.append("return $matches");
 
-    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<ODocument> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     ODocument doc = result.get(0);
     ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
@@ -991,7 +951,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  .out('TriangleE'){as: friend3}");
     query.append("return $patterns");
 
-    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<ODocument> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     ODocument doc = result.get(0);
     ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
@@ -1013,7 +973,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  -TriangleE->{as: friend3}");
     query.append("return $matches");
 
-    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<ODocument> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     ODocument doc = result.get(0);
     ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
@@ -1035,7 +995,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  -TriangleE->{as: friend3}");
     query.append("return $matches");
 
-    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<ODocument> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
   }
 
@@ -1050,7 +1010,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  .out('TriangleE'){as: friend3}");
     query.append("return $matches");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
   }
 
@@ -1065,7 +1025,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  -TriangleE->{as: friend3}");
     query.append("return $matches");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
   }
 
@@ -1080,7 +1040,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  .outE('TriangleE').inV(){as: friend3}");
     query.append("return $matches");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
   }
 
@@ -1092,7 +1052,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:TriangleV, as: friend2, where:(uid = 2 or uid = 3)}");
     query.append("return $matches");
 
-    List<OIdentifiable> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<OIdentifiable> result = collectIdentifiable(db.command(query.toString()));
     assertEquals(2, result.size());
     for (OIdentifiable d : result) {
       assertEquals(
@@ -1108,7 +1068,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:TriangleV, as: friend2, where:(uid = 2 or uid = 3)}");
     query.append("return $matches LIMIT 1");
 
-    List<OIdentifiable> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<OIdentifiable> result = collectIdentifiable(db.command(query.toString()));
     assertEquals(1, result.size());
     for (OIdentifiable d : result) {
       assertEquals(
@@ -1123,12 +1083,12 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
     query.append("return friend1.out('TriangleE')[0] as foo");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     ODocument doc = (ODocument) result.get(0);
     Object foo = doc.field("foo");
     assertNotNull(foo);
-    assertTrue(foo instanceof OVertex);
+    Assert.assertTrue(((OElement) foo).isVertex());
   }
 
   @Test
@@ -1138,7 +1098,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
     query.append("return friend1.out('TriangleE')[0,1] as foo");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     ODocument doc = (ODocument) result.get(0);
     Object foo = doc.field("foo");
@@ -1154,7 +1114,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
     query.append("return friend1.out('TriangleE')[0..1] as foo");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     ODocument doc = (ODocument) result.get(0);
     Object foo = doc.field("foo");
@@ -1170,7 +1130,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
     query.append("return friend1.out('TriangleE')[0..2] as foo");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     ODocument doc = (ODocument) result.get(0);
     Object foo = doc.field("foo");
@@ -1186,7 +1146,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
     query.append("return friend1.out('TriangleE')[0..3] as foo");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     ODocument doc = (ODocument) result.get(0);
     Object foo = doc.field("foo");
@@ -1202,7 +1162,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
     query.append("return friend1.out('TriangleE')[uid = 2] as foo");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     ODocument doc = (ODocument) result.get(0);
     Object foo = doc.field("foo");
@@ -1221,7 +1181,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append(".out('IndexedEdge'){class:IndexedVertex, as: two, where: (uid = 1)}");
     query.append("return one, two");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
   }
 
@@ -1233,7 +1193,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("-IndexedEdge->{class:IndexedVertex, as: two, where: (uid = 1)}");
     query.append("return one, two");
 
-    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<?> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
   }
 
@@ -1244,7 +1204,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
     query.append("return {'name':'foo', 'uuid':one.uid}");
 
-    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<ODocument> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     //    ODocument doc = result.get(0);
     //    assertEquals("foo", doc.field("name"));
@@ -1258,7 +1218,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
     query.append("return {'name':'foo', 'sub': {'uuid':one.uid}}");
 
-    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<ODocument> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     //    ODocument doc = result.get(0);
     //    assertEquals("foo", doc.field("name"));
@@ -1272,7 +1232,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
     query.append("return {'name':'foo', 'sub': [{'uuid':one.uid}]}");
 
-    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    List<ODocument> result = collect(db.command(query.toString()));
     assertEquals(1, result.size());
     //    ODocument doc = result.get(0);
     //    assertEquals("foo", doc.field("name"));
@@ -1288,6 +1248,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("return one, two");
 
     List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    System.out.println(result);
     assertEquals(1, result.size());
 
     query = new StringBuilder();
@@ -1362,10 +1323,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testOptional() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, as: person} -NonExistingEdge-> {as:b, optional:true} return person, b.name"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, as: person} -NonExistingEdge-> {as:b, optional:true} return person, b.name"));
     assertEquals(6, qResult.size());
     for (ODocument doc : qResult) {
       assertTrue(doc.fieldNames().length == 2);
@@ -1379,10 +1339,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testOptional2() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "match {class:Person, as: person} --> {as:b, optional:true, where:(nonExisting = 12)} return person, b.name"))
-            .execute();
+        collect(
+            db.command(
+                "match {class:Person, as: person} --> {as:b, optional:true, where:(nonExisting = 12)} return person, b.name"));
     assertEquals(6, qResult.size());
     for (ODocument doc : qResult) {
       assertTrue(doc.fieldNames().length == 2);
@@ -1396,14 +1355,13 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testOptional3() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select friend.name as name from ("
-                        + "match {class:Person, as:a, where:(name = 'n1' and 1 + 1 = 2)}.out('Friend'){as:friend, where:(name = 'n2' and 1 + 1 = 2)},"
-                        + "{as:a}.out(){as:b, where:(nonExisting = 12), optional:true},"
-                        + "{as:friend}.out(){as:b, optional:true}"
-                        + " return friend)"))
-            .execute();
+        collect(
+            db.command(
+                "select friend.name as name from ("
+                    + "match {class:Person, as:a, where:(name = 'n1' and 1 + 1 = 2)}.out('Friend'){as:friend, where:(name = 'n2' and 1 + 1 = 2)},"
+                    + "{as:a}.out(){as:b, where:(nonExisting = 12), optional:true},"
+                    + "{as:friend}.out(){as:b, optional:true}"
+                    + " return friend)"));
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).field("name"));
   }
@@ -1411,10 +1369,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testAliasesWithSubquery() throws Exception {
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "select from ( match {class:Person, as:A} return A.name as namexx ) limit 1"))
-            .execute();
+        collect(
+            db.command(
+                "select from ( match {class:Person, as:A} return A.name as namexx ) limit 1"));
     assertEquals(1, qResult.size());
     assertNotNull(qResult.get(0).field("namexx"));
     assertTrue(qResult.get(0).field("namexx").toString().startsWith("n"));
@@ -1423,16 +1380,15 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testEvalInReturn() {
     // issue #6606
-    db.command(new OCommandSQL("CREATE CLASS testEvalInReturn EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY testEvalInReturn.name String")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testEvalInReturn SET name = 'foo'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testEvalInReturn SET name = 'bar'")).execute();
+    db.command("CREATE CLASS testEvalInReturn EXTENDS V").close();
+    db.command("CREATE PROPERTY testEvalInReturn.name String").close();
+    db.command("CREATE VERTEX testEvalInReturn SET name = 'foo'").close();
+    db.command("CREATE VERTEX testEvalInReturn SET name = 'bar'").close();
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "MATCH {class: testEvalInReturn, as: p} RETURN if(eval(\"p.name = 'foo'\"), 1, 2) AS b"))
-            .execute();
+        collect(
+            db.command(
+                "MATCH {class: testEvalInReturn, as: p} RETURN if(eval(\"p.name = 'foo'\"), 1, 2) AS b"));
 
     assertEquals(2, qResult.size());
     int sum = 0;
@@ -1454,32 +1410,26 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testCheckClassAsCondition() {
 
-    db.command(new OCommandSQL("CREATE CLASS testCheckClassAsCondition EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testCheckClassAsCondition1 EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testCheckClassAsCondition2 EXTENDS V")).execute();
+    db.command("CREATE CLASS testCheckClassAsCondition EXTENDS V").close();
+    db.command("CREATE CLASS testCheckClassAsCondition1 EXTENDS V").close();
+    db.command("CREATE CLASS testCheckClassAsCondition2 EXTENDS V").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX testCheckClassAsCondition SET name = 'foo'"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX testCheckClassAsCondition1 SET name = 'bar'"))
-        .execute();
+    db.command("CREATE VERTEX testCheckClassAsCondition SET name = 'foo'").close();
+    db.command("CREATE VERTEX testCheckClassAsCondition1 SET name = 'bar'").close();
     for (int i = 0; i < 5; i++) {
-      db.command(new OCommandSQL("CREATE VERTEX testCheckClassAsCondition2 SET name = 'baz'"))
-          .execute();
+      db.command("CREATE VERTEX testCheckClassAsCondition2 SET name = 'baz'").close();
     }
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (select from testCheckClassAsCondition where name = 'foo') to (select from testCheckClassAsCondition1)"))
-        .execute();
+            "CREATE EDGE E FROM (select from testCheckClassAsCondition where name = 'foo') to (select from testCheckClassAsCondition1)")
+        .close();
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (select from testCheckClassAsCondition where name = 'foo') to (select from testCheckClassAsCondition2)"))
-        .execute();
+            "CREATE EDGE E FROM (select from testCheckClassAsCondition where name = 'foo') to (select from testCheckClassAsCondition2)")
+        .close();
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "MATCH {class: testCheckClassAsCondition, as: p} -E- {class: testCheckClassAsCondition1, as: q} RETURN $elements"))
-            .execute();
+        collect(
+            db.command(
+                "MATCH {class: testCheckClassAsCondition, as: p} -E- {class: testCheckClassAsCondition1, as: q} RETURN $elements"));
 
     assertEquals(2, qResult.size());
   }
@@ -1488,45 +1438,39 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   public void testInstanceof() {
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "MATCH {class: Person, as: p, where: ($currentMatch instanceof 'Person')} return $elements limit 1"))
-            .execute();
+        collect(
+            db.command(
+                "MATCH {class: Person, as: p, where: ($currentMatch instanceof 'Person')} return $elements limit 1"));
     assertEquals(1, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "MATCH {class: Person, as: p, where: ($currentMatch instanceof 'V')} return $elements limit 1"))
-            .execute();
+        collect(
+            db.command(
+                "MATCH {class: Person, as: p, where: ($currentMatch instanceof 'V')} return $elements limit 1"));
     assertEquals(1, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "MATCH {class: Person, as: p, where: (not ($currentMatch instanceof 'Person'))} return $elements limit 1"))
-            .execute();
+        collect(
+            db.command(
+                "MATCH {class: Person, as: p, where: (not ($currentMatch instanceof 'Person'))} return $elements limit 1"));
     assertEquals(0, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ($currentMatch instanceof 'Person')} return $elements limit 1"))
-            .execute();
+        collect(
+            db.command(
+                "MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ($currentMatch instanceof 'Person')} return $elements limit 1"));
     assertEquals(1, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ($currentMatch instanceof 'Person' and '$currentMatch' <> '@this')} return $elements limit 1"))
-            .execute();
+        collect(
+            db.command(
+                "MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ($currentMatch instanceof 'Person' and '$currentMatch' <> '@this')} return $elements limit 1"));
     assertEquals(1, qResult.size());
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ( not ($currentMatch instanceof 'Person'))} return $elements limit 1"))
-            .execute();
+        collect(
+            db.command(
+                "MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ( not ($currentMatch instanceof 'Person'))} return $elements limit 1"));
     assertEquals(0, qResult.size());
   }
 
@@ -1549,41 +1493,37 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     doc.save();
 
     List<ODocument> qResult =
-        db.command(
-                new OCommandSQL(
-                    "MATCH {class: testBigEntryPoint1, as: a}, {class: testBigEntryPoint2, as: b} return $elements limit 1"))
-            .execute();
+        collect(
+            db.command(
+                "MATCH {class: testBigEntryPoint1, as: a}, {class: testBigEntryPoint2, as: b} return $elements limit 1"));
     assertEquals(1, qResult.size());
   }
 
   @Test
   public void testMatched1() {
     // issue #6931
-    db.command(new OCommandSQL("CREATE CLASS testMatched1_Foo EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testMatched1_Bar EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testMatched1_Baz EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testMatched1_Far EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testMatched1_Foo_Bar EXTENDS E")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testMatched1_Bar_Baz EXTENDS E")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testMatched1_Foo_Far EXTENDS E")).execute();
+    db.command("CREATE CLASS testMatched1_Foo EXTENDS V").close();
+    db.command("CREATE CLASS testMatched1_Bar EXTENDS V").close();
+    db.command("CREATE CLASS testMatched1_Baz EXTENDS V").close();
+    db.command("CREATE CLASS testMatched1_Far EXTENDS V").close();
+    db.command("CREATE CLASS testMatched1_Foo_Bar EXTENDS E").close();
+    db.command("CREATE CLASS testMatched1_Bar_Baz EXTENDS E").close();
+    db.command("CREATE CLASS testMatched1_Foo_Far EXTENDS E").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Foo SET name = 'foo'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Bar SET name = 'bar'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Baz SET name = 'baz'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Far SET name = 'far'")).execute();
+    db.command("CREATE VERTEX testMatched1_Foo SET name = 'foo'").close();
+    db.command("CREATE VERTEX testMatched1_Bar SET name = 'bar'").close();
+    db.command("CREATE VERTEX testMatched1_Baz SET name = 'baz'").close();
+    db.command("CREATE VERTEX testMatched1_Far SET name = 'far'").close();
 
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testMatched1_Foo_Bar FROM (SELECT FROM testMatched1_Foo) TO (SELECT FROM testMatched1_Bar)"))
-        .execute();
+            "CREATE EDGE testMatched1_Foo_Bar FROM (SELECT FROM testMatched1_Foo) TO (SELECT FROM testMatched1_Bar)")
+        .close();
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testMatched1_Bar_Baz FROM (SELECT FROM testMatched1_Bar) TO (SELECT FROM testMatched1_Baz)"))
-        .execute();
+            "CREATE EDGE testMatched1_Bar_Baz FROM (SELECT FROM testMatched1_Bar) TO (SELECT FROM testMatched1_Baz)")
+        .close();
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testMatched1_Foo_Far FROM (SELECT FROM testMatched1_Foo) TO (SELECT FROM testMatched1_Far)"))
-        .execute();
+            "CREATE EDGE testMatched1_Foo_Far FROM (SELECT FROM testMatched1_Foo) TO (SELECT FROM testMatched1_Far)")
+        .close();
 
     List result =
         db.query(
@@ -1609,38 +1549,31 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testDependencyOrdering1() {
     // issue #6931
-    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Foo EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Bar EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Baz EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Far EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Foo_Bar EXTENDS E")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Bar_Baz EXTENDS E")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Foo_Far EXTENDS E")).execute();
+    db.command("CREATE CLASS testDependencyOrdering1_Foo EXTENDS V").close();
+    db.command("CREATE CLASS testDependencyOrdering1_Bar EXTENDS V").close();
+    db.command("CREATE CLASS testDependencyOrdering1_Baz EXTENDS V").close();
+    db.command("CREATE CLASS testDependencyOrdering1_Far EXTENDS V").close();
+    db.command("CREATE CLASS testDependencyOrdering1_Foo_Bar EXTENDS E").close();
+    db.command("CREATE CLASS testDependencyOrdering1_Bar_Baz EXTENDS E").close();
+    db.command("CREATE CLASS testDependencyOrdering1_Foo_Far EXTENDS E").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX testDependencyOrdering1_Foo SET name = 'foo'"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX testDependencyOrdering1_Bar SET name = 'bar'"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX testDependencyOrdering1_Baz SET name = 'baz'"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX testDependencyOrdering1_Far SET name = 'far'"))
-        .execute();
+    db.command("CREATE VERTEX testDependencyOrdering1_Foo SET name = 'foo'").close();
+    db.command("CREATE VERTEX testDependencyOrdering1_Bar SET name = 'bar'").close();
+    db.command("CREATE VERTEX testDependencyOrdering1_Baz SET name = 'baz'").close();
+    db.command("CREATE VERTEX testDependencyOrdering1_Far SET name = 'far'").close();
 
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testDependencyOrdering1_Foo_Bar FROM ("
-                    + "SELECT FROM testDependencyOrdering1_Foo) TO (SELECT FROM testDependencyOrdering1_Bar)"))
-        .execute();
+            "CREATE EDGE testDependencyOrdering1_Foo_Bar FROM ("
+                + "SELECT FROM testDependencyOrdering1_Foo) TO (SELECT FROM testDependencyOrdering1_Bar)")
+        .close();
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testDependencyOrdering1_Bar_Baz FROM ("
-                    + "SELECT FROM testDependencyOrdering1_Bar) TO (SELECT FROM testDependencyOrdering1_Baz)"))
-        .execute();
+            "CREATE EDGE testDependencyOrdering1_Bar_Baz FROM ("
+                + "SELECT FROM testDependencyOrdering1_Bar) TO (SELECT FROM testDependencyOrdering1_Baz)")
+        .close();
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testDependencyOrdering1_Foo_Far FROM ("
-                    + "SELECT FROM testDependencyOrdering1_Foo) TO (SELECT FROM testDependencyOrdering1_Far)"))
-        .execute();
+            "CREATE EDGE testDependencyOrdering1_Foo_Far FROM ("
+                + "SELECT FROM testDependencyOrdering1_Foo) TO (SELECT FROM testDependencyOrdering1_Far)")
+        .close();
 
     // The correct but non-obvious execution order here is:
     // foo, bar, far, baz
@@ -1671,38 +1604,31 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testCircularDependency() {
     // issue #6931
-    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Foo EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Bar EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Baz EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Far EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Foo_Bar EXTENDS E")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Bar_Baz EXTENDS E")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Foo_Far EXTENDS E")).execute();
+    db.command("CREATE CLASS testCircularDependency_Foo EXTENDS V").close();
+    db.command("CREATE CLASS testCircularDependency_Bar EXTENDS V").close();
+    db.command("CREATE CLASS testCircularDependency_Baz EXTENDS V").close();
+    db.command("CREATE CLASS testCircularDependency_Far EXTENDS V").close();
+    db.command("CREATE CLASS testCircularDependency_Foo_Bar EXTENDS E").close();
+    db.command("CREATE CLASS testCircularDependency_Bar_Baz EXTENDS E").close();
+    db.command("CREATE CLASS testCircularDependency_Foo_Far EXTENDS E").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX testCircularDependency_Foo SET name = 'foo'"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX testCircularDependency_Bar SET name = 'bar'"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX testCircularDependency_Baz SET name = 'baz'"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX testCircularDependency_Far SET name = 'far'"))
-        .execute();
+    db.command("CREATE VERTEX testCircularDependency_Foo SET name = 'foo'").close();
+    db.command("CREATE VERTEX testCircularDependency_Bar SET name = 'bar'").close();
+    db.command("CREATE VERTEX testCircularDependency_Baz SET name = 'baz'").close();
+    db.command("CREATE VERTEX testCircularDependency_Far SET name = 'far'").close();
 
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testCircularDependency_Foo_Bar FROM ("
-                    + "SELECT FROM testCircularDependency_Foo) TO (SELECT FROM testCircularDependency_Bar)"))
-        .execute();
+            "CREATE EDGE testCircularDependency_Foo_Bar FROM ("
+                + "SELECT FROM testCircularDependency_Foo) TO (SELECT FROM testCircularDependency_Bar)")
+        .close();
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testCircularDependency_Bar_Baz FROM ("
-                    + "SELECT FROM testCircularDependency_Bar) TO (SELECT FROM testCircularDependency_Baz)"))
-        .execute();
+            "CREATE EDGE testCircularDependency_Bar_Baz FROM ("
+                + "SELECT FROM testCircularDependency_Bar) TO (SELECT FROM testCircularDependency_Baz)")
+        .close();
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testCircularDependency_Foo_Far FROM ("
-                    + "SELECT FROM testCircularDependency_Foo) TO (SELECT FROM testCircularDependency_Far)"))
-        .execute();
+            "CREATE EDGE testCircularDependency_Foo_Far FROM ("
+                + "SELECT FROM testCircularDependency_Foo) TO (SELECT FROM testCircularDependency_Far)")
+        .close();
 
     // The circular dependency here is:
     // - far depends on baz
@@ -1737,23 +1663,17 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testUndefinedAliasDependency() {
     // issue #6931
-    db.command(new OCommandSQL("CREATE CLASS testUndefinedAliasDependency_Foo EXTENDS V"))
-        .execute();
-    db.command(new OCommandSQL("CREATE CLASS testUndefinedAliasDependency_Bar EXTENDS V"))
-        .execute();
-    db.command(new OCommandSQL("CREATE CLASS testUndefinedAliasDependency_Foo_Bar EXTENDS E"))
-        .execute();
+    db.command("CREATE CLASS testUndefinedAliasDependency_Foo EXTENDS V").close();
+    db.command("CREATE CLASS testUndefinedAliasDependency_Bar EXTENDS V").close();
+    db.command("CREATE CLASS testUndefinedAliasDependency_Foo_Bar EXTENDS E").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX testUndefinedAliasDependency_Foo SET name = 'foo'"))
-        .execute();
-    db.command(new OCommandSQL("CREATE VERTEX testUndefinedAliasDependency_Bar SET name = 'bar'"))
-        .execute();
+    db.command("CREATE VERTEX testUndefinedAliasDependency_Foo SET name = 'foo'").close();
+    db.command("CREATE VERTEX testUndefinedAliasDependency_Bar SET name = 'bar'").close();
 
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testUndefinedAliasDependency_Foo_Bar FROM ("
-                    + "SELECT FROM testUndefinedAliasDependency_Foo) TO (SELECT FROM testUndefinedAliasDependency_Bar)"))
-        .execute();
+            "CREATE EDGE testUndefinedAliasDependency_Foo_Bar FROM ("
+                + "SELECT FROM testUndefinedAliasDependency_Foo) TO (SELECT FROM testUndefinedAliasDependency_Bar)")
+        .close();
 
     // "bar" in the following query declares a dependency on the alias "baz", which doesn't exist.
     OSQLSynchQuery query =
@@ -1776,39 +1696,35 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test
   public void testCyclicDeepTraversal() {
-    db.command(new OCommandSQL("CREATE CLASS testCyclicDeepTraversalV EXTENDS V")).execute();
-    db.command(new OCommandSQL("CREATE CLASS testCyclicDeepTraversalE EXTENDS E")).execute();
+    db.command("CREATE CLASS testCyclicDeepTraversalV EXTENDS V").close();
+    db.command("CREATE CLASS testCyclicDeepTraversalE EXTENDS E").close();
 
-    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'a'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'b'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'c'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'z'")).execute();
+    db.command("CREATE VERTEX testCyclicDeepTraversalV SET name = 'a'").close();
+    db.command("CREATE VERTEX testCyclicDeepTraversalV SET name = 'b'").close();
+    db.command("CREATE VERTEX testCyclicDeepTraversalV SET name = 'c'").close();
+    db.command("CREATE VERTEX testCyclicDeepTraversalV SET name = 'z'").close();
 
     // a -> b -> z
     // z -> c -> a
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testCyclicDeepTraversalE from"
-                    + "(select from testCyclicDeepTraversalV where name = 'a') to (select from testCyclicDeepTraversalV where name = 'b')"))
-        .execute();
+            "CREATE EDGE testCyclicDeepTraversalE from"
+                + "(select from testCyclicDeepTraversalV where name = 'a') to (select from testCyclicDeepTraversalV where name = 'b')")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testCyclicDeepTraversalE from"
-                    + "(select from testCyclicDeepTraversalV where name = 'b') to (select from testCyclicDeepTraversalV where name = 'z')"))
-        .execute();
+            "CREATE EDGE testCyclicDeepTraversalE from"
+                + "(select from testCyclicDeepTraversalV where name = 'b') to (select from testCyclicDeepTraversalV where name = 'z')")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testCyclicDeepTraversalE from"
-                    + "(select from testCyclicDeepTraversalV where name = 'z') to (select from testCyclicDeepTraversalV where name = 'c')"))
-        .execute();
+            "CREATE EDGE testCyclicDeepTraversalE from"
+                + "(select from testCyclicDeepTraversalV where name = 'z') to (select from testCyclicDeepTraversalV where name = 'c')")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "CREATE EDGE testCyclicDeepTraversalE from"
-                    + "(select from testCyclicDeepTraversalV where name = 'c') to (select from testCyclicDeepTraversalV where name = 'a')"))
-        .execute();
+            "CREATE EDGE testCyclicDeepTraversalE from"
+                + "(select from testCyclicDeepTraversalV where name = 'c') to (select from testCyclicDeepTraversalV where name = 'a')")
+        .close();
 
     OSQLSynchQuery query =
         new OSQLSynchQuery(
@@ -1841,6 +1757,23 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  return $pathElements");
 
     return db.command(new OCommandSQL(query.toString())).execute();
+  }
+
+  private List<ODocument> collect(OResultSet set) {
+    return set.stream()
+        .map(
+            (r) -> {
+              if (r.isElement()) {
+                return (ODocument) r.getElement().get();
+              } else {
+                return (ODocument) r.toElement();
+              }
+            })
+        .collect(Collectors.toList());
+  }
+
+  private List<OIdentifiable> collectIdentifiable(OResultSet set) {
+    return set.stream().map((r) -> (ODocument) r.toElement()).collect(Collectors.toList());
   }
 
   private long indexUsages(ODatabaseDocument db) {
