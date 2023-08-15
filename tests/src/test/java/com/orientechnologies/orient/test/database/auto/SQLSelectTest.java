@@ -2104,14 +2104,13 @@ public class SQLSelectTest extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("TestSizeOfLink", v);
-    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '1'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '2'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '3'")).execute();
+    database.command("CREATE VERTEX TestSizeOfLink set name = '1'").close();
+    database.command("CREATE VERTEX TestSizeOfLink set name = '2'").close();
+    database.command("CREATE VERTEX TestSizeOfLink set name = '3'").close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM TestSizeOfLink WHERE name <> '1')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM TestSizeOfLink WHERE name <> '1')")
+        .close();
 
     List<OIdentifiable> result =
         database.query(
@@ -2125,19 +2124,15 @@ public class SQLSelectTest extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("EmbeddedMapAndDotNotation", v);
-    database
-        .command(new OCommandSQL("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'"))
-        .execute();
+    database.command("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'").close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE VERTEX EmbeddedMapAndDotNotation set data = {\"bar\": \"baz\", \"quux\": 1}, name = 'bar'"))
-        .execute();
+            "CREATE VERTEX EmbeddedMapAndDotNotation set data = {\"bar\": \"baz\", \"quux\": 1}, name = 'bar'")
+        .close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')")
+        .close();
 
     List<OIdentifiable> result =
         database.query(
@@ -2173,23 +2168,16 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testNamedParams() {
     // issue #7236
 
-    database.command(new OCommandSQL("create class testNamedParams extends V")).execute();
-    database
-        .command(new OCommandSQL("create class testNamedParams_permission extends V"))
-        .execute();
-    database
-        .command(new OCommandSQL("create class testNamedParams_HasPermission extends E"))
-        .execute();
+    database.command("create class testNamedParams extends V").close();
+    database.command("create class testNamedParams_permission extends V").close();
+    database.command("create class testNamedParams_HasPermission extends E").close();
 
-    database
-        .command(new OCommandSQL("insert into testNamedParams_permission set type = ['USER']"))
-        .execute();
-    database.command(new OCommandSQL("insert into testNamedParams set login = 20")).execute();
+    database.command("insert into testNamedParams_permission set type = ['USER']").close();
+    database.command("insert into testNamedParams set login = 20").close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE testNamedParams_HasPermission from (select from testNamedParams) to (select from testNamedParams_permission)"))
-        .execute();
+            "CREATE EDGE testNamedParams_HasPermission from (select from testNamedParams) to (select from testNamedParams_permission)")
+        .close();
 
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("key", 10);

@@ -16,7 +16,8 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,17 +40,10 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
   @Override
   public void beforeClass() throws Exception {
     super.beforeClass();
-    database.command(new OCommandSQL("CREATE CLASS PreparedStatementTest1")).execute();
-    database
-        .command(
-            new OCommandSQL(
-                "insert into PreparedStatementTest1 (name, surname) values ('foo1', 'bar1')"))
-        .execute();
-    database
-        .command(
-            new OCommandSQL(
-                "insert into PreparedStatementTest1 (name, listElem) values ('foo2', ['bar2'])"))
-        .execute();
+    database.command("CREATE CLASS PreparedStatementTest1");
+    database.command("insert into PreparedStatementTest1 (name, surname) values ('foo1', 'bar1')");
+    database.command(
+        "insert into PreparedStatementTest1 (name, listElem) values ('foo2', ['bar2'])");
   }
 
   @Test
@@ -181,16 +175,13 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
 
   @Test
   public void testUnnamedParamFlat() {
-    Iterable<ODocument> result =
-        database
-            .command(
-                new OSQLSynchQuery<ODocument>("select from PreparedStatementTest1 where name = ?"))
-            .execute("foo1");
+    OResultSet result = database.query("select from PreparedStatementTest1 where name = ?", "foo1");
 
     boolean found = false;
-    for (ODocument doc : result) {
+    while (result.hasNext()) {
+      OResult doc = result.next();
       found = true;
-      Assert.assertEquals(doc.field("name"), "foo1");
+      Assert.assertEquals(doc.getProperty("name"), "foo1");
     }
     Assert.assertTrue(found);
   }
@@ -199,17 +190,14 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
   public void testNamedParamFlat() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("name", "foo1");
-    Iterable<ODocument> result =
-        database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from PreparedStatementTest1 where name = :name"))
-            .execute(params);
+    OResultSet result =
+        database.query("select from PreparedStatementTest1 where name = :name", params);
 
     boolean found = false;
-    for (ODocument doc : result) {
+    while (result.hasNext()) {
+      OResult doc = result.next();
       found = true;
-      Assert.assertEquals(doc.field("name"), "foo1");
+      Assert.assertEquals(doc.getProperty("name"), "foo1");
     }
     Assert.assertTrue(found);
   }
@@ -288,17 +276,17 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
 
   @Test
   public void testSubqueryUnnamedParamFlat() {
-    Iterable<ODocument> result =
-        database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from (select from PreparedStatementTest1 where name = ?) where name = ?"))
-            .execute("foo1", "foo1");
+    OResultSet result =
+        database.query(
+            "select from (select from PreparedStatementTest1 where name = ?) where name = ?",
+            "foo1",
+            "foo1");
 
     boolean found = false;
-    for (ODocument doc : result) {
+    while (result.hasNext()) {
+      OResult doc = result.next();
       found = true;
-      Assert.assertEquals(doc.field("name"), "foo1");
+      Assert.assertEquals(doc.getProperty("name"), "foo1");
     }
     Assert.assertTrue(found);
   }
@@ -307,17 +295,16 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
   public void testSubqueryNamedParamFlat() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("name", "foo1");
-    Iterable<ODocument> result =
-        database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from (select from PreparedStatementTest1 where name = :name) where name = :name"))
-            .execute(params);
+    OResultSet result =
+        database.query(
+            "select from (select from PreparedStatementTest1 where name = :name) where name = :name",
+            params);
 
     boolean found = false;
-    for (ODocument doc : result) {
+    while (result.hasNext()) {
+      OResult doc = result.next();
       found = true;
-      Assert.assertEquals(doc.field("name"), "foo1");
+      Assert.assertEquals(doc.getProperty("name"), "foo1");
     }
     Assert.assertTrue(found);
   }
@@ -327,15 +314,13 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("one", 1);
     params.put("three", 3);
-    Iterable<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select max(:one, :three) as maximo"))
-            .execute(params);
+    OResultSet result = database.query("select max(:one, :three) as maximo", params);
 
     boolean found = false;
-    for (ODocument doc : result) {
+    while (result.hasNext()) {
+      OResult doc = result.next();
       found = true;
-      Assert.assertEquals(doc.<Object>field("maximo"), 3);
+      Assert.assertEquals(doc.<Object>getProperty("maximo"), 3);
     }
     Assert.assertTrue(found);
   }

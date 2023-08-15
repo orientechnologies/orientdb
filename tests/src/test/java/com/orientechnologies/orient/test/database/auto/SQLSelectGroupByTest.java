@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.HashSet;
 import java.util.List;
@@ -118,16 +117,12 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
   @Test
   public void queryGroupByAndWithNulls() {
     // INSERT WITH NO LOCATION (AS NULL)
-    database.command(new OCommandSQL("create class GroupByTest extends V")).execute();
+    database.command("create class GroupByTest extends V").close();
     try {
-      database.command(new OCommandSQL("insert into GroupByTest set testNull = true")).execute();
-      database.command(new OCommandSQL("insert into GroupByTest set location = 'Rome'")).execute();
-      database
-          .command(new OCommandSQL("insert into GroupByTest set location = 'Austin'"))
-          .execute();
-      database
-          .command(new OCommandSQL("insert into GroupByTest set location = 'Austin'"))
-          .execute();
+      database.command("insert into GroupByTest set testNull = true").close();
+      database.command("insert into GroupByTest set location = 'Rome'").close();
+      database.command("insert into GroupByTest set location = 'Austin'").close();
+      database.command("insert into GroupByTest set location = 'Austin'").close();
 
       final List<ODocument> result =
           database
@@ -148,22 +143,18 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
 
       Assert.assertTrue(foundNullGroup);
     } finally {
-      database.command(new OCommandSQL("delete vertex GroupByTest")).execute();
-      database.command(new OCommandSQL("drop class GroupByTest UNSAFE")).execute();
+      database.command("delete vertex GroupByTest").close();
+      database.command("drop class GroupByTest UNSAFE").close();
     }
   }
 
   @Test
   public void queryGroupByNoNulls() {
-    database.command(new OCommandSQL("create class GroupByTest extends V")).execute();
+    database.command("create class GroupByTest extends V").close();
     try {
-      database.command(new OCommandSQL("insert into GroupByTest set location = 'Rome'")).execute();
-      database
-          .command(new OCommandSQL("insert into GroupByTest set location = 'Austin'"))
-          .execute();
-      database
-          .command(new OCommandSQL("insert into GroupByTest set location = 'Austin'"))
-          .execute();
+      database.command("insert into GroupByTest set location = 'Rome'").close();
+      database.command("insert into GroupByTest set location = 'Austin'").close();
+      database.command("insert into GroupByTest set location = 'Austin'").close();
 
       final List<ODocument> result =
           database
@@ -179,8 +170,8 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
       }
 
     } finally {
-      database.command(new OCommandSQL("delete vertex GroupByTest")).execute();
-      database.command(new OCommandSQL("drop class GroupByTest UNSAFE")).execute();
+      database.command("delete vertex GroupByTest").close();
+      database.command("drop class GroupByTest UNSAFE").close();
     }
   }
 }

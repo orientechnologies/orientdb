@@ -23,7 +23,8 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.testng.Assert;
@@ -45,43 +46,33 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
   public void beforeClass() throws Exception {
     super.beforeClass();
 
-    database.command(new OCommandSQL("create class IndexInSubclassesTestBase")).execute();
+    database.command("create class IndexInSubclassesTestBase").close();
+    ;
+    database.command("create property IndexInSubclassesTestBase.name string").close();
+
     database
-        .command(new OCommandSQL("create property IndexInSubclassesTestBase.name string"))
-        .execute();
+        .command("create class IndexInSubclassesTestChild1 extends IndexInSubclassesTestBase")
+        .close();
+    database
+        .command(
+            "create index IndexInSubclassesTestChild1.name on IndexInSubclassesTestChild1 (name) notunique")
+        .close();
+
+    database
+        .command("create class IndexInSubclassesTestChild2 extends IndexInSubclassesTestBase")
+        .close();
+    database
+        .command(
+            "create index IndexInSubclassesTestChild2.name on IndexInSubclassesTestChild2 (name) notunique")
+        .close();
+
+    database.command("create class IndexInSubclassesTestBaseFail").close();
+    database.command("create property IndexInSubclassesTestBaseFail.name string").close();
 
     database
         .command(
-            new OCommandSQL(
-                "create class IndexInSubclassesTestChild1 extends IndexInSubclassesTestBase"))
-        .execute();
-    database
-        .command(
-            new OCommandSQL(
-                "create index IndexInSubclassesTestChild1.name on IndexInSubclassesTestChild1 (name) notunique"))
-        .execute();
-
-    database
-        .command(
-            new OCommandSQL(
-                "create class IndexInSubclassesTestChild2 extends IndexInSubclassesTestBase"))
-        .execute();
-    database
-        .command(
-            new OCommandSQL(
-                "create index IndexInSubclassesTestChild2.name on IndexInSubclassesTestChild2 (name) notunique"))
-        .execute();
-
-    database.command(new OCommandSQL("create class IndexInSubclassesTestBaseFail")).execute();
-    database
-        .command(new OCommandSQL("create property IndexInSubclassesTestBaseFail.name string"))
-        .execute();
-
-    database
-        .command(
-            new OCommandSQL(
-                "create class IndexInSubclassesTestChild1Fail extends IndexInSubclassesTestBaseFail"))
-        .execute();
+            "create class IndexInSubclassesTestChild1Fail extends IndexInSubclassesTestBaseFail")
+        .close();
     // database.command(
     // new OCommandSQL("create index IndexInSubclassesTestChild1Fail.name on
     // IndexInSubclassesTestChild1Fail (name) notunique"))
@@ -89,17 +80,15 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "create class IndexInSubclassesTestChild2Fail extends IndexInSubclassesTestBaseFail"))
-        .execute();
+            "create class IndexInSubclassesTestChild2Fail extends IndexInSubclassesTestBaseFail")
+        .close();
     database
         .command(
-            new OCommandSQL(
-                "create index IndexInSubclassesTestChild2Fail.name on IndexInSubclassesTestChild2Fail (name) notunique"))
-        .execute();
+            "create index IndexInSubclassesTestChild2Fail.name on IndexInSubclassesTestChild2Fail (name) notunique")
+        .close();
 
-    database.command(new OCommandSQL("create class GenericCrash")).execute();
-    database.command(new OCommandSQL("create class SpecificCrash extends GenericCrash")).execute();
+    database.command("create class GenericCrash").close();
+    database.command("create class SpecificCrash extends GenericCrash").close();
   }
 
   @BeforeMethod
@@ -109,13 +98,13 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     schema.reload();
 
-    database.command(new OCommandSQL("delete from IndexInSubclassesTestBase")).execute();
-    database.command(new OCommandSQL("delete from IndexInSubclassesTestChild1")).execute();
-    database.command(new OCommandSQL("delete from IndexInSubclassesTestChild2")).execute();
+    database.command("delete from IndexInSubclassesTestBase").close();
+    database.command("delete from IndexInSubclassesTestChild1").close();
+    database.command("delete from IndexInSubclassesTestChild2").close();
 
-    database.command(new OCommandSQL("delete from IndexInSubclassesTestBaseFail")).execute();
-    database.command(new OCommandSQL("delete from IndexInSubclassesTestChild1Fail")).execute();
-    database.command(new OCommandSQL("delete from IndexInSubclassesTestChild2Fail")).execute();
+    database.command("delete from IndexInSubclassesTestBaseFail").close();
+    database.command("delete from IndexInSubclassesTestChild1Fail").close();
+    database.command("delete from IndexInSubclassesTestChild2Fail").close();
   }
 
   @Test
@@ -286,11 +275,10 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
       indexUsageReverted = 0;
     }
 
-    List<ODocument> result =
+    OResultSet result =
         database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from IndexInSubclassesTestBaseFail where name > 'name9995' and name < 'name9999' order by name ASC"));
-    Assert.assertTrue(result.size() == 6);
+            "select from IndexInSubclassesTestBaseFail where name > 'name9995' and name < 'name9999' order by name ASC");
+    Assert.assertTrue(result.stream().count() == 6);
 
     long lastIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
     long lastIndexUsageReverted = profiler.getCounter("db.demo.query.indexUseAttemptedAndReverted");
@@ -316,14 +304,15 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
     }
 
     // crashed with OIOException, issue #3632
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "SELECT FROM GenericCrash WHERE @class='GenericCrash' ORDER BY @rid DESC"));
+    OResultSet result =
+        database.query("SELECT FROM GenericCrash WHERE @class='GenericCrash' ORDER BY @rid DESC");
 
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument doc : result) {
-      Assert.assertEquals(doc.field("name"), "foo");
+    int count = 0;
+    while (result.hasNext()) {
+      OResult doc = result.next();
+      Assert.assertEquals(doc.getProperty("name"), "foo");
+      count++;
     }
+    Assert.assertEquals(count, 2);
   }
 }

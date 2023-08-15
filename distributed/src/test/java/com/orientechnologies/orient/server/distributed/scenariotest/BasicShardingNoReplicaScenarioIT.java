@@ -28,14 +28,13 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -138,16 +137,15 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
 
         graphNoTx.activateOnCurrentThread();
         final String uniqueId = "client_asia-s2-t10-v0";
-        Iterable<OElement> it =
-            graphNoTx
-                .command(new OCommandSQL("select from Client where name = '" + uniqueId + "'"))
-                .execute();
-        List<OVertex> result = new LinkedList<OVertex>();
-        for (OElement v : it) {
-          if (v.isVertex()) {
-            result.add(v.asVertex().get());
-          }
-        }
+        OResultSet it = graphNoTx.query("select from Client where name = '" + uniqueId + "'");
+        List<OVertex> result =
+            it.stream()
+                .filter((r) -> r.isVertex())
+                .map(
+                    (r) -> {
+                      return r.getVertex().get();
+                    })
+                .collect(Collectors.toList());
         assertEquals(0, result.size());
         System.out.println("Done");
         graphNoTx.close();
@@ -183,16 +181,15 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
         graphNoTx = (ODatabaseDocumentInternal) orientDB1.open(getDatabaseName(), "admin", "admin");
         graphNoTx.activateOnCurrentThread();
         final String uniqueId = "client_asia-s2-t10-v0";
-        Iterable<OElement> it =
-            graphNoTx
-                .command(new OCommandSQL("select from Client where name = '" + uniqueId + "'"))
-                .execute();
-        List<OVertex> result = new LinkedList<OVertex>();
-        for (OElement v : it) {
-          if (v.isVertex()) {
-            result.add(v.asVertex().get());
-          }
-        }
+        OResultSet it = graphNoTx.query("select from Client where name = '" + uniqueId + "'");
+        List<OVertex> result =
+            it.stream()
+                .filter((r) -> r.isVertex())
+                .map(
+                    (r) -> {
+                      return r.getVertex().get();
+                    })
+                .collect(Collectors.toList());
 
         assertEquals(1, result.size());
         graphNoTx.close();

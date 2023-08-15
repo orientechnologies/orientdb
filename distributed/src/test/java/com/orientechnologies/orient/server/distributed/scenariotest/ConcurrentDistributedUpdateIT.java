@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.concurrent.Callable;
@@ -100,9 +100,10 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
             if ((i % 25) == 0) {
               log("[" + id + "] Records Processed: [" + i + "]");
             }
-            Iterable<OElement> vtxs = graph.command(new OCommandSQL(query)).execute();
+            OResultSet vtxs = graph.query(query);
             boolean update = true;
-            for (OElement vtx : vtxs) {
+            while (vtxs.hasNext()) {
+              OElement vtx = vtxs.next().getElement().get();
               if (update) {
                 update = true;
                 for (int k = 0; k < 10 && update; k++) {

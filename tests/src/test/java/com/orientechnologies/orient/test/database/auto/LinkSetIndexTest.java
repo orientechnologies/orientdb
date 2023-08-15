@@ -52,7 +52,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
   public void afterMethod() {
     checkEmbeddedDB();
 
-    database.command(new OCommandSQL("DELETE FROM LinkSetIndexTestClass")).execute();
+    database.command("DELETE FROM LinkSetIndexTestClass").close();
 
     List<ODocument> result =
         database.command(new OCommandSQL("select from LinkSetIndexTestClass")).execute();

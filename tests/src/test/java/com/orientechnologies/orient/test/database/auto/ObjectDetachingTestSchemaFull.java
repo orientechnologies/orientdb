@@ -18,7 +18,6 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
@@ -113,11 +112,10 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = "testOrientStringIdAnnotation")
   public void testOrientObjectIdPlusVersionAnnotationsNotInTx() {
     // DELETE PREVIOUS TESTS DATA
-    database.command(new OCommandSQL("delete from Country where name = 'Austria v1'")).execute();
+    database.command("delete from Country where name = 'Austria v1'").close();
     // BROWSE ALL THE OBJECTS
     Assert.assertTrue(database.countClass(Country.class) > 0);
     for (Country c :
@@ -688,7 +686,7 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testDetachAllNonProxied")
   public void testReloadAndDetachAll() {
     // DELETE PREVIOUS TEST DATA
-    database.command(new OCommandSQL("delete from Profile where nick = 'Jack'")).execute();
+    database.command("delete from Profile where nick = 'Jack'").close();
     // Open db
     // Create the address without country
     Address anAddress = new Address("Godewaersvelde");
@@ -702,7 +700,7 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     City aCity = new City("Paris");
     aCity = database.save(aCity);
     String command = "update " + anAddress.getId() + " set city = " + database.getIdentity(aCity);
-    database.command(new OCommandSQL(command)).execute();
+    database.command(command).close();
     realAddress = database.reload(anAddress, true);
     Assert.assertNotNull(realAddress.getCity());
     // At this point, in OrientDB Studio everything is fine
