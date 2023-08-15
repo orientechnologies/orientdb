@@ -1720,9 +1720,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void testSelectFromIndexValues() {
-    database
-        .command(new OCommandSQL("create index selectFromIndexValues on Profile (name) notunique"))
-        .execute();
+    database.command("create index selectFromIndexValues on Profile (name) notunique").close();
 
     final List<ODocument> classResult =
         new ArrayList<ODocument>(
@@ -1753,10 +1751,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   }
 
   public void testSelectFromIndexValuesAsc() {
-    database
-        .command(
-            new OCommandSQL("create index selectFromIndexValuesAsc on Profile (name) notunique"))
-        .execute();
+    database.command("create index selectFromIndexValuesAsc on Profile (name) notunique").close();
 
     final List<ODocument> classResult =
         new ArrayList<ODocument>(
@@ -1883,7 +1878,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   public void testOutFilterInclude() {
     OSchema schema = database.getMetadata().getSchema();
     schema.createClass("TestOutFilterInclude", schema.getClass("V"));
-    database.command(new OCommandSQL("create class linkedToOutFilterInclude extends E")).execute();
+    database.command("create class linkedToOutFilterInclude extends E").close();
     database
         .command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"one\" }"))
         .execute();
@@ -2009,26 +2004,18 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     final OClass e1 = schema.createClass("TestPolymorphicEdges_E1", e);
     final OClass e2 = schema.createClass("TestPolymorphicEdges_E2", e1);
 
-    database
-        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '1'"))
-        .execute();
-    database
-        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '2'"))
-        .execute();
-    database
-        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '3'"))
-        .execute();
+    database.command("CREATE VERTEX TestPolymorphicEdges_V set name = '1'").close();
+    database.command("CREATE VERTEX TestPolymorphicEdges_V set name = '2'").close();
+    database.command("CREATE VERTEX TestPolymorphicEdges_V set name = '3'").close();
 
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE TestPolymorphicEdges_E1 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '2')"))
-        .execute();
+            "CREATE EDGE TestPolymorphicEdges_E1 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '2')")
+        .close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')"))
-        .execute();
+            "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')")
+        .close();
 
     List<OIdentifiable> result =
         database.query(
@@ -2048,14 +2035,13 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("TestSizeOfLink", v);
-    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '1'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '2'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '3'")).execute();
+    database.command("CREATE VERTEX TestSizeOfLink set name = '1'").close();
+    database.command("CREATE VERTEX TestSizeOfLink set name = '2'").close();
+    database.command("CREATE VERTEX TestSizeOfLink set name = '3'").close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM TestSizeOfLink WHERE name <> '1')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM TestSizeOfLink WHERE name <> '1')")
+        .close();
 
     List<OIdentifiable> result =
         database.query(
@@ -2069,9 +2055,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("EmbeddedMapAndDotNotation", v);
-    database
-        .command(new OCommandSQL("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'"))
-        .execute();
+    database.command("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'").close();
     database
         .command(
             new OCommandSQL(
@@ -2079,9 +2063,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
         .execute();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')")
+        .close();
 
     List<OIdentifiable> result =
         database.query(

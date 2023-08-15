@@ -390,8 +390,8 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
   @Test()
   public void testSelectExcludeFunction() throws IOException {
     try {
-      database.command(new OCommandSQL("create class A extends V")).execute();
-      database.command(new OCommandSQL("create class B extends E")).execute();
+      database.command("create class A extends V").close();
+      database.command("create class B extends E").close();
       OIdentifiable id =
           database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
       OIdentifiable id2 =
@@ -443,17 +443,17 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertNotNull(((ODocument) res.get(0).field("out")).field("a"));
       Assert.assertNull(((ODocument) res.get(0).field("out")).field("in_B"));
     } finally {
-      database.command(new OCommandSQL("drop class A unsafe ")).execute();
-      database.command(new OCommandSQL("drop class B unsafe ")).execute();
+      database.command("drop class A unsafe ").close();
+      database.command("drop class B unsafe ").close();
     }
   }
 
   @Test
   public void testSimpleExpandExclude() {
     try {
-      database.command(new OCommandSQL("create class A extends V")).execute();
-      database.command(new OCommandSQL("create class B extends E")).execute();
-      database.command(new OCommandSQL("create class C extends E")).execute();
+      database.command("create class A extends V").close();
+      database.command("create class B extends E").close();
+      database.command("create class C extends E").close();
       OIdentifiable id =
           database.command(new OCommandSQL("insert into A (a,b) values ('a1','b1')")).execute();
       OIdentifiable id2 =
@@ -484,9 +484,9 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertNull(((ODocument) ele.field("out")).field("in_B"));
 
     } finally {
-      database.command(new OCommandSQL("drop class A unsafe ")).execute();
-      database.command(new OCommandSQL("drop class B unsafe ")).execute();
-      database.command(new OCommandSQL("drop class C unsafe ")).execute();
+      database.command("drop class A unsafe ").close();
+      database.command("drop class B unsafe ").close();
+      database.command("drop class C unsafe ").close();
     }
   }
 

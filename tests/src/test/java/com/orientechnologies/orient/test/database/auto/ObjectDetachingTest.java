@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
@@ -722,7 +721,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     City aCity = new City("Paris");
     aCity = database.save(aCity);
     String command = "update " + anAddress.getId() + " set city = " + database.getIdentity(aCity);
-    database.command(new OCommandSQL(command)).execute();
+    database.command(command).close();
     realAddress = database.reload(anAddress, true);
     Assert.assertNotNull(realAddress.getCity());
     // At this point, in OrientDB Studio everything is fine

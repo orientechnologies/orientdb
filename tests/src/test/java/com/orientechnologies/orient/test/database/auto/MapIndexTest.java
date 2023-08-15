@@ -62,8 +62,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
   @AfterMethod
   public void afterMethod() throws Exception {
-    database.command(new OCommandSQL("delete from Mapper")).execute();
-    database.command(new OCommandSQL("delete from MapIndexTestMovie")).execute();
+    database.command("delete from Mapper").close();
+    database.command("delete from MapIndexTestMovie").close();
     super.afterMethod();
   }
 
