@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,13 +58,10 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
 
   @AfterMethod
   public void afterMethod() {
-    //noinspection deprecation
-    database.command(new OCommandSQL("DELETE FROM RidBagIndexTestClass")).execute();
+    database.command("DELETE FROM RidBagIndexTestClass").close();
 
-    @SuppressWarnings("deprecation")
-    List<ODocument> result =
-        database.command(new OCommandSQL("select from RidBagIndexTestClass")).execute();
-    Assert.assertEquals(result.size(), 0);
+    OResultSet result = database.query("select from RidBagIndexTestClass");
+    Assert.assertEquals(result.stream().count(), 0);
 
     if (!database.getStorage().isRemote()) {
       final OIndex index = getIndex("ridBagIndex");
@@ -310,12 +307,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
 
     document.save();
 
-    //noinspection deprecation
     database
         .command(
-            new OCommandSQL(
-                "UPDATE " + document.getIdentity() + " add ridBag = " + docThree.getIdentity()))
-        .execute();
+            "UPDATE "
+                + document.getIdentity()
+                + " set ridBag = ridBag || "
+                + docThree.getIdentity())
+        .close();
 
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getInternal().size(), 3);
@@ -528,10 +526,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
 
     //noinspection deprecation
     database
-        .command(
-            new OCommandSQL(
-                "UPDATE " + document.getIdentity() + " remove ridBag = " + docTwo.getIdentity()))
-        .execute();
+        .command("UPDATE " + document.getIdentity() + " remove ridBag = " + docTwo.getIdentity())
+        .close();
 
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getInternal().size(), 1);

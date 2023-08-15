@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,9 +55,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
     database.command("DELETE FROM LinkSetIndexTestClass").close();
 
-    List<ODocument> result =
-        database.command(new OCommandSQL("select from LinkSetIndexTestClass")).execute();
-    Assert.assertEquals(result.size(), 0);
+    OResultSet result = database.command("select from LinkSetIndexTestClass");
+    Assert.assertEquals(result.stream().count(), 0);
 
     if (database.getStorage().isRemote()) {
       OIndex index =

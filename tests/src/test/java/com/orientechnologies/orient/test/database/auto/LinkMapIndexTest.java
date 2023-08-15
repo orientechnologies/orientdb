@@ -52,7 +52,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   @AfterMethod
   public void afterMethod() throws Exception {
-    database.command(new OCommandSQL("delete from LinkMapIndexTestClass")).execute();
+    database.command("delete from LinkMapIndexTestClass").close();
 
     super.afterMethod();
   }
