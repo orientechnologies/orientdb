@@ -27,15 +27,27 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.22 - (August, 17 2023)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3222---17-August-2023
+
+## Core 
+ - Optimizations of escaping in serialization of json strings
+ - Avoid to store in result metadata not network serializable values, issue #10004
+ - Re-enable transaction methods in scripts issue #9690
+ - Optimization index rebuild with transactions
+ - Minor optimization in free space map logic
+ - Fix space reuse, only use spaces in pages that have enough of it, issue #10005 
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.21 - (July, 25 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3221---25-June-2023
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3221---25-July-2023
 
 ## Core
  - Make sure to reload correctly view index informations on context restart
  - Changed logic for tracking the cluster and index views in the queries
  - Optimized view refresh using batch transactions
  - use everytime the most specific index when multiple are found
- - Update build dependencies to most recente versions
+ - Update build dependencies to most recent versions
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.20 - (June, 15 2023)
