@@ -16,7 +16,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.2.22</version>
+        <version>3.2.23-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
