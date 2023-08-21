@@ -1975,6 +1975,22 @@ public class OSelectExecutionPlanner {
     plan.chain(fetcher);
   }
 
+  private int[] classClustersFiltered(
+      ODatabaseSession db, OClass clazz, Set<String> filterClusters) {
+    int[] ids = clazz.getClusterIds();
+    List<Integer> filtered = new ArrayList<>();
+    for (int id : ids) {
+      if (filterClusters.contains(db.getClusterNameById(id))) {
+        filtered.add(id);
+      }
+    }
+    int[] result = new int[filtered.size()];
+    for (int i = 0; i < filtered.size(); i++) {
+      result[i] = filtered.get(i);
+    }
+    return result;
+  }
+
   private boolean handleClassAsTargetWithIndexedFunction(
       OSelectExecutionPlan plan,
       Set<String> filterClusters,
@@ -2025,8 +2041,9 @@ public class OSelectExecutionPlanner {
           subPlan.chain(step);
           int[] filterClusterIds = null;
           if (filterClusters != null) {
-            filterClusterIds =
-                ((ODatabaseDocumentInternal) ctx.getDatabase()).getClustersIds(filterClusters);
+            filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
+          } else {
+            filterClusterIds = clazz.getClusterIds();
           }
           subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
           if (requiresMultipleIndexLookups(bestIndex.getKeyCondition())
@@ -2265,8 +2282,9 @@ public class OSelectExecutionPlanner {
                 idx, orderType.equals(OOrderByItem.ASC), ctx, profilingEnabled));
         int[] filterClusterIds = null;
         if (filterClusters != null) {
-          filterClusterIds =
-              ((ODatabaseDocumentInternal) ctx.getDatabase()).getClustersIds(filterClusters);
+          filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
+        } else {
+          filterClusterIds = clazz.getClusterIds();
         }
         plan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
         if (info.serverToClusters.size() == 1) {
@@ -2458,8 +2476,9 @@ public class OSelectExecutionPlanner {
               profilingEnabled));
       int[] filterClusterIds = null;
       if (filterClusters != null) {
-        filterClusterIds =
-            ((ODatabaseDocumentInternal) ctx.getDatabase()).getClustersIds(filterClusters);
+        filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
+      } else {
+        filterClusterIds = clazz.getClusterIds();
       }
       result.add(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
       if (requiresMultipleIndexLookups(desc.getKeyCondition()) || duplicateResultsForRecord(desc)) {
