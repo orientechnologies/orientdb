@@ -29,9 +29,9 @@ public class SQLUpdateEdgeTest extends BaseMemoryDatabase {
   @Test
   public void testUpdateEdge() {
 
-    db.command(new OCommandSQL("create class V1 extends V")).execute();
+    db.command("create class V1 extends V").close();
 
-    db.command(new OCommandSQL("create class E1 extends E")).execute();
+    db.command("create class E1 extends E").close();
 
     db.getMetadata().getSchema().reload();
 
@@ -65,14 +65,13 @@ public class SQLUpdateEdgeTest extends BaseMemoryDatabase {
     Assert.assertEquals(edge.getSchemaType().get().getName(), "E1");
 
     db.command(
-            new OCommandSQL(
-                "update edge E1 set out = "
-                    + v3.getIdentity()
-                    + ", in = "
-                    + v4.getIdentity()
-                    + " where @rid = "
-                    + edge.getIdentity()))
-        .execute();
+            "update edge E1 set out = "
+                + v3.getIdentity()
+                + ", in = "
+                + v4.getIdentity()
+                + " where @rid = "
+                + edge.getIdentity())
+        .close();
 
     List<ODocument> result =
         db.query(new OSQLSynchQuery("select expand(out('E1')) from " + v3.getIdentity()));
@@ -106,9 +105,7 @@ public class SQLUpdateEdgeTest extends BaseMemoryDatabase {
             .execute();
     OEdge edge = edges.iterator().next();
 
-    db.command(
-            new OCommandSQL("UPDATE EDGE " + edge.getIdentity() + " SET in = " + v3.getIdentity()))
-        .execute();
+    db.command("UPDATE EDGE " + edge.getIdentity() + " SET in = " + v3.getIdentity());
 
     Iterable<ODocument> result =
         db.command(new OSQLSynchQuery<ODocument>("select expand(out()) from " + v1.getIdentity()))

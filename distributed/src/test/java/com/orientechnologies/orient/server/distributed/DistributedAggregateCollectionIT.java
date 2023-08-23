@@ -2,8 +2,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,19 +37,16 @@ public class DistributedAggregateCollectionIT extends AbstractServerClusterTest 
     try {
       db.command("INSERT into Item (name) values ('foo')").close();
 
-      Iterable<ODocument> result =
-          db.command(new OCommandSQL("select set(name) as names from Item")).execute();
-      Assert.assertEquals(Collections.singleton("foo"), result.iterator().next().field("names"));
+      OResultSet result = db.query("select set(name) as names from Item");
+      Assert.assertEquals(Collections.singleton("foo"), result.next().getProperty("names"));
 
-      result = db.command(new OCommandSQL("select list(name) as names from Item")).execute();
-      Assert.assertEquals(
-          Collections.singletonList("foo"), result.iterator().next().field("names"));
+      result = db.query("select list(name) as names from Item");
+      Assert.assertEquals(Collections.singletonList("foo"), result.next().getProperty("names"));
 
       db.command("INSERT into Item (map) values ({'a':'b'}) return @this").close();
 
-      result = db.command(new OCommandSQL("select map(map) as names from Item")).execute();
-      Assert.assertEquals(
-          Collections.singletonMap("a", "b"), result.iterator().next().field("names"));
+      result = db.query("select map(map) as names from Item");
+      Assert.assertEquals(Collections.singletonMap("a", "b"), result.next().getProperty("names"));
 
     } finally {
       db.close();

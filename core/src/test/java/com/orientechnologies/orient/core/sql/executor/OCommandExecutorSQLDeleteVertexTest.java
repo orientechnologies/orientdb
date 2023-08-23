@@ -42,7 +42,7 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
     // for issue #4148
 
     for (int i = 0; i < 10; i++) {
-      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+      db.command("create vertex User set name = 'foo" + i + "'").close();
     }
 
     final int res = (Integer) db.command(new OCommandSQL("delete vertex User limit 4")).execute();
@@ -56,7 +56,7 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
     // for issue #4622
 
     for (int i = 0; i < 100; i++) {
-      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+      db.command("create vertex User set name = 'foo" + i + "'").close();
     }
 
     final int res = (Integer) db.command(new OCommandSQL("delete vertex User batch 5")).execute();
@@ -84,7 +84,7 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
     // for issue #4523
 
     for (int i = 0; i < 100; i++) {
-      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+      db.command("create vertex User set name = 'foo" + i + "'").close();
     }
 
     final int res =
@@ -98,7 +98,7 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
     // for issue #4523
 
     for (int i = 0; i < 100; i++) {
-      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+      db.command("create vertex User set name = 'foo" + i + "'").close();
     }
 
     final int res =

@@ -93,9 +93,9 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
     graph.shutdown();
     database.open("admin", "admin");
 
-    database.command(new OCommandSQL("create vertex set script = true")).execute();
-    database.command(new OCommandSQL("create vertex")).execute();
-    database.command(new OCommandSQL("create vertex V")).execute();
+    database.command("create vertex set script = true").close();
+    database.command("create vertex").close();
+    database.command("create vertex V").close();
 
     // TODO complete this!
     // database.command(new OCommandSQL("create vertex set")).execute();

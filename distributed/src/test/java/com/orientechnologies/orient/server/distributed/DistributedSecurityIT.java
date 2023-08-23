@@ -20,9 +20,11 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import junit.framework.Assert;
 import org.junit.Test;
 
 /** Tests the behavior of security in distributed configuration. */
@@ -56,17 +58,17 @@ public class DistributedSecurityIT extends AbstractServerClusterTest {
         try {
           // TRY DELETING ALL OUSER VIA COMMAND
           Long deleted = g.command(new OCommandSQL("delete from OUser")).execute();
-          Assert.assertEquals(deleted.longValue(), 0l);
+          assertEquals(deleted.longValue(), 0l);
         } catch (Exception e) {
-          Assert.assertTrue(true);
+          assertTrue(true);
         }
 
         try {
           // TRY DELETING CURRENT OUSER VIA API
           g.getUser().getIdentity().getRecord().delete();
-          Assert.assertTrue(false);
+          assertTrue(false);
         } catch (Exception e) {
-          Assert.assertTrue(true);
+          assertTrue(true);
         }
 
       } finally {

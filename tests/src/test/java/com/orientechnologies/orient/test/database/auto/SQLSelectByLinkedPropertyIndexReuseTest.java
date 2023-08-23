@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OChainedIndexProxy;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.Arrays;
 import java.util.List;
@@ -58,9 +57,9 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
       database.open("admin", "admin");
     }
 
-    database.command(new OCommandSQL("drop class lpirtStudent")).execute();
-    database.command(new OCommandSQL("drop class lpirtGroup")).execute();
-    database.command(new OCommandSQL("drop class lpirtCurator")).execute();
+    database.command("drop class lpirtStudent").close();
+    database.command("drop class lpirtGroup").close();
+    database.command("drop class lpirtCurator").close();
     database.getMetadata().getSchema().reload();
 
     database.close();

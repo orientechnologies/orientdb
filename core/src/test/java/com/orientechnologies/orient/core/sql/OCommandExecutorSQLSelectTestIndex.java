@@ -21,10 +21,10 @@ package com.orientechnologies.orient.core.sql;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.BaseMemoryInternalDatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Test;
 
 public class OCommandExecutorSQLSelectTestIndex extends BaseMemoryInternalDatabase {
@@ -32,15 +32,17 @@ public class OCommandExecutorSQLSelectTestIndex extends BaseMemoryInternalDataba
   @Test
   public void testIndexSqlEmbeddedList() {
 
-    db.command(new OCommandSQL("create class Foo")).execute();
-    db.command(new OCommandSQL("create property Foo.bar EMBEDDEDLIST STRING")).execute();
-    db.command(new OCommandSQL("create index Foo.bar on Foo (bar) NOTUNIQUE")).execute();
-    db.command(new OCommandSQL("insert into Foo set bar = ['yep']")).execute();
-    List<ODocument> results =
-        db.command(new OCommandSQL("select from Foo where bar = 'yep'")).execute();
-    assertEquals(results.size(), 1);
+    db.command("create class Foo").close();
+    db.command("create property Foo.bar EMBEDDEDLIST STRING").close();
+    db.command("create index Foo.bar on Foo (bar) NOTUNIQUE").close();
+    db.command("insert into Foo set bar = ['yep']").close();
+    OResultSet results = db.query("select from Foo where bar = 'yep'");
+    assertEquals(results.stream().count(), 1);
 
-    final OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
+    final OIndex index =
+        ((OMetadataDefault) db.getMetadata())
+            .getIndexManagerInternal()
+            .getIndex((ODatabaseDocumentInternal) db, "Foo.bar");
     assertEquals(index.getInternal().size(), 1);
   }
 
@@ -48,42 +50,39 @@ public class OCommandExecutorSQLSelectTestIndex extends BaseMemoryInternalDataba
   public void testIndexOnHierarchyChange() {
     // issue #5743
 
-    db.command(new OCommandSQL("CREATE CLASS Main ABSTRACT")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY Main.uuid String")).execute();
-    db.command(new OCommandSQL("CREATE INDEX Main.uuid UNIQUE_HASH_INDEX")).execute();
-    db.command(new OCommandSQL("CREATE CLASS Base EXTENDS Main ABSTRACT")).execute();
-    db.command(new OCommandSQL("CREATE CLASS Derived EXTENDS Main")).execute();
-    db.command(new OCommandSQL("INSERT INTO Derived SET uuid='abcdef'")).execute();
-    db.command(new OCommandSQL("ALTER CLASS Derived SUPERCLASSES Base")).execute();
+    db.command("CREATE CLASS Main ABSTRACT").close();
+    db.command("CREATE PROPERTY Main.uuid String").close();
+    db.command("CREATE INDEX Main.uuid UNIQUE_HASH_INDEX").close();
+    db.command("CREATE CLASS Base EXTENDS Main ABSTRACT").close();
+    db.command("CREATE CLASS Derived EXTENDS Main").close();
+    db.command("INSERT INTO Derived SET uuid='abcdef'").close();
+    db.command("ALTER CLASS Derived SUPERCLASSES Base").close();
 
-    List<ODocument> results =
-        db.command(new OCommandSQL("SELECT * FROM Derived WHERE uuid='abcdef'")).execute();
-    assertEquals(results.size(), 1);
+    OResultSet results = db.query("SELECT * FROM Derived WHERE uuid='abcdef'");
+    assertEquals(results.stream().count(), 1);
   }
 
   @Test
   public void testListContainsField() {
+    db.command("CREATE CLASS Foo").close();
+    db.command("CREATE PROPERTY Foo.name String").close();
+    db.command("INSERT INTO Foo SET name = 'foo'").close();
 
-    db.command(new OCommandSQL("CREATE CLASS Foo")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY Foo.name String")).execute();
-    db.command(new OCommandSQL("INSERT INTO Foo SET name = 'foo'")).execute();
+    OResultSet result = db.query("SELECT * FROM Foo WHERE ['foo', 'bar'] CONTAINS name");
+    assertEquals(result.stream().count(), 1);
 
-    List<?> result =
-        db.query(
-            new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE ['foo', 'bar'] CONTAINS name"));
-    assertEquals(result.size(), 1);
+    result = db.query("SELECT * FROM Foo WHERE name IN ['foo', 'bar']");
+    assertEquals(result.stream().count(), 1);
 
-    result = db.query(new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE name IN ['foo', 'bar']"));
-    assertEquals(result.size(), 1);
+    db.command("CREATE INDEX Foo.name UNIQUE_HASH_INDEX").close();
 
-    db.command(new OCommandSQL("CREATE INDEX Foo.name UNIQUE_HASH_INDEX")).execute();
+    result = db.query("SELECT * FROM Foo WHERE ['foo', 'bar'] CONTAINS name");
+    assertEquals(result.stream().count(), 1);
 
-    result =
-        db.query(
-            new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE ['foo', 'bar'] CONTAINS name"));
-    assertEquals(result.size(), 1);
+    result = db.query("SELECT * FROM Foo WHERE name IN ['foo', 'bar']");
+    assertEquals(result.stream().count(), 1);
 
-    result = db.query(new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE name IN ['foo', 'bar']"));
-    assertEquals(result.size(), 1);
+    result = db.query("SELECT * FROM Foo WHERE name IN ['foo', 'bar']");
+    assertEquals(result.stream().count(), 1);
   }
 }

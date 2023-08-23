@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.testng.Assert;
@@ -56,20 +55,18 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
     else if (followTest.getSuperClass() == null)
       followTest.setSuperClass(database.getMetadata().getSchema().getClass("E"));
 
-    database.command(new OCommandSQL("create vertex PersonTest set name = 'A'")).execute();
-    database.command(new OCommandSQL("create vertex PersonTest set name = 'B'")).execute();
-    database.command(new OCommandSQL("create vertex PersonTest set name = 'C'")).execute();
+    database.command("create vertex PersonTest set name = 'A'").close();
+    database.command("create vertex PersonTest set name = 'B'").close();
+    database.command("create vertex PersonTest set name = 'C'").close();
 
     database
         .command(
-            new OCommandSQL(
-                "create edge FollowTest from (select from PersonTest where name = 'A') to (select from PersonTest where name = 'B')"))
-        .execute();
+            "create edge FollowTest from (select from PersonTest where name = 'A') to (select from PersonTest where name = 'B')")
+        .close();
     database
         .command(
-            new OCommandSQL(
-                "create edge FollowTest from (select from PersonTest where name = 'B') to (select from PersonTest where name = 'C')"))
-        .execute();
+            "create edge FollowTest from (select from PersonTest where name = 'B') to (select from PersonTest where name = 'C')")
+        .close();
   }
 
   @Test

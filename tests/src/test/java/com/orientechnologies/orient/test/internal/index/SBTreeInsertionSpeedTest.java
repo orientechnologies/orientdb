@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.Random;
 import org.testng.annotations.Test;
 
@@ -37,9 +36,7 @@ public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
     }
 
     databaseDocumentTx.create();
-    databaseDocumentTx
-        .command(new OCommandSQL("create index  sbtree_index unique String"))
-        .execute();
+    databaseDocumentTx.command("create index  sbtree_index unique String").close();
 
     index =
         databaseDocumentTx
