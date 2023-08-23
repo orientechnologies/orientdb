@@ -1977,7 +1977,7 @@ public class OSelectExecutionPlanner {
 
   private int[] classClustersFiltered(
       ODatabaseSession db, OClass clazz, Set<String> filterClusters) {
-    int[] ids = clazz.getClusterIds();
+    int[] ids = clazz.getPolymorphicClusterIds();
     List<Integer> filtered = new ArrayList<>();
     for (int id : ids) {
       if (filterClusters.contains(db.getClusterNameById(id))) {
@@ -2043,7 +2043,7 @@ public class OSelectExecutionPlanner {
           if (filterClusters != null) {
             filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
           } else {
-            filterClusterIds = clazz.getClusterIds();
+            filterClusterIds = clazz.getPolymorphicClusterIds();
           }
           subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
           if (requiresMultipleIndexLookups(bestIndex.getKeyCondition())
@@ -2284,7 +2284,7 @@ public class OSelectExecutionPlanner {
         if (filterClusters != null) {
           filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
         } else {
-          filterClusterIds = clazz.getClusterIds();
+          filterClusterIds = clazz.getPolymorphicClusterIds();
         }
         plan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
         if (info.serverToClusters.size() == 1) {
@@ -2478,7 +2478,7 @@ public class OSelectExecutionPlanner {
       if (filterClusters != null) {
         filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
       } else {
-        filterClusterIds = clazz.getClusterIds();
+        filterClusterIds = clazz.getPolymorphicClusterIds();
       }
       result.add(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
       if (requiresMultipleIndexLookups(desc.getKeyCondition()) || duplicateResultsForRecord(desc)) {
