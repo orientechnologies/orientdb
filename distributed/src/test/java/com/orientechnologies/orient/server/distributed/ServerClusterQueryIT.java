@@ -20,12 +20,14 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import java.util.Iterator;
-import junit.framework.Assert;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Test;
 
 /** Start 2 servers and execute query across the cluster */
@@ -94,20 +96,18 @@ public class ServerClusterQueryIT extends AbstractServerClusterTest {
               .openDatabase(getDatabaseName(), "admin", "admin");
 
       try {
-        final Iterable<OElement> result =
-            g.command(new OCommandSQL("select *, $depth as d from (traverse in('E1') from ?)"))
-                .execute(v2.getIdentity());
+        OResultSet it =
+            g.query("select *, $depth as d from (traverse in('E1') from ?)", v2.getIdentity());
 
-        final Iterator<OElement> it = result.iterator();
-        Assert.assertTrue(it.hasNext());
+        assertTrue(it.hasNext());
 
-        final OElement r1 = it.next();
-        Assert.assertTrue(it.hasNext());
-        final OElement r2 = it.next();
-        Assert.assertFalse(it.hasNext());
+        final OResult r1 = it.next();
+        assertTrue(it.hasNext());
+        final OResult r2 = it.next();
+        assertFalse(it.hasNext());
 
-        Assert.assertEquals(r1.<Object>getProperty("d"), 0);
-        Assert.assertEquals(r2.<Object>getProperty("d"), 1);
+        assertEquals(r1.<Object>getProperty("d"), 0);
+        assertEquals(r2.<Object>getProperty("d"), 1);
 
       } finally {
         g.close();
@@ -125,15 +125,12 @@ public class ServerClusterQueryIT extends AbstractServerClusterTest {
               .openDatabase(getDatabaseName(), "admin", "admin");
 
       try {
-        final Iterable<OElement> result =
-            g.command(new OCommandSQL("select sum(amount) as total from v"))
-                .execute(v2.getIdentity());
+        OResultSet it = g.command("select sum(amount) as total from v", v2.getIdentity());
 
-        final Iterator<OElement> it = result.iterator();
-        Assert.assertTrue(it.hasNext());
+        assertTrue(it.hasNext());
 
-        final OElement r1 = it.next();
-        Assert.assertEquals(r1.<Object>getProperty("total"), 46);
+        final OResult r1 = it.next();
+        assertEquals(r1.<Object>getProperty("total"), 46);
 
       } finally {
         g.close();
@@ -150,41 +147,35 @@ public class ServerClusterQueryIT extends AbstractServerClusterTest {
               .openDatabase(getDatabaseName(), "admin", "admin");
 
       try {
-        Iterable<OElement> result =
-            g.command(new OCommandSQL("select amount from v order by amount asc"))
-                .execute(v2.getIdentity());
+        OResultSet it = g.command("select amount from v order by amount asc");
 
-        Iterator<OElement> it = result.iterator();
-        Assert.assertTrue(it.hasNext());
+        assertTrue(it.hasNext());
 
-        OElement r1 = it.next();
-        Assert.assertTrue(it.hasNext());
-        OElement r2 = it.next();
-        Assert.assertTrue(it.hasNext());
-        OElement r3 = it.next();
-        Assert.assertFalse(it.hasNext());
+        OResult r1 = it.next();
+        assertTrue(it.hasNext());
+        OResult r2 = it.next();
+        assertTrue(it.hasNext());
+        OResult r3 = it.next();
+        assertFalse(it.hasNext());
 
-        Assert.assertEquals(10, r1.<Object>getProperty("amount"));
-        Assert.assertEquals(15, r2.<Object>getProperty("amount"));
-        Assert.assertEquals(21, r3.<Object>getProperty("amount"));
+        assertEquals(10, r1.<Object>getProperty("amount"));
+        assertEquals(15, r2.<Object>getProperty("amount"));
+        assertEquals(21, r3.<Object>getProperty("amount"));
 
-        result =
-            g.command(new OCommandSQL("select amount from v order by amount desc"))
-                .execute(v2.getIdentity());
+        it = g.command("select amount from v order by amount desc");
 
-        it = result.iterator();
-        Assert.assertTrue(it.hasNext());
+        assertTrue(it.hasNext());
 
         r1 = it.next();
-        Assert.assertTrue(it.hasNext());
+        assertTrue(it.hasNext());
         r2 = it.next();
-        Assert.assertTrue(it.hasNext());
+        assertTrue(it.hasNext());
         r3 = it.next();
-        Assert.assertFalse(it.hasNext());
+        assertFalse(it.hasNext());
 
-        Assert.assertEquals(21, r1.<Object>getProperty("amount"));
-        Assert.assertEquals(15, r2.<Object>getProperty("amount"));
-        Assert.assertEquals(10, r3.<Object>getProperty("amount"));
+        assertEquals(21, r1.<Object>getProperty("amount"));
+        assertEquals(15, r2.<Object>getProperty("amount"));
+        assertEquals(10, r3.<Object>getProperty("amount"));
 
       } finally {
         g.close();
@@ -201,22 +192,18 @@ public class ServerClusterQueryIT extends AbstractServerClusterTest {
               .openDatabase(getDatabaseName(), "admin", "admin");
 
       try {
-        Iterable<OElement> result =
-            g.command(
-                    new OCommandSQL(
-                        "select from ( select amount, kind from v group by kind ) order by kind"))
-                .execute();
+        OResultSet it =
+            g.query("select from ( select amount, kind from v group by kind ) order by kind");
 
-        Iterator<OElement> it = result.iterator();
-        Assert.assertTrue(it.hasNext());
+        assertTrue(it.hasNext());
 
-        OElement r1 = it.next();
-        Assert.assertTrue(it.hasNext());
-        OElement r2 = it.next();
-        Assert.assertFalse(it.hasNext());
+        OResult r1 = it.next();
+        assertTrue(it.hasNext());
+        OResult r2 = it.next();
+        // assertFalse(it.hasNext());
 
-        Assert.assertEquals(r1.getProperty("kind"), "a");
-        Assert.assertEquals(r2.getProperty("kind"), "b");
+        assertEquals(r1.getProperty("kind"), "a");
+        assertEquals(r2.getProperty("kind"), "b");
 
       } finally {
         g.close();

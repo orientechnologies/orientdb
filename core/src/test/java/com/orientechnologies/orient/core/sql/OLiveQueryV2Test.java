@@ -264,14 +264,15 @@ public class OLiveQueryV2Test {
 
       db.command("insert into test set name = 'foo', surname = 'bar'").close();
 
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar', _allow=?"))
-          .execute(
+      db.command(
+              "insert into test set name = 'foo', surname = 'bar', _allow=?",
               new ArrayList<OIdentifiable>() {
                 {
                   add(current);
                   add(reader);
                 }
-              });
+              })
+          .close();
 
       Integer integer = future.get();
       Assert.assertEquals(integer.intValue(), liveMatch);

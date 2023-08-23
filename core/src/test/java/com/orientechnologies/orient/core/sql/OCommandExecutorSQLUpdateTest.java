@@ -146,23 +146,23 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     params.put("svn_url", "foo");
     db.command("create class " + className).close();
 
-    OCommandSQL sql1 =
-        new OCommandSQL(
+    db.command(
             "update "
                 + className
                 + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
                 + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
-                + "UPSERT WHERE full_name = :full_name");
-    db.command(sql1).execute(params);
+                + "UPSERT WHERE full_name = :full_name",
+            params)
+        .close();
 
-    OCommandSQL sql2 =
-        new OCommandSQL(
+    db.command(
             "update "
                 + className
                 + " SET name = :name, html_url = :html_url, description = :description, "
                 + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
-                + "UPSERT WHERE full_name = :full_name");
-    db.command(sql2).execute(params);
+                + "UPSERT WHERE full_name = :full_name",
+            params)
+        .close();
   }
 
   @Test
@@ -207,10 +207,6 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     doc.field("booleanList", Collections.EMPTY_LIST);
     db.save(doc);
 
-    OCommandSQL updateCommand =
-        new OCommandSQL(
-            "UPDATE test SET boolean = :boolean, booleanList = :booleanList, integerList = :integerList WHERE id = 1");
-
     Map<String, Object> params = new HashMap<String, Object>();
 
     params.put("boolean", true);
@@ -223,7 +219,10 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     booleanList.add(true);
     params.put("booleanList", booleanList);
 
-    db.command(updateCommand).execute(params);
+    db.command(
+            "UPDATE test SET boolean = :boolean, booleanList = :booleanList, integerList = :integerList WHERE id = 1",
+            params)
+        .close();
 
     OSQLSynchQuery<ODocument> query =
         new OSQLSynchQuery<ODocument>("SELECT * FROM test WHERE id = 1");
@@ -291,11 +290,10 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
     assertEquals(queried.field("text"), "initial value");
 
-    OCommandSQL command = new OCommandSQL("UPDATE test SET text = :text");
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("text", "single \"");
 
-    db.command(command).execute(params);
+    db.command("UPDATE test SET text = :text", params).close();
     queried.reload();
     assertEquals(queried.field("text"), "single \"");
   }
@@ -313,11 +311,11 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
     assertEquals(queried.field("text"), "initial value");
 
-    OCommandSQL command = new OCommandSQL("UPDATE test SET text = :text");
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("text", "quoted \"value\" string");
 
-    db.command(command).execute(params);
+    db.command("UPDATE test SET text = :text", params).close();
+    ;
     queried.reload();
     assertEquals(queried.field("text"), "quoted \"value\" string");
   }
@@ -488,10 +486,9 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     d.field("name", "bar");
     d.save();
 
-    Object result =
-        db.command(new OCommandSQL("update Foo set surname = 'baz' return count")).execute();
+    OResultSet result = db.command("update Foo set surname = 'baz' return count");
 
-    assertEquals(2, result);
+    assertEquals(2, (long) result.next().getProperty("count"));
   }
 
   @Test

@@ -76,12 +76,12 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
   }
 
   public void testDeleteFrom() {
-    database.command(new OCommandSQL("CREATE CLASS testFromOneE extends E")).execute();
-    database.command(new OCommandSQL("CREATE CLASS testFromTwoE extends E")).execute();
-    database.command(new OCommandSQL("CREATE CLASS testFromV extends V")).execute();
+    database.command("CREATE CLASS testFromOneE extends E").close();
+    database.command("CREATE CLASS testFromTwoE extends E").close();
+    database.command("CREATE CLASS testFromV extends V").close();
 
-    database.command(new OCommandSQL("create vertex testFromV set name = 'Luca'")).execute();
-    database.command(new OCommandSQL("create vertex testFromV set name = 'Luca'")).execute();
+    database.command("create vertex testFromV set name = 'Luca'").close();
+    database.command("create vertex testFromV set name = 'Luca'").close();
 
     List<OIdentifiable> result =
         database.query(new OSQLSynchQuery<ODocument>("select from testFromV"));
