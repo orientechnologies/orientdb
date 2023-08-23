@@ -77,17 +77,12 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       return true;
     }
 
-    if (iLeft instanceof OResult && !(iRight instanceof OResult)) {
-      iLeft = ((OResult) iLeft).toElement();
-    }
-
-    if (iRight instanceof OResult && !(iLeft instanceof OResult)) {
-      iRight = ((OResult) iRight).toElement();
-    }
-
     // RECORD & ORID
+    /*from this is only legacy query engine */
     if (iLeft instanceof ORecord) return comparesValues(iRight, (ORecord) iLeft, true);
     else if (iRight instanceof ORecord) return comparesValues(iLeft, (ORecord) iRight, true);
+    /*till this is only legacy query engine */
+    else if (iRight instanceof OResult) return comparesValues(iLeft, (OResult) iRight, true);
     else if (iRight instanceof OResult) {
       return comparesValues(iLeft, (OResult) iRight, true);
     }
@@ -139,21 +134,26 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
   protected static boolean comparesValues(
       final Object iValue, final OResult iRecord, final boolean iConsiderIn) {
-    // ODOCUMENT AS RESULT OF SUB-QUERY: GET THE FIRST FIELD IF ANY
-    Set<String> firstFieldName = iRecord.getPropertyNames();
-    if (firstFieldName.size() == 1) {
-      Object fieldValue = iRecord.getProperty(firstFieldName.iterator().next());
-      if (fieldValue != null) {
-        if (iConsiderIn && OMultiValue.isMultiValue(fieldValue)) {
-          for (Object o : OMultiValue.getMultiValueIterable(fieldValue, false)) {
-            if (o != null && o.equals(iValue)) return true;
+    if (iRecord.getIdentity().isPresent() && iRecord.getIdentity().get().isPersistent()) {
+      return iRecord.getIdentity().equals(iValue);
+    } else {
+      // ODOCUMENT AS RESULT OF SUB-QUERY: GET THE FIRST FIELD IF ANY
+      Set<String> firstFieldName = iRecord.getPropertyNames();
+      if (firstFieldName.size() == 1) {
+        Object fieldValue = iRecord.getProperty(firstFieldName.iterator().next());
+        if (fieldValue != null) {
+          if (iConsiderIn && OMultiValue.isMultiValue(fieldValue)) {
+            for (Object o : OMultiValue.getMultiValueIterable(fieldValue, false)) {
+              if (o != null && o.equals(iValue)) return true;
+            }
           }
-        }
 
-        return fieldValue.equals(iValue);
+          return fieldValue.equals(iValue);
+        }
       }
+
+      return false;
     }
-    return false;
   }
 
   @Override
