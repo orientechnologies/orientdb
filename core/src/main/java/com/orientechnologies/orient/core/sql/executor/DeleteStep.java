@@ -2,7 +2,9 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import java.util.Optional;
 
 /**
  * Deletes records coming from upstream steps
@@ -19,14 +21,15 @@ public class DeleteStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(upstream, this::mapResult);
+    return new OResultSetMapper(upstream, (result) -> this.mapResult(result, ctx));
   }
 
-  private OResult mapResult(OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
-      if (result.isElement()) {
-        result.getElement().get().delete();
+      Optional<ORID> id = result.getIdentity();
+      if (id.isPresent()) {
+        ctx.getDatabase().delete(id.get());
       }
       return result;
     } finally {
