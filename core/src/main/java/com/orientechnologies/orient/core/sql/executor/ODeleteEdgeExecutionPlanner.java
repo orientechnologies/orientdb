@@ -100,10 +100,14 @@ public class ODeleteEdgeExecutionPlanner {
           rightExpression,
           ctx,
           enableProfiling);
+      String fromLabel = null;
+      if (leftExpression != null) {
+        fromLabel = "$__ORIENT_DELETE_EDGE_fromV";
+      }
       handleFetchFromTo(
           result,
           ctx,
-          "$__ORIENT_DELETE_EDGE_fromV",
+          fromLabel,
           "$__ORIENT_DELETE_EDGE_toV",
           className,
           targetClusterName,

@@ -33,7 +33,7 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
   private Iterator<OEdge> currentFromEdgesIter;
   private Iterator toIterator;
 
-  private Set<ORID> toList = new HashSet<>();
+  private Set<ORID> toList;
   private boolean inited = false;
 
   private OEdge nextEdge = null;
@@ -124,7 +124,7 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
     fromValues = ctx.getVariable(fromAlias);
     if (fromValues instanceof Iterable && !(fromValues instanceof OIdentifiable)) {
       fromValues = ((Iterable) fromValues).iterator();
-    } else if (!(fromValues instanceof Iterator)) {
+    } else if (!(fromValues instanceof Iterator) && fromValues != null) {
       fromValues = Collections.singleton(fromValues).iterator();
     }
 
@@ -133,29 +133,31 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
     toValues = ctx.getVariable(toAlias);
     if (toValues instanceof Iterable && !(toValues instanceof OIdentifiable)) {
       toValues = ((Iterable) toValues).iterator();
-    } else if (!(toValues instanceof Iterator)) {
+    } else if (!(toValues instanceof Iterator) && toValues != null) {
       toValues = Collections.singleton(toValues).iterator();
     }
 
     fromIter = (Iterator) fromValues;
 
     Iterator toIter = (Iterator) toValues;
+    if (toIter != null) {
+      toList = new HashSet<ORID>();
+      while (toIter.hasNext()) {
+        Object elem = toIter.next();
+        if (elem instanceof OResult) {
+          elem = ((OResult) elem).toElement();
+        }
+        if (elem instanceof OIdentifiable && !(elem instanceof OElement)) {
+          elem = ((OIdentifiable) elem).getRecord();
+        }
+        if (!(elem instanceof OElement)) {
+          throw new OCommandExecutionException("Invalid vertex: " + elem);
+        }
+        ((OElement) elem).asVertex().ifPresent(x -> toList.add(x.getIdentity()));
+      }
 
-    while (toIter != null && toIter.hasNext()) {
-      Object elem = toIter.next();
-      if (elem instanceof OResult) {
-        elem = ((OResult) elem).toElement();
-      }
-      if (elem instanceof OIdentifiable && !(elem instanceof OElement)) {
-        elem = ((OIdentifiable) elem).getRecord();
-      }
-      if (!(elem instanceof OElement)) {
-        throw new OCommandExecutionException("Invalid vertex: " + elem);
-      }
-      ((OElement) elem).asVertex().ifPresent(x -> toList.add(x.getIdentity()));
+      toIterator = toList.iterator();
     }
-
-    toIterator = toList.iterator();
 
     fetchNextEdge();
   }
