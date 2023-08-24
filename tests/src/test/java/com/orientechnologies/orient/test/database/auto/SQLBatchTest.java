@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.testng.Assert;
@@ -65,11 +64,9 @@ public class SQLBatchTest extends DocumentDBBaseTest {
     // issue #7435
     String className1 = "SQLBatchTest_testInlineArray1";
     String className2 = "SQLBatchTest_testInlineArray2";
-    database.command(new OCommandSQL("CREATE CLASS " + className1 + " EXTENDS V")).execute();
-    database.command(new OCommandSQL("CREATE CLASS " + className2 + " EXTENDS V")).execute();
-    database
-        .command(new OCommandSQL("CREATE PROPERTY " + className2 + ".foos LinkList " + className1))
-        .execute();
+    database.command("CREATE CLASS " + className1 + " EXTENDS V").close();
+    database.command("CREATE CLASS " + className2 + " EXTENDS V").close();
+    database.command("CREATE PROPERTY " + className2 + ".foos LinkList " + className1).close();
 
     String script =
         ""
@@ -104,11 +101,9 @@ public class SQLBatchTest extends DocumentDBBaseTest {
     // issue #7435
     String className1 = "SQLBatchTest_testInlineArray21";
     String className2 = "SQLBatchTest_testInlineArray22";
-    database.command(new OCommandSQL("CREATE CLASS " + className1 + " EXTENDS V")).execute();
-    database.command(new OCommandSQL("CREATE CLASS " + className2 + " EXTENDS V")).execute();
-    database
-        .command(new OCommandSQL("CREATE PROPERTY " + className2 + ".foos LinkList " + className1))
-        .execute();
+    database.command("CREATE CLASS " + className1 + " EXTENDS V").close();
+    database.command("CREATE CLASS " + className2 + " EXTENDS V").close();
+    database.command("CREATE PROPERTY " + className2 + ".foos LinkList " + className1).close();
 
     String script =
         ""

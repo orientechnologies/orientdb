@@ -1782,10 +1782,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   }
 
   public void testSelectFromIndexValuesDesc() {
-    database
-        .command(
-            new OCommandSQL("create index selectFromIndexValuesDesc on Profile (name) notunique"))
-        .execute();
+    database.command("create index selectFromIndexValuesDesc on Profile (name) notunique").close();
 
     final List<ODocument> classResult =
         new ArrayList<ODocument>(
@@ -1879,17 +1876,12 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     schema.createClass("TestOutFilterInclude", schema.getClass("V"));
     database.command("create class linkedToOutFilterInclude extends E").close();
-    database
-        .command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"one\" }"))
-        .execute();
-    database
-        .command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"two\" }"))
-        .execute();
+    database.command("insert into TestOutFilterInclude content { \"name\": \"one\" }").close();
+    database.command("insert into TestOutFilterInclude content { \"name\": \"two\" }").close();
     database
         .command(
-            new OCommandSQL(
-                "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name = 'one') to (select from TestOutFilterInclude where name = 'two')"))
-        .execute();
+            "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name = 'one') to (select from TestOutFilterInclude where name = 'two')")
+        .close();
 
     final List<OIdentifiable> result =
         database.query(
@@ -1920,7 +1912,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void testBinaryClusterSelect() {
-    database.command(new OCommandSQL("create blob cluster binarycluster")).execute();
+    database.command("create blob cluster binarycluster").close();
     database.reload();
     OBlob bytes = new ORecordBytes(new byte[] {1, 2, 3});
     database.save(bytes, "binarycluster");
@@ -1930,7 +1922,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     Assert.assertEquals(result.size(), 1);
 
-    database.command(new OCommandSQL("delete from cluster:binarycluster")).execute();
+    database.command("delete from cluster:binarycluster").close();
 
     result = database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
 
@@ -1944,16 +1936,15 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     final OClass cls = schema.createClass("TestExpandSkip", v);
     cls.createProperty("name", OType.STRING);
     cls.createIndex("TestExpandSkip.name", INDEX_TYPE.UNIQUE, "name");
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '1'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '2'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '3'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '4'")).execute();
+    database.command("CREATE VERTEX TestExpandSkip set name = '1'").close();
+    database.command("CREATE VERTEX TestExpandSkip set name = '2'").close();
+    database.command("CREATE VERTEX TestExpandSkip set name = '3'").close();
+    database.command("CREATE VERTEX TestExpandSkip set name = '4'").close();
 
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')")
+        .close();
 
     List<OIdentifiable> result =
         database.query(
@@ -2085,9 +2076,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("LetWithQuotedValue", v);
-    database
-        .command(new OCommandSQL("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\""))
-        .execute();
+    database.command("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\"").close();
 
     List<OIdentifiable> result =
         database.query(

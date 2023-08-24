@@ -255,8 +255,7 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
   }
 
   private void dropClass(String iClass) {
-    OCommandSQL dropClassCommand = new OCommandSQL("drop class " + iClass);
-    database.command(dropClassCommand).execute();
+    database.command("drop class " + iClass).close();
     database.getMetadata().getSchema().reload();
     database.reload();
     while (database.getMetadata().getSchema().existsClass(iClass)) {

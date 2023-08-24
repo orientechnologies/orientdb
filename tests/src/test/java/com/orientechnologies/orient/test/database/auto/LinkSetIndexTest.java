@@ -307,9 +307,11 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "UPDATE " + document.getIdentity() + " add linkSet = " + docThree.getIdentity()))
-        .execute();
+            "UPDATE "
+                + document.getIdentity()
+                + " set linkSet = linkSet || "
+                + docThree.getIdentity())
+        .close();
 
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getInternal().size(), 3);

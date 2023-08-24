@@ -483,12 +483,9 @@ public class ShardingIT extends AbstractServerClusterTest {
 
         Assert.assertEquals(totalBeforeDelete - count, totalAfterDelete);
 
-        g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp1'"))
-            .execute();
-        g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp2'"))
-            .execute();
-        g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp3'"))
-            .execute();
+        g.command("create vertex `Client-Type` set `name-property` = 'temp1'").close();
+        g.command("create vertex `Client-Type` set `name-property` = 'temp2'").close();
+        g.command("create vertex `Client-Type` set `name-property` = 'temp3'").close();
 
         Iterable<OElement> countResultAfterFullDelete =
             g.command(new OCommandSQL("select from `Client-Type`")).execute();

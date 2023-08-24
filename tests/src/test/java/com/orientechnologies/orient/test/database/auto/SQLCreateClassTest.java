@@ -28,7 +28,7 @@ public class SQLCreateClassTest {
     db.create();
     try {
       Assert.assertFalse(db.getMetadata().getSchema().existsClass("testSimpleCreate"));
-      db.command(new OCommandSQL("create class testSimpleCreate")).execute();
+      db.command("create class testSimpleCreate").close();
       Assert.assertTrue(db.getMetadata().getSchema().existsClass("testSimpleCreate"));
     } finally {
       db.drop();

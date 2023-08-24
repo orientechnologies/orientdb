@@ -3,14 +3,13 @@ package com.orientechnologies.orient.core.sql.select;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import org.junit.Before;
+import org.junit.Test;
 
 /** Created by tglman on 15/04/16. */
 public class TestBinaryRecordsQuery extends BaseMemoryDatabase {
@@ -59,8 +58,7 @@ public class TestBinaryRecordsQuery extends BaseMemoryDatabase {
     db.save(doc);
 
     OResultSet res =
-        db.command(
-            "delete from cluster:BlobCluster where @rid in (select ref from RecordPointer)");
+        db.command("delete from cluster:BlobCluster where @rid in (select ref from RecordPointer)");
     db.getLocalCache().clear();
     assertEquals(1, (long) res.next().getProperty("count"));
     rec = db.load(rec.getIdentity());

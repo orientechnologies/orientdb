@@ -359,7 +359,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   @Test
   public void insertSelect() {
-    database.command(new OCommandSQL("CREATE CLASS UserCopy")).execute();
+    database.command("CREATE CLASS UserCopy").close();
     database.getMetadata().getSchema().reload();
 
     long inserted =
@@ -381,13 +381,11 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   @Test(expectedExceptions = OValidationException.class)
   public void insertSelectFromProjection() {
-    database.command(new OCommandSQL("CREATE CLASS ProjectedInsert")).execute();
-    database
-        .command(new OCommandSQL("CREATE property ProjectedInsert.a Integer (max 3)"))
-        .execute();
+    database.command("CREATE CLASS ProjectedInsert").close();
+    database.command("CREATE property ProjectedInsert.a Integer (max 3)").close();
     database.getMetadata().getSchema().reload();
 
-    database.command(new OCommandSQL("INSERT INTO ProjectedInsert FROM select 10 as a ")).execute();
+    database.command("INSERT INTO ProjectedInsert FROM select 10 as a ").close();
   }
 
   @Test
@@ -621,9 +619,8 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "insert into TestEmbeddedDates set events = [{\"on\": date(\"2005-09-08 04:00:00\", \"yyyy-MM-dd HH:mm:ss\", \"UTC\")}]\n"))
-        .execute();
+            "insert into TestEmbeddedDates set events = [{\"on\": date(\"2005-09-08 04:00:00\", \"yyyy-MM-dd HH:mm:ss\", \"UTC\")}]\n")
+        .close();
 
     List<ODocument> result =
         database.query(new OSQLSynchQuery<ODocument>("select from TestEmbeddedDates"));
@@ -724,10 +721,8 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("InsertWithClusterAsFieldName");
 
     database
-        .command(
-            new OCommandSQL(
-                "INSERT INTO InsertWithClusterAsFieldName ( `cluster` ) values ( 'foo' )"))
-        .execute();
+        .command("INSERT INTO InsertWithClusterAsFieldName ( `cluster` ) values ( 'foo' )")
+        .close();
 
     List<ODocument> result =
         database.query(new OSQLSynchQuery<ODocument>("SELECT FROM InsertWithClusterAsFieldName"));
@@ -741,14 +736,11 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     // issue #6670
     database.getMetadata().getSchema().getOrCreateClass("TestInsertEmbeddedBigDecimal");
     database
-        .command(
-            new OCommandSQL("create property TestInsertEmbeddedBigDecimal.ed embeddedlist decimal"))
-        .execute();
+        .command("create property TestInsertEmbeddedBigDecimal.ed embeddedlist decimal")
+        .close();
     database
-        .command(
-            new OCommandSQL(
-                "INSERT INTO TestInsertEmbeddedBigDecimal CONTENT {\"ed\": [5,null,5]}"))
-        .execute();
+        .command("INSERT INTO TestInsertEmbeddedBigDecimal CONTENT {\"ed\": [5,null,5]}")
+        .close();
     List<ODocument> result =
         database.query(new OSQLSynchQuery<ODocument>("SELECT FROM TestInsertEmbeddedBigDecimal"));
     Assert.assertEquals(result.size(), 1);

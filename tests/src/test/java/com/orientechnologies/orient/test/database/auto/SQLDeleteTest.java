@@ -36,9 +36,7 @@ public class SQLDeleteTest extends DocumentDBBaseTest {
 
   @Test
   public void deleteWithWhereOperator() {
-    database
-        .command(new OCommandSQL("insert into Profile (sex, salary) values ('female', 2100)"))
-        .execute();
+    database.command("insert into Profile (sex, salary) values ('female', 2100)").close();
 
     final Long total = database.countClass("Profile");
 

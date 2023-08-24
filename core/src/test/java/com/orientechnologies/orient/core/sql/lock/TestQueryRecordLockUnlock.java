@@ -27,7 +27,7 @@ public class TestQueryRecordLockUnlock {
   @Test
   public void testLockReleaseAfterIncrement() throws InterruptedException {
     final ORID id;
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
     try {
 
       db = new ODatabaseDocumentTx("memory:" + TestQueryRecordLockUnlock.class.getSimpleName());
