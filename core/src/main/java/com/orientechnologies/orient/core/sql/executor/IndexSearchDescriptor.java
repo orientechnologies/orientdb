@@ -203,4 +203,18 @@ public class IndexSearchDescriptor {
     }
     return true;
   }
+
+  public boolean isSameCondition(IndexSearchDescriptor desc) {
+    if (blockCount() != desc.blockCount()) {
+      return false;
+    }
+    List<OBooleanExpression> left = getSubBlocks();
+    List<OBooleanExpression> right = desc.getSubBlocks();
+    for (int i = 0; i < left.size(); i++) {
+      if (!left.get(i).equals(right.get(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

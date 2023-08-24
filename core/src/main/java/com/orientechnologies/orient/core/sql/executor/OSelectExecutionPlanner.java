@@ -2452,12 +2452,13 @@ public class OSelectExecutionPlanner {
     List<OExecutionStepInternal> result = null;
     result =
         executionStepFromIndexes(
-            filterClusters, info, ctx, profilingEnabled, optimumIndexSearchDescriptors);
+            filterClusters, clazz, info, ctx, profilingEnabled, optimumIndexSearchDescriptors);
     return result;
   }
 
   private List<OExecutionStepInternal> executionStepFromIndexes(
       Set<String> filterClusters,
+      OClass clazz,
       QueryPlanningInfo info,
       OCommandContext ctx,
       boolean profilingEnabled,
@@ -2664,7 +2665,7 @@ public class OSelectExecutionPlanner {
     for (IndexSearchDescriptor desc : descriptors) {
       IndexSearchDescriptor matching = null;
       for (IndexSearchDescriptor result : results) {
-        if (isSameCondition(desc, result)) {
+        if (desc.isSameCondition(result)) {
           matching = result;
           break;
         }
@@ -2679,20 +2680,6 @@ public class OSelectExecutionPlanner {
       }
     }
     return results;
-  }
-
-  private boolean isSameCondition(IndexSearchDescriptor item, IndexSearchDescriptor desc) {
-    List<OBooleanExpression> left = item.getKeyCondition().getSubBlocks();
-    List<OBooleanExpression> right = desc.getKeyCondition().getSubBlocks();
-    if (left.size() != right.size()) {
-      return false;
-    }
-    for (int i = 0; i < left.size(); i++) {
-      if (!left.get(i).equals(right.get(i))) {
-        return false;
-      }
-    }
-    return true;
   }
 
   private List<IndexSearchDescriptor> removePrefixIndexes(List<IndexSearchDescriptor> descriptors) {
