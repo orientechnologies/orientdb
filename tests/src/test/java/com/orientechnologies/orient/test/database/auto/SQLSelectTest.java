@@ -1776,9 +1776,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testSelectFromIndexValues() {
-    database
-        .command(new OCommandSQL("create index selectFromIndexValues on Profile (name) notunique"))
-        .execute();
+    database.command("create index selectFromIndexValues on Profile (name) notunique").close();
 
     final List<ODocument> classResult =
         new ArrayList<ODocument>(
@@ -1809,10 +1807,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   public void testSelectFromIndexValuesAsc() {
-    database
-        .command(
-            new OCommandSQL("create index selectFromIndexValuesAsc on Profile (name) notunique"))
-        .execute();
+    database.command("create index selectFromIndexValuesAsc on Profile (name) notunique").close();
 
     final List<ODocument> classResult =
         new ArrayList<ODocument>(
@@ -1843,10 +1838,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   public void testSelectFromIndexValuesDesc() {
-    database
-        .command(
-            new OCommandSQL("create index selectFromIndexValuesDesc on Profile (name) notunique"))
-        .execute();
+    database.command("create index selectFromIndexValuesDesc on Profile (name) notunique").close();
 
     final List<ODocument> classResult =
         new ArrayList<ODocument>(
@@ -1981,7 +1973,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testBinaryClusterSelect() {
-    database.command(new OCommandSQL("create blob cluster binarycluster")).execute();
+    database.command("create blob cluster binarycluster").close();
     database.reload();
     OBlob bytes = new ORecordBytes(new byte[] {1, 2, 3});
     database.save(bytes, "binarycluster");
@@ -1991,7 +1983,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     Assert.assertEquals(result.size(), 1);
 
-    database.command(new OCommandSQL("delete from cluster:binarycluster")).execute();
+    database.command("delete from cluster:binarycluster").close();
 
     result = database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
 
@@ -2005,16 +1997,15 @@ public class SQLSelectTest extends AbstractSelectTest {
     final OClass cls = schema.createClass("TestExpandSkip", v);
     cls.createProperty("name", OType.STRING);
     cls.createIndex("TestExpandSkip.name", INDEX_TYPE.UNIQUE, "name");
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '1'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '2'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '3'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '4'")).execute();
+    database.command("CREATE VERTEX TestExpandSkip set name = '1'").close();
+    database.command("CREATE VERTEX TestExpandSkip set name = '2'").close();
+    database.command("CREATE VERTEX TestExpandSkip set name = '3'").close();
+    database.command("CREATE VERTEX TestExpandSkip set name = '4'").close();
 
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')")
+        .close();
 
     List<OIdentifiable> result =
         database.query(
@@ -2065,26 +2056,18 @@ public class SQLSelectTest extends AbstractSelectTest {
     final OClass e1 = schema.createClass("TestPolymorphicEdges_E1", e);
     final OClass e2 = schema.createClass("TestPolymorphicEdges_E2", e1);
 
-    database
-        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '1'"))
-        .execute();
-    database
-        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '2'"))
-        .execute();
-    database
-        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '3'"))
-        .execute();
+    database.command("CREATE VERTEX TestPolymorphicEdges_V set name = '1'").close();
+    database.command("CREATE VERTEX TestPolymorphicEdges_V set name = '2'").close();
+    database.command("CREATE VERTEX TestPolymorphicEdges_V set name = '3'").close();
 
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE TestPolymorphicEdges_E1 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '2')"))
-        .execute();
+            "CREATE EDGE TestPolymorphicEdges_E1 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '2')")
+        .close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')"))
-        .execute();
+            "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')")
+        .close();
 
     List<OIdentifiable> result =
         database.query(
@@ -2153,9 +2136,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("LetWithQuotedValue", v);
-    database
-        .command(new OCommandSQL("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\""))
-        .execute();
+    database.command("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\"").close();
 
     List<OIdentifiable> result =
         database.query(

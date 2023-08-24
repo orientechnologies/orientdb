@@ -401,25 +401,17 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       OIdentifiable id4 =
           database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge B from " + id.getIdentity() + " to " + id2.getIdentity()))
-          .execute();
+          .command("create edge B from " + id.getIdentity() + " to " + id2.getIdentity())
+          .close();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge B from " + id.getIdentity() + " to " + id3.getIdentity()))
-          .execute();
+          .command("create edge B from " + id.getIdentity() + " to " + id3.getIdentity())
+          .close();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge B from " + id.getIdentity() + " to " + id4.getIdentity()))
-          .execute();
+          .command("create edge B from " + id.getIdentity() + " to " + id4.getIdentity())
+          .close();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge B from " + id4.getIdentity() + " to " + id.getIdentity()))
-          .execute();
+          .command("create edge B from " + id4.getIdentity() + " to " + id.getIdentity())
+          .close();
 
       List<ODocument> res =
           database.query(
@@ -461,15 +453,11 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       OIdentifiable id3 =
           database.command(new OCommandSQL("insert into A (a,b) values ('a3','b3')")).execute();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge B from " + id.getIdentity() + " to " + id2.getIdentity()))
-          .execute();
+          .command("create edge B from " + id.getIdentity() + " to " + id2.getIdentity())
+          .close();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge C from " + id2.getIdentity() + " to " + id3.getIdentity()))
-          .execute();
+          .command("create edge C from " + id2.getIdentity() + " to " + id3.getIdentity())
+          .close();
 
       List<ODocument> res =
           database.query(

@@ -294,25 +294,20 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     checkUpdatedDoc(database, "Raf", "Torino", "fmale");
 
     /* THESE COMMANDS ARE OK */
-    OCommandSQL updatecommand =
-        new OCommandSQL("update Person set gender = 'female' where name = 'Raf'");
-    database.command(updatecommand).execute("Raf");
+    database.command("update Person set gender = 'female' where name = 'Raf'", "Raf");
     checkUpdatedDoc(database, "Raf", "Torino", "female");
 
-    updatecommand = new OCommandSQL("update Person set city = 'Turin' where name = ?");
-    database.command(updatecommand).execute("Raf");
+    database.command("update Person set city = 'Turin' where name = ?", "Raf");
     checkUpdatedDoc(database, "Raf", "Turin", "female");
 
-    updatecommand = new OCommandSQL("update Person set gender = ? where name = 'Raf'");
-    database.command(updatecommand).execute("F");
+    database.command("update Person set gender = ? where name = 'Raf'", "F");
     checkUpdatedDoc(database, "Raf", "Turin", "F");
 
-    updatecommand = new OCommandSQL("update Person set gender = ?, city = ? where name = 'Raf'");
-    database.command(updatecommand).execute("FEMALE", "TORINO");
+    database.command(
+        "update Person set gender = ?, city = ? where name = 'Raf'", "FEMALE", "TORINO");
     checkUpdatedDoc(database, "Raf", "TORINO", "FEMALE");
 
-    updatecommand = new OCommandSQL("update Person set gender = ? where name = ?");
-    database.command(updatecommand).execute("f", "Raf");
+    database.command("update Person set gender = ? where name = ?", "f", "Raf");
     checkUpdatedDoc(database, "Raf", "TORINO", "f");
   }
 
@@ -484,10 +479,9 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "UPDATE FormatEscapingTest SET test = format('aaa \\' bbb') WHERE @rid = "
-                    + document.getIdentity()))
-        .execute();
+            "UPDATE FormatEscapingTest SET test = format('aaa \\' bbb') WHERE @rid = "
+                + document.getIdentity())
+        .close();
 
     document.reload();
 
@@ -495,10 +489,9 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "UPDATE FormatEscapingTest SET test = 'ccc \\' eee', test2 = format('aaa \\' bbb') WHERE @rid = "
-                    + document.getIdentity()))
-        .execute();
+            "UPDATE FormatEscapingTest SET test = 'ccc \\' eee', test2 = format('aaa \\' bbb') WHERE @rid = "
+                + document.getIdentity())
+        .close();
 
     document.reload();
     Assert.assertEquals(document.field("test"), "ccc ' eee");
@@ -506,20 +499,18 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "UPDATE FormatEscapingTest SET test = 'aaa \\n bbb' WHERE @rid = "
-                    + document.getIdentity()))
-        .execute();
+            "UPDATE FormatEscapingTest SET test = 'aaa \\n bbb' WHERE @rid = "
+                + document.getIdentity())
+        .close();
 
     document.reload();
     Assert.assertEquals(document.field("test"), "aaa \n bbb");
 
     database
         .command(
-            new OCommandSQL(
-                "UPDATE FormatEscapingTest SET test = 'aaa \\r bbb' WHERE @rid = "
-                    + document.getIdentity()))
-        .execute();
+            "UPDATE FormatEscapingTest SET test = 'aaa \\r bbb' WHERE @rid = "
+                + document.getIdentity())
+        .close();
 
     document.reload();
     Assert.assertEquals(document.field("test"), "aaa \r bbb");
@@ -536,10 +527,9 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "UPDATE FormatEscapingTest SET test = 'aaa \\t bbb' WHERE @rid = "
-                    + document.getIdentity()))
-        .execute();
+            "UPDATE FormatEscapingTest SET test = 'aaa \\t bbb' WHERE @rid = "
+                + document.getIdentity())
+        .close();
 
     document.reload();
     Assert.assertEquals(document.field("test"), "aaa \t bbb");
@@ -569,9 +559,9 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                 database.command(new OCommandSQL("create vertex UpdateVertexContent")).execute())
             .getIdentity();
 
-    database.command(new OCommandSQL("create edge from " + vOneId + " to " + vTwoId)).execute();
-    database.command(new OCommandSQL("create edge from " + vOneId + " to " + vTwoId)).execute();
-    database.command(new OCommandSQL("create edge from " + vOneId + " to " + vTwoId)).execute();
+    database.command("create edge from " + vOneId + " to " + vTwoId).close();
+    database.command("create edge from " + vOneId + " to " + vTwoId).close();
+    database.command("create edge from " + vOneId + " to " + vTwoId).close();
 
     List<ODocument> result =
         database.query(
@@ -585,15 +575,11 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     }
 
     database
-        .command(
-            new OCommandSQL(
-                "update UpdateVertexContent content {value : 'val'} where @rid = " + vOneId))
-        .execute();
+        .command("update UpdateVertexContent content {value : 'val'} where @rid = " + vOneId)
+        .close();
     database
-        .command(
-            new OCommandSQL(
-                "update UpdateVertexContent content {value : 'val'} where @rid =  " + vTwoId))
-        .execute();
+        .command("update UpdateVertexContent content {value : 'val'} where @rid =  " + vTwoId)
+        .close();
 
     result =
         database.query(
@@ -630,15 +616,9 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                 database.command(new OCommandSQL("create vertex UpdateEdgeContentV")).execute())
             .getIdentity();
 
-    database
-        .command(new OCommandSQL("create edge UpdateEdgeContentE from " + vOneId + " to " + vTwoId))
-        .execute();
-    database
-        .command(new OCommandSQL("create edge UpdateEdgeContentE from " + vOneId + " to " + vTwoId))
-        .execute();
-    database
-        .command(new OCommandSQL("create edge UpdateEdgeContentE from " + vOneId + " to " + vTwoId))
-        .execute();
+    database.command("create edge UpdateEdgeContentE from " + vOneId + " to " + vTwoId).close();
+    database.command("create edge UpdateEdgeContentE from " + vOneId + " to " + vTwoId).close();
+    database.command("create edge UpdateEdgeContentE from " + vOneId + " to " + vTwoId).close();
 
     List<ODocument> result =
         database.query(

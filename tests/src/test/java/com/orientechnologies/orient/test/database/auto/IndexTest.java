@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -1277,9 +1278,8 @@ public class IndexTest extends ObjectDBBaseTest {
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
     database
         .command(
-            new OCommandSQL(
-                "CREATE INDEX Profile.nick on Profile (nick) UNIQUE METADATA {ignoreNullValues: true}"))
-        .execute();
+            "CREATE INDEX Profile.nick on Profile (nick) UNIQUE METADATA {ignoreNullValues: true}")
+        .close();
     database.getMetadata().reload();
   }
 
@@ -1323,9 +1323,10 @@ public class IndexTest extends ObjectDBBaseTest {
     indexWithLimitAndOffset.createProperty("val", OType.INTEGER);
     indexWithLimitAndOffset.createProperty("index", OType.INTEGER);
 
-    databaseDocumentTx.command(
-        new OCommandSQL(
-            "create index IndexWithLimitAndOffset on IndexWithLimitAndOffsetClass (val) notunique"));
+    databaseDocumentTx
+        .command(
+            "create index IndexWithLimitAndOffset on IndexWithLimitAndOffsetClass (val) notunique")
+        .close();
 
     for (int i = 0; i < 30; i++) {
       final ODocument document = new ODocument("IndexWithLimitAndOffsetClass");
@@ -1623,9 +1624,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "create index ValuesContainerIsRemovedIfIndexIsRemovedIndex on ValuesContainerIsRemovedIfIndexIsRemovedClass (val) notunique"))
-        .execute();
+            "create index ValuesContainerIsRemovedIfIndexIsRemovedIndex on ValuesContainerIsRemovedIfIndexIsRemovedClass (val) notunique")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       for (int j = 0; j < 100; j++) {
@@ -1640,9 +1640,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     final OWriteCache writeCache = storageLocalAbstract.getWriteCache();
     Assert.assertTrue(writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
-    database
-        .command(new OCommandSQL("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex"))
-        .execute();
+    database.command("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex").close();
     Assert.assertFalse(writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
   }
 
@@ -1755,18 +1753,12 @@ public class IndexTest extends ObjectDBBaseTest {
     testNullIteration.createProperty("birth", OType.DATETIME);
 
     database
-        .command(
-            new OCommandSQL(
-                "CREATE VERTEX NullIterationTest SET name = 'Andrew', birth = sysdate()"))
-        .execute();
+        .command("CREATE VERTEX NullIterationTest SET name = 'Andrew', birth = sysdate()")
+        .close();
     database
-        .command(
-            new OCommandSQL(
-                "CREATE VERTEX NullIterationTest SET name = 'Marcel', birth = sysdate()"))
-        .execute();
-    database
-        .command(new OCommandSQL("CREATE VERTEX NullIterationTest SET name = 'Olivier'"))
-        .execute();
+        .command("CREATE VERTEX NullIterationTest SET name = 'Marcel', birth = sysdate()")
+        .close();
+    database.command("CREATE VERTEX NullIterationTest SET name = 'Olivier'").close();
 
     ODocument metadata = new ODocument();
     metadata.field("ignoreNullValues", false);
@@ -1778,18 +1770,14 @@ public class IndexTest extends ObjectDBBaseTest {
         metadata,
         new String[] {"birth"});
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("SELECT FROM NullIterationTest ORDER BY birth ASC"));
-    Assert.assertEquals(result.size(), 3);
+    OResultSet result = database.query("SELECT FROM NullIterationTest ORDER BY birth ASC");
+    Assert.assertEquals(result.stream().count(), 3);
 
-    result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("SELECT FROM NullIterationTest ORDER BY birth DESC"));
-    Assert.assertEquals(result.size(), 3);
+    result = database.query("SELECT FROM NullIterationTest ORDER BY birth DESC");
+    Assert.assertEquals(result.stream().count(), 3);
 
-    result = database.query(new OSQLSynchQuery<ODocument>("SELECT FROM NullIterationTest"));
-    Assert.assertEquals(result.size(), 3);
+    result = database.query("SELECT FROM NullIterationTest");
+    Assert.assertEquals(result.stream().count(), 3);
   }
 
   private List<Long> getValidPositions(int clusterId) {
@@ -2361,25 +2349,17 @@ public class IndexTest extends ObjectDBBaseTest {
 
     OrientBaseGraph graph =
         new OrientGraphNoTx("memory:IndexTest_testParamsOrder", "admin", "admin");
+    ODatabaseDocument database = graph.getRawGraph();
 
-    graph.command(new OCommandSQL("CREATE CLASS Task extends V")).execute();
-    graph
-        .command(
-            new OCommandSQL(
-                "CREATE PROPERTY Task.projectId STRING (MANDATORY TRUE, NOTNULL, MAX 20)"))
-        .execute();
-    graph
-        .command(
-            new OCommandSQL("CREATE PROPERTY Task.seq SHORT ( MANDATORY TRUE, NOTNULL, MIN 0)"))
-        .execute();
-    graph.command(new OCommandSQL("CREATE INDEX TaskPK ON Task (projectId, seq) UNIQUE")).execute();
+    database.command("CREATE CLASS Task extends V").close();
+    database
+        .command("CREATE PROPERTY Task.projectId STRING (MANDATORY TRUE, NOTNULL, MAX 20)")
+        .close();
+    database.command("CREATE PROPERTY Task.seq SHORT ( MANDATORY TRUE, NOTNULL, MIN 0)").close();
+    database.command("CREATE INDEX TaskPK ON Task (projectId, seq) UNIQUE").close();
 
-    graph
-        .command(new OCommandSQL("INSERT INTO Task (projectId, seq) values ( 'foo', 2)"))
-        .execute();
-    graph
-        .command(new OCommandSQL("INSERT INTO Task (projectId, seq) values ( 'bar', 3)"))
-        .execute();
+    database.command("INSERT INTO Task (projectId, seq) values ( 'foo', 2)").close();
+    database.command("INSERT INTO Task (projectId, seq) values ( 'bar', 3)").close();
     Iterable<Vertex> x =
         graph.getVertices(
             "Task", new String[] {"seq", "projectId"}, new Object[] {(short) 2, "foo"});

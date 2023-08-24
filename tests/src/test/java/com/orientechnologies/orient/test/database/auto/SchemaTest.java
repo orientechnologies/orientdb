@@ -496,8 +496,8 @@ public class SchemaTest extends DocumentDBBaseTest {
   }
 
   public void testOfflineCluster() {
-    database.command(new OCommandSQL("create class TestOffline")).execute();
-    database.command(new OCommandSQL("insert into TestOffline set status = 'offline'")).execute();
+    database.command("create class TestOffline").close();
+    database.command("insert into TestOffline set status = 'offline'").close();
 
     List<OIdentifiable> result =
         database.command(new OCommandSQL("select from TestOffline")).execute();
@@ -611,7 +611,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   public void testWrongClassNameWithAt() {
     //    try {
-    database.command(new OCommandSQL("create class `Ant@ni`")).execute();
+    database.command("create class `Ant@ni`").close();
     //      Assert.fail();
     // why...? it can be allowed now with backtick quoting...
     // TODO review this
@@ -788,31 +788,24 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   private void swapClusters(ODatabaseDocumentInternal databaseDocumentTx, int i) {
     databaseDocumentTx
-        .command(
-            new OCommandSQL(
-                "CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal clusters 2"))
-        .execute();
+        .command("CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal clusters 2")
+        .close();
 
     databaseDocumentTx
-        .command(new OCommandSQL("INSERT INTO TestRenameClusterNew (iteration) VALUES(" + i + ")"))
-        .execute();
+        .command("INSERT INTO TestRenameClusterNew (iteration) VALUES(" + i + ")")
+        .close();
 
     databaseDocumentTx
-        .command(
-            new OCommandSQL(
-                "ALTER CLASS TestRenameClusterOriginal removecluster TestRenameClusterOriginal"))
-        .execute();
+        .command("ALTER CLASS TestRenameClusterOriginal removecluster TestRenameClusterOriginal")
+        .close();
     databaseDocumentTx
-        .command(
-            new OCommandSQL("ALTER CLASS TestRenameClusterNew removecluster TestRenameClusterNew"))
-        .execute();
-    databaseDocumentTx.command(new OCommandSQL("DROP CLASS TestRenameClusterNew")).execute();
+        .command("ALTER CLASS TestRenameClusterNew removecluster TestRenameClusterNew")
+        .close();
+    databaseDocumentTx.command("DROP CLASS TestRenameClusterNew").close();
     databaseDocumentTx
-        .command(
-            new OCommandSQL(
-                "ALTER CLASS TestRenameClusterOriginal addcluster TestRenameClusterNew"))
-        .execute();
-    databaseDocumentTx.command(new OCommandSQL("DROP CLUSTER TestRenameClusterOriginal")).execute();
+        .command("ALTER CLASS TestRenameClusterOriginal addcluster TestRenameClusterNew")
+        .close();
+    databaseDocumentTx.command("DROP CLUSTER TestRenameClusterOriginal").close();
     databaseDocumentTx
         .command(
             new OCommandSQL("ALTER CLUSTER TestRenameClusterNew name TestRenameClusterOriginal"))

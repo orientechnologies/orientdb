@@ -283,15 +283,13 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
-    //noinspection deprecation
     database
         .command(
-            new OCommandSQL(
-                "UPDATE "
-                    + document.getIdentity()
-                    + " add linkCollection = "
-                    + docThree.getIdentity()))
-        .execute();
+            "UPDATE "
+                + document.getIdentity()
+                + " set linkCollection = linkCollection || "
+                + docThree.getIdentity())
+        .close();
 
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getInternal().size(), 3);

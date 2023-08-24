@@ -14,9 +14,9 @@ public class SQLDropClassTest {
     db.create();
     try {
       Assert.assertFalse(db.getMetadata().getSchema().existsClass("testSimpleDrop"));
-      db.command(new OCommandSQL("create class testSimpleDrop")).execute();
+      db.command("create class testSimpleDrop").close();
       Assert.assertTrue(db.getMetadata().getSchema().existsClass("testSimpleDrop"));
-      db.command(new OCommandSQL("Drop class testSimpleDrop")).execute();
+      db.command("Drop class testSimpleDrop").close();
       Assert.assertFalse(db.getMetadata().getSchema().existsClass("testSimpleDrop"));
     } finally {
       db.drop();

@@ -18,7 +18,6 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
@@ -82,17 +81,13 @@ public class SQLLiveSelectTest extends AbstractSelectTest {
     Assert.assertNotNull(token);
 
     database.begin();
-    database
-        .command(new OCommandSQL("insert into LiveClassTx set name = 'foo', surname = 'bar'"))
-        .execute();
-    database
-        .command(new OCommandSQL("insert into LiveClassTx set name = 'foo', surname = 'baz'"))
-        .execute();
-    database.command(new OCommandSQL("insert into LiveClassTx set name = 'foo'")).execute();
+    database.command("insert into LiveClassTx set name = 'foo', surname = 'bar'").close();
+    database.command("insert into LiveClassTx set name = 'foo', surname = 'baz'").close();
+    database.command("insert into LiveClassTx set name = 'foo'").close();
     database.commit();
 
     database.begin();
-    database.command(new OCommandSQL("update LiveClassTx set name = 'updated'")).execute();
+    database.command("update LiveClassTx set name = 'updated'").close();
     database.commit();
 
     latch.await();
@@ -137,15 +132,11 @@ public class SQLLiveSelectTest extends AbstractSelectTest {
     Integer token = tokenDoc.field("token");
     Assert.assertNotNull(token);
 
-    database
-        .command(new OCommandSQL("insert into liveclass set name = 'foo', surname = 'bar'"))
-        .execute();
-    database
-        .command(new OCommandSQL("insert into liveclass set name = 'foo', surname = 'baz'"))
-        .execute();
-    database.command(new OCommandSQL("insert into liveclass set name = 'foo'")).execute();
+    database.command("insert into liveclass set name = 'foo', surname = 'bar'").close();
+    database.command("insert into liveclass set name = 'foo', surname = 'baz'").close();
+    database.command("insert into liveclass set name = 'foo'").close();
 
-    database.command(new OCommandSQL("update liveclass set name = 'updated'")).execute();
+    database.command("update liveclass set name = 'updated'").close();
 
     latch.await();
 

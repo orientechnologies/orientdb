@@ -288,7 +288,7 @@ public class SecurityTest extends DocumentDBBaseTest {
     database.getMetadata().getSchema().createClass("Protected");
 
     try {
-      database.command(new OCommandSQL("alter class Protected superclass OUser")).execute();
+      database.command("alter class Protected superclass OUser").close();
     } finally {
       database.getMetadata().getSchema().dropClass("Protected");
     }
