@@ -25,9 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -99,9 +97,8 @@ public class ResourceDerivedTest {
     db.close();
   }
 
-  private List<ODocument> query(String sql, Object... params) {
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(sql);
-    return query.run(params);
+  private OResultSet query(ODatabaseSession db, String sql, Object... params) {
+    return db.query(sql, params);
   }
 
   @After
@@ -116,7 +113,7 @@ public class ResourceDerivedTest {
     ODatabaseSession db = orientDB.open("test", "tenant1", "password");
 
     try {
-      List<ODocument> result = query("SELECT FROM Customer");
+      OResultSet result = query(db, "SELECT FROM Customer");
 
       assertThat(result).hasSize(3);
     } finally {
@@ -131,7 +128,7 @@ public class ResourceDerivedTest {
     ODatabaseSession db = orientDB.open("test", "tenant1", "password");
 
     try {
-      List<ODocument> result = query("SELECT FROM Customer_t2");
+      OResultSet result = query(db, "SELECT FROM Customer_t2");
 
       assertThat(result).hasSize(1);
     } finally {
@@ -146,7 +143,7 @@ public class ResourceDerivedTest {
     ODatabaseSession db = orientDB.open("test", "tenant1", "password");
 
     try {
-      query("SELECT FROM Customer_u2");
+      query(db, "SELECT FROM Customer_u2");
     } finally {
       db.close();
     }
@@ -159,7 +156,7 @@ public class ResourceDerivedTest {
     ODatabaseSession db = orientDB.open("test", "tenant2", "password");
 
     try {
-      List<ODocument> result = query("SELECT FROM Customer");
+      OResultSet result = query(db, "SELECT FROM Customer");
     } finally {
       db.close();
     }
@@ -173,7 +170,7 @@ public class ResourceDerivedTest {
     ODatabaseSession db = orientDB.open("test", "tenant2", "password");
 
     try {
-      List<ODocument> result = query("SELECT FROM Customer_t2");
+      OResultSet result = query(db, "SELECT FROM Customer_t2");
 
       assertThat(result).hasSize(2);
     } finally {
