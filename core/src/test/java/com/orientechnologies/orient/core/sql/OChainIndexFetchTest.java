@@ -8,8 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Test;
 
 public class OChainIndexFetchTest extends BaseMemoryDatabase {
@@ -35,9 +34,8 @@ public class OChainIndexFetchTest extends BaseMemoryDatabase {
 
     db.save(doc1);
 
-    List<ODocument> res =
-        db.query(new OSQLSynchQuery(" select from BaseClass where ref.id ='wrong_referred' "));
+    OResultSet res = db.query(" select from BaseClass where ref.id ='wrong_referred' ");
 
-    assertEquals(0, res.size());
+    assertEquals(0, res.stream().count());
   }
 }

@@ -4,9 +4,9 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STOR
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -23,7 +23,7 @@ public class OPartitionedDatabasePoolTest {
 
   @Rule public TestName name = new TestName();
 
-  private ODatabaseDocumentTx db;
+  private ODatabaseDocument db;
   private OPartitionedDatabasePool pool;
 
   @Before
@@ -42,7 +42,7 @@ public class OPartitionedDatabasePoolTest {
   @Test
   public void shouldAutoCreateDatabase() throws Exception {
 
-    ODatabaseDocumentTx db = pool.acquire();
+    ODatabaseDocument db = pool.acquire();
 
     assertThat(db.exists()).isTrue();
     assertThat(db.isClosed()).isFalse();
@@ -64,8 +64,8 @@ public class OPartitionedDatabasePoolTest {
   @Test
   public void shouldReturnSameDatabaseOnSameThread() throws Exception {
 
-    ODatabaseDocumentTx db1 = pool.acquire();
-    ODatabaseDocumentTx db2 = pool.acquire();
+    ODatabaseDocument db1 = pool.acquire();
+    ODatabaseDocument db2 = pool.acquire();
 
     assertThat(db1).isSameAs(db2);
 
@@ -88,12 +88,12 @@ public class OPartitionedDatabasePoolTest {
     // do a query and assert on other thread
     Runnable acquirer =
         () -> {
-          ODatabaseDocumentTx db = pool.acquire();
+          ODatabaseDocument db = pool.acquire();
 
           try {
             assertThat(db.isActiveOnCurrentThread()).isTrue();
 
-            List<ODocument> res = db.query(new OSQLSynchQuery<>("SELECT * FROM OUser"));
+            OResultSet res = db.query("SELECT * FROM OUser");
 
             assertThat(res).hasSize(3);
 
@@ -119,7 +119,7 @@ public class OPartitionedDatabasePoolTest {
     pool.setProperty(STORAGE_ENCRYPTION_METHOD.getKey(), "aes");
     pool.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
 
-    ODatabaseDocumentTx dbFromPool = pool.acquire();
+    ODatabaseDocument dbFromPool = pool.acquire();
 
     assertThat(dbFromPool.getProperty(STORAGE_ENCRYPTION_METHOD.getKey())).isEqualTo("aes");
     assertThat(dbFromPool.getProperty(STORAGE_ENCRYPTION_KEY.getKey()))
