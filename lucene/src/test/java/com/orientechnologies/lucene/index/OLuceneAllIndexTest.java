@@ -5,10 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.test.BaseLuceneTest;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.IOException;
-import java.util.List;
 import java.util.logging.Level;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -54,10 +52,8 @@ public class OLuceneAllIndexTest extends BaseLuceneTest {
   @Test
   @Ignore // FIXME: No function with name 'lucene_match'
   public void testLuceneFunction() {
-    List<ODocument> docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from Song where lucene_match( \"Song.author:Fabbio\" ) = true "));
+    OResultSet docs =
+        db.query("select from Song where lucene_match( \"Song.author:Fabbio\" ) = true ");
     assertThat(docs).hasSize(87);
   }
 }

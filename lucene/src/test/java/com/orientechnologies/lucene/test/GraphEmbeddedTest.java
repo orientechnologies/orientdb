@@ -21,9 +21,7 @@ package com.orientechnologies.lucene.test;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,12 +60,11 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
     db.begin();
 
-    List<ODocument> resultSet =
-        db.query(new OSQLSynchQuery<ODocument>("SELECT from City where name = 'London / a' "));
+    OResultSet resultSet = db.query("SELECT from City where name = 'London / a' ");
 
     Assertions.assertThat(resultSet).hasSize(1);
 
-    resultSet = db.query(new OSQLSynchQuery<ODocument>("SELECT from City where name = 'Rome' "));
+    resultSet = db.query("SELECT from City where name = 'Rome' ");
 
     Assertions.assertThat(resultSet).hasSize(1);
   }
@@ -93,8 +90,7 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
     db.commit();
 
-    List<ODocument> resultSet =
-        db.query(new OSQLSynchQuery<ODocument>("SELECT from One where name = 'Same' "));
+    OResultSet resultSet = db.query("SELECT from One where name = 'Same' ");
 
     Assertions.assertThat(resultSet).hasSize(1);
 

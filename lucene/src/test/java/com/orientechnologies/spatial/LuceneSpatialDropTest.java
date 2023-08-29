@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.File;
 import java.util.List;
@@ -74,8 +75,7 @@ public class LuceneSpatialDropTest {
       doc.field("longitude", 8.0 + (i * 0.000001));
       db.save(doc);
     }
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select * from test");
-    List<ODocument> result = db.command(query).execute();
-    Assert.assertEquals(count, result.size());
+    OResultSet result = db.query("select * from test");
+    Assert.assertEquals(count, result.stream().count());
   }
 }
