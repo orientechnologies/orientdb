@@ -18,10 +18,8 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
-import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +42,7 @@ public class LuceneQueryErrorTest extends BaseLuceneTest {
   public void testQueryError() {
 
     String query = "select * from Song where [title] LUCENE \"\" ";
-    List<?> result = db.query(new OSQLSynchQuery<ODocument>(query));
+    OResultSet result = db.query(query);
 
     Assertions.assertThat(result).isEmpty();
   }

@@ -24,9 +24,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.InputStream;
-import java.util.List;
 import java.util.stream.Stream;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -72,11 +70,9 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   @Test
   public void testSelectSingleDocumentWithAndOperator() {
 
-    @SuppressWarnings("deprecation")
-    List<ODocument> docs =
+    OResultSet docs =
         db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title,author] LUCENE \"(title:mountain AND author:Fabbio)\""));
+            "select * from Song where [title,author] LUCENE \"(title:mountain AND author:Fabbio)\"");
     assertThat(docs).hasSize(1);
   }
 
@@ -94,33 +90,23 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
 
   @Test
   public void testSelectMultipleDocumentsWithOrOperator() {
-    @SuppressWarnings("deprecation")
-    List<ODocument> docs =
+    OResultSet docs =
         db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title,author] LUCENE \"(title:mountain OR author:Fabbio)\""));
+            "select * from Song where [title,author] LUCENE \"(title:mountain OR author:Fabbio)\"");
 
     assertThat(docs).hasSize(91);
   }
 
   @Test
   public void testSelectOnTitleAndAuthorWithMatchOnTitle() {
-    @SuppressWarnings("deprecation")
-    List<ODocument> docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title,author] LUCENE \"mountain\""));
+    OResultSet docs = db.query("select * from Song where [title,author] LUCENE \"mountain\"");
 
     assertThat(docs).hasSize(5);
   }
 
   @Test
   public void testSelectOnTitleAndAuthorWithMatchOnAuthor() {
-    @SuppressWarnings("deprecation")
-    List<ODocument> docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title,author] LUCENE \"author:fabbio\""));
+    OResultSet docs = db.query("select * from Song where [title,author] LUCENE \"author:fabbio\"");
 
     assertThat(docs).hasSize(87);
   }
@@ -128,11 +114,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   @Test
   @Ignore
   public void testSelectOnAuthorWithMatchOnAuthor() {
-    @SuppressWarnings("deprecation")
-    List<ODocument> docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Song where [author,title] LUCENE \"(fabbio)\""));
+    OResultSet docs = db.query("select * from Song where [author,title] LUCENE \"(fabbio)\"");
 
     assertThat(docs).hasSize(87);
   }
@@ -150,15 +132,12 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
             + "insert into Item set Title = 'test', content = 'this is a test';\n";
     db.execute("sql", script).close();
 
-    List<ODocument> docs =
-        db.query(new OSQLSynchQuery<ODocument>("select * from Item where Title lucene 'te*'"));
+    OResultSet docs = db.query("select * from Item where Title lucene 'te*'");
     assertThat(docs).hasSize(1);
 
     //noinspection deprecation
-    docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Item where [Title, Summary, Content] lucene 'test'"));
+    docs = db.query("select * from Item where [Title, Summary, Content] lucene 'test'");
+
     assertThat(docs).hasSize(1);
 
     // nidex api

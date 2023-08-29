@@ -21,10 +21,7 @@ package com.orientechnologies.lucene.tests;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,8 +58,7 @@ public class OLuceneGraphEmbeddedTest extends OLuceneBaseTest {
 
     db.begin();
 
-    List<ODocument> docs =
-        db.query(new OSQLSynchQuery<ODocument>("SELECT from City where name = 'London / a' "));
+    OResultSet docs = db.query("SELECT from City where name = 'London / a' ");
 
     Assertions.assertThat(docs).hasSize(1);
 

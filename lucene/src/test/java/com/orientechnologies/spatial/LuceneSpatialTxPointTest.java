@@ -23,9 +23,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.ArrayList;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -87,18 +86,18 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
     String query =
         "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })"
             + " = true";
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    OResultSet docs = db.query(query);
 
-    Assert.assertEquals(1, docs.size());
+    Assert.assertEquals(1, docs.stream().count());
 
     db.rollback();
 
     query =
         "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })"
             + " = true";
-    docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    docs = db.query(query);
 
-    Assert.assertEquals(0, docs.size());
+    Assert.assertEquals(0, docs.stream().count());
   }
 
   @Test
@@ -119,9 +118,9 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
     String query =
         "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })"
             + " = true";
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    OResultSet docs = db.query(query);
 
-    Assert.assertEquals(1, docs.size());
+    Assert.assertEquals(1, docs.stream().count());
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
 
