@@ -26,11 +26,12 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Assert;
@@ -55,14 +56,14 @@ public class LuceneTransactionEmbeddedQueryTest {
       db.save(doc);
 
       String query = "select from C1 where p1 lucene \"abc\" ";
-      List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      OResultSet vertices = db.query(query);
 
-      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(vertices.stream().count(), 1);
       db.rollback();
 
       query = "select from C1 where p1 lucene \"abc\" ";
-      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-      Assert.assertEquals(vertices.size(), 0);
+      vertices = db.query(query);
+      Assert.assertEquals(vertices.stream().count(), 0);
     } finally {
       db.drop();
     }
@@ -92,35 +93,32 @@ public class LuceneTransactionEmbeddedQueryTest {
       db.save(doc);
 
       String query = "select from C1 where p1 lucene \"abc\" ";
-      @SuppressWarnings("deprecation")
-      List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      OResultSet vertices = db.query(query);
 
-      Assert.assertEquals(1, vertices.size());
+      Assert.assertEquals(1, vertices.stream().count());
 
       Assert.assertEquals(1, index.getInternal().size());
       db.commit();
 
       query = "select from C1 where p1 lucene \"abc\" ";
-      //noinspection deprecation
-      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      vertices = db.query(query);
 
-      Assert.assertEquals(1, vertices.size());
+      OResult res = vertices.next();
       Assert.assertEquals(1, index.getInternal().size());
 
       db.begin();
 
-      db.delete(vertices.get(0));
+      db.delete(res.getIdentity().get());
 
       query = "select from C1 where p1 lucene \"abc\" ";
-      //noinspection deprecation
-      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      vertices = db.query(query);
 
       Collection coll;
       try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
         coll = stream.collect(Collectors.toList());
       }
 
-      Assert.assertEquals(vertices.size(), 0);
+      Assert.assertEquals(vertices.stream().count(), 0);
       Assert.assertEquals(coll.size(), 0);
 
       Iterator iterator = coll.iterator();
@@ -135,10 +133,9 @@ public class LuceneTransactionEmbeddedQueryTest {
       db.rollback();
 
       query = "select from C1 where p1 lucene \"abc\" ";
-      //noinspection deprecation
-      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      vertices = db.query(query);
 
-      Assert.assertEquals(1, vertices.size());
+      Assert.assertEquals(1, vertices.stream().count());
 
       Assert.assertEquals(1, index.getInternal().size());
     } finally {
@@ -169,10 +166,9 @@ public class LuceneTransactionEmbeddedQueryTest {
       db.save(doc);
 
       String query = "select from C1 where p1 lucene \"update\" ";
-      @SuppressWarnings("deprecation")
-      List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      OResultSet vertices = db.query(query);
 
-      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(vertices.stream().count(), 1);
 
       Assert.assertEquals(2, index.getInternal().size());
 
@@ -180,33 +176,32 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       query = "select from C1 where p1 lucene \"update\" ";
       //noinspection deprecation
-      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      vertices = db.query(query);
 
       Collection coll;
       try (final Stream<ORID> stream = index.getInternal().getRids("update")) {
         coll = stream.collect(Collectors.toList());
       }
 
-      Assert.assertEquals(1, vertices.size());
+      OResult resultRecord = vertices.next();
       Assert.assertEquals(2, coll.size());
       Assert.assertEquals(2, index.getInternal().size());
 
       db.begin();
 
       // select in transaction while updating
-      ODocument record = vertices.get(0);
-      Collection p1 = record.field("p1");
+      OElement record = resultRecord.getElement().get();
+      Collection p1 = record.getProperty("p1");
       p1.remove("update removed");
       db.save(record);
 
       query = "select from C1 where p1 lucene \"update\" ";
-      //noinspection deprecation
-      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      vertices = db.query(query);
       try (Stream<ORID> stream = index.getInternal().getRids("update")) {
         coll = stream.collect(Collectors.toList());
       }
 
-      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(vertices.stream().count(), 1);
       Assert.assertEquals(coll.size(), 1);
 
       Iterator iterator = coll.iterator();
@@ -220,23 +215,21 @@ public class LuceneTransactionEmbeddedQueryTest {
       Assert.assertEquals(1, index.getInternal().size());
 
       query = "select from C1 where p1 lucene \"update\"";
-      //noinspection deprecation
-      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      vertices = db.query(query);
 
       try (Stream<ORID> stream = index.getInternal().getRids("update")) {
         coll = stream.collect(Collectors.toList());
       }
       Assert.assertEquals(coll.size(), 1);
 
-      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(vertices.stream().count(), 1);
 
       db.rollback();
 
       query = "select from C1 where p1 lucene \"update\" ";
-      //noinspection deprecation
-      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      vertices = db.query(query);
 
-      Assert.assertEquals(1, vertices.size());
+      Assert.assertEquals(1, vertices.stream().count());
 
       Assert.assertEquals(2, index.getInternal().size());
     } finally {
@@ -277,14 +270,13 @@ public class LuceneTransactionEmbeddedQueryTest {
       db.save(doc);
 
       String query = "select from C1 where p1 lucene \"abc\"";
-      @SuppressWarnings("deprecation")
-      List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      OResultSet vertices = db.query(query);
       Collection coll;
       try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
         coll = stream.collect(Collectors.toList());
       }
 
-      Assert.assertEquals(1, vertices.size());
+      Assert.assertEquals(1, vertices.stream().count());
       Assert.assertEquals(1, coll.size());
 
       Iterator iterator = coll.iterator();
@@ -302,22 +294,20 @@ public class LuceneTransactionEmbeddedQueryTest {
       Assert.assertEquals(2, index.getInternal().size());
 
       query = "select from C1 where p1 lucene \"removed\" ";
-      //noinspection deprecation
-      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      vertices = db.query(query);
       try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
         coll = stream.collect(Collectors.toList());
       }
 
-      Assert.assertEquals(1, vertices.size());
+      Assert.assertEquals(1, vertices.stream().count());
       Assert.assertEquals(1, coll.size());
 
       db.rollback();
 
       query = "select from C1 where p1 lucene \"abc\" ";
-      //noinspection deprecation
-      vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+      vertices = db.query(query);
 
-      Assert.assertEquals(2, vertices.size());
+      Assert.assertEquals(2, vertices.stream().count());
 
       Assert.assertEquals(2, index.getInternal().size());
     } finally {

@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +62,6 @@ public class LuceneMiscTest extends BaseLuceneTest {
     Assert.assertEquals(1, results.stream().count());
   }
 
-  // TODO Re-enable when removed check syntax on ODB
   @Test
   public void testSubLucene() {
 
@@ -75,18 +73,16 @@ public class LuceneMiscTest extends BaseLuceneTest {
 
     db.command("insert into Person set name='Enrico', age=18").close();
 
-    OSQLSynchQuery query =
-        new OSQLSynchQuery(
-            "select  from (select from Person where age = 18) where name lucene 'Enrico'");
-    List results = db.command(query).execute();
-    Assert.assertEquals(1, results.size());
+    OResultSet results =
+        db.query("select  from (select from Person where age = 18) where name lucene 'Enrico'");
+    Assert.assertEquals(1, results.stream().count());
 
     // WITH PROJECTION does not work as the class is missing
-    query =
-        new OSQLSynchQuery(
+
+    results =
+        db.query(
             "select  from (select name  from Person where age = 18) where name lucene 'Enrico'");
-    results = db.command(query).execute();
-    Assert.assertEquals(0, results.size());
+    Assert.assertEquals(0, results.stream().count());
   }
 
   @Test
@@ -136,15 +132,14 @@ public class LuceneMiscTest extends BaseLuceneTest {
     OEdge edge = authorVertex.addEdge(songVertex, "AuthorOf");
     db.save(edge);
 
-    List<Object> results = db.command(new OCommandSQL("select from AuthorOf")).execute();
-    Assert.assertEquals(results.size(), 1);
+    OResultSet results = db.query("select from AuthorOf");
+    Assert.assertEquals(results.stream().count(), 1);
 
-    results =
+    List<?> results1 =
         db.command(new OCommandSQL("select from AuthorOf where in.title lucene 'hurricane'"))
             .execute();
 
-    System.out.println("results = " + results);
-    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results1.size(), 1);
   }
 
   @Test
