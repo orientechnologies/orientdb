@@ -59,7 +59,7 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
     OResult result = (OResult) iThis;
 
     OElement element = result.toElement();
-
+    if (!element.getSchemaType().isPresent()) return false;
     String className = element.getSchemaType().get().getName();
     List<String> fieldNames = (List<String>) params[0];
 
