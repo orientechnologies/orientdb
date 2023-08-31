@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import java.util.ArrayList;
@@ -1038,39 +1038,22 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test
   public void testAny() {
-    //noinspection deprecation
-    database.command(new OCommandSQL("create class TestExport")).execute();
-    //noinspection deprecation
-    database.command(new OCommandSQL("create property TestExport.anything ANY")).execute();
-    //noinspection deprecation
-    database.command(new OCommandSQL("insert into TestExport set anything = 3")).execute();
-    //noinspection deprecation
-    database.command(new OCommandSQL("insert into TestExport set anything = 'Jay'")).execute();
-    //noinspection deprecation
-    database.command(new OCommandSQL("insert into TestExport set anything = 2.3")).execute();
+    database.command("create class TestExport").close();
+    database.command("create property TestExport.anything ANY").close();
+    database.command("insert into TestExport set anything = 3").close();
+    database.command("insert into TestExport set anything = 'Jay'").close();
+    database.command("insert into TestExport set anything = 2.3").close();
 
-    @SuppressWarnings("deprecation")
-    List<ODocument> result =
-        database
-            .command(new OCommandSQL("select count(*) from TestExport where anything = 3"))
-            .execute();
+    OResultSet result = database.command("select count(*) from TestExport where anything = 3");
     Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(result.stream().count(), 1);
 
-    //noinspection deprecation
-    result =
-        database
-            .command(new OCommandSQL("select count(*) from TestExport where anything = 'Jay'"))
-            .execute();
+    result = database.command("select count(*) from TestExport where anything = 'Jay'");
     Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(result.stream().count(), 1);
 
-    //noinspection deprecation
-    result =
-        database
-            .command(new OCommandSQL("select count(*) from TestExport where anything = 2.3"))
-            .execute();
+    result = database.command("select count(*) from TestExport where anything = 2.3");
     Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(result.stream().count(), 1);
   }
 }

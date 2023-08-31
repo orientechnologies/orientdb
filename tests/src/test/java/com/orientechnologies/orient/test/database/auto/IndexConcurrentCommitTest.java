@@ -4,8 +4,7 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -41,10 +40,9 @@ public class IndexConcurrentCommitTest extends DocumentDBBaseTest {
       database.commit();
 
       // Ensure that the people made it in correctly
-      final List<ODocument> result1 =
-          database.command(new OCommandSQL("select from Person")).execute();
+      final OResultSet result1 = database.query("select from Person");
       System.out.println("After transaction 1");
-      for (ODocument d : result1) System.out.println(d);
+      while (result1.hasNext()) System.out.println(result1.next());
 
       // Transaction 2
       database.begin();
@@ -69,9 +67,8 @@ public class IndexConcurrentCommitTest extends DocumentDBBaseTest {
       database.rollback();
     }
 
-    final List<ODocument> result2 =
-        database.command(new OCommandSQL("select from Person")).execute();
+    final OResultSet result2 = database.command("select from Person");
     System.out.println("After transaction 2");
-    for (ODocument d : result2) System.out.println(d);
+    while (result2.hasNext()) System.out.println(result2.next());
   }
 }
