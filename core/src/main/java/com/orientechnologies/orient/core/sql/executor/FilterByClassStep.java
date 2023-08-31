@@ -5,26 +5,21 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
 import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-import java.util.Locale;
 import java.util.Optional;
 
 /** Created by luigidellaquila on 01/03/17. */
 public class FilterByClassStep extends AbstractExecutionStep {
 
   private OIdentifier identifier;
-  private String className;
   private OResultSet prevResult = null;
   private long cost;
 
   public FilterByClassStep(OIdentifier identifier, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.identifier = identifier;
-    className = identifier.getStringValue();
   }
 
   @Override
@@ -32,11 +27,7 @@ public class FilterByClassStep extends AbstractExecutionStep {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    ctx.getDatabase()
-        .checkSecurity(
-            ORule.ResourceGeneric.CLASS,
-            ORole.PERMISSION_READ,
-            className.toLowerCase(Locale.ENGLISH));
+
     return new OLimitedResultSet(
         new OFilterResultSet(() -> fetchNext(ctx, nRecords), this::filterMap), nRecords);
   }
@@ -46,7 +37,7 @@ public class FilterByClassStep extends AbstractExecutionStep {
     try {
       if (result.isElement()) {
         Optional<OClass> clazz = result.getElement().get().getSchemaType();
-        if (clazz.isPresent() && clazz.get().isSubClassOf(className)) {
+        if (clazz.isPresent() && clazz.get().isSubClassOf(identifier.getStringValue())) {
           return result;
         }
       }

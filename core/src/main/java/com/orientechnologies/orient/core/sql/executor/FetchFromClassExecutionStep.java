@@ -6,14 +6,11 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -137,11 +134,6 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    ctx.getDatabase()
-        .checkSecurity(
-            ORule.ResourceGeneric.CLASS,
-            ORole.PERMISSION_READ,
-            className.toLowerCase(Locale.ENGLISH));
     return new OLimitedResultSet(
         new OResultSet() {
 

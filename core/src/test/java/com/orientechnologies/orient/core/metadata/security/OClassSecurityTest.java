@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.After;
@@ -59,7 +58,7 @@ public class OClassSecurityTest {
     this.db = null;
   }
 
-  @Test(expected = OSecurityException.class)
+  @Test
   public void testReadWithClassPermissions() {
     db.createClass("Person");
     ORole reader = db.getMetadata().getSecurity().getRole("reader");
