@@ -42,7 +42,8 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -495,16 +496,15 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         writer.beginObject(2, true, null);
         writer.writeAttribute(3, true, "name", index.getName());
 
-        List<ODocument> indexContent =
-            database.query(new OSQLSynchQuery<ODocument>("select from index:" + index.getName()));
+        OResultSet indexContent = database.query("select from index:" + index.getName());
 
         writer.beginCollection(3, true, "content");
 
         int i = 0;
-        for (ODocument indexEntry : indexContent) {
+        while (indexContent.hasNext()) {
+          OResult indexEntry = indexContent.next();
           if (i > 0) writer.append(",");
 
-          indexEntry.setLazyLoad(false);
           final OIndexDefinition indexDefinition = index.getDefinition();
 
           exportEntry.reset();
@@ -515,24 +515,21 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
             final OBinarySerializer binarySerializer =
                 ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();
 
-            final int dataSize = binarySerializer.getObjectSize(indexEntry.field("key"));
+            final int dataSize = binarySerializer.getObjectSize(indexEntry.getProperty("key"));
             final byte[] binaryContent = new byte[dataSize];
-            binarySerializer.serialize(indexEntry.field("key"), binaryContent, 0);
+            binarySerializer.serialize(indexEntry.getProperty("key"), binaryContent, 0);
 
             exportEntry.field("binary", true);
             exportEntry.field("key", binaryContent);
           } else {
             exportEntry.field("binary", false);
-            exportEntry.field("key", indexEntry.<Object>field("key"));
+            exportEntry.field("key", indexEntry.<Object>getProperty("key"));
           }
-          exportEntry.field("rid", indexEntry.<Object>field("rid"));
+          exportEntry.field("rid", indexEntry.<Object>getProperty("rid"));
 
           i++;
 
           writer.append(exportEntry.toJSON());
-
-          final long percent = indexContent.size() / 10;
-          if (percent > 0 && (i % percent) == 0) listener.onMessage(".");
         }
         writer.endCollection(3, true);
 

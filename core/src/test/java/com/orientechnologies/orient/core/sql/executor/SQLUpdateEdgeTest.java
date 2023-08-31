@@ -15,12 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql.executor;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.OVertex;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -36,33 +37,32 @@ public class SQLUpdateEdgeTest extends BaseMemoryDatabase {
     db.getMetadata().getSchema().reload();
 
     // VERTEXES
-    ODocument v1 = db.command(new OCommandSQL("create vertex")).execute();
-    Assert.assertEquals(v1.getClassName(), "V");
+    OElement v1 = db.command("create vertex").next().getElement().get();
+    assertEquals(v1.getSchemaType().get().getName(), "V");
 
-    ODocument v2 = db.command(new OCommandSQL("create vertex V1")).execute();
-    Assert.assertEquals(v2.getClassName(), "V1");
+    OElement v2 = db.command("create vertex V1").next().getElement().get();
+    assertEquals(v2.getSchemaType().get().getName(), "V1");
 
-    ODocument v3 =
-        db.command(new OCommandSQL("create vertex set vid = 'v3', brand = 'fiat'")).execute();
+    OElement v3 =
+        db.command("create vertex set vid = 'v3', brand = 'fiat'").next().getElement().get();
 
-    Assert.assertEquals(v3.getClassName(), "V");
-    Assert.assertEquals(v3.field("brand"), "fiat");
+    assertEquals(v3.getSchemaType().get().getName(), "V");
+    assertEquals(v3.getProperty("brand"), "fiat");
 
-    ODocument v4 =
-        db.command(new OCommandSQL("create vertex V1 set vid = 'v4',  brand = 'fiat',name = 'wow'"))
-            .execute();
-    Assert.assertEquals(v4.getClassName(), "V1");
-    Assert.assertEquals(v4.field("brand"), "fiat");
-    Assert.assertEquals(v4.field("name"), "wow");
+    OElement v4 =
+        db.command("create vertex V1 set vid = 'v4',  brand = 'fiat',name = 'wow'")
+            .next()
+            .getElement()
+            .get();
+    assertEquals(v4.getSchemaType().get().getName(), "V1");
+    assertEquals(v4.getProperty("brand"), "fiat");
+    assertEquals(v4.getProperty("name"), "wow");
 
-    List<OEdge> edges =
-        db.command(
-                new OCommandSQL(
-                    "create edge E1 from " + v1.getIdentity() + " to " + v2.getIdentity()))
-            .execute();
-    Assert.assertEquals(edges.size(), 1);
-    OEdge edge = edges.get(0);
-    Assert.assertEquals(edge.getSchemaType().get().getName(), "E1");
+    OResultSet edges =
+        db.command("create edge E1 from " + v1.getIdentity() + " to " + v2.getIdentity());
+    OEdge edge = edges.next().getEdge().get();
+    assertFalse(edges.hasNext());
+    assertEquals(edge.getSchemaType().get().getName(), "E1");
 
     db.command(
             "update edge E1 set out = "
@@ -73,53 +73,41 @@ public class SQLUpdateEdgeTest extends BaseMemoryDatabase {
                 + edge.getIdentity())
         .close();
 
-    List<ODocument> result =
-        db.query(new OSQLSynchQuery("select expand(out('E1')) from " + v3.getIdentity()));
-    Assert.assertEquals(edges.size(), 1);
-    ODocument vertex4 = result.get(0);
-    Assert.assertEquals(vertex4.field("vid"), "v4");
+    OResultSet result = db.query("select expand(out('E1')) from " + v3.getIdentity());
+    OResult vertex4 = result.next();
+    Assert.assertEquals(vertex4.getProperty("vid"), "v4");
 
-    result = db.query(new OSQLSynchQuery("select expand(in('E1')) from " + v4.getIdentity()));
-    Assert.assertEquals(result.size(), 1);
-    ODocument vertex3 = result.get(0);
-    Assert.assertEquals(vertex3.field("vid"), "v3");
+    result = db.query("select expand(in('E1')) from " + v4.getIdentity());
+    OResult vertex3 = result.next();
+    Assert.assertEquals(vertex3.getProperty("vid"), "v3");
 
-    result = db.query(new OSQLSynchQuery("select expand(out('E1')) from " + v1.getIdentity()));
-    Assert.assertEquals(result.size(), 0);
+    result = db.query("select expand(out('E1')) from " + v1.getIdentity());
+    Assert.assertEquals(result.stream().count(), 0);
 
-    result = db.query(new OSQLSynchQuery("select expand(in('E1')) from " + v2.getIdentity()));
-    Assert.assertEquals(result.size(), 0);
+    result = db.query("select expand(in('E1')) from " + v2.getIdentity());
+    Assert.assertEquals(result.stream().count(), 0);
   }
 
   @Test
   public void testUpdateEdgeOfTypeE() {
     // issue #6378
-    ODocument v1 = db.command(new OCommandSQL("create vertex")).execute();
-    ODocument v2 = db.command(new OCommandSQL("create vertex")).execute();
-    ODocument v3 = db.command(new OCommandSQL("create vertex")).execute();
+    OVertex v1 = db.command("create vertex").next().getVertex().get();
+    OVertex v2 = db.command("create vertex").next().getVertex().get();
+    OVertex v3 = db.command("create vertex").next().getVertex().get();
 
-    Iterable<OEdge> edges =
-        db.command(
-                new OCommandSQL(
-                    "create edge E from " + v1.getIdentity() + " to " + v2.getIdentity()))
-            .execute();
-    OEdge edge = edges.iterator().next();
+    OResultSet edges =
+        db.command("create edge E from " + v1.getIdentity() + " to " + v2.getIdentity());
+    OEdge edge = edges.next().getEdge().get();
 
     db.command("UPDATE EDGE " + edge.getIdentity() + " SET in = " + v3.getIdentity());
 
-    Iterable<ODocument> result =
-        db.command(new OSQLSynchQuery<ODocument>("select expand(out()) from " + v1.getIdentity()))
-            .execute();
-    Assert.assertEquals(result.iterator().next().getIdentity(), v3.getIdentity());
+    OResultSet result = db.query("select expand(out()) from " + v1.getIdentity());
+    Assert.assertEquals(result.next().getIdentity().get(), v3.getIdentity());
 
-    result =
-        db.command(new OSQLSynchQuery<ODocument>("select expand(in()) from " + v3.getIdentity()))
-            .execute();
-    Assert.assertEquals(result.iterator().next().getIdentity(), v1.getIdentity());
+    result = db.query("select expand(in()) from " + v3.getIdentity());
+    Assert.assertEquals(result.next().getIdentity().get(), v1.getIdentity());
 
-    result =
-        db.command(new OSQLSynchQuery<ODocument>("select expand(in()) from " + v2.getIdentity()))
-            .execute();
-    Assert.assertFalse(result.iterator().hasNext());
+    result = db.command("select expand(in()) from " + v2.getIdentity());
+    Assert.assertFalse(result.hasNext());
   }
 }
