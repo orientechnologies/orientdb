@@ -4,11 +4,7 @@ import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,10 +43,11 @@ public class OCommandExecutorSQLCreateEdgeTest extends BaseMemoryDatabase {
             "123")
         .close();
 
-    final List<ODocument> list = db.query(new OSQLSynchQuery<Object>("SELECT FROM link"));
+    OResultSet list = db.query("SELECT FROM link");
 
-    Assert.assertEquals(list.size(), 1);
-    Assert.assertEquals(list.get(0).field("foo"), "123");
+    OResult res = list.next();
+    Assert.assertEquals(res.getProperty("foo"), "123");
+    Assert.assertFalse(list.hasNext());
   }
 
   @Test
@@ -65,13 +62,13 @@ public class OCommandExecutorSQLCreateEdgeTest extends BaseMemoryDatabase {
             params)
         .close();
 
-    final List<ODocument> list = db.query(new OSQLSynchQuery<Object>("SELECT FROM link"));
+    OResultSet list = db.query("SELECT FROM link");
 
-    Assert.assertEquals(list.size(), 1);
-    final ODocument edge = list.get(0);
-    Assert.assertEquals(edge.field("foo"), "bar");
-    Assert.assertEquals(edge.field("out"), owner1.getIdentity());
-    Assert.assertEquals(edge.field("in"), owner2.getIdentity());
+    OResult edge = list.next();
+    Assert.assertEquals(edge.getProperty("foo"), "bar");
+    Assert.assertEquals(edge.getProperty("out"), owner1.getIdentity());
+    Assert.assertEquals(edge.getProperty("in"), owner2.getIdentity());
+    Assert.assertFalse(list.hasNext());
   }
 
   @Test
@@ -80,19 +77,18 @@ public class OCommandExecutorSQLCreateEdgeTest extends BaseMemoryDatabase {
       db.command("CREATE VERTEX Owner SET testbatch = true, id = ?", i).close();
     }
 
-    Collection edges =
+    OResultSet edges =
         db.command(
-                new OCommandSQL(
-                    "CREATE EDGE link from (select from owner where testbatch = true and id > 0) TO (select from owner where testbatch = true and id = 0) batch 10"))
-            .execute("456");
+            "CREATE EDGE link from (select from owner where testbatch = true and id > 0) TO (select from owner where testbatch = true and id = 0) batch 10",
+            "456");
 
-    Assert.assertEquals(edges.size(), 19);
+    Assert.assertEquals(edges.stream().count(), 19);
 
-    final List<ODocument> list =
-        db.query(new OSQLSynchQuery<Object>("select from owner where testbatch = true and id = 0"));
+    OResultSet list = db.query("select from owner where testbatch = true and id = 0");
 
-    Assert.assertEquals(list.size(), 1);
-    Assert.assertEquals(((ORidBag) list.get(0).field("in_link")).size(), 19);
+    OResult res = list.next();
+    Assert.assertEquals(((ORidBag) res.getProperty("in_link")).size(), 19);
+    Assert.assertFalse(list.hasNext());
   }
 
   @Test

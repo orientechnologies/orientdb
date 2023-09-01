@@ -25,9 +25,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
@@ -145,7 +143,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
   public void testRoles() throws IOException {
     database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
-    database.query(new OSQLSynchQuery<ORole>("select from ORole where name = 'admin'"));
+    database.query("select from ORole where name = 'admin'").close();
     database.close();
   }
 

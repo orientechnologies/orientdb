@@ -5,9 +5,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -492,15 +490,8 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
-    //noinspection deprecation
-    database
-        .command(
-            new OCommandSQL(
-                "UPDATE "
-                    + document.getIdentity()
-                    + " remove linkCollection = "
-                    + docTwo.getIdentity()))
-        .execute();
+    database.command(
+        "UPDATE " + document.getIdentity() + " remove linkCollection = " + docTwo.getIdentity());
 
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getInternal().size(), 1);
@@ -617,16 +608,12 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
     document.save();
 
-    @SuppressWarnings("deprecation")
-    List<ODocument> result =
+    OResultSet result =
         database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from LinkListIndexTestClass where linkCollection contains ?"),
+            "select * from LinkListIndexTestClass where linkCollection contains ?",
             docOne.getIdentity());
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(
         Arrays.asList(docOne.getIdentity(), docTwo.getIdentity()),
-        result.get(0).<List>field("linkCollection"));
+        result.next().<List>getProperty("linkCollection"));
   }
 }

@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -44,9 +43,6 @@ public class IndexClusterTest extends DocumentDBBaseTest {
     // when
     database.command("rebuild index " + className + "index1").close();
     assertEquals(
-        database
-            .query(new OSQLSynchQuery<Object>("select from " + className + " where key = 'a'"))
-            .size(),
-        2);
+        database.query("select from " + className + " where key = 'a'").stream().count(), 2);
   }
 }
