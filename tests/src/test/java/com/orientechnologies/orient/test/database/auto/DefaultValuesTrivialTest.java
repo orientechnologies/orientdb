@@ -17,9 +17,8 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.testng.Assert;
@@ -94,9 +93,9 @@ public class DefaultValuesTrivialTest {
   }
 
   private static Date getDatabaseSysdate(ODatabaseDocument database) {
-    @SuppressWarnings("deprecation")
-    List<ODocument> dates = database.query(new OSQLSynchQuery<Date>("SELECT sysdate()"));
-    return dates.get(0).field("sysdate");
+    try (OResultSet dates = database.query("SELECT sysdate() as sysdate")) {
+      return dates.next().getProperty("sysdate");
+    }
   }
 
   @Test

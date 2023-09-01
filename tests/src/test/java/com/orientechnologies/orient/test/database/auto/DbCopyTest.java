@@ -18,9 +18,8 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.IOException;
-import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -77,10 +76,9 @@ public class DbCopyTest extends DocumentDBBaseTest implements OCommandOutputList
       Assert.fail();
     }
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + className));
+    OResultSet result = database.query("SELECT FROM " + className);
 
-    Assert.assertEquals(result.size(), 25);
+    Assert.assertEquals(result.stream().count(), 25);
   }
 
   @Override

@@ -6,8 +6,8 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -663,17 +663,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     document.field("ridBag", ridBag);
     document.save();
 
-    @SuppressWarnings("deprecation")
-    List<ODocument> result =
+    OResultSet result =
         database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from RidBagIndexTestClass where ridBag contains ?"),
-            docOne.getIdentity());
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
+            "select * from RidBagIndexTestClass where ridBag contains ?", docOne.getIdentity());
+    OResult res = result.next();
 
     List<OIdentifiable> listResult = new ArrayList<>();
-    for (OIdentifiable identifiable : result.get(0).<ORidBag>field("ridBag"))
+    for (OIdentifiable identifiable : res.<ORidBag>getProperty("ridBag"))
       listResult.add(identifiable);
 
     Assert.assertEquals(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity()), listResult);

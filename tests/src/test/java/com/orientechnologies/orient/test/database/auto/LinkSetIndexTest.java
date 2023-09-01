@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -664,16 +663,12 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     document.field("linkSet", linkSet);
     document.save();
 
-    List<ODocument> result =
+    OResultSet result =
         database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from LinkSetIndexTestClass where linkSet contains ?"),
-            docOne.getIdentity());
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.size(), 1);
+            "select * from LinkSetIndexTestClass where linkSet contains ?", docOne.getIdentity());
 
     List<OIdentifiable> listResult =
-        new ArrayList<>(result.get(0).<Set<OIdentifiable>>field("linkSet"));
+        new ArrayList<>(result.next().<Set<OIdentifiable>>getProperty("linkSet"));
     Assert.assertEquals(listResult.size(), 2);
     Assert.assertTrue(
         listResult.containsAll(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));

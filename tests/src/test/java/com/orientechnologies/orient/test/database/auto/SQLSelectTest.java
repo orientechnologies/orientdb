@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -1145,15 +1147,13 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void excludeAttributes() {
-    final OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>(
-            "select expand( roles.exclude('@rid', '@class') ) from OUser");
+    OResultSet resultset =
+        database.query("select expand( roles.exclude('@rid', '@class') ) from OUser");
 
-    List<ODocument> resultset = database.query(query);
-
-    for (ODocument d : resultset) {
-      Assert.assertFalse(d.getIdentity().isPersistent());
-      Assert.assertNull(d.getSchemaClass());
+    while (resultset.hasNext()) {
+      OResult d = resultset.next();
+      Assert.assertFalse(d.getIdentity().get().isPersistent());
+      Assert.assertFalse(d.getElement().get().getSchemaType().isPresent());
     }
   }
 
@@ -1187,10 +1187,8 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void queryParenthesisInStrings() {
-    Assert.assertNotNull(
-        database
-            .command(new OCommandSQL("INSERT INTO account (name) VALUES ('test (demo)')"))
-            .execute());
+
+    database.command("INSERT INTO account (name) VALUES ('test (demo)')");
 
     List<ODocument> result =
         executeQuery("select * from account where name = 'test (demo)'", database);
