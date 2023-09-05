@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.db.record.ridbag;
 import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -98,14 +99,13 @@ public class ORidBag
   private ORecordId ownerRecord;
   private String fieldName;
 
-  private int topThreshold =
-      OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-  private int bottomThreshold =
-      OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+  private int topThreshold;
+  private int bottomThreshold;
 
   private UUID uuid;
 
   public ORidBag(final ORidBag ridBag) {
+    initThresholds();
     init();
     for (Iterator<OIdentifiable> it = ridBag.rawIterator(); it.hasNext(); ) {
       add(it.next());
@@ -113,30 +113,29 @@ public class ORidBag
   }
 
   public ORidBag() {
-    init();
-  }
-
-  public ORidBag(final int iTopThreshold, final int iBottomThreshold) {
-    topThreshold = iTopThreshold;
-    bottomThreshold = iBottomThreshold;
+    initThresholds();
     init();
   }
 
   public ORidBag(UUID uuid) {
+    initThresholds();
     init();
     this.uuid = uuid;
   }
 
   public ORidBag(OBonsaiCollectionPointer pointer, Map<OIdentifiable, Change> changes, UUID uuid) {
+    initThresholds();
     delegate = new OSBTreeRidBag(pointer, changes);
     this.uuid = uuid;
   }
 
   private ORidBag(final byte[] stream) {
+    initThresholds();
     fromStream(stream);
   }
 
   public ORidBag(ORidBagDelegate delegate) {
+    initThresholds();
     this.delegate = delegate;
   }
 
@@ -245,8 +244,7 @@ public class ORidBag
     if (getOwner() instanceof ORecord && !((ORecord) getOwner()).getIdentity().isPersistent()) {
       return true;
     }
-    if (OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger()
-        >= size()) {
+    if (bottomThreshold >= size()) {
       return true;
     }
     return false;
@@ -501,6 +499,26 @@ public class ORidBag
       return true;
     }
     return false;
+  }
+
+  protected void initThresholds() {
+    if (ODatabaseRecordThreadLocal.instance().isDefined()
+        && !ODatabaseRecordThreadLocal.instance().get().isClosed()) {
+      OContextConfiguration conf = ODatabaseRecordThreadLocal.instance().get().getConfiguration();
+      topThreshold =
+          conf.getValueAsInteger(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD);
+
+      bottomThreshold =
+          conf.getValueAsInteger(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD);
+
+    } else {
+
+      topThreshold =
+          OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+
+      bottomThreshold =
+          OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+    }
   }
 
   protected void init() {
