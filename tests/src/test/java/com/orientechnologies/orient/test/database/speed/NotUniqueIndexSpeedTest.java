@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 import java.util.Date;
 import org.testng.annotations.Test;
@@ -49,10 +48,15 @@ public class NotUniqueIndexSpeedTest extends OrientMonoThreadTest {
     String fVal = counter + "123456790qwertyASD";
     counter++;
 
-    database
-        .command(
-            new OCommandSQL(
-                "insert into test (x,    y,    z,    j,    k ,   l,    m,    indexdate), values (?, ?, ?, ?, ?, ?, ?, ?)"))
-        .execute(fVal, fVal, fVal, fVal, fVal, fVal, fVal, date);
+    database.command(
+        "insert into test (x,    y,    z,    j,    k ,   l,    m,    indexdate), values (?, ?, ?, ?, ?, ?, ?, ?)",
+        fVal,
+        fVal,
+        fVal,
+        fVal,
+        fVal,
+        fVal,
+        fVal,
+        date);
   }
 }

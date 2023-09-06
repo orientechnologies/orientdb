@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -522,10 +521,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     document.save();
 
     database
-        .command(
-            new OCommandSQL(
-                "UPDATE " + document.getIdentity() + " remove linkSet = " + docTwo.getIdentity()))
-        .execute();
+        .command("UPDATE " + document.getIdentity() + " remove linkSet = " + docTwo.getIdentity())
+        .close();
 
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getInternal().size(), 1);
