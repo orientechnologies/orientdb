@@ -209,7 +209,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertNotNull(dropTestClass);
     Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
     Assert.assertNotNull(database.getClusterNameById(clusterId));
-    database.command(new OCommandSQL("drop class " + testClassName)).execute();
+    database.command("drop class " + testClassName).close();
     database.reload();
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNull(dropTestClass);
@@ -416,16 +416,15 @@ public class SchemaTest extends DocumentDBBaseTest {
     document.setClassName("RenameClassTest");
     document.save();
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest"));
-    Assert.assertEquals(result.size(), 2);
+    OResultSet result = database.query("select from RenameClassTest");
+    Assert.assertEquals(result.stream().count(), 2);
 
     oClass.set(OClass.ATTRIBUTES.NAME, "RenameClassTest2");
 
     database.getLocalCache().clear();
 
-    result = database.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest2"));
-    Assert.assertEquals(result.size(), 2);
+    result = database.query("select from RenameClassTest2");
+    Assert.assertEquals(result.stream().count(), 2);
   }
 
   public void testMinimumClustersAndClusterSelection() {
@@ -433,7 +432,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("alter database minimumclusters 3")).execute();
 
     try {
-      database.command(new OCommandSQL("create class multipleclusters")).execute();
+      database.command("create class multipleclusters").close();
 
       database.reload();
 

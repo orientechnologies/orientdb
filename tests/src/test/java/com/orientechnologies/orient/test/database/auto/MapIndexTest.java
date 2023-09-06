@@ -633,9 +633,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(map);
     mapper = database.save(mapper);
 
-    database
-        .command(new OCommandSQL("UPDATE " + mapper.getId() + " remove intMap = 'key2'"))
-        .execute();
+    database.command("UPDATE " + mapper.getId() + " remove intMap = 'key2'").close();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getInternal().size(), 2);

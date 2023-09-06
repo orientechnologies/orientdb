@@ -26,8 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OConcurrentLegacyResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -134,7 +133,7 @@ public class IndexUniqueTest {
 
     @Override
     public Integer call() throws Exception {
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+      ODatabaseDocument db = new ODatabaseDocumentTx(url);
       int i = 0;
       int success = 0;
       while (i < ATTEMPTS) {
@@ -155,15 +154,10 @@ public class IndexUniqueTest {
           success++;
         } catch (ORecordDuplicatedException e) {
           for (int n = 0; n < 10; n++) {
-            OConcurrentLegacyResultSet result =
-                db.command(
-                        new OCommandSQL(
-                            "select * from indexTest where prop"
-                                + n
-                                + " like "
-                                + propValues[n].get()))
-                    .execute();
-            assert result.size() == 1;
+            OResultSet result =
+                db.query("select * from indexTest where prop" + n + " like " + propValues[n].get());
+
+            assert result.stream().count() == 1;
           }
         } catch (Exception e) {
           e.printStackTrace();

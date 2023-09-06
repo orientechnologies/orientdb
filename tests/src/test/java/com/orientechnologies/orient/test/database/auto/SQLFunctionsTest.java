@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -24,9 +27,10 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.UnsupportedEncodingException;
@@ -55,15 +59,11 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryMax() {
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select max(id) as max from Account"))
-            .execute();
+    OResultSet result = database.command("select max(id) as max from Account");
 
-    Assert.assertTrue(result.size() == 1);
-    for (ODocument d : result) {
-      Assert.assertNotNull(d.field("max"));
-    }
+    assertNotNull(result.next().getProperty("max"));
+    assertFalse(result.hasNext());
+    result.close();
   }
 
   @Test
@@ -81,17 +81,14 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryMin() {
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select min(id) as min from Account"))
-            .execute();
+    OResultSet result = database.command("select min(id) as min from Account");
 
-    Assert.assertTrue(result.size() == 1);
-    for (ODocument d : result) {
-      Assert.assertNotNull(d.field("min"));
+    OResult d = result.next();
+    Assert.assertNotNull(d.getProperty("min"));
 
-      Assert.assertEquals(((Number) d.field("min")).longValue(), 0l);
-    }
+    Assert.assertEquals(((Number) d.getProperty("min")).longValue(), 0l);
+    Assert.assertFalse(result.hasNext());
+    result.close();
   }
 
   @Test
@@ -109,29 +106,21 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
   @Test
   public void querySum() {
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select sum(id) as sum from Account"))
-            .execute();
-
-    Assert.assertTrue(result.size() == 1);
-    for (ODocument d : result) {
-      Assert.assertNotNull(d.field("sum"));
-    }
+    OResultSet result = database.command("select sum(id) as sum from Account");
+    OResult d = result.next();
+    Assert.assertNotNull(d.getProperty("sum"));
+    Assert.assertFalse(result.hasNext());
+    result.close();
   }
 
   @Test
   public void queryCount() {
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select count(*) as total from Account"))
-            .execute();
-
-    Assert.assertTrue(result.size() == 1);
-    for (ODocument d : result) {
-      Assert.assertNotNull(d.field("total"));
-      Assert.assertTrue(((Number) d.field("total")).longValue() > 0);
-    }
+    OResultSet result = database.command("select count(*) as total from Account");
+    OResult d = result.next();
+    Assert.assertNotNull(d.getProperty("total"));
+    Assert.assertTrue(((Number) d.getProperty("total")).longValue() > 0);
+    Assert.assertFalse(result.hasNext());
+    result.close();
   }
 
   public void queryCountExtendsRestricted() {
@@ -416,19 +405,17 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
   @Test
   public void querySysdateNoFormat() {
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select sysdate() as date from Account"))
-            .execute();
+    OResultSet result = database.command("select sysdate() as date from Account");
 
-    Assert.assertTrue(result.size() > 1);
+    Assert.assertTrue(result.hasNext());
     Object lastDate = null;
-    for (ODocument d : result) {
-      Assert.assertNotNull(d.field("date"));
+    while (result.hasNext()) {
+      OResult d = result.next();
+      Assert.assertNotNull(d.getProperty("date"));
 
-      if (lastDate != null) d.field("date").equals(lastDate);
+      if (lastDate != null) d.getProperty("date").equals(lastDate);
 
-      lastDate = d.field("date");
+      lastDate = d.getProperty("date");
     }
   }
 
@@ -453,36 +440,37 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryDate() {
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select count(*) as tot from Account"))
-            .execute();
-    Assert.assertEquals(result.size(), 1);
-    int tot = ((Number) result.get(0).field("tot")).intValue();
+    OResultSet result = database.command("select count(*) as tot from Account");
 
-    int updated =
-        ((Number)
-                database.command(new OCommandSQL("update Account set created = date()")).execute())
-            .intValue();
+    int tot = ((Number) result.next().getProperty("tot")).intValue();
+    assertFalse(result.hasNext());
+
+    long updated =
+        database.command("update Account set created = date()").next().getProperty("count");
     Assert.assertEquals(updated, tot);
 
     String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
 
     result =
-        database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from Account where created <= date('"
-                        + dateFormat.format(new Date())
-                        + "', \""
-                        + pattern
-                        + "\")"))
-            .execute();
+        database.query(
+            "select from Account where created <= date('"
+                + dateFormat.format(new Date())
+                + "', \""
+                + pattern
+                + "\")");
 
-    Assert.assertEquals(result.size(), tot);
-    for (ODocument d : result) {
-      Assert.assertNotNull(d.field("created"));
+    Assert.assertEquals(result.stream().count(), tot);
+    result =
+        database.query(
+            "select from Account where created <= date('"
+                + dateFormat.format(new Date())
+                + "', \""
+                + pattern
+                + "\")");
+    while (result.hasNext()) {
+      OResult d = result.next();
+      Assert.assertNotNull(d.getProperty("created"));
     }
   }
 
