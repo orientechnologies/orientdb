@@ -31,13 +31,14 @@ import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -571,16 +572,14 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testOrderByWithMetadataQuery() {
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select expand(classes) from metadata:schema order by name"))
-            .execute();
-    assertTrue(qResult.size() > 0);
+    OResultSet qResult = db.query("select expand(classes) from metadata:schema order by name");
+    assertTrue(qResult.stream().count() > 0);
   }
 
   @Test
   public void testLimitWithUnnamedParam() {
-    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit ?")).execute(3);
-    assertEquals(qResult.size(), 3);
+    OResultSet qResult = db.query("select from foo limit ?", 3);
+    assertEquals(qResult.stream().count(), 3);
   }
 
   @Test
@@ -606,21 +605,19 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testParamsInLetSubquery() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("name", "foo");
-    List<ODocument> qResult =
+    OResultSet qResult =
         db.command(
-                new OCommandSQL(
-                    "select from TestParams let $foo = (select name from TestParams where surname = :name) where surname in $foo.name "))
-            .execute(params);
-    assertEquals(qResult.size(), 1);
+            "select from TestParams let $foo = (select name from TestParams where surname = :name) where surname in $foo.name ",
+            params);
+    assertEquals(qResult.stream().count(), 1);
   }
 
   @Test
   public void testBooleanParams() {
     // issue #4224
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select name from TestParams where name = ? and active = ?"))
-            .execute("foo", true);
-    assertEquals(qResult.size(), 1);
+    OResultSet qResult =
+        db.command("select name from TestParams where name = ? and active = ?", "foo", true);
+    assertEquals(qResult.stream().count(), 1);
   }
 
   @Test
@@ -767,18 +764,13 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testMultipleClusters() {
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select from cluster:[testmultipleclusters1]")).execute();
+    OResultSet qResult = db.command("select from cluster:[testmultipleclusters1]");
 
-    assertEquals(qResult.size(), 1);
+    assertEquals(qResult.stream().count(), 1);
 
-    qResult =
-        db.command(
-                new OCommandSQL(
-                    "select from cluster:[testmultipleclusters1, testmultipleclusters2]"))
-            .execute();
+    qResult = db.command("select from cluster:[testmultipleclusters1, testmultipleclusters2]");
 
-    assertEquals(qResult.size(), 2);
+    assertEquals(qResult.stream().count(), 2);
   }
 
   @Test
@@ -845,75 +837,64 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testMultipleParamsWithSameName() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "foo");
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select from TestParams where name like '%' + :param1 + '%'"))
-            .execute(params);
-    assertEquals(qResult.size(), 2);
+    OResultSet qResult =
+        db.query("select from TestParams where name like '%' + :param1 + '%'", params);
+    assertEquals(qResult.stream().count(), 2);
 
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "select from TestParams where name like '%' + :param1 + '%' and surname like '%' + :param1 + '%'"))
-            .execute(params);
-    assertEquals(qResult.size(), 1);
+        db.query(
+            "select from TestParams where name like '%' + :param1 + '%' and surname like '%' + :param1 + '%'",
+            params);
+    assertEquals(qResult.stream().count(), 1);
 
     params = new HashMap<String, Object>();
     params.put("param1", "bar");
 
-    qResult =
-        db.command(new OCommandSQL("select from TestParams where surname like '%' + :param1 + '%'"))
-            .execute(params);
-    assertEquals(qResult.size(), 1);
+    qResult = db.query("select from TestParams where surname like '%' + :param1 + '%'", params);
+    assertEquals(qResult.stream().count(), 1);
   }
 
   // /*** from issue #2743
   @Test
   public void testBasicQueryOrdered() {
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter");
-    List<ODocument> results = db.query(sql);
-    assertEquals(26, results.size());
+    OResultSet results = db.query("SELECT from alphabet ORDER BY letter");
+    assertEquals(26, results.stream().count());
   }
 
   @Test
   public void testSkipZeroOrdered() {
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 0");
-    List<ODocument> results = db.query(sql);
-    assertEquals(26, results.size());
+    OResultSet results = db.query("SELECT from alphabet ORDER BY letter SKIP 0");
+    assertEquals(26, results.stream().count());
   }
 
   @Test
   public void testSkipOrdered() {
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7");
-    List<ODocument> results = db.query(sql);
-    assertEquals(19, results.size()); // FAILURE - actual 0
+    OResultSet results = db.query("SELECT from alphabet ORDER BY letter SKIP 7");
+    assertEquals(19, results.stream().count());
   }
 
   @Test
   public void testLimitOrdered() {
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter LIMIT 9");
-    List<ODocument> results = db.query(sql);
-    assertEquals(9, results.size());
+    OResultSet results = db.query("SELECT from alphabet ORDER BY letter LIMIT 9");
+    assertEquals(9, results.stream().count());
   }
 
   @Test
   public void testLimitMinusOneOrdered() {
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter LIMIT -1");
-    List<ODocument> results = db.query(sql);
-    assertEquals(26, results.size());
+    OResultSet results = db.query("SELECT from alphabet ORDER BY letter LIMIT -1");
+    assertEquals(26, results.stream().count());
   }
 
   @Test
   public void testSkipAndLimitOrdered() {
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7 LIMIT 9");
-    List<ODocument> results = db.query(sql);
-    assertEquals(9, results.size());
+    OResultSet results = db.query("SELECT from alphabet ORDER BY letter SKIP 7 LIMIT 9");
+    assertEquals(9, results.stream().count());
   }
 
   @Test
   public void testSkipAndLimitMinusOneOrdered() {
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from alphabet ORDER BY letter SKIP 7 LIMIT -1");
-    List<ODocument> results = db.query(sql);
-    assertEquals(19, results.size());
+    OResultSet results = db.query("SELECT from alphabet ORDER BY letter SKIP 7 LIMIT -1");
+    assertEquals(19, results.stream().count());
   }
 
   @Test
@@ -1004,24 +985,18 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testExpandSkipLimit() {
     initExpandSkipLimit(db);
     // issue #4985
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
+    OResultSet results =
+        db.query(
             "SELECT expand(linked) from ExpandSkipLimit where parent = true order by nnum skip 1 limit 1");
-    List<OIdentifiable> results = db.query(sql);
-    assertEquals(results.size(), 1);
-    ODocument doc = results.get(0).getRecord();
-    //    assertEquals(doc.field("nnum"), 1);
-    assertThat(doc.<Integer>field("nnum")).isEqualTo(1);
+    OResult doc = results.next();
+    assertThat(doc.<Integer>getProperty("nnum")).isEqualTo(1);
   }
 
   @Test
   public void testBacktick() {
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT `foo-bar` as r from TestBacktick");
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 1);
-    ODocument doc = results.get(0);
-    //    assertEquals(doc.field("r"), 10);
-    assertThat(doc.<Integer>field("r")).isEqualTo(10);
+    OResultSet results = db.query("SELECT `foo-bar` as r from TestBacktick");
+    OResult doc = results.next();
+    assertThat(doc.<Integer>getProperty("r")).isEqualTo(10);
   }
 
   @Test
@@ -1029,12 +1004,11 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #4949
     Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("paramvalue", "count");
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] DESC"))
-            .execute(parameters);
-    assertEquals(qResult.size(), 2);
-    Map embedded = qResult.get(0).field("emb");
+    OResultSet qResult =
+        db.command("select from TestParamsEmbedded order by emb[:paramvalue] DESC", parameters);
+    Map embedded = qResult.next().getProperty("emb");
     assertEquals(embedded.get("count"), 1);
+    qResult.close();
   }
 
   @Test
@@ -1042,74 +1016,70 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #4949
     Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("paramvalue", "count");
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] ASC"))
-            .execute(parameters);
-    assertEquals(qResult.size(), 2);
-    Map embedded = qResult.get(0).field("emb");
+    OResultSet qResult =
+        db.command("select from TestParamsEmbedded order by emb[:paramvalue] ASC", parameters);
+    Map embedded = qResult.next().getProperty("emb");
     assertEquals(embedded.get("count"), 0);
+    qResult.close();
+    qResult =
+        db.command("select from TestParamsEmbedded order by emb[:paramvalue] ASC", parameters);
+    assertEquals(qResult.stream().count(), 2);
   }
 
   @Test
   public void testMassiveOrderAscSkipLimit() {
     initMassiveOrderSkipLimit(db);
     int skip = 1000;
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
-            "SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 5);
-    for (int i = 0; i < results.size(); i++) {
-      ODocument doc = results.get(i);
-      //      assertEquals(doc.field("nnum"), skip + i);
-      assertThat(doc.<Integer>field("nnum")).isEqualTo(skip + i);
+    OResultSet results =
+        db.query("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
+
+    int i = 0;
+    while (results.hasNext()) {
+      OResult doc = results.next();
+      assertThat(doc.<Integer>getProperty("nnum")).isEqualTo(skip + i);
+      i++;
     }
+    assertEquals(i, 5);
   }
 
   @Test
   public void testMassiveOrderDescSkipLimit() {
     initMassiveOrderSkipLimit(db);
     int skip = 1000;
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
-            "SELECT from MassiveOrderSkipLimit order by nnum desc skip " + skip + " limit 5");
-
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 5);
-    for (int i = 0; i < results.size(); i++) {
-      ODocument doc = results.get(i);
-      //      assertEquals(doc.field("nnum"), ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
-      assertThat(doc.<Integer>field("nnum")).isEqualTo(ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
+    OResultSet results =
+        db.query("SELECT from MassiveOrderSkipLimit order by nnum desc skip " + skip + " limit 5");
+    int i = 0;
+    while (results.hasNext()) {
+      OResult doc = results.next();
+      assertThat(doc.<Integer>getProperty("nnum")).isEqualTo(ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
+      i++;
     }
+    assertEquals(i, 5);
   }
 
   @Test
   public void testIntersectExpandLet() {
     // issue #5121
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
+    OResultSet results =
+        db.query(
             "select expand(intersect($q1, $q2)) "
                 + "let $q1 = (select from OUser where name ='admin'),"
                 + "$q2 = (select from OUser where name ='admin')");
-
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 1);
-    for (int i = 0; i < results.size(); i++) {
-      ODocument doc = results.get(i);
-      assertEquals(doc.field("name"), "admin");
-    }
+    assertTrue(results.hasNext());
+    OResult doc = results.next();
+    assertEquals(doc.getProperty("name"), "admin");
+    assertFalse(results.hasNext());
   }
 
   @Test
   public void testDatesListContainsString() {
     initDatesSet(db);
     // issue #3526
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
-            "select from OCommandExecutorSQLSelectTest_datesSet where foo contains '2015-10-21'");
 
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 1);
+    OResultSet results =
+        db.query(
+            "select from OCommandExecutorSQLSelectTest_datesSet where foo contains '2015-10-21'");
+    assertEquals(results.stream().count(), 1);
   }
 
   @Test
@@ -1117,9 +1087,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #5229
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "adm.*");
-    OSQLSynchQuery sql = new OSQLSynchQuery("select from OUser where name matches :param1");
-    List<ODocument> results = db.query(sql, params);
-    assertEquals(results.size(), 1);
+    OResultSet results = db.query("select from OUser where name matches :param1", params);
+    assertEquals(results.stream().count(), 1);
   }
 
   @Test
@@ -1128,12 +1097,11 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #5229
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", ".*admin[name].*"); // will not work
-    OSQLSynchQuery sql = new OSQLSynchQuery("select from matchesstuff where name matches :param1");
-    List<ODocument> results = db.query(sql, params);
-    assertEquals(results.size(), 0);
+    OResultSet results = db.query("select from matchesstuff where name matches :param1", params);
+    assertEquals(results.stream().count(), 0);
     params.put("param1", Pattern.quote("admin[name]") + ".*"); // should work
-    results = db.query(sql, params);
-    assertEquals(results.size(), 1);
+    results = db.query("select from matchesstuff where name matches :param1", params);
+    assertEquals(results.stream().count(), 1);
   }
 
   @Test
@@ -1141,31 +1109,28 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     initMatchesWithRegex(db);
     // issue #5229
     String pattern = Pattern.quote("adm") + ".*";
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM matchesstuff WHERE (name matches ?)");
-    List<ODocument> results = db.query(sql, pattern);
-    assertEquals(results.size(), 1);
+    OResultSet results = db.query("SELECT FROM matchesstuff WHERE (name matches ?)", pattern);
+    assertEquals(results.stream().count(), 1);
   }
 
   @Test
   public void testMatchesWithQuotes2() {
     initMatchesWithRegex(db);
     // issue #5229
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
+    OResultSet results =
+        db.query(
             "SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and not ( name matches '(.*)foo(.*)' ) )");
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 1);
+    assertEquals(results.stream().count(), 1);
   }
 
   @Test
   public void testMatchesWithQuotes3() {
     initMatchesWithRegex(db);
     // issue #5229
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
+    OResultSet results =
+        db.query(
             "SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and  ( name matches '\\\\Qadmin\\\\E.*' ) )");
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 1);
+    assertEquals(results.stream().count(), 1);
   }
 
   @Test
@@ -1174,35 +1139,34 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "adm.*");
     params.put("param2", "foo.*");
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
-            "select from OUser where (name matches :param1 and not (name matches :param2))");
-    List<ODocument> results = db.query(sql, params);
-    assertEquals(results.size(), 1);
+    OResultSet results =
+        db.query(
+            "select from OUser where (name matches :param1 and not (name matches :param2))",
+            params);
+    assertEquals(results.stream().count(), 1);
 
     params.put("param1", Pattern.quote("adm") + ".*");
-    results = db.query(sql, params);
-    assertEquals(results.size(), 1);
+    results =
+        db.query(
+            "select from OUser where (name matches :param1 and not (name matches :param2))",
+            params);
+    assertEquals(results.stream().count(), 1);
   }
 
   @Test
   public void testDistinctLimit() {
     initDistinctLimit(db);
-    OSQLSynchQuery sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit 1");
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 1);
+    OResultSet results = db.query("select distinct(name) from DistinctLimit limit 1");
+    assertEquals(results.stream().count(), 1);
 
-    sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit 2");
-    results = db.query(sql);
-    assertEquals(results.size(), 2);
+    results = db.query("select distinct(name) from DistinctLimit limit 2");
+    assertEquals(results.stream().count(), 2);
 
-    sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit 3");
-    results = db.query(sql);
-    assertEquals(results.size(), 2);
+    results = db.query("select distinct(name) from DistinctLimit limit 3");
+    assertEquals(results.stream().count(), 2);
 
-    sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit -1");
-    results = db.query(sql);
-    assertEquals(results.size(), 2);
+    results = db.query("select distinct(name) from DistinctLimit limit -1");
+    assertEquals(results.stream().count(), 2);
   }
 
   @Test
@@ -1210,9 +1174,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     initDistinctLimit(db);
     OClass clazz = db.getMetadata().getSchema().getClass("DistinctLimit");
     int clusterId = clazz.getClusterIds()[0];
-    OSQLSynchQuery sql = new OSQLSynchQuery("select from cluster:" + clusterId + " limit 1");
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 1);
+    OResultSet results = db.query("select from cluster:" + clusterId + " limit 1");
+    assertEquals(results.stream().count(), 1);
   }
 
   @Test
@@ -1261,14 +1224,11 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testMaxLongNumber() {
     initMaxLongNumber(db);
     // issue #5664
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 3);
+    OResultSet results = db.query("select from MaxLongNumberTest WHERE last < 10 OR last is null");
+    assertEquals(results.stream().count(), 3);
     db.command("update MaxLongNumberTest set last = max(91,ifnull(last,0))").close();
-    sql = new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
-    results = db.query(sql);
-    assertEquals(results.size(), 0);
+    results = db.query("select from MaxLongNumberTest WHERE last < 10 OR last is null");
+    assertEquals(results.stream().count(), 0);
   }
 
   @Test
@@ -1430,11 +1390,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   @Test
   public void testParamConcat() {
     // issue #6049
-    List<ODocument> results =
-        db.query(
-            new OSQLSynchQuery<ODocument>("select from TestParams where surname like ? + '%'"),
-            "fo");
-    assertEquals(results.size(), 1);
+    OResultSet results = db.query("select from TestParams where surname like ? + '%'", "fo");
+    assertEquals(results.stream().count(), 1);
   }
 
   @Test
@@ -1858,18 +1815,13 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command("insert into " + className + " SET name = null, x = 1").close();
     db.command("insert into " + className + " SET x = 2").close();
 
-    List<ODocument> results =
-        db.query(
-            new OSQLSynchQuery<ODocument>("SELECT * FROM " + className + " WHERE name is defined"));
-    assertEquals(results.size(), 1);
-    assertEquals((int) results.get(0).field("x"), 1);
+    OResultSet results = db.query("SELECT * FROM " + className + " WHERE name is defined");
+    assertEquals((int) results.next().getProperty("x"), 1);
+    results.close();
+    results = db.query("SELECT * FROM " + className + " WHERE name is not defined");
 
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "SELECT * FROM " + className + " WHERE name is not defined"));
-    assertEquals(results.size(), 1);
-    assertEquals((int) results.get(0).field("x"), 2);
+    assertEquals((int) results.next().getProperty("x"), 2);
+    results.close();
   }
 
   private long indexUsages(ODatabaseDocument db) {
