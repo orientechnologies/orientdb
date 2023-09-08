@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.db.hook;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -14,7 +15,7 @@ public class HookRegisterRemoveTest {
   @Test
   public void addAndRemoveHookTest() {
 
-    ODatabaseDocumentTx db =
+    ODatabaseDocument db =
         new ODatabaseDocumentTx("memory:" + HookRegisterRemoveTest.class.getSimpleName());
     db.create();
     final AtomicInteger integer = new AtomicInteger(0);

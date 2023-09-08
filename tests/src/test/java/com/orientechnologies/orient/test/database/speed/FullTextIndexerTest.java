@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -14,7 +15,7 @@ public class FullTextIndexerTest {
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     Orient.instance().getProfiler().startRecording();
 
-    final ODatabaseDocumentTx database =
+    final ODatabaseDocument database =
         new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
 
     database.declareIntent(new OIntentMassiveInsert());

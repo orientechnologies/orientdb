@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.internal;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
@@ -24,7 +25,7 @@ public class TestClustersLimits {
   }
 
   protected static void executeTest(String url) throws IOException {
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+    ODatabaseDocument database = new ODatabaseDocumentTx(url);
 
     if (ODatabaseHelper.existsDatabase(database, "plocal"))
       ODatabaseHelper.dropDatabase(database, "plocal");

@@ -5,6 +5,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -24,7 +26,7 @@ public class OTokenHandlerImplTest {
   @Test
   public void testWebTokenCreationValidation()
       throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db =
+    ODatabaseDocument db =
         new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
@@ -44,7 +46,7 @@ public class OTokenHandlerImplTest {
 
       assertTrue(tok.getIsVerified());
 
-      OUser user = tok.getUser(db);
+      OUser user = tok.getUser((ODatabaseDocumentInternal) db);
       assertEquals(user.getName(), original.getName());
       boolean boole = handler.validateToken(tok, "open", db.getName());
       assertTrue(boole);
@@ -106,7 +108,7 @@ public class OTokenHandlerImplTest {
 
   @Test
   public void testTokenForge() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db =
+    ODatabaseDocument db =
         new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
@@ -133,7 +135,7 @@ public class OTokenHandlerImplTest {
   @Test
   public void testBinartTokenCreationValidation()
       throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db =
+    ODatabaseDocument db =
         new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
@@ -145,7 +147,7 @@ public class OTokenHandlerImplTest {
       data.setSerializationImpl("a");
       data.protocolVersion = 2;
 
-      byte[] token = handler.getSignedBinaryToken(db, original, data);
+      byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
 
       OToken tok = handler.parseBinaryToken(token);
 
@@ -153,7 +155,7 @@ public class OTokenHandlerImplTest {
 
       assertTrue(tok.getIsVerified());
 
-      OUser user = tok.getUser(db);
+      OUser user = tok.getUser((ODatabaseDocumentInternal) db);
       assertEquals(user.getName(), original.getName());
       boolean boole = handler.validateBinaryToken(tok);
       assertTrue(boole);
@@ -165,7 +167,7 @@ public class OTokenHandlerImplTest {
 
   @Test
   public void testTokenNotRenew() {
-    ODatabaseDocumentTx db =
+    ODatabaseDocument db =
         new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
@@ -177,7 +179,7 @@ public class OTokenHandlerImplTest {
       data.setSerializationImpl("a");
       data.protocolVersion = 2;
 
-      byte[] token = handler.getSignedBinaryToken(db, original, data);
+      byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
 
       OToken tok = handler.parseBinaryToken(token);
       token = handler.renewIfNeeded(tok);
@@ -191,7 +193,7 @@ public class OTokenHandlerImplTest {
 
   @Test
   public void testTokenRenew() {
-    ODatabaseDocumentTx db =
+    ODatabaseDocument db =
         new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
@@ -203,7 +205,7 @@ public class OTokenHandlerImplTest {
       data.setSerializationImpl("a");
       data.protocolVersion = 2;
 
-      byte[] token = handler.getSignedBinaryToken(db, original, data);
+      byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
 
       OToken tok = handler.parseBinaryToken(token);
       tok.setExpiry(System.currentTimeMillis() + (handler.getSessionInMills() / 2) - 1);

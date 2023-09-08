@@ -18,6 +18,8 @@ package com.orientechnologies.orient.test.database.auto;
 import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
 
 import com.orientechnologies.DatabaseAbstractTest;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -47,8 +49,8 @@ import org.testng.annotations.Test;
 
 @Test
 public class TransactionConsistencyTest extends DocumentDBBaseTest {
-  protected ODatabaseDocumentTx database1;
-  protected ODatabaseDocumentTx database2;
+  protected ODatabaseDocument database1;
+  protected ODatabaseDocument database2;
 
   public static final String NAME = "name";
 
@@ -126,7 +128,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     database1.close();
 
     database2.activateOnCurrentThread();
-    database2.getStorage().close();
+    ((ODatabaseDocumentInternal) database2).getStorage().close();
     database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
 
     ODocument vDocA_db2 = database2.load(vDocA_Rid);

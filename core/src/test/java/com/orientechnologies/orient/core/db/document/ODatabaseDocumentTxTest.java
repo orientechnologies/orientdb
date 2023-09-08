@@ -4,6 +4,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -29,7 +30,7 @@ import org.junit.Test;
 
 public class ODatabaseDocumentTxTest {
 
-  private ODatabaseDocumentTx db;
+  private ODatabaseDocument db;
 
   @Before
   public void setUp() throws Exception {
@@ -282,7 +283,7 @@ public class ODatabaseDocumentTxTest {
           new Thread() {
             @Override
             public void run() {
-              ODatabaseDocumentTx dbCopy = db.copy();
+              ODatabaseDocument dbCopy = ((ODatabaseDocumentInternal) db).copy();
               dbCopy.activateOnCurrentThread();
               dbCopy.executeWithRetry(
                   10,
@@ -324,7 +325,7 @@ public class ODatabaseDocumentTxTest {
           new Thread() {
             @Override
             public void run() {
-              ODatabaseDocumentTx dbCopy = db.copy();
+              ODatabaseDocument dbCopy = ((ODatabaseDocumentInternal) db).copy();
               dbCopy.activateOnCurrentThread();
               dbCopy.begin();
               dbCopy.executeWithRetry(
@@ -465,7 +466,7 @@ public class ODatabaseDocumentTxTest {
 
   @Test
   public void selectDescTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:foo");
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:foo");
     db.create();
     String className = "bar";
     OSchema schema = db.getMetadata().getSchema();
@@ -475,7 +476,8 @@ public class ODatabaseDocumentTxTest {
     ODocument document = new ODocument(className);
     document.save();
     ORecordIteratorClassDescendentOrder<ODocument> reverseIterator =
-        new ORecordIteratorClassDescendentOrder<ODocument>(db, db, className, true);
+        new ORecordIteratorClassDescendentOrder<ODocument>(
+            (ODatabaseDocumentInternal) db, (ODatabaseDocumentInternal) db, className, true);
     Assert.assertTrue(reverseIterator.hasNext());
     Assert.assertEquals(document, reverseIterator.next());
     db.close();

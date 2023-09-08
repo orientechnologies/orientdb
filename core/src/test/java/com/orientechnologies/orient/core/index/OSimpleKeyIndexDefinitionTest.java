@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -135,7 +136,7 @@ public class OSimpleKeyIndexDefinitionTest {
 
   @Test
   public void testReload() {
-    final ODatabaseDocumentTx databaseDocumentTx =
+    final ODatabaseDocument databaseDocumentTx =
         new ODatabaseDocumentTx("memory:osimplekeyindexdefinitiontest");
     databaseDocumentTx.create();
 

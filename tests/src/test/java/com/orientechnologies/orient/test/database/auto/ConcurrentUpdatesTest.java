@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -62,7 +63,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     @Override
     public void run() {
       try {
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+        ODatabaseDocument db = new ODatabaseDocumentTx(url);
         for (int i = 0; i < OPTIMISTIC_CYCLES; i++) {
           int retries = 0;
           while (true) {
@@ -167,7 +168,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
   public void concurrentOptimisticUpdates() throws Exception {
     counter.set(0);
 
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+    ODatabaseDocument database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     ODocument doc1 = database.newInstance();
@@ -224,7 +225,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
   protected void sqlUpdate(boolean lock) throws InterruptedException {
     counter.set(0);
 
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+    ODatabaseDocument database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     ODocument doc1 = database.newInstance();

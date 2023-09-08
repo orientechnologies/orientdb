@@ -1,5 +1,6 @@
 package com.orientechnologies;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import java.util.Locale;
 import org.junit.After;
@@ -10,7 +11,7 @@ import org.junit.Before;
  * @since 7/16/14
  */
 public abstract class DatabaseAbstractTest {
-  protected ODatabaseDocumentTx database;
+  protected ODatabaseDocument database;
 
   public static ENV getEnvironment() {
     String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase(Locale.ENGLISH);

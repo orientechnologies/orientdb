@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -79,7 +81,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   public void testTransactionOptimisticConcurrentException() throws IOException {
     if (database.getClusterIdByName("binary") == -1) database.addBlobCluster("binary");
 
-    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
+    ODatabaseDocument db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
 
     database.activateOnCurrentThread();
@@ -92,7 +94,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       // RE-READ THE RECORD
       record1.load();
 
-      ODatabaseRecordThreadLocal.instance().set(db2);
+      ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) db2);
       OBlob record2 = db2.load(record1.getIdentity());
 
       record2.setDirty();
@@ -151,7 +153,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   public void testTransactionOptimisticCacheMgmt2Db() throws IOException {
     if (database.getClusterIdByName("binary") == -1) database.addBlobCluster("binary");
 
-    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
+    ODatabaseDocument db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
 
     OBlob record1 = new ORecordBytes("This is the first version".getBytes());
@@ -268,7 +270,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
         new Callable<Void>() {
           @Override
           public Void call() throws Exception {
-            final ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
+            final ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
             db.open("admin", "admin");
             try {
               Assert.assertEquals(db.countClass("NestedTxClass"), 0);
@@ -323,7 +325,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
         new Callable<Void>() {
           @Override
           public Void call() throws Exception {
-            final ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
+            final ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
             db.open("admin", "admin");
             try {
               Assert.assertEquals(db.countClass("NestedTxRollbackOne"), 1);

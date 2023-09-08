@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.test.database.base.SetupTest;
 import org.testng.annotations.AfterClass;
@@ -48,10 +49,10 @@ public class DbClosedTest extends DocumentDBBaseTest {
   }
 
   public void testDoubleDb() {
-    ODatabaseDocumentTx db = pool.acquire();
+    ODatabaseDocument db = pool.acquire();
 
     // now I am getting another db instance
-    ODatabaseDocumentTx dbAnother = pool.acquire();
+    ODatabaseDocument dbAnother = pool.acquire();
     dbAnother.close();
 
     db.activateOnCurrentThread();
@@ -59,10 +60,10 @@ public class DbClosedTest extends DocumentDBBaseTest {
   }
 
   public void testDoubleDbWindowsPath() {
-    ODatabaseDocumentTx db = pool.acquire();
+    ODatabaseDocument db = pool.acquire();
 
     // now I am getting another db instance
-    ODatabaseDocumentTx dbAnother = pool.acquire();
+    ODatabaseDocument dbAnother = pool.acquire();
     dbAnother.close();
 
     db.activateOnCurrentThread();

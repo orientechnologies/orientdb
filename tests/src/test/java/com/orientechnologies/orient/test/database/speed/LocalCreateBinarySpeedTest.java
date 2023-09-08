@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -26,7 +27,7 @@ import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class LocalCreateBinarySpeedTest extends OrientMonoThreadTest {
-  private ODatabaseDocumentTx database;
+  private ODatabaseDocument database;
   private ORecordBytes record;
   private static final int RECORD_SIZE = 512;
   private byte[] recordContent;

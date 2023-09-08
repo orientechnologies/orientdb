@@ -20,7 +20,9 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -45,7 +47,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
   @Test
   public void testIsolationRepeatableRead() throws IOException {
 
-    ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
+    ODatabaseDocument db1 = new ODatabaseDocumentTx(url);
     db1.open("admin", "admin");
 
     ODocument record1 = new ODocument();
@@ -61,7 +63,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
       record1.getIdentity().getRecord();
 
       // CHANGE THE RECORD FROM DB2
-      ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
+      ODatabaseDocument db2 = new ODatabaseDocumentTx(url);
       db2.open("admin", "admin");
 
       ODocument record2 = db2.load(record1.getIdentity());
@@ -84,7 +86,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
 
   @Test
   public void testIsolationReadCommitted() throws IOException {
-    ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
+    ODatabaseDocument db1 = new ODatabaseDocumentTx(url);
     db1.open("admin", "admin");
 
     ODocument record1 = new ODocument();
@@ -99,7 +101,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     record1.getIdentity().getRecord();
 
     // CHANGE THE RECORD FROM DB2
-    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
+    ODatabaseDocument db2 = new ODatabaseDocumentTx(url);
     db2.open("admin", "admin");
 
     ODocument record2 = db2.load(record1.getIdentity());
@@ -118,7 +120,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
 
   @Test
   public void testIsolationRepeatableReadScript() throws ExecutionException, InterruptedException {
-    final ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
+    final ODatabaseDocument db1 = new ODatabaseDocumentTx(url);
     db1.open("admin", "admin");
 
     final ODocument record1 = new ODocument();
@@ -127,7 +129,8 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
         .save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
     Future<List<OIdentifiable>> txFuture =
-        db1.getSharedContext()
+        ((ODatabaseDocumentInternal) db1)
+            .getSharedContext()
             .getOrientDB()
             .execute(
                 new Callable<List<OIdentifiable>>() {
@@ -153,7 +156,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     Thread.sleep(500);
 
     // CHANGE THE RECORD FROM DB2
-    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
+    ODatabaseDocument db2 = new ODatabaseDocumentTx(url);
     db2.open("admin", "admin");
 
     ODocument record2 = db2.load(record1.getIdentity());
@@ -175,7 +178,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
 
   @Test
   public void testIsolationReadCommittedScript() throws ExecutionException, InterruptedException {
-    final ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
+    final ODatabaseDocument db1 = new ODatabaseDocumentTx(url);
     db1.open("admin", "admin");
 
     final ODocument record1 = new ODocument();
@@ -184,7 +187,8 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
         .save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
     Future<List<OIdentifiable>> txFuture =
-        db1.getSharedContext()
+        ((ODatabaseDocumentInternal) db1)
+            .getSharedContext()
             .getOrientDB()
             .execute(
                 new Callable<List<OIdentifiable>>() {
@@ -210,7 +214,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     Thread.sleep(500);
 
     // CHANGE THE RECORD FROM DB2
-    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
+    ODatabaseDocument db2 = new ODatabaseDocumentTx(url);
     db2.open("admin", "admin");
 
     ODocument record2 = db2.load(record1.getIdentity());

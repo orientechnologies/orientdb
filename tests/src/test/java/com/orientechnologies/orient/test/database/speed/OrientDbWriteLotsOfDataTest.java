@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -49,7 +49,7 @@ public class OrientDbWriteLotsOfDataTest {
     OPartitionedDatabasePool pool = new OPartitionedDatabasePool(DBURI, DBUSR, DBPWD);
 
     // create the schema for the test class if it doesn't exist
-    ODatabaseDocumentTx db = pool.acquire();
+    ODatabaseDocument db = pool.acquire();
     try {
       OSchema schema = db.getMetadata().getSchema();
       if (!schema.existsClass(CLASSNAME)) {
@@ -96,7 +96,7 @@ public class OrientDbWriteLotsOfDataTest {
 
   class RunTest extends Thread {
 
-    private ODatabaseDocumentTx db;
+    private ODatabaseDocument db;
     private int statTotalTxn;
     private int statTotalSaves;
     private double statTotalSecs;

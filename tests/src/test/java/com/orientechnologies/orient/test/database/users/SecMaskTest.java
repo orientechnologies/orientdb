@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.database.users;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -11,7 +12,7 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 public class SecMaskTest {
-  private static ODatabaseDocumentTx database;
+  private static ODatabaseDocument database;
 
   @Test
   public static void main(String[] args) {

@@ -29,7 +29,7 @@ import org.junit.Test;
 /** @author Sergey Sitnikov */
 public class VersionedDeleteTest {
 
-  private ODatabaseDocumentTx db;
+  private ODatabaseDocument db;
 
   @Before
   public void before() {

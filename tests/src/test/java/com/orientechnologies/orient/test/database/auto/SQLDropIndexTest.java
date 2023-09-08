@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -33,7 +35,7 @@ import org.testng.annotations.Test;
 @Test(groups = {"index"})
 public class SQLDropIndexTest {
 
-  private ODatabaseDocumentTx database;
+  private ODatabaseDocument database;
   private static final OType EXPECTED_PROP1_TYPE = OType.DOUBLE;
   private static final OType EXPECTED_PROP2_TYPE = OType.INTEGER;
   private final String url;
@@ -78,7 +80,7 @@ public class SQLDropIndexTest {
   public void testOldSyntax() throws Exception {
     database.command(new OCommandSQL("CREATE INDEX SQLDropIndexTestClass.prop1 UNIQUE")).execute();
 
-    database.getMetadata().getIndexManagerInternal().reload();
+    ((OMetadataDefault) database.getMetadata()).getIndexManagerInternal().reload();
 
     OIndex index =
         database
@@ -89,7 +91,7 @@ public class SQLDropIndexTest {
     Assert.assertNotNull(index);
 
     database.command(new OCommandSQL("DROP INDEX SQLDropIndexTestClass.prop1")).execute();
-    database.getMetadata().getIndexManagerInternal().reload();
+    ((OMetadataDefault) database.getMetadata()).getIndexManagerInternal().reload();
 
     index =
         database
@@ -107,7 +109,7 @@ public class SQLDropIndexTest {
             new OCommandSQL(
                 "CREATE INDEX SQLDropIndexCompositeIndex ON SQLDropIndexTestClass (prop1, prop2) UNIQUE"))
         .execute();
-    database.getMetadata().getIndexManagerInternal().reload();
+    ((OMetadataDefault) database.getMetadata()).getIndexManagerInternal().reload();
 
     OIndex index =
         database
@@ -118,7 +120,7 @@ public class SQLDropIndexTest {
     Assert.assertNotNull(index);
 
     database.command(new OCommandSQL("DROP INDEX SQLDropIndexCompositeIndex")).execute();
-    database.getMetadata().getIndexManagerInternal().reload();
+    ((OMetadataDefault) database.getMetadata()).getIndexManagerInternal().reload();
 
     index =
         database

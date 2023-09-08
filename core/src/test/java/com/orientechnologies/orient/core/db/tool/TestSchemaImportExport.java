@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -15,7 +17,7 @@ public class TestSchemaImportExport {
 
   @Test
   public void testExportImportCustomData() throws IOException {
-    ODatabaseDocumentTx db =
+    ODatabaseDocument db =
         new ODatabaseDocumentTx("memory:" + TestSchemaImportExport.class.getSimpleName());
     db.create();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -23,18 +25,21 @@ public class TestSchemaImportExport {
       OClass clazz = db.getMetadata().getSchema().createClass("Test");
       clazz.createProperty("some", OType.STRING);
       clazz.setCustom("testcustom", "test");
-      ODatabaseExport exp = new ODatabaseExport(db, output, new MockOutputListener());
+      ODatabaseExport exp =
+          new ODatabaseExport((ODatabaseDocumentInternal) db, output, new MockOutputListener());
       exp.exportDatabase();
     } finally {
       db.drop();
     }
-    ODatabaseDocumentTx db1 =
+    ODatabaseDocument db1 =
         new ODatabaseDocumentTx("memory:imp_" + TestSchemaImportExport.class.getSimpleName());
     db1.create();
     try {
       ODatabaseImport imp =
           new ODatabaseImport(
-              db1, new ByteArrayInputStream(output.toByteArray()), new MockOutputListener());
+              (ODatabaseDocumentInternal) db1,
+              new ByteArrayInputStream(output.toByteArray()),
+              new MockOutputListener());
       imp.importDatabase();
       db1.close();
       db1.open("admin", "admin");
@@ -48,26 +53,29 @@ public class TestSchemaImportExport {
 
   @Test
   public void testExportImportDefaultValue() throws IOException {
-    ODatabaseDocumentTx db =
+    ODatabaseDocument db =
         new ODatabaseDocumentTx("memory:" + TestSchemaImportExport.class.getSimpleName());
     db.create();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     try {
       OClass clazz = db.getMetadata().getSchema().createClass("Test");
       clazz.createProperty("bla", OType.STRING).setDefaultValue("something");
-      ODatabaseExport exp = new ODatabaseExport(db, output, new MockOutputListener());
+      ODatabaseExport exp =
+          new ODatabaseExport((ODatabaseDocumentInternal) db, output, new MockOutputListener());
       exp.exportDatabase();
     } finally {
       db.drop();
     }
 
-    ODatabaseDocumentTx db1 =
+    ODatabaseDocument db1 =
         new ODatabaseDocumentTx("memory:imp_" + TestSchemaImportExport.class.getSimpleName());
     db1.create();
     try {
       ODatabaseImport imp =
           new ODatabaseImport(
-              db1, new ByteArrayInputStream(output.toByteArray()), new MockOutputListener());
+              (ODatabaseDocumentInternal) db1,
+              new ByteArrayInputStream(output.toByteArray()),
+              new MockOutputListener());
       imp.importDatabase();
       db1.close();
       db1.open("admin", "admin");
@@ -83,7 +91,7 @@ public class TestSchemaImportExport {
 
   @Test
   public void testExportImportMultipleInheritance() throws IOException {
-    ODatabaseDocumentTx db =
+    ODatabaseDocument db =
         new ODatabaseDocumentTx(
             "memory:" + TestSchemaImportExport.class.getSimpleName() + "MultipleInheritance");
     db.create();
@@ -93,20 +101,23 @@ public class TestSchemaImportExport {
       clazz.addSuperClass(db.getMetadata().getSchema().getClass("ORestricted"));
       clazz.addSuperClass(db.getMetadata().getSchema().getClass("OIdentity"));
 
-      ODatabaseExport exp = new ODatabaseExport(db, output, new MockOutputListener());
+      ODatabaseExport exp =
+          new ODatabaseExport((ODatabaseDocumentInternal) db, output, new MockOutputListener());
       exp.exportDatabase();
     } finally {
       db.drop();
     }
 
-    ODatabaseDocumentTx db1 =
+    ODatabaseDocument db1 =
         new ODatabaseDocumentTx(
             "memory:imp_" + TestSchemaImportExport.class.getSimpleName() + "MultipleInheritance");
     db1.create();
     try {
       ODatabaseImport imp =
           new ODatabaseImport(
-              db1, new ByteArrayInputStream(output.toByteArray()), new MockOutputListener());
+              (ODatabaseDocumentInternal) db1,
+              new ByteArrayInputStream(output.toByteArray()),
+              new MockOutputListener());
       imp.importDatabase();
       db1.close();
       db1.open("admin", "admin");

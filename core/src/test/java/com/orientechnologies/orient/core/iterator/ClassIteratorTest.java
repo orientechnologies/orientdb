@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.iterator;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -16,7 +18,7 @@ import org.junit.Test;
 /** @author Artem Loginov */
 public class ClassIteratorTest {
   private static final boolean RECREATE_DATABASE = true;
-  private static ODatabaseDocumentTx db = null;
+  private static ODatabaseDocument db = null;
   private Set<String> names;
 
   private static void initializeDatabase() {
@@ -138,7 +140,8 @@ public class ClassIteratorTest {
 
     // Use descending class iterator.
     final ORecordIteratorClass<ODocument> personIter =
-        new ORecordIteratorClassDescendentOrder<ODocument>(db, db, "Person", true);
+        new ORecordIteratorClassDescendentOrder<ODocument>(
+            (ODatabaseDocumentInternal) db, (ODatabaseDocumentInternal) db, "Person", true);
 
     personIter.setRange(null, null); // open range
 
@@ -163,7 +166,8 @@ public class ClassIteratorTest {
     }
 
     final ORecordIteratorClass<ODocument> personIter =
-        new ORecordIteratorClass<ODocument>(db, "PersonMultipleClusters", true);
+        new ORecordIteratorClass<ODocument>(
+            (ODatabaseDocumentInternal) db, "PersonMultipleClusters", true);
 
     int docNum = 0;
 

@@ -19,7 +19,13 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -61,7 +67,7 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
 
   @Test
   public void testDbExport() throws IOException {
-    final ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+    final ODatabaseDocument database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     // ADD A CUSTOM TO THE CLASS
@@ -70,7 +76,8 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
         .execute();
 
     final ODatabaseExport export =
-        new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
+        new ODatabaseExport(
+            (ODatabaseDocumentInternal) database, testPath + "/" + exportFilePath, this);
     export.exportDatabase();
     export.close();
     database.close();
@@ -87,12 +94,13 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
       importDir.mkdir();
     }
 
-    final ODatabaseDocumentTx database =
+    final ODatabaseDocument database =
         new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
     database.create();
 
     final ODatabaseImport dbImport =
-        new ODatabaseImport(database, testPath + "/" + exportFilePath, this);
+        new ODatabaseImport(
+            (ODatabaseDocumentInternal) database, testPath + "/" + exportFilePath, this);
 
     // UNREGISTER ALL THE HOOKS
     for (final ORecordHook hook : new ArrayList<>(database.getHooks().keySet())) {
