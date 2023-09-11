@@ -22,6 +22,7 @@ package com.orientechnologies.orient.console;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARNING_DEFAULT_USERS;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.common.console.OConsoleProperties;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -120,8 +121,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public class OConsoleDatabaseApp extends OrientConsole
-    implements OCommandOutputListener, OProgressListener {
+public class OConsoleDatabaseApp extends OConsoleApplication
+    implements OCommandOutputListener, OProgressListener, OTableFormatter.OTableOutput {
   protected ODatabaseDocumentInternal currentDatabase;
   protected String currentDatabaseName;
   protected ORecord currentRecord;
@@ -3282,7 +3283,7 @@ public class OConsoleDatabaseApp extends OrientConsole
 
   @Override
   protected void onBefore() {
-    super.onBefore();
+    printApplicationInfo();
 
     setResultset(new ArrayList<OIdentifiable>());
 
@@ -3588,5 +3589,40 @@ public class OConsoleDatabaseApp extends OrientConsole
     else message(iMessageSuccess, elapsedSeconds);
 
     return result;
+  }
+
+  @Override
+  public void onMessage(String text, Object... args) {
+    message(text, args);
+  }
+
+  @Override
+  protected void onException(Throwable e) {
+    Throwable current = e;
+    while (current != null) {
+      err.print("\nError: " + current.toString() + "\n");
+      current = current.getCause();
+    }
+  }
+
+  @Override
+  protected void onAfter() {
+    out.println();
+  }
+
+  protected String format(final String iValue, final int iMaxSize) {
+    if (iValue == null) return null;
+
+    if (iValue.length() > iMaxSize) return iValue.substring(0, iMaxSize - 3) + "...";
+    return iValue;
+  }
+
+  public boolean historyEnabled() {
+    for (String arg : args) {
+      if (arg.equalsIgnoreCase(PARAM_DISABLE_HISTORY)) {
+        return false;
+      }
+    }
+    return true;
   }
 }
