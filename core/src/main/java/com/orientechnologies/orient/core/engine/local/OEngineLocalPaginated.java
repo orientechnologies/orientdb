@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import java.util.ArrayList;
 import java.util.List;
-import jnr.posix.POSIXFactory;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -77,7 +76,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     final String userName = System.getProperty("user.name", "unknown");
     OLogManager.instance()
         .infoNoDb(this, "System is started under an effective user : `%s`", userName);
-    if (OIOUtils.isOsLinux() && POSIXFactory.getPOSIX().getegid() == 0) {
+    if (ONative.instance().isOsRoot()) {
       OLogManager.instance()
           .warnNoDb(
               this,

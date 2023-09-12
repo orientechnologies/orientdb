@@ -560,4 +560,8 @@ public class ONative {
       return 4096;
     }
   }
+
+  public boolean isOsRoot() {
+    return OIOUtils.isOsLinux() && posix.getegid() == 0;
+  }
 }
