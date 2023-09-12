@@ -49,4 +49,16 @@ To produce the community distribution just run
 mvn clean install
 ```  
 
-this will produce two files `distribution/target/orientdb-community-(version).tar.gz` `distribution/target/orientdb-community-(version).zip`
+this command will produce two files `distribution/target/orientdb-community-(version).tar.gz` `distribution/target/orientdb-community-(version).zip`
+
+## Opening a issue
+
+If you have problem you can just open a issue on [Github Issue Tracker](github.com/orientechnologies/orientdb/issues) following the issue template.
+
+## Send a Pull Request
+
+You can send a pull request for fixes or for features to the [Github Pull Requests](https://github.com/orientechnologies/orientdb/pulls) to be accepted the 
+PR should respect the PR template, and provide test cases for the issue fixed or new features, and should not include regressions on existing tests. 
+
+
+
