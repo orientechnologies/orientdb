@@ -4592,4 +4592,21 @@ public class OSelectStatementExecutionTest {
       Assert.assertTrue(((String) item.getProperty("x")).contains("foo bar"));
     }
   }
+
+  @Test
+  public void testOptimizedCountQuery() {
+    String className = "testOptimizedCountQuery";
+    db.command("create class " + className).close();
+    db.command("create property " + className + ".field boolean").close();
+    db.command("create index " + className + ".field on " + className + "(field) NOTUNIQUE")
+        .close();
+    db.command("insert into " + className + " set field=true").close();
+    try (OResultSet rs =
+        db.query("select count(*) as count from " + className + " where field=true")) {
+      Assert.assertTrue(rs.hasNext());
+      OResult item = rs.next();
+      Assert.assertEquals((long) item.getProperty("count"), 1L);
+      Assert.assertFalse(rs.hasNext());
+    }
+  }
 }
