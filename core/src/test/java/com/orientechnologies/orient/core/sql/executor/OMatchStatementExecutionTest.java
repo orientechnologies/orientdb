@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -1525,25 +1526,23 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
             "CREATE EDGE testMatched1_Foo_Far FROM (SELECT FROM testMatched1_Foo) TO (SELECT FROM testMatched1_Far)")
         .close();
 
-    List result =
+    OResultSet result =
         db.query(
-            new OSQLSynchQuery(
-                "MATCH \n"
-                    + "{class: testMatched1_Foo, as: foo}.out('testMatched1_Foo_Bar') {as: bar}, \n"
-                    + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz}, \n"
-                    + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: ($matched.baz IS null),as: far}\n"
-                    + "RETURN $matches"));
-    assertTrue(result.isEmpty());
+            "MATCH \n"
+                + "{class: testMatched1_Foo, as: foo}.out('testMatched1_Foo_Bar') {as: bar}, \n"
+                + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz}, \n"
+                + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: ($matched.baz IS null),as: far}\n"
+                + "RETURN $matches");
+    assertFalse(result.hasNext());
 
     result =
         db.query(
-            new OSQLSynchQuery(
-                "MATCH \n"
-                    + "{class: testMatched1_Foo, as: foo}.out('testMatched1_Foo_Bar') {as: bar}, \n"
-                    + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz}, \n"
-                    + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: ($matched.baz IS not null),as: far}\n"
-                    + "RETURN $matches"));
-    assertEquals(1, result.size());
+            "MATCH \n"
+                + "{class: testMatched1_Foo, as: foo}.out('testMatched1_Foo_Bar') {as: bar}, \n"
+                + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz}, \n"
+                + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: ($matched.baz IS not null),as: far}\n"
+                + "RETURN $matches");
+    assertEquals(1, result.stream().count());
   }
 
   @Test

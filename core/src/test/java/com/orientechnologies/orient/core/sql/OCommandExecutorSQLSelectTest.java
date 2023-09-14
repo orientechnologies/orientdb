@@ -558,16 +558,14 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testLimit() {
-    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit 3")).execute();
-    assertEquals(qResult.size(), 3);
+    OResultSet qResult = db.query("select from foo limit 3");
+    assertEquals(qResult.stream().count(), 3);
   }
 
   @Test
   public void testLimitWithMetadataQuery() {
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select expand(classes) from metadata:schema limit 3"))
-            .execute();
-    assertEquals(qResult.size(), 3);
+    OResultSet qResult = db.query("select expand(classes) from metadata:schema limit 3");
+    assertEquals(qResult.stream().count(), 3);
   }
 
   @Test
@@ -586,9 +584,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testLimitWithNamedParam() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("lim", 2);
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select from foo limit :lim")).execute(params);
-    assertEquals(qResult.size(), 2);
+    OResultSet qResult = db.command("select from foo limit :lim", params);
+    assertEquals(qResult.stream().count(), 2);
   }
 
   @Test
@@ -596,9 +593,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #5493
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("limit", 2);
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select from foo limit :limit")).execute(params);
-    assertEquals(qResult.size(), 2);
+    OResultSet qResult = db.command("select from foo limit :limit", params);
+    assertEquals(qResult.stream().count(), 2);
   }
 
   @Test
@@ -807,9 +803,9 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testQuotedClassName() {
-    List<ODocument> qResult = db.command(new OCommandSQL("select from `edge`")).execute();
+    OResultSet qResult = db.query("select from `edge`");
 
-    assertEquals(qResult.size(), 0);
+    assertEquals(qResult.stream().count(), 0);
   }
 
   public void testUrl() {
@@ -1500,35 +1496,26 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command("insert into testFoo set val = 3, name = 'foo'");
     db.command("insert into testFoo set val = 5, name = 'bar'");
 
-    List<ODocument> results =
-        db.query(new OSQLSynchQuery<ODocument>("select sum(val), name from testFoo group by name"));
-    assertEquals(results.size(), 2);
+    OResultSet results = db.query("select sum(val), name from testFoo group by name");
+    assertEquals(results.stream().count(), 2);
   }
 
   @Test
   public void testDateComparison() {
     // issue #6389
 
-    byte[] array = new byte[] {1, 4, 5, 74, 3, 45, 6, 127, -120, 2};
-
     db.command("create class TestDateComparison").close();
     db.command("create property TestDateComparison.dateProp DATE").close();
 
     db.command("insert into TestDateComparison set dateProp = '2016-05-01'").close();
 
-    List<ODocument> results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "SELECT from TestDateComparison WHERE dateProp >= '2016-05-01'"));
-    assertEquals(results.size(), 1);
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "SELECT from TestDateComparison WHERE dateProp <= '2016-05-01'"));
-    assertEquals(results.size(), 1);
+    OResultSet results = db.query("SELECT from TestDateComparison WHERE dateProp >= '2016-05-01'");
+
+    assertEquals(results.stream().count(), 1);
+    results = db.query("SELECT from TestDateComparison WHERE dateProp <= '2016-05-01'");
+
+    assertEquals(results.stream().count(), 1);
   }
-  // <<<<<<< HEAD
-  // =======
 
   @Test
   public void testOrderByRidDescMultiCluster() {
@@ -1539,8 +1526,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
       clazz.addCluster("TestOrderByRidDescMultiCluster_11111");
     }
     for (int i = 0; i < 100; i++) {
-      db.command(new OCommandSQL("insert into TestOrderByRidDescMultiCluster set foo = " + i))
-          .execute();
+      db.command("insert into TestOrderByRidDescMultiCluster set foo = " + i).close();
     }
 
     List<ODocument> results =
@@ -1574,52 +1560,31 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testCountOnSubclassIndexes() {
     // issue #6737
 
-    db.command(new OCommandSQL("create class testCountOnSubclassIndexes_superclass")).execute();
-    db.command(new OCommandSQL("create property testCountOnSubclassIndexes_superclass.foo boolean"))
-        .execute();
+    db.command("create class testCountOnSubclassIndexes_superclass").close();
+    db.command("create property testCountOnSubclassIndexes_superclass.foo boolean").close();
     db.command(
-            new OCommandSQL(
-                "create index testCountOnSubclassIndexes_superclass.foo on testCountOnSubclassIndexes_superclass (foo) notunique"))
-        .execute();
+            "create index testCountOnSubclassIndexes_superclass.foo on testCountOnSubclassIndexes_superclass (foo) notunique")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "create class testCountOnSubclassIndexes_sub1 extends testCountOnSubclassIndexes_superclass"))
-        .execute();
+            "create class testCountOnSubclassIndexes_sub1 extends testCountOnSubclassIndexes_superclass")
+        .close();
     db.command(
-            new OCommandSQL(
-                "create index testCountOnSubclassIndexes_sub1.foo on testCountOnSubclassIndexes_sub1 (foo) notunique"))
-        .execute();
+            "create index testCountOnSubclassIndexes_sub1.foo on testCountOnSubclassIndexes_sub1 (foo) notunique")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "create class testCountOnSubclassIndexes_sub2 extends testCountOnSubclassIndexes_superclass"))
-        .execute();
+            "create class testCountOnSubclassIndexes_sub2 extends testCountOnSubclassIndexes_superclass")
+        .close();
     db.command(
-            new OCommandSQL(
-                "create index testCountOnSubclassIndexes_sub2.foo on testCountOnSubclassIndexes_sub2 (foo) notunique"))
-        .execute();
+            "create index testCountOnSubclassIndexes_sub2.foo on testCountOnSubclassIndexes_sub2 (foo) notunique")
+        .close();
 
-    db.command(
-            new OCommandSQL(
-                "insert into testCountOnSubclassIndexes_sub1 set name = 'a', foo = true"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into testCountOnSubclassIndexes_sub1 set name = 'b', foo = false"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into testCountOnSubclassIndexes_sub2 set name = 'c', foo = true"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into testCountOnSubclassIndexes_sub2 set name = 'd', foo = true"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into testCountOnSubclassIndexes_sub2 set name = 'e', foo = false"))
-        .execute();
+    db.command("insert into testCountOnSubclassIndexes_sub1 set name = 'a', foo = true").close();
+    db.command("insert into testCountOnSubclassIndexes_sub1 set name = 'b', foo = false").close();
+    db.command("insert into testCountOnSubclassIndexes_sub2 set name = 'c', foo = true").close();
+    db.command("insert into testCountOnSubclassIndexes_sub2 set name = 'd', foo = true").close();
+    db.command("insert into testCountOnSubclassIndexes_sub2 set name = 'e', foo = false").close();
 
     List<ODocument> results =
         db.query(
@@ -1656,8 +1621,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testConvertDouble() {
     // issue #7234
 
-    db.command(new OCommandSQL("create class testConvertDouble")).execute();
-    db.command(new OCommandSQL("insert into testConvertDouble set num = 100000")).execute();
+    db.command("create class testConvertDouble").close();
+    db.command("insert into testConvertDouble set num = 100000").close();
 
     List<ODocument> results =
         db.query(
@@ -1671,15 +1636,14 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
     String className = "testFilterListaOfMaps";
 
-    db.command(new OCommandSQL("create class " + className)).execute();
-    db.command(new OCommandSQL("create property " + className + ".tagz embeddedmap")).execute();
-    db.command(new OCommandSQL("insert into " + className + " set tagz = {}")).execute();
+    db.command("create class " + className).close();
+    db.command("create property " + className + ".tagz embeddedmap").close();
+    db.command("insert into " + className + " set tagz = {}").close();
     db.command(
-            new OCommandSQL(
-                "update "
-                    + className
-                    + " SET tagz.foo = [{name:'a', surname:'b'}, {name:'c', surname:'d'}]"))
-        .execute();
+            "update "
+                + className
+                + " SET tagz.foo = [{name:'a', surname:'b'}, {name:'c', surname:'d'}]")
+        .close();
 
     List<ODocument> results =
         db.query(
@@ -1694,32 +1658,28 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testComparisonOfShorts() {
     // issue #7578
     String className = "testComparisonOfShorts";
-    db.command(new OCommandSQL("create class " + className)).execute();
-    db.command(new OCommandSQL("create property " + className + ".state Short")).execute();
-    db.command(new OCommandSQL("INSERT INTO " + className + " set state = 1")).execute();
-    db.command(new OCommandSQL("INSERT INTO " + className + " set state = 1")).execute();
-    db.command(new OCommandSQL("INSERT INTO " + className + " set state = 2")).execute();
+    db.command("create class " + className).close();
+    db.command("create property " + className + ".state Short").close();
+    db.command("INSERT INTO " + className + " set state = 1").close();
+    db.command("INSERT INTO " + className + " set state = 1").close();
+    db.command("INSERT INTO " + className + " set state = 2").close();
 
-    List<ODocument> results =
-        db.query(new OSQLSynchQuery<ODocument>("select from " + className + " where state in [1]"));
-    assertEquals(results.size(), 2);
+    OResultSet results = db.query("select from " + className + " where state in [1]");
+    assertEquals(results.stream().count(), 2);
 
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from " + className + " where [1] contains state"));
-    assertEquals(results.size(), 2);
+    results = db.query("select from " + className + " where [1] contains state");
+
+    assertEquals(results.stream().count(), 2);
   }
 
   @Test
   public void testEnumAsParams() {
     // issue #7418
     String className = "testEnumAsParams";
-    db.command(new OCommandSQL("create class " + className)).execute();
-    db.command(new OCommandSQL("INSERT INTO " + className + " set status = ?"))
-        .execute(OType.STRING);
-    db.command(new OCommandSQL("INSERT INTO " + className + " set status = ?")).execute(OType.ANY);
-    db.command(new OCommandSQL("INSERT INTO " + className + " set status = ?")).execute(OType.BYTE);
+    db.command("create class " + className).close();
+    db.command("INSERT INTO " + className + " set status = ?", OType.STRING).close();
+    db.command("INSERT INTO " + className + " set status = ?", OType.ANY).close();
+    db.command("INSERT INTO " + className + " set status = ?", OType.BYTE).close();
 
     Map<String, Object> params = new HashMap<String, Object>();
     List enums = new ArrayList();
@@ -1738,30 +1698,26 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #7793
     String className = "testEmbeddedMapOfMapsContainsValue";
 
-    db.command(new OCommandSQL("create class " + className)).execute();
-    db.command(new OCommandSQL("create property " + className + ".embedded_map EMBEDDEDMAP"))
-        .execute();
-    db.command(new OCommandSQL("create property " + className + ".id INTEGER")).execute();
+    db.command("create class " + className).close();
+    db.command("create property " + className + ".embedded_map EMBEDDEDMAP").close();
+    db.command("create property " + className + ".id INTEGER").close();
     db.command(
-            new OCommandSQL(
-                "INSERT INTO "
-                    + className
-                    + " SET id = 0, embedded_map = {\"key_2\" : {\"name\" : \"key_2\", \"id\" : \"0\"}}"))
-        .execute();
+            "INSERT INTO "
+                + className
+                + " SET id = 0, embedded_map = {\"key_2\" : {\"name\" : \"key_2\", \"id\" : \"0\"}}")
+        .close();
     db.command(
-            new OCommandSQL(
-                "INSERT INTO "
-                    + className
-                    + " SET id = 1, embedded_map = {\"key_1\" : {\"name\" : \"key_1\", \"id\" : \"1\" }}"))
-        .execute();
+            "INSERT INTO "
+                + className
+                + " SET id = 1, embedded_map = {\"key_1\" : {\"name\" : \"key_1\", \"id\" : \"1\" }}")
+        .close();
 
-    List<ODocument> results =
+    OResultSet results =
         db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from "
-                    + className
-                    + " where embedded_map CONTAINSVALUE {\"name\":\"key_2\", \"id\":\"0\"}"));
-    assertEquals(results.size(), 1);
+            "select from "
+                + className
+                + " where embedded_map CONTAINSVALUE {\"name\":\"key_2\", \"id\":\"0\"}");
+    assertEquals(results.stream().count(), 1);
   }
 
   @Test
@@ -1784,10 +1740,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
             new OSQLSynchQuery<ODocument>("SELECT * FROM " + className + " WHERE \"0\" <= name"));
     assertEquals(results.size(), 2);
 
-    db.command(
-            new OCommandSQL(
-                "CREATE INDEX " + className + ".name on " + className + " (name) UNIQUE"))
-        .execute();
+    db.command("CREATE INDEX " + className + ".name on " + className + " (name) UNIQUE").close();
 
     results =
         db.query(

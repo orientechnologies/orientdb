@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import java.util.concurrent.atomic.AtomicLong;
 import org.testng.Assert;
@@ -129,7 +128,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
         ODatabaseDocument db = new ODatabaseDocumentTx(url);
 
         for (int i = 0; i < PESSIMISTIC_CYCLES; i++) {
-          String cmd = "update " + rid + " increment total = 1";
+          String cmd = "update " + rid + " set total = total + 1";
           if (lock) cmd += " lock record";
 
           int retries = 0;
@@ -139,7 +138,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
               db.open("admin", "admin");
               try {
-                db.command(new OCommandSQL(cmd)).execute();
+                db.command(cmd).close();
                 counter.incrementAndGet();
               } finally {
                 db.close();

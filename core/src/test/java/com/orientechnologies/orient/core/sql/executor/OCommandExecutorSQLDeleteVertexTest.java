@@ -45,10 +45,10 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
       db.command("create vertex User set name = 'foo" + i + "'").close();
     }
 
-    final int res = (Integer) db.command(new OCommandSQL("delete vertex User limit 4")).execute();
+    db.command("delete vertex User limit 4").close();
 
-    List<?> result = db.query(new OSQLSynchQuery("select from User"));
-    Assert.assertEquals(result.size(), 6);
+    OResultSet result = db.query("select from User");
+    Assert.assertEquals(result.stream().count(), 6);
   }
 
   @Test
@@ -87,10 +87,9 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
       db.command("create vertex User set name = 'foo" + i + "'").close();
     }
 
-    final int res =
-        (Integer) db.command(new OCommandSQL("delete vertex from (select from User)")).execute();
-    List<?> result = db.query(new OSQLSynchQuery("select from User"));
-    Assert.assertEquals(result.size(), 0);
+    db.command("delete vertex from (select from User)").close();
+    OResultSet result = db.query("select from User");
+    Assert.assertEquals(result.stream().count(), 0);
   }
 
   @Test
@@ -101,13 +100,9 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
       db.command("create vertex User set name = 'foo" + i + "'").close();
     }
 
-    final int res =
-        (Integer)
-            db.command(
-                    new OCommandSQL("delete vertex from (select from User where name = 'foo10')"))
-                .execute();
+    db.command("delete vertex from (select from User where name = 'foo10')").close();
 
-    List<?> result = db.query(new OSQLSynchQuery("select from User"));
-    Assert.assertEquals(result.size(), 99);
+    OResultSet result = db.query("select from User");
+    Assert.assertEquals(result.stream().count(), 99);
   }
 }
