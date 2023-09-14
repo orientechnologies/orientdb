@@ -37,7 +37,17 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -1929,18 +1939,13 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testOutFilterInclude() {
     OSchema schema = database.getMetadata().getSchema();
     schema.createClass("TestOutFilterInclude", schema.getClass("V"));
-    database.command(new OCommandSQL("create class linkedToOutFilterInclude extends E")).execute();
-    database
-        .command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"one\" }"))
-        .execute();
-    database
-        .command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"two\" }"))
-        .execute();
+    database.command("create class linkedToOutFilterInclude extends E").close();
+    database.command("insert into TestOutFilterInclude content { \"name\": \"one\" }").close();
+    database.command("insert into TestOutFilterInclude content { \"name\": \"two\" }").close();
     database
         .command(
-            new OCommandSQL(
-                "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name = 'one') to (select from TestOutFilterInclude where name = 'two')"))
-        .execute();
+            "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name = 'one') to (select from TestOutFilterInclude where name = 'two')")
+        .close();
 
     final List<OIdentifiable> result =
         database.query(
@@ -1976,16 +1981,15 @@ public class SQLSelectTest extends AbstractSelectTest {
     OBlob bytes = new ORecordBytes(new byte[] {1, 2, 3});
     database.save(bytes, "binarycluster");
 
-    List<OIdentifiable> result =
-        database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
+    OResultSet result = database.query("select from cluster:binarycluster");
 
-    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(result.stream().count(), 1);
 
     database.command("delete from cluster:binarycluster").close();
 
-    result = database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
+    result = database.query("select from cluster:binarycluster");
 
-    Assert.assertEquals(result.size(), 0);
+    Assert.assertEquals(result.stream().count(), 0);
   }
 
   @Test
@@ -2005,44 +2009,30 @@ public class SQLSelectTest extends AbstractSelectTest {
             "CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')")
         .close();
 
-    List<OIdentifiable> result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1'"));
-    Assert.assertEquals(result.size(), 3);
+    OResultSet result = database.query("select expand(out()) from TestExpandSkip where name = '1'");
+
+    Assert.assertEquals(result.stream().count(), 3);
 
     Map<Object, Object> params = new HashMap<Object, Object>();
     params.put("values", Arrays.asList(new String[] {"2", "3", "antani"}));
     result =
         database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()[name in :values]) from TestExpandSkip where name = '1'"),
-            params);
-    Assert.assertEquals(result.size(), 2);
+            "select expand(out()[name in :values]) from TestExpandSkip where name = '1'", params);
+    Assert.assertEquals(result.stream().count(), 2);
+
+    result = database.query("select expand(out()) from TestExpandSkip where name = '1' skip 1");
+
+    Assert.assertEquals(result.stream().count(), 2);
+
+    result = database.query("select expand(out()) from TestExpandSkip where name = '1' skip 2");
+    Assert.assertEquals(result.stream().count(), 1);
+
+    result = database.query("select expand(out()) from TestExpandSkip where name = '1' skip 3");
+    Assert.assertEquals(result.stream().count(), 0);
 
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 1"));
-    Assert.assertEquals(result.size(), 2);
-
-    result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 2"));
-    Assert.assertEquals(result.size(), 1);
-
-    result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 3"));
-    Assert.assertEquals(result.size(), 0);
-
-    result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1"));
-    Assert.assertEquals(result.size(), 1);
+        database.query("select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1");
+    Assert.assertEquals(result.stream().count(), 1);
   }
 
   @Test
@@ -2067,17 +2057,15 @@ public class SQLSelectTest extends AbstractSelectTest {
             "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')")
         .close();
 
-    List<OIdentifiable> result =
+    OResultSet result =
         database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out('TestPolymorphicEdges_E1')) from TestPolymorphicEdges_V where name = '1'"));
-    Assert.assertEquals(result.size(), 2);
+            "select expand(out('TestPolymorphicEdges_E1')) from TestPolymorphicEdges_V where name = '1'");
+    Assert.assertEquals(result.stream().count(), 2);
 
     result =
         database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out('TestPolymorphicEdges_E2')) from TestPolymorphicEdges_V where name = '1' "));
-    Assert.assertEquals(result.size(), 1);
+            "select expand(out('TestPolymorphicEdges_E2')) from TestPolymorphicEdges_V where name = '1' ");
+    Assert.assertEquals(result.stream().count(), 1);
   }
 
   @Test
@@ -2093,11 +2081,10 @@ public class SQLSelectTest extends AbstractSelectTest {
             "CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM TestSizeOfLink WHERE name <> '1')")
         .close();
 
-    List<OIdentifiable> result =
+    OResultSet result =
         database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                " select from (select from TestSizeOfLink where name = '1') where out()[name=2].size() > 0"));
-    Assert.assertEquals(result.size(), 1);
+            " select from (select from TestSizeOfLink where name = '1') where out()[name=2].size() > 0");
+    Assert.assertEquals(result.stream().count(), 1);
   }
 
   @Test
@@ -2133,14 +2120,13 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testLetWithQuotedValue() {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
-    final OClass cls = schema.createClass("LetWithQuotedValue", v);
+    schema.createClass("LetWithQuotedValue", v);
     database.command("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\"").close();
 
-    List<OIdentifiable> result =
+    OResultSet result =
         database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                " select expand($a) let $a = (select from LetWithQuotedValue where name = \"\\\"foo\\\"\")"));
-    Assert.assertEquals(result.size(), 1);
+            " select expand($a) let $a = (select from LetWithQuotedValue where name = \"\\\"foo\\\"\")");
+    Assert.assertEquals(result.stream().count(), 1);
   }
 
   @Test
