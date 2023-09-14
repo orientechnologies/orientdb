@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -316,20 +317,17 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
     assertEquals(idProperty.getDefaultValue(), "6");
   }
 
-  @Test(expected = OCommandSQLParsingException.class)
+  @Test(expected = OCommandExecutionException.class)
   public void testInvalidAttributeName() throws Exception {
     db.command("CREATE CLASS company").close();
-    db.command(
-            new OCommandSQL(
-                "CREATE PROPERTY company.id INTEGER (MANDATORY, INVALID, NOTNULL)  UNSAFE"))
-        .execute();
+    db.command("CREATE PROPERTY company.id INTEGER (MANDATORY, INVALID, NOTNULL)  UNSAFE").close();
   }
 
-  @Test(expected = OCommandSQLParsingException.class)
+  @Test(expected = OCommandExecutionException.class)
   public void testMissingAttributeValue() throws Exception {
 
     db.command("CREATE CLASS company").close();
-    db.command(new OCommandSQL("CREATE PROPERTY company.id INTEGER (DEFAULT)  UNSAFE")).execute();
+    db.command("CREATE PROPERTY company.id INTEGER (DEFAULT)  UNSAFE").close();
   }
 
   @Test(expected = OCommandSQLParsingException.class)
