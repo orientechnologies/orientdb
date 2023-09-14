@@ -25,7 +25,6 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARN
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.Orient;
@@ -54,7 +53,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1097,38 +1095,23 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   private static void scanDatabaseDirectory(final File directory, DatabaseFound found) {
-    try {
-      if (directory.exists() && directory.isDirectory()) {
-        final File[] files = directory.listFiles();
-        if (files != null)
-          for (File db : files) {
-            if (db.isDirectory()) {
-              final Path dbPath = Paths.get(db.getAbsolutePath());
-              try (DirectoryStream<Path> stream = Files.newDirectoryStream(dbPath)) {
-                stream.forEach(
-                    (p) -> {
-                      if (!Files.isDirectory(p)) {
-                        final String fileName = p.getFileName().toString();
-
-                        if (fileName.equals("database.ocf")
-                            || (fileName.startsWith(
-                                    OClusterBasedStorageConfiguration.COMPONENT_NAME)
-                                && fileName.endsWith(
-                                    OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION))) {
-                          final int count = p.getNameCount();
-                          found.found(
-                              OIOUtils.getDatabaseNameFromPath(
-                                  p.subpath(count - 2, count - 1).toString()));
-                        }
-                      }
-                    });
+    if (directory.exists() && directory.isDirectory()) {
+      final File[] files = directory.listFiles();
+      if (files != null)
+        for (File db : files) {
+          if (db.isDirectory()) {
+            for (File cf : db.listFiles()) {
+              String fileName = cf.getName();
+              if (fileName.equals("database.ocf")
+                  || (fileName.startsWith(OClusterBasedStorageConfiguration.COMPONENT_NAME)
+                      && fileName.endsWith(
+                          OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION))) {
+                found.found(db.getName());
+                break;
               }
             }
           }
-      }
-    } catch (IOException e) {
-      throw OException.wrapException(
-          new ODatabaseException("Exception during scanning of database directory"), e);
+        }
     }
   }
 

@@ -111,12 +111,23 @@ public class OrientDBEmbeddedTests {
   @Test
   public void testListDatabases() {
     OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    // OrientDBInternal orientDb = OrientDBInternal.fromUrl("local:.", null);
     assertEquals(orientDb.list().size(), 0);
     orientDb.create("test", ODatabaseType.MEMORY);
     List<String> databases = orientDb.list();
     assertEquals(databases.size(), 1);
     assertTrue(databases.contains("test"));
+    orientDb.close();
+  }
+
+  @Test
+  public void testListDatabasesPersistent() {
+    OrientDB orientDb = new OrientDB("embedded:./target/listTest", OrientDBConfig.defaultConfig());
+    assertEquals(orientDb.list().size(), 0);
+    orientDb.create("testListDatabase", ODatabaseType.PLOCAL);
+    List<String> databases = orientDb.list();
+    assertEquals(databases.size(), 1);
+    assertTrue(databases.contains("testListDatabase"));
+    orientDb.drop("testListDatabase");
     orientDb.close();
   }
 
