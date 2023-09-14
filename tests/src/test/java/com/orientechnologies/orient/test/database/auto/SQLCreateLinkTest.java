@@ -31,8 +31,7 @@ public class SQLCreateLinkTest extends DocumentDBBaseTest {
 
   @Test
   public void createLinktest() {
-    Assert.assertTrue(
-        (Integer) database.command(new OCommandSQL("CREATE CLASS POST")).execute() > 0);
+    database.command("CREATE CLASS POST").close();
     Assert.assertTrue(
         database
                 .command(
