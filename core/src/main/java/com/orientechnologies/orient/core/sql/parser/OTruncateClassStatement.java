@@ -2,16 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -31,7 +29,7 @@ public class OTruncateClassStatement extends ODDLStatement {
 
   @Override
   public OResultSet executeDDL(OCommandContext ctx) {
-    ODatabaseSession db = ctx.getDatabase();
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.getClass(className.getStringValue());
     if (clazz == null) {
@@ -70,24 +68,21 @@ public class OTruncateClassStatement extends ODDLStatement {
       }
     }
 
-    try {
-      clazz.truncate();
-      OResultInternal result = new OResultInternal();
-      result.setProperty("operation", "truncate class");
-      result.setProperty("className", className.getStringValue());
-      rs.add(result);
-      if (polymorphic) {
-        for (OClass subclass : subclasses) {
-          subclass.truncate();
-          result = new OResultInternal();
-          result.setProperty("operation", "truncate class");
-          result.setProperty("className", className.getStringValue());
-          rs.add(result);
-        }
+    long count = db.truncateClass(clazz.getName(), false);
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "truncate class");
+    result.setProperty("className", className.getStringValue());
+    result.setProperty("count", count);
+    rs.add(result);
+    if (polymorphic) {
+      for (OClass subclass : subclasses) {
+        count = db.truncateClass(subclass.getName(), false);
+        result = new OResultInternal();
+        result.setProperty("operation", "truncate class");
+        result.setProperty("className", className.getStringValue());
+        result.setProperty("count", count);
+        rs.add(result);
       }
-    } catch (IOException e) {
-      throw OException.wrapException(
-          new OCommandExecutionException("Error on executing command"), e);
     }
 
     return rs;

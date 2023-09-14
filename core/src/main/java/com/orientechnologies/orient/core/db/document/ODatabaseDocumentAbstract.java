@@ -316,12 +316,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   /** {@inheritDoc} */
-  @Override
-  public void truncateCluster(String clusterName) {
-    command("truncate cluster " + clusterName).close();
-  }
-
-  /** {@inheritDoc} */
   public OMetadataDefault getMetadata() {
     checkOpenness();
     return metadata;

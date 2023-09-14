@@ -5,11 +5,6 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -45,31 +40,14 @@ public class OTruncateClusterStatement extends ODDLStatement {
       throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
     }
 
-    final OSchema schema = database.getMetadata().getSchema();
-    final OClass clazz = schema.getClassByClusterId(clusterId);
-    if (clazz == null) {
-      final String clusterName = database.getClusterNameById(clusterId);
-      database.checkForClusterPermissions(clusterName);
-
-      final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(clusterName);
-      if (iteratorCluster == null) {
-        throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
-      }
-      while (iteratorCluster.hasNext()) {
-        final ORecord record = iteratorCluster.next();
-        record.delete();
-      }
-    } else {
-      String name = database.getClusterNameById(clusterId);
-      clazz.truncateCluster(name);
-    }
+    String name = database.getClusterNameById(clusterId);
+    long count = database.truncateClusterInternal(name);
 
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "truncate cluster");
-    if (clusterName != null) {
-      result.setProperty("clusterName", clusterName.getStringValue());
-    }
+    result.setProperty("clusterName", name);
     result.setProperty("clusterId", clusterId);
+    result.setProperty("count", count);
 
     rs.add(result);
     return rs;

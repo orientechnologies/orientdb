@@ -387,7 +387,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public OResultSet query(String query, Object[] args) {
+  public OResultSet query(String query, Object... args) {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.query(this, query, args);
@@ -1250,5 +1250,40 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public int[] getClustersIds(Set<String> filterClusters) {
     checkIfActive();
     return filterClusters.stream().map((c) -> getClusterIdByName(c)).mapToInt(i -> i).toArray();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void truncateCluster(String clusterName) {
+    command("truncate cluster " + clusterName).close();
+  }
+
+  @Override
+  public void truncateClass(String name) {
+    command("truncate class " + name).close();
+  }
+
+  @Override
+  public long truncateClusterInternal(String name) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public long truncateClass(String name, boolean polimorfic) {
+    long count = 0;
+    if (polimorfic) {
+      try (OResultSet result = command("truncate class " + name + " polymorphic ")) {
+        while (result.hasNext()) {
+          count += (long) result.next().getProperty("count");
+        }
+      }
+    } else {
+      try (OResultSet result = command("truncate class " + name)) {
+        while (result.hasNext()) {
+          count += (long) result.next().getProperty("count");
+        }
+      }
+    }
+    return count;
   }
 }

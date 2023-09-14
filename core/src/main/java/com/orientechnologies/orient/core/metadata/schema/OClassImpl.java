@@ -28,21 +28,17 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -631,16 +627,7 @@ public abstract class OClassImpl implements OClass {
 
   protected void truncateClusterInternal(
       final String clusterName, final ODatabaseDocumentInternal database) {
-    database.checkForClusterPermissions(clusterName);
-
-    final ORecordIteratorCluster<ORecord> iteratorCluster = database.browseCluster(clusterName);
-    if (iteratorCluster == null) {
-      throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
-    }
-    while (iteratorCluster.hasNext()) {
-      final ORecord record = iteratorCluster.next();
-      record.delete();
-    }
+    database.truncateCluster(clusterName);
   }
 
   public Collection<OClass> getSubclasses() {
@@ -805,38 +792,7 @@ public abstract class OClassImpl implements OClass {
   /** Truncates all the clusters the class uses. */
   public void truncate() {
     ODatabaseDocumentInternal db = getDatabase();
-    db.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE);
-
-    if (isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
-      throw new OSecurityException(
-          "Class '"
-              + getName()
-              + "' cannot be truncated because has record level security enabled (extends '"
-              + OSecurityShared.RESTRICTED_CLASSNAME
-              + "')");
-    }
-
-    acquireSchemaReadLock();
-    try {
-
-      for (int id : clusterIds) {
-        if (id < 0) continue;
-        final String clusterName = db.getClusterNameById(id);
-        if (clusterName == null) continue;
-        db.checkForClusterPermissions(clusterName);
-
-        final ORecordIteratorCluster<ORecord> iteratorCluster = db.browseCluster(clusterName);
-        if (iteratorCluster == null) {
-          throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
-        }
-        while (iteratorCluster.hasNext()) {
-          final ORecord record = iteratorCluster.next();
-          record.delete();
-        }
-      }
-    } finally {
-      releaseSchemaReadLock();
-    }
+    db.truncateClass(name, false);
   }
 
   /**

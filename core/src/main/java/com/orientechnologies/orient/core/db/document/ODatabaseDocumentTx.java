@@ -1653,4 +1653,19 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public int[] getClustersIds(Set<String> filterClusters) {
     return internal.getClustersIds(filterClusters);
   }
+
+  @Override
+  public void truncateClass(String name) {
+    internal.truncateClass(name);
+  }
+
+  @Override
+  public long truncateClusterInternal(String name) {
+    return internal.truncateClusterInternal(name);
+  }
+
+  @Override
+  public long truncateClass(String name, boolean polimorfic) {
+    return internal.truncateClass(name, polimorfic);
+  }
 }

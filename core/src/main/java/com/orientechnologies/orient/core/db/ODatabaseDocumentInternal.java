@@ -298,4 +298,10 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   default void queryStartUsingViewCluster(int cluster) {}
 
   default void queryStartUsingViewIndex(String index) {}
+
+  public void truncateClass(String name);
+
+  public long truncateClass(String name, boolean polimorfic);
+
+  public long truncateClusterInternal(String name);
 }

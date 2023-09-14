@@ -76,6 +76,7 @@ import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -2022,5 +2023,67 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   public void endEsclusiveMetadataChange() {
     ((OAbstractPaginatedStorage) storage).endDDL();
+  }
+
+  @Override
+  public long truncateClass(String name, boolean polimorfic) {
+    this.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE);
+    OClass clazz = getClass(name);
+    if (clazz.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
+      throw new OSecurityException(
+          "Class '"
+              + getName()
+              + "' cannot be truncated because has record level security enabled (extends '"
+              + OSecurityShared.RESTRICTED_CLASSNAME
+              + "')");
+    }
+
+    int[] clusterIds;
+    if (polimorfic) {
+      clusterIds = clazz.getPolymorphicClusterIds();
+    } else {
+      clusterIds = clazz.getClusterIds();
+    }
+    long count = 0;
+    for (int id : clusterIds) {
+      if (id < 0) continue;
+      final String clusterName = getClusterNameById(id);
+      if (clusterName == null) continue;
+      count += truncateClusterInternal(clusterName);
+    }
+    return count;
+  }
+
+  @Override
+  public void truncateClass(String name) {
+    truncateClass(name, true);
+  }
+
+  @Override
+  public long truncateClusterInternal(String clusterName) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, clusterName);
+    checkForClusterPermissions(clusterName);
+    int id = getClusterIdByName(clusterName);
+    if (id == -1) {
+      throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
+    }
+    final OClass clazz = getMetadata().getSchema().getClassByClusterId(id);
+    if (clazz != null) {
+      checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, clazz.getName());
+    }
+    long count = 0;
+    final ORecordIteratorCluster<ORecord> iteratorCluster =
+        new ORecordIteratorCluster<ORecord>(this, id);
+    while (iteratorCluster.hasNext()) {
+      final ORecord record = iteratorCluster.next();
+      record.delete();
+      count++;
+    }
+    return count;
+  }
+
+  @Override
+  public void truncateCluster(String clusterName) {
+    truncateClusterInternal(clusterName);
   }
 }

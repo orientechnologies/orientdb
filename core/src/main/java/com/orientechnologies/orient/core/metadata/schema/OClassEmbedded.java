@@ -445,13 +445,7 @@ public class OClassEmbedded extends OClassImpl {
   public OClass truncateCluster(String clusterName) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, name);
 
-    acquireSchemaReadLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      truncateClusterInternal(clusterName, database);
-    } finally {
-      releaseSchemaReadLock();
-    }
+    truncateClusterInternal(clusterName, getDatabase());
 
     return this;
   }
