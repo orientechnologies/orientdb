@@ -37,8 +37,6 @@
         <developer>
             <id>l.garulli</id>
             <name>Luca Garulli</name>
-            <organization>ArcadeDB</organization>
-            <organizationUrl>https://www.arcadedb.com</organizationUrl>
             <roles>
                 <role>founder</role>
                 <role>architect</role>
