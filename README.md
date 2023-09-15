@@ -13,7 +13,7 @@
 
 ## Is OrientDB a Relational DBMS?
 
-No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports [ACID Transactions](https://orientdb.org/docs/3.1.x/internals/Transactions.html) and [SQL](https://orientdb.org/docs/3.1.x/sql/) as query language. In this way it's easy to start using it without having to learn too much new stuff. 
+No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports [ACID Transactions](https://orientdb.org/docs/3.2.x/internals/Transactions.html) and [SQL](https://orientdb.org/docs/3.2.x/sql/) as query language. In this way it's easy to start using it without having to learn too much new stuff. 
 
 ## Scalability: the database is the bottleneck of most applications
 
@@ -30,6 +30,13 @@ Yes. OrientDB is totally written in [Java](http://en.wikipedia.org/wiki/Java_%28
 - For any questions visit the [OrientDB Community Group](https://github.com/orientechnologies/orientdb/discussions)
 
 [Get started with OrientDB](http://orientdb.org/docs/3.1.x/gettingstarted/).
+
+--------
+## Contributing
+
+For the guide to contributing to OrientDB checkout the [CONTRIBUTING.MD](https://github.com/orientechnologies/orientdb/blob/develop/CONTRIBUTING.md)
+
+All the contribution are considered licensed under Apache-2 license if not stated otherwise.
 
 --------
 
@@ -62,8 +69,6 @@ References:
 [![](http://s1.softpedia-static.com/_img/sp100free.png?1)](http://www.softpedia.com/get/Internet/Servers/Database-Utils/OrientDB.shtml#status)
 
 --------
-
-[![security status](https://www.meterian.io/badge/gh/orientechnologies/orientdb/security)](https://www.meterian.io/report/gh/orientechnologies/orientdb) | [![stability status](https://www.meterian.io/badge/gh/orientechnologies/orientdb/stability)](https://www.meterian.io/report/gh/orientechnologies/orientdb)
 
 
 ### Reference
