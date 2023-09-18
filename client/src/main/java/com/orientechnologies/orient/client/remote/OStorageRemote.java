@@ -2066,9 +2066,9 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
     ODatabaseDocumentInternal db = null;
     if (ODatabaseRecordThreadLocal.instance() != null)
       db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    ODatabaseDocumentRemote remote =
-        (ODatabaseDocumentRemote) ODatabaseDocumentTxInternal.getInternal(db);
-    if (remote == null) return null;
+    ODatabaseDocumentInternal internal = ODatabaseDocumentTxInternal.getInternal(db);
+    if (internal == null || !(internal instanceof ODatabaseDocumentRemote)) return null;
+    ODatabaseDocumentRemote remote = (ODatabaseDocumentRemote) internal;
     OStorageRemoteSession session = remote.getSessionMetadata();
     if (session == null) {
       session = new OStorageRemoteSession(sessionSerialId.decrementAndGet());
