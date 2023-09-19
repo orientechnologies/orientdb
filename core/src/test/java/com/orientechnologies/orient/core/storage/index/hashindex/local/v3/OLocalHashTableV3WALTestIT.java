@@ -4,6 +4,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -79,12 +80,16 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
     // orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
     databaseDocumentTx =
         orientDB.open(ACTUAL_DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    ((ODatabaseDocumentInternal) databaseDocumentTx).getSharedContext().getViewManager().close();
 
     OCreateDatabaseUtil.createDatabase(EXPECTED_DB_NAME, orientDB, OCreateDatabaseUtil.TYPE_PLOCAL);
     // orientDB.create(EXPECTED_DB_NAME, ODatabaseType.PLOCAL);
     expectedDatabaseDocumentTx =
         orientDB.open(EXPECTED_DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-
+    ((ODatabaseDocumentInternal) expectedDatabaseDocumentTx)
+        .getSharedContext()
+        .getViewManager()
+        .close();
     expectedStorage =
         ((OLocalPaginatedStorage) ((ODatabaseInternal<?>) expectedDatabaseDocumentTx).getStorage());
     actualStorage =
