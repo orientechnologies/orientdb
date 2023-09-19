@@ -23,7 +23,7 @@ public class FetchFromDistributedMetadataStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    if (resultSet != null) {
+    if (resultSet == null) {
       getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
       resultSet = new OProduceOneResult(() -> produce(ctx), true);
     }
