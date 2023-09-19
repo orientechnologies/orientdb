@@ -6339,15 +6339,17 @@ public abstract class OAbstractPaginatedStorage
     for (final Map.Entry<String, OTransactionIndexChanges> entry : indexes.entrySet()) {
       final String indexName = entry.getKey();
       final OIndexInternal index = entry.getValue().resolveAssociatedIndex(indexName, manager, db);
-      try {
-        OBaseIndexEngine engine = getIndexEngine(index.getIndexId());
+      if (index != null) {
+        try {
+          OBaseIndexEngine engine = getIndexEngine(index.getIndexId());
 
-        if (!index.isUnique() && engine.hasRidBagTreesSupport()) {
-          atomicOperationsManager.acquireExclusiveLockTillOperationComplete(
-              atomicOperation, OIndexRIDContainerSBTree.generateLockName(indexName));
+          if (!index.isUnique() && engine.hasRidBagTreesSupport()) {
+            atomicOperationsManager.acquireExclusiveLockTillOperationComplete(
+                atomicOperation, OIndexRIDContainerSBTree.generateLockName(indexName));
+          }
+        } catch (OInvalidIndexEngineIdException e) {
+          throw logAndPrepareForRethrow(e, false);
         }
-      } catch (OInvalidIndexEngineIdException e) {
-        throw logAndPrepareForRethrow(e, false);
       }
     }
   }
