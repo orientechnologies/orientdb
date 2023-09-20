@@ -26,6 +26,31 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.23- (September, 21 2023)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3223---21-September-2023
+
+# Core
+ - Optimization to avoid load record from indexes that do not match the target class
+ - Correct delete query in new query engine to consider also binary record
+ - Avoid to create temporary records in query engine equal operator
+ - Correct the delete edge with single from or to
+ - Correct optimization of count queries, issue #10021
+ - Moved logic for truncate cluster to the database layer
+ - Avoid to scan all the database files for identify a database, issue #10024
+ - Add check to avoid to try lock not existing ridbags
+
+# Remote
+ - Avoid to cast to the underlying specific type while reading a ridbag from the network, issue #9499
+ - Minor fix for lookup of remote session from thread local
+
+# Lucene
+ - Make sure that lucene functions do no fail when no class is defined
+
+# Distributed
+ - Correct distributed metadata query
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.22 - (August, 17 2023)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3222---17-August-2023
