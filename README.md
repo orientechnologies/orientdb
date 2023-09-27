@@ -1,6 +1,8 @@
 ## OrientDB
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![REUSE status](https://api.reuse.software/badge/github.com/orientechnologies/orientdb)](https://api.reuse.software/info/github.com/orientechnologies/orientdb)
+
 ------
 
 <!---<img src="http://orientdb.com/orientdb-studio_800px.png">-->
