@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OServer;
@@ -83,7 +84,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
 
   @Test
   public void createDropClassTest() throws IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:localhost/" + TESTDB);
+    ODatabaseDocument db = new ODatabaseDocumentTx("remote:localhost/" + TESTDB);
     db.open("admin", "admin");
 
     server.getSystemDatabase().execute(null, "delete from OAuditingLog where database = ?", TESTDB);

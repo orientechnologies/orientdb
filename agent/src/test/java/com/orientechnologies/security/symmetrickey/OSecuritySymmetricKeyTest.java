@@ -2,6 +2,7 @@ package com.orientechnologies.security.symmetrickey;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
@@ -73,7 +74,7 @@ public class OSecuritySymmetricKeyTest extends AbstractSecurityTest {
     OSymmetricKey sk = new OSymmetricKey("AES", "AAC7LeGkFbmHEYNTz5GwDw==");
 
     // "test" is the username.  It's specified in the security.json resource file.
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     // We encrypt the username and specify the Base64-encoded JSON document as the password.
     db.open("test", sk.encrypt("AES/CBC/PKCS5Padding", "test"));
     db.close();
@@ -85,7 +86,7 @@ public class OSecuritySymmetricKeyTest extends AbstractSecurityTest {
     OSymmetricKey sk = new OSymmetricKey("AES", "8BC7LeGkFbmHEYNTz5GwDw==");
 
     // "test" is the username.  It's specified in the security.json resource file.
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     // We encrypt the username and specify the Base64-encoded JSON document as the password.
     db.open("test", sk.encrypt("AES/CBC/PKCS5Padding", "test"));
     db.close();
@@ -97,7 +98,7 @@ public class OSecuritySymmetricKeyTest extends AbstractSecurityTest {
         OSymmetricKey.fromStream("AES", new FileInputStream(SERVER_DIRECTORY + "/config/AES.key"));
 
     // "test2" is the username.  It's specified in the security.json resource file.
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     // We encrypt the username and specify the Base64-encoded JSON document as the password.
     db.open("test2", sk.encrypt("AES/CBC/PKCS5Padding", "test2"));
     db.close();
@@ -113,7 +114,7 @@ public class OSecuritySymmetricKeyTest extends AbstractSecurityTest {
             "password");
 
     // "test3" is the username.  It's specified in the security.json resource file.
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     // We encrypt the username and specify the Base64-encoded JSON document as the password.
     db.open("test3", sk.encrypt("AES/CBC/PKCS5Padding", "test3"));
     db.close();

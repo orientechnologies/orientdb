@@ -2,6 +2,7 @@ package com.orientechnologies.security.symmetrickey;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
 import com.orientechnologies.orient.server.OServer;
@@ -120,7 +121,7 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
         OSymmetricKey.fromStream("AES", new FileInputStream(SERVER_DIRECTORY + "/config/AES.key"));
 
     // "sysuser" is the username.  We just created it in OSystem.
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     // We encrypt the username and specify the Base64-encoded JSON document as the password.
     db.open(sysuser, sk.encrypt("AES/CBC/PKCS5Padding", sysuser));
     db.close();
@@ -153,7 +154,7 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
             "password");
 
     // "sysuser" is the username.  We just created it in OSystem.
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     // We encrypt the username and specify the Base64-encoded JSON document as the password.
     db.open(sysuser, sk.encrypt("AES/CBC/PKCS5Padding", sysuser));
     db.close();

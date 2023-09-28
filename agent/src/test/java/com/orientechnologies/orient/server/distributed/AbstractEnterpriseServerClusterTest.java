@@ -25,7 +25,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -320,17 +322,17 @@ public abstract class AbstractEnterpriseServerClusterTest {
 
   protected void executeWhen(
       int serverId,
-      OCallable<Boolean, ODatabaseDocumentTx> condition,
-      OCallable<Boolean, ODatabaseDocumentTx> action)
+      OCallable<Boolean, ODatabaseDocument> condition,
+      OCallable<Boolean, ODatabaseDocument> action)
       throws Exception {
-    final ODatabaseDocumentTx db =
+    final ODatabaseDocument db =
         new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId)))
             .open("admin", "admin");
     try {
       executeWhen(db, condition, action);
     } finally {
       if (!db.isClosed()) {
-        ODatabaseRecordThreadLocal.instance().set(db);
+        ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) db);
         db.close();
         ODatabaseRecordThreadLocal.instance().set(null);
       }
@@ -338,9 +340,9 @@ public abstract class AbstractEnterpriseServerClusterTest {
   }
 
   protected void executeWhen(
-      final ODatabaseDocumentTx db,
-      OCallable<Boolean, ODatabaseDocumentTx> condition,
-      OCallable<Boolean, ODatabaseDocumentTx> action) {
+      final ODatabaseDocument db,
+      OCallable<Boolean, ODatabaseDocument> condition,
+      OCallable<Boolean, ODatabaseDocument> action) {
     while (true) {
       db.activateOnCurrentThread();
       if (condition.call(db)) {
@@ -407,10 +409,10 @@ public abstract class AbstractEnterpriseServerClusterTest {
 
   protected void waitFor(
       final int serverId,
-      final OCallable<Boolean, ODatabaseDocumentTx> condition,
+      final OCallable<Boolean, ODatabaseDocument> condition,
       final long timeout) {
     try {
-      ODatabaseDocumentTx db =
+      ODatabaseDocument db =
           new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId)))
               .open("admin", "admin");
       try {
@@ -437,7 +439,7 @@ public abstract class AbstractEnterpriseServerClusterTest {
 
       } finally {
         if (!db.isClosed()) {
-          ODatabaseRecordThreadLocal.instance().set(db);
+          ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) db);
           db.close();
           ODatabaseRecordThreadLocal.instance().set(null);
         }

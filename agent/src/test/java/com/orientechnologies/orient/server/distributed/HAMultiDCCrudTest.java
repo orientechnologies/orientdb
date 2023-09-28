@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -66,7 +67,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     Assert.assertTrue(austinDc.contains("usa-1"));
     Assert.assertTrue(austinDc.contains("usa-2"));
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:localhost:2424/" + getDatabaseName());
+    ODatabaseDocument db = new ODatabaseDocumentTx("remote:localhost:2424/" + getDatabaseName());
     db.open("admin", "admin");
     try {
       db.command("INSERT into Item (name) values ('foo')").close();
