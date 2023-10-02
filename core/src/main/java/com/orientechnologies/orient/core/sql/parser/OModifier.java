@@ -472,7 +472,7 @@ public class OModifier extends SimpleNode {
 
   public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
     if (suffix != null && suffix.isBaseIdentifier()) {
-      OProperty prop = clazz.getProperty(suffix.identifier.getStringValue());
+      OProperty prop = clazz.getProperty(suffix.getIdentifier().getStringValue());
       if (prop != null
           && prop.getAllIndexes().stream()
               .anyMatch(idx -> idx.getDefinition().getFields().size() == 1)) {

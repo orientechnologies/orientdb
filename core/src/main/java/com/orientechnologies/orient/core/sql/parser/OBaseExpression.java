@@ -22,7 +22,7 @@ public class OBaseExpression extends OMathExpression {
 
   protected ONumber number;
 
-  protected OBaseIdentifier identifier;
+  private OBaseIdentifier identifier;
 
   protected OInputParameter inputParam;
 
@@ -383,8 +383,8 @@ public class OBaseExpression extends OMathExpression {
 
   public List<String> getMatchPatternInvolvedAliases() {
     if (this.identifier != null && this.identifier.toString().equals("$matched")) {
-      if (modifier != null && modifier.suffix != null && modifier.suffix.identifier != null) {
-        return Collections.singletonList(modifier.suffix.identifier.toString());
+      if (modifier != null && modifier.suffix != null && modifier.suffix.getIdentifier() != null) {
+        return Collections.singletonList(modifier.suffix.getIdentifier().toString());
       }
     }
     return Collections.emptyList();
@@ -499,7 +499,7 @@ public class OBaseExpression extends OMathExpression {
       return false;
     }
     if (identifier.isIndexChain(ctx, clazz)) {
-      OProperty prop = clazz.getProperty(identifier.getSuffix().identifier.getStringValue());
+      OProperty prop = clazz.getProperty(identifier.getSuffix().getIdentifier().getStringValue());
       OClass linkedClass = prop.getLinkedClass();
       if (linkedClass != null) {
         return modifier.isIndexChain(ctx, linkedClass);

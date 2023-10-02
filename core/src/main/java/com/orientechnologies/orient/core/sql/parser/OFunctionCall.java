@@ -50,10 +50,10 @@ public class OFunctionCall extends SimpleNode {
       return false;
     }
     OBaseExpression base = (OBaseExpression) param.mathExpression;
-    if (base.identifier == null || base.identifier.suffix == null) {
+    if (base.getIdentifier() == null || base.getIdentifier().suffix == null) {
       return false;
     }
-    return base.identifier.suffix.star;
+    return base.getIdentifier().suffix.star;
   }
 
   public List<OExpression> getParams() {
@@ -381,7 +381,7 @@ public class OFunctionCall extends SimpleNode {
     OBaseIdentifier l1 = new OBaseIdentifier(-1);
     l1.levelZero = l0;
     OBaseExpression l2 = new OBaseExpression(-1);
-    l2.identifier = l1;
+    l2.setIdentifier(l1);
     OExpression l3 = new OExpression(-1);
     l3.mathExpression = l2;
     OProjectionItem item = new OProjectionItem(-1);

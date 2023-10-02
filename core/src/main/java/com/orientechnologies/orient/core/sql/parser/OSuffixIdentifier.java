@@ -464,6 +464,10 @@ public class OSuffixIdentifier extends SimpleNode {
     return identifier;
   }
 
+  public void setIdentifier(OIdentifier identifier) {
+    this.identifier = identifier;
+  }
+
   public boolean isCacheable() {
     return true;
   }

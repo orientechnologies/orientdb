@@ -55,9 +55,10 @@ public class OInputParameter extends SimpleNode {
       OExpression result = new OExpression(-1);
       OFunctionCall funct = new OFunctionCall(-1);
       result.mathExpression = new OBaseExpression(-1);
-      ((OBaseExpression) result.mathExpression).identifier = new OBaseIdentifier(-1);
-      ((OBaseExpression) result.mathExpression).identifier.levelZero = new OLevelZeroIdentifier(-1);
-      ((OBaseExpression) result.mathExpression).identifier.levelZero.functionCall = funct;
+      OBaseIdentifier identifier = new OBaseIdentifier(-1);
+      identifier.levelZero = new OLevelZeroIdentifier(-1);
+      identifier.levelZero.functionCall = funct;
+      ((OBaseExpression) result.mathExpression).setIdentifier(identifier);
       funct.name = new OIdentifier("decimal");
       OExpression stringExp = new OExpression(-1);
       stringExp.mathExpression = new OBaseExpression(((BigDecimal) value).toPlainString());

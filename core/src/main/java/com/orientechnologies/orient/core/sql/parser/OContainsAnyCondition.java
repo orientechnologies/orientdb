@@ -286,14 +286,17 @@ public class OContainsAnyCondition extends OBooleanExpression {
 
       result.left = new OExpression(-1);
       OBaseExpression base = new OBaseExpression(-1);
-      base.identifier = new OBaseIdentifier(-1);
-      base.identifier.suffix = new OSuffixIdentifier(-1);
-      base.identifier.suffix.identifier =
-          ((OBaseExpression) left.mathExpression).identifier.suffix.identifier;
+      OBaseIdentifier identifier = new OBaseIdentifier(-1);
+      identifier.suffix = new OSuffixIdentifier(-1);
+      identifier.suffix.setIdentifier(
+          ((OBaseExpression) left.mathExpression).getIdentifier().suffix.getIdentifier());
+      base.setIdentifier(identifier);
       result.left.mathExpression = base;
 
       OClass nextClazz =
-          clazz.getProperty(base.identifier.suffix.identifier.getStringValue()).getLinkedClass();
+          clazz
+              .getProperty(base.getIdentifier().suffix.getIdentifier().getStringValue())
+              .getLinkedClass();
       OParenthesisExpression newRight = new OParenthesisExpression(-1);
       newRight.statement =
           OBinaryCondition.indexChainToStatement(

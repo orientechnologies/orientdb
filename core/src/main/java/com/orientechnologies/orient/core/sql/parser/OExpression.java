@@ -177,9 +177,9 @@ public class OExpression extends SimpleNode {
       identifier =
           new OIdentifier(
               ((OBaseExpression) mathExpression)
-                  .identifier
+                  .getIdentifier()
                   .getSuffix()
-                  .identifier
+                  .getIdentifier()
                   .getStringValue());
     } else {
       identifier = new OIdentifier(this.toString());

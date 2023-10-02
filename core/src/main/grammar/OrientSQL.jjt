@@ -2310,11 +2310,11 @@ OLevelZeroIdentifier LevelZeroIdentifier():
 }
 
 OSuffixIdentifier SuffixIdentifier():
-{}
+{OIdentifier identifier;}
 {
     (
         LOOKAHEAD( Identifier() )
-        jjtThis.identifier = Identifier()
+        identifier =Identifier() { jjtThis.setIdentifier(identifier); }
         |
         LOOKAHEAD( RecordAttribute() )
         jjtThis.recordAttribute = RecordAttribute()
@@ -2516,13 +2516,13 @@ OMathExpression ParenthesisExpression():
 }
 
 OBaseExpression BaseExpression():
-{}
+{OBaseIdentifier identifier;}
 {
     (
         jjtThis.number = Number()
         |
         (
-    	    jjtThis.identifier = BaseIdentifier()
+    	    identifier = BaseIdentifier() { jjtThis.setIdentifier(identifier);}
     	    [
     	        LOOKAHEAD( Modifier() )
     	        jjtThis.modifier = Modifier()
@@ -2601,6 +2601,7 @@ OFromItem FromItem():
     jjtThis.inputParams = new java.util.ArrayList();
     ORid lastRid;
     OInputParameter lastParam;
+    OIdentifier identifier;
 }
 {
     (
@@ -2658,7 +2659,7 @@ OFromItem FromItem():
         )
     	|
     	(
-            jjtThis.identifier = Identifier()
+            identifier = Identifier() {jjtThis.setIdentifier(identifier); }
             [
                 LOOKAHEAD( Modifier() )
                 jjtThis.modifier = Modifier()
@@ -5295,41 +5296,41 @@ OWhileBlock WhileBlock():
 
 
 OSecurityResourceSegment SecurityResourceSegment():
-{}
+{OIdentifier identifier;}
 {
     (
         (
             <STAR> { jjtThis.star = true; }
             |
-            jjtThis.identifier = Identifier()
+            identifier = Identifier() {jjtThis.setIdentifier(identifier); }
             |
-            token = <CLUSTER> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <CLUSTER> { jjtThis.setIdentifier( new OIdentifier(token.image)); }
             |
-            token = <CREATE> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <CREATE> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <DELETE> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <DELETE> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <INSERT> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <INSERT> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <SELECT> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <SELECT> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <LIKE> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <LIKE> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <VERTEX> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <VERTEX> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <EDGE> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <EDGE> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <CONTAINS> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <CONTAINS> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <CONTAINSALL> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <CONTAINSALL> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <CONTAINSANY> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <CONTAINSANY> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <CONTAINSKEY> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <CONTAINSKEY> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <CONTAINSVALUE> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <CONTAINSVALUE> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
             |
-            token = <FROM> { jjtThis.identifier = new OIdentifier(token.image); }
+            token = <FROM> { jjtThis.setIdentifier(new OIdentifier(token.image)); }
         )
         [
           <DOT>

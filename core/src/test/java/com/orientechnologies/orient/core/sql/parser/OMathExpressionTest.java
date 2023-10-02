@@ -197,21 +197,6 @@ public class OMathExpressionTest {
     return new OBaseExpression(-1);
   }
 
-  private OMathExpression list(Number... values) {
-    OBaseExpression exp = new OBaseExpression(-1);
-    exp.identifier = new OBaseIdentifier(-1);
-    exp.identifier.levelZero = new OLevelZeroIdentifier(-1);
-    OCollection coll = new OCollection(-1);
-    exp.identifier.levelZero.collection = coll;
-
-    for (Number val : values) {
-      OExpression sub = new OExpression(-1);
-      sub.mathExpression = integer(val);
-      coll.expressions.add(sub);
-    }
-    return exp;
-  }
-
   @Test
   public void testNullCoalescing() {
     testNullCoalescingGeneric(integer(20), integer(15), 20);

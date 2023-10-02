@@ -387,7 +387,7 @@ public class OBaseIdentifier extends SimpleNode {
 
   public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
     if (suffix != null && suffix.isBaseIdentifier()) {
-      OProperty prop = clazz.getProperty(suffix.identifier.getStringValue());
+      OProperty prop = clazz.getProperty(suffix.getIdentifier().getStringValue());
       if (prop == null) {
         return false;
       }

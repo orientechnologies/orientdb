@@ -57,6 +57,10 @@ public class OSecurityResourceSegment extends SimpleNode {
     }
   }
 
+  public void setIdentifier(OIdentifier identifier) {
+    this.identifier = identifier;
+  }
+
   @Override
   public OSecurityResourceSegment copy() {
     OSecurityResourceSegment result = new OSecurityResourceSegment(-1);

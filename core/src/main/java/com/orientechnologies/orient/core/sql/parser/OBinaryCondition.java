@@ -254,7 +254,7 @@ public class OBinaryCondition extends OBooleanExpression {
       OUpdateItem result = new OUpdateItem(-1);
       result.operator = OUpdateItem.OPERATOR_EQ;
       OBaseExpression baseExp = ((OBaseExpression) left.mathExpression);
-      result.left = baseExp.identifier.suffix.identifier.copy();
+      result.left = baseExp.getIdentifier().suffix.getIdentifier().copy();
       result.leftModifier = baseExp.modifier == null ? null : baseExp.modifier.copy();
       result.right = right.copy();
       return Optional.of(result);
@@ -269,9 +269,9 @@ public class OBinaryCondition extends OBooleanExpression {
       return false;
     }
     OBaseExpression base = (OBaseExpression) left.mathExpression;
-    if (base.identifier == null
-        || base.identifier.suffix == null
-        || base.identifier.suffix.identifier == null) {
+    if (base.getIdentifier() == null
+        || base.getIdentifier().suffix == null
+        || base.getIdentifier().suffix.getIdentifier() == null) {
       return false;
     }
     return true;
@@ -346,7 +346,7 @@ public class OBinaryCondition extends OBooleanExpression {
       OExpression newLeft = new OExpression(-1);
       newLeft.mathExpression = new OBaseExpression(-1);
       OBaseIdentifier identifirer = new OBaseIdentifier(-1);
-      ((OBaseExpression) newLeft.mathExpression).identifier = identifirer;
+      ((OBaseExpression) newLeft.mathExpression).setIdentifier(identifirer);
       identifirer.levelZero = new OLevelZeroIdentifier(-1);
       OFunctionCall function = new OFunctionCall(-1);
       identifirer.levelZero.functionCall = function;
@@ -364,23 +364,25 @@ public class OBinaryCondition extends OBooleanExpression {
 
   private OExpression fieldNamesToStrings(OExpression left) {
     if (left.isBaseIdentifier()) {
-      OIdentifier identifier = ((OBaseExpression) left.mathExpression).identifier.suffix.identifier;
+      OIdentifier identifier =
+          ((OBaseExpression) left.mathExpression).getIdentifier().suffix.getIdentifier();
       OCollection newColl = new OCollection(-1);
       newColl.expressions = new ArrayList<>();
       newColl.expressions.add(identifierToStringExpr(identifier));
       OExpression result = new OExpression(-1);
       OBaseExpression newBase = new OBaseExpression(-1);
       result.mathExpression = newBase;
-      newBase.identifier = new OBaseIdentifier(-1);
-      newBase.identifier.levelZero = new OLevelZeroIdentifier(-1);
-      newBase.identifier.levelZero.collection = newColl;
+      OBaseIdentifier newIdentifier = new OBaseIdentifier(-1);
+      newIdentifier.levelZero = new OLevelZeroIdentifier(-1);
+      newIdentifier.levelZero.collection = newColl;
+      newBase.setIdentifier(newIdentifier);
       return result;
     } else if (left.mathExpression instanceof OBaseExpression) {
       OBaseExpression base = (OBaseExpression) left.mathExpression;
-      if (base.identifier != null
-          && base.identifier.levelZero != null
-          && base.identifier.levelZero.collection != null) {
-        OCollection coll = base.identifier.levelZero.collection;
+      if (base.getIdentifier() != null
+          && base.getIdentifier() != null
+          && base.getIdentifier().levelZero.collection != null) {
+        OCollection coll = base.getIdentifier().levelZero.collection;
 
         OCollection newColl = new OCollection(-1);
         newColl.expressions = new ArrayList<>();
@@ -388,7 +390,7 @@ public class OBinaryCondition extends OBooleanExpression {
         for (OExpression exp : coll.expressions) {
           if (exp.isBaseIdentifier()) {
             OIdentifier identifier =
-                ((OBaseExpression) exp.mathExpression).identifier.suffix.identifier;
+                ((OBaseExpression) exp.mathExpression).getIdentifier().suffix.getIdentifier();
             OExpression val = identifierToStringExpr(identifier);
             newColl.expressions.add(val);
           } else {
@@ -399,9 +401,10 @@ public class OBinaryCondition extends OBooleanExpression {
         OExpression result = new OExpression(-1);
         OBaseExpression newBase = new OBaseExpression(-1);
         result.mathExpression = newBase;
-        newBase.identifier = new OBaseIdentifier(-1);
-        newBase.identifier.levelZero = new OLevelZeroIdentifier(-1);
-        newBase.identifier.levelZero.collection = newColl;
+        OBaseIdentifier newIdentifier = new OBaseIdentifier(-1);
+        newIdentifier.levelZero = new OLevelZeroIdentifier(-1);
+        newIdentifier.levelZero.collection = newColl;
+        newBase.setIdentifier(newIdentifier);
         return result;
       }
     }
@@ -452,16 +455,19 @@ public class OBinaryCondition extends OBooleanExpression {
 
       result.left = new OExpression(-1);
       OBaseExpression base = new OBaseExpression(-1);
-      base.identifier = new OBaseIdentifier(-1);
-      base.identifier.suffix = new OSuffixIdentifier(-1);
-      base.identifier.suffix.identifier =
-          ((OBaseExpression) left.mathExpression).identifier.suffix.identifier;
+      OBaseIdentifier identifier = new OBaseIdentifier(-1);
+      identifier.suffix = new OSuffixIdentifier(-1);
+      identifier.suffix.setIdentifier(
+          ((OBaseExpression) left.mathExpression).getIdentifier().suffix.getIdentifier());
+      base.setIdentifier(identifier);
       result.left.mathExpression = base;
 
       result.operator = new OInOperator(-1);
 
       OClass nextClazz =
-          clazz.getProperty(base.identifier.suffix.identifier.getStringValue()).getLinkedClass();
+          clazz
+              .getProperty(base.getIdentifier().suffix.getIdentifier().getStringValue())
+              .getLinkedClass();
       result.rightStatement =
           indexChainToStatement(
               ((OBaseExpression) left.mathExpression).modifier, nextClazz, right, ctx);
@@ -487,8 +493,8 @@ public class OBinaryCondition extends OBooleanExpression {
 
     base.left = new OExpression(-1);
     base.left.mathExpression = new OBaseExpression(-1);
-    ((OBaseExpression) base.left.mathExpression).identifier =
-        new OBaseIdentifier(modifier.suffix.identifier);
+    ((OBaseExpression) base.left.mathExpression)
+        .setIdentifier(new OBaseIdentifier(modifier.suffix.getIdentifier()));
     ((OBaseExpression) base.left.mathExpression).modifier =
         modifier.next == null ? null : modifier.next.copy();
 
