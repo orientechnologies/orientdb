@@ -113,6 +113,7 @@ public class OResultInternal implements OResult {
   }
 
   public <T> T getProperty(String name) {
+    loadElement();
     T result = null;
     if (content != null && content.containsKey(name)) {
       result = (T) wrap(content.get(name));
@@ -127,6 +128,7 @@ public class OResultInternal implements OResult {
 
   @Override
   public OElement getElementProperty(String name) {
+    loadElement();
     Object result = null;
     if (content != null && content.containsKey(name)) {
       result = content.get(name);
@@ -147,6 +149,7 @@ public class OResultInternal implements OResult {
 
   @Override
   public OVertex getVertexProperty(String name) {
+    loadElement();
     Object result = null;
     if (content != null && content.containsKey(name)) {
       result = content.get(name);
@@ -167,6 +170,7 @@ public class OResultInternal implements OResult {
 
   @Override
   public OEdge getEdgeProperty(String name) {
+    loadElement();
     Object result = null;
     if (content != null && content.containsKey(name)) {
       result = content.get(name);
@@ -187,6 +191,7 @@ public class OResultInternal implements OResult {
 
   @Override
   public OBlob getBlobProperty(String name) {
+    loadElement();
     Object result = null;
     if (content != null && content.containsKey(name)) {
       result = content.get(name);
@@ -205,7 +210,7 @@ public class OResultInternal implements OResult {
     return result instanceof OBlob ? (OBlob) result : null;
   }
 
-  private Object wrap(Object input) {
+  private static Object wrap(Object input) {
     if (input instanceof OElement && !((OElement) input).getIdentity().isValid()) {
       OResultInternal result = new OResultInternal();
       OElement elem = (OElement) input;
@@ -215,9 +220,9 @@ public class OResultInternal implements OResult {
       elem.getSchemaType().ifPresent(x -> result.setProperty("@class", x.getName()));
       return result;
     } else if (isEmbeddedList(input)) {
-      return ((List) input).stream().map(this::wrap).collect(Collectors.toList());
+      return ((List) input).stream().map(OResultInternal::wrap).collect(Collectors.toList());
     } else if (isEmbeddedSet(input)) {
-      return ((Set) input).stream().map(this::wrap).collect(Collectors.toSet());
+      return ((Set) input).stream().map(OResultInternal::wrap).collect(Collectors.toSet());
     } else if (isEmbeddedMap(input)) {
       Map result = new HashMap();
       for (Map.Entry<Object, Object> o : ((Map<Object, Object>) input).entrySet()) {
@@ -228,19 +233,20 @@ public class OResultInternal implements OResult {
     return input;
   }
 
-  private boolean isEmbeddedSet(Object input) {
+  private static boolean isEmbeddedSet(Object input) {
     return OType.getTypeByValue(input) == OType.EMBEDDEDSET && input instanceof Set;
   }
 
-  private boolean isEmbeddedMap(Object input) {
+  private static boolean isEmbeddedMap(Object input) {
     return OType.getTypeByValue(input) == OType.EMBEDDEDMAP && input instanceof Map;
   }
 
-  private boolean isEmbeddedList(Object input) {
+  private static boolean isEmbeddedList(Object input) {
     return OType.getTypeByValue(input) == OType.EMBEDDEDLIST && input instanceof List;
   }
 
   public Set<String> getPropertyNames() {
+    loadElement();
     if (element != null && !(element instanceof ORecordBytes)) {
       return ((ODocument) element.getRecord()).getPropertyNames();
     } else if (content != null) {
@@ -251,6 +257,7 @@ public class OResultInternal implements OResult {
   }
 
   public boolean hasProperty(String propName) {
+    loadElement();
     if (element != null && ((ODocument) element.getRecord()).containsField(propName)) {
       return true;
     }
@@ -275,6 +282,7 @@ public class OResultInternal implements OResult {
   }
 
   public Optional<OElement> getElement() {
+    loadElement();
     if (element == null || element instanceof OElement) {
       return Optional.ofNullable((OElement) element);
     }
@@ -422,15 +430,19 @@ public class OResultInternal implements OResult {
     return property;
   }
 
-  public void setElement(OIdentifiable element) {
-    if (element instanceof OElement) {
-      this.element = element;
-    } else {
-      this.element = element.getRecord();
+  public void loadElement() {
+    if (element == null || element instanceof OElement) {
+      return;
     }
     if (element instanceof OContextualRecordId) {
       this.addMetadata(((OContextualRecordId) element).getContext());
     }
+    this.element = element.getRecord();
+  }
+
+  public void setElement(OIdentifiable element) {
+    this.element = element;
+    //    loadElement();
     this.content = null;
   }
 
