@@ -55,10 +55,10 @@ public interface OResult {
   OEdge getEdgeProperty(String name);
 
   /**
-   * returns an OEdge property from the result
+   * returns an OBlob property from the result
    *
    * @param name the property name
-   * @return the property value. Null if the property is not defined or if it's not an OEdge
+   * @return the property value. Null if the property is not defined or if it's not an OBlob
    */
   OBlob getBlobProperty(String name);
 
