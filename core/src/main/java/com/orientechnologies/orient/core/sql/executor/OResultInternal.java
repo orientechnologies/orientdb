@@ -118,7 +118,7 @@ public class OResultInternal implements OResult {
     if (content != null && content.containsKey(name)) {
       result = (T) wrap(content.get(name));
     } else if (element != null) {
-      result = (T) wrap(((ODocument) element.getRecord()).getProperty(name));
+      result = (T) wrap(((ODocument) element.getRecord()).rawField(name));
     }
     if (result instanceof OIdentifiable && ((OIdentifiable) result).getIdentity().isPersistent()) {
       result = (T) ((OIdentifiable) result).getIdentity();
