@@ -153,8 +153,8 @@ public class OEdgeDelegate implements OEdge {
     ODatabaseDocument db = getDatabase();
     OVertex from = getFrom();
     OVertex to = getTo();
-    OVertexDelegate.detachOutgointEdge(from, this);
-    OVertexDelegate.detachIncomingEdge(to, this);
+    OVertexDocument.detachOutgointEdge(from, this);
+    OVertexDocument.detachIncomingEdge(to, this);
     this.element =
         ((ODatabaseDocumentInternal) db)
             .newRegularEdge(

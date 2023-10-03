@@ -1161,8 +1161,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
             && (fields == null || fields.length == 0)
             && !forceRegular) {
           edge = newLightweightEdge(iClassName, from, to);
-          OVertexDelegate.createLink(from.getRecord(), to.getRecord(), outFieldName);
-          OVertexDelegate.createLink(to.getRecord(), from.getRecord(), inFieldName);
+          OVertexDocument.createLink(from.getRecord(), to.getRecord(), outFieldName);
+          OVertexDocument.createLink(to.getRecord(), from.getRecord(), inFieldName);
         } else {
           edge = newEdgeInternal(iClassName);
           edge.setProperty("out", currentVertex.getRecord());
@@ -1181,11 +1181,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
           if (!outDocumentModified) {
             // OUT-VERTEX ---> IN-VERTEX/EDGE
-            OVertexDelegate.createLink(outDocument, edge.getRecord(), outFieldName);
+            OVertexDocument.createLink(outDocument, edge.getRecord(), outFieldName);
           }
 
           // IN-VERTEX ---> OUT-VERTEX/EDGE
-          OVertexDelegate.createLink(inDocument, edge.getRecord(), inFieldName);
+          OVertexDocument.createLink(inDocument, edge.getRecord(), inFieldName);
         }
 
         // OK

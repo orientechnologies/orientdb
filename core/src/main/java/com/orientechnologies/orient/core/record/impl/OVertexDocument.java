@@ -1,20 +1,25 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -604,5 +609,132 @@ public class OVertexDocument extends ODocument implements OVertex {
   @Override
   public OVertexDocument copy() {
     return (OVertexDocument) copyTo(new OVertexDocument());
+  }
+
+  protected static void detachEdge(OVertex vertex, OEdge edge, String fieldPrefix) {
+    String className = edge.getSchemaType().get().getName();
+
+    if (className.equalsIgnoreCase("e")) {
+      className = "";
+    }
+    String edgeField = fieldPrefix + className;
+    Object edgeProp = vertex.getProperty(edgeField);
+    OIdentifiable edgeId = null;
+
+    edgeId = ((OIdentifiable) edge).getIdentity();
+    if (edgeId == null) {
+      // lightweight edge
+
+      OVertex out = edge.getFrom();
+      OVertex in = edge.getTo();
+      if (out != null && vertex.getIdentity().equals(out.getIdentity())) {
+        edgeId = (OIdentifiable) in;
+      } else {
+        edgeId = (OIdentifiable) out;
+      }
+    }
+
+    if (edgeProp instanceof Collection) {
+      ((Collection) edgeProp).remove(edgeId);
+    } else if (edgeProp instanceof ORidBag) {
+      ((ORidBag) edgeProp).remove(edgeId);
+    } else if (edgeProp instanceof OIdentifiable
+            && ((OIdentifiable) edgeProp).getIdentity() != null
+            && ((OIdentifiable) edgeProp).getIdentity().equals(edgeId)
+        || edge.isLightweight()) {
+      vertex.removeProperty(edgeField);
+    } else {
+      OLogManager.instance()
+          .warn(
+              vertex,
+              "Error detaching edge: the vertex collection field is of type "
+                  + (edgeProp == null ? "null" : edgeProp.getClass()));
+    }
+  }
+
+  protected static void detachIncomingEdge(OVertex vertex, OEdge edge) {
+    OVertexDocument.detachEdge(vertex, edge, "in_");
+  }
+
+  protected static void detachOutgointEdge(OVertex vertex, OEdge edge) {
+    OVertexDocument.detachEdge(vertex, edge, "out_");
+  }
+
+  /** (Internal only) Creates a link between a vertices and a Graph Element. */
+  public static Object createLink(
+      final ODocument iFromVertex, final OIdentifiable iTo, final String iFieldName) {
+    final Object out;
+    OType outType = iFromVertex.fieldType(iFieldName);
+    Object found = iFromVertex.field(iFieldName);
+
+    final OClass linkClass = ODocumentInternal.getImmutableSchemaClass(iFromVertex);
+    if (linkClass == null)
+      throw new IllegalArgumentException("Class not found in source vertex: " + iFromVertex);
+
+    final OProperty prop = linkClass.getProperty(iFieldName);
+    final OType propType = prop != null && prop.getType() != OType.ANY ? prop.getType() : null;
+
+    if (found == null) {
+      if (propType == OType.LINKLIST
+          || (prop != null
+              && "true".equalsIgnoreCase(prop.getCustom("ordered")))) { // TODO constant
+        final Collection coll = new ORecordLazyList(iFromVertex);
+        coll.add(iTo);
+        out = coll;
+        outType = OType.LINKLIST;
+      } else if (propType == null || propType == OType.LINKBAG) {
+        final ORidBag bag = new ORidBag();
+        bag.add(iTo);
+        out = bag;
+        outType = OType.LINKBAG;
+      } else if (propType == OType.LINK) {
+        out = iTo;
+        outType = OType.LINK;
+      } else
+        throw new ODatabaseException(
+            "Type of field provided in schema '"
+                + prop.getType()
+                + "' cannot be used for link creation.");
+
+    } else if (found instanceof OIdentifiable) {
+      if (prop != null && propType == OType.LINK)
+        throw new ODatabaseException(
+            "Type of field provided in schema '"
+                + prop.getType()
+                + "' cannot be used for creation to hold several links.");
+
+      if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) { // TODO constant
+        final Collection coll = new ORecordLazyList(iFromVertex);
+        coll.add(found);
+        coll.add(iTo);
+        out = coll;
+        outType = OType.LINKLIST;
+      } else {
+        final ORidBag bag = new ORidBag();
+        bag.add((OIdentifiable) found);
+        bag.add(iTo);
+        out = bag;
+        outType = OType.LINKBAG;
+      }
+    } else if (found instanceof ORidBag) {
+      // ADD THE LINK TO THE COLLECTION
+      out = null;
+
+      ((ORidBag) found).add(iTo.getRecord());
+
+    } else if (found instanceof Collection<?>) {
+      // USE THE FOUND COLLECTION
+      out = null;
+      ((Collection<Object>) found).add(iTo);
+
+    } else
+      throw new ODatabaseException(
+          "Relationship content is invalid on field " + iFieldName + ". Found: " + found);
+
+    if (out != null)
+      // OVERWRITE IT
+      iFromVertex.setProperty(iFieldName, out, outType);
+
+    return out;
   }
 }

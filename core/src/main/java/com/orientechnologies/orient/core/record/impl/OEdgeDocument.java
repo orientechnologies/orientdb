@@ -69,11 +69,11 @@ public class OEdgeDocument extends ODocument implements OEdge {
   public static void deleteLinks(OEdge delegate) {
     OVertex from = delegate.getFrom();
     if (from != null) {
-      OVertexDelegate.detachOutgointEdge(from, delegate);
+      OVertexDocument.detachOutgointEdge(from, delegate);
     }
     OVertex to = delegate.getTo();
     if (to != null) {
-      OVertexDelegate.detachIncomingEdge(to, delegate);
+      OVertexDocument.detachIncomingEdge(to, delegate);
     }
   }
 }
