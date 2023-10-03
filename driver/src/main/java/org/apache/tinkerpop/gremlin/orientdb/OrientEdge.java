@@ -2,13 +2,14 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
+import com.orientechnologies.orient.core.record.impl.OEdgeDocument;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -64,8 +65,7 @@ public final class OrientEdge extends OrientElement implements Edge {
 
   protected static OEdge createRawElement(OGraph graph, String label) {
     String className = graph.createEdgeClass(label);
-    OEdgeDelegate delegate = new OEdgeDelegate(new ODocument(className));
-    return delegate;
+    return new OEdgeDocument((ODatabaseSession) graph.getRawDatabase(), className);
   }
 
   @Override
