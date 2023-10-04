@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OMatchFilter;
 import com.orientechnologies.orient.core.sql.parser.OMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.OMatchPathItemFirst;
@@ -21,7 +22,7 @@ public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
     super(lastUpstreamRecord, edge);
   }
 
-  protected Iterable<OResultInternal> traversePatternEdge(
+  protected OExecutionStream traversePatternEdge(
       OIdentifiable startingPoint, OCommandContext iCommandContext) {
 
     Iterable possibleResults = null;
@@ -39,14 +40,14 @@ public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
     //    }
 
     OMultiMatchPathItem item = (OMultiMatchPathItem) this.item;
-    List<OResultInternal> result = new ArrayList<>();
+    List<OResult> result = new ArrayList<>();
 
     List<Object> nextStep = new ArrayList<>();
     nextStep.add(startingPoint);
 
     Object oldCurrent = iCommandContext.getVariable("$current");
     for (OMatchPathItem sub : item.getItems()) {
-      List<OResultInternal> rightSide = new ArrayList<>();
+      List<OResult> rightSide = new ArrayList<>();
       for (Object o : nextStep) {
         OWhereClause whileCond =
             sub.getFilter() == null ? null : sub.getFilter().getWhileCondition();
@@ -62,9 +63,11 @@ public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
             current = ((OResult) current).getElement().orElse(null);
           }
           MatchEdgeTraverser subtraverser = new MatchEdgeTraverser(null, sub);
-          subtraverser
-              .executeTraversal(iCommandContext, sub, (OIdentifiable) current, 0, null)
-              .forEach(x -> rightSide.add(x));
+          OExecutionStream rightStream =
+              subtraverser.executeTraversal(iCommandContext, sub, (OIdentifiable) current, 0, null);
+          while (rightStream.hasNext(iCommandContext)) {
+            rightSide.add(rightStream.next(iCommandContext));
+          }
 
         } else {
           iCommandContext.setVariable("$current", o);
@@ -114,7 +117,7 @@ public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
     iCommandContext.setVariable("$current", oldCurrent);
     //    return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable)
     // qR);
-    return (Iterable) result;
+    return OExecutionStream.resultIterator(result.iterator());
   }
 
   private boolean matchesCondition(OResultInternal x, OMatchFilter filter, OCommandContext ctx) {

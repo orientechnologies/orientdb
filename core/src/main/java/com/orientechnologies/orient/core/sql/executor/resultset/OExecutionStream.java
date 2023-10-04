@@ -57,7 +57,7 @@ public interface OExecutionStream {
     return OEmptyExecutionStream.EMPTY;
   }
 
-  static OExecutionStream singleton(OResult result) {
+  public static OExecutionStream singleton(OResult result) {
     return new OSingletonExecutionStream(result);
   }
 

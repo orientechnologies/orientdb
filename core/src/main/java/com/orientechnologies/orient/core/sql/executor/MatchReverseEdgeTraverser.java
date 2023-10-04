@@ -2,12 +2,10 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /** Created by luigidellaquila on 15/10/16. */
 public class MatchReverseEdgeTraverser extends MatchEdgeTraverser {
@@ -38,36 +36,24 @@ public class MatchReverseEdgeTraverser extends MatchEdgeTraverser {
   }
 
   @Override
-  protected Iterable<OResultInternal> traversePatternEdge(
+  protected OExecutionStream traversePatternEdge(
       OIdentifiable startingPoint, OCommandContext iCommandContext) {
 
     Object qR = this.item.getMethod().executeReverse(startingPoint, iCommandContext);
     if (qR == null) {
-      return Collections.emptyList();
+      return OExecutionStream.empty();
     }
     if (qR instanceof OResultInternal) {
-      return Collections.singleton((OResultInternal) qR);
+      return OExecutionStream.singleton((OResultInternal) qR);
     }
     if (qR instanceof OIdentifiable) {
-      return Collections.singleton(new OResultInternal((OIdentifiable) qR));
+      return OExecutionStream.singleton(new OResultInternal((OIdentifiable) qR));
     }
     if (qR instanceof Iterable) {
       Iterable iterable = (Iterable) qR;
-      List<OResultInternal> result = new ArrayList<>();
-      for (Object o : iterable) {
-        if (o instanceof OIdentifiable) {
-          result.add(new OResultInternal((OIdentifiable) o));
-        } else if (o instanceof OResultInternal) {
-          result.add((OResultInternal) o);
-        } else if (o == null) {
-          continue;
-        } else {
-          throw new UnsupportedOperationException();
-        }
-      }
-      return result;
+      return OExecutionStream.iterator(iterable.iterator());
     }
-    return Collections.EMPTY_LIST;
+    return OExecutionStream.empty();
   }
 
   @Override
