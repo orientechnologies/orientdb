@@ -133,14 +133,14 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
       Iterator iterator = OMultiValue.getMultiValueIterator(value);
       while (iterator.hasNext()) {
         Object item = iterator.next();
-        if (value instanceof OIdentifiable) {
-          insertIntoIndex(index, key, (OIdentifiable) value);
+        if (item instanceof OIdentifiable) {
+          insertIntoIndex(index, key, (OIdentifiable) item);
           count++;
-        } else if (value instanceof OResult && ((OResult) value).isElement()) {
-          insertIntoIndex(index, key, ((OResult) value).getElement().get());
+        } else if (item instanceof OResult && ((OResult) item).isElement()) {
+          insertIntoIndex(index, key, ((OResult) item).getElement().get());
           count++;
         } else {
-          throw new OCommandExecutionException("Cannot insert into index " + value);
+          throw new OCommandExecutionException("Cannot insert into index " + item);
         }
       }
     }
