@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -156,8 +156,9 @@ public final class DistributedConfigReloadIT {
                 int deleteErrorCounter = 0;
                 try {
                   graph.command(sql).close();
-                  Iterable<OVertex> vtxs = graph.command(new OCommandSQL(sql)).execute();
-                  for (OVertex vtx : vtxs) {
+                  OResultSet vtxs = graph.query(sql);
+                  while (vtxs.hasNext()) {
+                    OVertex vtx = vtxs.next().getVertex().get();
                     boolean needRetry = true;
                     for (int i = 0; i < 10 && needRetry; i++) {
                       try {
@@ -216,10 +217,11 @@ public final class DistributedConfigReloadIT {
                 }
 
                 if (isSelectSuccessful) {
-                  graph.command(new OCommandSQL(sql)).execute();
-                  Iterable<OVertex> vtxs = graph.command(new OCommandSQL(sql)).execute();
+                  graph.command(sql).close();
+                  OResultSet vtxs = graph.command(sql);
                   ArrayList<String> vtxList = new ArrayList();
-                  for (OVertex vtx : vtxs) {
+                  while (vtxs.hasNext()) {
+                    OVertex vtx = vtxs.next().getVertex().get();
                     vtxList.add(vtx.toString());
                   }
                   if (vtxList.size() > 0) {
