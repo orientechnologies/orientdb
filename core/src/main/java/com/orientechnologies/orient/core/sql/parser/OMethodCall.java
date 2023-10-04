@@ -36,8 +36,10 @@ public class OMethodCall extends SimpleNode {
 
   protected OIdentifier methodName;
   protected List<OExpression> params = new ArrayList<OExpression>();
-
-  private Boolean calculatedIsGraph = null;
+  private boolean resolved = false;
+  private boolean isGraph = false;
+  private OSQLFunction graphFunction = null;
+  private OSQLMethod method = null;
 
   public OMethodCall(int id) {
     super(id);
@@ -90,17 +92,121 @@ public class OMethodCall extends SimpleNode {
     return execute(targetObjects, ctx, methodName.getStringValue(), params, iPossibleResults);
   }
 
+  private void resolveMethod() {
+    if (!resolved) {
+      String name = methodName.getStringValue();
+      for (String graphMethod : graphMethods) {
+        if (graphMethod.equalsIgnoreCase(name)) {
+          isGraph = true;
+          break;
+        }
+      }
+      if (this.isGraph) {
+        this.graphFunction = OSQLEngine.getInstance().getFunction(name);
+
+      } else {
+        this.method = OSQLEngine.getMethod(name);
+      }
+
+      resolved = true;
+    }
+  }
+
+  private boolean resolveIsGraphFunction() {
+    resolveMethod();
+    return isGraph;
+  }
+
   private Object execute(
       Object targetObjects,
       OCommandContext ctx,
       String name,
       List<OExpression> iParams,
       Iterable<OIdentifiable> iPossibleResults) {
-    List<Object> paramValues = new ArrayList<Object>();
     Object val = ctx.getVariable("$current");
     if (val == null && targetObjects == null) {
       return null;
     }
+    List<Object> paramValues = resolveParams(targetObjects, ctx, iParams, val);
+    if (resolveIsGraphFunction()) {
+      return invokeGraphFunction(
+          this.graphFunction, targetObjects, ctx, iPossibleResults, paramValues);
+    }
+    if (this.method != null) {
+      return invokeMethod(this.method, targetObjects, ctx, val, paramValues);
+    }
+    throw new UnsupportedOperationException(
+        "OMethod call, something missing in the implementation...?");
+  }
+
+  private static Object invokeMethod(
+      OSQLMethod method,
+      Object targetObjects,
+      OCommandContext ctx,
+      Object val,
+      List<Object> paramValues) {
+    if (val instanceof OResult) {
+      val = ((OResult) val).getElement().orElse(null);
+    }
+    return method.execute(
+        targetObjects, (OIdentifiable) val, ctx, targetObjects, paramValues.toArray());
+  }
+
+  private static Object invokeGraphFunction(
+      OSQLFunction graphFunction,
+      Object targetObjects,
+      OCommandContext ctx,
+      Iterable<OIdentifiable> iPossibleResults,
+      List<Object> paramValues) {
+    if (graphFunction instanceof OSQLFunctionFiltered) {
+      Object current = ctx.getVariable("$current");
+      if (current instanceof OResult) {
+        current = ((OResult) current).getElement().orElse(null);
+      }
+      return ((OSQLFunctionFiltered) graphFunction)
+          .execute(
+              targetObjects,
+              (OIdentifiable) current,
+              null,
+              paramValues.toArray(),
+              iPossibleResults,
+              ctx);
+    } else {
+      Object current = ctx.getVariable("$current");
+      if (current instanceof OIdentifiable) {
+        return graphFunction.execute(
+            targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
+      } else if (current instanceof OResult) {
+        return graphFunction.execute(
+            targetObjects,
+            ((OResult) current).getElement().orElse(null),
+            null,
+            paramValues.toArray(),
+            ctx);
+      } else {
+        return graphFunction.execute(targetObjects, null, null, paramValues.toArray(), ctx);
+      }
+    }
+  }
+
+  private static Object executeGraphFunction(
+      Object targetObjects,
+      OCommandContext ctx,
+      String name,
+      List<OExpression> iParams,
+      Iterable<OIdentifiable> iPossibleResults) {
+    Object val = ctx.getVariable("$current");
+    if (val == null && targetObjects == null) {
+      return null;
+    }
+    List<Object> paramValues = resolveParams(targetObjects, ctx, iParams, val);
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
+    return invokeGraphFunction(function, targetObjects, ctx, iPossibleResults, paramValues);
+  }
+
+  private static List<Object> resolveParams(
+      Object targetObjects, OCommandContext ctx, List<OExpression> iParams, Object val) {
+    List<Object> paramValues = new ArrayList<Object>();
     for (OExpression expr : iParams) {
       if (val instanceof OIdentifiable) {
         paramValues.add(expr.execute((OIdentifiable) val, ctx));
@@ -114,48 +220,7 @@ public class OMethodCall extends SimpleNode {
         throw new OCommandExecutionException("Invalild value for $current: " + val);
       }
     }
-    if (isGraphFunction()) {
-      OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
-      if (function instanceof OSQLFunctionFiltered) {
-        Object current = ctx.getVariable("$current");
-        if (current instanceof OResult) {
-          current = ((OResult) current).getElement().orElse(null);
-        }
-        return ((OSQLFunctionFiltered) function)
-            .execute(
-                targetObjects,
-                (OIdentifiable) current,
-                null,
-                paramValues.toArray(),
-                iPossibleResults,
-                ctx);
-      } else {
-        Object current = ctx.getVariable("$current");
-        if (current instanceof OIdentifiable) {
-          return function.execute(
-              targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
-        } else if (current instanceof OResult) {
-          return function.execute(
-              targetObjects,
-              ((OResult) current).getElement().orElse(null),
-              null,
-              paramValues.toArray(),
-              ctx);
-        } else {
-          return function.execute(targetObjects, null, null, paramValues.toArray(), ctx);
-        }
-      }
-    }
-    OSQLMethod method = OSQLEngine.getMethod(name);
-    if (method != null) {
-      if (val instanceof OResult) {
-        val = ((OResult) val).getElement().orElse(null);
-      }
-      return method.execute(
-          targetObjects, (OIdentifiable) val, ctx, targetObjects, paramValues.toArray());
-    }
-    throw new UnsupportedOperationException(
-        "OMethod call, something missing in the implementation...?");
+    return paramValues;
   }
 
   public Object executeReverse(Object targetObjects, OCommandContext ctx) {
@@ -165,38 +230,38 @@ public class OMethodCall extends SimpleNode {
 
     String straightName = methodName.getStringValue();
     if (straightName.equalsIgnoreCase("out")) {
-      return execute(targetObjects, ctx, "in", params, null);
+      return executeGraphFunction(targetObjects, ctx, "in", params, null);
     }
     if (straightName.equalsIgnoreCase("in")) {
-      return execute(targetObjects, ctx, "out", params, null);
+      return executeGraphFunction(targetObjects, ctx, "out", params, null);
     }
 
     if (straightName.equalsIgnoreCase("both")) {
-      return execute(targetObjects, ctx, "both", params, null);
+      return executeGraphFunction(targetObjects, ctx, "both", params, null);
     }
 
     if (straightName.equalsIgnoreCase("outE")) {
-      return execute(targetObjects, ctx, "outV", params, null);
+      return executeGraphFunction(targetObjects, ctx, "outV", params, null);
     }
 
     if (straightName.equalsIgnoreCase("outV")) {
-      return execute(targetObjects, ctx, "outE", params, null);
+      return executeGraphFunction(targetObjects, ctx, "outE", params, null);
     }
 
     if (straightName.equalsIgnoreCase("inE")) {
-      return execute(targetObjects, ctx, "inV", params, null);
+      return executeGraphFunction(targetObjects, ctx, "inV", params, null);
     }
 
     if (straightName.equalsIgnoreCase("inV")) {
-      return execute(targetObjects, ctx, "inE", params, null);
+      return executeGraphFunction(targetObjects, ctx, "inE", params, null);
     }
 
     if (straightName.equalsIgnoreCase("bothE")) {
-      return execute(targetObjects, ctx, "bothV", params, null);
+      return executeGraphFunction(targetObjects, ctx, "bothV", params, null);
     }
 
     if (straightName.equalsIgnoreCase("bothV")) {
-      return execute(targetObjects, ctx, "bothE", params, null);
+      return executeGraphFunction(targetObjects, ctx, "bothE", params, null);
     }
 
     throw new UnsupportedOperationException("Invalid reverse traversal: " + methodName);
@@ -290,26 +355,10 @@ public class OMethodCall extends SimpleNode {
   }
 
   public boolean isCacheable() {
-    if (isGraphFunction()) {
+    if (resolveIsGraphFunction()) {
       return true;
     }
     return false; // TODO
-  }
-
-  private boolean isGraphFunction() {
-    if (calculatedIsGraph != null) {
-      return calculatedIsGraph;
-    }
-    for (String graphMethod : graphMethods) {
-      if (graphMethod.equalsIgnoreCase(methodName.getStringValue())) {
-        calculatedIsGraph = true;
-        break;
-      }
-    }
-    if (calculatedIsGraph == null) {
-      calculatedIsGraph = false;
-    }
-    return calculatedIsGraph;
   }
 
   public void addParam(OExpression param) {

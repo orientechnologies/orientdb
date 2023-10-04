@@ -234,15 +234,15 @@ public class OResultInternal implements OResult {
   }
 
   private static boolean isEmbeddedSet(Object input) {
-    return OType.getTypeByValue(input) == OType.EMBEDDEDSET && input instanceof Set;
+    return input instanceof Set && OType.getTypeByValue(input) == OType.EMBEDDEDSET;
   }
 
   private static boolean isEmbeddedMap(Object input) {
-    return OType.getTypeByValue(input) == OType.EMBEDDEDMAP && input instanceof Map;
+    return input instanceof Map && OType.getTypeByValue(input) == OType.EMBEDDEDMAP;
   }
 
   private static boolean isEmbeddedList(Object input) {
-    return OType.getTypeByValue(input) == OType.EMBEDDEDLIST && input instanceof List;
+    return input instanceof List && OType.getTypeByValue(input) == OType.EMBEDDEDLIST;
   }
 
   public Set<String> getPropertyNames() {
