@@ -713,11 +713,10 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "UPDATE "
-                    + doc.getIdentity()
-                    + " ADD embeddedListWithLinkedClass = [{'line1':'123 Fake Street'}]"))
-        .execute();
+            "UPDATE "
+                + doc.getIdentity()
+                + " set embeddedListWithLinkedClass = embeddedListWithLinkedClass || [{'line1':'123 Fake Street'}]")
+        .close();
 
     doc.reload();
 
@@ -726,11 +725,10 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "UPDATE "
-                    + doc.getIdentity()
-                    + " ADD embeddedListWithLinkedClass = {'line1':'123 Fake Street'}"))
-        .execute();
+            "UPDATE "
+                + doc.getIdentity()
+                + " set embeddedListWithLinkedClass =  embeddedListWithLinkedClass || [{'line1':'123 Fake Street'}]")
+        .close();
 
     doc.reload();
 
@@ -749,11 +747,9 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     database.getMetadata().getSchema().createClass(className);
 
     database
-        .command(
-            new OCommandSQL(
-                "insert into " + className + " set list = [{\"xxx\":1},{\"zzz\":3},{\"yyy\":2}]"))
-        .execute();
-    database.command(new OCommandSQL("UPDATE " + className + " ADD list = {\"kkk\":4}")).execute();
+        .command("insert into " + className + " set list = [{\"xxx\":1},{\"zzz\":3},{\"yyy\":2}]")
+        .close();
+    database.command("UPDATE " + className + " set list = list || [{\"kkk\":4}]").close();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from " + className));
     Assert.assertEquals(result.size(), 1);
