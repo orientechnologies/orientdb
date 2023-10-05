@@ -114,13 +114,13 @@
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>
-            <version>1.36</version>
+            <version>1.37</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
-            <version>1.36</version>
+            <version>1.37</version>
             <scope>test</scope>
         </dependency>
 
@@ -128,7 +128,7 @@
         <dependency>
             <groupId>org.knowm.xchart</groupId>
             <artifactId>xchart</artifactId>
-            <version>3.8.3</version>
+            <version>3.8.5</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
