@@ -135,7 +135,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   protected static boolean comparesValues(
       final Object iValue, final OResult iRecord, final boolean iConsiderIn) {
     if (iRecord.getIdentity().isPresent() && iRecord.getIdentity().get().isPersistent()) {
-      return iRecord.getIdentity().equals(iValue);
+      return iRecord.getIdentity().get().equals(iValue);
     } else {
       // ODOCUMENT AS RESULT OF SUB-QUERY: GET THE FIRST FIELD IF ANY
       Set<String> firstFieldName = iRecord.getPropertyNames();

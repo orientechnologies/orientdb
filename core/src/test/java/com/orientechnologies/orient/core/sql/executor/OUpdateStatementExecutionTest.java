@@ -1,15 +1,18 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
+import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -731,5 +734,25 @@ public class OUpdateStatementExecutionTest {
 
     Assert.assertFalse(result.hasNext());
     result.close();
+  }
+
+  @Test
+  public void testUpdateWhereSubquery() {
+
+    OVertex vertex = db.newVertex();
+    vertex.setProperty("one", "two");
+    ORID identity = db.save(vertex).getIdentity();
+
+    try (OResultSet result =
+        db.command(
+            "update v set first='value' where @rid in (select @rid from [" + identity + "]) ")) {
+      assertEquals((long) result.next().getProperty("count"), 1L);
+    }
+
+    try (OResultSet result =
+        db.command(
+            "update v set other='value' where @rid in (select * from [" + identity + "]) ")) {
+      assertEquals((long) result.next().getProperty("count"), 1L);
+    }
   }
 }
