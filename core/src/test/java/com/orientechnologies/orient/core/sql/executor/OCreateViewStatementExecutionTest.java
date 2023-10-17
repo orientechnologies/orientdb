@@ -3,10 +3,8 @@ package com.orientechnologies.orient.core.sql.executor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -16,29 +14,11 @@ import com.orientechnologies.orient.core.record.OElement;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class OCreateViewStatementExecutionTest {
-  private static OrientDB context;
-  private static ODatabaseDocument db;
-
-  @BeforeClass
-  public static void beforeClass() {
-    context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    context.execute(
-        "create database OCreateViewStatementExecutionTest memory users(admin identified by 'adminpwd' role admin)");
-    db = context.open("OCreateViewStatementExecutionTest", "admin", "adminpwd");
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    db.close();
-    context.close();
-  }
+public class OCreateViewStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test
   public void testPlain() {

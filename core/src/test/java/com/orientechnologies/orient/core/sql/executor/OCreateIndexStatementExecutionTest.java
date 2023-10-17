@@ -1,29 +1,14 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class OCreateIndexStatementExecutionTest {
-  static ODatabaseDocumentInternal db;
-
-  @BeforeClass
-  public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:OCreateIndexStatementExecutionTest");
-    db.create();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    db.close();
-  }
+public class OCreateIndexStatementExecutionTest extends BaseMemoryInternalDatabase {
 
   @Test
   public void testPlain() {

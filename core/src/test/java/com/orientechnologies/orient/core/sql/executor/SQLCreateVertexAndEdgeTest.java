@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -25,89 +25,64 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class SQLCreateVertexAndEdgeTest {
-  private ODatabaseDocumentTx database;
-  private String url;
-
-  public SQLCreateVertexAndEdgeTest() {
-    url = "memory:" + SQLCreateVertexAndEdgeTest.class.getSimpleName();
-
-    database = new ODatabaseDocumentTx(url);
-    if (database.exists()) database.open("admin", "admin");
-    else database.create();
-  }
-
-  @Before
-  public void before() {}
-
-  @After
-  public void deinit() {
-    database.close();
-  }
+public class SQLCreateVertexAndEdgeTest extends BaseMemoryDatabase {
 
   @Test
   public void testCreateEdgeDefaultClass() {
-    int vclusterId = database.addCluster("vdefault");
-    int eclusterId = database.addCluster("edefault");
+    int vclusterId = db.addCluster("vdefault");
+    int eclusterId = db.addCluster("edefault");
 
-    database.command(new OCommandSQL("create class V1 extends V")).execute();
-    database.command(new OCommandSQL("alter class V1 addcluster vdefault")).execute();
+    db.command(new OCommandSQL("create class V1 extends V")).execute();
+    db.command(new OCommandSQL("alter class V1 addcluster vdefault")).execute();
 
-    database.command(new OCommandSQL("create class E1 extends E")).execute();
-    database.command(new OCommandSQL("alter class E1 addcluster edefault")).execute();
+    db.command(new OCommandSQL("create class E1 extends E")).execute();
+    db.command(new OCommandSQL("alter class E1 addcluster edefault")).execute();
 
-    database.getMetadata().getSchema().reload();
+    db.getMetadata().getSchema().reload();
 
     // VERTEXES
-    ODocument v1 = database.command(new OCommandSQL("create vertex")).execute();
+    ODocument v1 = db.command(new OCommandSQL("create vertex")).execute();
     Assert.assertEquals(v1.getClassName(), "V");
 
-    ODocument v2 = database.command(new OCommandSQL("create vertex V1")).execute();
+    ODocument v2 = db.command(new OCommandSQL("create vertex V1")).execute();
     Assert.assertEquals(v2.getClassName(), "V1");
 
-    ODocument v3 = database.command(new OCommandSQL("create vertex set brand = 'fiat'")).execute();
+    ODocument v3 = db.command(new OCommandSQL("create vertex set brand = 'fiat'")).execute();
     Assert.assertEquals(v3.getClassName(), "V");
     Assert.assertEquals(v3.field("brand"), "fiat");
 
     ODocument v4 =
-        database
-            .command(new OCommandSQL("create vertex V1 set brand = 'fiat',name = 'wow'"))
-            .execute();
+        db.command(new OCommandSQL("create vertex V1 set brand = 'fiat',name = 'wow'")).execute();
     Assert.assertEquals(v4.getClassName(), "V1");
     Assert.assertEquals(v4.field("brand"), "fiat");
     Assert.assertEquals(v4.field("name"), "wow");
 
-    ODocument v5 = database.command(new OCommandSQL("create vertex V1 cluster vdefault")).execute();
+    ODocument v5 = db.command(new OCommandSQL("create vertex V1 cluster vdefault")).execute();
     Assert.assertEquals(v5.getClassName(), "V1");
     Assert.assertEquals(v5.getIdentity().getClusterId(), vclusterId);
 
     // EDGES
     List<Object> edges =
-        database
-            .command(
+        db.command(
                 new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v2.getIdentity()))
             .execute();
     Assert.assertFalse(edges.isEmpty());
 
     edges =
-        database
-            .command(
+        db.command(
                 new OCommandSQL(
                     "create edge E1 from " + v1.getIdentity() + " to " + v3.getIdentity()))
             .execute();
     Assert.assertFalse(edges.isEmpty());
 
     edges =
-        database
-            .command(
+        db.command(
                 new OCommandSQL(
                     "create edge from "
                         + v1.getIdentity()
@@ -123,8 +98,7 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e3.<Object>field("weight"), 3);
 
     edges =
-        database
-            .command(
+        db.command(
                 new OCommandSQL(
                     "create edge E1 from "
                         + v2.getIdentity()
@@ -140,8 +114,7 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e4.<Object>field("weight"), 10);
 
     edges =
-        database
-            .command(
+        db.command(
                 new OCommandSQL(
                     "create edge e1 cluster edefault from "
                         + v3.getIdentity()
@@ -168,13 +141,13 @@ public class SQLCreateVertexAndEdgeTest {
       cmd += "commit retry 100\n";
       cmd += "return $e";
 
-      List<OVertex> result = database.query(new OSQLSynchQuery<OVertex>("select from V"));
+      List<OVertex> result = db.query(new OSQLSynchQuery<OVertex>("select from V"));
 
       int before = result.size();
 
-      database.command(new OCommandScript("sql", cmd)).execute();
+      db.command(new OCommandScript("sql", cmd)).execute();
 
-      result = database.query(new OSQLSynchQuery<OVertex>("select from V"));
+      result = db.query(new OSQLSynchQuery<OVertex>("select from V"));
 
       Assert.assertEquals(result.size(), before + 1);
     } catch (Exception ex) {
@@ -187,38 +160,36 @@ public class SQLCreateVertexAndEdgeTest {
 
   @Test
   public void testNewParser() {
-    ODocument v1 = database.command(new OCommandSQL("create vertex")).execute();
+    ODocument v1 = db.command(new OCommandSQL("create vertex")).execute();
 
     Assert.assertEquals(v1.getClassName(), "V");
 
     ORID vid = v1.getIdentity();
     // TODO remove this
-    database.command(new OCommandSQL("create edge from " + vid + " to " + vid)).execute();
+    db.command(new OCommandSQL("create edge from " + vid + " to " + vid)).execute();
 
-    database.command(new OCommandSQL("create edge E from " + vid + " to " + vid)).execute();
+    db.command(new OCommandSQL("create edge E from " + vid + " to " + vid)).execute();
 
-    database
-        .command(new OCommandSQL("create edge from " + vid + " to " + vid + " set foo = 'bar'"))
+    db.command(new OCommandSQL("create edge from " + vid + " to " + vid + " set foo = 'bar'"))
         .execute();
 
-    database
-        .command(new OCommandSQL("create edge E from " + vid + " to " + vid + " set bar = 'foo'"))
+    db.command(new OCommandSQL("create edge E from " + vid + " to " + vid + " set bar = 'foo'"))
         .execute();
   }
 
   @Test
   public void testCannotAlterEClassname() {
-    database.command(new OCommandSQL("create class ETest extends E")).execute();
+    db.command(new OCommandSQL("create class ETest extends E")).execute();
 
     try {
-      database.command(new OCommandSQL("alter class ETest name ETest2")).execute();
+      db.command(new OCommandSQL("alter class ETest name ETest2")).execute();
       Assert.assertTrue(false);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(true);
     }
 
     try {
-      database.command(new OCommandSQL("alter class ETest name ETest2 unsafe")).execute();
+      db.command(new OCommandSQL("alter class ETest name ETest2 unsafe")).execute();
       Assert.assertTrue(true);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(false);
@@ -228,14 +199,11 @@ public class SQLCreateVertexAndEdgeTest {
   public void testSqlScriptThatDeletesEdge() {
     long start = System.currentTimeMillis();
 
-    database
-        .command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge1'"))
+    db.command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge1'"))
         .execute();
-    database
-        .command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge2'"))
+    db.command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge2'"))
         .execute();
-    database
-        .command(
+    db.command(
             new OCommandSQL(
                 "create edge E from (select from V where name = 'testSqlScriptThatDeletesEdge1') to (select from V where name = 'testSqlScriptThatDeletesEdge2') set name = 'testSqlScriptThatDeletesEdge'"))
         .execute();
@@ -247,10 +215,10 @@ public class SQLCreateVertexAndEdgeTest {
       cmd += "COMMIT\n";
       cmd += "RETURN $groupVertices\n";
 
-      Object r = database.command(new OCommandScript("sql", cmd)).execute();
+      Object r = db.command(new OCommandScript("sql", cmd)).execute();
 
       List<?> edges =
-          database.query(
+          db.query(
               new OSQLSynchQuery<OVertex>(
                   "select from E where name = 'testSqlScriptThatDeletesEdge'"));
 

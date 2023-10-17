@@ -1,27 +1,11 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import org.junit.AfterClass;
+import com.orientechnologies.BaseMemoryDatabase;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class OForEachBlockExecutionTest {
-  static ODatabaseDocument db;
-
-  @BeforeClass
-  public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:OForEachBlockExecutionTest");
-    db.create();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    db.drop();
-  }
-
+public class OForEachBlockExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testPlain() {
 

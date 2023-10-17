@@ -2,30 +2,15 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class ODeleteStatementExecutionTest {
-  static ODatabaseDocument db;
-
-  @BeforeClass
-  public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:ODeleteStatementExecutionTest");
-    db.create();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    db.close();
-  }
+public class ODeleteStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test
   public void testSimple() {

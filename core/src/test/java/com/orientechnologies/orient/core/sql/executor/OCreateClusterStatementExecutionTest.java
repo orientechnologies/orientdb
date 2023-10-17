@@ -1,28 +1,14 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class OCreateClusterStatementExecutionTest {
-  static ODatabaseDocument db;
-
-  @BeforeClass
-  public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:OCreateClusterStatementExecutionTest");
-    db.create();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    db.close();
-  }
+public class OCreateClusterStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test
   public void testPlain() {
@@ -66,7 +52,8 @@ public class OCreateClusterStatementExecutionTest {
     String clusterName = "testBlob";
     OResultSet result = db.command("create blob cluster " + clusterName);
     Assert.assertTrue(db.getClusterIdByName(clusterName) > 0);
-    Assert.assertTrue(((ODatabaseDocumentTx) db).getStorage().getClusterIdByName(clusterName) >= 0);
+    Assert.assertTrue(
+        ((ODatabaseDocumentInternal) db).getStorage().getClusterIdByName(clusterName) >= 0);
     // TODO test that it's a blob cluster
     result.close();
   }

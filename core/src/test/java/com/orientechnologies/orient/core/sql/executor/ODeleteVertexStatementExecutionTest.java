@@ -1,36 +1,12 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.OVertex;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class ODeleteVertexStatementExecutionTest {
-  static ODatabaseDocument db;
-
-  @BeforeClass
-  public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:ODeleteVertexStatementExecutionTest");
-    db.create();
-    OClass v = db.getMetadata().getSchema().getClass("V");
-    if (v == null) {
-      db.getMetadata().getSchema().createClass("V");
-    }
-    OClass e = db.getMetadata().getSchema().getClass("E");
-    if (e == null) {
-      db.getMetadata().getSchema().createClass("E");
-    }
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    db.drop();
-  }
+public class ODeleteVertexStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test
   public void testDeleteSingleVertex() {

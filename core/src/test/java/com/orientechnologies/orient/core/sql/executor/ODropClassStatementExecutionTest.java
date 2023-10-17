@@ -1,33 +1,14 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class ODropClassStatementExecutionTest {
-  static ODatabaseDocument db;
-
-  @BeforeClass
-  public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:ODropClassStatementExecutionTest");
-    db.create();
-    OClass v = db.getMetadata().getSchema().getClass("V");
-    if (v == null) {
-      db.getMetadata().getSchema().createClass("V");
-    }
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    db.close();
-  }
+public class ODropClassStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test
   public void testPlain() {
