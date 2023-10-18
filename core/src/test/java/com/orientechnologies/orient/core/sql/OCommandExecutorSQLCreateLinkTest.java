@@ -19,33 +19,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class OCommandExecutorSQLCreateLinkTest {
-  static ODatabaseDocumentTx db;
-  private static String DB_STORAGE = "memory";
-  private static String DB_NAME = "OCommandExecutorSQLCreateLinkTest";
-
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
-    db.create();
-  }
-
-  @AfterClass
-  public static void afterClass() throws Exception {
-    if (db.isClosed()) {
-      db.open("admin", "admin");
-    }
-    db.close();
-  }
+public class OCommandExecutorSQLCreateLinkTest extends BaseMemoryDatabase {
 
   @Test
   public void testBasic() throws Exception {

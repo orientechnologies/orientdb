@@ -25,12 +25,12 @@ import org.junit.Test;
 @Ignore
 public class ColumnSecurityTest {
   static String DB_NAME = "test";
-  static OrientDB orient;
+  static OrientDB context;
   private ODatabaseSession db;
 
   @BeforeClass
   public static void beforeClass() {
-    orient =
+    context =
         new OrientDB(
             "plocal:.",
             OrientDBConfig.builder()
@@ -40,12 +40,12 @@ public class ColumnSecurityTest {
 
   @AfterClass
   public static void afterClass() {
-    orient.close();
+    context.close();
   }
 
   @Before
   public void before() {
-    orient.execute(
+    context.execute(
         "create database "
             + DB_NAME
             + " "
@@ -53,13 +53,13 @@ public class ColumnSecurityTest {
             + " users ( admin identified by '"
             + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
             + "' role admin)");
-    this.db = orient.open(DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    this.db = context.open(DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
   }
 
   @After
   public void after() {
     this.db.close();
-    orient.drop("test");
+    context.drop("test");
     this.db = null;
   }
 
@@ -222,7 +222,7 @@ public class ColumnSecurityTest {
     db.save(elem);
 
     db.close();
-    this.db = orient.open(DB_NAME, "reader", "reader");
+    this.db = context.open(DB_NAME, "reader", "reader");
     OResultSet rs = db.query("select from Person");
     boolean fooFound = false;
     boolean nullFound = false;
@@ -269,7 +269,7 @@ public class ColumnSecurityTest {
     db.save(elem);
 
     db.close();
-    this.db = orient.open(DB_NAME, "reader", "reader");
+    this.db = context.open(DB_NAME, "reader", "reader");
     OResultSet rs = db.query("select from Person where name = 'foo'");
     Assert.assertTrue(rs.hasNext());
     rs.next();
@@ -327,7 +327,7 @@ public class ColumnSecurityTest {
 
     db.close();
     Thread.sleep(200);
-    this.db = orient.open(DB_NAME, "reader", "reader");
+    this.db = context.open(DB_NAME, "reader", "reader");
     rs = db.query("select from Person");
     fooFound = false;
     boolean nullFound = false;
@@ -373,7 +373,7 @@ public class ColumnSecurityTest {
     db.save(elem);
 
     db.close();
-    this.db = orient.open(DB_NAME, "reader", "reader");
+    this.db = context.open(DB_NAME, "reader", "reader");
     OResultSet rs = db.query("select from Person where name = 'foo' OR name = 'bar'");
 
     OResult item = rs.next();
@@ -397,7 +397,7 @@ public class ColumnSecurityTest {
         db, security.getRole(db, "writer"), "database.class.Person.name", policy);
 
     db.close();
-    this.db = orient.open(DB_NAME, "writer", "writer");
+    this.db = context.open(DB_NAME, "writer", "writer");
 
     OElement elem = db.newElement("Person");
     elem.setProperty("name", "foo");
@@ -439,7 +439,7 @@ public class ColumnSecurityTest {
     db.save(elem);
 
     db.close();
-    this.db = orient.open(DB_NAME, "writer", "writer");
+    this.db = context.open(DB_NAME, "writer", "writer");
 
     db.command("UPDATE Person SET name = 'foo1' WHERE name = 'foo'");
 
@@ -476,7 +476,7 @@ public class ColumnSecurityTest {
     db.save(elem);
 
     db.close();
-    this.db = orient.open(DB_NAME, "writer", "writer");
+    this.db = context.open(DB_NAME, "writer", "writer");
 
     db.command("UPDATE Person SET name = 'foo1' WHERE name = 'foo'");
 
@@ -507,7 +507,7 @@ public class ColumnSecurityTest {
 
     db.close();
 
-    db = orient.open(DB_NAME, "reader", "reader");
+    db = context.open(DB_NAME, "reader", "reader");
     try (final OResultSet resultSet = db.query("SELECT from Person")) {
       OResult item = resultSet.next();
       Assert.assertNull(item.getProperty("name"));
@@ -528,7 +528,7 @@ public class ColumnSecurityTest {
 
     db.close();
 
-    db = orient.open(DB_NAME, "reader", "reader");
+    db = context.open(DB_NAME, "reader", "reader");
     try (final OResultSet resultSet = db.query("SELECT from Person")) {
       OResult item = resultSet.next();
       Assert.assertNull(item.getProperty("name"));

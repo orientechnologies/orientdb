@@ -22,34 +22,13 @@ package com.orientechnologies.orient.core.sql;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class OCommandExecutorSQLCreateSequenceTest {
-  static ODatabaseDocumentTx db;
-  private static String DB_STORAGE = "memory";
-  private static String DB_NAME = "OCommandExecutorSQLCreateSequenceTest";
-
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
-    db.create();
-  }
-
-  @AfterClass
-  public static void afterClass() throws Exception {
-    if (db.isClosed()) {
-      db.open("admin", "admin");
-    }
-    db.command(new OCommandSQL("drop class foo")).execute();
-    db.getMetadata().getSchema().reload();
-    db.close();
-  }
+public class OCommandExecutorSQLCreateSequenceTest extends BaseMemoryDatabase {
 
   @Test
   public void testSimple() {

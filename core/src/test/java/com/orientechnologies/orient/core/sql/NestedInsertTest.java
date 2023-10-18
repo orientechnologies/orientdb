@@ -1,29 +1,14 @@
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class NestedInsertTest {
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:" + NestedInsertTest.class.getSimpleName());
-    db.create();
-  }
-
-  @After
-  public void after() {
-    db.drop();
-  }
+public class NestedInsertTest extends BaseMemoryDatabase {
 
   @Test
   public void testEmbeddedValueDate() {

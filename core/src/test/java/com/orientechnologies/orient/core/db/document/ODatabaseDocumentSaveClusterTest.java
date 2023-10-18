@@ -1,25 +1,15 @@
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Created by tglman on 04/11/15. */
-public class ODatabaseDocumentSaveClusterTest {
-
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    db =
-        new ODatabaseDocumentTx("memory:" + ODatabaseDocumentSaveClusterTest.class.getSimpleName());
-    db.create();
-  }
+public class ODatabaseDocumentSaveClusterTest extends BaseMemoryDatabase {
 
   @Test(expected = IllegalArgumentException.class)
   public void testSaveWrongCluster() {
@@ -58,10 +48,5 @@ public class ODatabaseDocumentSaveClusterTest {
     Assert.assertEquals(saved.getIdentity().getClusterId(), res);
     db.getMetadata().getSchema().dropClass(clazz.getName());
     Assert.assertFalse(db.existsCluster("test_one"));
-  }
-
-  @After
-  public void after() {
-    db.drop();
   }
 }

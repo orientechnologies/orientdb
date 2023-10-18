@@ -20,30 +20,16 @@
 
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Map;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class DocumentTest {
-  private ODatabaseDocumentTx db;
-
-  @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:" + DocumentTest.class.getSimpleName());
-    db.create();
-  }
-
-  @After
-  public void after() {
-    db.drop();
-  }
+public class DocumentTest extends BaseMemoryDatabase {
 
   public void testFromMapNotSaved() {
     final ODocument doc = new ODocument();

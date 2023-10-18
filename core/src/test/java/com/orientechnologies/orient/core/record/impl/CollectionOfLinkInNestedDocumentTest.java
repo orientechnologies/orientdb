@@ -4,33 +4,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class CollectionOfLinkInNestedDocumentTest {
-
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    db =
-        new ODatabaseDocumentTx(
-            "memory:" + CollectionOfLinkInNestedDocumentTest.class.getSimpleName());
-    db.create();
-  }
-
-  @After
-  public void after() {
-    db.drop();
-  }
+public class CollectionOfLinkInNestedDocumentTest extends BaseMemoryDatabase {
 
   @Test
   public void nestedLinkSet() {

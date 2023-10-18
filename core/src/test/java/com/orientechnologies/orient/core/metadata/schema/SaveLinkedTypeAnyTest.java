@@ -1,32 +1,16 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.Collection;
 import java.util.List;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Created by tglman on 10/06/16. */
-public class SaveLinkedTypeAnyTest {
-
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:" + SaveLinkedTypeAnyTest.class.getSimpleName());
-    db.create();
-  }
-
-  @After
-  public void after() {
-    db.drop();
-  }
+public class SaveLinkedTypeAnyTest extends BaseMemoryDatabase {
 
   @Test
   public void testRemoveLinkedType() {

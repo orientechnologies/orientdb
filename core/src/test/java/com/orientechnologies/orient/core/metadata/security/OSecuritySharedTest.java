@@ -1,57 +1,11 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.OCreateDatabaseUtil;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class OSecuritySharedTest {
-
-  static OrientDB orient;
-  private ODatabaseSession db;
-
-  @BeforeClass
-  public static void beforeClass() {
-    orient =
-        new OrientDB(
-            "plocal:.",
-            OrientDBConfig.builder()
-                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
-                .build());
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    orient.close();
-  }
-
-  @Before
-  public void before() {
-    orient.execute(
-        "create database "
-            + "test"
-            + " "
-            + "memory"
-            + " users ( admin identified by '"
-            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
-            + "' role admin)");
-    this.db = orient.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-  }
-
-  @After
-  public void after() {
-    this.db.close();
-    orient.drop("test");
-    this.db = null;
-  }
+public class OSecuritySharedTest extends BaseMemoryDatabase {
 
   @Test
   public void testCreateSecurityPolicy() {

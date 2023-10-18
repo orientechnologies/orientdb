@@ -1,38 +1,16 @@
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import java.util.Arrays;
 import java.util.Random;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class OCompositeIndexGrowShrinkIT {
-  private OrientDB orientDB;
-  private ODatabaseDocument db;
+public class OCompositeIndexGrowShrinkIT extends BaseMemoryDatabase {
   private Random random = new Random();
-
-  @Before
-  public void before() {
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.execute(
-        " create database ? memory users (admin identified by 'adminpwd' role admin) ",
-        OCompositeIndexGrowShrinkIT.class.getSimpleName());
-    db = orientDB.open(OCompositeIndexGrowShrinkIT.class.getSimpleName(), "admin", "adminpwd");
-  }
-
-  @After
-  public void after() {
-    db.close();
-    orientDB.drop(OCompositeIndexGrowShrinkIT.class.getSimpleName());
-    orientDB.close();
-  }
 
   public String randomText() {
     String str = new String();

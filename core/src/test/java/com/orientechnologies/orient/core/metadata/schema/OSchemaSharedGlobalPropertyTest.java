@@ -2,34 +2,11 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class OSchemaSharedGlobalPropertyTest {
-
-  private ODatabaseDocumentTx db;
-
-  @Before
-  public void setUp() {
-    db = new ODatabaseDocumentTx("memory:" + OSchemaSharedGlobalPropertyTest.class.getSimpleName());
-    if (db.exists()) {
-      db.open("admin", "admin");
-    } else db.create();
-  }
-
-  @After
-  public void after() {
-    db.close();
-  }
-
-  @After
-  public void afterClass() {
-    db.open("admin", "admin");
-    db.drop();
-  }
+public class OSchemaSharedGlobalPropertyTest extends BaseMemoryDatabase {
 
   @Test
   public void testGlobalPropertyCreate() {

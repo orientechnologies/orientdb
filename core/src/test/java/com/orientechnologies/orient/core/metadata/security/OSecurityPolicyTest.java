@@ -1,62 +1,16 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.OCreateDatabaseUtil;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Map;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class OSecurityPolicyTest {
-  static OrientDB orientDB;
-  ODatabaseSession db;
-
-  @BeforeClass
-  public static void beforeClass() {
-    orientDB =
-        new OrientDB(
-            "plocal:.",
-            OrientDBConfig.builder()
-                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
-                .build());
-  }
-
-  @Before
-  public void before() {
-    orientDB.execute(
-        "create database "
-            + getClass().getSimpleName()
-            + " "
-            + "memory"
-            + " users ( admin identified by '"
-            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
-            + "' role admin)");
-    this.db =
-        orientDB.open(getClass().getSimpleName(), "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    orientDB.close();
-    orientDB = null;
-  }
-
-  @After
-  public void after() {
-    db.close();
-    orientDB.drop(getClass().getSimpleName());
-  }
+public class OSecurityPolicyTest extends BaseMemoryDatabase {
 
   @Test
   public void testSecurityPolicyCreate() {

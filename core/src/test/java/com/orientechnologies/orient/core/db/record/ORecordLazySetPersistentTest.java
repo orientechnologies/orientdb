@@ -3,26 +3,14 @@ package com.orientechnologies.orient.core.db.record;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class ORecordLazySetPersistentTest {
-
-  private ODatabaseDocument db;
-
-  @Before
-  public void init() throws Exception {
-    String url = "memory:" + ORecordLazySetPersistentTest.class.getSimpleName();
-    db = new ODatabaseDocumentTx(url);
-    db = db.create();
-  }
+public class ORecordLazySetPersistentTest extends BaseMemoryDatabase {
 
   @Test
   public void test1() {
@@ -101,13 +89,5 @@ public class ORecordLazySetPersistentTest {
       assertEquals(0, linkset.size()); // AssertionError: expected:<0> but was:<1>
     }
     db.commit();
-  }
-
-  @After
-  public void close() {
-    if (db != null) {
-      db.activateOnCurrentThread();
-      db.drop();
-    }
   }
 }

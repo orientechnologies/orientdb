@@ -2,21 +2,12 @@ package com.orientechnologies.orient.core.db.document;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Created by tglman on 26/10/15. */
-public class RecursiveLinkedSaveTest {
-
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:" + RecursiveLinkedSaveTest.class.getSimpleName());
-    db.create();
-  }
+public class RecursiveLinkedSaveTest extends BaseMemoryDatabase {
 
   @Test
   public void testLinked() {
@@ -52,10 +43,5 @@ public class RecursiveLinkedSaveTest {
     doc1 = doc.field("link");
     doc2 = doc1.field("link");
     assertEquals(doc, doc2.field("link"));
-  }
-
-  @After
-  public void after() {
-    db.drop();
   }
 }

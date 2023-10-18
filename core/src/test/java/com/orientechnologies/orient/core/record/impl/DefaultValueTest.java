@@ -4,8 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -14,29 +13,14 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import java.util.Date;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class DefaultValueTest {
-
-  private ODatabaseDocument database;
-
-  @Before
-  public void before() {
-    database = new ODatabaseDocumentTx("memory:" + DefaultValueTest.class.getSimpleName());
-    database.create();
-  }
-
-  @After
-  public void after() {
-    database.drop();
-  }
+public class DefaultValueTest extends BaseMemoryDatabase {
 
   @Test
   public void testKeepValueSerialization() {
     // create example schema
-    OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass classA = schema.createClass("ClassC");
 
     OProperty prop = classA.createProperty("name", OType.STRING);
@@ -53,7 +37,7 @@ public class DefaultValueTest {
 
   @Test
   public void testDefaultValueDate() {
-    OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass classA = schema.createClass("ClassA");
 
     OProperty prop = classA.createProperty("date", OType.DATE);
@@ -62,13 +46,13 @@ public class DefaultValueTest {
     some.setDefaultValue("uuid()");
 
     ODocument doc = new ODocument(classA);
-    ODocument saved = database.save(doc);
+    ODocument saved = db.save(doc);
     assertNotNull(saved.field("date"));
     assertTrue(saved.field("date") instanceof Date);
     assertNotNull(saved.field("id"));
 
-    OIdentifiable id = database.command(new OCommandSQL("insert into ClassA content {}")).execute();
-    ODocument seved1 = database.load(id.getIdentity());
+    OIdentifiable id = db.command(new OCommandSQL("insert into ClassA content {}")).execute();
+    ODocument seved1 = db.load(id.getIdentity());
     assertNotNull(seved1.field("date"));
     assertNotNull(seved1.field("id"));
     assertTrue(seved1.field("date") instanceof Date);
@@ -76,14 +60,14 @@ public class DefaultValueTest {
 
   @Test
   public void testDefaultValueFromJson() {
-    OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass classA = schema.createClass("ClassA");
 
     OProperty prop = classA.createProperty("date", OType.DATE);
     prop.setDefaultValue(ODateHelper.getDateTimeFormatInstance().format(new Date()));
 
     ODocument doc = new ODocument().fromJSON("{'@class':'ClassA','other':'other'}");
-    ODocument saved = database.save(doc);
+    ODocument saved = db.save(doc);
     assertNotNull(saved.field("date"));
     assertTrue(saved.field("date") instanceof Date);
     assertNotNull(saved.field("other"));
@@ -91,7 +75,7 @@ public class DefaultValueTest {
 
   @Test
   public void testDefaultValueProvidedFromJson() {
-    OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass classA = schema.createClass("ClassA");
 
     OProperty prop = classA.createProperty("date", OType.DATETIME);
@@ -100,7 +84,7 @@ public class DefaultValueTest {
     String value1 = ODateHelper.getDateTimeFormatInstance().format(new Date());
     ODocument doc =
         new ODocument().fromJSON("{'@class':'ClassA','date':'" + value1 + "','other':'other'}");
-    ODocument saved = database.save(doc);
+    ODocument saved = db.save(doc);
     assertNotNull(saved.field("date"));
     assertEquals(ODateHelper.getDateTimeFormatInstance().format(saved.field("date")), value1);
     assertNotNull(saved.field("other"));
@@ -108,7 +92,7 @@ public class DefaultValueTest {
 
   @Test
   public void testDefaultValueMandatoryReadonlyFromJson() {
-    OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass classA = schema.createClass("ClassA");
 
     OProperty prop = classA.createProperty("date", OType.DATE);
@@ -117,7 +101,7 @@ public class DefaultValueTest {
     prop.setDefaultValue(ODateHelper.getDateTimeFormatInstance().format(new Date()));
 
     ODocument doc = new ODocument().fromJSON("{'@class':'ClassA','other':'other'}");
-    ODocument saved = database.save(doc);
+    ODocument saved = db.save(doc);
     assertNotNull(saved.field("date"));
     assertTrue(saved.field("date") instanceof Date);
     assertNotNull(saved.field("other"));
@@ -125,7 +109,7 @@ public class DefaultValueTest {
 
   @Test
   public void testDefaultValueProvidedMandatoryReadonlyFromJson() {
-    OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass classA = schema.createClass("ClassA");
 
     OProperty prop = classA.createProperty("date", OType.DATETIME);
@@ -136,7 +120,7 @@ public class DefaultValueTest {
     String value1 = ODateHelper.getDateTimeFormatInstance().format(new Date());
     ODocument doc =
         new ODocument().fromJSON("{'@class':'ClassA','date':'" + value1 + "','other':'other'}");
-    ODocument saved = database.save(doc);
+    ODocument saved = db.save(doc);
     assertNotNull(saved.field("date"));
     assertEquals(ODateHelper.getDateTimeFormatInstance().format(saved.field("date")), value1);
     assertNotNull(saved.field("other"));
@@ -144,7 +128,7 @@ public class DefaultValueTest {
 
   @Test
   public void testDefaultValueUpdateMandatoryReadonlyFromJson() {
-    OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass classA = schema.createClass("ClassA");
 
     OProperty prop = classA.createProperty("date", OType.DATETIME);
@@ -153,7 +137,7 @@ public class DefaultValueTest {
     prop.setDefaultValue(ODateHelper.getDateTimeFormatInstance().format(new Date()));
 
     ODocument doc = new ODocument().fromJSON("{'@class':'ClassA','other':'other'}");
-    ODocument saved = database.save(doc);
+    ODocument saved = db.save(doc);
     assertNotNull(saved.field("date"));
     assertTrue(saved.field("date") instanceof Date);
     assertNotNull(saved.field("other"));
@@ -161,7 +145,7 @@ public class DefaultValueTest {
     ODocument doc1 =
         new ODocument().fromJSON("{'@class':'ClassA','date':'" + val + "','other':'other1'}");
     saved.merge(doc1, true, true);
-    saved = database.save(saved);
+    saved = db.save(saved);
     assertNotNull(saved.field("date"));
     assertEquals(ODateHelper.getDateTimeFormatInstance().format(saved.field("date")), val);
     assertEquals(saved.field("other"), "other1");

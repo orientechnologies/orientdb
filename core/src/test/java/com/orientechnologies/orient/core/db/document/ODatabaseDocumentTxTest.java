@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.db.document;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -23,25 +24,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class ODatabaseDocumentTxTest {
-
-  private ODatabaseDocument db;
-
-  @Before
-  public void setUp() throws Exception {
-    String url = "memory:" + ODatabaseDocumentTxTest.class.getSimpleName();
-    db = new ODatabaseDocumentTx(url).create();
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    db.drop();
-  }
+public class ODatabaseDocumentTxTest extends BaseMemoryDatabase {
 
   @Test
   public void testCountClass() throws Exception {
@@ -466,8 +452,6 @@ public class ODatabaseDocumentTxTest {
 
   @Test
   public void selectDescTest() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:foo");
-    db.create();
     String className = "bar";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className, 1, schema.getClass(OClass.VERTEX_CLASS_NAME));
@@ -480,7 +464,6 @@ public class ODatabaseDocumentTxTest {
             (ODatabaseDocumentInternal) db, (ODatabaseDocumentInternal) db, className, true);
     Assert.assertTrue(reverseIterator.hasNext());
     Assert.assertEquals(document, reverseIterator.next());
-    db.close();
   }
 
   @Test

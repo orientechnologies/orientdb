@@ -19,25 +19,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class OCommandExecutorSQLDropPropertyTest {
-  static ODatabaseDocumentTx db;
-  private static String DB_STORAGE = "memory";
-  private static String DB_NAME = "OCommandExecutorSQLDropPropertyTest";
-  private int ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
-
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
-    db.create();
-  }
+public class OCommandExecutorSQLDropPropertyTest extends BaseMemoryDatabase {
 
   @Test
   public void test() {

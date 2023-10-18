@@ -19,34 +19,14 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 /** @author Sergey Sitnikov */
-public class VersionedDeleteTest {
-
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:" + VersionedDeleteTest.class.getSimpleName());
-
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
-
-    db.create();
-  }
-
-  @After
-  public void after() {
-    db.drop();
-  }
+public class VersionedDeleteTest extends BaseMemoryDatabase {
 
   @Test(expected = OConcurrentModificationException.class)
   public void testDeleteFutureVersion() {

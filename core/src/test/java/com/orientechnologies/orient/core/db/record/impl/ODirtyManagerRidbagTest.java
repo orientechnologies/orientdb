@@ -2,27 +2,16 @@ package com.orientechnologies.orient.core.db.record.impl;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class ODirtyManagerRidbagTest {
-
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:" + ODirtyManagerRidbagTest.class.getSimpleName());
-    db.create();
-  }
+public class ODirtyManagerRidbagTest extends BaseMemoryDatabase {
 
   @Test
   public void testRidBagTree() {
@@ -41,10 +30,5 @@ public class ODirtyManagerRidbagTest {
     } finally {
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(value);
     }
-  }
-
-  @After
-  public void after() {
-    db.drop();
   }
 }

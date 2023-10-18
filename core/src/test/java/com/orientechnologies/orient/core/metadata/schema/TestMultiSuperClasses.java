@@ -5,30 +5,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class TestMultiSuperClasses {
-  private ODatabaseDocumentTx db;
-
-  @Before
-  public void setUp() {
-    db = new ODatabaseDocumentTx("memory:" + TestMultiSuperClasses.class.getSimpleName());
-    if (db.exists()) {
-      db.open("admin", "admin");
-    } else db.create();
-  }
-
-  @After
-  public void after() {
-    db.close();
-  }
+public class TestMultiSuperClasses extends BaseMemoryInternalDatabase {
 
   @Test
   public void testClassCreation() {

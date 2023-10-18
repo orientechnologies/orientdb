@@ -6,7 +6,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -22,32 +22,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class OClassImplTest {
-
-  private ODatabaseDocumentTx db;
-
-  @Before
-  public void setUp() {
-    db = new ODatabaseDocumentTx("memory:" + OClassImplTest.class.getSimpleName());
-    if (db.exists()) {
-      db.open("admin", "admin");
-    } else db.create();
-  }
-
-  @After
-  public void after() {
-    db.close();
-  }
-
-  @After
-  public void afterClass() {
-    db.open("admin", "admin");
-    db.drop();
-  }
+public class OClassImplTest extends BaseMemoryInternalDatabase {
 
   /**
    * If class was not abstract and we call {@code setAbstract(false)} clusters should not be

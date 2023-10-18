@@ -5,30 +5,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class AlterPropertyTest {
-
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    //noinspection deprecation
-    db = new ODatabaseDocumentTx("memory:" + AlterPropertyTest.class.getSimpleName());
-    db.create();
-  }
-
-  @After
-  public void after() {
-    db.drop();
-  }
+public class AlterPropertyTest extends BaseMemoryDatabase {
 
   @Test
   public void testPropertyRenaming() {
