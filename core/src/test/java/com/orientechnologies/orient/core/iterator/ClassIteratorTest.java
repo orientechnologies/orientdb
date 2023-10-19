@@ -1,8 +1,7 @@
 package com.orientechnologies.orient.core.iterator;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -10,54 +9,32 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.ODefau
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** @author Artem Loginov */
-public class ClassIteratorTest {
-  private static final boolean RECREATE_DATABASE = true;
-  private static ODatabaseDocument db = null;
+public class ClassIteratorTest extends BaseMemoryDatabase {
   private Set<String> names;
 
-  private static void initializeDatabase() {
-    db = new ODatabaseDocumentTx("memory:" + ClassIteratorTest.class.getSimpleName());
-    if (db.exists() && RECREATE_DATABASE) {
-      db.open("admin", "admin");
-      db.drop();
-      System.out.println("Dropped database.");
-    }
-    if (!db.exists()) {
-      db.create();
-      System.out.println("Created database.");
-
-      final OSchema schema = db.getMetadata().getSchema();
-
-      // Create Person class
-      final OClass personClass = schema.createClass("Person");
-      personClass
-          .createProperty("First", OType.STRING)
-          .setMandatory(true)
-          .setNotNull(true)
-          .setMin("1");
-
-      System.out.println("Created schema.");
-    } else {
-      db.open("admin", "admin");
-    }
-  }
-
-  private static void createPerson(final String iClassName, final String first) {
+  private void createPerson(final String iClassName, final String first) {
     // Create Person document
     final ODocument personDoc = db.newInstance(iClassName);
     personDoc.field("First", first);
     personDoc.save();
   }
 
-  @Before
-  public void setUp() throws Exception {
-    initializeDatabase();
+  public void beforeTest() {
+    super.beforeTest();
+
+    final OSchema schema = db.getMetadata().getSchema();
+
+    // Create Person class
+    final OClass personClass = schema.createClass("Person");
+    personClass
+        .createProperty("First", OType.STRING)
+        .setMandatory(true)
+        .setNotNull(true)
+        .setMin("1");
 
     // Insert some data
     names = new HashSet<String>();
@@ -69,11 +46,6 @@ public class ClassIteratorTest {
     for (String name : names) {
       createPerson("Person", name);
     }
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    if (!db.isClosed()) db.close();
   }
 
   @Test

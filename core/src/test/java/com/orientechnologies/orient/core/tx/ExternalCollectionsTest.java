@@ -19,32 +19,16 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 /** @author Sergey Sitnikov */
-public class ExternalCollectionsTest {
-
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    db =
-        new ODatabaseDocumentTx("memory:" + ExternalCollectionsTest.class.getSimpleName()).create();
-  }
-
-  @After
-  public void after() {
-    db.drop();
-  }
+public class ExternalCollectionsTest extends BaseMemoryDatabase {
 
   @Ignore // re-enable or remove after decision on #6370 is made
   @Test

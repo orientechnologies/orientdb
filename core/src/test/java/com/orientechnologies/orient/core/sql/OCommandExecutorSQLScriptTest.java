@@ -2,8 +2,8 @@ package com.orientechnologies.orient.core.sql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -12,29 +12,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class OCommandExecutorSQLScriptTest {
-  private static String DB_STORAGE = "memory";
-  private static String DB_NAME = "OCommandExecutorSQLScriptTest";
-  public ODatabaseDocumentTx db;
+public class OCommandExecutorSQLScriptTest extends BaseMemoryDatabase {
 
-  @After
-  public void after() throws Exception {
-    if (db.isClosed()) {
-      db.open("admin", "admin");
-    }
-    db.drop();
-  }
-
-  @Before
-  public void before() throws Exception {
-    db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
 
     db.command(new OCommandSQL("CREATE class foo")).execute();
 

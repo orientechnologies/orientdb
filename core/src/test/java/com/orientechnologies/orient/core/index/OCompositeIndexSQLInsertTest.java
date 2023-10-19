@@ -1,26 +1,18 @@
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class OCompositeIndexSQLInsertTest {
+public class OCompositeIndexSQLInsertTest extends BaseMemoryDatabase {
 
-  public ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    System.err.println("BEFORE THREAD: " + Thread.currentThread());
-    db = new ODatabaseDocumentTx("memory:" + OCompositeIndexSQLInsertTest.class.getSimpleName());
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
     OSchema schema = db.getMetadata().getSchema();
     OClass book = schema.createClass("Book");
     book.createProperty("author", OType.STRING);
@@ -33,13 +25,6 @@ public class OCompositeIndexSQLInsertTest {
     indexOptions.field("ignoreNullValues", true);
     book.createIndex(
         "indexignoresnulls", "NOTUNIQUE", null, indexOptions, new String[] {"nullKey1"});
-  }
-
-  @After
-  public void after() {
-    System.err.println("AFTER THREAD: " + Thread.currentThread());
-    db.activateOnCurrentThread();
-    db.drop();
   }
 
   @Test

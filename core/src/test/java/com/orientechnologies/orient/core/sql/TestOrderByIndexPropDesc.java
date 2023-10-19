@@ -1,39 +1,25 @@
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class TestOrderByIndexPropDesc {
+public class TestOrderByIndexPropDesc extends BaseMemoryDatabase {
 
   private static final String DOCUMENT_CLASS_NAME = "MyDocument";
   private static final String PROP_INDEXED_STRING = "dateProperty";
 
-  private ODatabaseDocument db;
-
-  @Before
-  public void init() throws Exception {
-    db = new ODatabaseDocumentTx("memory:TestOrderByIndexPropDesc");
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
     OClass oclass = db.getMetadata().getSchema().createClass(DOCUMENT_CLASS_NAME);
     oclass.createProperty(PROP_INDEXED_STRING, OType.INTEGER);
     oclass.createIndex("index", INDEX_TYPE.NOTUNIQUE, PROP_INDEXED_STRING);
-  }
-
-  @After
-  public void drop() {
-    if (db != null) {
-      db.drop();
-    }
   }
 
   @Test

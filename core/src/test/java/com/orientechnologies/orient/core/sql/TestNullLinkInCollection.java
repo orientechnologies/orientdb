@@ -2,8 +2,7 @@ package com.orientechnologies.orient.core.sql;
 
 import static org.junit.Assert.assertNull;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -12,25 +11,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Created by tglman on 02/12/15. */
-public class TestNullLinkInCollection {
+public class TestNullLinkInCollection extends BaseMemoryDatabase {
 
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:" + TestNullLinkInCollection.class.getSimpleName());
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
     db.getMetadata().getSchema().createClass("Test");
-  }
-
-  @After
-  public void after() {
-    db.drop();
   }
 
   @Test

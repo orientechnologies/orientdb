@@ -1,30 +1,18 @@
 package com.orientechnologies.orient.core.db.record.impl;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Created by tglman on 01/10/15. */
-public class DirtyManagerReferenceCleanTest {
+public class DirtyManagerReferenceCleanTest extends BaseMemoryDatabase {
 
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:" + DirtyManagerReferenceCleanTest.class.getSimpleName());
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
     db.getMetadata().getSchema().createClass("test");
-  }
-
-  @After
-  public void after() {
-    db.drop();
   }
 
   @Test

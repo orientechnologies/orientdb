@@ -18,46 +18,38 @@
 
 package com.orientechnologies.orient.core.sql;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import org.junit.Test;
 
 /** Created by Enrico Risa on 07/06/16. */
-public class OCommandExecutorSQLGrantRevokeTest {
+public class OCommandExecutorSQLGrantRevokeTest extends BaseMemoryDatabase {
 
   @Test
   public void grantServerRemove() {
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:grant");
-    try {
-      db.create();
+    ORole testRole =
+        db.getMetadata()
+            .getSecurity()
+            .createRole("testRole", OSecurityRole.ALLOW_MODES.DENY_ALL_BUT);
 
-      ORole testRole =
-          db.getMetadata()
-              .getSecurity()
-              .createRole("testRole", OSecurityRole.ALLOW_MODES.DENY_ALL_BUT);
+    assertFalse(testRole.allow(ORule.ResourceGeneric.SERVER, "server", ORole.PERMISSION_EXECUTE));
 
-      assertFalse(testRole.allow(ORule.ResourceGeneric.SERVER, "server", ORole.PERMISSION_EXECUTE));
+    db.command(new OCommandSQL("GRANT execute on server.remove to testRole")).execute();
 
-      db.command(new OCommandSQL("GRANT execute on server.remove to testRole")).execute();
+    testRole = db.getMetadata().getSecurity().getRole("testRole");
 
-      testRole = db.getMetadata().getSecurity().getRole("testRole");
+    assertTrue(testRole.allow(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE));
 
-      assertTrue(testRole.allow(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE));
+    db.command(new OCommandSQL("REVOKE execute on server.remove from testRole")).execute();
 
-      db.command(new OCommandSQL("REVOKE execute on server.remove from testRole")).execute();
+    testRole = db.getMetadata().getSecurity().getRole("testRole");
 
-      testRole = db.getMetadata().getSecurity().getRole("testRole");
-
-      assertFalse(testRole.allow(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE));
-
-    } finally {
-      db.drop();
-    }
+    assertFalse(testRole.allow(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE));
   }
 }

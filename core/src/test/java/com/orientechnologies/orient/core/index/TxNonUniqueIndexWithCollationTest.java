@@ -21,25 +21,22 @@ package com.orientechnologies.orient.core.index;
 
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 /** @author Sergey Sitnikov */
-public class TxNonUniqueIndexWithCollationTest {
-
-  private ODatabaseDocumentTx db;
+public class TxNonUniqueIndexWithCollationTest extends BaseMemoryDatabase {
 
   @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:TxNonUniqueIndexWithCollationTest");
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
     db.getMetadata()
         .getSchema()
         .createClass("user")
@@ -47,15 +44,18 @@ public class TxNonUniqueIndexWithCollationTest {
         .setCollate("ci")
         .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    db.newInstance("user").field("name", "abc").save();
-    db.newInstance("user").field("name", "aby").save();
-    db.newInstance("user").field("name", "aby").save();
-    db.newInstance("user").field("name", "abz").save();
-  }
-
-  @After
-  public void after() {
-    db.drop();
+    OElement user = db.newElement("user");
+    user.setProperty("name", "abc");
+    db.save(user);
+    user = db.newElement("user");
+    user.setProperty("name", "aby");
+    db.save(user);
+    user = db.newElement("user");
+    user.setProperty("name", "aby");
+    db.save(user);
+    user = db.newElement("user");
+    user.setProperty("name", "abz");
+    db.save(user);
   }
 
   @Test

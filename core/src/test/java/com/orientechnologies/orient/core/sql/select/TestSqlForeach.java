@@ -1,19 +1,15 @@
 package com.orientechnologies.orient.core.sql.select;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestSqlForeach {
+public class TestSqlForeach extends BaseMemoryDatabase {
 
   @Test
   public void testForeach() {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:" + TestSqlForeach.class.getSimpleName());
-    db.create();
     db.getMetadata().getSchema().createClass("Test");
     ODocument doc = new ODocument("Test");
     db.save(doc);

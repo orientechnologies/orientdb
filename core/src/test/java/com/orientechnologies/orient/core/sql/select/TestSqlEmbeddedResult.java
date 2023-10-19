@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.sql.select;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -11,13 +10,10 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestSqlEmbeddedResult {
+public class TestSqlEmbeddedResult extends BaseMemoryDatabase {
 
   @Test
   public void testEmbeddedRusultTypeNotLink() {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:" + TestSqlEmbeddedResult.class.getSimpleName());
-    db.create();
     db.getMetadata().getSchema().createClass("Test");
     ODocument doc = new ODocument("Test");
     ODocument doc1 = new ODocument();
@@ -53,6 +49,5 @@ public class TestSqlEmbeddedResult {
     read = new ODocument(bt);
     Assert.assertNotNull(read.field("el"));
     Assert.assertEquals(read.fieldType("el"), OType.EMBEDDEDLIST);
-    db.drop();
   }
 }

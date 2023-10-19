@@ -2,8 +2,7 @@ package com.orientechnologies.orient.core.sql;
 
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -11,13 +10,10 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.junit.Test;
 
-public class UpdateWithRidParameters {
+public class UpdateWithRidParameters extends BaseMemoryDatabase {
 
   @Test
   public void testRidParameters() {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:" + UpdateWithRidParameters.class.getSimpleName());
-    db.create();
 
     OSchema schm = db.getMetadata().getSchema();
     schm.createClass("testingClass");
@@ -47,7 +43,5 @@ public class UpdateWithRidParameters {
 
     assertEquals(orid, lst.get(0));
     assertEquals(orid, lst.get(1));
-
-    db.drop();
   }
 }

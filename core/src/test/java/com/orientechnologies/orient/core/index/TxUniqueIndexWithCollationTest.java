@@ -21,25 +21,20 @@ package com.orientechnologies.orient.core.index;
 
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 /** @author Sergey Sitnikov */
-public class TxUniqueIndexWithCollationTest {
+public class TxUniqueIndexWithCollationTest extends BaseMemoryDatabase {
 
-  private ODatabaseDocumentTx db;
-
-  @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:TxUniqueIndexWithCollationTest");
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
     db.getMetadata()
         .getSchema()
         .createClass("user")
@@ -47,14 +42,17 @@ public class TxUniqueIndexWithCollationTest {
         .setCollate("ci")
         .createIndex(OClass.INDEX_TYPE.UNIQUE);
 
-    db.newInstance("user").field("name", "abc").save();
-    db.newInstance("user").field("name", "aby").save();
-    db.newInstance("user").field("name", "abz").save();
-  }
+    OElement one = db.newElement("user");
+    one.setProperty("name", "abc");
+    db.save(one);
 
-  @After
-  public void after() {
-    db.drop();
+    OElement two = db.newElement("user");
+    two.setProperty("name", "aby");
+    db.save(two);
+
+    OElement three = db.newElement("user");
+    three.setProperty("name", "abz");
+    db.save(three);
   }
 
   @Test
