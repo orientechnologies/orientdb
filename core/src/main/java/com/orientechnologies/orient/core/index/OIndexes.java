@@ -121,13 +121,15 @@ public final class OIndexes {
       algorithm = chooseDefaultIndexAlgorithm(indexType);
     }
 
-    algorithm = algorithm.toUpperCase(Locale.ENGLISH);
-    final Iterator<OIndexFactory> ite = getAllFactories();
+    if (algorithm != null) {
+      algorithm = algorithm.toUpperCase(Locale.ENGLISH);
+      final Iterator<OIndexFactory> ite = getAllFactories();
 
-    while (ite.hasNext()) {
-      final OIndexFactory factory = ite.next();
-      if (factory.getTypes().contains(indexType) && factory.getAlgorithms().contains(algorithm)) {
-        return factory;
+      while (ite.hasNext()) {
+        final OIndexFactory factory = ite.next();
+        if (factory.getTypes().contains(indexType) && factory.getAlgorithms().contains(algorithm)) {
+          return factory;
+        }
       }
     }
 

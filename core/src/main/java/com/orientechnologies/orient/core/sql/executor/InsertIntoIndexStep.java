@@ -21,7 +21,7 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
   private final OIndexIdentifier targetIndex;
   private final OInsertBody body;
 
-  private boolean executed = false;
+  private OResultSet result;
 
   public InsertIntoIndexStep(
       OIndexIdentifier targetIndex,
@@ -36,7 +36,10 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OProduceOneResult(() -> produce(ctx));
+    if (result == null) {
+      result = new OProduceOneResult(() -> produce(ctx));
+    }
+    return result;
   }
 
   private OResultInternal produce(OCommandContext ctx) {
@@ -60,7 +63,6 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
       count = handleKeyValues(body.getIdentifierList(), body.getValueExpressions(), index, ctx);
     }
 
-    executed = true;
     OResultInternal result = new OResultInternal();
     result.setProperty("count", count);
     return result;
