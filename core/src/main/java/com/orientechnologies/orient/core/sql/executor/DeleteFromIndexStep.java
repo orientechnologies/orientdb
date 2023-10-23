@@ -92,7 +92,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   }
 
   private boolean filter(ORawPair<Object, ORID> entry, OCommandContext ctx) {
-    if (ridCondition == null) {
+    if (ridCondition != null) {
       OResultInternal res = new OResultInternal();
       res.setProperty("rid", entry.second);
       if (ridCondition.evaluate(res, ctx)) {
