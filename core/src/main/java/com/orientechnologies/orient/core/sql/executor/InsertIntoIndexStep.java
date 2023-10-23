@@ -56,7 +56,7 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
     if (body.getContent() != null) {
       throw new OCommandExecutionException("Invalid expression: INSERT INTO INDEX:... CONTENT ...");
     }
-    int count;
+    long count;
     if (setExps != null) {
       count = handleSet(setExps, index, ctx);
     } else {
@@ -68,7 +68,7 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
     return result;
   }
 
-  private int handleKeyValues(
+  private long handleKeyValues(
       List<OIdentifier> identifierList,
       List<List<OExpression>> setExpressions,
       OIndex index,
@@ -78,7 +78,7 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
     if (identifierList == null || setExpressions == null) {
       throw new OCommandExecutionException("Invalid insert expression");
     }
-    int count = 0;
+    long count = 0;
     for (List<OExpression> valList : setExpressions) {
       if (identifierList.size() != valList.size()) {
         throw new OCommandExecutionException("Invalid insert expression");
@@ -100,7 +100,7 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
     return count;
   }
 
-  private int handleSet(List<OInsertSetExpression> setExps, OIndex index, OCommandContext ctx) {
+  private long handleSet(List<OInsertSetExpression> setExps, OIndex index, OCommandContext ctx) {
     OExpression keyExp = null;
     OExpression valueExp = null;
     for (OInsertSetExpression exp : setExps) {
@@ -118,9 +118,9 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
     return doExecute(index, ctx, keyExp, valueExp);
   }
 
-  private int doExecute(
+  private long doExecute(
       OIndex index, OCommandContext ctx, OExpression keyExp, OExpression valueExp) {
-    int count = 0;
+    long count = 0;
     Object key = keyExp.execute((OResult) null, ctx);
     Object value = valueExp.execute((OResult) null, ctx);
     if (value instanceof OIdentifiable) {

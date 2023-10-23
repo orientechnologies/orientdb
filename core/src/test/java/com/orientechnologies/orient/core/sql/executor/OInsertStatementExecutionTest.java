@@ -1,9 +1,12 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Collection;
 import java.util.HashMap;
@@ -456,5 +459,23 @@ public class OInsertStatementExecutionTest extends BaseMemoryDatabase {
 
     Assert.assertFalse(result.hasNext());
     result.close();
+  }
+
+  @Test
+  public void testInsertIndexTest() {
+    db.command("CREATE INDEX testInsert UNIQUE STRING ");
+
+    try (OResultSet insert = db.command("INSERT INTO index:testInsert set key='one', rid=#5:0")) {
+      assertEquals((long) insert.next().getProperty("count"), 1L);
+      assertFalse(insert.hasNext());
+    }
+
+    try (OResultSet result = db.query("SELECT FROM index:testInsert ")) {
+
+      OResult item = result.next();
+      assertEquals(item.getProperty("key"), "one");
+      assertEquals(item.getProperty("rid"), new ORecordId(5, 0));
+      assertFalse(result.hasNext());
+    }
   }
 }
