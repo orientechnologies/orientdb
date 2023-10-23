@@ -82,7 +82,7 @@ public class ODatabasePoolTest {
         new ODatabasePool(orientDb, "test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     ODatabaseDocument db = pool.acquire();
     db.close();
-    db.close();
+    pool.close();
     orientDb.close();
   }
 }

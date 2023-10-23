@@ -235,6 +235,7 @@ public class RemoteTokenExpireTest {
     } catch (OTokenSecurityException e) {
       Assert.fail("It should  get the expire exception");
     }
+    pool.close();
   }
 
   @After

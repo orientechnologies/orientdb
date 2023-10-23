@@ -79,6 +79,7 @@ public class TestConcurrentSequenceGenerationIT {
       t.join();
     }
     Assert.assertEquals(0, failures.get());
+    pool.close();
   }
 
   @After

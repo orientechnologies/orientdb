@@ -76,5 +76,6 @@ public class HookOnIndexedMapTest {
         Assert.fail();
       }
     }
+    orient.close();
   }
 }

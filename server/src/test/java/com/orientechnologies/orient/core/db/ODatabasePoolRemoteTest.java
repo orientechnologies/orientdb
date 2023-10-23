@@ -72,7 +72,7 @@ public class ODatabasePoolRemoteTest {
     ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
     db.close();
-    db.close();
+    pool.close();
     orientDb.close();
   }
 

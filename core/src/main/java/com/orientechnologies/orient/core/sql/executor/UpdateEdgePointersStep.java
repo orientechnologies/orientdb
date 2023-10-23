@@ -129,7 +129,7 @@ public class UpdateEdgePointersStep extends AbstractExecutionStep {
       return false;
     }
     ODocument record = ((OIdentifiable) iRecord).getRecord();
-    if (iRecord == null) {
+    if (record == null) {
       return false;
     }
     return (ODocumentInternal.getImmutableSchemaClass(record).isSubClassOf(orientClass));

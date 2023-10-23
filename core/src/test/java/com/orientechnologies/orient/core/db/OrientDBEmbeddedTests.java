@@ -456,6 +456,7 @@ public class OrientDBEmbeddedTests {
 
     poolAdmin1 = orientDB.cachedPool("testdb", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     assertNotEquals(poolAdmin2, poolAdmin1);
+    orientDB.close();
   }
 
   @Test
