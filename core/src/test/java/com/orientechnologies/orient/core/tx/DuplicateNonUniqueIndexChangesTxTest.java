@@ -19,7 +19,7 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -31,34 +31,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Sergey Sitnikov */
-public class DuplicateNonUniqueIndexChangesTxTest {
+public class DuplicateNonUniqueIndexChangesTxTest extends BaseMemoryDatabase {
 
-  private static ODatabaseDocumentTx db;
   private OIndex index;
 
-  @BeforeClass
-  public static void before() {
-    db =
-        new ODatabaseDocumentTx(
-            "memory:" + DuplicateNonUniqueIndexChangesTxTest.class.getSimpleName());
-  }
-
-  @AfterClass
-  public static void after() {
-    db.drop();
-  }
-
-  @Before
-  public void beforeMethod() {
-    if (!db.isClosed()) db.drop();
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
     final OClass class_ = db.getMetadata().getSchema().createClass("Person");
     index =
         class_
@@ -71,9 +53,12 @@ public class DuplicateNonUniqueIndexChangesTxTest {
     db.begin();
 
     // saved persons will have null name
-    final ODocument person1 = db.newInstance("Person").save();
-    final ODocument person2 = db.newInstance("Person").save();
-    final ODocument person3 = db.newInstance("Person").save();
+    final ODocument person1 = db.newInstance("Person");
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    db.save(person3);
 
     // change some names
     person3.field("name", "Name3").save();
@@ -88,9 +73,15 @@ public class DuplicateNonUniqueIndexChangesTxTest {
   @Test
   public void testDuplicateNullsOnUpdate() {
     db.begin();
-    final ODocument person1 = db.newInstance("Person").field("name", "Name1").save();
-    final ODocument person2 = db.newInstance("Person").field("name", "Name2").save();
-    final ODocument person3 = db.newInstance("Person").field("name", "Name3").save();
+    final ODocument person1 = db.newInstance("Person");
+    person1.field("name", "Name1");
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    person2.field("name", "Name2");
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    person3.field("name", "Name3");
+    db.save(person3);
     db.commit();
 
     // verify index state
@@ -129,9 +120,15 @@ public class DuplicateNonUniqueIndexChangesTxTest {
     db.begin();
 
     // saved persons will have same name
-    final ODocument person1 = db.newInstance("Person").field("name", "same").save();
-    final ODocument person2 = db.newInstance("Person").field("name", "same").save();
-    final ODocument person3 = db.newInstance("Person").field("name", "same").save();
+    final ODocument person1 = db.newInstance("Person");
+    person1.field("name", "same");
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    person2.field("name", "same");
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    person3.field("name", "same");
+    db.save(person3);
 
     // change some names
     person2.field("name", "Name1").save();
@@ -149,9 +146,15 @@ public class DuplicateNonUniqueIndexChangesTxTest {
   @Test
   public void testDuplicateValuesOnUpdate() {
     db.begin();
-    final ODocument person1 = db.newInstance("Person").field("name", "Name1").save();
-    final ODocument person2 = db.newInstance("Person").field("name", "Name2").save();
-    final ODocument person3 = db.newInstance("Person").field("name", "Name3").save();
+    final ODocument person1 = db.newInstance("Person");
+    person1.field("name", "Name1");
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    person2.field("name", "Name2");
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    person3.field("name", "Name3");
+    db.save(person3);
     db.commit();
 
     // verify index state
@@ -186,10 +189,18 @@ public class DuplicateNonUniqueIndexChangesTxTest {
     db.begin();
 
     // saved persons will have same name
-    final ODocument person1 = db.newInstance("Person").field("name", "same").save();
-    final ODocument person2 = db.newInstance("Person").field("name", "same").save();
-    final ODocument person3 = db.newInstance("Person").field("name", "same").save();
-    final ODocument person4 = db.newInstance("Person").field("name", "same").save();
+    final ODocument person1 = db.newInstance("Person");
+    person1.field("name", "same");
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    person2.field("name", "same");
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    person3.field("name", "same");
+    db.save(person3);
+    final ODocument person4 = db.newInstance("Person");
+    person4.field("name", "same");
+    db.save(person4);
 
     person1.delete();
     person2.field("name", "Name2").save();
@@ -208,10 +219,18 @@ public class DuplicateNonUniqueIndexChangesTxTest {
   @Test
   public void testDuplicateValuesOnUpdateDelete() {
     db.begin();
-    final ODocument person1 = db.newInstance("Person").field("name", "Name1").save();
-    final ODocument person2 = db.newInstance("Person").field("name", "Name2").save();
-    final ODocument person3 = db.newInstance("Person").field("name", "Name3").save();
-    final ODocument person4 = db.newInstance("Person").field("name", "Name4").save();
+    final ODocument person1 = db.newInstance("Person");
+    person1.field("name", "Name1");
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    person2.field("name", "Name2");
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    person3.field("name", "Name3");
+    db.save(person3);
+    final ODocument person4 = db.newInstance("Person");
+    person4.field("name", "Name4");
+    db.save(person4);
     db.commit();
 
     // verify index state
@@ -254,7 +273,10 @@ public class DuplicateNonUniqueIndexChangesTxTest {
 
     db.begin();
     for (int i = 0; i < OTransactionIndexChangesPerKey.SET_ADD_THRESHOLD * 2; ++i) {
-      db.newInstance("Person").field("name", "Name").field("serial", i).save();
+      ODocument pers = db.newInstance("Person");
+      pers.field("name", "Name");
+      pers.field("serial", i);
+      db.save(pers);
       unseen.add(i);
     }
     db.commit();

@@ -19,41 +19,23 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.stream.Stream;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Sergey Sitnikov */
-public class DuplicateDictionaryIndexChangesTxTest {
+public class DuplicateDictionaryIndexChangesTxTest extends BaseMemoryDatabase {
 
-  private static ODatabaseDocumentTx db;
   private OIndex index;
 
-  @BeforeClass
-  public static void before() {
-    db =
-        new ODatabaseDocumentTx(
-            "memory:" + DuplicateDictionaryIndexChangesTxTest.class.getSimpleName());
-  }
-
-  @AfterClass
-  public static void after() {
-    db.drop();
-  }
-
-  @Before
-  public void beforeMethod() {
-    if (!db.isClosed()) db.drop();
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
     final OClass class_ = db.getMetadata().getSchema().createClass("Person");
     index =
         class_
@@ -66,9 +48,12 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.begin();
 
     // saved persons will have null name
-    final ODocument person1 = db.newInstance("Person").save();
-    final ODocument person2 = db.newInstance("Person").save();
-    final ODocument person3 = db.newInstance("Person").save();
+    final ODocument person1 = db.newInstance("Person");
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    db.save(person3);
 
     // change some names to not null
     person1.field("name", "Name1").save();
@@ -90,9 +75,15 @@ public class DuplicateDictionaryIndexChangesTxTest {
   @Test
   public void testDuplicateNullsOnUpdate() {
     db.begin();
-    final ODocument person1 = db.newInstance("Person").field("name", (Object) null).save();
-    final ODocument person2 = db.newInstance("Person").field("name", (Object) null).save();
-    final ODocument person3 = db.newInstance("Person").field("name", (Object) null).save();
+    final ODocument person1 = db.newInstance("Person");
+    person1.field("name", (Object) null);
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    person2.field("name", (Object) null);
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    person3.field("name", (Object) null);
+    db.save(person3);
     db.commit();
 
     // verify index state
@@ -128,9 +119,15 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.begin();
 
     // saved persons will have same name
-    final ODocument person1 = db.newInstance("Person").field("name", "same").save();
-    final ODocument person2 = db.newInstance("Person").field("name", "same").save();
-    final ODocument person3 = db.newInstance("Person").field("name", "same").save();
+    final ODocument person1 = db.newInstance("Person");
+    person1.field("name", "same");
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    person2.field("name", "same");
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    person3.field("name", "same");
+    person3.save();
 
     // change names to unique
     person1.field("name", "Name1").save();
@@ -157,9 +154,15 @@ public class DuplicateDictionaryIndexChangesTxTest {
   @Test
   public void testDuplicateValuesOnUpdate() {
     db.begin();
-    final ODocument person1 = db.newInstance("Person").field("name", "Name1").save();
-    final ODocument person2 = db.newInstance("Person").field("name", "Name2").save();
-    final ODocument person3 = db.newInstance("Person").field("name", "Name3").save();
+    final ODocument person1 = db.newInstance("Person");
+    person1.field("name", "Name1");
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    person2.field("name", "Name2");
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    person3.field("name", "Name3");
+    db.save(person3);
     db.commit();
 
     // verify index state
@@ -213,10 +216,18 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.begin();
 
     // saved persons will have same name
-    final ODocument person1 = db.newInstance("Person").field("name", "same").save();
-    final ODocument person2 = db.newInstance("Person").field("name", "same").save();
-    final ODocument person3 = db.newInstance("Person").field("name", "same").save();
-    final ODocument person4 = db.newInstance("Person").field("name", "same").save();
+    final ODocument person1 = db.newInstance("Person");
+    person1.field("name", "same");
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    person2.field("name", "same");
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    person3.field("name", "same");
+    db.save(person3);
+    final ODocument person4 = db.newInstance("Person");
+    person4.field("name", "same");
+    db.save(person4);
 
     person1.delete();
     person2.field("name", "Name2").save();
@@ -240,10 +251,18 @@ public class DuplicateDictionaryIndexChangesTxTest {
   @Test
   public void testDuplicateValuesOnUpdateDelete() {
     db.begin();
-    final ODocument person1 = db.newInstance("Person").field("name", "Name1").save();
-    final ODocument person2 = db.newInstance("Person").field("name", "Name2").save();
-    final ODocument person3 = db.newInstance("Person").field("name", "Name3").save();
-    final ODocument person4 = db.newInstance("Person").field("name", "Name4").save();
+    final ODocument person1 = db.newInstance("Person");
+    person1.field("name", "Name1");
+    db.save(person1);
+    final ODocument person2 = db.newInstance("Person");
+    person2.field("name", "Name2");
+    db.save(person2);
+    final ODocument person3 = db.newInstance("Person");
+    person3.field("name", "Name3");
+    db.save(person3);
+    final ODocument person4 = db.newInstance("Person");
+    person4.field("name", "Name4");
+    db.save(person4);
     db.commit();
 
     // verify index state

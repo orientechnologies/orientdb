@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -10,33 +10,20 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** @author Artem Orobets (enisher-at-gmail.com) */
 @RunWith(JUnit4.class)
-public class OCommandExecutorSQLCreateEdgeTest {
+public class OCommandExecutorSQLCreateEdgeTest extends BaseMemoryDatabase {
 
-  private ODatabaseDocumentTx db;
   private ODocument owner1;
   private ODocument owner2;
 
-  @Before
-  public void setUp() throws Exception {
-    db =
-        new ODatabaseDocumentTx(
-            "memory:" + OCommandExecutorSQLCreateEdgeTest.class.getSimpleName());
-
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
-
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
 
     final OSchema schema = db.getMetadata().getSchema();
     schema.createClass("Owner", schema.getClass("V"));
@@ -48,15 +35,6 @@ public class OCommandExecutorSQLCreateEdgeTest {
     owner2 = new ODocument("Owner");
     owner2.field("id", 2);
     owner2.save();
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    db.drop();
-
-    db = null;
-    owner1 = null;
-    owner2 = null;
   }
 
   @Test

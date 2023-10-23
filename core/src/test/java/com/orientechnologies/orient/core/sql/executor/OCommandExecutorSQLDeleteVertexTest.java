@@ -19,36 +19,22 @@
  */
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class OCommandExecutorSQLDeleteVertexTest {
+public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
 
-  private ODatabaseDocumentTx db;
-
-  @Before
-  public void init() throws Exception {
-    db =
-        new ODatabaseDocumentTx(
-            "memory:" + OCommandExecutorSQLDeleteVertexTest.class.getSimpleName());
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
     final OSchema schema = db.getMetadata().getSchema();
     schema.createClass("User", schema.getClass("V"));
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    db.drop();
-    db = null;
   }
 
   @Test

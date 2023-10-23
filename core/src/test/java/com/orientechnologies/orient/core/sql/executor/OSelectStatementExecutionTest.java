@@ -2,12 +2,11 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -35,25 +34,11 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class OSelectStatementExecutionTest {
-  static ODatabaseDocument db;
-
-  @BeforeClass
-  public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:OSelectStatementExecutionTest");
-    db.create();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    db.close();
-  }
+public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test
   public void testSelectNoTarget() {
@@ -1002,8 +987,7 @@ public class OSelectStatementExecutionTest {
 
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
-    Assert.assertEquals(
-        OSelectStatementExecutionTest.class.getSimpleName(), item.getProperty("name"));
+    Assert.assertEquals("testQueryMetadataDatabase", item.getProperty("name"));
     Assert.assertFalse(result.hasNext());
     result.close();
   }
@@ -1015,8 +999,7 @@ public class OSelectStatementExecutionTest {
 
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
-    Assert.assertEquals(
-        OSelectStatementExecutionTest.class.getSimpleName(), item.getProperty("name"));
+    Assert.assertEquals("testQueryMetadataStorage", item.getProperty("name"));
     Assert.assertFalse(result.hasNext());
     result.close();
   }
