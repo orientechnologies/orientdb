@@ -28,6 +28,22 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.24 - (October, 26 2023)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3224---26-October-2023
+
+# Core
+
+ - Optimized OResult to load records lazily
+ - Optimized OResult to avoid early load of link in properties
+ - Minor optimizations in the query engine runtime 
+ - Fix insert into index step to use the right value
+ - Minor dependencies updates
+ - Fix regression in rid comparison in case of embedded query
+ - Fix regression in direct insert into index query
+ - Fix regression in update index step
+ - Avoid storage to go in read only mode if index key type validation fails
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.23- (September, 21 2023)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3223---21-September-2023
 
