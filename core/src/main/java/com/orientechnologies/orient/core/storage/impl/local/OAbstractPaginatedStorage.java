@@ -2779,6 +2779,22 @@ public abstract class OAbstractPaginatedStorage
         throw new OIndexException("Types of indexed keys have to be provided");
       }
 
+      final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition);
+      if (keySerializer == null) {
+        throw new OIndexException("Can not determine key serializer");
+      }
+
+      final int keySize = determineKeySize(indexDefinition);
+
+      final boolean nullValuesSupport = !indexDefinition.isNullValuesIgnored();
+      final byte serializerId;
+
+      if (valueSerializer != null) {
+        serializerId = valueSerializer.getId();
+      } else {
+        serializerId = -1;
+      }
+
       checkBackupRunning();
       stateLock.writeLock().lock();
       try {
@@ -2804,22 +2820,6 @@ public abstract class OAbstractPaginatedStorage
                   ((OClusterBasedStorageConfiguration) configuration)
                       .deleteIndexEngine(atomicOperation, engineName);
                 }
-              }
-
-              final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition);
-              if (keySerializer == null) {
-                throw new OIndexException("Can not determine key serializer");
-              }
-
-              final int keySize = determineKeySize(indexDefinition);
-
-              final boolean nullValuesSupport = !indexDefinition.isNullValuesIgnored();
-              final byte serializerId;
-
-              if (valueSerializer != null) {
-                serializerId = valueSerializer.getId();
-              } else {
-                serializerId = -1;
               }
 
               final OBaseIndexEngine engine =
