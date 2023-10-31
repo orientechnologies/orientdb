@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OIndexName;
 import java.util.Arrays;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -20,7 +19,7 @@ public class CountFromIndexStepTest extends TestUtilsFixture {
   private static final String PROPERTY_NAME = "testPropertyName";
   private static final String PROPERTY_VALUE = "testPropertyValue";
   private static final String ALIAS = "size";
-  private static String indexName;
+  private String indexName;
 
   private OIndexIdentifier.Type identifierType;
 
@@ -28,7 +27,7 @@ public class CountFromIndexStepTest extends TestUtilsFixture {
     this.identifierType = identifierType;
   }
 
-  @Parameterized.Parameters(name = "OIndexIdentifier.Type: {0}")
+  @Parameterized.Parameters(name = "{0}")
   public static Iterable<Object[]> types() {
     return Arrays.asList(
         new Object[][] {
@@ -39,8 +38,8 @@ public class CountFromIndexStepTest extends TestUtilsFixture {
         });
   }
 
-  @BeforeClass
-  public static void precondition() {
+  public void beforeTest() {
+    super.beforeTest();
     OClass clazz = createClassInstance();
     clazz.createProperty(PROPERTY_NAME, OType.STRING);
     String className = clazz.getName();
@@ -64,7 +63,7 @@ public class CountFromIndexStepTest extends TestUtilsFixture {
     identifier.setType(identifierType);
 
     OBasicCommandContext context = new OBasicCommandContext();
-    context.setDatabase(database);
+    context.setDatabase(db);
     CountFromIndexStep step = new CountFromIndexStep(identifier, ALIAS, context, false);
 
     OResultSet result = step.syncPull(context, 20);

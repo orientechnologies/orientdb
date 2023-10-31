@@ -23,7 +23,7 @@ public class CheckSafeDeleteStepTest extends TestUtilsFixture {
     this.className = className;
   }
 
-  @Parameterized.Parameters(name = "Class name: {0}")
+  @Parameterized.Parameters(name = "{0}")
   public static Iterable<Object[]> documentTypes() {
     return Arrays.asList(
         new Object[][] {
@@ -36,10 +36,10 @@ public class CheckSafeDeleteStepTest extends TestUtilsFixture {
     OCommandContext context = new OBasicCommandContext();
     switch (className) {
       case VERTEX_CLASS_NAME:
-        database.createVertexClass(VERTEX_CLASS_NAME);
+        db.createVertexClass(VERTEX_CLASS_NAME);
         break;
       case EDGE_CLASS_NAME:
-        database.createEdgeClass(EDGE_CLASS_NAME);
+        db.createEdgeClass(EDGE_CLASS_NAME);
         break;
     }
 

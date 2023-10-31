@@ -1,38 +1,16 @@
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import org.junit.Test;
+
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
-public class BigKeyIndexTest {
-
-  private OrientDB orientDB;
-  private ODatabaseDocument db;
-
-  @Before
-  public void before() {
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.execute(
-        " create database ? memory users (admin identified by 'adminpwd' role admin) ",
-        BigKeyIndexTest.class.getSimpleName());
-    db = orientDB.open(BigKeyIndexTest.class.getSimpleName(), "admin", "adminpwd");
-  }
-
-  @After
-  public void after() {
-    db.close();
-    orientDB.drop(BigKeyIndexTest.class.getSimpleName());
-    orientDB.close();
-  }
+public class BigKeyIndexTest extends BaseMemoryDatabase {
 
   @Test
   public void testBigKey() {
@@ -46,7 +24,6 @@ public class BigKeyIndexTest {
       for (int z = 0; z < 1000; z++) {
         bigValue += "one" + z;
       }
-      System.out.println("" + bigValue.length());
       doc.setProperty("two", bigValue);
       db.save(doc);
     }
@@ -63,7 +40,6 @@ public class BigKeyIndexTest {
     for (int z = 0; z < 3000; z++) {
       bigValue += "one" + z;
     }
-    System.out.println("" + bigValue.length());
     doc.setProperty("two", bigValue);
     db.save(doc);
   }

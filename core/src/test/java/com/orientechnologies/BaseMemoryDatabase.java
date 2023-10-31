@@ -13,23 +13,28 @@ public class BaseMemoryDatabase {
   protected ODatabaseSession db;
   protected OrientDB context;
   @Rule public TestName name = new TestName();
+  private String databaseName;
 
   @Before
   public void beforeTest() {
     context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    String dbName = name.getMethodName();
+    dbName = dbName.replace('[', '_');
+    dbName = dbName.replace(']', '_');
+    this.databaseName = dbName;
     context
         .execute(
             "create database "
-                + name.getMethodName()
+                + this.databaseName
                 + " memory users(admin identified by 'adminpwd' role admin) ")
         .close();
-    db = context.open(name.getMethodName(), "admin", "adminpwd");
+    db = context.open(this.databaseName, "admin", "adminpwd");
   }
 
   @After
   public void afterTest() throws Exception {
     db.close();
-    context.drop(name.getMethodName());
+    context.drop(databaseName);
     context.close();
   }
 }
