@@ -1,6 +1,4 @@
-
-Develop: [![Build Status](http://helios.orientdb.com/job/orientdb-studio-multibranch/job/develop/badge/icon)](http://helios.orientdb.com/job/orientdb-studio-multibranch/job/develop/) 2.2.x: [![Build Status](http://helios.orientdb.com/job/orientdb-studio-multibranch/job/2.2.x/badge/icon)](http://helios.orientdb.com/job/orientdb-studio-multibranch/job/2.2.x/)
-
+[![REUSE status](https://api.reuse.software/badge/github.com/orientechnologies/orientdb-studio)](https://api.reuse.software/info/github.com/orientechnologies/orientdb-studio)
 # [OrientDB Studio](https://github.com/orientechnologies/orientdb-studio)
 
 ## Developers
