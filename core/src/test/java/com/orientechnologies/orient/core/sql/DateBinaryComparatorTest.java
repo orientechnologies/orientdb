@@ -2,8 +2,7 @@ package com.orientechnologies.orient.core.sql;
 
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -12,31 +11,16 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class DateBinaryComparatorTest {
+public class DateBinaryComparatorTest extends BaseMemoryDatabase {
 
   private final String dateFormat = "yyyy-MM-dd";
-  private final String dbUrl = "memory:DateBinaryComparatorTest";
   private final String dateValue = "2017-07-18";
 
-  private ODatabaseDocument db;
-
-  @Before
-  public void initDatabase() {
-    db = new ODatabaseDocumentTx(dbUrl);
-    if (!db.exists()) {
-      db.create();
-    }
-    openDatabase();
+  public void beforeTest() {
+    super.beforeTest();
     initSchema();
-  }
-
-  @After
-  public void dropDatabase() {
-    db.drop();
   }
 
   private void initSchema() {
@@ -61,12 +45,6 @@ public class DateBinaryComparatorTest {
 
     try (OResultSet result = db.query(str, params)) {
       assertTrue(result.stream().count() == 1);
-    }
-  }
-
-  private void openDatabase() {
-    if (db.isClosed()) {
-      db.open("admin", "admin");
     }
   }
 }

@@ -2,9 +2,10 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import static org.junit.Assert.fail;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
@@ -14,21 +15,16 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class OMatchStatementExecutionNewTest {
+public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
   private static String DB_STORAGE = "memory";
   private static String DB_NAME = "OMatchStatementExecutionNewTest";
 
-  static ODatabaseDocumentTx db;
+  public void beforeTest() {
+    super.beforeTest();
 
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
-    db.create();
     getProfilerInstance().startRecording();
 
     db.command(new OCommandSQL("CREATE class Person extends V")).execute();
@@ -63,7 +59,7 @@ public class OMatchStatementExecutionNewTest {
     initDiamondTest();
   }
 
-  private static void initEdgeIndexTest() {
+  private void initEdgeIndexTest() {
     db.command(new OCommandSQL("CREATE class IndexedVertex extends V")).execute();
     db.command(new OCommandSQL("CREATE property IndexedVertex.uid INTEGER")).execute();
     db.command(new OCommandSQL("CREATE index IndexedVertex_uid on IndexedVertex (uid) NOTUNIQUE"))
@@ -107,7 +103,7 @@ public class OMatchStatementExecutionNewTest {
     // System.out.println("x = " + x));
   }
 
-  private static void initOrgChart() {
+  private void initOrgChart() {
 
     // ______ [manager] department _______
     // _____ (employees in department)____
@@ -224,7 +220,7 @@ public class OMatchStatementExecutionNewTest {
     }
   }
 
-  private static void initTriangleTest() {
+  private void initTriangleTest() {
     db.command(new OCommandSQL("CREATE class TriangleV extends V")).execute();
     db.command(new OCommandSQL("CREATE property TriangleV.uid INTEGER")).execute();
     db.command(new OCommandSQL("CREATE index TriangleV_uid on TriangleV (uid) UNIQUE_HASH_INDEX"))
@@ -245,7 +241,7 @@ public class OMatchStatementExecutionNewTest {
     }
   }
 
-  private static void initDiamondTest() {
+  private void initDiamondTest() {
     db.command(new OCommandSQL("CREATE class DiamondV extends V")).execute();
     db.command(new OCommandSQL("CREATE class DiamondE extends E")).execute();
     for (int i = 0; i < 4; i++) {
@@ -258,16 +254,6 @@ public class OMatchStatementExecutionNewTest {
                   "CREATE EDGE DiamondE from (select from DiamondV where uid = ?) to (select from DiamondV where uid = ?)"))
           .execute(edge[0], edge[1]);
     }
-  }
-
-  @AfterClass
-  public static void afterClass() throws Exception {
-    if (db.isClosed()) {
-      db.open("admin", "admin");
-    }
-    // db.command(new OCommandSQL("drop class foo")).execute();
-    // db.getMetadata().getSchema().reload();
-    db.close();
   }
 
   @Test
@@ -2297,7 +2283,7 @@ public class OMatchStatementExecutionNewTest {
     }
   }
 
-  private long indexUsages(ODatabaseDocumentTx db) {
+  private long indexUsages(ODatabaseDocument db) {
     final long oldIndexUsage;
     try {
       oldIndexUsage = getProfilerInstance().getCounter("db." + DB_NAME + ".query.indexUsed");
@@ -2308,7 +2294,7 @@ public class OMatchStatementExecutionNewTest {
     return -1l;
   }
 
-  private static OProfiler getProfilerInstance() throws Exception {
+  private OProfiler getProfilerInstance() {
     return Orient.instance().getProfiler();
   }
 

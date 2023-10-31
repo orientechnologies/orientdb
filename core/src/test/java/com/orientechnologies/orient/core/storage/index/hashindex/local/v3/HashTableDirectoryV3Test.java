@@ -1,84 +1,66 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local.v3;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import java.io.IOException;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/15/14
  */
-public class HashTableDirectoryV3Test {
-  private static ODatabaseDocumentTx databaseDocumentTx;
+public class HashTableDirectoryV3Test extends BaseMemoryInternalDatabase {
 
   private static OHashTableDirectory directory;
 
-  @BeforeClass
-  public static void beforeClass() throws IOException {
-    databaseDocumentTx =
-        new ODatabaseDocumentTx("memory:" + HashTableDirectoryV3Test.class.getSimpleName());
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
-    }
-
-    databaseDocumentTx.create();
-
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+  public void beforeTest() {
+    super.beforeTest();
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     directory =
         new OHashTableDirectory(
             ".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest", storage);
 
-    final OAtomicOperation atomicOperation = startTx();
-    directory.create(atomicOperation);
-    completeTx();
+    try {
+      final OAtomicOperation atomicOperation = startTx();
+      directory.create(atomicOperation);
+      completeTx();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  @AfterClass
-  public static void afterClass() throws Exception {
-    final OAtomicOperation atomicOperation = startTx();
-    directory.delete(atomicOperation);
-    completeTx();
-
-    databaseDocumentTx.drop();
+  public void afterTest() {
+    try {
+      final OAtomicOperation atomicOperation = startTx();
+      directory.clear(atomicOperation);
+      completeTx();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    super.afterTest();
   }
 
-  @Before
-  public void beforeMethod() {}
-
-  @After
-  public void afterMethod() throws IOException {
-    final OAtomicOperation atomicOperation = startTx();
-    directory.clear(atomicOperation);
-    completeTx();
-  }
-
-  private static OAtomicOperation startTx() throws IOException {
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+  private OAtomicOperation startTx() throws IOException {
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     OAtomicOperationsManager manager = storage.getAtomicOperationsManager();
     Assert.assertNull(manager.getCurrentOperation());
     return manager.startAtomicOperation(null);
   }
 
-  private static void rollbackTx() throws IOException {
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+  private void rollbackTx() throws IOException {
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     OAtomicOperationsManager manager = storage.getAtomicOperationsManager();
     manager.endAtomicOperation(new OCommandInterruptedException(""));
     Assert.assertNull(manager.getCurrentOperation());
   }
 
-  private static void completeTx() throws IOException {
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+  private void completeTx() throws IOException {
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     OAtomicOperationsManager manager = storage.getAtomicOperationsManager();
     manager.endAtomicOperation(null);
     Assert.assertNull(manager.getCurrentOperation());

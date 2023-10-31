@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.sql.functions.sql;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -9,13 +9,10 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class OSqlUpdateContentValidationTest {
+public class OSqlUpdateContentValidationTest extends BaseMemoryDatabase {
 
   @Test
   public void testReadOnlyValidation() {
-    ODatabaseDocumentTx db =
-        new ODatabaseDocumentTx("memory:" + OSqlUpdateContentValidationTest.class.getSimpleName());
-    db.create();
     OClass clazz = db.getMetadata().getSchema().createClass("Test");
     clazz.createProperty("testNormal", OType.STRING);
     clazz.createProperty("test", OType.STRING).setReadonly(true);
@@ -33,6 +30,5 @@ public class OSqlUpdateContentValidationTest {
     } catch (OValidationException val) {
 
     }
-    db.close();
   }
 }

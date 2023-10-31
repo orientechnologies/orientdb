@@ -27,7 +27,7 @@ public class BaseMemoryInternalDatabase {
   }
 
   @After
-  public void afterTest() throws Exception {
+  public void afterTest() {
     db.close();
     context.drop(name.getMethodName());
     context.close();

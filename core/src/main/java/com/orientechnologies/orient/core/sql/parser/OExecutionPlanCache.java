@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
@@ -192,7 +191,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
     invalidate();
   }
 
-  public static OExecutionPlanCache instance(ODatabaseDocumentTx db) {
+  public static OExecutionPlanCache instance(ODatabaseDocumentInternal db) {
     if (db == null) {
       throw new IllegalArgumentException("DB cannot be null");
     }

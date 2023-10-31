@@ -1,19 +1,17 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class OExecutionPlanCacheTest {
+public class OExecutionPlanCacheTest extends BaseMemoryInternalDatabase {
 
   @Test
   public void testCacheInvalidation1() throws InterruptedException {
     String testName = "testCacheInvalidation1";
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OExecutionPlanCacheTest");
-    db.create();
     OExecutionPlanCache cache = OExecutionPlanCache.instance(db);
     String stm = "SELECT FROM OUser";
 
@@ -54,7 +52,5 @@ public class OExecutionPlanCacheTest {
 
     prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     Assert.assertFalse(cache.contains(stm));
-
-    db.close();
   }
 }
