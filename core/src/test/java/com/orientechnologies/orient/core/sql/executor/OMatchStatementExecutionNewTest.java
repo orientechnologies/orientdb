@@ -50,13 +50,8 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
     db.command(new OCommandSQL("CREATE VERTEX MathOp set a = 1, b = 3, c = 2")).execute();
     db.command(new OCommandSQL("CREATE VERTEX MathOp set a = 5, b = 3, c = 2")).execute();
 
-    initOrgChart();
+    //    initOrgChart();
 
-    initTriangleTest();
-
-    initEdgeIndexTest();
-
-    initDiamondTest();
   }
 
   private void initEdgeIndexTest() {
@@ -790,6 +785,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testManager() {
+    initOrgChart();
     // the manager of a person is the manager of the department that person belongs to.
     // if that department does not have a direct manager, climb up the hierarchy until you find one
     Assert.assertEquals("c", getManager("p10").field("name"));
@@ -846,6 +842,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testManager2() {
+    initOrgChart();
     // the manager of a person is the manager of the department that person belongs to.
     // if that department does not have a direct manager, climb up the hierarchy until you find one
 
@@ -904,6 +901,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testManaged() {
+    initOrgChart();
     // people managed by a manager are people who belong to his department or people who belong to
     // sub-departments without a manager
     OResultSet managedByA = getManagedBy("a");
@@ -950,6 +948,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testManagedArrows() {
+    initOrgChart();
     // people managed by a manager are people who belong to his department or people who belong to
     // sub-departments without a manager
     OResultSet managedByA = getManagedByArrows("a");
@@ -993,6 +992,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testManaged2() {
+    initOrgChart();
     // people managed by a manager are people who belong to his department or people who belong to
     // sub-departments without a manager
     OResultSet managedByA = getManagedBy2("a");
@@ -1038,6 +1038,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testManaged2Arrows() {
+    initOrgChart();
     // people managed by a manager are people who belong to his department or people who belong to
     // sub-departments without a manager
     OResultSet managedByA = getManagedBy2Arrows("a");
@@ -1082,6 +1083,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testTriangle1() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
@@ -1103,6 +1105,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testTriangle1Arrows() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append(
@@ -1119,6 +1122,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testTriangle2Old() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1143,6 +1147,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testTriangle2() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1167,6 +1172,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testTriangle2Arrows() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1191,6 +1197,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testTriangle3() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1209,6 +1216,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testTriangle4() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1227,6 +1235,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testTriangle4Arrows() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1245,6 +1254,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testTriangleWithEdges4() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1264,6 +1274,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testCartesianProduct() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where:(uid = 1)},");
@@ -1285,6 +1296,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testNoPrefetch() {
+    initEdgeIndexTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:IndexedVertex, as: one}");
@@ -1311,6 +1323,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testCartesianProductLimit() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where:(uid = 1)},");
@@ -1329,6 +1342,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testArrayNumber() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
@@ -1347,6 +1361,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testArraySingleSelectors2() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
@@ -1365,6 +1380,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testArrayRangeSelectors1() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
@@ -1384,6 +1400,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testArrayRange2() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
@@ -1403,6 +1420,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testArrayRange3() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
@@ -1422,6 +1440,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testConditionInSquareBrackets() {
+    initTriangleTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
@@ -1443,6 +1462,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testIndexedEdge() {
+    initEdgeIndexTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:IndexedVertex, as: one, where: (uid = 0)}");
@@ -1459,6 +1479,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testIndexedEdgeArrows() {
+    initEdgeIndexTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:IndexedVertex, as: one, where: (uid = 0)}");
@@ -1474,6 +1495,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testJson() {
+    initEdgeIndexTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
@@ -1492,6 +1514,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testJson2() {
+    initEdgeIndexTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
@@ -1509,6 +1532,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testJson3() {
+    initEdgeIndexTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
@@ -1527,6 +1551,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testUnique() {
+    initDiamondTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append(
@@ -1559,6 +1584,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testNotUnique() {
+    initDiamondTest();
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append(
@@ -1594,6 +1620,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testManagedElements() {
+    initOrgChart();
     OResultSet managedByB = getManagedElements("b");
 
     Set<String> expectedNames = new HashSet<String>();
@@ -1629,6 +1656,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
   @Test
   public void testManagedPathElements() {
+    initOrgChart();
     OResultSet managedByB = getManagedPathElements("b");
 
     Set<String> expectedNames = new HashSet<String>();

@@ -207,18 +207,6 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
             new OCommandSQL(
                 "insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0}, {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]"))
         .execute();
-
-    initExpandSkipLimit(db);
-    initMassiveOrderSkipLimit(db);
-    initDatesSet(db);
-
-    initMatchesWithRegex(db);
-    initDistinctLimit(db);
-    initLinkListSequence(db);
-    initMaxLongNumber(db);
-    initFilterAndOrderByTest(db);
-    initComplexFilterInSquareBrackets(db);
-    initCollateOnLinked(db);
   }
 
   private static void initCollateOnLinked(ODatabaseDocument db) {
@@ -1090,6 +1078,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testExpandSkipLimit() {
+    initExpandSkipLimit(db);
     // issue #4985
     OSQLSynchQuery sql =
         new OSQLSynchQuery(
@@ -1139,6 +1128,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testMassiveOrderAscSkipLimit() {
+    initMassiveOrderSkipLimit(db);
     int skip = 1000;
     OSQLSynchQuery sql =
         new OSQLSynchQuery(
@@ -1154,6 +1144,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testMassiveOrderDescSkipLimit() {
+    initMassiveOrderSkipLimit(db);
     int skip = 1000;
     OSQLSynchQuery sql =
         new OSQLSynchQuery(
@@ -1187,6 +1178,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testDatesListContainsString() {
+    initDatesSet(db);
     // issue #3526
     OSQLSynchQuery sql =
         new OSQLSynchQuery(
@@ -1208,6 +1200,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testParamWithMatchesQuoteRegex() {
+    initMatchesWithRegex(db);
     // issue #5229
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", ".*admin[name].*"); // will not work
@@ -1221,6 +1214,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testMatchesWithQuotes() {
+    initMatchesWithRegex(db);
     // issue #5229
     String pattern = Pattern.quote("adm") + ".*";
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM matchesstuff WHERE (name matches ?)");
@@ -1230,6 +1224,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testMatchesWithQuotes2() {
+    initMatchesWithRegex(db);
     // issue #5229
     OSQLSynchQuery sql =
         new OSQLSynchQuery(
@@ -1240,6 +1235,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testMatchesWithQuotes3() {
+    initMatchesWithRegex(db);
     // issue #5229
     OSQLSynchQuery sql =
         new OSQLSynchQuery(
@@ -1267,6 +1263,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testDistinctLimit() {
+    initDistinctLimit(db);
     OSQLSynchQuery sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit 1");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
@@ -1286,6 +1283,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testSelectFromClusterNumber() {
+    initDistinctLimit(db);
     OClass clazz = db.getMetadata().getSchema().getClass("DistinctLimit");
     int clusterId = clazz.getClusterIds()[0];
     OSQLSynchQuery sql = new OSQLSynchQuery("select from cluster:" + clusterId + " limit 1");
@@ -1295,6 +1293,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testLinkListSequence1() {
+    initLinkListSequence(db);
     OSQLSynchQuery sql =
         new OSQLSynchQuery(
             "select expand(children.children.children) from LinkListSequence where name = 'root'");
@@ -1308,6 +1307,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testLinkListSequence2() {
+    initLinkListSequence(db);
     OSQLSynchQuery sql =
         new OSQLSynchQuery(
             "select expand(children[0].children.children) from LinkListSequence where name = 'root'");
@@ -1321,6 +1321,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testLinkListSequence3() {
+    initLinkListSequence(db);
     OSQLSynchQuery sql =
         new OSQLSynchQuery(
             "select expand(children[0].children[0].children) from LinkListSequence where name = 'root'");
@@ -1334,6 +1335,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testMaxLongNumber() {
+    initMaxLongNumber(db);
     // issue #5664
     OSQLSynchQuery sql =
         new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
@@ -1348,6 +1350,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testFilterAndOrderBy() {
+    initFilterAndOrderByTest(db);
     // issue http://www.prjhub.com/#/issues/6199
 
     OSQLSynchQuery sql =
@@ -1372,6 +1375,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testComplexFilterInSquareBrackets() {
+    initComplexFilterInSquareBrackets(db);
     // issues #513 #5451
 
     OSQLSynchQuery sql =
@@ -1496,6 +1500,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testCollateOnLinked() {
+    initCollateOnLinked(db);
+
     List<ODocument> results =
         db.query(
             new OSQLSynchQuery<ODocument>(

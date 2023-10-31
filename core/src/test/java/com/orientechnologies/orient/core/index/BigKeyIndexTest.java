@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.index;
 
-import org.junit.Test;
-
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -9,6 +7,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.Test;
 
 public class BigKeyIndexTest extends BaseMemoryDatabase {
 
