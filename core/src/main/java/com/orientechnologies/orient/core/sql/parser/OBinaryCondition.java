@@ -380,7 +380,7 @@ public class OBinaryCondition extends OBooleanExpression {
     } else if (left.mathExpression instanceof OBaseExpression) {
       OBaseExpression base = (OBaseExpression) left.mathExpression;
       if (base.getIdentifier() != null
-          && base.getIdentifier() != null
+          && base.getIdentifier().levelZero != null
           && base.getIdentifier().levelZero.collection != null) {
         OCollection coll = base.getIdentifier().levelZero.collection;
 

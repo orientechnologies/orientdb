@@ -124,6 +124,10 @@ public class OShapeFactory extends OComplexShapeBuilder {
   @Override
   public String asText(Object obj) {
 
+    if (obj instanceof OResult) {
+      OElement oElement = ((OResult) obj).toElement();
+      return asText((ODocument) oElement);
+    }
     if (obj instanceof ODocument) {
       return asText((ODocument) obj);
     }
