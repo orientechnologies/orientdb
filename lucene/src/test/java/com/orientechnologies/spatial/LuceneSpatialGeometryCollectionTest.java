@@ -16,9 +16,8 @@
 package com.orientechnologies.spatial;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Arrays;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,13 +55,11 @@ public class LuceneSpatialGeometryCollectionTest extends BaseSpatialLuceneTest {
     test1.field("geometry", geometry);
     test1.save();
 
-    List<ODocument> execute =
+    OResultSet execute =
         db.command(
-                new OCommandSQL(
-                    "SELECT from test where ST_Contains(geometry, ST_GeomFromText('POINT(1 1)')) = true"))
-            .execute();
+            "SELECT from test where ST_Contains(geometry, ST_GeomFromText('POINT(1 1)')) = true");
 
-    Assert.assertEquals(execute.size(), 1);
+    Assert.assertEquals(execute.stream().count(), 1);
   }
 
   @Test
@@ -90,12 +87,10 @@ public class LuceneSpatialGeometryCollectionTest extends BaseSpatialLuceneTest {
 
     db.commit();
 
-    List<ODocument> execute =
+    OResultSet execute =
         db.command(
-                new OCommandSQL(
-                    "SELECT from test where ST_Contains(geometry, ST_GeomFromText('POINT(1 1)')) = true"))
-            .execute();
+            "SELECT from test where ST_Contains(geometry, ST_GeomFromText('POINT(1 1)')) = true");
 
-    Assert.assertEquals(execute.size(), 1);
+    Assert.assertEquals(execute.stream().count(), 1);
   }
 }
