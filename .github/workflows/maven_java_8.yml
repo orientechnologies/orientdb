@@ -1,7 +1,7 @@
 # This workflow will build a Java project with Maven
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
 
-name: Java 8 CI with Maven
+name: Java CI with Maven
 
 on:
   push:
@@ -19,21 +19,23 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        java-version: ["8", "11", "17", "21"]
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 8 PR
+    - name: Set up JDK ${{matrix.java-version}} PR
       if: github.event_name == 'pull_request'
       uses: actions/setup-java@v3
       with:
-        java-version: '8'
+        java-version: ${{matrix.java-version}}
         distribution: 'temurin'
         # Step that does that actual cache save and restore
-    - name: Set up JDK 8 Branch
+    - name: Set up JDK ${{matrix.java-version}} Branch
       if: github.event_name != 'pull_request'
       uses: actions/setup-java@v3
       with:
-        java-version: '8'
+        java-version: ${{matrix.java-version}}
         distribution: 'temurin'
         server-id: sonatype-nexus-snapshots
         server-username: MAVEN_USERNAME
