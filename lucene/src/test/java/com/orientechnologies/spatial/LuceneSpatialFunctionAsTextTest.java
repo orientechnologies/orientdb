@@ -15,13 +15,16 @@
  */
 package com.orientechnologies.spatial;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.text.ParseException;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -71,19 +74,17 @@ public class LuceneSpatialFunctionAsTextTest extends BaseSpatialLuceneTest {
   }
 
   protected void queryAndAssertGeom(String name, String wkt) {
-    List<ODocument> results =
-        db.command(
-                new OCommandSQL(
-                    "select *, ST_AsText(geometry) as text from Location where name = ? "))
-            .execute(name);
+    OResultSet results =
+        db.command("select *, ST_AsText(geometry) as text from Location where name = ? ", name);
 
-    Assert.assertEquals(1, results.size());
-    ODocument doc = results.iterator().next();
+    assertTrue(results.hasNext());
+    OResult doc = results.next();
 
-    String asText = doc.field("text");
+    String asText = doc.getProperty("text");
 
     Assert.assertNotNull(asText);
     Assert.assertEquals(asText, wkt);
+    assertFalse(results.hasNext());
   }
 
   @Test
