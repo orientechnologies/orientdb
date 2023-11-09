@@ -2,12 +2,26 @@ package com.orientechnologies.orient.server.security;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.*;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Date;
-import sun.security.x509.*;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 /**
  * @author Matteo Bollo (matteo.bollo-at-sap.com)
@@ -184,99 +198,39 @@ public class OSelfSignedCertificate<tmpLocalHost> {
       e.printStackTrace();
     } catch (NoSuchAlgorithmException e) {
       e.printStackTrace();
+    } catch (OperatorCreationException e) {
+      e.printStackTrace();
     }
   }
 
   public static X509Certificate generateSelfSignedCertificate(
       KeyPair keypair, int validity, String ownerFDN, BigInteger certSN)
-      throws CertificateException, IOException, NoSuchAlgorithmException {
-
-    X509CertImpl cert;
-
-    //  Build the X.509 certificate content:
-    X509CertInfo info = new X509CertInfo();
-    X500Name owner;
-    owner = new X500Name(ownerFDN);
-
-    // set certificate VERSION
-    try {
-      info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
-    } catch (IOException e) {
-      try {
-        info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V2));
-      } catch (IOException ex) {
-        info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V1));
-      }
-    }
-
-    // set certificate SERIAL NUMBER
-    info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(certSN));
-
-    // set certificate SUBJECT i.e. the owner of the certificate.
-    try {
-      info.set(X509CertInfo.SUBJECT, new CertificateSubjectName(owner));
-    } catch (CertificateException ignore) {
-      info.set(X509CertInfo.SUBJECT, owner);
-    }
-    // set certificate ISSUER equal to SBUJECT as it is a self-signed certificate.
-    try {
-      info.set(X509CertInfo.ISSUER, new CertificateIssuerName(owner));
-    } catch (CertificateException ignore) {
-      info.set(X509CertInfo.ISSUER, owner);
-    }
-
-    // set certificate VALIDITY from today to today+validity
-
+      throws CertificateException, IOException, NoSuchAlgorithmException,
+          OperatorCreationException {
+    X500Name name = new X500Name(ownerFDN);
+    // If you issue more than just test certificates, you might want a decent serial number schema
+    // ^.^
+    BigInteger serialNumber = BigInteger.valueOf(System.currentTimeMillis());
     Date from, to;
     Calendar c = Calendar.getInstance();
     c.add(Calendar.DAY_OF_YEAR, 0);
     from = c.getTime();
     c.add(Calendar.DAY_OF_YEAR, validity);
     to = c.getTime();
-    info.set(X509CertInfo.VALIDITY, new CertificateValidity(from, to));
 
-    // set certificate PUBLIC_KEY
-    info.set(X509CertInfo.KEY, new CertificateX509Key(keypair.getPublic()));
+    // If there is no issuer, we self-sign our certificate.
+    X500Name issuerName = name;
+    PrivateKey issuerKey = keypair.getPrivate();
 
-    // set certificate Signature ALGORITHM = RSA
-    info.set(
-        X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(AlgorithmId.get("SHA256WithRSA")));
+    // The cert builder to build up our certificate information
+    JcaX509v3CertificateBuilder builder =
+        new JcaX509v3CertificateBuilder(
+            issuerName, serialNumber, from, to, name, keypair.getPublic());
 
-    // Sign the cert to identify the algorithm that's used.
-    cert = new X509CertImpl(info);
-
-    try {
-      cert.sign(keypair.getPrivate(), "SHA256withRSA");
-      //            cert.sign(keyPair.getPrivate(),"SHA1withDSA");
-    } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
-    } catch (InvalidKeyException e) {
-      e.printStackTrace();
-    } catch (NoSuchProviderException e) {
-      e.printStackTrace();
-    } catch (SignatureException e) {
-      e.printStackTrace();
-    }
-
-    // Update the algorithm and sign again.
-    info.set(
-        CertificateAlgorithmId.NAME + '.' + CertificateAlgorithmId.ALGORITHM,
-        cert.get(X509CertImpl.SIG_ALG));
-
-    cert = new X509CertImpl(info);
-
-    try {
-      cert.sign(keypair.getPrivate(), "SHA256withRSA");
-      cert.verify(keypair.getPublic());
-    } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
-    } catch (InvalidKeyException e) {
-      e.printStackTrace();
-    } catch (NoSuchProviderException e) {
-      e.printStackTrace();
-    } catch (SignatureException e) {
-      e.printStackTrace();
-    }
+    // Finally, sign the certificate:
+    ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSA").build(issuerKey);
+    X509CertificateHolder certHolder = builder.build(signer);
+    X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
 
     return cert;
   }
