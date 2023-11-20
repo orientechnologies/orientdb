@@ -51,7 +51,7 @@ jobs:
     - name: Build with Maven
       run: mvn -B package --file pom.xml
     - name: Publish Snapshot
-      if: github.event_name != 'pull_request'
+      if: github.event_name != 'pull_request' && ${{matrix.java-version}} == "8"
       run: mvn -B clean deploy -DskipTests --file pom.xml
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
