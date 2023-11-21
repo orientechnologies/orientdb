@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -195,40 +195,27 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
     }
     assertThat(coll).hasSize(2);
 
-    @SuppressWarnings("deprecation")
-    List<?> query =
-        db.query(new OSQLSynchQuery<>("select from Person where [name,tags] lucene 'Enrico'"));
+    OResultSet query = db.query("select from Person where [name,tags] lucene 'Enrico'");
 
     assertThat(query).hasSize(1);
 
-    //noinspection deprecation
-    query =
-        db.query(
-            new OSQLSynchQuery<>(
-                "select from (select from Person where [name,tags] lucene 'Enrico')"));
+    query = db.query("select from (select from Person where [name,tags] lucene 'Enrico')");
 
     assertThat(query).hasSize(1);
 
-    //noinspection deprecation
-    query = db.query(new OSQLSynchQuery<>("select from Person where [name,tags] lucene 'Jared'"));
+    query = db.query("select from Person where [name,tags] lucene 'Jared'");
 
     assertThat(query).hasSize(1);
 
-    //noinspection deprecation
-    query = db.query(new OSQLSynchQuery<>("select from Person where [name,tags] lucene 'Funny'"));
+    query = db.query("select from Person where [name,tags] lucene 'Funny'");
 
     assertThat(query).hasSize(1);
 
-    //noinspection deprecation
-    query = db.query(new OSQLSynchQuery<>("select from Person where [name,tags] lucene 'Geek'"));
+    query = db.query("select from Person where [name,tags] lucene 'Geek'");
 
     assertThat(query).hasSize(2);
 
-    //noinspection deprecation
-    query =
-        db.query(
-            new OSQLSynchQuery<>(
-                "select from Person where [name,tags] lucene '(name:Enrico AND tags:Geek)'"));
+    query = db.query("select from Person where [name,tags] lucene '(name:Enrico AND tags:Geek)'");
 
     assertThat(query).hasSize(1);
   }
@@ -248,9 +235,7 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
     db.save(vertex);
     db.commit();
 
-    @SuppressWarnings("deprecation")
-    final List<ODocument> search =
-        db.query(new OSQLSynchQuery<ODocument>("SELECT from C1 WHERE p1 LUCENE \"tested\""));
+    OResultSet search = db.query("SELECT from C1 WHERE p1 LUCENE \"tested\"");
 
     assertThat(search).hasSize(1);
   }

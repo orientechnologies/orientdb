@@ -18,10 +18,11 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import static org.junit.Assert.assertFalse;
+
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,29 +43,29 @@ public class LuceneContextTest extends BaseLuceneTest {
   @Test
   public void testContext() {
 
-    List<ODocument> docs =
+    OResultSet docs =
         db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select *,$score from Song where [title] LUCENE \"(title:man)\""));
-
-    Assert.assertEquals(docs.size(), 14);
+            "select *,$score from Song where [title] LUCENE \"(title:man)\" order by $score desc");
 
     Float latestScore = 100f;
-    for (ODocument doc : docs) {
-      Float score = doc.field("$score");
+    int count = 0;
+    while (docs.hasNext()) {
+      count++;
+      OResult doc = docs.next();
+      Float score = doc.getProperty("$score");
       Assert.assertNotNull(score);
       Assert.assertTrue(score <= latestScore);
       latestScore = score;
     }
+    Assert.assertEquals(count, 14);
 
     docs =
         db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select *,$totalHits,$Song_title_totalHits from Song where [title] LUCENE \"(title:man)\" limit 1"));
-    Assert.assertEquals(docs.size(), 1);
+            "select *,$totalHits,$Song_title_totalHits from Song where [title] LUCENE \"(title:man)\" limit 1");
 
-    ODocument doc = docs.iterator().next();
-    Assert.assertEquals(new Long(14), doc.<Long>field("$totalHits"));
-    Assert.assertEquals(new Long(14), doc.<Long>field("$Song_title_totalHits"));
+    OResult doc = docs.next();
+    Assert.assertEquals(new Long(14), doc.<Long>getProperty("$totalHits"));
+    Assert.assertEquals(new Long(14), doc.<Long>getProperty("$Song_title_totalHits"));
+    assertFalse(docs.hasNext());
   }
 }

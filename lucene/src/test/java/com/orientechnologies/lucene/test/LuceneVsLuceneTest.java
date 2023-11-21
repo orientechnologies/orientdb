@@ -23,11 +23,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -115,20 +114,15 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
     final TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
     ScoreDoc[] hits = docs.scoreDocs;
 
-    List<ODocument> oDocs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select *,$score from Song where title LUCENE \"down the\""));
-
-    Assert.assertEquals(oDocs.size(), hits.length);
+    OResultSet oDocs =
+        db.query("select *,$score from Song where title LUCENE \"down the\" order by $score desc");
 
     int i = 0;
     for (ScoreDoc hit : hits) {
-      //      Assert.assertEquals(oDocs.get(i).field("$score"), hit.score);
-
-      assertThat(oDocs.get(i).<Float>field("$score")).isEqualTo(hit.score);
+      assertThat(oDocs.next().<Float>getProperty("$score")).isEqualTo(hit.score);
       i++;
     }
+    Assert.assertEquals(i, hits.length);
     reader.close();
   }
 }
