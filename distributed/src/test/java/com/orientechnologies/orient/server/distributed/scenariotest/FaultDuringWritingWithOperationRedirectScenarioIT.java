@@ -22,12 +22,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -73,7 +70,6 @@ public class FaultDuringWritingWithOperationRedirectScenarioIT extends AbstractS
   @Override
   public void executeTest() throws Exception { //  TO-CHANGE
 
-    List<ODocument> result = null;
     ODatabaseDocument dbServer3 = getDatabase(2);
     String dbServerUrl1 = getRemoteDatabaseURL(serverInstance.get(0));
 
@@ -102,8 +98,8 @@ public class FaultDuringWritingWithOperationRedirectScenarioIT extends AbstractS
 
       // preliminar check
       dbServer3.activateOnCurrentThread();
-      result = dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
-      assertEquals(500, result.size());
+      OResultSet result = dbServer3.query("select from Person");
+      assertEquals(500, result.stream().count());
 
       // check consistency on all the server:
       // all the records destined to server3 were redirected to an other server, so we must inspect
