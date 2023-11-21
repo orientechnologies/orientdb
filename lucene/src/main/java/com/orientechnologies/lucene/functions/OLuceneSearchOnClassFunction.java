@@ -42,6 +42,16 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
   }
 
   @Override
+  public boolean canExecuteInline(
+      OFromClause target,
+      OBinaryCompareOperator operator,
+      Object rightValue,
+      OCommandContext ctx,
+      OExpression... args) {
+    return true;
+  }
+
+  @Override
   public Object execute(
       Object iThis,
       OIdentifiable iCurrentRecord,

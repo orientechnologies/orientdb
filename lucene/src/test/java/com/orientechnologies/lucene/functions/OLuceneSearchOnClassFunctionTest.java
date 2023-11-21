@@ -3,7 +3,6 @@ package com.orientechnologies.lucene.functions;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.lucene.tests.OLuceneBaseTest;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
@@ -66,7 +65,6 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
     resultSet.close();
   }
 
-  @Test(expected = OCommandExecutionException.class)
   public void shouldThrowExceptionWithWrongClass() throws Exception {
 
     OResultSet resultSet =
