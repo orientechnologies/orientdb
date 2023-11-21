@@ -20,16 +20,14 @@ package com.orientechnologies.lucene.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Assert;
@@ -123,13 +121,7 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
     final OClass song = createEmbeddedMapIndex();
     checkCreatedEmbeddedMapIndex(song, "LUCENE");
 
-    final List<?> result = queryIndexEmbeddedMapClass("Bolzano", 1);
-    result.stream()
-        .forEach(
-            entry -> {
-              final OIdentifiable oid = (OIdentifiable) entry;
-              System.out.println(oid.toString());
-            });
+    queryIndexEmbeddedMapClass("Bolzano", 1);
   }
 
   @Test
@@ -139,13 +131,7 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
     final OClass song = createEmbeddedMapIndex();
     checkCreatedEmbeddedMapIndex(song, "LUCENE");
 
-    final List<?> result = queryIndexEmbeddedMapClass("Bolzano", 1);
-    result.stream()
-        .forEach(
-            entry -> {
-              final OIdentifiable oid = (OIdentifiable) entry;
-              System.out.println(oid.toString());
-            });
+    queryIndexEmbeddedMapClass("Bolzano", 1);
   }
 
   @Test
@@ -155,13 +141,7 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
     final OClass song = createEmbeddedMapIndexSimple();
     checkCreatedEmbeddedMapIndex(song, "CELL_BTREE");
 
-    final List<?> result = queryIndexEmbeddedMapClass("Hello Bolzano how are you today?", 0);
-    result.stream()
-        .forEach(
-            entry -> {
-              final OIdentifiable oid = (OIdentifiable) entry;
-              System.out.println("result: " + oid.toString());
-            });
+    queryIndexEmbeddedMapClass("Hello Bolzano how are you today?", 0);
   }
 
   private void addDocumentViaAPI() {
@@ -182,29 +162,21 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
     final OClass song = createEmbeddedMapIndexSimple();
     checkCreatedEmbeddedMapIndex(song, "CELL_BTREE");
 
-    final List<?> result = queryIndexEmbeddedMapClass("Bolzano", 0);
-    result.stream()
-        .forEach(
-            entry -> {
-              final OIdentifiable oid = (OIdentifiable) entry;
-              System.out.println("result: " + oid.toString());
-            });
+    queryIndexEmbeddedMapClass("Bolzano", 0);
   }
 
-  private List<?> queryIndexEmbeddedMapClass(final String searchTerm, final int expectedCount) {
-    final List<?> result =
+  private void queryIndexEmbeddedMapClass(final String searchTerm, final int expectedCount) {
+    final OResultSet result =
         db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from "
-                    + SONG_CLASS
-                    + " where SEARCH_CLASS('"
-                    + searchTerm
-                    + "', {\n"
-                    + "    \"allowLeadingWildcard\": true ,\n"
-                    + "    \"lowercaseExpandedTerms\": true\n"
-                    + "}) = true"));
+            "select from "
+                + SONG_CLASS
+                + " where SEARCH_CLASS('"
+                + searchTerm
+                + "', {\n"
+                + "    \"allowLeadingWildcard\": true ,\n"
+                + "    \"lowercaseExpandedTerms\": true\n"
+                + "}) = true");
     Assert.assertEquals(expectedCount, result.stream().count());
-    return result;
   }
 
   private void checkCreatedEmbeddedMapIndex(final OClass clazz, final String expectedAlgorithm) {
