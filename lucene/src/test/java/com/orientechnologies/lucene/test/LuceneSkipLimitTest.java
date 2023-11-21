@@ -18,10 +18,10 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.id.ORID;
 import java.io.InputStream;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,27 +32,29 @@ public class LuceneSkipLimitTest extends BaseLuceneTest {
   @Test
   public void testContext() {
 
-    List<ODocument> docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title] LUCENE \"(title:man)\""));
+    List<ORID> docs =
+        db.query("select * from Song where [title] LUCENE \"(title:man)\"").stream()
+            .map((r) -> r.getIdentity().get())
+            .collect(Collectors.toList());
 
     Assert.assertEquals(docs.size(), 14);
 
-    ODocument doc = docs.get(9);
+    ORID doc = docs.get(9);
     docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title] LUCENE \"(title:man)\" skip 10 limit 10"));
+        db.query("select * from Song where [title] LUCENE \"(title:man)\" skip 10 limit 10")
+            .stream()
+            .map((r) -> r.getIdentity().get())
+            .collect(Collectors.toList());
 
     Assert.assertEquals(docs.size(), 4);
 
     Assert.assertEquals(docs.contains(doc), false);
 
     docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title] LUCENE \"(title:man)\" skip 14 limit 10"));
+        db.query("select * from Song where [title] LUCENE \"(title:man)\" skip 14 limit 10")
+            .stream()
+            .map((r) -> r.getIdentity().get())
+            .collect(Collectors.toList());
 
     Assert.assertEquals(docs.size(), 0);
   }
