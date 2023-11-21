@@ -22,8 +22,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -39,10 +38,9 @@ public class LuceneInheritanceQueryTest extends BaseLuceneTest {
     doc.field("name", "abc");
     db.save(doc);
 
-    List<ODocument> vertices =
-        db.query(new OSQLSynchQuery<ODocument>("select from C1 where name lucene \"abc\" "));
+    OResultSet vertices = db.query("select from C1 where name lucene \"abc\" ");
 
-    Assert.assertEquals(1, vertices.size());
+    Assert.assertEquals(1, vertices.stream().count());
 
     //    OResultSet resultSet = db.query("select from C1 where name lucene \"abc\" ");
     //
@@ -55,6 +53,6 @@ public class LuceneInheritanceQueryTest extends BaseLuceneTest {
     c1.createProperty("name", OType.STRING);
     c1.createIndex("C1.name", "FULLTEXT", null, null, "LUCENE", new String[] {"name"});
 
-    final OClass c2 = db.createClass("C2", "C1");
+    db.createClass("C2", "C1");
   }
 }

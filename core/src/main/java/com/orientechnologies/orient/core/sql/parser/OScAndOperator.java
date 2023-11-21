@@ -21,9 +21,6 @@ public class OScAndOperator extends SimpleNode implements OBinaryCompareOperator
   @Override
   public boolean execute(Object iLeft, Object iRight) {
     if (lowLevelOperator == null) {
-      // TODO implement this!
-    }
-    if (lowLevelOperator == null) {
       throw new UnsupportedOperationException();
     }
     return false;
