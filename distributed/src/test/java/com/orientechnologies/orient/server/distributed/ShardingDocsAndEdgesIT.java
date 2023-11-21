@@ -1,12 +1,9 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -136,14 +133,9 @@ public class ShardingDocsAndEdgesIT extends AbstractServerClusterTest {
 
     db.activateOnCurrentThread();
 
-    Object o = db.command(new OCommandSQL(command)).execute();
-    if (o instanceof List) {
-      List<ODocument> resultList = (List) o;
-      for (OIdentifiable d : resultList) {
-        if (d.getRecord() instanceof ODocument) {
-          resultSet.add((String) ((ODocument) d.getRecord()).field("name"));
-        }
-      }
+    OResultSet o = db.command(command);
+    while (o.hasNext()) {
+      resultSet.add(o.next().getProperty("name"));
     }
 
     return resultSet;
