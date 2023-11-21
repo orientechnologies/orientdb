@@ -33,7 +33,7 @@ let HeaderController = angular.module('header.controller', [databaseServices]).c
 
 
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     }
     if (data != null) {
 

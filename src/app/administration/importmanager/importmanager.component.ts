@@ -42,7 +42,7 @@ class ImportManagerComponent {
     this.hints = {
       importDbFromSQL: "This is the Enterprise Edition, so you can <b>migrate</b> and <b>synch</b> your SQL database with <b>Teleporter</b>.",
       downloadEE: "You can <b>migrate</b> your SQL database with <b>Teleporter</b> but you <b>cannot synch</b> it as this is the Community Edition.<br/> " +
-      "You can enjoy all the features simply downloading the <a href='http://orientdb.com/orientdb-enterprise/?#matrix'>Enterprise Edition.</a>"
+      "You can enjoy all the features simply downloading the <a href='https://orientdb.com/orientdb-enterprise/?#matrix'>Enterprise Edition.</a>"
     }
   }
 

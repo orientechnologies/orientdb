@@ -135,13 +135,13 @@ class TeleporterComponent implements AfterViewChecked {
       "<li><b>naive</b>: performs a 'naive' import of the data source. The data source schema is translated semi-directly in a correspondent and coherent graph model.</li> " +
       "<li><b>naive-aggregate</b>: performs a 'naive' import of the data source. The data source schema is translated semi-directly in a correspondent and coherent graph model " +
       "using an aggregation policy on the junction tables of dimension equals to 2.</li><br>" +
-      "<a href='http://orientdb.com/docs/last/Teleporter-Execution-Strategies.html'>More info</a>",
+      "<a href='https://orientdb.com/docs/last/teleporter/Teleporter-Execution-Strategies.html'>More info</a>",
       nameResolver: "Name of the resolver which transforms the names of all the elements of the source database according to a specific convention.<br>" +
       "<li><b>original</b>: maintains the original name convention.</li>" +
       "<li><b>java</b>: transforms all the elements' names according to the Java convention.</li>",
       tableList: "Select the source database tables you want to import in OrientDB.",
       XMLPath: "Executes the migration taking advantage of OrientDB's polymorphism according to the configuration in the specified XML file.<br><br>" +
-      "<a href='http://orientdb.com/docs/last/Teleporter-Inheritance.html'>More info</a>",
+      "<a href='https://orientdb.com/docs/last/teleporter/Teleporter-Inheritance.html'>More info</a>",
       logLevel: "Level of verbosity printed to the output during the execution."
     }
 

@@ -128,7 +128,7 @@ ServerModule.controller("MultipleServerController", [
     $scope.agent = true;
 
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     };
     $scope.agentActive = AgentService.active;
 
@@ -323,7 +323,7 @@ ServerModule.controller("SingleServerController", [
     AgentService
   ) {
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     };
 
     $scope.agentActive = AgentService.active;
@@ -556,7 +556,7 @@ ServerModule.controller("LogsController", [
     //	LOG_LEVEL.INFO.ordinal() 1
     //	LOG_LEVEL.WARN.ordinal() 3
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     };
 
     $scope.agentActive = AgentService.active;

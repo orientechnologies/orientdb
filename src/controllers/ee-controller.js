@@ -74,7 +74,7 @@ ee.controller("GeneralMonitorController", [
     $scope.tab = $routeParams.db;
 
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     };
     $scope.agentActive = AgentService.active;
 
@@ -273,7 +273,7 @@ ee.controller("SinglePollerController", [
     $scope.height = 80;
 
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     };
     $scope.agentActive = AgentService.active;
 
@@ -317,7 +317,7 @@ ee.controller("ClusterController", [
   "AgentService",
   function($scope, Cluster, Notification, $rootScope, $timeout, AgentService) {
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     };
     $scope.polling = true;
     $scope.agentActive = AgentService.active;
@@ -714,7 +714,7 @@ ee.controller("ProfilerController", [
     $scope.strategies = ["INVALIDATE_ALL", "PER_CLUSTER"];
 
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     };
     $scope.agentActive = AgentService.active;
     $scope.itemsByPage = 10;
@@ -910,7 +910,7 @@ ee.controller("AuditingController", [
     $scope.enabled = false;
     $scope.clazz = "tabs-style-linebox";
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     };
     $scope.agentActive = AgentService.active;
 
@@ -1160,7 +1160,7 @@ ee.controller("PluginsController", [
   "AgentService",
   function($scope, Plugins, Cluster, Notification, AgentService) {
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     };
 
     $scope.agentActive = AgentService.active;
@@ -1968,7 +1968,7 @@ ee.controller("EventsController", [
     var PNAME = "ee-events";
 
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     };
     $scope.agentActive = AgentService.active;
 
@@ -2215,7 +2215,7 @@ ee.controller("TeleporterController", [
   "AgentService",
   function($scope, Teleporter, $timeout, Notification, AgentService) {
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise"
+      ee: "https://www.orientdb.com/orientdb-enterprise"
     };
     $scope.agentActive = AgentService.active;
 
@@ -3259,8 +3259,8 @@ ee.controller("CloudController", [
     $scope.agent = {};
 
     $scope.links = {
-      ee: "http://www.orientdb.com/orientdb-enterprise",
-      eecloud: "http://cloud.orientdb.com"
+      ee: "https://www.orientdb.com/orientdb-enterprise",
+      eecloud: "https://cloud.orientdb.com"
     };
     DatabaseApi.isEE().then(data => {
       $scope.links.eeCloudProject = data.monitoringUrl;

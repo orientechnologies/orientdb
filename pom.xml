@@ -6,7 +6,7 @@
   <version>3.2.25-SNAPSHOT</version>
   <name>OrientDB Studio</name>
   <description>OrientDB Studio - web interface for OrientDB server</description>
-  <url>http://www.orientdb.com</url>
+  <url>https://www.orientdb.com</url>
   <organization>
     <name>OrientDB</name>
     <url>https://orientdb.com</url>

@@ -17,8 +17,8 @@ database.factory("Database", [
   function(DatabaseApi, localStorageService, SchemaService, $location) {
     var version =
       STUDIO_VERSION.indexOf("SNAPSHOT") == -1 ? STUDIO_VERSION : "last";
-    var wikiBase = "http://www.orientdb.com/docs/" + version + "/";
-    var oWikiBase = "http://www.orientdb.com/docs/" + version + "/";
+    var wikiBase = "https://www.orientdb.com/docs/" + version + "/";
+    var oWikiBase = "https://www.orientdb.com/docs/" + version + "/";
     var current = {
       name: null,
       username: null,
