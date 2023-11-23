@@ -4,8 +4,10 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.OFieldTypesString;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.ArrayList;
@@ -83,14 +85,34 @@ public class OJson extends SimpleNode {
 
   private ODocument toDocument(OResult source, OCommandContext ctx, String className) {
     ODocument retDoc = new ODocument(className);
+    Map<String, Character> types = null;
     for (OJsonItem item : items) {
       String name = item.getLeftValue();
       if (name == null
           || ODocumentHelper.getReservedAttributes().contains(name.toLowerCase(Locale.ENGLISH))) {
+        if (name.equals(OFieldTypesString.ATTRIBUTE_FIELD_TYPES)) {
+          Object value = item.right.execute(source, ctx);
+          types = OFieldTypesString.loadFieldTypes(value.toString());
+          for (Map.Entry<String, Character> entry : types.entrySet()) {
+            OType t = OFieldTypesString.getOTypeFromChar(entry.getValue());
+            retDoc.setFieldType(entry.getKey(), t);
+          }
+        }
         continue;
       }
       Object value = item.right.execute(source, ctx);
-      retDoc.field(name, value);
+      Character charType;
+      if (types != null) {
+        charType = types.get(name);
+      } else {
+        charType = null;
+      }
+      if (charType != null) {
+        OType t = OFieldTypesString.getOTypeFromChar(charType);
+        retDoc.setProperty(name, value, t);
+      } else {
+        retDoc.setProperty(name, value);
+      }
     }
     return retDoc;
   }

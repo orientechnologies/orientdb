@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.OFieldTypesString;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON.FormatSettings;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -61,7 +61,7 @@ public class OJSONFetchContext implements OFetchContext {
         jsonWriter.writeAttribute(
             settings.indentLevel > -1 ? settings.indentLevel : 1,
             true,
-            ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES,
+            OFieldTypesString.ATTRIBUTE_FIELD_TYPES,
             sb.toString());
       } catch (final IOException e) {
         throw OException.wrapException(new OFetchException("Error writing field types"), e);

@@ -87,6 +87,7 @@ public class ODocumentHelper {
   public static final String ATTRIBUTE_TYPE = "@type";
   public static final String ATTRIBUTE_SIZE = "@size";
   public static final String ATTRIBUTE_FIELDS = "@fields";
+  public static final String ATTRIBUTE_FIELS_TYPES = "@fieldtypes";
   public static final String ATTRIBUTE_RAW = "@raw";
 
   public static interface ODbRelatedCall<T> {
@@ -109,6 +110,7 @@ public class ODocumentHelper {
     retSet.add(ATTRIBUTE_SIZE);
     retSet.add(ATTRIBUTE_FIELDS);
     retSet.add(ATTRIBUTE_RAW);
+    retSet.add(ATTRIBUTE_FIELS_TYPES);
     return retSet;
   }
 

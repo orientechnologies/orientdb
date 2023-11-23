@@ -28,7 +28,12 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -43,19 +48,32 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordStringable;
-import com.orientechnologies.orient.core.record.impl.*;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEmbedded;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.StringWriter;
 import java.text.ParseException;
-import java.util.*;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   public static final String NAME = "json";
   public static final ORecordSerializerJSON INSTANCE = new ORecordSerializerJSON();
-  public static final String ATTRIBUTE_FIELD_TYPES = "@fieldTypes";
   public static final char[] PARAMETER_SEPARATOR = new char[] {':', ','};
   public static final int INITIAL_SIZE = 5000;
   private static final Long MAX_INT = (long) Integer.MAX_VALUE;
@@ -219,8 +237,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         final String fieldValue = fields.get(i + 1);
         final String fieldValueAsString = OIOUtils.getStringContent(fieldValue);
 
-        if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && record instanceof ODocument) {
-          fieldTypes = loadFieldTypesV0(fieldTypes, fieldValueAsString);
+        if (fieldName.equals(OFieldTypesString.ATTRIBUTE_FIELD_TYPES)
+            && record instanceof ODocument) {
+          fieldTypes = OFieldTypesString.loadFieldTypesV0(fieldTypes, fieldValueAsString);
         } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
           if (record == null
               || ORecordInternal.getRecordType(record) != fieldValueAsString.charAt(0)) {
@@ -298,7 +317,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       return;
     } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
       return;
-    } else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && record instanceof ODocument) {
+    } else if (fieldName.equals(OFieldTypesString.ATTRIBUTE_FIELD_TYPES)
+        && record instanceof ODocument) {
       return;
     } else if (fieldName.equals("value") && !(record instanceof ODocument)) {
       // RECORD VALUE(S)
@@ -367,7 +387,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
 
       if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName))
-        type = ORecordSerializerStringAbstract.getType(fieldValue, fieldTypes.get(fieldName));
+        type = OFieldTypesString.getType(fieldValue, fieldTypes.get(fieldName));
 
       if (v instanceof OTrackedSet<?>) {
         if (OMultiValue.getFirstValue(v) instanceof OIdentifiable) type = OType.LINKSET;
@@ -487,21 +507,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return type;
   }
 
-  private Map<String, Character> loadFieldTypesV0(
-      Map<String, Character> fieldTypes, final String fieldValueAsString) {
-    // LOAD THE FIELD TYPE MAP
-    final String[] fieldTypesParts = fieldValueAsString.split(",");
-    if (fieldTypesParts.length > 0) {
-      fieldTypes = new HashMap<>();
-      String[] part;
-      for (String f : fieldTypesParts) {
-        part = f.split("=");
-        if (part.length == 2) fieldTypes.put(part[0], part[1].charAt(0));
-      }
-    }
-    return fieldTypes;
-  }
-
   @SuppressWarnings("unchecked")
   private Object getValueV0(
       final ODocument iRecord,
@@ -525,7 +530,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     }
 
     if (iType == null && iFieldTypes != null && iFieldTypes.containsKey(iFieldName))
-      iType = ORecordSerializerStringAbstract.getType(iFieldValue, iFieldTypes.get(iFieldName));
+      iType = OFieldTypesString.getType(iFieldValue, iFieldTypes.get(iFieldName));
 
     if (iFieldValue.startsWith("{") && iFieldValue.endsWith("}")) {
       // Json object
@@ -577,7 +582,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
         if (iFieldTypes != null) {
           Character c = iFieldTypes.get(iFieldName);
-          if (c != null) iType = ORecordSerializerStringAbstract.getType(iFieldValueAsString, c);
+          if (c != null) iType = OFieldTypesString.getType(iFieldValueAsString, c);
         }
 
         if (iType == null) iType = OType.STRING;
@@ -668,13 +673,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   private boolean canBeTrunkedToInt(Long v) {
     return (v > 0) ? v.compareTo(MAX_INT) <= 0 : v.compareTo(MIN_INT) >= 0;
-  }
-
-  private boolean canBeTrunkedToFloat(Double v) {
-    // TODO not really correct check. Small numbers with high precision will be trunked while they
-    // shouldn't be
-
-    return (v > 0) ? v.compareTo(MAX_FLOAT) <= 0 : v.compareTo(MIN_FLOAT) >= 0;
   }
 
   /** OBJECT OR MAP. CHECK THE TYPE ATTRIBUTE TO KNOW IT. */
