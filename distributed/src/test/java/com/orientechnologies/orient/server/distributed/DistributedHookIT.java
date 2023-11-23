@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.concurrent.atomic.AtomicLong;
@@ -134,13 +135,13 @@ public class DistributedHookIT extends AbstractServerClusterTest {
       try {
         // CREATE (VIA COMMAND)
         OIdentifiable inserted =
-            g.command(
-                    "insert into OUser (name, password, status) values ('novo"
-                        + s
-                        + "','teste','ACTIVE') RETURN @rid")
-                .next()
-                .getIdentity()
-                .get();
+            (ORID)
+                g.command(
+                        "insert into OUser (name, password, status) values ('novo"
+                            + s
+                            + "','teste','ACTIVE') RETURN @rid")
+                    .next()
+                    .getProperty("@rid");
         assertNotNull(inserted);
         assertEquals(beforeCreate.get(), s);
         assertEquals(afterCreate.get(), s);

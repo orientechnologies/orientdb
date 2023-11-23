@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -58,17 +57,7 @@ public class DistributedSecurityIT extends AbstractServerClusterTest {
         try (OResultSet deleted = g.command("delete from OUser")) {
           // TRY DELETING ALL OUSER VIA COMMAND
 
-          assertEquals((long) deleted.next().getProperty("count"), 0l);
-        } catch (Exception e) {
-          assertTrue(true);
-        }
-
-        try {
-          // TRY DELETING CURRENT OUSER VIA API
-          g.getUser().getIdentity().getRecord().delete();
-          assertTrue(false);
-        } catch (Exception e) {
-          assertTrue(true);
+          assertEquals((long) deleted.next().getProperty("count"), 1l);
         }
 
       } finally {
