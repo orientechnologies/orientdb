@@ -228,6 +228,37 @@ public class OInsertStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testContentMultiple() {
+    String className = "testContent";
+    db.getMetadata().getSchema().createClass(className);
+
+    OResultSet result =
+        db.command(
+            "insert into "
+                + className
+                + " content {'name':'name1', 'surname':'surname1'},{'name':'name1', 'surname':'surname1'}");
+    printExecutionPlan(result);
+    for (int i = 0; i < 2; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("name1", item.getProperty("name"));
+    }
+    Assert.assertFalse(result.hasNext());
+
+    result = db.query("select from " + className);
+    for (int i = 0; i < 2; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("name1", item.getProperty("name"));
+      Assert.assertEquals("surname1", item.getProperty("surname"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
   public void testContentWithParam() {
     String className = "testContentWithParam";
     db.getMetadata().getSchema().createClass(className);

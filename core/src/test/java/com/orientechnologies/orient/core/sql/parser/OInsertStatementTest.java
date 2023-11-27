@@ -89,6 +89,13 @@ public class OInsertStatementTest {
   }
 
   @Test
+  public void testInsertContent() {
+    checkRightSyntax("insert into Activity content {'name':'name1', 'surname':'surname1'}");
+    checkRightSyntax(
+        "insert into Activity content {'name':'name1', 'surname':'surname1'}, {'name':'name2', 'surname':'surname2'}");
+  }
+
+  @Test
   public void testJsonEscaping() {
     // issue #5911
     checkRightSyntax(

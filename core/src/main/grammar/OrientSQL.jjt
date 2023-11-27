@@ -1918,9 +1918,17 @@ OInsertBody InsertBody():
             ( <CONTENT>
                 (
                     content = Json() { jjtThis.addContent(content);}
-                    |
+                    | 
                     inputParamater = InputParameter() { jjtThis.addContentInputParam(inputParamater); }
                 )
+                (
+                	<COMMA>
+                	(
+                	    content = Json() { jjtThis.addContent(content);}
+                        | 
+                        inputParamater = InputParameter() { jjtThis.addContentInputParam(inputParamater); }
+                	)                	
+                )*
             )
          )
     )

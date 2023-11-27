@@ -149,6 +149,18 @@ public class OInsertExecutionPlanner {
         && body.getValueExpressions().size() > 0) {
       tot = body.getValueExpressions().size();
     }
+    if (body != null
+        && body.getContentInputParam() != null
+        && body.getContentInputParam().size() > 0) {
+      tot = body.getContentInputParam().size();
+      if (body != null && body.getContent() != null && body.getContent().size() > 0) {
+        tot += body.getContent().size();
+      }
+    } else {
+      if (body != null && body.getContent() != null && body.getContent().size() > 0) {
+        tot = body.getContent().size();
+      }
+    }
     result.chain(new CreateRecordStep(ctx, tot, profilingEnabled));
   }
 
