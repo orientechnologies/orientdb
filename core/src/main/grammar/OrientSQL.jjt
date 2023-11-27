@@ -1850,6 +1850,8 @@ OInsertBody InsertBody():
     OIdentifier lastIdentifier;
     OExpression lastExpression;
     List<OExpression> lastExpressionList;
+    OJson content;
+    OInputParameter inputParamater;
 }
 {
     (
@@ -1915,9 +1917,9 @@ OInsertBody InsertBody():
             |
             ( <CONTENT>
                 (
-                    jjtThis.content = Json()
+                    content = Json() { jjtThis.addContent(content);}
                     |
-                    jjtThis.contentInputParam = InputParameter()
+                    inputParamater = InputParameter() { jjtThis.addContentInputParam(inputParamater); }
                 )
             )
          )

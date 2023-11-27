@@ -9,8 +9,10 @@ import com.orientechnologies.orient.core.sql.parser.OCreateEdgeStatement;
 import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OInputParameter;
 import com.orientechnologies.orient.core.sql.parser.OInsertBody;
 import com.orientechnologies.orient.core.sql.parser.OInsertSetExpression;
+import com.orientechnologies.orient.core.sql.parser.OJson;
 import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
 import java.util.ArrayList;
 import java.util.List;
@@ -194,9 +196,13 @@ public class OCreateEdgeExecutionPlanner {
               ctx,
               profilingEnabled));
     } else if (insertBody.getContent() != null) {
-      result.chain(new UpdateContentStep(insertBody.getContent(), ctx, profilingEnabled));
+      for (OJson json : insertBody.getContent()) {
+        result.chain(new UpdateContentStep(json, ctx, profilingEnabled));
+      }
     } else if (insertBody.getContentInputParam() != null) {
-      result.chain(new UpdateContentStep(insertBody.getContentInputParam(), ctx, profilingEnabled));
+      for (OInputParameter inputParam : insertBody.getContentInputParam()) {
+        result.chain(new UpdateContentStep(inputParam, ctx, profilingEnabled));
+      }
     } else if (insertBody.getSetExpressions() != null) {
       List<OUpdateItem> items = new ArrayList<>();
       for (OInsertSetExpression exp : insertBody.getSetExpressions()) {

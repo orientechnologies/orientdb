@@ -5,9 +5,11 @@ import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OInputParameter;
 import com.orientechnologies.orient.core.sql.parser.OInsertBody;
 import com.orientechnologies.orient.core.sql.parser.OInsertSetExpression;
 import com.orientechnologies.orient.core.sql.parser.OInsertStatement;
+import com.orientechnologies.orient.core.sql.parser.OJson;
 import com.orientechnologies.orient.core.sql.parser.OProjection;
 import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
@@ -105,9 +107,13 @@ public class OInsertExecutionPlanner {
               ctx,
               profilingEnabled));
     } else if (insertBody.getContent() != null) {
-      result.chain(new UpdateContentStep(insertBody.getContent(), ctx, profilingEnabled));
+      for (OJson json : insertBody.getContent()) {
+        result.chain(new UpdateContentStep(json, ctx, profilingEnabled));
+      }
     } else if (insertBody.getContentInputParam() != null) {
-      result.chain(new UpdateContentStep(insertBody.getContentInputParam(), ctx, profilingEnabled));
+      for (OInputParameter inputParam : insertBody.getContentInputParam()) {
+        result.chain(new UpdateContentStep(inputParam, ctx, profilingEnabled));
+      }
     } else if (insertBody.getSetExpressions() != null) {
       List<OUpdateItem> items = new ArrayList<>();
       for (OInsertSetExpression exp : insertBody.getSetExpressions()) {

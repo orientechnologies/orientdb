@@ -9,12 +9,12 @@ import java.util.stream.Collectors;
 
 public class OInsertBody extends SimpleNode {
 
-  protected List<OIdentifier> identifierList;
-  protected List<List<OExpression>> valueExpressions;
-  protected List<OInsertSetExpression> setExpressions;
+  private List<OIdentifier> identifierList;
+  private List<List<OExpression>> valueExpressions;
+  private List<OInsertSetExpression> setExpressions;
 
-  protected OJson content;
-  protected OInputParameter contentInputParam;
+  private List<OJson> content;
+  private List<OInputParameter> contentInputParam;
 
   public OInsertBody(int id) {
     super(id);
@@ -71,12 +71,26 @@ public class OInsertBody extends SimpleNode {
       }
     }
 
-    if (content != null) {
+    if (content != null || contentInputParam != null) {
       builder.append("CONTENT ");
-      content.toString(params, builder);
-    } else if (contentInputParam != null) {
-      builder.append("CONTENT ");
-      contentInputParam.toString(params, builder);
+      boolean first = true;
+      if (content != null) {
+        for (OJson item : content) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toString(params, builder);
+          first = false;
+        }
+      } else if (contentInputParam != null) {
+        for (OInputParameter item : contentInputParam) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toString(params, builder);
+          first = false;
+        }
+      }
     }
   }
 
@@ -127,12 +141,26 @@ public class OInsertBody extends SimpleNode {
       }
     }
 
-    if (content != null) {
+    if (content != null || contentInputParam != null) {
       builder.append("CONTENT ");
-      content.toGenericStatement(builder);
-    } else if (contentInputParam != null) {
-      builder.append("CONTENT ");
-      contentInputParam.toGenericStatement(builder);
+      boolean first = true;
+      if (content != null) {
+        for (OJson item : content) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toGenericStatement(builder);
+          first = false;
+        }
+      } else if (contentInputParam != null) {
+        for (OInputParameter item : contentInputParam) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toGenericStatement(builder);
+          first = false;
+        }
+      }
     }
   }
 
@@ -152,8 +180,12 @@ public class OInsertBody extends SimpleNode {
         setExpressions == null
             ? null
             : setExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.content = content == null ? null : content.copy();
-    result.contentInputParam = contentInputParam == null ? null : contentInputParam.copy();
+    result.content =
+        content == null ? null : content.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.contentInputParam =
+        contentInputParam == null
+            ? null
+            : contentInputParam.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 
@@ -222,12 +254,26 @@ public class OInsertBody extends SimpleNode {
     this.setExpressions.add(exp);
   }
 
-  public OJson getContent() {
+  public List<OJson> getContent() {
     return content;
   }
 
-  public OInputParameter getContentInputParam() {
+  public List<OInputParameter> getContentInputParam() {
     return contentInputParam;
+  }
+
+  public void addContentInputParam(OInputParameter par) {
+    if (contentInputParam == null) {
+      contentInputParam = new ArrayList<>();
+    }
+    contentInputParam.add(par);
+  }
+
+  public void addContent(OJson json) {
+    if (content == null) {
+      content = new ArrayList<>();
+    }
+    content.add(json);
   }
 
   public boolean isCacheable() {
@@ -249,9 +295,14 @@ public class OInsertBody extends SimpleNode {
       }
     }
 
-    if (content != null && !content.isCacheable()) {
-      return false;
+    if (content != null) {
+      for (OJson item : content) {
+        if (!item.isCacheable()) {
+          return false;
+        }
+      }
     }
+
     return true;
   }
 }
