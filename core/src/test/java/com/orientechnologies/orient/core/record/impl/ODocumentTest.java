@@ -10,7 +10,7 @@ import static org.junit.Assert.assertTrue;
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -135,7 +135,7 @@ public class ODocumentTest {
     assertEquals(doc.fieldType("link"), OType.LINK);
     assertEquals(doc.fieldType("string"), OType.STRING);
     assertEquals(doc.fieldType("binary"), OType.BINARY);
-    ORecordSerializer ser = ODatabaseDocumentTx.getDefaultSerializer();
+    ORecordSerializer ser = ODatabaseDocumentAbstract.getDefaultSerializer();
     byte[] bytes = ser.toStream(doc);
     doc = new ODocument();
     ser.fromStream(bytes, doc, null);
@@ -158,7 +158,7 @@ public class ODocumentTest {
     assertNull(doc.fieldType("link"));
     assertNull(doc.fieldType("string"));
     assertNull(doc.fieldType("binary"));
-    ORecordSerializer ser = ODatabaseDocumentTx.getDefaultSerializer();
+    ORecordSerializer ser = ODatabaseDocumentAbstract.getDefaultSerializer();
     byte[] bytes = ser.toStream(doc);
     doc = new ODocument();
     ser.fromStream(bytes, doc, null);
@@ -192,7 +192,7 @@ public class ODocumentTest {
       assertEquals(doc.fieldType("link"), OType.LINK);
       assertEquals(doc.fieldType("string"), OType.STRING);
       assertEquals(doc.fieldType("binary"), OType.BINARY);
-      ORecordSerializer ser = ODatabaseDocumentTx.getDefaultSerializer();
+      ORecordSerializer ser = ODatabaseDocumentAbstract.getDefaultSerializer();
       byte[] bytes = ser.toStream(doc);
       doc = new ODocument();
       ser.fromStream(bytes, doc, null);
@@ -213,7 +213,7 @@ public class ODocumentTest {
   public void testChangeTypeOnValueSet() throws Exception {
     ODocument doc = new ODocument();
     doc.field("link", new ORecordId(1, 2));
-    ORecordSerializer ser = ODatabaseDocumentTx.getDefaultSerializer();
+    ORecordSerializer ser = ODatabaseDocumentAbstract.getDefaultSerializer();
     byte[] bytes = ser.toStream(doc);
     doc = new ODocument();
     ser.fromStream(bytes, doc, null);

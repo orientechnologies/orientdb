@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.db.record;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -26,13 +26,13 @@ public class DocumentJavaSerializationTest {
   @Before
   public void before() {
     this.previousSerializerConf = OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString();
-    previousSerializerInstance = ODatabaseDocumentTx.getDefaultSerializer();
+    previousSerializerInstance = ODatabaseDocumentAbstract.getDefaultSerializer();
   }
 
   @After
   public void after() {
     OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.setValue(this.previousSerializerConf);
-    ODatabaseDocumentTx.setDefaultSerializer(previousSerializerInstance);
+    ODatabaseDocumentAbstract.setDefaultSerializer(previousSerializerInstance);
   }
 
   @Test
@@ -54,7 +54,7 @@ public class DocumentJavaSerializationTest {
   @Test
   public void testCsvBinarySerialization() throws IOException, ClassNotFoundException {
     OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.setValue(ORecordSerializerSchemaAware2CSV.NAME);
-    ODatabaseDocumentTx.setDefaultSerializer(
+    ODatabaseDocumentAbstract.setDefaultSerializer(
         ORecordSerializerFactory.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME));
     ODocument doc = new ODocument();
     ORecordInternal.setRecordSerializer(
@@ -66,7 +66,7 @@ public class DocumentJavaSerializationTest {
     oos.writeObject(doc);
 
     OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.setValue(ORecordSerializerBinary.NAME);
-    ODatabaseDocumentTx.setDefaultSerializer(
+    ODatabaseDocumentAbstract.setDefaultSerializer(
         ORecordSerializerFactory.instance().getFormat(ORecordSerializerBinary.NAME));
 
     ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
@@ -79,7 +79,7 @@ public class DocumentJavaSerializationTest {
   @Test
   public void testBinaryCsvSerialization() throws IOException, ClassNotFoundException {
     OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.setValue(ORecordSerializerBinary.NAME);
-    ODatabaseDocumentTx.setDefaultSerializer(
+    ODatabaseDocumentAbstract.setDefaultSerializer(
         ORecordSerializerFactory.instance().getFormat(ORecordSerializerBinary.NAME));
     ODocument doc = new ODocument();
     ORecordInternal.setRecordSerializer(
@@ -91,7 +91,7 @@ public class DocumentJavaSerializationTest {
     oos.writeObject(doc);
 
     OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.setValue(ORecordSerializerSchemaAware2CSV.NAME);
-    ODatabaseDocumentTx.setDefaultSerializer(
+    ODatabaseDocumentAbstract.setDefaultSerializer(
         ORecordSerializerFactory.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME));
 
     ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());

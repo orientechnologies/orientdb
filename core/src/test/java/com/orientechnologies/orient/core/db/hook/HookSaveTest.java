@@ -2,34 +2,18 @@ package com.orientechnologies.orient.core.db.hook;
 
 import static org.junit.Assert.assertNotNull;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Created by tglman on 01/06/16. */
-public class HookSaveTest {
-
-  private ODatabaseDocument database;
-
-  @Before
-  public void before() {
-    database = new ODatabaseDocumentTx("memory:" + HookSaveTest.this.getClass().getSimpleName());
-    database.create();
-  }
-
-  @After
-  public void after() {
-    database.drop();
-  }
+public class HookSaveTest extends BaseMemoryDatabase {
 
   @Test
   public void testCreatedLinkedInHook() {
-    database.registerHook(
+    db.registerHook(
         new ORecordHook() {
           @Override
           public void onUnregister() {}
@@ -51,7 +35,7 @@ public class HookSaveTest {
           }
         });
 
-    ODocument doc = database.save(new ODocument("test"));
+    ODocument doc = db.save(new ODocument("test"));
     ODocument newRef = doc.field("testNewLinkedRecord");
     assertNotNull(newRef);
     assertNotNull(newRef.getIdentity().isPersistent());
@@ -59,7 +43,7 @@ public class HookSaveTest {
 
   @Test
   public void testCreatedBackLinkedInHook() {
-    database.registerHook(
+    db.registerHook(
         new ORecordHook() {
           @Override
           public void onUnregister() {}
@@ -82,7 +66,7 @@ public class HookSaveTest {
           }
         });
 
-    ODocument doc = database.save(new ODocument("test"));
+    ODocument doc = db.save(new ODocument("test"));
     ODocument newRef = doc.field("testNewLinkedRecord");
     assertNotNull(newRef);
     assertNotNull(newRef.getIdentity().isPersistent());

@@ -1,26 +1,20 @@
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.Collection;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 /** @author Luca Garulli (l.garulli--(at)--orientdb.com) */
-public class TestTypeGuessingWorkingWithSQLAndMultiValues {
-
-  private ODatabaseDocumentTx db;
+public class TestTypeGuessingWorkingWithSQLAndMultiValues extends BaseMemoryDatabase {
 
   @Before
-  public void create() {
-    db =
-        new ODatabaseDocumentTx(
-            "memory:" + TestTypeGuessingWorkingWithSQLAndMultiValues.class.getSimpleName());
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
 
     db.command(
             new OCommandScript(
@@ -69,10 +63,5 @@ public class TestTypeGuessingWorkingWithSQLAndMultiValues {
     Assert.assertEquals(addresses.size(), 4);
 
     for (ODocument a : addresses) Assert.assertTrue(a.getClassName().equals("Address"));
-  }
-
-  @After
-  public void after() {
-    db.drop();
   }
 }

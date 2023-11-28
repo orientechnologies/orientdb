@@ -2,22 +2,17 @@ package com.orientechnologies.orient.core.db.hook;
 
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
-public class HookRegisterRemoveTest {
+public class HookRegisterRemoveTest extends BaseMemoryDatabase {
 
   @Test
   public void addAndRemoveHookTest() {
-
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:" + HookRegisterRemoveTest.class.getSimpleName());
-    db.create();
     final AtomicInteger integer = new AtomicInteger(0);
     ORecordHook iHookImpl =
         new ORecordHook() {
@@ -43,6 +38,5 @@ public class HookRegisterRemoveTest {
     db.unregisterHook(iHookImpl);
     db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
     assertEquals(3, integer.get());
-    db.drop();
   }
 }

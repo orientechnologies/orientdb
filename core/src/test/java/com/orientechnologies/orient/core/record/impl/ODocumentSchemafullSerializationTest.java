@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -73,7 +74,7 @@ public abstract class ODocumentSchemafullSerializationTest {
 
   @Before
   public void before() {
-    ODatabaseDocumentTx.setDefaultSerializer(serializer);
+    ODatabaseDocumentAbstract.setDefaultSerializer(serializer);
     databaseDocument = new ODatabaseDocumentTx("memory:" + name.getMethodName()).create();
     // databaseDocument.getMetadata().
     OSchema schema = databaseDocument.getMetadata().getSchema();
@@ -127,7 +128,7 @@ public abstract class ODocumentSchemafullSerializationTest {
   @After
   public void after() {
     databaseDocument.drop();
-    ODatabaseDocumentTx.setDefaultSerializer(
+    ODatabaseDocumentAbstract.setDefaultSerializer(
         ORecordSerializerFactory.instance()
             .getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString()));
   }

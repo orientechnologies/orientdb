@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -31,14 +31,14 @@ public class ODocumentSchemalessSerializationTest {
   @Before
   public void before() {
     serializer = new ORecordSerializerSchemaAware2CSV();
-    defaultSerializer = ODatabaseDocumentTx.getDefaultSerializer();
-    ODatabaseDocumentTx.setDefaultSerializer(serializer);
+    defaultSerializer = ODatabaseDocumentAbstract.getDefaultSerializer();
+    ODatabaseDocumentAbstract.setDefaultSerializer(serializer);
     ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @After
   public void after() {
-    ODatabaseDocumentTx.setDefaultSerializer(defaultSerializer);
+    ODatabaseDocumentAbstract.setDefaultSerializer(defaultSerializer);
   }
 
   @Test

@@ -1,42 +1,26 @@
 package com.orientechnologies.orient.core.command.traverse;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** @author Artem Orobets (enisher-at-gmail.com) */
-public class OTraverseTest {
+public class OTraverseTest extends BaseMemoryDatabase {
 
-  private ODatabaseDocument db;
   private ODocument rootDocument;
   private OTraverse traverse;
 
-  @Before
-  public void setUp() throws Exception {
-    db = new ODatabaseDocumentTx("memory:" + OTraverseTest.class.getSimpleName());
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
-
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
 
     rootDocument = new ODocument();
     traverse = new OTraverse();
     traverse.target(rootDocument).fields("*");
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    db.drop();
   }
 
   @Test
