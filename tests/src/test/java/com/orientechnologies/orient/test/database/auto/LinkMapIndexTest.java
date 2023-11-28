@@ -369,12 +369,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "UPDATE "
-                    + document.getIdentity()
-                    + " put linkMap = 'key3', "
-                    + docThree.getIdentity()))
-        .execute();
+            "UPDATE " + document.getIdentity() + " set linkMap['key3'] = " + docThree.getIdentity())
+        .close();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getInternal().size(), 3);
