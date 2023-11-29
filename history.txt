@@ -27,6 +27,19 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.25 - (November, 30 2023)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3225---30-November-2023
+
+# Core
+ - Add support of @fieldTypes in the json from new query engine
+ - Add support for multiple json or parameter in insert content in the query engine
+
+# Lucene 
+ - Correct lucene search on class function
+ - Fix query engine integration with geospatial lucene
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.24 - (October, 26 2023)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3224---26-October-2023
