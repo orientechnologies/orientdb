@@ -2788,7 +2788,6 @@ public abstract class OAbstractPaginatedStorage
 
       final boolean nullValuesSupport = !indexDefinition.isNullValuesIgnored();
       final byte serializerId;
-
       if (valueSerializer != null) {
         serializerId = valueSerializer.getId();
       } else {

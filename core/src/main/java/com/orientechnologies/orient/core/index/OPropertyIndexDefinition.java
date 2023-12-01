@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /** Index implementation bound to one schema class property. */
 public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
@@ -196,6 +197,42 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
     if (engine != null)
       ddl.append(' ').append(OCommandExecutorSQLCreateIndex.KEYWORD_ENGINE + " " + engine);
     return ddl;
+  }
+
+  protected void processAdd(
+      final Object value,
+      final Map<Object, Integer> keysToAdd,
+      final Map<Object, Integer> keysToRemove) {
+    if (value == null) return;
+
+    final Integer removeCount = keysToRemove.get(value);
+    if (removeCount != null) {
+      int newRemoveCount = removeCount - 1;
+      if (newRemoveCount > 0) keysToRemove.put(value, newRemoveCount);
+      else keysToRemove.remove(value);
+    } else {
+      final Integer addCount = keysToAdd.get(value);
+      if (addCount != null) keysToAdd.put(value, addCount + 1);
+      else keysToAdd.put(value, 1);
+    }
+  }
+
+  protected void processRemoval(
+      final Object value,
+      final Map<Object, Integer> keysToAdd,
+      final Map<Object, Integer> keysToRemove) {
+    if (value == null) return;
+
+    final Integer addCount = keysToAdd.get(value);
+    if (addCount != null) {
+      int newAddCount = addCount - 1;
+      if (newAddCount > 0) keysToAdd.put(value, newAddCount);
+      else keysToAdd.remove(value);
+    } else {
+      final Integer removeCount = keysToRemove.get(value);
+      if (removeCount != null) keysToRemove.put(value, removeCount + 1);
+      else keysToRemove.put(value, 1);
+    }
   }
 
   @Override

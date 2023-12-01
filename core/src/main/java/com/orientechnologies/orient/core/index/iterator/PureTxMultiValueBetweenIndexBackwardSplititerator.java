@@ -1,9 +1,10 @@
-package com.orientechnologies.orient.core.index;
+package com.orientechnologies.orient.core.index.iterator;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import java.util.Comparator;

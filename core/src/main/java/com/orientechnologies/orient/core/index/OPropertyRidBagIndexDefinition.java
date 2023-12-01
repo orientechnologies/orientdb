@@ -35,7 +35,8 @@ import java.util.Map;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 1/30/14
  */
-public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMultiValue {
+public class OPropertyRidBagIndexDefinition extends OPropertyIndexDefinition
+    implements OIndexDefinitionMultiValue {
   private static final long serialVersionUID = -8315498456603024776L;
 
   public OPropertyRidBagIndexDefinition() {}

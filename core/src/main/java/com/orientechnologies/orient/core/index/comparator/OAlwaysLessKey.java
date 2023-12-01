@@ -17,16 +17,16 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.core.index;
+package com.orientechnologies.orient.core.index.comparator;
 
 /**
- * It always greater than any passed in key.
+ * It always lesser than any passed in key.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 20.03.12
  */
-public final class OAlwaysGreaterKey implements Comparable<Comparable<?>> {
+public final class OAlwaysLessKey implements Comparable<Comparable<?>> {
   public int compareTo(Comparable<?> o) {
-    return 1;
+    return -1;
   }
 }

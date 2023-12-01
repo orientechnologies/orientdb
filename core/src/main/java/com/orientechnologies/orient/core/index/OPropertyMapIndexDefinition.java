@@ -34,7 +34,8 @@ import java.util.Map;
  *
  * @link com.orientechnologies.orient.core.metadata.schema.OType#LINKMAP} property.
  */
-public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiValue {
+public class OPropertyMapIndexDefinition extends OPropertyIndexDefinition
+    implements OIndexDefinitionMultiValue {
 
   private static final long serialVersionUID = 275241019910834466L;
 

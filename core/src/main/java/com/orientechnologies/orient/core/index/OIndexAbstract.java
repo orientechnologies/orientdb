@@ -35,6 +35,8 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.comparator.OAlwaysGreaterKey;
+import com.orientechnologies.orient.core.index.comparator.OAlwaysLessKey;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -1222,7 +1224,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     return key;
   }
 
-  protected Object enhanceToCompositeKeyBetweenAsc(Object keyTo, boolean toInclusive) {
+  public Object enhanceToCompositeKeyBetweenAsc(Object keyTo, boolean toInclusive) {
     OIndexAbstract.PartialSearchMode partialSearchModeTo;
     if (toInclusive) partialSearchModeTo = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;
     else partialSearchModeTo = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
@@ -1231,7 +1233,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     return keyTo;
   }
 
-  protected Object enhanceFromCompositeKeyBetweenAsc(Object keyFrom, boolean fromInclusive) {
+  public Object enhanceFromCompositeKeyBetweenAsc(Object keyFrom, boolean fromInclusive) {
     OIndexAbstract.PartialSearchMode partialSearchModeFrom;
     if (fromInclusive) partialSearchModeFrom = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
     else partialSearchModeFrom = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;
@@ -1240,7 +1242,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     return keyFrom;
   }
 
-  protected Object enhanceToCompositeKeyBetweenDesc(Object keyTo, boolean toInclusive) {
+  public Object enhanceToCompositeKeyBetweenDesc(Object keyTo, boolean toInclusive) {
     OIndexAbstract.PartialSearchMode partialSearchModeTo;
     if (toInclusive) partialSearchModeTo = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;
     else partialSearchModeTo = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
@@ -1249,7 +1251,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     return keyTo;
   }
 
-  protected Object enhanceFromCompositeKeyBetweenDesc(Object keyFrom, boolean fromInclusive) {
+  public Object enhanceFromCompositeKeyBetweenDesc(Object keyFrom, boolean fromInclusive) {
     OIndexAbstract.PartialSearchMode partialSearchModeFrom;
     if (fromInclusive) partialSearchModeFrom = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
     else partialSearchModeFrom = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;

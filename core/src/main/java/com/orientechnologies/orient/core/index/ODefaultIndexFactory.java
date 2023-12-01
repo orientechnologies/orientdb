@@ -45,7 +45,7 @@ import java.util.Set;
 public class ODefaultIndexFactory implements OIndexFactory {
 
   private static final String SBTREE_ALGORITHM = "SBTREE";
-  static final String SBTREE_BONSAI_VALUE_CONTAINER = "SBTREEBONSAISET";
+  public static final String SBTREE_BONSAI_VALUE_CONTAINER = "SBTREEBONSAISET";
   public static final String NONE_VALUE_CONTAINER = "NONE";
   static final String CELL_BTREE_ALGORITHM = "CELL_BTREE";
 

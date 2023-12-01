@@ -28,15 +28,16 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.iterator.PureTxMultiValueBetweenIndexBackwardSplititerator;
+import com.orientechnologies.orient.core.index.iterator.PureTxMultiValueBetweenIndexForwardSpliterator;
+import com.orientechnologies.orient.core.index.multivalue.MultiValuesTransformer;
+import com.orientechnologies.orient.core.index.multivalue.OMultivalueEntityRemover;
+import com.orientechnologies.orient.core.index.multivalue.OMultivalueIndexKeyUpdaterImpl;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -51,7 +52,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -212,50 +212,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       ORID identity)
       throws OInvalidIndexEngineIdException {
     final OIndexKeyUpdater<Object> creator =
-        (oldValue, bonsayFileId) -> {
-          @SuppressWarnings("unchecked")
-          Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
-          if (toUpdate == null) {
-            if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(
-                valueContainerAlgorithm)) {
-              if (binaryFormatVersion >= 13) {
-                toUpdate = new OMixedIndexRIDContainer(indexName, bonsayFileId);
-              } else {
-                toUpdate = new OIndexRIDContainer(indexName, true, bonsayFileId);
-              }
-            } else {
-              throw new IllegalStateException("MVRBTree is not supported any more");
-            }
-          }
-          if (toUpdate instanceof OIndexRIDContainer) {
-            boolean isTree = !((OIndexRIDContainer) toUpdate).isEmbedded();
-            toUpdate.add(identity);
-
-            if (isTree) {
-              //noinspection unchecked
-              return OIndexUpdateAction.nothing();
-            } else {
-              return OIndexUpdateAction.changed(toUpdate);
-            }
-          } else if (toUpdate instanceof OMixedIndexRIDContainer) {
-            final OMixedIndexRIDContainer ridContainer = (OMixedIndexRIDContainer) toUpdate;
-            final boolean embeddedWasUpdated = ridContainer.addEntry(identity);
-
-            if (!embeddedWasUpdated) {
-              //noinspection unchecked
-              return OIndexUpdateAction.nothing();
-            } else {
-              return OIndexUpdateAction.changed(toUpdate);
-            }
-          } else {
-            if (toUpdate.add(identity)) {
-              return OIndexUpdateAction.changed(toUpdate);
-            } else {
-              //noinspection unchecked
-              return OIndexUpdateAction.nothing();
-            }
-          }
-        };
+        new OMultivalueIndexKeyUpdaterImpl(
+            identity, valueContainerAlgorithm, binaryFormatVersion, indexName);
 
     storage.updateIndexEntry(indexId, key, creator);
   }
@@ -308,7 +266,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
 
     final OModifiableBoolean removed = new OModifiableBoolean(false);
 
-    final OIndexKeyUpdater<Object> creator = new EntityRemover(value, removed);
+    final OIndexKeyUpdater<Object> creator = new OMultivalueEntityRemover(value, removed);
 
     storage.updateIndexEntry(indexId, key, creator);
 
@@ -606,7 +564,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
         this, mergeTxAndBackedStreams(indexChanges, txStream, stream, ascSortOrder));
   }
 
-  static Set<OIdentifiable> calculateTxValue(
+  public static Set<OIdentifiable> calculateTxValue(
       final Object key, OTransactionIndexChanges indexChanges) {
     final List<OIdentifiable> result = new ArrayList<>();
     final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
@@ -777,55 +735,5 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
 
     return IndexStreamSecurityDecorator.decorateStream(
         this, mergeTxAndBackedStreams(indexChanges, txStream, stream, false));
-  }
-
-  private static final class MultiValuesTransformer implements OBaseIndexEngine.ValuesTransformer {
-    private static final MultiValuesTransformer INSTANCE = new MultiValuesTransformer();
-
-    @Override
-    public Collection<ORID> transformFromValue(Object value) {
-      //noinspection unchecked
-      return (Collection<ORID>) value;
-    }
-  }
-
-  private static class EntityRemover implements OIndexKeyUpdater<Object> {
-    private final OIdentifiable value;
-    private final OModifiableBoolean removed;
-
-    private EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
-      this.value = value;
-      this.removed = removed;
-    }
-
-    @Override
-    public OIndexUpdateAction<Object> update(Object persistentValue, AtomicLong bonsayFileId) {
-      @SuppressWarnings("unchecked")
-      Set<OIdentifiable> values = (Set<OIdentifiable>) persistentValue;
-      if (value == null) {
-        removed.setValue(true);
-
-        //noinspection unchecked
-        return OIndexUpdateAction.remove();
-      } else if (values.remove(value)) {
-        removed.setValue(true);
-
-        if (values.isEmpty()) {
-          // remove tree ridbag too
-          if (values instanceof OMixedIndexRIDContainer) {
-            ((OMixedIndexRIDContainer) values).delete();
-          } else if (values instanceof OIndexRIDContainerSBTree) {
-            ((OIndexRIDContainerSBTree) values).delete();
-          }
-
-          //noinspection unchecked
-          return OIndexUpdateAction.remove();
-        } else {
-          return OIndexUpdateAction.changed(values);
-        }
-      }
-
-      return OIndexUpdateAction.changed(values);
-    }
   }
 }

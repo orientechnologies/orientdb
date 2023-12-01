@@ -1,14 +1,15 @@
-package com.orientechnologies.orient.core.index;
+package com.orientechnologies.orient.core.index.iterator;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndexOneValue;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import java.util.Comparator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
-class PureTxBetweenIndexBackwardSpliterator implements Spliterator<ORawPair<Object, ORID>> {
+public class PureTxBetweenIndexBackwardSpliterator implements Spliterator<ORawPair<Object, ORID>> {
   /** */
   private final OIndexOneValue oIndexTxAwareOneValue;
 
@@ -17,7 +18,7 @@ class PureTxBetweenIndexBackwardSpliterator implements Spliterator<ORawPair<Obje
 
   private Object nextKey;
 
-  PureTxBetweenIndexBackwardSpliterator(
+  public PureTxBetweenIndexBackwardSpliterator(
       OIndexOneValue oIndexTxAwareOneValue,
       Object fromKey,
       boolean fromInclusive,

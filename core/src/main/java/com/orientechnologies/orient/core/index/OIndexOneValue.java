@@ -27,6 +27,10 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.comparator.AscComparator;
+import com.orientechnologies.orient.core.index.comparator.DescComparator;
+import com.orientechnologies.orient.core.index.iterator.PureTxBetweenIndexBackwardSpliterator;
+import com.orientechnologies.orient.core.index.iterator.PureTxBetweenIndexForwardSpliterator;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
@@ -204,20 +208,19 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     if (indexChanges == null) {
       return stream;
     }
+    Comparator<ORawPair<Object, ORID>> keyComparator;
+    if (ascSortOrder) {
+      keyComparator = AscComparator.INSTANCE;
+    } else {
+      keyComparator = DescComparator.INSTANCE;
+    }
 
     @SuppressWarnings("resource")
     final Stream<ORawPair<Object, ORID>> txStream =
         keys.stream()
             .map((key) -> calculateTxIndexEntry(getCollatingValue(key), null, indexChanges))
             .filter(Objects::nonNull)
-            .sorted(
-                (entryOne, entryTwo) -> {
-                  if (ascSortOrder) {
-                    return ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
-                  } else {
-                    return -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
-                  }
-                });
+            .sorted(keyComparator);
 
     if (indexChanges.cleared) {
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);
@@ -495,7 +498,7 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     return OStreamSerializerRID.INSTANCE;
   }
 
-  ORawPair<Object, ORID> calculateTxIndexEntry(
+  public ORawPair<Object, ORID> calculateTxIndexEntry(
       Object key, final ORID backendValue, final OTransactionIndexChanges indexChanges) {
     key = getCollatingValue(key);
     ORID result = backendValue;
@@ -525,6 +528,13 @@ public abstract class OIndexOneValue extends OIndexAbstract {
       Stream<ORawPair<Object, ORID>> txStream,
       Stream<ORawPair<Object, ORID>> backedStream,
       boolean ascSortOrder) {
+    Comparator<ORawPair<Object, ORID>> comparator;
+    if (ascSortOrder) {
+      comparator = AscComparator.INSTANCE;
+    } else {
+      comparator = DescComparator.INSTANCE;
+    }
+
     return Streams.mergeSortedSpliterators(
         txStream,
         backedStream
@@ -533,13 +543,7 @@ public abstract class OIndexOneValue extends OIndexAbstract {
                     calculateTxIndexEntry(
                         getCollatingValue(entry.first), entry.second, indexChanges))
             .filter(Objects::nonNull),
-        (entryOne, entryTwo) -> {
-          if (ascSortOrder) {
-            return ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
-          } else {
-            return -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
-          }
-        });
+        comparator);
   }
 
   @Override

@@ -36,7 +36,8 @@ import java.util.Map;
  * com.orientechnologies.orient.core.metadata.schema.OType#LINKSET} or {@link
  * com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDSET} properties.
  */
-public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiValue {
+public class OPropertyListIndexDefinition extends OPropertyIndexDefinition
+    implements OIndexDefinitionMultiValue {
 
   private static final long serialVersionUID = -6499782365051906190L;
 
