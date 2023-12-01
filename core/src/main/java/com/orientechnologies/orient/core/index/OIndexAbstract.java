@@ -24,7 +24,6 @@ import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -216,7 +215,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
       final OIndexMetadata indexMetadata,
       boolean rebuild,
       final OProgressListener progressListener) {
-    final OBinarySerializer valueSerializer = determineValueSerializer();
     acquireExclusiveLock();
     try {
       Set<String> clustersToIndex = indexMetadata.getClustersToIndex();
@@ -240,7 +238,9 @@ public abstract class OIndexAbstract implements OIndexInternal {
         engineProperties.put("partitions", Integer.toString(clustersToIndex.size()));
       }
 
-      indexId = storage.addIndexEngine(indexMetadata, valueSerializer, version, engineProperties);
+      indexId =
+          storage.addIndexEngine(
+              indexMetadata, determineValueSerializerId(), version, engineProperties);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
       assert indexId >= 0;
@@ -293,7 +293,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         if (indexId == -1) {
           indexId =
               storage.loadExternalIndexEngine(
-                  indexMetadata, determineValueSerializer(), version, 1, engineProperties);
+                  indexMetadata, determineValueSerializerId(), version, engineProperties);
           apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         }
 
@@ -492,7 +492,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
       OIndexMetadata indexMetadata = this.loadMetadata(updateConfiguration());
       indexId =
           storage.addIndexEngine(
-              indexMetadata, determineValueSerializer(), version, engineProperties);
+              indexMetadata, determineValueSerializerId(), version, engineProperties);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
       onIndexEngineChange(indexId);
@@ -945,7 +945,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     return databaseName;
   }
 
-  protected abstract OBinarySerializer determineValueSerializer();
+  protected abstract byte determineValueSerializerId();
 
   public Object getCollatingValue(final Object key) {
     if (key != null && indexDefinition != null) return indexDefinition.getCollate().transform(key);

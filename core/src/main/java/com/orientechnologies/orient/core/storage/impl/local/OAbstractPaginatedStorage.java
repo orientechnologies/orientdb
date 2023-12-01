@@ -2663,9 +2663,8 @@ public abstract class OAbstractPaginatedStorage
 
   public int loadExternalIndexEngine(
       final OIndexMetadata indexMetadata,
-      final OBinarySerializer<?> valueSerializer,
+      final byte valueSerializerId,
       final int version,
-      final int apiVersion,
       final Map<String, String> engineProperties) {
     final String engineName = indexMetadata.getName();
     final String algorithm = indexMetadata.getAlgorithm();
@@ -2709,7 +2708,7 @@ public abstract class OAbstractPaginatedStorage
                 version,
                 engine.getEngineAPIVersion(),
                 multivalue,
-                valueSerializer.getId(),
+                valueSerializerId,
                 keySerializer.getId(),
                 isAutomatic,
                 keyTypes,
@@ -2720,6 +2719,9 @@ public abstract class OAbstractPaginatedStorage
                 engineProperties);
 
         if (engineData.getApiVersion() < 1) {
+
+          OBinarySerializer<?> valueSerializer =
+              getComponentsFactory().binarySerializerFactory.getObjectSerializer(valueSerializerId);
           ((OIndexEngine) engine)
               .load(
                   engineName,
@@ -2760,7 +2762,7 @@ public abstract class OAbstractPaginatedStorage
 
   public int addIndexEngine(
       final OIndexMetadata indexMetadata,
-      final OBinarySerializer<?> valueSerializer,
+      final byte valueSerializerId,
       final int version,
       final Map<String, String> engineProperties) {
     final String engineName = indexMetadata.getName();
@@ -2787,12 +2789,6 @@ public abstract class OAbstractPaginatedStorage
       final int keySize = determineKeySize(indexDefinition);
 
       final boolean nullValuesSupport = !indexDefinition.isNullValuesIgnored();
-      final byte serializerId;
-      if (valueSerializer != null) {
-        serializerId = valueSerializer.getId();
-      } else {
-        serializerId = -1;
-      }
 
       checkBackupRunning();
       stateLock.writeLock().lock();
@@ -2820,7 +2816,10 @@ public abstract class OAbstractPaginatedStorage
                       .deleteIndexEngine(atomicOperation, engineName);
                 }
               }
-
+              OBinarySerializer<?> valueSerializer =
+                  getComponentsFactory()
+                      .binarySerializerFactory
+                      .getObjectSerializer(valueSerializerId);
               final OBaseIndexEngine engine =
                   addIndexEngineInternal(
                       atomicOperation,
@@ -2854,7 +2853,7 @@ public abstract class OAbstractPaginatedStorage
                       version,
                       engine.getEngineAPIVersion(),
                       multivalue,
-                      serializerId,
+                      valueSerializerId,
                       keySerializer.getId(),
                       isAutomatic,
                       keyTypes,

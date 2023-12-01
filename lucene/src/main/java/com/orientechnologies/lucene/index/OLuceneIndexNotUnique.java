@@ -18,7 +18,6 @@ package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneTxOperations;
@@ -28,7 +27,10 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.IndexStreamSecurityDecorator;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexAbstract;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
@@ -149,11 +151,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   }
 
   @Override
-  protected OBinarySerializer determineValueSerializer() {
-    return storage
-        .getComponentsFactory()
-        .binarySerializerFactory
-        .getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
+  protected byte determineValueSerializerId() {
+    return OStreamSerializerSBTreeIndexRIDContainer.ID;
   }
 
   @Override

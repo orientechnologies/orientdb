@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.stream.Streams;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -494,8 +493,8 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   }
 
   @Override
-  protected OBinarySerializer determineValueSerializer() {
-    return OStreamSerializerRID.INSTANCE;
+  protected byte determineValueSerializerId() {
+    return OStreamSerializerRID.INSTANCE.getId();
   }
 
   public ORawPair<Object, ORID> calculateTxIndexEntry(

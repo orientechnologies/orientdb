@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.stream.Streams;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.ORawPair;
@@ -28,6 +27,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.comparator.AscComparator;
+import com.orientechnologies.orient.core.index.comparator.DescComparator;
 import com.orientechnologies.orient.core.index.iterator.PureTxMultiValueBetweenIndexBackwardSplititerator;
 import com.orientechnologies.orient.core.index.iterator.PureTxMultiValueBetweenIndexForwardSpliterator;
 import com.orientechnologies.orient.core.index.multivalue.MultiValuesTransformer;
@@ -279,18 +280,12 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     return storage.removeRidIndexEntry(indexId, key, value.getIdentity());
   }
 
-  protected OBinarySerializer<?> determineValueSerializer() {
+  protected byte determineValueSerializerId() {
     if (binaryFormatVersion >= 13) {
-      return storage
-          .getComponentsFactory()
-          .binarySerializerFactory
-          .getObjectSerializer(OMixedIndexRIDContainerSerializer.ID);
+      return OMixedIndexRIDContainerSerializer.ID;
     }
 
-    return storage
-        .getComponentsFactory()
-        .binarySerializerFactory
-        .getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
+    return OStreamSerializerSBTreeIndexRIDContainer.ID;
   }
 
   @Override
@@ -483,46 +478,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
 
     sortedKeys.sort(comparator);
 
-    //noinspection resource
     Stream<ORawPair<Object, ORID>> stream =
         IndexStreamSecurityDecorator.decorateStream(
-            this,
-            sortedKeys.stream()
-                .flatMap(
-                    (key) -> {
-                      key = getCollatingValue(key);
-
-                      final Object entryKey = key;
-                      acquireSharedLock();
-                      try {
-                        while (true) {
-                          try {
-                            if (apiVersion == 0) {
-                              //noinspection unchecked,resource
-                              return Optional.ofNullable(
-                                      (Collection<ORID>) storage.getIndexValue(indexId, key))
-                                  .map(
-                                      (rids) ->
-                                          rids.stream().map((rid) -> new ORawPair<>(entryKey, rid)))
-                                  .orElse(Stream.empty());
-                            } else if (apiVersion == 1) {
-                              //noinspection resource
-                              return storage
-                                  .getIndexValues(indexId, key)
-                                  .map((rid) -> new ORawPair<>(entryKey, rid));
-                            } else {
-                              throw new IllegalStateException(
-                                  "Invalid version of index API - " + apiVersion);
-                            }
-                          } catch (OInvalidIndexEngineIdException ignore) {
-                            doReloadIndexEngine();
-                          }
-                        }
-
-                      } finally {
-                        releaseSharedLock();
-                      }
-                    }));
+            this, sortedKeys.stream().flatMap(this::streamForKey));
 
     ODatabaseDocumentInternal database = getDatabase();
     final OTransactionIndexChanges indexChanges =
@@ -530,31 +488,18 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     if (indexChanges == null) {
       return stream;
     }
+    Comparator<ORawPair<Object, ORID>> keyComparator;
+    if (ascSortOrder) {
+      keyComparator = AscComparator.INSTANCE;
+    } else {
+      keyComparator = DescComparator.INSTANCE;
+    }
 
-    @SuppressWarnings("resource")
     final Stream<ORawPair<Object, ORID>> txStream =
         keys.stream()
-            .flatMap(
-                (key) -> {
-                  final Set<OIdentifiable> result =
-                      calculateTxValue(getCollatingValue(key), indexChanges);
-                  if (result != null) {
-                    return result.stream()
-                        .map((rid) -> new ORawPair<>(getCollatingValue(key), rid.getIdentity()));
-                  }
-                  return null;
-                })
+            .flatMap((key) -> txStramForKey(indexChanges, key))
             .filter(Objects::nonNull)
-            .sorted(
-                (entryOne, entryTwo) -> {
-                  if (ascSortOrder) {
-                    return ODefaultComparator.INSTANCE.compare(
-                        getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first));
-                  } else {
-                    return -ODefaultComparator.INSTANCE.compare(
-                        getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first));
-                  }
-                });
+            .sorted(keyComparator);
 
     if (indexChanges.cleared) {
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);
@@ -562,6 +507,45 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
 
     return IndexStreamSecurityDecorator.decorateStream(
         this, mergeTxAndBackedStreams(indexChanges, txStream, stream, ascSortOrder));
+  }
+
+  private Stream<ORawPair<Object, ORID>> txStramForKey(
+      final OTransactionIndexChanges indexChanges, Object key) {
+    final Set<OIdentifiable> result = calculateTxValue(getCollatingValue(key), indexChanges);
+    if (result != null) {
+      return result.stream()
+          .map((rid) -> new ORawPair<>(getCollatingValue(key), rid.getIdentity()));
+    }
+    return null;
+  }
+
+  private Stream<ORawPair<Object, ORID>> streamForKey(Object key) {
+    key = getCollatingValue(key);
+
+    final Object entryKey = key;
+    acquireSharedLock();
+    try {
+      while (true) {
+        try {
+          if (apiVersion == 0) {
+            //noinspection unchecked,resource
+            return Optional.ofNullable((Collection<ORID>) storage.getIndexValue(indexId, key))
+                .map((rids) -> rids.stream().map((rid) -> new ORawPair<>(entryKey, rid)))
+                .orElse(Stream.empty());
+          } else if (apiVersion == 1) {
+            //noinspection resource
+            return storage.getIndexValues(indexId, key).map((rid) -> new ORawPair<>(entryKey, rid));
+          } else {
+            throw new IllegalStateException("Invalid version of index API - " + apiVersion);
+          }
+        } catch (OInvalidIndexEngineIdException ignore) {
+          doReloadIndexEngine();
+        }
+      }
+
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public static Set<OIdentifiable> calculateTxValue(
@@ -657,20 +641,18 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       Stream<ORawPair<Object, ORID>> txStream,
       Stream<ORawPair<Object, ORID>> backedStream,
       boolean ascOrder) {
+    Comparator<ORawPair<Object, ORID>> keyComparator;
+    if (ascOrder) {
+      keyComparator = AscComparator.INSTANCE;
+    } else {
+      keyComparator = DescComparator.INSTANCE;
+    }
     return Streams.mergeSortedSpliterators(
         txStream,
         backedStream
             .map((entry) -> calculateTxIndexEntry(entry.first, entry.second, indexChanges))
             .filter(Objects::nonNull),
-        (entryOne, entryTwo) -> {
-          if (ascOrder) {
-            return ODefaultComparator.INSTANCE.compare(
-                getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first));
-          } else {
-            return -ODefaultComparator.INSTANCE.compare(
-                getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first));
-          }
-        });
+        keyComparator);
   }
 
   private ORawPair<Object, ORID> calculateTxIndexEntry(
