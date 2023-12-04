@@ -80,8 +80,9 @@ public final class OHashIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public final OIndexInternal createIndex(
-      final OStorage storage, final OIndexMetadata im, int version) throws OConfigurationException {
+  public final OIndexInternal createIndex(final OStorage storage, final OIndexMetadata im)
+      throws OConfigurationException {
+    int version = im.getVersion();
     final String name = im.getName();
     final ODocument metadata = im.getMetadata();
     final String indexType = im.getType();
@@ -90,6 +91,7 @@ public final class OHashIndexFactory implements OIndexFactory {
 
     if (version < 0) {
       version = getLastVersion(algorithm);
+      im.setVersion(version);
     }
 
     if (valueContainerAlgorithm == null)

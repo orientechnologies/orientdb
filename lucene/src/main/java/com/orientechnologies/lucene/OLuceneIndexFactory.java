@@ -80,7 +80,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OIndexInternal createIndex(OStorage storage, OIndexMetadata im, int version)
+  public OIndexInternal createIndex(OStorage storage, OIndexMetadata im)
       throws OConfigurationException {
     final String name = im.getName();
     ODocument metadata = im.getMetadata();
@@ -100,7 +100,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
               name,
               indexType,
               algorithm,
-              version,
+              im.getVersion(),
               pagStorage,
               valueContainerAlgorithm,
               metadata,

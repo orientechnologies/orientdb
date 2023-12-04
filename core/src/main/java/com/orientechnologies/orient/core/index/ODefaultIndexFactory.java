@@ -99,8 +99,9 @@ public class ODefaultIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal createIndex(OStorage storage, OIndexMetadata im, int version)
+  public OIndexInternal createIndex(OStorage storage, OIndexMetadata im)
       throws OConfigurationException {
+    int version = im.getVersion();
     final String name = im.getName();
     final ODocument metadata = im.getMetadata();
     final String indexType = im.getType();

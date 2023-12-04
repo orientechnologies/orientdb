@@ -213,6 +213,6 @@ public class ORecreateIndexesTask implements Runnable {
     }
     OIndexMetadata m =
         OIndexAbstract.loadMetadataInternal(idx, indexType, algorithm, valueContainerAlgorithm);
-    return OIndexes.createIndex(indexManager.storage, m, -1);
+    return OIndexes.createIndex(indexManager.storage, m);
   }
 }

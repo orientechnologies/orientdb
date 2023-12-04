@@ -144,7 +144,7 @@ public final class OIndexes {
    * @throws OConfigurationException if index creation failed
    * @throws OIndexException if index type does not exist
    */
-  public static OIndexInternal createIndex(OStorage storage, OIndexMetadata metadata, int version)
+  public static OIndexInternal createIndex(OStorage storage, OIndexMetadata metadata)
       throws OConfigurationException, OIndexException {
     String indexType = metadata.getType();
     String algorithm = metadata.getAlgorithm();
@@ -156,8 +156,7 @@ public final class OIndexes {
       }
     }
 
-    return findFactoryByAlgorithmAndType(algorithm, indexType)
-        .createIndex(storage, metadata, version);
+    return findFactoryByAlgorithmAndType(algorithm, indexType).createIndex(storage, metadata);
   }
 
   private static OIndexFactory findFactoryByAlgorithmAndType(String algorithm, String indexType) {

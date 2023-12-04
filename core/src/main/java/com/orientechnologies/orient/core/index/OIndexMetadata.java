@@ -21,6 +21,9 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import java.util.Set;
 
 /**
@@ -35,6 +38,7 @@ public class OIndexMetadata {
   private final String type;
   private final String algorithm;
   private final String valueContainerAlgorithm;
+  private int version;
   private final ODocument metadata;
 
   public OIndexMetadata(
@@ -44,6 +48,7 @@ public class OIndexMetadata {
       String type,
       String algorithm,
       String valueContainerAlgorithm,
+      int version,
       ODocument metadata) {
     this.name = name;
     this.indexDefinition = indexDefinition;
@@ -51,6 +56,7 @@ public class OIndexMetadata {
     this.type = type;
     this.algorithm = algorithm;
     this.valueContainerAlgorithm = valueContainerAlgorithm;
+    this.version = version;
     this.metadata = metadata;
   }
 
@@ -116,6 +122,31 @@ public class OIndexMetadata {
     } else {
       return false;
     }
+  }
+
+  public byte getValueSerializerId(int binaryFormatVersion) {
+    String t = type.toUpperCase();
+    if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(t)
+        || OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(t)
+        || OClass.INDEX_TYPE.FULLTEXT.toString().equals(t)
+        || OClass.INDEX_TYPE.SPATIAL.toString().equals(t)) {
+      // TODO: Hard Coded Lucene maybe fix
+      if (binaryFormatVersion >= 13 && !"LUCENE".equalsIgnoreCase(algorithm)) {
+        return OMixedIndexRIDContainerSerializer.ID;
+      }
+
+      return OStreamSerializerSBTreeIndexRIDContainer.ID;
+    } else {
+      return OStreamSerializerRID.INSTANCE.getId();
+    }
+  }
+
+  public int getVersion() {
+    return version;
+  }
+
+  public void setVersion(int version) {
+    this.version = version;
   }
 
   public ODocument getMetadata() {

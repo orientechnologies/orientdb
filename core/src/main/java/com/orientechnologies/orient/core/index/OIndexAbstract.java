@@ -184,6 +184,11 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
     final Set<String> clusters = new HashSet<>(config.field(CONFIG_CLUSTERS, OType.EMBEDDEDSET));
 
+    final int indexVersion =
+        config.field(OIndexInternal.INDEX_VERSION) == null
+            ? 1
+            : (Integer) config.field(OIndexInternal.INDEX_VERSION);
+
     return new OIndexMetadata(
         indexName,
         loadedIndexDefinition,
@@ -191,6 +196,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         type,
         algorithm,
         valueContainerAlgorithm,
+        indexVersion,
         config.field(OIndexInternal.METADATA));
   }
 
@@ -237,10 +243,8 @@ public abstract class OIndexAbstract implements OIndexInternal {
       } else {
         engineProperties.put("partitions", Integer.toString(clustersToIndex.size()));
       }
-
-      indexId =
-          storage.addIndexEngine(
-              indexMetadata, determineValueSerializerId(), version, engineProperties);
+      indexMetadata.setVersion(version);
+      indexId = storage.addIndexEngine(indexMetadata, engineProperties);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
       assert indexId >= 0;
@@ -291,9 +295,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
         if (indexId == -1) {
-          indexId =
-              storage.loadExternalIndexEngine(
-                  indexMetadata, determineValueSerializerId(), version, engineProperties);
+          indexId = storage.loadExternalIndexEngine(indexMetadata, engineProperties);
           apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         }
 
@@ -490,9 +492,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
       }
 
       OIndexMetadata indexMetadata = this.loadMetadata(updateConfiguration());
-      indexId =
-          storage.addIndexEngine(
-              indexMetadata, determineValueSerializerId(), version, engineProperties);
+      indexId = storage.addIndexEngine(indexMetadata, engineProperties);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
       onIndexEngineChange(indexId);

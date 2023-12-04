@@ -41,8 +41,7 @@ public interface OIndexFactory {
    * @return OIndexInternal
    * @throws OConfigurationException if index creation failed
    */
-  OIndexInternal createIndex(OStorage storage, OIndexMetadata im, int version)
-      throws OConfigurationException;
+  OIndexInternal createIndex(OStorage storage, OIndexMetadata im) throws OConfigurationException;
 
   OBaseIndexEngine createIndexEngine(
       int indexId,

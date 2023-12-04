@@ -12,31 +12,32 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class OMultivalueIndexKeyUpdaterImpl implements OIndexKeyUpdater<Object> {
   private final ORID identity;
-  private final String valueContainerAlgorithm;
-  private final int binaryFormatVersion;
   private final String indexName;
+  private final boolean mixedContainer;
 
   public OMultivalueIndexKeyUpdaterImpl(
       ORID identity, String valueContainerAlgorithm, int binaryFormatVersion, String indexName) {
     this.identity = identity;
-    this.valueContainerAlgorithm = valueContainerAlgorithm;
-    this.binaryFormatVersion = binaryFormatVersion;
     this.indexName = indexName;
+    if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+      if (binaryFormatVersion >= 13) {
+        mixedContainer = true;
+      } else {
+        mixedContainer = false;
+      }
+    } else {
+      throw new IllegalStateException("MVRBTree is not supported any more");
+    }
   }
 
   @Override
   public OIndexUpdateAction<Object> update(Object oldValue, AtomicLong bonsayFileId) {
-    @SuppressWarnings("unchecked")
     Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
     if (toUpdate == null) {
-      if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-        if (binaryFormatVersion >= 13) {
-          toUpdate = new OMixedIndexRIDContainer(indexName, bonsayFileId);
-        } else {
-          toUpdate = new OIndexRIDContainer(indexName, true, bonsayFileId);
-        }
+      if (mixedContainer) {
+        toUpdate = new OMixedIndexRIDContainer(indexName, bonsayFileId);
       } else {
-        throw new IllegalStateException("MVRBTree is not supported any more");
+        toUpdate = new OIndexRIDContainer(indexName, true, bonsayFileId);
       }
     }
     if (toUpdate instanceof OIndexRIDContainer) {

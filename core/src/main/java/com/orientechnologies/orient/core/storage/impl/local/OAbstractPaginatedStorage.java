@@ -2662,16 +2662,14 @@ public abstract class OAbstractPaginatedStorage
   }
 
   public int loadExternalIndexEngine(
-      final OIndexMetadata indexMetadata,
-      final byte valueSerializerId,
-      final int version,
-      final Map<String, String> engineProperties) {
+      final OIndexMetadata indexMetadata, final Map<String, String> engineProperties) {
     final String engineName = indexMetadata.getName();
     final String algorithm = indexMetadata.getAlgorithm();
     final String indexType = indexMetadata.getType();
     final OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
     final boolean isAutomatic = indexMetadata.getIndexDefinition().isAutomatic();
     final boolean multivalue = indexMetadata.isMultivalue();
+    final int version = indexMetadata.getVersion();
     try {
       stateLock.writeLock().lock();
       try {
@@ -2686,6 +2684,9 @@ public abstract class OAbstractPaginatedStorage
           throw new OIndexException("Index with name " + engineName + " already exists");
         }
         makeStorageDirty();
+
+        final int binaryFormatVersion = getConfiguration().getBinaryFormatVersion();
+        final byte valueSerializerId = indexMetadata.getValueSerializerId(binaryFormatVersion);
 
         final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition);
         if (keySerializer == null) {
@@ -2761,16 +2762,14 @@ public abstract class OAbstractPaginatedStorage
   }
 
   public int addIndexEngine(
-      final OIndexMetadata indexMetadata,
-      final byte valueSerializerId,
-      final int version,
-      final Map<String, String> engineProperties) {
+      final OIndexMetadata indexMetadata, final Map<String, String> engineProperties) {
     final String engineName = indexMetadata.getName();
     final String algorithm = indexMetadata.getAlgorithm();
     final String indexType = indexMetadata.getType();
     final OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
     final boolean isAutomatic = indexMetadata.getIndexDefinition().isAutomatic();
     final boolean multivalue = indexMetadata.isMultivalue();
+    final int version = indexMetadata.getVersion();
 
     try {
       if (indexDefinition == null) {
@@ -2816,6 +2815,9 @@ public abstract class OAbstractPaginatedStorage
                       .deleteIndexEngine(atomicOperation, engineName);
                 }
               }
+              final int binaryFormatVersion = getConfiguration().getBinaryFormatVersion();
+              final byte valueSerializerId =
+                  indexMetadata.getValueSerializerId(binaryFormatVersion);
               OBinarySerializer<?> valueSerializer =
                   getComponentsFactory()
                       .binarySerializerFactory
