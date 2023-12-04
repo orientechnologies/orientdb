@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
@@ -84,8 +83,6 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
   public OIndexInternal createIndex(OStorage storage, OIndexMetadata im)
       throws OConfigurationException {
     int version = im.getVersion();
-    final String name = im.getName();
-    final ODocument metadata = im.getMetadata();
     final String indexType = im.getType();
     final String algorithm = im.getAlgorithm();
     String valueContainerAlgorithm = im.getValueContainerAlgorithm();
@@ -94,50 +91,17 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
 
     if (version < 0) {
       version = getLastVersion(algorithm);
+      im.setVersion(version);
     }
 
-    if (AUTOSHARDING_ALGORITHM.equals(algorithm))
-      return createShardedIndex(
-          name,
-          indexType,
-          valueContainerAlgorithm,
-          metadata,
-          (OAbstractPaginatedStorage) storage,
-          version);
+    if (AUTOSHARDING_ALGORITHM.equals(algorithm)) {
+      if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
+        return new OIndexUnique(im, storage);
+      } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
+        return new OIndexNotUnique(im, storage);
+      }
 
-    throw new OConfigurationException("Unsupported type: " + indexType);
-  }
-
-  private OIndexInternal createShardedIndex(
-      final String name,
-      final String indexType,
-      final String valueContainerAlgorithm,
-      final ODocument metadata,
-      final OAbstractPaginatedStorage storage,
-      final int version) {
-
-    final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
-
-    if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(
-          name,
-          indexType,
-          AUTOSHARDING_ALGORITHM,
-          version,
-          storage,
-          valueContainerAlgorithm,
-          metadata,
-          binaryFormatVersion);
-    } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(
-          name,
-          indexType,
-          AUTOSHARDING_ALGORITHM,
-          version,
-          storage,
-          valueContainerAlgorithm,
-          metadata,
-          binaryFormatVersion);
+      throw new OConfigurationException("Unsupported type: " + indexType);
     }
 
     throw new OConfigurationException("Unsupported type: " + indexType);

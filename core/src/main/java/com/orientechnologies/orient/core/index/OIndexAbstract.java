@@ -96,25 +96,22 @@ public abstract class OIndexAbstract implements OIndexInternal {
   private String algorithm;
   private volatile OIndexDefinition indexDefinition;
   private final Map<String, String> engineProperties = new HashMap<>();
-  protected final int binaryFormatVersion;
 
-  public OIndexAbstract(
-      String name,
-      final String type,
-      final String algorithm,
-      final String valueContainerAlgorithm,
-      final ODocument metadata,
-      final int version,
-      final OStorage storage,
-      int binaryFormatVersion) {
-    this.binaryFormatVersion = binaryFormatVersion;
+  public OIndexAbstract(OIndexMetadata im, final OStorage storage) {
+    int version = im.getVersion();
+    final String name = im.getName();
+    final ODocument metadata = im.getMetadata();
+    final String indexType = im.getType();
+    final String algorithm = im.getAlgorithm();
+    String valueContainerAlgorithm = im.getValueContainerAlgorithm();
+
     acquireExclusiveLock();
     try {
       databaseName = storage.getName();
 
       this.version = version;
       this.name = name;
-      this.type = type;
+      this.type = indexType;
       this.algorithm = algorithm;
       this.metadata = metadata;
       this.valueContainerAlgorithm = valueContainerAlgorithm;
@@ -944,8 +941,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public String getDatabaseName() {
     return databaseName;
   }
-
-  protected abstract byte determineValueSerializerId();
 
   public Object getCollatingValue(final Object key) {
     if (key != null && indexDefinition != null) return indexDefinition.getCollate().transform(key);

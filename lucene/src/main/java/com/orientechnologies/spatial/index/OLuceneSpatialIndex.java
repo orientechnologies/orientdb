@@ -17,8 +17,9 @@ package com.orientechnologies.spatial.index;
 import com.orientechnologies.lucene.index.OLuceneIndexNotUnique;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.spatial.engine.OLuceneSpatialIndexContainer;
@@ -33,24 +34,8 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
   private final OShapeFactory shapeFactory = OShapeFactory.INSTANCE;
 
-  public OLuceneSpatialIndex(
-      String name,
-      String typeId,
-      String algorithm,
-      int version,
-      OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      final int binaryFormatVersion) {
-    super(
-        name,
-        typeId,
-        algorithm,
-        version,
-        storage,
-        valueContainerAlgorithm,
-        metadata,
-        binaryFormatVersion);
+  public OLuceneSpatialIndex(OIndexMetadata im, final OStorage storage) {
+    super(im, storage);
   }
 
   @Override

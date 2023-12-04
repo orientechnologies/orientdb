@@ -31,9 +31,10 @@ import com.orientechnologies.orient.core.index.IndexStreamSecurityDecorator;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -52,24 +53,8 @@ import org.apache.lucene.search.IndexSearcher;
 
 public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneIndex {
 
-  public OLuceneIndexNotUnique(
-      String name,
-      String typeId,
-      String algorithm,
-      int version,
-      OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      final int binaryFormatVersion) {
-    super(
-        name,
-        typeId,
-        algorithm,
-        valueContainerAlgorithm,
-        metadata,
-        version,
-        storage,
-        binaryFormatVersion);
+  public OLuceneIndexNotUnique(OIndexMetadata im, final OStorage storage) {
+    super(im, storage);
   }
 
   @Override
@@ -148,11 +133,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     } finally {
       releaseExclusiveLock();
     }
-  }
-
-  @Override
-  protected byte determineValueSerializerId() {
-    return OStreamSerializerSBTreeIndexRIDContainer.ID;
   }
 
   @Override

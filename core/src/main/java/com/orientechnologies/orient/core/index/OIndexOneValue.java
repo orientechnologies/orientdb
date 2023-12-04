@@ -31,9 +31,7 @@ import com.orientechnologies.orient.core.index.comparator.DescComparator;
 import com.orientechnologies.orient.core.index.iterator.PureTxBetweenIndexBackwardSpliterator;
 import com.orientechnologies.orient.core.index.iterator.PureTxBetweenIndexForwardSpliterator;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -56,24 +54,8 @@ import java.util.stream.StreamSupport;
  */
 public abstract class OIndexOneValue extends OIndexAbstract {
 
-  public OIndexOneValue(
-      String name,
-      final String type,
-      String algorithm,
-      int version,
-      OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      final int binaryFormatVersion) {
-    super(
-        name,
-        type,
-        algorithm,
-        valueContainerAlgorithm,
-        metadata,
-        version,
-        storage,
-        binaryFormatVersion);
+  public OIndexOneValue(OIndexMetadata im, final OStorage storage) {
+    super(im, storage);
   }
 
   @Deprecated
@@ -490,11 +472,6 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   @Override
   public boolean isUnique() {
     return true;
-  }
-
-  @Override
-  protected byte determineValueSerializerId() {
-    return OStreamSerializerRID.INSTANCE.getId();
   }
 
   public ORawPair<Object, ORID> calculateTxIndexEntry(

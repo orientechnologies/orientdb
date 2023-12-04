@@ -35,9 +35,7 @@ import com.orientechnologies.orient.core.index.multivalue.MultiValuesTransformer
 import com.orientechnologies.orient.core.index.multivalue.OMultivalueEntityRemover;
 import com.orientechnologies.orient.core.index.multivalue.OMultivalueIndexKeyUpdaterImpl;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -64,24 +62,8 @@ import java.util.stream.StreamSupport;
  */
 public abstract class OIndexMultiValues extends OIndexAbstract {
 
-  OIndexMultiValues(
-      String name,
-      final String type,
-      String algorithm,
-      int version,
-      OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm,
-      final ODocument metadata,
-      final int binaryFormatVersion) {
-    super(
-        name,
-        type,
-        algorithm,
-        valueContainerAlgorithm,
-        metadata,
-        version,
-        storage,
-        binaryFormatVersion);
+  OIndexMultiValues(OIndexMetadata im, final OStorage storage) {
+    super(im, storage);
   }
 
   @Deprecated
@@ -190,7 +172,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid)
       throws OInvalidIndexEngineIdException {
     if (apiVersion == 0) {
-      doPutV0(indexId, storage, binaryFormatVersion, valueContainerAlgorithm, getName(), key, rid);
+      doPutV0(indexId, storage, valueContainerAlgorithm, getName(), key, rid);
     } else if (apiVersion == 1) {
       doPutV1(storage, indexId, key, rid);
     } else {
@@ -206,12 +188,12 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   private static void doPutV0(
       final int indexId,
       final OAbstractPaginatedStorage storage,
-      final int binaryFormatVersion,
       String valueContainerAlgorithm,
       String indexName,
       Object key,
       ORID identity)
       throws OInvalidIndexEngineIdException {
+    int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
     final OIndexKeyUpdater<Object> creator =
         new OMultivalueIndexKeyUpdaterImpl(
             identity, valueContainerAlgorithm, binaryFormatVersion, indexName);
@@ -278,14 +260,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       int indexId, OAbstractPaginatedStorage storage, Object key, OIdentifiable value)
       throws OInvalidIndexEngineIdException {
     return storage.removeRidIndexEntry(indexId, key, value.getIdentity());
-  }
-
-  protected byte determineValueSerializerId() {
-    if (binaryFormatVersion >= 13) {
-      return OMixedIndexRIDContainerSerializer.ID;
-    }
-
-    return OStreamSerializerSBTreeIndexRIDContainer.ID;
   }
 
   @Override

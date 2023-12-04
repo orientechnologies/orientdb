@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
@@ -83,8 +82,6 @@ public final class OHashIndexFactory implements OIndexFactory {
   public final OIndexInternal createIndex(final OStorage storage, final OIndexMetadata im)
       throws OConfigurationException {
     int version = im.getVersion();
-    final String name = im.getName();
-    final ODocument metadata = im.getMetadata();
     final String indexType = im.getType();
     final String algorithm = im.getAlgorithm();
     String valueContainerAlgorithm = im.getValueContainerAlgorithm();
@@ -97,38 +94,12 @@ public final class OHashIndexFactory implements OIndexFactory {
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
 
-    final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
-
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType)) {
-      return new OIndexUnique(
-          name,
-          indexType,
-          algorithm,
-          version,
-          (OAbstractPaginatedStorage) storage,
-          valueContainerAlgorithm,
-          metadata,
-          binaryFormatVersion);
+      return new OIndexUnique(im, storage);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType)) {
-      return new OIndexNotUnique(
-          name,
-          indexType,
-          algorithm,
-          version,
-          (OAbstractPaginatedStorage) storage,
-          valueContainerAlgorithm,
-          metadata,
-          binaryFormatVersion);
+      return new OIndexNotUnique(im, storage);
     } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType)) {
-      return new OIndexDictionary(
-          name,
-          indexType,
-          algorithm,
-          version,
-          (OAbstractPaginatedStorage) storage,
-          valueContainerAlgorithm,
-          metadata,
-          binaryFormatVersion);
+      return new OIndexDictionary(im, storage);
     }
 
     throw new OConfigurationException("Unsupported type: " + indexType);

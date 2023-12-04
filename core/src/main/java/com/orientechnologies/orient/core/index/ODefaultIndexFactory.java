@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeSingleValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
@@ -102,8 +101,6 @@ public class ODefaultIndexFactory implements OIndexFactory {
   public OIndexInternal createIndex(OStorage storage, OIndexMetadata im)
       throws OConfigurationException {
     int version = im.getVersion();
-    final String name = im.getName();
-    final ODocument metadata = im.getMetadata();
     final String indexType = im.getType();
     final String algorithm = im.getAlgorithm();
     String valueContainerAlgorithm = im.getValueContainerAlgorithm();
@@ -114,74 +111,22 @@ public class ODefaultIndexFactory implements OIndexFactory {
 
     if (version < 0) {
       version = getLastVersion(algorithm);
+      im.setVersion(version);
     }
 
-    return createSBTreeIndex(
-        name,
-        indexType,
-        valueContainerAlgorithm,
-        metadata,
-        (OAbstractPaginatedStorage) storage,
-        version,
-        algorithm);
-  }
-
-  private static OIndexInternal createSBTreeIndex(
-      String name,
-      String indexType,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      OAbstractPaginatedStorage storage,
-      int version,
-      String algorithm) {
-
-    final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
-
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(
-          name,
-          indexType,
-          algorithm,
-          version,
-          storage,
-          valueContainerAlgorithm,
-          metadata,
-          binaryFormatVersion);
+      return new OIndexUnique(im, storage);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(
-          name,
-          indexType,
-          algorithm,
-          version,
-          storage,
-          valueContainerAlgorithm,
-          metadata,
-          binaryFormatVersion);
+      return new OIndexNotUnique(im, storage);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       OLogManager.instance()
           .warnNoDb(
               ODefaultIndexFactory.class,
               "You are creating native full text index instance. "
                   + "That is unsafe because this type of index is deprecated and will be removed in future.");
-      return new OIndexFullText(
-          name,
-          indexType,
-          algorithm,
-          version,
-          storage,
-          valueContainerAlgorithm,
-          metadata,
-          binaryFormatVersion);
+      return new OIndexFullText(im, storage);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
-      return new OIndexDictionary(
-          name,
-          indexType,
-          algorithm,
-          version,
-          storage,
-          valueContainerAlgorithm,
-          metadata,
-          binaryFormatVersion);
+      return new OIndexDictionary(im, storage);
     }
 
     throw new OConfigurationException("Unsupported type: " + indexType);

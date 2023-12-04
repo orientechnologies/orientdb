@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -62,28 +62,12 @@ public class OIndexFullText extends OIndexMultiValues {
 
   private Set<String> stopWords;
 
-  public OIndexFullText(
-      String name,
-      String typeId,
-      String algorithm,
-      int version,
-      OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      int binaryFormatVersion) {
-    super(
-        name,
-        typeId,
-        algorithm,
-        version,
-        storage,
-        valueContainerAlgorithm,
-        metadata,
-        binaryFormatVersion);
+  public OIndexFullText(OIndexMetadata im, final OStorage storage) {
+    super(im, storage);
     acquireExclusiveLock();
     try {
       config();
-      configWithMetadata(metadata);
+      configWithMetadata(im.getMetadata());
     } finally {
       releaseExclusiveLock();
     }

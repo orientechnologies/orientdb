@@ -39,7 +39,7 @@ public class OIndexMetadata {
   private final String algorithm;
   private final String valueContainerAlgorithm;
   private int version;
-  private final ODocument metadata;
+  private ODocument metadata;
 
   public OIndexMetadata(
       String name,
@@ -151,5 +151,9 @@ public class OIndexMetadata {
 
   public ODocument getMetadata() {
     return metadata;
+  }
+
+  public void setMetadata(ODocument metadata) {
+    this.metadata = metadata;
   }
 }

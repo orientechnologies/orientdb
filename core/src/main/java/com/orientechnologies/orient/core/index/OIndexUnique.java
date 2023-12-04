@@ -22,8 +22,8 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
@@ -61,24 +61,8 @@ public class OIndexUnique extends OIndexOneValue {
         return newValue.getIdentity();
       };
 
-  public OIndexUnique(
-      String name,
-      String typeId,
-      String algorithm,
-      int version,
-      OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      int binaryFormatVersion) {
-    super(
-        name,
-        typeId,
-        algorithm,
-        version,
-        storage,
-        valueContainerAlgorithm,
-        metadata,
-        binaryFormatVersion);
+  public OIndexUnique(OIndexMetadata im, final OStorage storage) {
+    super(im, storage);
   }
 
   @Override

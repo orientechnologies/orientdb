@@ -18,32 +18,16 @@ package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
 
 public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
 
-  public OLuceneFullTextIndex(
-      String name,
-      String typeId,
-      String algorithm,
-      int version,
-      OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      final int binaryFormatVersion) {
-    super(
-        name,
-        typeId,
-        algorithm,
-        version,
-        storage,
-        valueContainerAlgorithm,
-        metadata,
-        binaryFormatVersion);
+  public OLuceneFullTextIndex(OIndexMetadata im, final OStorage storage) {
+    super(im, storage);
   }
 
   public Document buildDocument(final Object key) {

@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -82,31 +81,16 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   @Override
   public OIndexInternal createIndex(OStorage storage, OIndexMetadata im)
       throws OConfigurationException {
-    final String name = im.getName();
     ODocument metadata = im.getMetadata();
     final String indexType = im.getType();
     final String algorithm = im.getAlgorithm();
-    String valueContainerAlgorithm = im.getValueContainerAlgorithm();
-
-    OAbstractPaginatedStorage pagStorage = (OAbstractPaginatedStorage) storage;
 
     if (metadata == null)
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
 
+    im.setMetadata(metadata);
     if (FULLTEXT.toString().equalsIgnoreCase(indexType)) {
-      final int binaryFormatVersion = pagStorage.getConfiguration().getBinaryFormatVersion();
-      final OLuceneFullTextIndex index =
-          new OLuceneFullTextIndex(
-              name,
-              indexType,
-              algorithm,
-              im.getVersion(),
-              pagStorage,
-              valueContainerAlgorithm,
-              metadata,
-              binaryFormatVersion);
-
-      return index;
+      return new OLuceneFullTextIndex(im, storage);
     }
     throw new OConfigurationException("Unsupported type : " + algorithm);
   }
