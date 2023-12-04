@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -136,7 +137,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   }
 
   @Override
-  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
     return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.NonUnique);
   }

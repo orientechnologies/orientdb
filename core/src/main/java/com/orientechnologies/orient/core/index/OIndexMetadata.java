@@ -24,6 +24,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexFactory;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
 import java.util.Set;
 
 /**
@@ -54,8 +56,19 @@ public class OIndexMetadata {
     this.indexDefinition = indexDefinition;
     this.clustersToIndex = clustersToIndex;
     this.type = type;
+    if (type.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
+        || type.equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name())
+        || type.equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name())) {
+      if (!algorithm.equalsIgnoreCase("autosharding")) {
+        algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
+      }
+    }
     this.algorithm = algorithm;
-    this.valueContainerAlgorithm = valueContainerAlgorithm;
+    if (valueContainerAlgorithm != null) {
+      this.valueContainerAlgorithm = valueContainerAlgorithm;
+    } else {
+      this.valueContainerAlgorithm = OAutoShardingIndexFactory.NONE_VALUE_CONTAINER;
+    }
     this.version = version;
     this.metadata = metadata;
   }

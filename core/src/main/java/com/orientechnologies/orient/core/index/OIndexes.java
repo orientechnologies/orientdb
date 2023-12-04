@@ -148,13 +148,6 @@ public final class OIndexes {
       throws OConfigurationException, OIndexException {
     String indexType = metadata.getType();
     String algorithm = metadata.getAlgorithm();
-    if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
-        || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name())
-        || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name())) {
-      if (!algorithm.equalsIgnoreCase("autosharding")) {
-        algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
-      }
-    }
 
     return findFactoryByAlgorithmAndType(algorithm, indexType).createIndex(storage, metadata);
   }

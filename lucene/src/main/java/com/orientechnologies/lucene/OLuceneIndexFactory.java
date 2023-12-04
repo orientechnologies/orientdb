@@ -85,10 +85,11 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
     final String indexType = im.getType();
     final String algorithm = im.getAlgorithm();
 
-    if (metadata == null)
+    if (metadata == null) {
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
+      im.setMetadata(metadata);
+    }
 
-    im.setMetadata(metadata);
     if (FULLTEXT.toString().equalsIgnoreCase(indexType)) {
       return new OLuceneFullTextIndex(im, storage);
     }

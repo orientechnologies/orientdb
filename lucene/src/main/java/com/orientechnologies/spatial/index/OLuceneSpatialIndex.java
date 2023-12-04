@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import com.orientechnologies.spatial.engine.OLuceneSpatialIndexContainer;
 import com.orientechnologies.spatial.shape.OShapeFactory;
 import java.util.LinkedHashMap;
@@ -47,7 +48,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
   }
 
   @Override
-  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OTransactionIndexEntry> interpretTxKeyChanges(
       final OTransactionIndexChangesPerKey changes) {
 
     try {
@@ -88,7 +89,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
     return key;
   }
 
-  private static Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretAsSpatial(
+  private static Iterable<OTransactionIndexEntry> interpretAsSpatial(
       OTransactionIndexChangesPerKey item) {
     // 1. Handle common fast paths.
 

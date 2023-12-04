@@ -4,6 +4,7 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexOneValue;
+import com.orientechnologies.orient.core.index.comparator.AscComparator;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import java.util.Comparator;
 import java.util.Spliterator;
@@ -90,7 +91,6 @@ public class PureTxBetweenIndexForwardSpliterator implements Spliterator<ORawPai
 
   @Override
   public Comparator<? super ORawPair<Object, ORID>> getComparator() {
-    return (entryOne, entryTwo) ->
-        ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+    return AscComparator.INSTANCE;
   }
 }

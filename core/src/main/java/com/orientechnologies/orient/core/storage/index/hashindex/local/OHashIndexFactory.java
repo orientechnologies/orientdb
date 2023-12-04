@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexDictionary;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
@@ -84,15 +83,11 @@ public final class OHashIndexFactory implements OIndexFactory {
     int version = im.getVersion();
     final String indexType = im.getType();
     final String algorithm = im.getAlgorithm();
-    String valueContainerAlgorithm = im.getValueContainerAlgorithm();
 
     if (version < 0) {
       version = getLastVersion(algorithm);
       im.setVersion(version);
     }
-
-    if (valueContainerAlgorithm == null)
-      valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
 
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType)) {
       return new OIndexUnique(im, storage);

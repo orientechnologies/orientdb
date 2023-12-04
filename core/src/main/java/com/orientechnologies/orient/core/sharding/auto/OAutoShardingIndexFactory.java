@@ -85,9 +85,6 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
     int version = im.getVersion();
     final String indexType = im.getType();
     final String algorithm = im.getAlgorithm();
-    String valueContainerAlgorithm = im.getValueContainerAlgorithm();
-
-    if (valueContainerAlgorithm == null) valueContainerAlgorithm = NONE_VALUE_CONTAINER;
 
     if (version < 0) {
       version = getLastVersion(algorithm);

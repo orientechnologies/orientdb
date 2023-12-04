@@ -105,9 +105,10 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
           .registerSerializer(OLuceneMockSpatialSerializer.INSTANCE, OType.EMBEDDED);
     }
 
-    if (metadata == null)
+    if (metadata == null) {
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
-    im.setMetadata(metadata);
+      im.setMetadata(metadata);
+    }
     if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
       return new OLuceneSpatialIndex(im, storage);
     }

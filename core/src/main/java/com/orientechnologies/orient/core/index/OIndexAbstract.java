@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.comparator.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.comparator.OAlwaysLessKey;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.iterator.OIndexCursorStream;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -50,6 +51,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContaine
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -61,7 +63,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
@@ -82,10 +83,8 @@ public abstract class OIndexAbstract implements OIndexInternal {
   protected final String type;
   protected final ODocument metadata;
   protected final OAbstractPaginatedStorage storage;
-  private final String databaseName;
   private final String name;
   private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
-  private final AtomicLong rebuildVersion = new AtomicLong();
   private final int version;
   protected volatile String valueContainerAlgorithm;
 
@@ -107,7 +106,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
     acquireExclusiveLock();
     try {
-      databaseName = storage.getName();
 
       this.version = version;
       this.name = name;
@@ -336,10 +334,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     }
   }
 
-  private Map<String, String> getEngineProperties() {
-    return engineProperties;
-  }
-
   @Override
   public OIndexMetadata loadMetadata(final ODocument config) {
     return loadMetadataInternal(config, type, algorithm, valueContainerAlgorithm);
@@ -422,13 +416,13 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   @Deprecated
   public OIndexCursor cursor() {
-    return new StreamWrapper(stream());
+    return new OIndexCursorStream(stream());
   }
 
   @Deprecated
   @Override
   public OIndexCursor descCursor() {
-    return new StreamWrapper(descStream());
+    return new OIndexCursorStream(descStream());
   }
 
   @Deprecated
@@ -451,27 +445,27 @@ public abstract class OIndexAbstract implements OIndexInternal {
   @Deprecated
   @Override
   public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
-    return new StreamWrapper(streamEntries(keys, ascSortOrder));
+    return new OIndexCursorStream(streamEntries(keys, ascSortOrder));
   }
 
   @Deprecated
   @Override
   public OIndexCursor iterateEntriesBetween(
       Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder) {
-    return new StreamWrapper(
+    return new OIndexCursorStream(
         streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder));
   }
 
   @Deprecated
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    return new StreamWrapper(streamEntriesMajor(fromKey, fromInclusive, ascOrder));
+    return new OIndexCursorStream(streamEntriesMajor(fromKey, fromInclusive, ascOrder));
   }
 
   @Deprecated
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
-    return new StreamWrapper(streamEntriesMajor(toKey, toInclusive, ascOrder));
+    return new OIndexCursorStream(streamEntriesMajor(toKey, toInclusive, ascOrder));
   }
 
   /** {@inheritDoc} */
@@ -817,14 +811,14 @@ public abstract class OIndexAbstract implements OIndexInternal {
    * @param changes the changes to interpret.
    * @return the interpreted index key changes.
    */
-  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
     return changes.getEntriesAsList();
   }
 
   private void applyIndexTxEntry(
       Map<Object, Object> snapshot, OTransactionIndexChangesPerKey entry) {
-    for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op : interpretTxKeyChanges(entry)) {
+    for (OTransactionIndexEntry op : interpretTxKeyChanges(entry)) {
       switch (op.getOperation()) {
         case PUT:
           putInSnapshot(getCollatingValue(entry.key), op.getValue(), snapshot);
@@ -939,7 +933,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   public String getDatabaseName() {
-    return databaseName;
+    return storage.getName();
   }
 
   public Object getCollatingValue(final Object key) {
@@ -1143,40 +1137,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     }
   }
 
-  private static class StreamWrapper extends OIndexAbstractCursor {
-    private final Iterator<ORawPair<Object, ORID>> iterator;
-
-    private StreamWrapper(final Stream<ORawPair<Object, ORID>> stream) {
-      iterator = stream.iterator();
-    }
-
-    @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-      if (iterator.hasNext()) {
-        final ORawPair<Object, ORID> pair = iterator.next();
-
-        return new Map.Entry<Object, OIdentifiable>() {
-          @Override
-          public Object getKey() {
-            return pair.first;
-          }
-
-          @Override
-          public OIdentifiable getValue() {
-            return pair.second;
-          }
-
-          @Override
-          public OIdentifiable setValue(OIdentifiable value) {
-            throw new UnsupportedOperationException();
-          }
-        };
-      }
-
-      return null;
-    }
-  }
-
   /**
    * Indicates search behavior in case of {@link
    * com.orientechnologies.orient.core.index.OCompositeKey} keys that have less amount of internal
@@ -1194,7 +1154,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   private static Object enhanceCompositeKey(
-      Object key, OIndexAbstract.PartialSearchMode partialSearchMode, OIndexDefinition definition) {
+      Object key, PartialSearchMode partialSearchMode, OIndexDefinition definition) {
     if (!(key instanceof OCompositeKey)) return key;
 
     final OCompositeKey compositeKey = (OCompositeKey) key;
@@ -1202,12 +1162,12 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
     if (!(keySize == 1
         || compositeKey.getKeys().size() == keySize
-        || partialSearchMode.equals(OIndexAbstract.PartialSearchMode.NONE))) {
+        || partialSearchMode.equals(PartialSearchMode.NONE))) {
       final OCompositeKey fullKey = new OCompositeKey(compositeKey);
       int itemsToAdd = keySize - fullKey.getKeys().size();
 
       final Comparable<?> keyItem;
-      if (partialSearchMode.equals(OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY))
+      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
         keyItem = ALWAYS_GREATER_KEY;
       else keyItem = ALWAYS_LESS_KEY;
 
@@ -1220,36 +1180,36 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   public Object enhanceToCompositeKeyBetweenAsc(Object keyTo, boolean toInclusive) {
-    OIndexAbstract.PartialSearchMode partialSearchModeTo;
-    if (toInclusive) partialSearchModeTo = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;
-    else partialSearchModeTo = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
+    PartialSearchMode partialSearchModeTo;
+    if (toInclusive) partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
+    else partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
 
     keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo, getDefinition());
     return keyTo;
   }
 
   public Object enhanceFromCompositeKeyBetweenAsc(Object keyFrom, boolean fromInclusive) {
-    OIndexAbstract.PartialSearchMode partialSearchModeFrom;
-    if (fromInclusive) partialSearchModeFrom = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
-    else partialSearchModeFrom = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;
+    PartialSearchMode partialSearchModeFrom;
+    if (fromInclusive) partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
+    else partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
 
     keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom, getDefinition());
     return keyFrom;
   }
 
   public Object enhanceToCompositeKeyBetweenDesc(Object keyTo, boolean toInclusive) {
-    OIndexAbstract.PartialSearchMode partialSearchModeTo;
-    if (toInclusive) partialSearchModeTo = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;
-    else partialSearchModeTo = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
+    PartialSearchMode partialSearchModeTo;
+    if (toInclusive) partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
+    else partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
 
     keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo, getDefinition());
     return keyTo;
   }
 
   public Object enhanceFromCompositeKeyBetweenDesc(Object keyFrom, boolean fromInclusive) {
-    OIndexAbstract.PartialSearchMode partialSearchModeFrom;
-    if (fromInclusive) partialSearchModeFrom = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
-    else partialSearchModeFrom = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;
+    PartialSearchMode partialSearchModeFrom;
+    if (fromInclusive) partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
+    else partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
 
     keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom, getDefinition());
     return keyFrom;
