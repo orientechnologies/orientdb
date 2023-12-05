@@ -1139,14 +1139,18 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private void confirmPhase2DDL(Set<String> nodes, ODistributedRequestId messageId, boolean apply) {
     ODistributedServerManager dManager = getDistributedManager();
-    dManager.sendRequest(
-        getName(),
-        null,
-        nodes,
-        new OSQLCommandTaskSecondPhase(messageId, apply),
-        dManager.getNextMessageIdCounter(),
-        EXECUTION_MODE.RESPONSE,
-        null);
+    ODistributedResponse response =
+        dManager.sendRequest(
+            getName(),
+            null,
+            nodes,
+            new OSQLCommandTaskSecondPhase(messageId, apply),
+            dManager.getNextMessageIdCounter(),
+            EXECUTION_MODE.RESPONSE,
+            null);
+    if (response != null && response.getPayload() instanceof RuntimeException) {
+      throw (RuntimeException) response.getPayload();
+    }
   }
 
   private ODistributedTxResponseManagerImpl sendTask(
