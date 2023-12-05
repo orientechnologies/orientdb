@@ -130,7 +130,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
 
   public void distributedDropIndex(ODatabaseDocumentInternal database, final String iName) {
 
-    String dropIndexDDL = "DROP INDEX `" + iName + "`";
+    String dropIndexDDL = "DROP INDEX `" + iName + "` if exists";
 
     sendCommand(database, dropIndexDDL);
 
