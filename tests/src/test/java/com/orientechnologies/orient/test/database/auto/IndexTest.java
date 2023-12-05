@@ -25,13 +25,11 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -1147,25 +1145,21 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "createInheritanceIndex")
   public void testIndexReturnOnlySpecifiedClass() {
-    List<ODocument> result;
 
     ODatabaseDocument db = database.getUnderlying();
 
-    result =
-        db.command(new OSQLSynchQuery("select * from ChildTestClass where testParentProperty = 10"))
-            .execute();
-    Assert.assertNotNull(result);
-    Assert.assertEquals(1, result.size());
-    Assert.assertEquals(10L, result.get(0).<Object>field("testParentProperty"));
+    try (OResultSet result =
+        db.command("select * from ChildTestClass where testParentProperty = 10")) {
 
-    result =
-        db.command(
-                new OCommandSQL(
-                    "select * from AnotherChildTestClass where testParentProperty = 11"))
-            .execute();
-    Assert.assertNotNull(result);
-    Assert.assertEquals(1, result.size());
-    Assert.assertEquals(11L, result.get(0).<Object>field("testParentProperty"));
+      Assert.assertEquals(10L, result.next().<Object>getProperty("testParentProperty"));
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result =
+        db.command("select * from AnotherChildTestClass where testParentProperty = 11")) {
+      Assert.assertEquals(11L, result.next().<Object>getProperty("testParentProperty"));
+      Assert.assertFalse(result.hasNext());
+    }
   }
 
   public void testNotUniqueIndexKeySize() {
@@ -1744,7 +1738,6 @@ public class IndexTest extends ObjectDBBaseTest {
 
   public void testNullIteration() {
     ODatabaseDocumentInternal database = this.database.getUnderlying();
-    OrientGraph graph = new OrientGraph(database, false);
 
     OClass v = database.getMetadata().getSchema().getClass("V");
     OClass testNullIteration =
@@ -1778,21 +1771,6 @@ public class IndexTest extends ObjectDBBaseTest {
 
     result = database.query("SELECT FROM NullIterationTest");
     Assert.assertEquals(result.stream().count(), 3);
-  }
-
-  private List<Long> getValidPositions(int clusterId) {
-    final List<Long> positions = new ArrayList<>();
-
-    final ORecordIteratorCluster<?> iteratorCluster =
-        database.getUnderlying().browseCluster(database.getClusterNameById(clusterId));
-
-    for (int i = 0; i < 7; i++) {
-      if (!iteratorCluster.hasNext()) break;
-
-      ORecord doc = iteratorCluster.next();
-      positions.add(doc.getIdentity().getClusterPosition());
-    }
-    return positions;
   }
 
   public void testMultikeyWithoutFieldAndNullSupport() {
