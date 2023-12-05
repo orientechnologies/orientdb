@@ -10,7 +10,6 @@ import static org.junit.Assert.fail;
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -1725,25 +1724,24 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
                 + "(select from testCyclicDeepTraversalV where name = 'c') to (select from testCyclicDeepTraversalV where name = 'a')")
         .close();
 
-    OSQLSynchQuery query =
-        new OSQLSynchQuery(
-            "MATCH {\n"
-                + "    class: testCyclicDeepTraversalV,\n"
-                + "    as: foo,\n"
-                + "    where: (name = 'a')\n"
-                + "}.out() {\n"
-                + "    while: ($depth < 2),\n"
-                + "    where: (name = 'z'),\n"
-                + "    as: bar\n"
-                + "}, {\n"
-                + "    as: bar\n"
-                + "}.out() {\n"
-                + "    while: ($depth < 2),\n"
-                + "    as: foo\n"
-                + "} RETURN $patterns");
+    String query =
+        "MATCH {\n"
+            + "    class: testCyclicDeepTraversalV,\n"
+            + "    as: foo,\n"
+            + "    where: (name = 'a')\n"
+            + "}.out() {\n"
+            + "    while: ($depth < 2),\n"
+            + "    where: (name = 'z'),\n"
+            + "    as: bar\n"
+            + "}, {\n"
+            + "    as: bar\n"
+            + "}.out() {\n"
+            + "    while: ($depth < 2),\n"
+            + "    as: foo\n"
+            + "} RETURN $patterns";
 
-    List<?> result = db.query(query);
-    assertEquals(1, result.size());
+    OResultSet result = db.query(query);
+    assertEquals(1, result.stream().count());
   }
 
   private List<OIdentifiable> getManagedPathElements(String managerName) {
@@ -1773,17 +1771,6 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
 
   private List<OIdentifiable> collectIdentifiable(OResultSet set) {
     return set.stream().map((r) -> (ODocument) r.toElement()).collect(Collectors.toList());
-  }
-
-  private long indexUsages(ODatabaseDocument db) {
-    final long oldIndexUsage;
-    try {
-      oldIndexUsage = getProfilerInstance().getCounter("db." + db.getName() + ".query.indexUsed");
-      return oldIndexUsage == -1 ? 0 : oldIndexUsage;
-    } catch (Exception e) {
-      fail();
-    }
-    return -1l;
   }
 
   private OProfiler getProfilerInstance() {

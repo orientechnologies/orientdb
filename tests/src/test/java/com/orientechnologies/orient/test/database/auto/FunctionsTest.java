@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,21 +72,17 @@ public class FunctionsTest extends DocumentDBBaseTest {
             .execute();
     Assert.assertNotNull(f);
 
-    OLegacyResultSet<OIdentifiable> res1 =
-        database.command(new OCommandSQL("select testCache()")).execute();
-    Assert.assertNotNull(res1);
-    Assert.assertNotNull(res1.get(0));
-    Assert.assertEquals(((ODocument) res1.get(0)).<Object>field("testCache"), 1);
+    try (OResultSet res1 = database.command("select testCache() as testCache")) {
+      Assert.assertEquals(res1.next().<Object>getProperty("testCache"), 1);
+    }
 
     ODocument func = f.getRecord();
     func.field("code", "return 2;");
     func.save();
 
-    OLegacyResultSet<OIdentifiable> res2 =
-        database.command(new OCommandSQL("select testCache()")).execute();
-    Assert.assertNotNull(res2);
-    Assert.assertNotNull(res2.get(0));
-    Assert.assertEquals(((ODocument) res2.get(0)).<Object>field("testCache"), 2);
+    try (OResultSet res2 = database.command("select testCache() as testCache")) {
+      Assert.assertEquals(res2.next().<Object>getProperty("testCache"), 2);
+    }
   }
 
   @Test
@@ -100,8 +95,6 @@ public class FunctionsTest extends DocumentDBBaseTest {
     // + OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() + " executing function for " + TOT + "
     // times");
 
-    final long startTime = System.currentTimeMillis();
-
     final AtomicLong counter = new AtomicLong();
 
     final Thread[] threads = new Thread[threadNum];
@@ -110,11 +103,9 @@ public class FunctionsTest extends DocumentDBBaseTest {
           new Thread() {
             public void run() {
               for (int cycle = 0; cycle < TOT; ++cycle) {
-                OLegacyResultSet<OIdentifiable> res1 =
-                    database.command(new OCommandSQL("select testMTCall()")).execute();
+                OResultSet res1 = database.command("select testMTCall() as testMTCall");
                 Assert.assertNotNull(res1);
-                Assert.assertNotNull(res1.get(0));
-                Assert.assertEquals(((ODocument) res1.get(0)).<Object>field("testMTCall"), 3);
+                Assert.assertEquals(res1.next().<Object>getProperty("testMTCall"), 3);
 
                 counter.incrementAndGet();
               }
@@ -140,11 +131,10 @@ public class FunctionsTest extends DocumentDBBaseTest {
             "create function testParams \"return 'Hello ' + name + ' ' + surname + ' from ' + country;\" PARAMETERS [name,surname,country] LANGUAGE Javascript")
         .close();
 
-    OLegacyResultSet<OIdentifiable> res1 =
-        database.command(new OCommandSQL("select testParams('Jay', 'Miner', 'USA')")).execute();
-    Assert.assertNotNull(res1);
-    Assert.assertNotNull(res1.get(0));
-    Assert.assertEquals(((ODocument) res1.get(0)).field("testParams"), "Hello Jay Miner from USA");
+    try (OResultSet res1 =
+        database.command("select testParams('Jay', 'Miner', 'USA') as testParams")) {
+      Assert.assertEquals(res1.next().getProperty("testParams"), "Hello Jay Miner from USA");
+    }
 
     final HashMap<String, Object> params = new HashMap<String, Object>();
     params.put("name", "Jay");
