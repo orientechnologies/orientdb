@@ -27,7 +27,9 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
@@ -55,8 +57,7 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
     db.command("INSERT INTO company SET name = 'MyCompany'").close();
 
-    final ODocument r =
-        (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM company")).get(0);
+    final OElement r = db.query("SELECT FROM company").next().getElement().get();
 
     db.command("INSERT INTO employee SET name = 'Philipp'").close();
     db.command("INSERT INTO employee SET name = 'Selma'").close();
@@ -66,38 +67,39 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.command("UPDATE company set employees = (SELECT FROM employee)").close();
 
     r.reload();
-    assertEquals(((Set) r.field("employees")).size(), 4);
+    assertEquals(((Set) r.getProperty("employees")).size(), 4);
 
     db.command(
             "UPDATE company REMOVE employees = (SELECT FROM employee WHERE name = 'Linn') WHERE name = 'MyCompany'")
         .close();
 
     r.reload();
-    assertEquals(((Set) r.field("employees")).size(), 3);
+    assertEquals(((Set) r.getProperty("employees")).size(), 3);
   }
 
   @Test
   public void testUpdateContent() throws Exception {
     db.command("insert into V (name) values ('bar')").close();
     db.command("UPDATE V content {\"value\":\"foo\"}").close();
-    Iterable result = db.query(new OSQLSynchQuery<Object>("select from V"));
-    ODocument doc = (ODocument) result.iterator().next();
-    assertEquals(doc.field("value"), "foo");
+    try (OResultSet result = db.query("select from V")) {
+      OResult doc = result.next();
+      assertEquals(doc.getProperty("value"), "foo");
+    }
   }
 
   @Test
   public void testUpdateContentParse() throws Exception {
     db.command("insert into V (name) values ('bar')").close();
     db.command("UPDATE V content {\"value\":\"foo\\\\\"}").close();
-    Iterable result = db.query(new OSQLSynchQuery<Object>("select from V"));
-    ODocument doc = (ODocument) result.iterator().next();
-    assertEquals(doc.field("value"), "foo\\");
+    try (OResultSet result = db.query("select from V")) {
+      assertEquals(result.next().getProperty("value"), "foo\\");
+    }
 
     db.command("UPDATE V content {\"value\":\"foo\\\\\\\\\"}").close();
 
-    result = db.query(new OSQLSynchQuery<Object>("select from V"));
-    doc = (ODocument) result.iterator().next();
-    assertEquals(doc.field("value"), "foo\\\\");
+    try (OResultSet result = db.query("select from V")) {
+      assertEquals(result.next().getProperty("value"), "foo\\\\");
+    }
   }
 
   @Test
@@ -111,21 +113,18 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
             "INSERT INTO i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"aaa\", \"bbb\"]}")
         .close();
 
-    Iterable result =
-        db.query(new OSQLSynchQuery<Object>("SELECT * FROM i_have_a_list WHERE types = 'aaa'"));
-    assertTrue(result.iterator().hasNext());
+    OResultSet result = db.query("SELECT * FROM i_have_a_list WHERE types = 'aaa'");
+    assertEquals(result.stream().count(), 1);
 
     db.command(
             "UPDATE i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"ccc\", \"bbb\"]} WHERE id = 'the_id'")
         .close();
 
-    result =
-        db.query(new OSQLSynchQuery<Object>("SELECT * FROM i_have_a_list WHERE types = 'ccc'"));
-    assertTrue(result.iterator().hasNext());
+    result = db.query("SELECT * FROM i_have_a_list WHERE types = 'ccc'");
+    assertEquals(result.stream().count(), 1);
 
-    result =
-        db.query(new OSQLSynchQuery<Object>("SELECT * FROM i_have_a_list WHERE types = 'aaa'"));
-    assertFalse(result.iterator().hasNext());
+    result = db.query("SELECT * FROM i_have_a_list WHERE types = 'aaa'");
+    assertEquals(result.stream().count(), 0);
   }
 
   @Test
@@ -169,11 +168,12 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.command("CREATE PROPERTY test.id integer").close();
     db.command("CREATE PROPERTY test.addField EMBEDDEDSET string").close();
     db.command("UPDATE test SET id = 1 , addField=[\"xxxx\"] UPSERT WHERE id = 1").close();
-    Iterable result = db.query(new OSQLSynchQuery<Object>("select from test"));
-    ODocument doc = (ODocument) result.iterator().next();
-    Set<?> set = doc.field("addField");
-    assertEquals(set.size(), 1);
-    assertEquals(set.iterator().next(), "xxxx");
+    try (OResultSet result = db.query("select from test")) {
+      OResult doc = result.next();
+      Set<?> set = doc.getProperty("addField");
+      assertEquals(set.size(), 1);
+      assertEquals(set.iterator().next(), "xxxx");
+    }
   }
 
   @Test
@@ -182,15 +182,17 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.command("CREATE CLASS test").close();
     Date date = new Date();
     db.command("insert into test set birthDate = ?", date).close();
-    Iterable result = db.query(new OSQLSynchQuery<Object>("select from test"));
-    ODocument doc = (ODocument) result.iterator().next();
-    assertEquals(doc.field("birthDate"), date);
+    try (OResultSet result = db.query("select from test")) {
+      OResult doc = result.next();
+      assertEquals(doc.getProperty("birthDate"), date);
+    }
 
     date = new Date();
     db.command("UPDATE test set birthDate = ?", date).close();
-    result = db.query(new OSQLSynchQuery<Object>("select from test"));
-    doc = (ODocument) result.iterator().next();
-    assertEquals(doc.field("birthDate"), date);
+    try (OResultSet result = db.query("select from test")) {
+      OResult doc = result.next();
+      assertEquals(doc.getProperty("birthDate"), date);
+    }
   }
 
   // issue #4776
@@ -222,16 +224,14 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
             params)
         .close();
 
-    OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>("SELECT * FROM test WHERE id = 1");
-
-    List<ODocument> queryResult = db.command(query).execute(params);
-    assertEquals(queryResult.size(), 1);
-    ODocument docResult = queryResult.get(0);
-    List<?> resultBooleanList = docResult.field("booleanList");
-    assertNotNull(resultBooleanList);
-    assertEquals(resultBooleanList.size(), 1);
-    assertEquals(resultBooleanList.iterator().next(), true);
+    try (OResultSet queryResult = db.command("SELECT * FROM test WHERE id = 1")) {
+      OResult docResult = queryResult.next();
+      List<?> resultBooleanList = docResult.getProperty("booleanList");
+      assertNotNull(resultBooleanList);
+      assertEquals(resultBooleanList.size(), 1);
+      assertEquals(resultBooleanList.iterator().next(), true);
+      assertFalse(queryResult.hasNext());
+    }
   }
 
   @Test
@@ -249,27 +249,25 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
     db.save(test);
 
-    ODocument queried =
-        (ODocument)
-            db.query(new OSQLSynchQuery<Object>("SELECT FROM test WHERE id = \"id1\"")).get(0);
+    OElement queried = db.query("SELECT FROM test WHERE id = \"id1\"").next().getElement().get();
     ;
 
     db.command("UPDATE test set count += 2").close();
     queried.reload();
     //    assertEquals(queried.field("count"), 22);
 
-    Assertions.assertThat(queried.<Integer>field("count")).isEqualTo(22);
+    Assertions.assertThat(queried.<Integer>getProperty("count")).isEqualTo(22);
 
     db.command("UPDATE test set map.nestedCount = map.nestedCount + 5").close();
     queried.reload();
     //    assertEquals(queried.field("map.nestedCount"), 15);
 
-    Assertions.assertThat(queried.<Integer>field("map.nestedCount")).isEqualTo(15);
+    Assertions.assertThat(queried.<Map>getProperty("map").get("nestedCount")).isEqualTo(15);
 
     db.command("UPDATE test set map.nestedCount = map.nestedCount+ 5").close();
     queried.reload();
 
-    Assertions.assertThat(queried.<Integer>field("map.nestedCount")).isEqualTo(20);
+    Assertions.assertThat(queried.<Map>getProperty("map").get("nestedCount")).isEqualTo(20);
 
     //    assertEquals(queried.field("map.nestedCount"), 20);
 
@@ -285,15 +283,15 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
     db.save(test);
 
-    ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
-    assertEquals(queried.field("text"), "initial value");
+    OElement queried = db.query("SELECT FROM test").next().getElement().get();
+    assertEquals(queried.getProperty("text"), "initial value");
 
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("text", "single \"");
 
     db.command("UPDATE test SET text = :text", params).close();
     queried.reload();
-    assertEquals(queried.field("text"), "single \"");
+    assertEquals(queried.getProperty("text"), "single \"");
   }
 
   @Test
@@ -306,16 +304,16 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
     db.save(test);
 
-    ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
-    assertEquals(queried.field("text"), "initial value");
+    OElement queried = db.query("SELECT FROM test").next().getElement().get();
+    assertEquals(queried.getProperty("text"), "initial value");
 
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("text", "quoted \"value\" string");
 
     db.command("UPDATE test SET text = :text", params).close();
-    ;
+
     queried.reload();
-    assertEquals(queried.field("text"), "quoted \"value\" string");
+    assertEquals(queried.getProperty("text"), "quoted \"value\" string");
   }
 
   @Test
@@ -328,9 +326,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     // db.command(new OCommandSQL("update V set value.f12 = 'asdf\\\\' WHERE key =
     // \"test\"")).execute();
 
-    ODocument queried =
-        (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM testquotesinjson")).get(0);
-    assertEquals(queried.field("value.f12"), "test\\");
+    OElement queried = db.query("SELECT FROM testquotesinjson").next().getElement().get();
+    assertEquals(((Map) queried.getProperty("value")).get("f12"), "test\\");
   }
 
   @Test
@@ -346,10 +343,10 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     script.append("update $a.a set name = 'baz';\n");
     db.command(new OCommandScript(script.toString())).execute();
 
-    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from A"));
-    assertNotNull(result);
-    assertEquals(result.size(), 1);
-    assertEquals(result.get(0).field("name"), "baz");
+    try (OResultSet result = db.query("select from A")) {
+      assertEquals(result.next().getProperty("name"), "baz");
+      assertFalse(result.hasNext());
+    }
   }
 
   @Test
@@ -357,9 +354,9 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.getMetadata().getSchema().createClass("foo-bar");
     db.command("insert into `foo-bar` set name = 'foo'").close();
     db.command("UPDATE `foo-bar` set name = 'bar' where name = 'foo'").close();
-    Iterable result = db.query(new OSQLSynchQuery<Object>("select from `foo-bar`"));
-    ODocument doc = (ODocument) result.iterator().next();
-    assertEquals(doc.field("name"), "bar");
+    try (OResultSet result = db.query("select from `foo-bar`")) {
+      assertEquals(result.next().getProperty("name"), "bar");
+    }
   }
 
   @Test
@@ -368,9 +365,9 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.getMetadata().getSchema().createClass("foo");
     db.command("insert into foo set name = 'foo'").close();
     db.command("UPDATE foo set name = 'bar' where name = 'foo' lock record limit 1").close();
-    Iterable result = db.query(new OSQLSynchQuery<Object>("select from foo"));
-    ODocument doc = (ODocument) result.iterator().next();
-    assertEquals(doc.field("name"), "bar");
+    try (OResultSet result = db.query("select from foo")) {
+      assertEquals(result.next().getProperty("name"), "bar");
+    }
     db.command("UPDATE foo set name = 'foo' where name = 'bar' lock record limit 1").close();
   }
 
@@ -383,9 +380,9 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.command(new OCommandSQL("insert into cluster:foo set bar = {\"value\":\"zz\\\\\"}"))
         .execute();
     db.command(new OCommandSQL("UPDATE cluster:foo set bar = {\"value\":\"foo\\\\\"}")).execute();
-    Iterable result = db.query(new OSQLSynchQuery<Object>("select from cluster:foo"));
-    ODocument doc = (ODocument) result.iterator().next();
-    assertEquals(((ODocument) doc.field("bar")).field("value"), "foo\\");
+    try (OResultSet result = db.query("select from cluster:foo")) {
+      assertEquals(((OResult) result.next().getProperty("bar")).getProperty("value"), "foo\\");
+    }
   }
 
   @Test
@@ -399,24 +396,24 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.command(new OCommandSQL("insert into cluster:foo set bar = {\"value\":\"zz\\\\\"}"))
         .execute();
     db.command(new OCommandSQL("UPDATE cluster:foo set bar = {\"value\":\"foo\\\\\"}")).execute();
-    Iterable result = db.query(new OSQLSynchQuery<Object>("select from cluster:foo"));
-    Iterator iterator = result.iterator();
-    assertTrue(iterator.hasNext());
-    ODocument doc = (ODocument) iterator.next();
-    assertEquals(((ODocument) doc.field("bar")).field("value"), "foo\\");
-    assertFalse(iterator.hasNext());
+    try (OResultSet result = db.query("select from cluster:foo")) {
+      assertTrue(result.hasNext());
+      OResult doc = result.next();
+      assertEquals(((OResult) doc.getProperty("bar")).getProperty("value"), "foo\\");
+      assertFalse(result.hasNext());
+    }
 
     db.command(
             new OCommandSQL("insert into cluster:fooadditional1 set bar = {\"value\":\"zz\\\\\"}"))
         .execute();
     db.command(new OCommandSQL("UPDATE cluster:fooadditional1 set bar = {\"value\":\"foo\\\\\"}"))
         .execute();
-    result = db.query(new OSQLSynchQuery<Object>("select from cluster:fooadditional1"));
-    iterator = result.iterator();
-    assertTrue(iterator.hasNext());
-    doc = (ODocument) iterator.next();
-    assertEquals(((ODocument) doc.field("bar")).field("value"), "foo\\");
-    assertFalse(iterator.hasNext());
+    try (OResultSet result = db.query("select from cluster:fooadditional1")) {
+      assertTrue(result.hasNext());
+      OResult doc = result.next();
+      assertEquals(((OResult) doc.getProperty("bar")).getProperty("value"), "foo\\");
+      assertFalse(result.hasNext());
+    }
   }
 
   @Test
@@ -465,11 +462,12 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.command("update Foo MERGE {\"a\":1}").close();
     db.command("update Foo CONTENT {\"a\":1}").close();
 
-    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from Foo"));
+    try (OResultSet result = db.query("select from Foo")) {
 
-    assertEquals(result.size(), 1);
-    ODocument doc = result.get(0);
-    assertNull(doc.field("_allowRead"));
+      OResult doc = result.next();
+      assertNull(doc.getProperty("_allowRead"));
+      assertFalse(result.hasNext());
+    }
   }
 
   @Test

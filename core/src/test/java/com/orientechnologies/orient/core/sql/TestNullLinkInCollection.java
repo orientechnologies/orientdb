@@ -6,7 +6,7 @@ import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -29,8 +29,9 @@ public class TestNullLinkInCollection extends BaseMemoryDatabase {
     docs.add(new ORecordId(10, 20));
     doc.field("items", docs, OType.LINKLIST);
     db.save(doc);
-    List<ODocument> res = db.query(new OSQLSynchQuery<Object>("select items from Test"));
-    assertNull(((List) res.get(0).field("items")).get(0));
+    try (OResultSet res = db.query("select items from Test")) {
+      assertNull(((List) res.next().getProperty("items")).get(0));
+    }
   }
 
   @Test
@@ -40,7 +41,8 @@ public class TestNullLinkInCollection extends BaseMemoryDatabase {
     docs.add(new ORecordId(10, 20));
     doc.field("items", docs, OType.LINKSET);
     db.save(doc);
-    List<ODocument> res = db.query(new OSQLSynchQuery<Object>("select items from Test"));
-    assertNull(((Set) res.get(0).field("items")).iterator().next());
+    try (OResultSet res = db.query("select items from Test")) {
+      assertNull(((Set) res.next().getProperty("items")).iterator().next());
+    }
   }
 }

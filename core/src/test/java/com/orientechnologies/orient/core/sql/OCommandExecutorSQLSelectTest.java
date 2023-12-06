@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -49,6 +50,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import org.junit.Test;
 
 public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
@@ -540,11 +543,10 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testExpandOnEmbedded() {
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select expand(address) from foo where name = 'a'")).execute();
-
-    assertEquals(qResult.size(), 1);
-    assertEquals(qResult.get(0).field("city"), "NY");
+    try(OResultSet qResult = db.command("select expand(address) from foo where name = 'a'")){
+      assertEquals(qResult.next().getProperty("city"), "NY");
+      assertFalse(qResult.hasNext());
+    }
   }
 
   @Test
@@ -618,77 +620,78 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testFromInSquareBrackets() {
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select tags[' from '] as a from TestFromInSquare")).execute();
-    assertEquals(qResult.size(), 1);
-    assertEquals(qResult.get(0).field("a"), "foo");
+    try(OResultSet qResult = db.command("select tags[' from '] as a from TestFromInSquare")){
+      assertEquals(qResult.next().getProperty("a"), "foo");
+      assertFalse(qResult.hasNext());
+    }
   }
 
   @Test
   public void testNewline() {
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select\n1 as ACTIVE\nFROM foo")).execute();
-    assertEquals(qResult.size(), 5);
+    OResultSet qResult = db.command("select\n1 as ACTIVE\nFROM foo");
+    assertEquals(qResult.stream().count(), 5);
   }
 
   @Test
   public void testOrderByRid() {
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select from ridsorttest order by @rid ASC")).execute();
-    assertTrue(qResult.size() > 0);
+    OResultSet qResult = db.query("select from ridsorttest order by @rid ASC");
+    assertTrue(qResult.hasNext());
 
-    ODocument prev = qResult.get(0);
-    for (int i = 1; i < qResult.size(); i++) {
-      assertTrue(prev.getIdentity().compareTo(qResult.get(i).getIdentity()) <= 0);
-      prev = qResult.get(i);
+    OResult prev = qResult.next();
+    while(qResult.hasNext()){
+      OResult next = qResult.next();
+      assertTrue(prev.getIdentity().get().compareTo(next.getIdentity().get()) <= 0);
+      prev = next;
     }
+    qResult.close();
 
-    qResult = db.command(new OCommandSQL("select from ridsorttest order by @rid DESC")).execute();
-    assertTrue(qResult.size() > 0);
+    qResult = db.query("select from ridsorttest order by @rid DESC");
+    assertTrue(qResult.hasNext());
 
-    prev = qResult.get(0);
-    for (int i = 1; i < qResult.size(); i++) {
-      assertTrue(prev.getIdentity().compareTo(qResult.get(i).getIdentity()) >= 0);
-      prev = qResult.get(i);
+    prev = qResult.next();
+    while(qResult.hasNext()){
+      OResult next = qResult.next();
+      assertTrue(prev.getIdentity().get().compareTo(next.getIdentity().get()) >= 0);
+      prev = next;
     }
+    qResult.close();
 
     qResult =
-        db.command(new OCommandSQL("select from ridsorttest where name > 3 order by @rid DESC"))
-            .execute();
-    assertTrue(qResult.size() > 0);
+        db.query("select from ridsorttest where name > 3 order by @rid DESC");
+    assertTrue(qResult.hasNext());
 
-    prev = qResult.get(0);
-    for (int i = 1; i < qResult.size(); i++) {
-      assertTrue(prev.getIdentity().compareTo(qResult.get(i).getIdentity()) >= 0);
-      prev = qResult.get(i);
+    prev = qResult.next();
+    while(qResult.hasNext()){
+      OResult next = qResult.next();
+      assertTrue(prev.getIdentity().get().compareTo(next.getIdentity().get()) >= 0);
+      prev = next;
     }
   }
 
   @Test
   public void testUnwind() {
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select from unwindtest unwind coll")).execute();
+    List<OResult> qResult =
+        db.command("select from unwindtest unwind coll").stream().collect(Collectors.toList());
 
     assertEquals(qResult.size(), 4);
-    for (ODocument doc : qResult) {
-      String name = doc.field("name");
-      String coll = doc.field("coll");
+    for (OResult doc : qResult) {
+      String name = doc.getProperty("name");
+      String coll = doc.getProperty("coll");
       assertTrue(coll.startsWith(name));
-      assertFalse(doc.getIdentity().isPersistent());
+      assertFalse(doc.getIdentity().isPresent());
     }
   }
 
   @Test
   public void testUnwind2() {
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select from unwindtest2 unwind coll")).execute();
+    List<OResult> qResult =
+        db.command("select from unwindtest2 unwind coll").stream().collect(Collectors.toList());
 
     assertEquals(qResult.size(), 1);
-    for (ODocument doc : qResult) {
-      String name = doc.field("name");
-      Object coll = doc.field("coll");
+    for (OResult doc : qResult) {
+      Object coll = doc.getProperty("coll");
       assertNull(coll);
-      assertFalse(doc.getIdentity().isPersistent());
+      assertFalse(doc.getIdentity().isPresent());
     }
   }
 
