@@ -5,8 +5,7 @@ import static org.junit.Assert.assertEquals;
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.List;
 import org.junit.Test;
 
@@ -22,20 +21,20 @@ public class UpdateWithRidParameters extends BaseMemoryDatabase {
     db.command("INSERT INTO testingClass SET id = ?", 123).close();
 
     db.command("INSERT INTO testingClass2 SET id = ?", 456).close();
-
-    List<ODocument> docs =
-        db.query(new OSQLSynchQuery<ODocument>("SELECT FROM testingClass2 WHERE id = ?"), 456);
-    ORID orid = (ORID) docs.get(0).field("@rid", ORID.class);
+    ORID orid;
+    try (OResultSet docs = db.query("SELECT FROM testingClass2 WHERE id = ?", 456)) {
+      orid = (ORID) docs.next().getProperty("@rid");
+    }
 
     // This does not work. It silently adds a null instead of the ORID.
     db.command("UPDATE testingClass set linkedlist = linkedlist || ?", orid).close();
 
     // This does work.
     db.command("UPDATE testingClass set linkedlist = linkedlist || " + orid.toString()).close();
-
-    List<ODocument> docs2 =
-        db.query(new OSQLSynchQuery<ODocument>("SELECT FROM testingClass WHERE id = ?"), 123);
-    List<ORID> lst = docs2.get(0).field("linkedlist", List.class);
+    List<ORID> lst;
+    try (OResultSet docs = db.query("SELECT FROM testingClass WHERE id = ?", 123)) {
+      lst = docs.next().getProperty("linkedlist");
+    }
 
     assertEquals(orid, lst.get(0));
     assertEquals(orid, lst.get(1));
