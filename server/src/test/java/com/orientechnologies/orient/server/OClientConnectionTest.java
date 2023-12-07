@@ -7,23 +7,18 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
 import java.io.IOException;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 /** Created by tglman on 27/12/15. */
-public class OClientConnectionTest {
+public class OClientConnectionTest extends BaseMemoryInternalDatabase {
 
-  private ODatabaseDocumentInternal db;
   @Mock private ONetworkProtocolBinary protocol;
 
   @Mock private ONetworkProtocolBinary protocol1;
@@ -32,19 +27,12 @@ public class OClientConnectionTest {
 
   @Mock private OServer server;
 
-  @Before
-  public void before() {
+  public void beforeTest() {
+    super.beforeTest();
     MockitoAnnotations.initMocks(this);
     Mockito.when(protocol.getServer()).thenReturn(server);
     Mockito.when(server.getClientConnectionManager()).thenReturn(manager);
     Mockito.when(server.getContextConfiguration()).thenReturn(new OContextConfiguration());
-    db = new ODatabaseDocumentTx("memory:" + OClientConnectionTest.class.getSimpleName());
-    db.create();
-  }
-
-  @After
-  public void after() {
-    db.drop();
   }
 
   @Test

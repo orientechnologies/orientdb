@@ -24,7 +24,7 @@ public class RemoteTransactionHookTest {
   private static final String SERVER_DIRECTORY = "./target/hook-transaction";
   private OServer server;
   private OrientDB orientDB;
-  private ODatabaseDocument database;
+  private ODatabaseDocument db;
 
   @Before
   public void before() throws Exception {
@@ -40,13 +40,13 @@ public class RemoteTransactionHookTest {
     orientDB.execute(
         "create database ? memory users (admin identified by 'admin' role admin)",
         RemoteTransactionHookTest.class.getSimpleName());
-    database = orientDB.open(RemoteTransactionHookTest.class.getSimpleName(), "admin", "admin");
-    database.createClass("SomeTx");
+    db = orientDB.open(RemoteTransactionHookTest.class.getSimpleName(), "admin", "admin");
+    db.createClass("SomeTx");
   }
 
   @After
   public void after() {
-    database.close();
+    db.close();
     orientDB.close();
     server.shutdown();
 
@@ -58,19 +58,19 @@ public class RemoteTransactionHookTest {
   @Test
   @Ignore
   public void testCalledInTx() {
-    CountCallHook calls = new CountCallHook(database);
-    database.registerHook(calls);
+    CountCallHook calls = new CountCallHook(db);
+    db.registerHook(calls);
 
-    database.begin();
+    db.begin();
     ODocument doc = new ODocument("SomeTx");
     doc.setProperty("name", "some");
-    database.save(doc);
-    database.command("insert into SomeTx set name='aa' ").close();
-    OResultSet res = database.command("update SomeTx set name='bb' where name=\"some\"");
+    db.save(doc);
+    db.command("insert into SomeTx set name='aa' ").close();
+    OResultSet res = db.command("update SomeTx set name='bb' where name=\"some\"");
     assertEquals((Long) 1L, (Long) res.next().getProperty("count"));
     res.close();
-    database.command("delete from SomeTx where name='aa'").close();
-    database.commit();
+    db.command("delete from SomeTx where name='aa'").close();
+    db.commit();
 
     assertEquals(2, calls.getBeforeCreate());
     assertEquals(2, calls.getAfterCreate());
@@ -107,22 +107,22 @@ public class RemoteTransactionHookTest {
     assertEquals(1, calls.getAfterDelete());
     database.close();
     orientDB.close();
-    this.database.activateOnCurrentThread();
+    this.db.activateOnCurrentThread();
   }
 
   @Test
   public void testCalledInTxServer() {
-    database.begin();
+    db.begin();
     CountCallHookServer calls = CountCallHookServer.instance;
     ODocument doc = new ODocument("SomeTx");
     doc.setProperty("name", "some");
-    database.save(doc);
-    database.command("insert into SomeTx set name='aa' ").close();
-    OResultSet res = database.command("update SomeTx set name='bb' where name=\"some\"");
+    db.save(doc);
+    db.command("insert into SomeTx set name='aa' ").close();
+    OResultSet res = db.command("update SomeTx set name='bb' where name=\"some\"");
     assertEquals((Long) 1L, (Long) res.next().getProperty("count"));
     res.close();
-    database.command("delete from SomeTx where name='aa'").close();
-    database.commit();
+    db.command("delete from SomeTx where name='aa'").close();
+    db.commit();
     assertEquals(2, calls.getBeforeCreate());
     assertEquals(2, calls.getAfterCreate());
     assertEquals(1, calls.getBeforeUpdate());

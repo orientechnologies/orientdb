@@ -40,7 +40,7 @@ public class OLiveQueryRemoteTest {
 
   private OServer server;
   private OrientDB orientDB;
-  private ODatabaseDocument database;
+  private ODatabaseDocument db;
 
   @Before
   public void before() throws Exception {
@@ -56,12 +56,12 @@ public class OLiveQueryRemoteTest {
     orientDB.execute(
         "create database ? memory users (admin identified by 'admin' role admin)",
         OLiveQueryRemoteTest.class.getSimpleName());
-    database = orientDB.open(OLiveQueryRemoteTest.class.getSimpleName(), "admin", "admin");
+    db = orientDB.open(OLiveQueryRemoteTest.class.getSimpleName(), "admin", "admin");
   }
 
   @After
   public void after() {
-    database.close();
+    db.close();
     orientDB.close();
     server.shutdown();
 
@@ -111,9 +111,9 @@ public class OLiveQueryRemoteTest {
   @Test
   public void testRidSelect() throws InterruptedException {
     MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(1));
-    OVertex item = database.newVertex();
+    OVertex item = db.newVertex();
     item.save();
-    OLiveQueryMonitor live = database.live("LIVE SELECT FROM " + item.getIdentity(), listener);
+    OLiveQueryMonitor live = db.live("LIVE SELECT FROM " + item.getIdentity(), listener);
     item.setProperty("x", "z");
     item.save();
     Assert.assertTrue(listener.latch.await(10, TimeUnit.SECONDS));
@@ -122,25 +122,25 @@ public class OLiveQueryRemoteTest {
   @Test
   public void testLiveInsert() throws InterruptedException {
 
-    database.getMetadata().getSchema().createClass("test");
-    database.getMetadata().getSchema().createClass("test2");
+    db.getMetadata().getSchema().createClass("test");
+    db.getMetadata().getSchema().createClass("test2");
     MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(2));
 
-    OLiveQueryMonitor monitor = database.live("select from test", listener);
+    OLiveQueryMonitor monitor = db.live("select from test", listener);
     Assert.assertNotNull(monitor);
 
-    database.command("insert into test set name = 'foo', surname = 'bar'").close();
-    database.command("insert into test set name = 'foo', surname = 'baz'").close();
-    database.command("insert into test2 set name = 'foo'").close();
+    db.command("insert into test set name = 'foo', surname = 'bar'").close();
+    db.command("insert into test set name = 'foo', surname = 'baz'").close();
+    db.command("insert into test2 set name = 'foo'").close();
 
     Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
 
     monitor.unSubscribe();
     Assert.assertTrue(listener.ended.await(1, TimeUnit.MINUTES));
 
-    database.command("insert into test set name = 'foo', surname = 'bax'");
-    database.command("insert into test2 set name = 'foo'");
-    database.command("insert into test set name = 'foo', surname = 'baz'");
+    db.command("insert into test set name = 'foo', surname = 'bax'");
+    db.command("insert into test2 set name = 'foo'");
+    db.command("insert into test set name = 'foo', surname = 'baz'");
 
     Assert.assertEquals(listener.ops.size(), 2);
     for (OResult doc : listener.ops) {
@@ -154,15 +154,15 @@ public class OLiveQueryRemoteTest {
   @Test
   @Ignore
   public void testRestrictedLiveInsert() throws ExecutionException, InterruptedException {
-    OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass oRestricted = schema.getClass("ORestricted");
     schema.createClass("test", oRestricted);
 
     int liveMatch = 1;
-    OResultSet query = database.query("select from OUSer where name = 'reader'");
+    OResultSet query = db.query("select from OUSer where name = 'reader'");
 
     final OIdentifiable reader = query.next().getIdentity().orElse(null);
-    final OIdentifiable current = database.getUser().getIdentity();
+    final OIdentifiable current = db.getUser().getIdentity();
 
     ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -216,9 +216,9 @@ public class OLiveQueryRemoteTest {
     latch.await();
 
     query.close();
-    database.command("insert into test set name = 'foo', surname = 'bar'");
+    db.command("insert into test set name = 'foo', surname = 'bar'");
 
-    database.command(
+    db.command(
         "insert into test set name = 'foo', surname = 'bar', _allow=?",
         new ArrayList<OIdentifiable>() {
           {
@@ -234,24 +234,24 @@ public class OLiveQueryRemoteTest {
   @Test
   public void testBatchWithTx() throws InterruptedException {
 
-    database.getMetadata().getSchema().createClass("test");
-    database.getMetadata().getSchema().createClass("test2");
+    db.getMetadata().getSchema().createClass("test");
+    db.getMetadata().getSchema().createClass("test2");
 
     int txSize = 100;
 
     MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(txSize));
 
-    OLiveQueryMonitor monitor = database.live("select from test", listener);
+    OLiveQueryMonitor monitor = db.live("select from test", listener);
     Assert.assertNotNull(monitor);
 
-    database.begin();
+    db.begin();
     for (int i = 0; i < txSize; i++) {
-      OElement elem = database.newElement("test");
+      OElement elem = db.newElement("test");
       elem.setProperty("name", "foo");
       elem.setProperty("surname", "bar" + i);
       elem.save();
     }
-    database.commit();
+    db.commit();
 
     Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
 

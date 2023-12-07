@@ -5,12 +5,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -19,43 +13,25 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.server.BaseServerMemoryDatabase;
 import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OServer;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Created by tglman on 03/01/17. */
-public class RemoteQuerySupportTest {
+public class RemoteQuerySupportTest extends BaseServerMemoryDatabase {
 
-  private static final String SERVER_DIRECTORY = "./target/query";
-  private OServer server;
-  private OrientDB orientDB;
-  private ODatabaseDocument session;
   private int oldPageSize;
 
-  @Before
-  public void before() throws Exception {
-    OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.setValue(1);
-    server = new OServer(false);
-    server.setServerRootDirectory(SERVER_DIRECTORY);
-    server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
-    server.activate();
-
-    orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    orientDB.execute(
-        "create database ? memory users (admin identified by 'admin' role admin)",
-        RemoteQuerySupportTest.class.getSimpleName());
-    session = orientDB.open(RemoteQuerySupportTest.class.getSimpleName(), "admin", "admin");
-    session.createClass("Some");
+  public void beforeTest() {
+    super.beforeTest();
+    db.createClass("Some");
     oldPageSize = QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
     QUERY_REMOTE_RESULTSET_PAGE_SIZE.setValue(10);
   }
@@ -65,9 +41,9 @@ public class RemoteQuerySupportTest {
     for (int i = 0; i < 150; i++) {
       ODocument doc = new ODocument("Some");
       doc.setProperty("prop", "value");
-      session.save(doc);
+      db.save(doc);
     }
-    OResultSet res = session.query("select from Some");
+    OResultSet res = db.query("select from Some");
     for (int i = 0; i < 150; i++) {
       assertTrue(res.hasNext());
       OResult item = res.next();
@@ -80,9 +56,9 @@ public class RemoteQuerySupportTest {
     for (int i = 0; i < 150; i++) {
       ODocument doc = new ODocument("Some");
       doc.setProperty("prop", "value");
-      session.save(doc);
+      db.save(doc);
     }
-    OResultSet res = session.command("select from Some");
+    OResultSet res = db.command("select from Some");
     for (int i = 0; i < 150; i++) {
       assertTrue(res.hasNext());
       OResult item = res.next();
@@ -95,10 +71,10 @@ public class RemoteQuerySupportTest {
     for (int i = 0; i < 150; i++) {
       ODocument doc = new ODocument("Some");
       doc.setProperty("prop", "value");
-      session.save(doc);
+      db.save(doc);
     }
 
-    OResultSet res = session.command("insert into V from select from Some");
+    OResultSet res = db.command("insert into V from select from Some");
     for (int i = 0; i < 150; i++) {
       assertTrue(res.hasNext());
       OResult item = res.next();
@@ -111,14 +87,14 @@ public class RemoteQuerySupportTest {
     for (int i = 0; i < 150; i++) {
       ODocument doc = new ODocument("Some");
       doc.setProperty("prop", "value");
-      session.save(doc);
+      db.save(doc);
     }
-    OResultSet res = session.query("select from Some");
+    OResultSet res = db.query("select from Some");
 
     for (OClientConnection conn : server.getClientConnectionManager().getConnections()) {
       conn.close();
     }
-    session.activateOnCurrentThread();
+    db.activateOnCurrentThread();
 
     for (int i = 0; i < 150; i++) {
       assertTrue(res.hasNext());
@@ -134,8 +110,8 @@ public class RemoteQuerySupportTest {
     ODocument emb = new ODocument();
     emb.setProperty("one", "value");
     doc.setProperty("emb", emb, OType.EMBEDDED);
-    session.save(doc);
-    OResultSet res = session.query("select emb from Some");
+    db.save(doc);
+    OResultSet res = db.query("select emb from Some");
 
     OResult item = res.next();
     assertNotNull(item.getProperty("emb"));
@@ -153,8 +129,8 @@ public class RemoteQuerySupportTest {
     emb.setProperty("secEmb", emb1, OType.EMBEDDED);
 
     doc.setProperty("emb", emb, OType.EMBEDDED);
-    session.save(doc);
-    OResultSet res = session.query("select emb from Some");
+    db.save(doc);
+    OResultSet res = db.query("select emb from Some");
 
     OResult item = res.next();
     assertNotNull(item.getProperty("emb"));
@@ -172,8 +148,8 @@ public class RemoteQuerySupportTest {
     List<Object> list = new ArrayList<>();
     list.add(emb);
     doc.setProperty("list", list, OType.EMBEDDEDLIST);
-    session.save(doc);
-    OResultSet res = session.query("select list from Some");
+    db.save(doc);
+    OResultSet res = db.query("select list from Some");
 
     OResult item = res.next();
     assertNotNull(item.getProperty("list"));
@@ -190,8 +166,8 @@ public class RemoteQuerySupportTest {
     Set<ODocument> set = new HashSet<>();
     set.add(emb);
     doc.setProperty("set", set, OType.EMBEDDEDSET);
-    session.save(doc);
-    OResultSet res = session.query("select set from Some");
+    db.save(doc);
+    OResultSet res = db.query("select set from Some");
 
     OResult item = res.next();
     assertNotNull(item.getProperty("set"));
@@ -209,8 +185,8 @@ public class RemoteQuerySupportTest {
     Map<String, ODocument> map = new HashMap<>();
     map.put("key", emb);
     doc.setProperty("map", map, OType.EMBEDDEDMAP);
-    session.save(doc);
-    OResultSet res = session.query("select map from Some");
+    db.save(doc);
+    OResultSet res = db.query("select map from Some");
 
     OResult item = res.next();
     assertNotNull(item.getProperty("map"));
@@ -222,17 +198,17 @@ public class RemoteQuerySupportTest {
   @Test
   public void testCommandWithTX() {
 
-    session.begin();
+    db.begin();
 
-    session.command("insert into Some set prop = 'value'");
+    db.command("insert into Some set prop = 'value'");
 
     ORecord record;
 
-    try (OResultSet resultSet = session.command("insert into Some set prop = 'value'")) {
+    try (OResultSet resultSet = db.command("insert into Some set prop = 'value'")) {
       record = resultSet.next().getRecord().get();
     }
 
-    session.commit();
+    db.commit();
 
     Assert.assertTrue(record.getIdentity().isPersistent());
   }
@@ -240,22 +216,22 @@ public class RemoteQuerySupportTest {
   @Test(expected = OSerializationException.class)
   public void testBrokenParameter() {
     try {
-      session.query("select from Some where prop= ?", new Object()).close();
+      db.query("select from Some where prop= ?", new Object()).close();
     } catch (RuntimeException e) {
       // should be possible to run a query after without getting the server stuck
-      session.query("select from Some where prop= ?", new ORecordId(10, 10)).close();
+      db.query("select from Some where prop= ?", new ORecordId(10, 10)).close();
       throw e;
     }
   }
 
   @Test
   public void testScriptWithRidbags() {
-    session.command("create class testScriptWithRidbagsV extends V");
-    session.command("create class testScriptWithRidbagsE extends E");
-    session.command("create vertex testScriptWithRidbagsV set name = 'a'");
-    session.command("create vertex testScriptWithRidbagsV set name = 'b'");
+    db.command("create class testScriptWithRidbagsV extends V");
+    db.command("create class testScriptWithRidbagsE extends E");
+    db.command("create vertex testScriptWithRidbagsV set name = 'a'");
+    db.command("create vertex testScriptWithRidbagsV set name = 'b'");
 
-    session.command(
+    db.command(
         "create edge testScriptWithRidbagsE from (select from testScriptWithRidbagsV where name = 'a') TO (select from testScriptWithRidbagsV where name = 'b');");
 
     String script = "";
@@ -265,7 +241,7 @@ public class RemoteQuerySupportTest {
     script += "COMMIT ;";
     script += "RETURN [$q1,$q2]";
 
-    OResultSet rs = session.execute("sql", script);
+    OResultSet rs = db.execute("sql", script);
 
     rs.forEachRemaining(x -> System.out.println(x));
     rs.close();
@@ -273,28 +249,20 @@ public class RemoteQuerySupportTest {
 
   @Test
   public void testLetOut() {
-    session.command("create class letVertex extends V");
-    session.command("create class letEdge extends E");
-    session.command("create vertex letVertex set name = 'a'");
-    session.command("create vertex letVertex set name = 'b'");
-    session.command(
+    db.command("create class letVertex extends V");
+    db.command("create class letEdge extends E");
+    db.command("create vertex letVertex set name = 'a'");
+    db.command("create vertex letVertex set name = 'b'");
+    db.command(
         "create edge letEdge from (select from letVertex where name = 'a') TO (select from letVertex where name = 'b');");
 
     OResultSet rs =
-        session.query(
-            "select $someNode.in('letEdge') from letVertex LET $someNode =out('letEdge');");
+        db.query("select $someNode.in('letEdge') from letVertex LET $someNode =out('letEdge');");
     assertEquals(rs.stream().count(), 2);
   }
 
-  @After
-  public void after() {
+  public void afterTest() {
+    super.afterTest();
     QUERY_REMOTE_RESULTSET_PAGE_SIZE.setValue(oldPageSize);
-    session.close();
-    orientDB.close();
-    server.shutdown();
-
-    Orient.instance().shutdown();
-    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
-    Orient.instance().startup();
   }
 }

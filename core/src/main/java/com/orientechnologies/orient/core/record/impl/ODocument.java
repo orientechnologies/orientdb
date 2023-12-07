@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 import com.orientechnologies.orient.core.db.record.ODetachable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -3366,7 +3366,7 @@ public class ODocument extends ORecordAbstract
 
     if (recordFormat == null)
       // GET THE DEFAULT ONE
-      recordFormat = ODatabaseDocumentTx.getDefaultSerializer();
+      recordFormat = ODatabaseDocumentAbstract.getDefaultSerializer();
   }
 
   protected String checkFieldName(final String iFieldName) {

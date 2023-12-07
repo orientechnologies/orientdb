@@ -6,8 +6,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
@@ -15,45 +13,39 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OrientJwtHeader;
+import com.orientechnologies.orient.server.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import org.junit.Test;
 
-public class OTokenHandlerImplTest {
+public class OTokenHandlerImplTest extends BaseMemoryInternalDatabase {
 
   @Test
   public void testWebTokenCreationValidation()
       throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
-    db.create();
+    OSecurityUser original = db.getUser();
+    OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
+    byte[] token = handler.getSignedWebToken(db, original);
+
     try {
-      OSecurityUser original = db.getUser();
-      OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
-      byte[] token = handler.getSignedWebToken(db, original);
-
-      try {
-        // Make this thread wait at least 10 milliseconds before check the validity
-        Thread.sleep(10);
-      } catch (InterruptedException e) {
-      }
-
-      OToken tok = handler.parseWebToken(token);
-
-      assertNotNull(tok);
-
-      assertTrue(tok.getIsVerified());
-
-      OUser user = tok.getUser((ODatabaseDocumentInternal) db);
-      assertEquals(user.getName(), original.getName());
-      boolean boole = handler.validateToken(tok, "open", db.getName());
-      assertTrue(boole);
-      assertTrue(tok.getIsValid());
-    } finally {
-      db.drop();
+      // Make this thread wait at least 10 milliseconds before check the validity
+      Thread.sleep(10);
+    } catch (InterruptedException e) {
     }
+
+    OToken tok = handler.parseWebToken(token);
+
+    assertNotNull(tok);
+
+    assertTrue(tok.getIsVerified());
+
+    OUser user = tok.getUser((ODatabaseDocumentInternal) db);
+    assertEquals(user.getName(), original.getName());
+    boolean boole = handler.validateToken(tok, "open", db.getName());
+    assertTrue(boole);
+    assertTrue(tok.getIsValid());
   }
 
   @Test(expected = Exception.class)
@@ -108,113 +100,83 @@ public class OTokenHandlerImplTest {
 
   @Test
   public void testTokenForge() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
-    db.create();
-    try {
-      OSecurityUser original = db.getUser();
-      OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
+    OSecurityUser original = db.getUser();
+    OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
 
-      byte[] token = handler.getSignedWebToken(db, original);
-      byte[] token2 = handler.getSignedWebToken(db, original);
-      String s = new String(token);
-      String s2 = new String(token2);
+    byte[] token = handler.getSignedWebToken(db, original);
+    byte[] token2 = handler.getSignedWebToken(db, original);
+    String s = new String(token);
+    String s2 = new String(token2);
 
-      String newS = s.substring(0, s.lastIndexOf('.')) + s2.substring(s2.lastIndexOf('.'));
+    String newS = s.substring(0, s.lastIndexOf('.')) + s2.substring(s2.lastIndexOf('.'));
 
-      OToken tok = handler.parseWebToken(newS.getBytes());
+    OToken tok = handler.parseWebToken(newS.getBytes());
 
-      assertNotNull(tok);
+    assertNotNull(tok);
 
-      assertFalse(tok.getIsVerified());
-    } finally {
-      db.drop();
-    }
+    assertFalse(tok.getIsVerified());
   }
 
   @Test
   public void testBinartTokenCreationValidation()
       throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
-    db.create();
-    try {
-      OSecurityUser original = db.getUser();
-      OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
-      ONetworkProtocolData data = new ONetworkProtocolData();
-      data.driverName = "aa";
-      data.driverVersion = "aa";
-      data.setSerializationImpl("a");
-      data.protocolVersion = 2;
+    OSecurityUser original = db.getUser();
+    OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
+    ONetworkProtocolData data = new ONetworkProtocolData();
+    data.driverName = "aa";
+    data.driverVersion = "aa";
+    data.setSerializationImpl("a");
+    data.protocolVersion = 2;
 
-      byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
+    byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
 
-      OToken tok = handler.parseBinaryToken(token);
+    OToken tok = handler.parseBinaryToken(token);
 
-      assertNotNull(tok);
+    assertNotNull(tok);
 
-      assertTrue(tok.getIsVerified());
+    assertTrue(tok.getIsVerified());
 
-      OUser user = tok.getUser((ODatabaseDocumentInternal) db);
-      assertEquals(user.getName(), original.getName());
-      boolean boole = handler.validateBinaryToken(tok);
-      assertTrue(boole);
-      assertTrue(tok.getIsValid());
-    } finally {
-      db.drop();
-    }
+    OUser user = tok.getUser((ODatabaseDocumentInternal) db);
+    assertEquals(user.getName(), original.getName());
+    boolean boole = handler.validateBinaryToken(tok);
+    assertTrue(boole);
+    assertTrue(tok.getIsValid());
   }
 
   @Test
   public void testTokenNotRenew() {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
-    db.create();
-    try {
-      OSecurityUser original = db.getUser();
-      OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
-      ONetworkProtocolData data = new ONetworkProtocolData();
-      data.driverName = "aa";
-      data.driverVersion = "aa";
-      data.setSerializationImpl("a");
-      data.protocolVersion = 2;
+    OSecurityUser original = db.getUser();
+    OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
+    ONetworkProtocolData data = new ONetworkProtocolData();
+    data.driverName = "aa";
+    data.driverVersion = "aa";
+    data.setSerializationImpl("a");
+    data.protocolVersion = 2;
 
-      byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
+    byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
 
-      OToken tok = handler.parseBinaryToken(token);
-      token = handler.renewIfNeeded(tok);
+    OToken tok = handler.parseBinaryToken(token);
+    token = handler.renewIfNeeded(tok);
 
-      assertEquals(0, token.length);
-
-    } finally {
-      db.drop();
-    }
+    assertEquals(0, token.length);
   }
 
   @Test
   public void testTokenRenew() {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
-    db.create();
-    try {
-      OSecurityUser original = db.getUser();
-      OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
-      ONetworkProtocolData data = new ONetworkProtocolData();
-      data.driverName = "aa";
-      data.driverVersion = "aa";
-      data.setSerializationImpl("a");
-      data.protocolVersion = 2;
+    OSecurityUser original = db.getUser();
+    OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
+    ONetworkProtocolData data = new ONetworkProtocolData();
+    data.driverName = "aa";
+    data.driverVersion = "aa";
+    data.setSerializationImpl("a");
+    data.protocolVersion = 2;
 
-      byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
+    byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
 
-      OToken tok = handler.parseBinaryToken(token);
-      tok.setExpiry(System.currentTimeMillis() + (handler.getSessionInMills() / 2) - 1);
-      token = handler.renewIfNeeded(tok);
+    OToken tok = handler.parseBinaryToken(token);
+    tok.setExpiry(System.currentTimeMillis() + (handler.getSessionInMills() / 2) - 1);
+    token = handler.renewIfNeeded(tok);
 
-      assertTrue(token.length != 0);
-
-    } finally {
-      db.drop();
-    }
+    assertTrue(token.length != 0);
   }
 }
