@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -42,14 +41,14 @@ public class SQLCreateClassTest {
     db.create();
     try {
       Assert.assertFalse(db.getMetadata().getSchema().existsClass("testIfNotExists"));
-      db.command(new OCommandSQL("create class testIfNotExists if not exists")).execute();
+      db.command("create class testIfNotExists if not exists").close();
       db.getMetadata().getSchema().reload();
       Assert.assertTrue(db.getMetadata().getSchema().existsClass("testIfNotExists"));
-      db.command(new OCommandSQL("create class testIfNotExists if not exists")).execute();
+      db.command("create class testIfNotExists if not exists").close();
       db.getMetadata().getSchema().reload();
       Assert.assertTrue(db.getMetadata().getSchema().existsClass("testIfNotExists"));
       try {
-        db.command(new OCommandSQL("create class testIfNotExists")).execute();
+        db.command("create class testIfNotExists").close();
         Assert.fail();
       } catch (Exception e) {
       }

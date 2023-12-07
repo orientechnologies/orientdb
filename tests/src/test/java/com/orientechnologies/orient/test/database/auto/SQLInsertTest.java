@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -392,7 +394,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
   public void insertWithReturn() {
 
     if (!database.getMetadata().getSchema().existsClass("actor2")) {
-      database.command(new OCommandSQL("CREATE CLASS Actor2")).execute();
+      database.command("CREATE CLASS Actor2").close();
       database.getMetadata().getSchema().reload();
     }
 
@@ -724,11 +726,12 @@ public class SQLInsertTest extends DocumentDBBaseTest {
         .command("INSERT INTO InsertWithClusterAsFieldName ( `cluster` ) values ( 'foo' )")
         .close();
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("SELECT FROM InsertWithClusterAsFieldName"));
+    List<OResult> result =
+        database.query("SELECT FROM InsertWithClusterAsFieldName").stream()
+            .collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(result.get(0).field("cluster"), "foo");
+    Assert.assertEquals(result.get(0).getProperty("cluster"), "foo");
   }
 
   @Test
