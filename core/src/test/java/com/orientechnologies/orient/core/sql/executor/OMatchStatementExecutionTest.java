@@ -1248,7 +1248,6 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("return one, two");
 
     List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
-    System.out.println(result);
     assertEquals(1, result.size());
 
     query = new StringBuilder();
@@ -1397,14 +1396,12 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     }
     assertEquals(3, sum);
 
-    // check that it still removes duplicates (standard behavior for MATCH)
     qResult =
-        db.command(
-                new OCommandSQL(
-                    "MATCH {class: testEvalInReturn, as: p} RETURN if(eval(\"p.name = 'foo'\"), 'foo', 'foo') AS b"))
-            .execute();
+        collect(
+            db.command(
+                "MATCH {class: testEvalInReturn, as: p} RETURN if(eval(\"p.name = 'foo'\"), 'foo', 'foo') AS b"));
 
-    assertEquals(1, qResult.size());
+    assertEquals(2, qResult.size());
   }
 
   @Test
