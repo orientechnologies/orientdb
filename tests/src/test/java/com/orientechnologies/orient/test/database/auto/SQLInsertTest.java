@@ -284,14 +284,10 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     if (schema.getClass("test") == null) schema.createClass("test");
 
-    ODocument doc =
-        (ODocument)
-            database
-                .command(new OCommandSQL("INSERT INTO test(text) VALUES ('(Hello World)')"))
-                .execute();
+    OResult doc = database.command("INSERT INTO test(text) VALUES ('(Hello World)')").next();
 
     Assert.assertTrue(doc != null);
-    Assert.assertEquals(doc.field("text"), "(Hello World)");
+    Assert.assertEquals(doc.getProperty("text"), "(Hello World)");
   }
 
   @Test
@@ -624,13 +620,13 @@ public class SQLInsertTest extends DocumentDBBaseTest {
             "insert into TestEmbeddedDates set events = [{\"on\": date(\"2005-09-08 04:00:00\", \"yyyy-MM-dd HH:mm:ss\", \"UTC\")}]\n")
         .close();
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("select from TestEmbeddedDates"));
+    List<OResult> result =
+        database.query("select from TestEmbeddedDates").stream().collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 1);
     boolean found = false;
-    ODocument doc = result.get(0);
-    Collection events = doc.field("events");
+    OResult doc = result.get(0);
+    Collection events = doc.getProperty("events");
     for (Object event : events) {
       Assert.assertTrue(event instanceof Map);
       Object dateObj = ((Map) event).get("on");
@@ -641,7 +637,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
       found = true;
     }
 
-    doc.delete();
+    database.delete(doc.getIdentity().get());
     Assert.assertEquals(found, true);
   }
 
@@ -744,10 +740,11 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     database
         .command("INSERT INTO TestInsertEmbeddedBigDecimal CONTENT {\"ed\": [5,null,5]}")
         .close();
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("SELECT FROM TestInsertEmbeddedBigDecimal"));
+    List<OResult> result =
+        database.query("SELECT FROM TestInsertEmbeddedBigDecimal").stream()
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 1);
-    Iterable ed = result.get(0).field("ed");
+    Iterable ed = result.get(0).getProperty("ed");
     Object o = ed.iterator().next();
     Assert.assertEquals(o.getClass(), BigDecimal.class);
     Assert.assertEquals(((BigDecimal) o).intValue(), 5);
