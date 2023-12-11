@@ -3,10 +3,10 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -285,12 +285,12 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
 
   public void testDeleteVertexWithReturn() {
     OIdentifiable v1 =
-        database.command(new OCommandSQL("create vertex V set returning = true")).execute();
+        database.command("create vertex V set returning = true").next().getIdentity().get();
 
     List<OIdentifiable> v2s =
-        database
-            .command(new OCommandSQL("delete vertex V return before where returning = true"))
-            .execute();
+        database.command("delete vertex V return before where returning = true").stream()
+            .map((r) -> r.getIdentity().get())
+            .collect(Collectors.toList());
 
     Assert.assertEquals(v2s.size(), 1);
     Assert.assertTrue(v2s.contains(v1));

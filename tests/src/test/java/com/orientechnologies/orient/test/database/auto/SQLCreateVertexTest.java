@@ -3,12 +3,11 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -39,18 +38,14 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
       vClass.createProperty("message", OType.STRING);
     }
 
+    database.command("create vertex CreateVertexByContent content { \"message\": \"(:\"}").close();
     database
         .command(
-            new OCommandSQL("create vertex CreateVertexByContent content { \"message\": \"(:\"}"))
-        .execute();
-    database
-        .command(
-            new OCommandSQL(
-                "create vertex CreateVertexByContent content { \"message\": \"\\\"‎ה, כן?...‎\\\"\"}"))
-        .execute();
+            "create vertex CreateVertexByContent content { \"message\": \"\\\"‎ה, כן?...‎\\\"\"}")
+        .close();
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("select from CreateVertexByContent"));
+    List<OResult> result =
+        database.query("select from CreateVertexByContent").stream().collect(Collectors.toList());
     Assert.assertEquals(result.size(), 2);
 
     List<String> messages = new ArrayList<String>();
@@ -59,8 +54,8 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
 
     List<String> resultMessages = new ArrayList<String>();
 
-    for (ODocument document : result) {
-      resultMessages.add(document.<String>field("message"));
+    for (OResult document : result) {
+      resultMessages.add(document.<String>getProperty("message"));
     }
 
     //    issue #1787, works fine locally, not on CI

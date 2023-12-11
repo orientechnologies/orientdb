@@ -24,6 +24,8 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +33,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -68,62 +71,49 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     List<Long> positions = getValidPositions(addressClusterId);
 
-    Integer records =
-        database
-            .command(
-                new OCommandSQL(
-                    "update Profile set salary = 120.30, location = "
-                        + addressClusterId
-                        + ":"
-                        + positions.get(2)
-                        + ", salary_cloned = salary where surname = 'Obama'"))
-            .execute();
+    OResultSet records =
+        database.command(
+            "update Profile set salary = 120.30, location = "
+                + addressClusterId
+                + ":"
+                + positions.get(2)
+                + ", salary_cloned = salary where surname = 'Obama'");
 
-    Assert.assertEquals(records.intValue(), 3);
+    Assert.assertEquals(((Number) records.next().getProperty("count")).intValue(), 3);
   }
 
   @Test
   public void updateWithWhereRid() {
 
-    List<ODocument> result =
-        database
-            .command(new OCommandSQL("select @rid as rid from Profile where surname = 'Obama'"))
-            .execute();
+    List<OResult> result =
+        database.command("select @rid as rid from Profile where surname = 'Obama'").stream()
+            .collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 3);
 
-    Integer records =
-        database
-            .command(new OCommandSQL("update Profile set salary = 133.00 where @rid = ?"))
-            .execute(result.get(0).<Object>field("rid"));
+    OResultSet records =
+        database.command(
+            "update Profile set salary = 133.00 where @rid = ?",
+            result.get(0).<Object>getProperty("rid"));
 
-    Assert.assertEquals(records.intValue(), 1);
+    Assert.assertEquals(((Number) records.next().getProperty("count")).intValue(), 1);
   }
 
   @Test
   public void updateUpsertOperator() {
 
-    List<ODocument> result =
-        database
-            .command(
-                new OCommandSQL(
-                    "UPDATE Profile SET surname='Merkel' RETURN AFTER where surname = 'Merkel'"))
-            .execute();
-    Assert.assertEquals(result.size(), 0);
+    OResultSet result =
+        database.command(
+            "UPDATE Profile SET surname='Merkel' RETURN AFTER where surname = 'Merkel'");
+    Assert.assertEquals(result.stream().count(), 0);
 
     result =
-        database
-            .command(
-                new OCommandSQL(
-                    "UPDATE Profile SET surname='Merkel' UPSERT RETURN AFTER  where surname = 'Merkel'"))
-            .execute();
-    Assert.assertEquals(result.size(), 1);
+        database.command(
+            "UPDATE Profile SET surname='Merkel' UPSERT RETURN AFTER  where surname = 'Merkel'");
+    Assert.assertEquals(result.stream().count(), 1);
 
-    result =
-        database
-            .command(new OCommandSQL("SELECT FROM Profile  where surname = 'Merkel'"))
-            .execute();
-    Assert.assertEquals(result.size(), 1);
+    result = database.command("SELECT FROM Profile  where surname = 'Merkel'");
+    Assert.assertEquals(result.stream().count(), 1);
   }
 
   @Test(dependsOnMethods = "updateWithWhereOperator")
@@ -357,19 +347,19 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     doc.field("gender", "fmale");
     doc.save();
 
-    OCommandSQL updatecommand =
-        new OCommandSQL("update Data set gender = :gender , city = :city where name = :name");
+    String updatecommand = "update Data set gender = :gender , city = :city where name = :name";
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("gender", "f");
     params.put("city", "TOR");
     params.put("name", "Raf");
 
-    database.command(updatecommand).execute(params);
-    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select * from Data"));
-    ODocument oDoc = result.get(0);
-    Assert.assertEquals("Raf", oDoc.field("name"));
-    Assert.assertEquals("TOR", oDoc.field("city"));
-    Assert.assertEquals("f", oDoc.field("gender"));
+    database.command(updatecommand, params);
+    OResultSet result = database.query("select * from Data");
+    OResult oDoc = result.next();
+    Assert.assertEquals("Raf", oDoc.getProperty("name"));
+    Assert.assertEquals("TOR", oDoc.getProperty("city"));
+    Assert.assertEquals("f", oDoc.getProperty("gender"));
+    result.close();
   }
 
   public void updateIncrement() {
@@ -751,10 +741,11 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
         .close();
     database.command("UPDATE " + className + " set list = list || [{\"kkk\":4}]").close();
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from " + className));
+    List<OResult> result =
+        database.query("select from " + className).stream().collect(Collectors.toList());
     Assert.assertEquals(result.size(), 1);
-    ODocument doc = result.get(0);
-    List list = doc.field("list");
+    OResult doc = result.get(0);
+    List list = doc.getProperty("list");
     Assert.assertEquals(list.size(), 4);
     Object fourth = list.get(3);
 

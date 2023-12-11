@@ -26,11 +26,13 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
@@ -232,7 +234,8 @@ public class SecurityTest extends DocumentDBBaseTest {
   public void testAdminCanSeeSystemClusters() {
     database.open("admin", "admin");
 
-    List<ODocument> result = database.command(new OCommandSQL("select from ouser")).execute();
+    List<OResult> result =
+        database.command("select from ouser").stream().collect(Collectors.toList());
     Assert.assertFalse(result.isEmpty());
 
     Assert.assertTrue(database.browseClass("OUser").hasNext());
