@@ -3,10 +3,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import java.text.Collator;
 import java.util.Locale;
 import java.util.Map;
 
@@ -23,6 +26,7 @@ public class OOrderByItem {
 
   // calculated at run time
   private OCollate collateStrategy;
+  private Collator stringCollator;
 
   public String getAlias() {
     return alias;
@@ -135,7 +139,27 @@ public class OOrderByItem {
         }
       } else if (bVal == null) {
         result = 1;
+      } else if (aVal instanceof String && bVal instanceof String) {
+
+        ODatabaseDocumentInternal internal = ((ODatabaseDocumentInternal) ctx.getDatabase());
+        if (stringCollator == null) {
+          String language = (String) internal.get(ATTRIBUTES.LOCALELANGUAGE);
+          String country = (String) internal.get(ATTRIBUTES.LOCALECOUNTRY);
+          Locale locale;
+          if (language != null) {
+            if (country != null) {
+              locale = new Locale(language, country);
+            } else {
+              locale = new Locale(language);
+            }
+          } else {
+            locale = Locale.getDefault();
+          }
+          stringCollator = Collator.getInstance(locale);
+        }
+        result = stringCollator.compare(aVal, bVal);
       } else if (aVal instanceof Comparable && bVal instanceof Comparable) {
+
         try {
           result = ((Comparable) aVal).compareTo(bVal);
         } catch (Exception e) {
