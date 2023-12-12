@@ -384,6 +384,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     new ONewDeltaSyncImporter()
         .importDelta(server, dbName, backupStream, plugin.getLocalNodeName());
+    getDatabase(dbName).setOnline();
   }
 
   private void offlineOnShutdown() {
@@ -444,6 +445,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       return true;
     }
     return false;
+  }
+
+  public void distributedSetOnline(String database) {
+    ODistributedDatabaseImpl distribDatabase = getDatabase(database);
+    if (distribDatabase != null) {
+      distribDatabase.setOnline();
+    }
   }
 
   public Set<String> getActiveDatabases() {

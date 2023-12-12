@@ -971,58 +971,61 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final ORemoteTask task,
       final ODatabaseDocumentInternal database) {
 
-    final ODistributedPlugin manager = this;
-
     return OScenarioThreadLocal.executeAsDistributed(
-        new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            try {
-              final Object result = task.execute(reqId, serverInstance, manager, database);
-
-              if (result instanceof Throwable && !(result instanceof OException))
-                // EXCEPTION
-                ODistributedServerLog.debug(
-                    this,
-                    nodeName,
-                    getNodeNameById(reqId.getNodeId()),
-                    DIRECTION.IN,
-                    "Error on executing request %d (%s) on local node: ",
-                    (Throwable) result,
-                    reqId,
-                    task);
-
-              return result;
-
-            } catch (InterruptedException e) {
-              // IGNORE IT
-              ODistributedServerLog.debug(
-                  this,
-                  nodeName,
-                  getNodeNameById(reqId.getNodeId()),
-                  DIRECTION.IN,
-                  "Interrupted execution on executing distributed request %s on local node: %s",
-                  e,
-                  reqId,
-                  task);
-              return e;
-
-            } catch (Exception e) {
-              if (!(e instanceof OException))
-                ODistributedServerLog.error(
-                    this,
-                    nodeName,
-                    getNodeNameById(reqId.getNodeId()),
-                    DIRECTION.IN,
-                    "Error on executing distributed request %s on local node: %s",
-                    e,
-                    reqId,
-                    task);
-
-              return e;
-            }
-          }
+        () -> {
+          return localInternalExecute(reqId, task, database);
         });
+  }
+
+  private Object localInternalExecute(
+      final ODistributedRequestId reqId,
+      final ORemoteTask task,
+      final ODatabaseDocumentInternal database) {
+    final ODistributedPlugin manager = this;
+    try {
+      final Object result = task.execute(reqId, serverInstance, manager, database);
+
+      if (result instanceof Throwable && !(result instanceof OException))
+        // EXCEPTION
+        ODistributedServerLog.debug(
+            this,
+            nodeName,
+            getNodeNameById(reqId.getNodeId()),
+            DIRECTION.IN,
+            "Error on executing request %d (%s) on local node: ",
+            (Throwable) result,
+            reqId,
+            task);
+
+      return result;
+
+    } catch (InterruptedException e) {
+      // IGNORE IT
+      ODistributedServerLog.debug(
+          this,
+          nodeName,
+          getNodeNameById(reqId.getNodeId()),
+          DIRECTION.IN,
+          "Interrupted execution on executing distributed request %s on local node: %s",
+          e,
+          reqId,
+          task);
+      return e;
+
+    } catch (Exception e) {
+      if (!(e instanceof OException))
+        ODistributedServerLog.error(
+            this,
+            nodeName,
+            getNodeNameById(reqId.getNodeId()),
+            DIRECTION.IN,
+            "Error on executing distributed request %s on local node: %s",
+            e,
+            reqId,
+            task);
+
+      return e;
+    }
   }
 
   public Set<String> getManagedDatabases() {
@@ -1279,37 +1282,35 @@ public class ODistributedPlugin extends OServerPluginAbstract
               // CREATE THE DISTRIBUTED QUEUE
               // TODO: This should check also but can't do it now
               // storage.getLastMetadata().isPresent();
-              if (!distrDatabase.exists()) {
+              if (!serverInstance.existsDatabase(databaseName)) {
 
                 if (deploy == null || !deploy) {
                   distrDatabase.setOnline();
-                  distrDatabase.resume();
                   return false;
                 }
 
                 // FIRST TIME, ASK FOR FULL REPLICA
-                databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup);
+                databaseInstalled = requestFullDatabase(databaseName, iStartup);
 
               } else {
                 if (tryWithDeltaFirst) {
                   try {
 
                     // TRY WITH DELTA SYNC
-                    databaseInstalled = requestNewDatabaseDelta(distrDatabase, databaseName, cfg);
+                    databaseInstalled = requestNewDatabaseDelta(databaseName, cfg);
 
                   } catch (ODistributedDatabaseDeltaSyncException e) {
                     if (deploy == null || !deploy) {
                       // NO AUTO DEPLOY
                       distrDatabase.setOnline();
-                      distrDatabase.resume();
                       return false;
                     }
 
-                    databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup);
+                    databaseInstalled = requestFullDatabase(databaseName, iStartup);
                   }
                 } else
                   // SKIP DELTA AND EXECUTE FULL BACKUP
-                  databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup);
+                  databaseInstalled = requestFullDatabase(databaseName, iStartup);
               }
 
               if (!databaseInstalled) {
@@ -1330,7 +1331,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                   databaseName);
 
               databaseInstalled = true;
-              distrDatabase.resume();
             } catch (RuntimeException e) {
               // UNLOCK ACCEPTING REQUESTS EVEN IN CASE OF ERROR.
               distrDatabase.resume();
@@ -1345,9 +1345,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   private boolean requestNewDatabaseDelta(
-      ODistributedDatabaseImpl distrDatabase,
-      String databaseName,
-      OModifiableDistributedConfiguration cfg) {
+      String databaseName, OModifiableDistributedConfiguration cfg) {
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers(null, nodeName);
     getAvailableNodes(nodes, databaseName);
@@ -1371,7 +1369,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
         continue;
       }
       OTxMetadataHolder metadata;
-      try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
+      try (ODatabaseDocumentInternal inst =
+          serverInstance.getDatabases().openNoAuthorization(databaseName)) {
         Optional<byte[]> read = ((OAbstractPaginatedStorage) inst.getStorage()).getLastMetadata();
         if (read.isPresent()) {
           metadata = OTxMetadataHolderImpl.read(read.get());
@@ -1400,10 +1399,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
         databaseInstalledCorrectly =
             installResponseNewDeltaSync(
-                distrDatabase,
-                databaseName,
-                targetNode,
-                (ONewDeltaTaskResponse) response.getPayload());
+                databaseName, targetNode, (ONewDeltaTaskResponse) response.getPayload());
 
       } catch (ODistributedDatabaseDeltaSyncException e) {
         // RE-THROW IT
@@ -1421,8 +1417,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       }
 
       if (databaseInstalledCorrectly) {
-        distrDatabase.resume();
-
         try {
           reassignClustersOwnership(nodeName, databaseName, null, false);
         } catch (Exception e) {
@@ -1444,10 +1438,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     throw new ODistributedDatabaseDeltaSyncException("Requested database delta sync error");
   }
 
-  protected boolean requestFullDatabase(
-      final ODistributedDatabaseImpl distrDatabase,
-      final String databaseName,
-      final boolean backupDatabase) {
+  protected boolean requestFullDatabase(final String databaseName, final boolean backupDatabase) {
     ODistributedServerLog.info(
         this,
         nodeName,
@@ -1458,7 +1449,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     for (int retry = 0; retry < DEPLOY_DB_MAX_RETRIES; ++retry) {
       // ASK DATABASE TO THE FIRST NODE, THE FIRST ATTEMPT, OTHERWISE ASK TO EVERYONE
-      if (requestDatabaseFullSync(distrDatabase, backupDatabase, databaseName, retry > 0))
+      if (requestDatabaseFullSync(backupDatabase, databaseName, retry > 0))
         // DEPLOYED
         return true;
       try {
@@ -1474,10 +1465,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   private boolean installResponseNewDeltaSync(
-      ODistributedDatabaseImpl distrDatabase,
-      String databaseName,
-      String targetNode,
-      ONewDeltaTaskResponse results) {
+      String databaseName, String targetNode, ONewDeltaTaskResponse results) {
     final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
     boolean databaseInstalledCorrectly = false;
     // EXTRACT THE REAL RESULT
@@ -1498,8 +1486,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
               new OIOException("Error on distributed sync of database"), e);
         }
 
-        distrDatabase.setOnline();
-
         ODistributedServerLog.info(
             this,
             nodeName,
@@ -1517,17 +1503,15 @@ public class ODistributedPlugin extends OServerPluginAbstract
     } else if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.FULL_SYNC) {
       throw new ODistributedDatabaseDeltaSyncException("Full sync required");
     } else if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.NO_CHANGES) {
-      distrDatabase.setOnline();
+      OrientDBInternal context = serverInstance.getDatabases();
+      context.distributedSetOnline(databaseName);
       return true;
     }
     return databaseInstalledCorrectly;
   }
 
   protected boolean requestDatabaseFullSync(
-      final ODistributedDatabaseImpl distrDatabase,
-      final boolean backupDatabase,
-      final String databaseName,
-      final boolean iAskToAllNodes) {
+      final boolean backupDatabase, final String databaseName, final boolean iAskToAllNodes) {
     // GET ALL THE OTHER SERVERS
     Collection<String> nodes = getActiveServers();
     if (nodes.isEmpty()) {
@@ -1621,13 +1605,12 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
           try {
             installDatabaseFromNetwork(
-                dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value);
+                dbPath, databaseName, r.getKey(), (ODistributedDatabaseChunk) value);
           } catch (OException e) {
             OLogManager.instance().error(this, "Error installing database from network", e);
             continue;
           }
 
-          distrDatabase.resume();
           return true;
         }
       }
@@ -1636,7 +1619,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
         final Object value = r.getValue();
 
         if (value instanceof Boolean) {
-          distrDatabase.setOnline();
+          serverInstance.getDatabases().distributedSetOnline(databaseName);
           continue;
         } else if (value instanceof ODatabaseIsOldException) {
 
@@ -1804,7 +1787,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   protected void installDatabaseFromNetwork(
       final String dbPath,
       final String databaseName,
-      final ODistributedDatabaseImpl distrDatabase,
       final String iNode,
       final ODistributedDatabaseChunk firstChunk) {
 
@@ -1813,8 +1795,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     installDatabaseOnLocalNode(databaseName, dbPath, iNode, firstChunk.incremental, receiver);
     receiver.close();
-
-    distrDatabase.setOnline();
 
     try {
       reassignClustersOwnership(nodeName, databaseName, null, false);
@@ -2166,58 +2146,57 @@ public class ODistributedPlugin extends OServerPluginAbstract
         20000,
         null,
         cfg -> {
-          try {
-            if (incremental) {
-              serverInstance
-                  .getDatabases()
-                  .fullSync(
-                      databaseName, receiver.getInputStream(), OrientDBConfig.defaultConfig());
-              ODistributedDatabaseImpl distrDatabase = getDatabase(databaseName);
-              distrDatabase.saveDatabaseConfiguration();
-
-              try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
-                Optional<byte[]> read =
-                    ((OAbstractPaginatedStorage) inst.getStorage()).getLastMetadata();
-                if (read.isPresent()) {
-                  OTxMetadataHolder metadata = OTxMetadataHolderImpl.read(read.get());
-                  final OSyncDatabaseNewDeltaTask deployTask =
-                      new OSyncDatabaseNewDeltaTask(metadata.getStatus());
-
-                  final List<String> targetNodes = new ArrayList<String>(1);
-                  targetNodes.add(iNode);
-                  final ODistributedResponse response =
-                      sendRequest(
-                          databaseName,
-                          null,
-                          targetNodes,
-                          deployTask,
-                          getNextMessageIdCounter(),
-                          ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                          null);
-                  if (response == null)
-                    throw new ODistributedDatabaseDeltaSyncException("Error Requesting delta sync");
-                  installResponseNewDeltaSync(
-                      distrDatabase,
-                      databaseName,
-                      iNode,
-                      (ONewDeltaTaskResponse) response.getPayload());
-                }
-              }
-            } else {
-
-              // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)
-              try (InputStream in = receiver.getInputStream()) {
-
-                // IMPORT FULL DATABASE (LISTENER ONLY FOR DEBUG PURPOSE)
-                serverInstance.getDatabases().networkRestore(databaseName, in, null);
-              }
-            }
-            return null;
-          } catch (IOException e) {
-            throw OException.wrapException(
-                new OIOException("Error on distributed sync of database"), e);
-          }
+          return internalInstallDatabase(databaseName, iNode, incremental, receiver);
         });
+  }
+
+  private Object internalInstallDatabase(
+      final String databaseName, final String iNode, boolean incremental, OSyncReceiver receiver) {
+    try {
+      if (incremental) {
+        serverInstance
+            .getDatabases()
+            .fullSync(databaseName, receiver.getInputStream(), OrientDBConfig.defaultConfig());
+        ODistributedDatabaseImpl distrDatabase = getDatabase(databaseName);
+        distrDatabase.saveDatabaseConfiguration();
+
+        try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
+          Optional<byte[]> read = ((OAbstractPaginatedStorage) inst.getStorage()).getLastMetadata();
+          if (read.isPresent()) {
+            OTxMetadataHolder metadata = OTxMetadataHolderImpl.read(read.get());
+            final OSyncDatabaseNewDeltaTask deployTask =
+                new OSyncDatabaseNewDeltaTask(metadata.getStatus());
+
+            final List<String> targetNodes = new ArrayList<String>(1);
+            targetNodes.add(iNode);
+            final ODistributedResponse response =
+                sendRequest(
+                    databaseName,
+                    null,
+                    targetNodes,
+                    deployTask,
+                    getNextMessageIdCounter(),
+                    ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                    null);
+            if (response == null)
+              throw new ODistributedDatabaseDeltaSyncException("Error Requesting delta sync");
+            installResponseNewDeltaSync(
+                databaseName, iNode, (ONewDeltaTaskResponse) response.getPayload());
+          }
+        }
+      } else {
+
+        // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)
+        try (InputStream in = receiver.getInputStream()) {
+
+          // IMPORT FULL DATABASE (LISTENER ONLY FOR DEBUG PURPOSE)
+          serverInstance.getDatabases().networkRestore(databaseName, in, null);
+        }
+      }
+      return null;
+    } catch (IOException e) {
+      throw OException.wrapException(new OIOException("Error on distributed sync of database"), e);
+    }
   }
 
   @Override
