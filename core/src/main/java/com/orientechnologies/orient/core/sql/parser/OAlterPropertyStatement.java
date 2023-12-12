@@ -47,7 +47,8 @@ public class OAlterPropertyStatement extends ODDLStatement {
 
     OProperty property = clazz.getProperty(propertyName.getStringValue());
     if (property == null) {
-      throw new OCommandExecutionException("Property " + property + " not found on class " + clazz);
+      throw new OCommandExecutionException(
+          "Property " + propertyName.getStringValue() + " not found on class " + clazz);
     }
 
     OResultInternal result = new OResultInternal();
