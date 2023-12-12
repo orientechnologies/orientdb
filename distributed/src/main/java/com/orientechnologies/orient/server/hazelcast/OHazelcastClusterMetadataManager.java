@@ -12,7 +12,6 @@ import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -948,9 +947,7 @@ public class OHazelcastClusterMetadataManager
     }
   }
 
-  public void removeDbFromClusterMetadata(final ODatabaseInternal iDatabase) {
-    final String dbName = iDatabase.getName();
-
+  public void removeDbFromClusterMetadata(final String dbName) {
     if (configurationMap != null) {
       configurationMap.removeDatabaseStatus(nodeName, dbName);
     }

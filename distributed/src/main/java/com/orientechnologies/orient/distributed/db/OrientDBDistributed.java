@@ -263,6 +263,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
 
     synchronized (this) {
+      unregisterDatabase(name);
+      plugin.removeDbFromClusterMetadata(name);
+
       if (exists(name, null, null)) {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         OSharedContext sharedContext = sharedContexts.get(name);
@@ -406,19 +409,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   /** Creates a distributed database instance if not defined yet. */
-  public ODistributedDatabaseImpl registerDatabase(final String iDatabaseName) {
-    final ODistributedDatabaseImpl ddb = databases.get(iDatabaseName);
-    if (ddb != null) return ddb;
-    ODistributedDatabaseImpl ddd =
-        new ODistributedDatabaseImpl(this, plugin, iDatabaseName, plugin.getServerInstance());
-    // SELF REGISTERING ITSELF HERE BECAUSE IT'S NEEDED FURTHER IN THE CALL CHAIN
-    final ODistributedDatabaseImpl prev = databases.put(iDatabaseName, ddd);
-    if (prev != null) {
-      // KILL THE PREVIOUS ONE
-      prev.shutdown();
-    }
-
-    return ddd;
+  public ODistributedDatabaseImpl registerDatabase(final String db) {
+    return databases.computeIfAbsent(
+        db,
+        (key) -> {
+          return new ODistributedDatabaseImpl(this, plugin, key);
+        });
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
