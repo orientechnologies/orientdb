@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -111,10 +110,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final OrientDBDistributed context;
 
   public ODistributedDatabaseImpl(
-      OrientDBDistributed context,
-      final ODistributedPlugin manager,
-      final String iDatabaseName,
-      OServer server) {
+      OrientDBDistributed context, final ODistributedPlugin manager, final String iDatabaseName) {
     this.context = context;
     this.manager = manager;
     this.databaseName = iDatabaseName;

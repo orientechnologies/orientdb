@@ -73,7 +73,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedConfiguration
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
-import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
@@ -396,21 +395,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
   public void onClose(final ODatabaseInternal iDatabase) {}
 
   @Override
-  public void onDrop(final ODatabaseInternal iDatabase) {
-    if (!isRelatedToLocalServer(iDatabase)) return;
+  public void onDrop(final ODatabaseInternal iDatabase) {}
 
-    final String dbName = iDatabase.getName();
-
-    ODistributedServerLog.info(
-        this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
-
-    final ODistributedMessageService msgService = getMessageService();
-    if (msgService != null) {
-      ((OrientDBDistributed) getServerInstance().getDatabases())
-          .unregisterDatabase(iDatabase.getName());
-    }
-
-    clusterManager.removeDbFromClusterMetadata(iDatabase);
+  public void removeDbFromClusterMetadata(String name) {
+    clusterManager.removeDbFromClusterMetadata(name);
   }
 
   public void dropOnAllServers(final String dbName) {
