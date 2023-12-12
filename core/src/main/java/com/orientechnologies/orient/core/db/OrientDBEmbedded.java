@@ -780,6 +780,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         storages.put(name, storage);
       }
       storage.restore(in, null, callable, null);
+      distributedSetOnline(name);
     } catch (OModificationOperationProhibitedException e) {
       throw e;
     } catch (Exception e) {

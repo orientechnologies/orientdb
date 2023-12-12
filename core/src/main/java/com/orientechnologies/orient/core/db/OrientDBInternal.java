@@ -375,6 +375,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
 
   void internalDrop(String database);
 
+  default void distributedSetOnline(String database) {}
+
   void create(
       String name,
       String user,
