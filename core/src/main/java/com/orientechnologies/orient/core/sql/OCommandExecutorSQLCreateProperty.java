@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.ArrayList;
@@ -316,8 +317,8 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     }
 
     // CREATE IT LOCALLY
-    OPropertyImpl internalProp =
-        sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, unsafe);
+    OProperty internalProp =
+        sourceClass.addProperty(fieldName, type, linkedType, linkedClass, unsafe);
     if (readonly) {
       internalProp.setReadonly(true);
     }
