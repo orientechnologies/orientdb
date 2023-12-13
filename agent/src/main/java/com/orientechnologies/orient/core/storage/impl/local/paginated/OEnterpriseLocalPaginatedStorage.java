@@ -482,111 +482,97 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       else freezeId = -1;
 
       try {
-        final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(stream);
+        final ZipOutputStream zipOutputStream =
+            new ZipOutputStream(
+                new BufferedOutputStream(stream), Charset.forName(configuration.getCharset()));
         try {
-          final ZipOutputStream zipOutputStream =
-              new ZipOutputStream(
-                  bufferedOutputStream, Charset.forName(configuration.getCharset()));
+          final long startSegment;
+          final OLogSequenceNumber freezeLsn;
+
+          if (fromLsn == null) {
+            UUID databaseInstanceUUID = super.readDatabaseInstanceId();
+            if (databaseInstanceUUID == null) {
+              atomicOperationsManager.executeInsideAtomicOperation(
+                  null,
+                  atomicOperation -> {
+                    generateDatabaseInstanceId(atomicOperation);
+                  });
+              databaseInstanceUUID = super.readDatabaseInstanceId();
+            }
+            final ZipEntry zipEntry = new ZipEntry("database_instance.uuid");
+
+            zipOutputStream.putNextEntry(zipEntry);
+            DataOutputStream dos = new DataOutputStream(zipOutputStream);
+            dos.writeUTF(databaseInstanceUUID.toString());
+            dos.flush();
+          }
+
+          final long newSegmentFreezeId =
+              atomicOperationsManager.freezeAtomicOperations(null, null);
           try {
-            final long startSegment;
-            final OLogSequenceNumber freezeLsn;
+            final OLogSequenceNumber startLsn = writeAheadLog.end();
 
-            if (fromLsn == null) {
-              try {
-                UUID databaseInstanceUUID = super.readDatabaseInstanceId();
-                if (databaseInstanceUUID == null) {
-                  atomicOperationsManager.executeInsideAtomicOperation(
-                      null,
-                      atomicOperation -> {
-                        generateDatabaseInstanceId(atomicOperation);
-                      });
-                  databaseInstanceUUID = super.readDatabaseInstanceId();
-                }
-                final ZipEntry zipEntry = new ZipEntry("database_instance.uuid");
+            if (startLsn != null) freezeLsn = startLsn;
+            else freezeLsn = new OLogSequenceNumber(0, 0);
 
-                zipOutputStream.putNextEntry(zipEntry);
-                zipOutputStream.flush();
-                DataOutputStream dos = new DataOutputStream(zipOutputStream);
-                dos.writeUTF(databaseInstanceUUID.toString());
-                dos.flush();
-                //                dos.close();
-              } finally {
-                zipOutputStream.flush();
-              }
+            writeAheadLog.addCutTillLimit(freezeLsn);
+
+            writeAheadLog.appendNewSegment();
+            startSegment = writeAheadLog.activeSegment();
+
+            getLastMetadata()
+                .ifPresent(
+                    metadata -> {
+                      try {
+                        writeAheadLog.log(new MetaDataRecord(metadata));
+                      } catch (final IOException e) {
+                        throw new IllegalStateException("Error during write of metadata", e);
+                      }
+                    });
+          } finally {
+            atomicOperationsManager.releaseAtomicOperations(newSegmentFreezeId);
+          }
+
+          try {
+            backupIv(zipOutputStream);
+
+            final byte[] encryptionIv = new byte[16];
+            final SecureRandom secureRandom = new SecureRandom();
+            secureRandom.nextBytes(encryptionIv);
+
+            backupEncryptedIv(zipOutputStream, encryptionIv);
+
+            final String aesKeyEncoded =
+                getConfiguration()
+                    .getContextConfiguration()
+                    .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+            final byte[] aesKey =
+                aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+
+            if (aesKey != null
+                && aesKey.length != 16
+                && aesKey.length != 24
+                && aesKey.length != 32) {
+              throw new OInvalidStorageEncryptionKeyException(
+                  "Invalid length of the encryption key, provided size is " + aesKey.length);
             }
 
-            final long newSegmentFreezeId =
-                atomicOperationsManager.freezeAtomicOperations(null, null);
-            try {
-              final OLogSequenceNumber startLsn = writeAheadLog.end();
+            lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream, encryptionIv, aesKey);
+            final OLogSequenceNumber lastWALLsn =
+                copyWALToIncrementalBackup(zipOutputStream, startSegment);
 
-              if (startLsn != null) freezeLsn = startLsn;
-              else freezeLsn = new OLogSequenceNumber(0, 0);
-
-              writeAheadLog.addCutTillLimit(freezeLsn);
-
-              writeAheadLog.appendNewSegment();
-              startSegment = writeAheadLog.activeSegment();
-
-              getLastMetadata()
-                  .ifPresent(
-                      metadata -> {
-                        try {
-                          writeAheadLog.log(new MetaDataRecord(metadata));
-                        } catch (final IOException e) {
-                          throw new IllegalStateException("Error during write of metadata", e);
-                        }
-                      });
-            } finally {
-              atomicOperationsManager.releaseAtomicOperations(newSegmentFreezeId);
-            }
-
-            try {
-              backupIv(zipOutputStream);
-
-              final byte[] encryptionIv = new byte[16];
-              final SecureRandom secureRandom = new SecureRandom();
-              secureRandom.nextBytes(encryptionIv);
-
-              backupEncryptedIv(zipOutputStream, encryptionIv);
-
-              final String aesKeyEncoded =
-                  getConfiguration()
-                      .getContextConfiguration()
-                      .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
-              final byte[] aesKey =
-                  aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
-
-              if (aesKey != null
-                  && aesKey.length != 16
-                  && aesKey.length != 24
-                  && aesKey.length != 32) {
-                throw new OInvalidStorageEncryptionKeyException(
-                    "Invalid length of the encryption key, provided size is " + aesKey.length);
-              }
-
-              lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream, encryptionIv, aesKey);
-              final OLogSequenceNumber lastWALLsn =
-                  copyWALToIncrementalBackup(zipOutputStream, startSegment);
-
-              if (lastWALLsn != null && (lastLsn == null || lastWALLsn.compareTo(lastLsn) > 0)) {
-                lastLsn = lastWALLsn;
-              }
-            } finally {
-              writeAheadLog.removeCutTillLimit(freezeLsn);
+            if (lastWALLsn != null && (lastLsn == null || lastWALLsn.compareTo(lastLsn) > 0)) {
+              lastLsn = lastWALLsn;
             }
           } finally {
-            try {
-              zipOutputStream.flush();
-            } catch (IOException e) {
-              OLogManager.instance().warn(this, "Failed to flush resource " + zipOutputStream);
-            }
+            writeAheadLog.removeCutTillLimit(freezeLsn);
           }
         } finally {
           try {
-            bufferedOutputStream.flush();
+            zipOutputStream.finish();
+            zipOutputStream.flush();
           } catch (IOException e) {
-            OLogManager.instance().warn(this, "Failed to flush resource " + bufferedOutputStream);
+            OLogManager.instance().warn(this, "Failed to flush resource " + zipOutputStream);
           }
         }
       } finally {
