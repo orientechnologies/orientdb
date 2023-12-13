@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class BackupRestoreTest {
@@ -63,6 +64,42 @@ public class BackupRestoreTest {
       simpleFill(db);
       backup(db);
 
+      for (int i = 0; i < repeat; i++) {
+        restore(db);
+        simpleCheck(db);
+      }
+    }
+  }
+
+  @Test
+  @Ignore
+  public void testBackupLocalToMemory() throws IOException {
+    try (OrientDB db = new OrientDB("embedded:" + basePath, OrientDBConfig.defaultConfig())) {
+      db.execute("create database testdb plocal users (admin identified by 'adminpwd' role admin) ")
+          .close();
+      simpleFill(db);
+      backup(db);
+      db.execute("drop database testdb").close();
+      db.execute("create database testdb memory users (admin identified by 'adminpwd' role admin) ")
+          .close();
+      for (int i = 0; i < repeat; i++) {
+        restore(db);
+        simpleCheck(db);
+      }
+    }
+  }
+
+  @Test
+  @Ignore
+  public void testBackupMemoryToLocal() throws IOException {
+    try (OrientDB db = new OrientDB("embedded:" + basePath, OrientDBConfig.defaultConfig())) {
+      db.execute("create database testdb memory users (admin identified by 'adminpwd' role admin) ")
+          .close();
+      simpleFill(db);
+      backup(db);
+      db.execute("drop database testdb").close();
+      db.execute("create database testdb plocal users (admin identified by 'adminpwd' role admin) ")
+          .close();
       for (int i = 0; i < repeat; i++) {
         restore(db);
         simpleCheck(db);

@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -56,7 +57,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
 
   private final ConcurrentMap<Integer, MemoryFile> files = new ConcurrentHashMap<>();
 
-  private int counter;
+  private final Random fileIdGen = new Random();
 
   private final int pageSize;
   private final int id;
@@ -81,8 +82,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
       Integer fileId = fileNameIdMap.get(fileName);
 
       if (fileId == null) {
-        counter++;
-        final int id = counter;
+        final int id = fileIdGen.nextInt(Integer.MAX_VALUE - 1) + 1;
 
         files.put(id, new MemoryFile(this.id, id));
         fileNameIdMap.put(fileName, id);
@@ -129,8 +129,8 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   public final long bookFileId(final String fileName) {
     metadataLock.lock();
     try {
-      counter++;
-      return composeFileId(id, counter);
+      final int fileId = fileIdGen.nextInt(Integer.MAX_VALUE - 1) + 1;
+      return composeFileId(id, fileId);
     } finally {
       metadataLock.unlock();
     }
