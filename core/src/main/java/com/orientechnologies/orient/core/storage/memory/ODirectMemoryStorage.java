@@ -97,7 +97,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   @Override
   protected void initWalAndDiskCache(final OContextConfiguration contextConfiguration) {
     if (writeAheadLog == null) {
-      writeAheadLog = new OMemoryWriteAheadLog();
+      writeAheadLog = new OMemoryWriteAheadLog(this.name);
     }
 
     final ODirectMemoryOnlyDiskCache diskCache =
@@ -338,15 +338,13 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
             "Invalid length of the encryption key, provided size is " + aesKey.length);
       }
 
-      final OQuarto<Locale, OContextConfiguration, String, Locale> quarto =
-          preprocessingIncrementalRestore();
+      final OQuarto<Locale, OContextConfiguration, String, Locale> quarto = preprocessingRestore();
       final Locale serverLocale = quarto.one;
       final OContextConfiguration contextConfiguration = quarto.two;
       final String charset = quarto.three;
       final Locale locale = quarto.four;
 
-      restoreFromIncrementalBackup(
-          charset, serverLocale, locale, contextConfiguration, aesKey, in, true);
+      restoreFromBackup(charset, serverLocale, locale, contextConfiguration, aesKey, in, true);
 
       postProcessIncrementalRestore(contextConfiguration);
     } catch (IOException e) {
@@ -435,7 +433,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
     }
   }
 
-  private void restoreFromIncrementalBackup(
+  private void restoreFromBackup(
       final String charset,
       final Locale serverLocale,
       final Locale locale,
@@ -624,7 +622,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
     }
   }
 
-  private OQuarto<Locale, OContextConfiguration, String, Locale> preprocessingIncrementalRestore()
+  private OQuarto<Locale, OContextConfiguration, String, Locale> preprocessingRestore()
       throws IOException {
     final Locale serverLocale = configuration.getLocaleInstance();
     final OContextConfiguration contextConfiguration = configuration.getContextConfiguration();

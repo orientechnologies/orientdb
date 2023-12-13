@@ -20,14 +20,22 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -36,6 +44,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   private final AtomicInteger nextPosition = new AtomicInteger();
   private final AtomicInteger nextOperationId = new AtomicInteger();
+
+  private volatile ByteArrayOutputStream buffer;
+  private final String storageName;
+
+  public OMemoryWriteAheadLog(String storageName) {
+    this.storageName = storageName;
+  }
+
+  private void startBuffering() {
+    buffer = new ByteArrayOutputStream();
+  }
+
+  private void stopBuffering() {
+    buffer = null;
+  }
 
   @Override
   public OLogSequenceNumber begin() {
@@ -76,6 +99,18 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   public OLogSequenceNumber log(WriteableWALRecord record) {
     final OLogSequenceNumber lsn = new OLogSequenceNumber(0, nextPosition.incrementAndGet());
     record.setLsn(lsn);
+    OutputStream out = this.buffer;
+    if (out != null) {
+      ByteBuffer serializedRecord = OWALRecordsFactory.toStream(record);
+      try {
+        byte[] recordSize = new byte[OIntegerSerializer.INT_SIZE];
+        OIntegerSerializer.INSTANCE.serializeNative(serializedRecord.limit(), recordSize, 0);
+        out.write(recordSize);
+        out.write(serializedRecord.array());
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException(e.getMessage()), e);
+      }
+    }
 
     return lsn;
   }
@@ -119,10 +154,14 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   public void moveLsnAfter(OLogSequenceNumber lsn) {}
 
   @Override
-  public void addCutTillLimit(OLogSequenceNumber lsn) {}
+  public void addCutTillLimit(OLogSequenceNumber lsn) {
+    startBuffering();
+  }
 
   @Override
-  public void removeCutTillLimit(OLogSequenceNumber lsn) {}
+  public void removeCutTillLimit(OLogSequenceNumber lsn) {
+    stopBuffering();
+  }
 
   @Override
   public File[] nonActiveSegments(long fromSegment) {
@@ -137,6 +176,18 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
   public long activeSegment() {
     return 0;
+  }
+
+  public void backupBuffer(ZipOutputStream output) throws IOException {
+    final ZipEntry entry = new ZipEntry(getSegmentName(0));
+    output.putNextEntry(entry);
+    ByteArrayOutputStream out = this.buffer;
+    this.buffer = null;
+    output.write(out.toByteArray());
+  }
+
+  private String getSegmentName(final long segment) {
+    return storageName + "." + segment + WAL_SEGMENT_EXTENSION;
   }
 
   @Override
