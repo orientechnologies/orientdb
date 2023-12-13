@@ -248,8 +248,8 @@ public abstract class OAbstractPaginatedStorage
         OPageIsBrokenListener,
         OStorage {
 
-  private static final String CONF_UTF_8_ENTRY_NAME = "database_utf8.ocf";
-  private static final String CONF_ENTRY_NAME = "database.ocf";
+  protected static final String CONF_UTF_8_ENTRY_NAME = "database_utf8.ocf";
+  protected static final String CONF_ENTRY_NAME = "database.ocf";
 
   protected static final String ALGORITHM_NAME = "AES";
   protected static final String TRANSFORMATION = "AES/CTR/NoPadding";
@@ -5050,7 +5050,7 @@ public abstract class OAbstractPaginatedStorage
     zipOutputStream.closeEntry();
   }
 
-  private void backupIv(final ZipOutputStream zipOutputStream) throws IOException {
+  protected void backupIv(final ZipOutputStream zipOutputStream) throws IOException {
     final ZipEntry zipEntry = new ZipEntry(IV_NAME);
     zipOutputStream.putNextEntry(zipEntry);
 
@@ -5058,14 +5058,14 @@ public abstract class OAbstractPaginatedStorage
     zipOutputStream.closeEntry();
   }
 
-  private byte[] restoreIv(final ZipInputStream zipInputStream) throws IOException {
+  protected byte[] restoreIv(final ZipInputStream zipInputStream) throws IOException {
     final byte[] iv = new byte[16];
     OIOUtils.readFully(zipInputStream, iv, 0, iv.length);
 
     return iv;
   }
 
-  private OLogSequenceNumber backupPagesWithChanges(
+  protected OLogSequenceNumber backupPagesWithChanges(
       final OLogSequenceNumber changeLsn,
       final ZipOutputStream stream,
       final byte[] encryptionIv,
@@ -5435,7 +5435,7 @@ public abstract class OAbstractPaginatedStorage
 
   protected abstract Path checkAndCleanPath(String path);
 
-  private byte[] restoreEncryptionIv(final ZipInputStream zipInputStream) throws IOException {
+  protected byte[] restoreEncryptionIv(final ZipInputStream zipInputStream) throws IOException {
     final byte[] iv = new byte[16];
     int read = 0;
     while (read < iv.length) {
@@ -5452,7 +5452,7 @@ public abstract class OAbstractPaginatedStorage
     return iv;
   }
 
-  private void replaceConfiguration(ZipInputStream zipInputStream) throws IOException {
+  protected void replaceConfiguration(ZipInputStream zipInputStream) throws IOException {
     byte[] buffer = new byte[1024];
 
     int rb = 0;

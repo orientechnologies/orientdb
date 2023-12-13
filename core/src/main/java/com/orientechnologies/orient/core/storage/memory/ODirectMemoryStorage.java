@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.memory;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -41,11 +42,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OMemoryWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
@@ -60,6 +64,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -97,7 +102,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   @Override
   protected void initWalAndDiskCache(final OContextConfiguration contextConfiguration) {
     if (writeAheadLog == null) {
-      writeAheadLog = new OMemoryWriteAheadLog();
+      writeAheadLog = new OMemoryWriteAheadLog(this.name);
     }
 
     final ODirectMemoryOnlyDiskCache diskCache =
@@ -336,15 +341,13 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
             "Invalid length of the encryption key, provided size is " + aesKey.length);
       }
 
-      final OQuarto<Locale, OContextConfiguration, String, Locale> quarto =
-          preprocessingIncrementalRestore();
+      final OQuarto<Locale, OContextConfiguration, String, Locale> quarto = preprocessingRestore();
       final Locale serverLocale = quarto.one;
       final OContextConfiguration contextConfiguration = quarto.two;
       final String charset = quarto.three;
       final Locale locale = quarto.four;
 
-      restoreFromIncrementalBackup(
-          charset, serverLocale, locale, contextConfiguration, aesKey, in, true);
+      restoreFromBackup(charset, serverLocale, locale, contextConfiguration, aesKey, in, true);
 
       postProcessIncrementalRestore(contextConfiguration);
     } catch (IOException e) {
@@ -353,6 +356,26 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
     } finally {
       stateLock.writeLock().unlock();
     }
+  }
+
+  private OQuarto<Locale, OContextConfiguration, String, Locale> preprocessingRestore()
+      throws IOException {
+    final Locale serverLocale = configuration.getLocaleInstance();
+    final OContextConfiguration contextConfiguration = configuration.getContextConfiguration();
+    final String charset = configuration.getCharset();
+    final Locale locale = configuration.getLocaleInstance();
+
+    atomicOperationsManager.executeInsideAtomicOperation(
+        null,
+        atomicOperation -> {
+          closeClusters(false);
+          closeIndexes(atomicOperation, false);
+          ((OClusterBasedStorageConfiguration) configuration).close(atomicOperation);
+        });
+
+    configuration = null;
+
+    return new OQuarto<>(serverLocale, contextConfiguration, charset, locale);
   }
 
   protected void postProcessIncrementalRestore(OContextConfiguration contextConfiguration)
@@ -387,6 +410,196 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
         atomicOperation2 -> {
           generateDatabaseInstanceId(atomicOperation2);
         });
+  }
+
+  private void restoreFromBackup(
+      final String charset,
+      final Locale serverLocale,
+      final Locale locale,
+      final OContextConfiguration contextConfiguration,
+      final byte[] aesKey,
+      final InputStream inputStream,
+      final boolean isFull)
+      throws IOException {
+    stateLock.writeLock().lock();
+    try {
+
+      final List<String> currentFiles = new ArrayList<>(writeCache.files().keySet());
+
+      final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+      final ZipInputStream zipInputStream =
+          new ZipInputStream(bufferedInputStream, Charset.forName(charset));
+      final int pageSize = writeCache.pageSize();
+
+      ZipEntry zipEntry;
+      OLogSequenceNumber maxLsn = null;
+
+      List<String> processedFiles = new ArrayList<>();
+
+      if (isFull) {
+        final Map<String, Long> files = writeCache.files();
+        for (Map.Entry<String, Long> entry : files.entrySet()) {
+          final long fileId = writeCache.fileIdByName(entry.getKey());
+
+          // assert entry.getValue().equals(fileId);
+          readCache.deleteFile(fileId, writeCache);
+        }
+      }
+
+      final File walTempDir = createWalTempDirectory();
+
+      byte[] encryptionIv = null;
+      byte[] walIv = null;
+
+      entryLoop:
+      while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+        if (zipEntry.getName().equals(IV_NAME)) {
+          walIv = restoreIv(zipInputStream);
+          continue;
+        }
+
+        if (zipEntry.getName().equals(ENCRYPTION_IV)) {
+          encryptionIv = restoreEncryptionIv(zipInputStream);
+          continue;
+        }
+
+        if (zipEntry.getName().equals(CONF_ENTRY_NAME)) {
+          replaceConfiguration(zipInputStream);
+
+          continue;
+        }
+
+        if (zipEntry.getName().equalsIgnoreCase("database_instance.uuid")) {
+          continue;
+        }
+
+        if (zipEntry.getName().equals(CONF_UTF_8_ENTRY_NAME)) {
+          replaceConfiguration(zipInputStream);
+
+          continue;
+        }
+
+        if (zipEntry
+            .getName()
+            .toLowerCase(serverLocale)
+            .endsWith(CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION)) {
+          final String walName = zipEntry.getName();
+          final int segmentIndex =
+              walName.lastIndexOf(
+                  ".", walName.length() - CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION.length() - 1);
+          final String storageName = getName();
+
+          if (segmentIndex < 0) {
+            throw new IllegalStateException("Can not find index of WAL segment");
+          }
+
+          addFileToDirectory(
+              storageName + walName.substring(segmentIndex), zipInputStream, walTempDir);
+          continue;
+        }
+
+        if (aesKey != null && encryptionIv == null) {
+          throw new OSecurityException("IV can not be null if encryption key is provided");
+        }
+
+        final byte[] binaryFileId = new byte[OLongSerializer.LONG_SIZE];
+        OIOUtils.readFully(zipInputStream, binaryFileId, 0, binaryFileId.length);
+
+        final long expectedFileId = OLongSerializer.INSTANCE.deserialize(binaryFileId, 0);
+        long fileId;
+
+        if (!writeCache.exists(zipEntry.getName())) {
+          fileId = readCache.addFile(zipEntry.getName(), expectedFileId, writeCache);
+        } else {
+          fileId = writeCache.fileIdByName(zipEntry.getName());
+        }
+
+        if (!writeCache.fileIdsAreEqual(expectedFileId, fileId))
+          throw new OStorageException(
+              "Can not restore database from backup because expected and actual file ids are not"
+                  + " the same");
+
+        while (true) {
+          final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
+
+          int rb = 0;
+
+          while (rb < data.length) {
+            final int b = zipInputStream.read(data, rb, data.length - rb);
+
+            if (b == -1) {
+              if (rb > 0)
+                throw new OStorageException("Can not read data from file " + zipEntry.getName());
+              else {
+                processedFiles.add(zipEntry.getName());
+                continue entryLoop;
+              }
+            }
+
+            rb += b;
+          }
+
+          final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
+
+          if (aesKey != null) {
+            doEncryptionDecryption(
+                Cipher.DECRYPT_MODE, aesKey, expectedFileId, pageIndex, data, encryptionIv);
+          }
+
+          OCacheEntry cacheEntry =
+              readCache.loadForWrite(fileId, pageIndex, writeCache, true, null);
+
+          if (cacheEntry == null) {
+            do {
+              if (cacheEntry != null) readCache.releaseFromWrite(cacheEntry, writeCache, true);
+
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache, null);
+            } while (cacheEntry.getPageIndex() != pageIndex);
+          }
+
+          try {
+            final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
+            final OLogSequenceNumber backedUpPageLsn =
+                ODurablePage.getLogSequenceNumber(OLongSerializer.LONG_SIZE, data);
+            if (isFull) {
+              buffer.position(0);
+              buffer.put(data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+
+              if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) < 0) {
+                maxLsn = backedUpPageLsn;
+              }
+            } else {
+              final OLogSequenceNumber currentPageLsn =
+                  ODurablePage.getLogSequenceNumberFromPage(buffer);
+              if (backedUpPageLsn.compareTo(currentPageLsn) > 0) {
+                buffer.position(0);
+                buffer.put(
+                    data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+
+                if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) < 0) {
+                  maxLsn = backedUpPageLsn;
+                }
+              }
+            }
+
+          } finally {
+            readCache.releaseFromWrite(cacheEntry, writeCache, true);
+          }
+        }
+      }
+
+      currentFiles.removeAll(processedFiles);
+
+      for (String file : currentFiles) {
+        if (writeCache.exists(file)) {
+          final long fileId = writeCache.fileIdByName(file);
+          readCache.deleteFile(fileId, writeCache);
+        }
+      }
+
+    } finally {
+      stateLock.writeLock().unlock();
+    }
   }
 
   @Override
