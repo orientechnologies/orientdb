@@ -21,26 +21,53 @@
 package com.orientechnologies.orient.core.storage.memory;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.util.OQuarto;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
+import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OMemoryWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -48,6 +75,15 @@ import java.util.zip.ZipOutputStream;
  */
 public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   private static final int ONE_KB = 1024;
+
+  private static final String ALGORITHM_NAME = "AES";
+  private static final String TRANSFORMATION = "AES/CTR/NoPadding";
+  private static final String IV_EXT = ".iv";
+  protected static final String IV_NAME = "data" + IV_EXT;
+
+  private static final ThreadLocal<Cipher> CIPHER =
+      ThreadLocal.withInitial(ODirectMemoryStorage::getCipherInstance);
+  private static final OLogger logger = OLogManager.instance().logger(ODirectMemoryStorage.class);
 
   public ODirectMemoryStorage(
       final String name,
@@ -129,14 +165,154 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
       final OCommandOutputListener iListener,
       final int compressionLevel,
       final int bufferSize) {
+
+    checkOpennessAndMigration();
+
+    stateLock.readLock().lock();
     try {
-      throw new UnsupportedOperationException();
-    } catch (final RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (final Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+
+      checkOpennessAndMigration();
+      freeze(false);
+
+      try {
+        final ZipOutputStream zipOutputStream =
+            new ZipOutputStream(
+                new BufferedOutputStream(out), Charset.forName(configuration.getCharset()));
+        try {
+
+          final byte[] encryptionIv = new byte[16];
+          final SecureRandom secureRandom = new SecureRandom();
+          secureRandom.nextBytes(encryptionIv);
+
+          final String aesKeyEncoded =
+              getConfiguration()
+                  .getContextConfiguration()
+                  .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+          final byte[] aesKey =
+              aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+
+          if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
+            throw new OInvalidStorageEncryptionKeyException(
+                "Invalid length of the encryption key, provided size is " + aesKey.length);
+          }
+
+          backupPagesWithChanges(zipOutputStream, encryptionIv, aesKey);
+
+        } catch (IOException e) {
+          OException.wrapException(new OStorageException("Error on memory file backup"), e);
+        } finally {
+          try {
+            zipOutputStream.close();
+          } catch (IOException e) {
+            logger.warn("Failed to flush resource " + zipOutputStream);
+          }
+        }
+      } finally {
+        release();
+      }
+    } finally {
+      stateLock.readLock().unlock();
+    }
+    return new ArrayList<>();
+  }
+
+  private void backupPagesWithChanges(
+      final ZipOutputStream stream, final byte[] encryptionIv, final byte[] aesKey)
+      throws IOException {
+
+    final Map<String, Long> files = writeCache.files();
+    final int pageSize = writeCache.pageSize();
+
+    for (Map.Entry<String, Long> entry : files.entrySet()) {
+      final String fileName = entry.getKey();
+
+      long fileId = entry.getValue();
+      fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
+
+      final long filledUpTo = writeCache.getFilledUpTo(fileId);
+      final ZipEntry zipEntry = new ZipEntry(fileName);
+
+      stream.putNextEntry(zipEntry);
+
+      final byte[] binaryFileId = new byte[OLongSerializer.LONG_SIZE];
+      OLongSerializer.INSTANCE.serialize(fileId, binaryFileId, 0);
+      stream.write(binaryFileId, 0, binaryFileId.length);
+
+      for (int pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
+        final OCacheEntry cacheEntry =
+            readCache.silentLoadForRead(fileId, pageIndex, writeCache, true);
+        cacheEntry.acquireSharedLock();
+        try {
+          final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
+          OLongSerializer.INSTANCE.serializeNative(pageIndex, data, 0);
+          ODurablePage.getPageData(
+              cacheEntry.getCachePointer().getBuffer(), data, OLongSerializer.LONG_SIZE, pageSize);
+
+          if (aesKey != null) {
+            doEncryptionDecryption(
+                Cipher.ENCRYPT_MODE, aesKey, fileId, pageIndex, data, encryptionIv);
+          }
+
+          stream.write(data);
+
+        } finally {
+          cacheEntry.releaseSharedLock();
+          readCache.releaseFromRead(cacheEntry);
+        }
+      }
+
+      stream.closeEntry();
+    }
+  }
+
+  protected static void doEncryptionDecryption(
+      final int mode,
+      final byte[] aesKey,
+      final long pageIndex,
+      final long fileId,
+      final byte[] backUpPage,
+      final byte[] encryptionIv) {
+    try {
+      final Cipher cipher = CIPHER.get();
+      final SecretKey secretKey = new SecretKeySpec(aesKey, ALGORITHM_NAME);
+
+      final byte[] updatedIv = new byte[16];
+      for (int i = 0; i < OLongSerializer.LONG_SIZE; i++) {
+        updatedIv[i] = (byte) (encryptionIv[i] ^ ((pageIndex >>> i) & 0xFF));
+      }
+
+      for (int i = 0; i < OLongSerializer.LONG_SIZE; i++) {
+        updatedIv[i + OLongSerializer.LONG_SIZE] =
+            (byte) (encryptionIv[i + OLongSerializer.LONG_SIZE] ^ ((fileId >>> i) & 0xFF));
+      }
+
+      cipher.init(mode, secretKey, new IvParameterSpec(updatedIv));
+
+      final byte[] data =
+          cipher.doFinal(
+              backUpPage, OLongSerializer.LONG_SIZE, backUpPage.length - OLongSerializer.LONG_SIZE);
+      System.arraycopy(
+          data,
+          0,
+          backUpPage,
+          OLongSerializer.LONG_SIZE,
+          backUpPage.length - OLongSerializer.LONG_SIZE);
+    } catch (InvalidKeyException e) {
+      throw OException.wrapException(new OInvalidStorageEncryptionKeyException(e.getMessage()), e);
+    } catch (InvalidAlgorithmParameterException e) {
+      throw new IllegalArgumentException("Invalid IV.", e);
+    } catch (IllegalBlockSizeException | BadPaddingException e) {
+      throw new IllegalStateException("Unexpected exception during CRT encryption.", e);
+    }
+  }
+
+  private static Cipher getCipherInstance() {
+    try {
+      return Cipher.getInstance(TRANSFORMATION);
+    } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+      throw OException.wrapException(
+          new OSecurityException("Implementation of encryption " + TRANSFORMATION + " is absent"),
+          e);
     }
   }
 
@@ -146,15 +322,71 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
       final Map<String, Object> options,
       final Callable<Object> callable,
       final OCommandOutputListener iListener) {
+    stateLock.writeLock().lock();
     try {
-      throw new UnsupportedOperationException();
-    } catch (final RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (final Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      final String aesKeyEncoded =
+          getConfiguration()
+              .getContextConfiguration()
+              .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+      final byte[] aesKey =
+          aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+
+      if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
+        throw new OInvalidStorageEncryptionKeyException(
+            "Invalid length of the encryption key, provided size is " + aesKey.length);
+      }
+
+      final OQuarto<Locale, OContextConfiguration, String, Locale> quarto =
+          preprocessingIncrementalRestore();
+      final Locale serverLocale = quarto.one;
+      final OContextConfiguration contextConfiguration = quarto.two;
+      final String charset = quarto.three;
+      final Locale locale = quarto.four;
+
+      restoreFromIncrementalBackup(
+          charset, serverLocale, locale, contextConfiguration, aesKey, in, true);
+
+      postProcessIncrementalRestore(contextConfiguration);
+    } catch (IOException e) {
+      throw OException.wrapException(
+          new OStorageException("Error during restore from incremental backup"), e);
+    } finally {
+      stateLock.writeLock().unlock();
     }
+  }
+
+  protected void postProcessIncrementalRestore(OContextConfiguration contextConfiguration)
+      throws IOException {
+    if (OClusterBasedStorageConfiguration.exists(writeCache)) {
+      configuration = new OClusterBasedStorageConfiguration(this);
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null,
+          atomicOperation ->
+              ((OClusterBasedStorageConfiguration) configuration)
+                  .load(contextConfiguration, atomicOperation));
+    } else {
+      if (configuration == null) {
+        configuration = new OClusterBasedStorageConfiguration(this);
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            atomicOperation ->
+                ((OClusterBasedStorageConfiguration) configuration)
+                    .load(contextConfiguration, atomicOperation));
+      }
+    }
+
+    atomicOperationsManager.executeInsideAtomicOperation(null, this::openClusters);
+    sbTreeCollectionManager.close();
+    sbTreeCollectionManager.load();
+    openIndexes();
+
+    flushAllData();
+
+    atomicOperationsManager.executeInsideAtomicOperation(
+        null,
+        atomicOperation2 -> {
+          generateDatabaseInstanceId(atomicOperation2);
+        });
   }
 
   @Override
