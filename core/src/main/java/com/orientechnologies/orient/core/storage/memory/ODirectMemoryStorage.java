@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyE
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -55,6 +56,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
@@ -195,13 +197,14 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
                 "Invalid length of the encryption key, provided size is " + aesKey.length);
           }
 
-          backupPagesWithChanges(zipOutputStream, encryptionIv, aesKey);
+          backupFiles(zipOutputStream, encryptionIv, aesKey);
 
         } catch (IOException e) {
           OException.wrapException(new OStorageException("Error on memory file backup"), e);
         } finally {
           try {
-            zipOutputStream.close();
+            zipOutputStream.finish();
+            zipOutputStream.flush();
           } catch (IOException e) {
             OLogManager.instance().warn(this, "Failed to flush resource " + zipOutputStream);
           }
@@ -215,7 +218,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
     return new ArrayList<>();
   }
 
-  private void backupPagesWithChanges(
+  private void backupFiles(
       final ZipOutputStream stream, final byte[] encryptionIv, final byte[] aesKey)
       throws IOException {
 
@@ -226,29 +229,24 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
       final String fileName = entry.getKey();
 
       long fileId = entry.getValue();
-      fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
+      int internalId = writeCache.internalFileId(fileId);
+      String entryName = OWOWCache.createInternalFileName(fileName, internalId);
+      fileId = writeCache.externalFileId(internalId);
 
       final long filledUpTo = writeCache.getFilledUpTo(fileId);
-      final ZipEntry zipEntry = new ZipEntry(fileName);
+
+      final ZipEntry zipEntry = new ZipEntry(entryName);
 
       stream.putNextEntry(zipEntry);
-
-      final byte[] binaryFileId = new byte[OLongSerializer.LONG_SIZE];
-      OLongSerializer.INSTANCE.serialize(fileId, binaryFileId, 0);
-      stream.write(binaryFileId, 0, binaryFileId.length);
 
       for (int pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
         final OCacheEntry cacheEntry =
             readCache.silentLoadForRead(fileId, pageIndex, writeCache, true);
         cacheEntry.acquireSharedLock();
         try {
-          final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
-          OLongSerializer.INSTANCE.serializeNative(pageIndex, data, 0);
+          final byte[] data = new byte[pageSize];
           ODurablePage.getPageData(
-              cacheEntry.getCachePointer().getBufferDuplicate(),
-              data,
-              OLongSerializer.LONG_SIZE,
-              pageSize);
+              cacheEntry.getCachePointer().getBufferDuplicate(), data, 0, pageSize);
 
           if (aesKey != null) {
             doEncryptionDecryption(
@@ -344,7 +342,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
       final String charset = quarto.three;
       final Locale locale = quarto.four;
 
-      restoreFromBackup(charset, serverLocale, locale, contextConfiguration, aesKey, in, true);
+      restoreFromBackup(charset, serverLocale, locale, contextConfiguration, aesKey, in);
 
       postProcessIncrementalRestore(contextConfiguration);
     } catch (IOException e) {
@@ -439,8 +437,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
       final Locale locale,
       final OContextConfiguration contextConfiguration,
       final byte[] aesKey,
-      final InputStream inputStream,
-      final boolean isFull)
+      final InputStream inputStream)
       throws IOException {
     stateLock.writeLock().lock();
     try {
@@ -457,14 +454,12 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
       List<String> processedFiles = new ArrayList<>();
 
-      if (isFull) {
-        final Map<String, Long> files = writeCache.files();
-        for (Map.Entry<String, Long> entry : files.entrySet()) {
-          final long fileId = writeCache.fileIdByName(entry.getKey());
+      final Map<String, Long> files = writeCache.files();
+      for (Map.Entry<String, Long> entry : files.entrySet()) {
+        final long fileId = writeCache.fileIdByName(entry.getKey());
 
-          // assert entry.getValue().equals(fileId);
-          readCache.deleteFile(fileId, writeCache);
-        }
+        // assert entry.getValue().equals(fileId);
+        readCache.deleteFile(fileId, writeCache);
       }
 
       final File walTempDir = createWalTempDirectory();
@@ -474,37 +469,40 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
       entryLoop:
       while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-        if (zipEntry.getName().equals(IV_NAME)) {
+        String zipEntryName = zipEntry.getName();
+        if (zipEntryName.equals(IV_NAME)) {
           walIv = restoreIv(zipInputStream);
           continue;
         }
 
-        if (zipEntry.getName().equals(ENCRYPTION_IV)) {
+        if (zipEntryName.equals(ENCRYPTION_IV)) {
           encryptionIv = restoreEncryptionIv(zipInputStream);
           continue;
         }
 
-        if (zipEntry.getName().equals(CONF_ENTRY_NAME)) {
+        if (zipEntryName.equals(CONF_ENTRY_NAME)) {
           replaceConfiguration(zipInputStream);
 
           continue;
         }
 
-        if (zipEntry.getName().equalsIgnoreCase("database_instance.uuid")) {
+        if (zipEntryName.equalsIgnoreCase("database_instance.uuid")) {
           continue;
         }
 
-        if (zipEntry.getName().equals(CONF_UTF_8_ENTRY_NAME)) {
+        if (zipEntryName.equals(CONF_UTF_8_ENTRY_NAME)) {
           replaceConfiguration(zipInputStream);
 
           continue;
         }
+        if (zipEntryName.toLowerCase(serverLocale).endsWith(".cm")) {
+          continue;
+        }
 
-        if (zipEntry
-            .getName()
+        if (zipEntryName
             .toLowerCase(serverLocale)
             .endsWith(CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION)) {
-          final String walName = zipEntry.getName();
+          final String walName = zipEntryName;
           final int segmentIndex =
               walName.lastIndexOf(
                   ".", walName.length() - CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION.length() - 1);
@@ -523,24 +521,20 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
           throw new OSecurityException("IV can not be null if encryption key is provided");
         }
 
-        final byte[] binaryFileId = new byte[OLongSerializer.LONG_SIZE];
-        OIOUtils.readFully(zipInputStream, binaryFileId, 0, binaryFileId.length);
-
-        final long expectedFileId = OLongSerializer.INSTANCE.deserialize(binaryFileId, 0);
         long fileId;
-
-        if (!writeCache.exists(zipEntry.getName())) {
-          fileId = readCache.addFile(zipEntry.getName(), expectedFileId, writeCache);
+        String fileName = OWOWCache.extractLogicalFileName(zipEntryName);
+        int internalId = OWOWCache.extractFileId(zipEntryName);
+        if (internalId == 0) {
+          fileId = writeCache.bookFileId(fileName);
         } else {
-          fileId = writeCache.fileIdByName(zipEntry.getName());
+          fileId = writeCache.externalFileId(internalId);
         }
+        fileId = readCache.addFile(fileName, fileId, writeCache);
 
-        if (!writeCache.fileIdsAreEqual(expectedFileId, fileId))
-          throw new OStorageException(
-              "Can not restore database from backup because expected and actual file ids are not the same");
-
+        int pageIndex = 0;
         while (true) {
-          final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
+          final byte[] data = new byte[pageSize];
+          Arrays.fill(data, (byte) 0);
 
           int rb = 0;
 
@@ -548,10 +542,8 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
             final int b = zipInputStream.read(data, rb, data.length - rb);
 
             if (b == -1) {
-              if (rb > 0)
-                throw new OStorageException("Can not read data from file " + zipEntry.getName());
-              else {
-                processedFiles.add(zipEntry.getName());
+              if (rb <= 0) {
+                processedFiles.add(fileName);
                 continue entryLoop;
               }
             }
@@ -559,11 +551,9 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
             rb += b;
           }
 
-          final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
-
           if (aesKey != null) {
             doEncryptionDecryption(
-                Cipher.DECRYPT_MODE, aesKey, expectedFileId, pageIndex, data, encryptionIv);
+                Cipher.DECRYPT_MODE, aesKey, fileId, pageIndex, data, encryptionIv);
           }
 
           OCacheEntry cacheEntry =
@@ -581,30 +571,17 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
             final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
             final OLogSequenceNumber backedUpPageLsn =
                 ODurablePage.getLogSequenceNumber(OLongSerializer.LONG_SIZE, data);
-            if (isFull) {
-              buffer.position(0);
-              buffer.put(data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+            buffer.position(0);
+            buffer.put(data, 0, data.length);
 
-              if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) < 0) {
-                maxLsn = backedUpPageLsn;
-              }
-            } else {
-              final OLogSequenceNumber currentPageLsn =
-                  ODurablePage.getLogSequenceNumberFromPage(buffer);
-              if (backedUpPageLsn.compareTo(currentPageLsn) > 0) {
-                buffer.position(0);
-                buffer.put(
-                    data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
-
-                if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) < 0) {
-                  maxLsn = backedUpPageLsn;
-                }
-              }
+            if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) < 0) {
+              maxLsn = backedUpPageLsn;
             }
 
           } finally {
             readCache.releaseFromWrite(cacheEntry, writeCache, true);
           }
+          pageIndex++;
         }
       }
 

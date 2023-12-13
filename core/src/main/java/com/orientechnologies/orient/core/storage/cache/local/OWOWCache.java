@@ -1863,7 +1863,7 @@ public final class OWOWCache extends OAbstractWriteCache
     return new AsyncFile(storagePath.resolve(internalFileName), pageSize, this.executor);
   }
 
-  private static String createInternalFileName(final String fileName, final int fileId) {
+  public static String createInternalFileName(final String fileName, final int fileId) {
     final int extSeparator = fileName.lastIndexOf('.');
 
     String prefix;
@@ -1889,6 +1889,57 @@ public final class OWOWCache extends OAbstractWriteCache
     }
 
     return prefix;
+  }
+
+  public static int extractFileId(final String fileName) {
+    final int extSeparator = fileName.lastIndexOf('.');
+
+    String whole;
+    if (extSeparator < 0) {
+      whole = fileName;
+    } else if (extSeparator == 0) {
+      whole = "";
+    } else {
+      whole = fileName.substring(0, extSeparator);
+    }
+
+    final int idSeparator = fileName.lastIndexOf('_');
+    if (idSeparator > 0) {
+      String curId = whole.substring(idSeparator + 1);
+      return Integer.parseInt(curId);
+    }
+    return 0;
+  }
+
+  public static String extractLogicalFileName(final String fileName) {
+    final int extSeparator = fileName.lastIndexOf('.');
+
+    String whole;
+    if (extSeparator < 0) {
+      whole = fileName;
+    } else if (extSeparator == 0) {
+      whole = "";
+    } else {
+      whole = fileName.substring(0, extSeparator);
+    }
+
+    final String suffix;
+    if (extSeparator < 0 || extSeparator == fileName.length() - 1) {
+      suffix = "";
+    } else {
+      suffix = fileName.substring(extSeparator + 1);
+    }
+
+    final int idSeparator = fileName.lastIndexOf('_');
+    if (idSeparator > 0) {
+      whole = whole.substring(0, idSeparator);
+    }
+
+    if (extSeparator >= 0) {
+      return whole + "." + suffix;
+    }
+
+    return whole;
   }
 
   /**
