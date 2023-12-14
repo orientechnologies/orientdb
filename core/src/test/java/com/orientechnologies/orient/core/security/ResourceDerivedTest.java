@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,7 +35,7 @@ import org.junit.Test;
 /** @author SDIPro */
 public class ResourceDerivedTest {
 
-  private ODatabaseDocumentTx db;
+  private ODatabaseDocument db;
 
   @Before
   public void before() {

@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
@@ -20,48 +20,32 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class OTruncateClassStatementExecutionTest {
-  static ODatabaseDocumentInternal database;
-
-  @BeforeClass
-  public static void beforeClass() {
-    database = new ODatabaseDocumentTx("memory:OTruncateClassStatementExecutionTest");
-    database.create();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    database.close();
-  }
+public class OTruncateClassStatementExecutionTest extends BaseMemoryInternalDatabase {
 
   @SuppressWarnings("unchecked")
   @Test
   public void testTruncateClass() {
 
-    OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
 
     final OIndex index = getOrCreateIndex(testClass);
 
-    database.command("truncate class test_class");
+    db.command("truncate class test_class");
 
-    database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(1, 2)));
-    database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(3, 0)));
+    db.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(1, 2)));
+    db.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(3, 0)));
 
-    database.command(new OCommandSQL("truncate class test_class")).execute();
+    db.command(new OCommandSQL("truncate class test_class")).execute();
 
-    database.save(
-        new ODocument(testClass).field("name", "x").field("data", Arrays.asList(5, 6, 7)));
-    database.save(
-        new ODocument(testClass).field("name", "y").field("data", Arrays.asList(8, 9, -1)));
+    db.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(5, 6, 7)));
+    db.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(8, 9, -1)));
 
-    OResultSet result = database.query("select from test_class");
+    OResultSet result = db.query("select from test_class");
     //    Assert.assertEquals(result.size(), 2);
 
     Set<Integer> set = new HashSet<Integer>();
@@ -85,20 +69,20 @@ public class OTruncateClassStatementExecutionTest {
 
   @Test
   public void testTruncateVertexClass() {
-    database.command("create class TestTruncateVertexClass extends V");
-    database.command("create vertex TestTruncateVertexClass set name = 'foo'");
+    db.command("create class TestTruncateVertexClass extends V");
+    db.command("create vertex TestTruncateVertexClass set name = 'foo'");
 
     try {
-      database.command("truncate class TestTruncateVertexClass");
+      db.command("truncate class TestTruncateVertexClass");
       Assert.fail();
     } catch (Exception e) {
     }
-    OResultSet result = database.query("select from TestTruncateVertexClass");
+    OResultSet result = db.query("select from TestTruncateVertexClass");
     Assert.assertTrue(result.hasNext());
     result.close();
 
-    database.command("truncate class TestTruncateVertexClass unsafe");
-    result = database.query("select from TestTruncateVertexClass");
+    db.command("truncate class TestTruncateVertexClass unsafe");
+    result = db.query("select from TestTruncateVertexClass");
     Assert.assertFalse(result.hasNext());
     result.close();
   }
@@ -106,14 +90,14 @@ public class OTruncateClassStatementExecutionTest {
   @Test
   public void testTruncateVertexClassSubclasses() {
 
-    database.command("create class TestTruncateVertexClassSuperclass");
-    database.command(
+    db.command("create class TestTruncateVertexClassSuperclass");
+    db.command(
         "create class TestTruncateVertexClassSubclass extends TestTruncateVertexClassSuperclass");
 
-    database.command("insert into TestTruncateVertexClassSuperclass set name = 'foo'");
-    database.command("insert into TestTruncateVertexClassSubclass set name = 'bar'");
+    db.command("insert into TestTruncateVertexClassSuperclass set name = 'foo'");
+    db.command("insert into TestTruncateVertexClassSubclass set name = 'bar'");
 
-    OResultSet result = database.query("select from TestTruncateVertexClassSuperclass");
+    OResultSet result = db.query("select from TestTruncateVertexClassSuperclass");
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());
       result.next();
@@ -121,15 +105,15 @@ public class OTruncateClassStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
 
-    database.command("truncate class TestTruncateVertexClassSuperclass ");
-    result = database.query("select from TestTruncateVertexClassSubclass");
+    db.command("truncate class TestTruncateVertexClassSuperclass ");
+    result = db.query("select from TestTruncateVertexClassSubclass");
     Assert.assertTrue(result.hasNext());
     result.next();
     Assert.assertFalse(result.hasNext());
     result.close();
 
-    database.command("truncate class TestTruncateVertexClassSuperclass polymorphic");
-    result = database.query("select from TestTruncateVertexClassSubclass");
+    db.command("truncate class TestTruncateVertexClassSuperclass polymorphic");
+    result = db.query("select from TestTruncateVertexClassSubclass");
     Assert.assertFalse(result.hasNext());
     result.close();
   }
@@ -137,30 +121,29 @@ public class OTruncateClassStatementExecutionTest {
   @Test
   public void testTruncateVertexClassSubclassesWithIndex() {
 
-    database.command("create class TestTruncateVertexClassSuperclassWithIndex");
-    database.command("create property TestTruncateVertexClassSuperclassWithIndex.name STRING");
-    database.command(
+    db.command("create class TestTruncateVertexClassSuperclassWithIndex");
+    db.command("create property TestTruncateVertexClassSuperclassWithIndex.name STRING");
+    db.command(
         "create index TestTruncateVertexClassSuperclassWithIndex_index on TestTruncateVertexClassSuperclassWithIndex (name) NOTUNIQUE");
 
-    database.command(
+    db.command(
         "create class TestTruncateVertexClassSubclassWithIndex extends TestTruncateVertexClassSuperclassWithIndex");
 
-    database.command("insert into TestTruncateVertexClassSuperclassWithIndex set name = 'foo'");
-    database.command("insert into TestTruncateVertexClassSubclassWithIndex set name = 'bar'");
+    db.command("insert into TestTruncateVertexClassSuperclassWithIndex set name = 'foo'");
+    db.command("insert into TestTruncateVertexClassSubclassWithIndex set name = 'bar'");
 
-    if (!((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (!((ODatabaseInternal) db).getStorage().isRemote()) {
       final OIndexManagerAbstract indexManager =
-          ((OMetadataInternal) database.getMetadata()).getIndexManagerInternal();
+          ((OMetadataInternal) db.getMetadata()).getIndexManagerInternal();
       final OIndex indexOne =
           indexManager.getIndex(
-              (ODatabaseDocumentInternal) database,
-              "TestTruncateVertexClassSuperclassWithIndex_index");
+              (ODatabaseDocumentInternal) db, "TestTruncateVertexClassSuperclassWithIndex_index");
       Assert.assertEquals(2, indexOne.getInternal().size());
 
-      database.command("truncate class TestTruncateVertexClassSubclassWithIndex");
+      db.command("truncate class TestTruncateVertexClassSubclassWithIndex");
       Assert.assertEquals(1, indexOne.getInternal().size());
 
-      database.command("truncate class TestTruncateVertexClassSuperclassWithIndex polymorphic");
+      db.command("truncate class TestTruncateVertexClassSuperclassWithIndex polymorphic");
       Assert.assertEquals(0, indexOne.getInternal().size());
     }
   }
@@ -174,8 +157,7 @@ public class OTruncateClassStatementExecutionTest {
   }
 
   private OIndex getOrCreateIndex(OClass testClass) {
-    OIndex index =
-        database.getMetadata().getIndexManagerInternal().getIndex(database, "test_class_by_data");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "test_class_by_data");
     if (index == null) {
       testClass.createProperty("data", OType.EMBEDDEDLIST, OType.INTEGER);
       index = testClass.createIndex("test_class_by_data", OClass.INDEX_TYPE.UNIQUE, "data");
@@ -197,21 +179,21 @@ public class OTruncateClassStatementExecutionTest {
   @Test
   public void testTruncateClassWithCommandCache() {
 
-    OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
 
-    database.command("truncate class test_class");
+    db.command("truncate class test_class");
 
-    database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(1, 2)));
-    database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(3, 0)));
+    db.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(1, 2)));
+    db.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(3, 0)));
 
-    OResultSet result = database.query("select from test_class");
+    OResultSet result = db.query("select from test_class");
     Assert.assertEquals(toList(result).size(), 2);
 
     result.close();
-    database.command("truncate class test_class");
+    db.command("truncate class test_class");
 
-    result = database.query("select from test_class");
+    result = db.query("select from test_class");
     Assert.assertEquals(toList(result).size(), 0);
     result.close();
 

@@ -1,40 +1,25 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class OTruncateClusterStatementExecutionTest {
-  static ODatabaseDocument database;
-
-  @BeforeClass
-  public static void beforeClass() {
-    database = new ODatabaseDocumentTx("memory:OTruncateClusterStatementExecutionTest");
-    database.create();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    database.close();
-  }
+public class OTruncateClusterStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test
   public void testClusterWithIndex() {
     final String clusterName = "TruncateClusterWithIndex";
-    final int clusterId = database.addCluster(clusterName);
+    final int clusterId = db.addCluster(clusterName);
 
     final String className = "TruncateClusterClass";
-    final OSchema schema = database.getMetadata().getSchema();
+    final OSchema schema = db.getMetadata().getSchema();
 
     final OClass clazz = schema.createClass(className);
     clazz.addClusterId(clusterId);
@@ -47,19 +32,19 @@ public class OTruncateClusterStatementExecutionTest {
 
     document.save(clusterName);
 
-    Assert.assertEquals(database.countClass(className), 1);
-    Assert.assertEquals(database.countClusterElements(clusterId), 1);
+    Assert.assertEquals(db.countClass(className), 1);
+    Assert.assertEquals(db.countClusterElements(clusterId), 1);
 
-    OResultSet indexQuery = database.query("select from TruncateClusterClass where value='val'");
+    OResultSet indexQuery = db.query("select from TruncateClusterClass where value='val'");
     Assert.assertEquals(toList(indexQuery).size(), 1);
     indexQuery.close();
 
-    database.command("truncate cluster " + clusterName);
+    db.command("truncate cluster " + clusterName);
 
-    Assert.assertEquals(database.countClass(className), 0);
-    Assert.assertEquals(database.countClusterElements(clusterId), 0);
+    Assert.assertEquals(db.countClass(className), 0);
+    Assert.assertEquals(db.countClusterElements(clusterId), 0);
 
-    indexQuery = database.query("select from TruncateClusterClass where value='val'");
+    indexQuery = db.query("select from TruncateClusterClass where value='val'");
 
     Assert.assertEquals(toList(indexQuery).size(), 0);
     indexQuery.close();

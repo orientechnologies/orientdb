@@ -2,40 +2,18 @@ package com.orientechnologies.orient.server.network;
 
 import static org.junit.Assert.assertNotEquals;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.server.OServer;
-import java.io.File;
-import org.junit.After;
-import org.junit.Before;
+import com.orientechnologies.orient.server.BaseServerMemoryDatabase;
 import org.junit.Test;
 
 /** Created by tglman on 19/07/17. */
-public class RemoteSequenceTest {
-
-  private OServer server;
-
-  @Before
-  public void before() throws Exception {
-    server = new OServer(false);
-    server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
-    server.activate();
-
-    OServerAdmin server = new OServerAdmin("remote:localhost");
-    server.connect("root", "root");
-    server.createDatabase(RemoteSequenceTest.class.getSimpleName(), "graph", "memory");
-  }
+public class RemoteSequenceTest extends BaseServerMemoryDatabase {
 
   @Test
   public void testSequences() {
-    ODatabaseDocument database =
-        new ODatabaseDocumentTx("remote:localhost/" + RemoteSequenceTest.class.getSimpleName());
-    database.open("admin", "admin");
+    ODatabaseDocument database = db;
     database.command(new OCommandSQL("DROP CLASS CV1")).execute();
     database.command(new OCommandSQL("DROP CLASS CV2")).execute();
     database.command(new OCommandSQL("DROP CLASS SV")).execute();
@@ -68,14 +46,5 @@ public class RemoteSequenceTest {
     doc1.field("testID", 1);
     database.save(doc1);
     assertNotEquals(doc1.field("uniqueID"), doc.field("uniqueID"));
-  }
-
-  @After
-  public void after() {
-    server.shutdown();
-
-    Orient.instance().shutdown();
-    OFileUtils.deleteRecursively(new File(server.getDatabaseDirectory()));
-    Orient.instance().startup();
   }
 }

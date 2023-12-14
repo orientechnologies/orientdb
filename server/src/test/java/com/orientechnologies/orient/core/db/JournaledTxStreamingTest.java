@@ -23,8 +23,8 @@ package com.orientechnologies.orient.core.db;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import java.io.DataInputStream;
@@ -46,7 +46,8 @@ public class JournaledTxStreamingTest {
 
   private File buildDir;
   private Process serverProcess;
-  private ODatabaseDocumentTx db;
+  private OrientDB ctx;
+  private ODatabaseDocument db;
   private DataInputStream stream;
 
   @Before
@@ -65,15 +66,11 @@ public class JournaledTxStreamingTest {
 
     spawnServer();
 
-    final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3500");
-    serverAdmin.connect("root", "root");
-    serverAdmin.createDatabase(JournaledTxStreamingTest.class.getSimpleName(), "graph", "plocal");
-    serverAdmin.close();
+    ctx = new OrientDB("remote:localhost:3500", "root", "root", OrientDBConfig.defaultConfig());
+    ctx.execute("create database " + JournaledTxStreamingTest.class.getSimpleName() + " plocal ")
+        .close();
 
-    db =
-        new ODatabaseDocumentTx(
-            "remote:localhost:3500/" + JournaledTxStreamingTest.class.getSimpleName());
-    db.open("root", "root");
+    db = ctx.open(JournaledTxStreamingTest.class.getSimpleName(), "root", "root");
 
     final Socket socket = new Socket();
     socket.connect(new InetSocketAddress(InetAddress.getLocalHost(), 3600));
@@ -102,7 +99,8 @@ public class JournaledTxStreamingTest {
     for (int i = 0; i < ITERATIONS; ++i) {
       db.begin();
       txs.addLast(db.getTransaction().getClientTransactionId());
-      db.newInstance().save(db.getClusterNameById(db.getDefaultClusterId()));
+      OElement rec = db.newInstance();
+      db.save(rec, db.getClusterNameById(db.getDefaultClusterId()));
       db.commit();
     }
 

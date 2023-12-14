@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -46,7 +47,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class ORecordSerializerBinaryTest {
 
-  private static ODatabaseDocumentTx db = null;
+  private static ODatabaseDocumentInternal db = null;
   private static ORecordSerializerBinary serializer;
   private final int serializerVersion;
 

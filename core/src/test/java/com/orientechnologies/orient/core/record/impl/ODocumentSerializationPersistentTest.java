@@ -2,8 +2,8 @@ package com.orientechnologies.orient.core.record.impl;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -16,8 +16,6 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.After;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -26,18 +24,13 @@ import org.junit.Test;
  * @author Artem Orobets (enisher-at-gmail.com)
  * @since 12/20/12
  */
-public class ODocumentSerializationPersistentTest {
+public class ODocumentSerializationPersistentTest extends BaseMemoryInternalDatabase {
 
-  private static ODatabaseDocumentTx db;
-  private static ORID docId;
-  private static ORID linkedId;
+  private ORID docId;
+  private ORID linkedId;
 
-  @BeforeClass
-  public static void setUp() throws Exception {
-
-    db = new ODatabaseDocumentTx("memory:testdocumentserialization");
-
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
 
     final ODocument doc = new ODocument();
     doc.field("name", "Artem");
@@ -50,9 +43,6 @@ public class ODocumentSerializationPersistentTest {
     docId = doc.getIdentity();
     linkedId = linkedDoc.getIdentity();
   }
-
-  @After
-  public void tearDown() throws Exception {}
 
   @Test
   public void testSerialization() throws Exception {

@@ -4,9 +4,8 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
@@ -15,25 +14,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import java.util.Collections;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Created by tglman on 01/07/16. */
-public class SBTreeBagDeleteTest {
+public class SBTreeBagDeleteTest extends BaseMemoryInternalDatabase {
 
-  private ODatabaseDocumentInternal db;
-
-  @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:" + SBTreeBagDeleteTest.class.getSimpleName());
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
     db.getConfiguration().setValue(RID_BAG_SBTREEBONSAI_DELETE_DELAY, 50);
-  }
-
-  @After
-  public void after() {
-    db.drop();
   }
 
   @Test

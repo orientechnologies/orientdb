@@ -3,8 +3,9 @@ package com.orientechnologies.orient.core.record;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -20,22 +21,26 @@ public class DocumentIndependentJavaSerializationTest {
 
   @Test
   public void testSerialization() throws IOException, ClassNotFoundException {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx(
-            "memory:" + DocumentIndependentJavaSerializationTest.class.getSimpleName());
-    db.create();
     byte[] ser;
-    try {
-      OClass clazz = db.getMetadata().getSchema().createClass("Test");
-      clazz.createProperty("test", OType.STRING);
-      ODocument doc = new ODocument(clazz);
-      doc.field("test", "Some Value");
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      ObjectOutputStream oos = new ObjectOutputStream(baos);
-      oos.writeObject(doc);
-      ser = baos.toByteArray();
-    } finally {
-      db.drop();
+    try (OrientDB ctx = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
+      ctx.execute(
+          "create database "
+              + DocumentIndependentJavaSerializationTest.class.getSimpleName()
+              + " memory users (admin identified by 'adminpwd' role admin)");
+      try (ODatabaseDocument db =
+          ctx.open(
+              DocumentIndependentJavaSerializationTest.class.getSimpleName(),
+              "admin",
+              "adminpwd")) {
+        OClass clazz = db.getMetadata().getSchema().createClass("Test");
+        clazz.createProperty("test", OType.STRING);
+        ODocument doc = new ODocument(clazz);
+        doc.field("test", "Some Value");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(doc);
+        ser = baos.toByteArray();
+      }
     }
 
     ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(ser));
@@ -54,21 +59,25 @@ public class DocumentIndependentJavaSerializationTest {
     oos.writeObject(doc);
     byte[] ser = baos.toByteArray();
 
-    ODatabaseDocumentInternal db =
-        new ODatabaseDocumentTx(
-            "memory:" + DocumentIndependentJavaSerializationTest.class.getSimpleName());
-    db.create();
+    try (OrientDB ctx = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
+      ctx.execute(
+          "create database "
+              + DocumentIndependentJavaSerializationTest.class.getSimpleName()
+              + " memory users (admin identified by 'adminpwd' role admin)");
+      try (ODatabaseDocument db =
+          ctx.open(
+              DocumentIndependentJavaSerializationTest.class.getSimpleName(),
+              "admin",
+              "adminpwd")) {
 
-    try {
-      OClass clazz = db.getMetadata().getSchema().createClass("Test");
-      clazz.createProperty("test", OType.STRING);
-      ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(ser));
-      ODocument doc1 = (ODocument) input.readObject();
-      assertEquals(doc1.recordFormat, db.getSerializer());
-      assertEquals(doc1.getClassName(), "Test");
-      assertEquals(doc1.field("test"), "Some Value");
-    } finally {
-      db.drop();
+        OClass clazz = db.getMetadata().getSchema().createClass("Test");
+        clazz.createProperty("test", OType.STRING);
+        ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(ser));
+        ODocument doc1 = (ODocument) input.readObject();
+        assertEquals(doc1.recordFormat, ((ODatabaseDocumentInternal) db).getSerializer());
+        assertEquals(doc1.getClassName(), "Test");
+        assertEquals(doc1.field("test"), "Some Value");
+      }
     }
   }
 }

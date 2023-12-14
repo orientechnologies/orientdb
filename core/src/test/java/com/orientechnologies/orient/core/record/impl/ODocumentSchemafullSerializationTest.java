@@ -3,11 +3,10 @@ package com.orientechnologies.orient.core.record.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -19,13 +18,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
-public abstract class ODocumentSchemafullSerializationTest {
+public abstract class ODocumentSchemafullSerializationTest extends BaseMemoryInternalDatabase {
 
   private static final String CITY = "city";
   private static final String NUMBER = "number";
@@ -61,7 +58,6 @@ public abstract class ODocumentSchemafullSerializationTest {
   private static final String EMBEDDED_FIELD = "embeddedField";
   private static final String ANY_FIELD = "anyField";
   @Rule public TestName name = new TestName();
-  private ODatabaseDocumentInternal databaseDocument;
   private OClass simple;
   private ORecordSerializer serializer;
   private OClass embSimp;
@@ -72,12 +68,16 @@ public abstract class ODocumentSchemafullSerializationTest {
     this.serializer = serializer;
   }
 
-  @Before
-  public void before() {
+  @Override
+  protected String getDatabaseName() {
+    return ODocumentSchemafullSerializationTest.class.getSimpleName();
+  }
+
+  public void beforeTest() {
     ODatabaseDocumentAbstract.setDefaultSerializer(serializer);
-    databaseDocument = new ODatabaseDocumentTx("memory:" + name.getMethodName()).create();
+    super.beforeTest();
     // databaseDocument.getMetadata().
-    OSchema schema = databaseDocument.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     address = schema.createClass("Address");
     address.createProperty(NAME, OType.STRING);
     address.createProperty(NUMBER, OType.INTEGER);
@@ -125,9 +125,8 @@ public abstract class ODocumentSchemafullSerializationTest {
     clazzEmbComp.createProperty("addressByStreet", OType.EMBEDDEDMAP, address);
   }
 
-  @After
-  public void after() {
-    databaseDocument.drop();
+  public void afterTest() {
+    super.afterTest();
     ODatabaseDocumentAbstract.setDefaultSerializer(
         ORecordSerializerFactory.instance()
             .getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString()));
@@ -135,7 +134,7 @@ public abstract class ODocumentSchemafullSerializationTest {
 
   @Test
   public void testSimpleSerialization() {
-    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument document = new ODocument(simple);
 
     document.field(STRING_FIELD, NAME);
@@ -168,7 +167,7 @@ public abstract class ODocumentSchemafullSerializationTest {
   @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
   public void testSimpleLiteralList() {
-    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument document = new ODocument(embSimp);
     List<String> strings = new ArrayList<String>();
     strings.add("a");
@@ -258,7 +257,7 @@ public abstract class ODocumentSchemafullSerializationTest {
 
   @Test
   public void testSimpleMapStringLiteral() {
-    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument document = new ODocument(embMapSimple);
 
     Map<String, String> mapString = new HashMap<String, String>();
@@ -314,7 +313,7 @@ public abstract class ODocumentSchemafullSerializationTest {
 
   @Test
   public void testSimpleEmbeddedDoc() {
-    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument document = new ODocument(simple);
     ODocument embedded = new ODocument(address);
     embedded.field(NAME, "test");
@@ -334,7 +333,7 @@ public abstract class ODocumentSchemafullSerializationTest {
 
   @Test
   public void testUpdateBooleanWithPropertyTypeAny() {
-    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument document = new ODocument(simple);
     document.field(ANY_FIELD, false);
 
@@ -353,7 +352,7 @@ public abstract class ODocumentSchemafullSerializationTest {
 
   @Test
   public void simpleTypeKeepingTest() {
-    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument document = new ODocument();
     document.field("name", "test");
 

@@ -20,16 +20,20 @@ public class BaseMemoryInternalDatabase {
     context
         .execute(
             "create database "
-                + name.getMethodName()
+                + getDatabaseName()
                 + " memory users(admin identified by 'adminpwd' role admin) ")
         .close();
-    db = (ODatabaseDocumentInternal) context.open(name.getMethodName(), "admin", "adminpwd");
+    db = (ODatabaseDocumentInternal) context.open(getDatabaseName(), "admin", "adminpwd");
+  }
+
+  protected String getDatabaseName() {
+    return name.getMethodName();
   }
 
   @After
   public void afterTest() {
     db.close();
-    context.drop(name.getMethodName());
+    context.drop(getDatabaseName());
     context.close();
   }
 }
