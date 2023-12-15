@@ -4,21 +4,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Iterator;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class ORecordLazySetTest {
+public class ORecordLazySetTest extends BaseMemoryDatabase {
 
-  private ODatabaseDocumentTx db;
   private ODocument doc1;
   private ODocument doc2;
   private ODocument doc3;
@@ -26,10 +23,8 @@ public class ORecordLazySetTest {
   private ORID rid2;
   private ORID rid3;
 
-  @Before
-  public void before() {
-    db = new ODatabaseDocumentTx("memory:" + ORecordLazySet.class.getSimpleName());
-    db.create();
+  public void beforeTest() {
+    super.beforeTest();
     doc1 =
         db.save(
             new ODocument().field("doc1", "doc1"), db.getClusterNameById(db.getDefaultClusterId()));
@@ -42,12 +37,6 @@ public class ORecordLazySetTest {
         db.save(
             new ODocument().field("doc3", "doc3"), db.getClusterNameById(db.getDefaultClusterId()));
     rid3 = doc3.getIdentity();
-  }
-
-  @After
-  public void after() {
-    db.activateOnCurrentThread();
-    db.drop();
   }
 
   @Test
@@ -142,22 +131,15 @@ public class ORecordLazySetTest {
 
   @Test
   public void testSetWithNotExistentRecordWithValidation() {
-    ODatabaseDocumentTx db =
-        new ODatabaseDocumentTx("memory:testSetWithNotExistentRecordWithValidation");
-    db.create();
     OClass test = db.getMetadata().getSchema().createClass("test");
     OClass test1 = db.getMetadata().getSchema().createClass("test1");
     test.createProperty("fi", OType.LINKSET).setLinkedClass(test1);
-    try {
-      ODocument doc = new ODocument(test);
-      ORecordLazySet set = new ORecordLazySet(doc);
-      set.add(new ORecordId(5, 1000));
-      doc.field("fi", set);
-      db.begin();
-      db.save(doc);
-      db.commit();
-    } finally {
-      db.drop();
-    }
+    ODocument doc = new ODocument(test);
+    ORecordLazySet set = new ORecordLazySet(doc);
+    set.add(new ORecordId(5, 1000));
+    doc.field("fi", set);
+    db.begin();
+    db.save(doc);
+    db.commit();
   }
 }

@@ -24,7 +24,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
@@ -75,25 +77,24 @@ public class ODateConversionTestCase {
 
   @Test
   public void testDateFormantWithMethod() throws ParseException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:format");
-    db.create();
-    try {
+    try (OrientDB ctx = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
+      ctx.execute("create database test memory users(admin identified by 'adminpwd' role admin)");
+      try (ODatabaseDocument db = ctx.open("test", "admin", "adminpwd")) {
 
-      SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-      format.setTimeZone(TimeZone.getTimeZone("GMT"));
-      Date date = format.parse("2016-08-31 23:30:00");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        Date date = format.parse("2016-08-31 23:30:00");
 
-      db.setInternal(ODatabase.ATTRIBUTES.TIMEZONE, "GMT");
+        db.set(ODatabase.ATTRIBUTES.TIMEZONE, "GMT");
 
-      ODocument doc = new ODocument();
+        ODocument doc = new ODocument();
 
-      doc.field("dateTime", date);
-      String formatted = doc.field("dateTime.format('yyyy-MM-dd')");
+        doc.field("dateTime", date);
+        String formatted = doc.field("dateTime.format('yyyy-MM-dd')");
 
-      Assert.assertEquals("2016-08-31", formatted);
-
-    } finally {
-      db.drop();
+        Assert.assertEquals("2016-08-31", formatted);
+      }
+      ctx.drop("test");
     }
   }
 }

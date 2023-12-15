@@ -7,8 +7,9 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -438,33 +439,34 @@ public class ODocumentSchemalessBinarySerializationTest {
 
   @Test
   public void testLinkCollections() {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
-    try {
-      ODocument document = new ODocument();
-      Set<ORecordId> linkSet = new HashSet<ORecordId>();
-      linkSet.add(new ORecordId(10, 20));
-      linkSet.add(new ORecordId(10, 21));
-      linkSet.add(new ORecordId(10, 22));
-      linkSet.add(new ORecordId(11, 22));
-      document.field("linkSet", linkSet, OType.LINKSET);
+    try (OrientDB ctx = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
+      ctx.execute("create database test memory users(admin identified by 'adminpwd' role admin)");
+      try (ODatabaseDocument db = ctx.open("test", "admin", "adminpwd")) {
+        ODocument document = new ODocument();
+        Set<ORecordId> linkSet = new HashSet<ORecordId>();
+        linkSet.add(new ORecordId(10, 20));
+        linkSet.add(new ORecordId(10, 21));
+        linkSet.add(new ORecordId(10, 22));
+        linkSet.add(new ORecordId(11, 22));
+        document.field("linkSet", linkSet, OType.LINKSET);
 
-      List<ORecordId> linkList = new ArrayList<ORecordId>();
-      linkList.add(new ORecordId(10, 20));
-      linkList.add(new ORecordId(10, 21));
-      linkList.add(new ORecordId(10, 22));
-      linkList.add(new ORecordId(11, 22));
-      document.field("linkList", linkList, OType.LINKLIST);
-      byte[] res = serializer.toStream(document);
-      ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+        List<ORecordId> linkList = new ArrayList<ORecordId>();
+        linkList.add(new ORecordId(10, 20));
+        linkList.add(new ORecordId(10, 21));
+        linkList.add(new ORecordId(10, 22));
+        linkList.add(new ORecordId(11, 22));
+        document.field("linkList", linkList, OType.LINKLIST);
+        byte[] res = serializer.toStream(document);
+        ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
-      assertEquals(extr.fields(), document.fields());
-      assertEquals(
-          ((Set<?>) extr.field("linkSet")).size(), ((Set<?>) document.field("linkSet")).size());
-      assertTrue(((Set<?>) extr.field("linkSet")).containsAll((Set<?>) document.field("linkSet")));
-      assertEquals(extr.<Object>field("linkList"), document.field("linkList"));
-    } finally {
-      db.drop();
+        assertEquals(extr.fields(), document.fields());
+        assertEquals(
+            ((Set<?>) extr.field("linkSet")).size(), ((Set<?>) document.field("linkSet")).size());
+        assertTrue(
+            ((Set<?>) extr.field("linkSet")).containsAll((Set<?>) document.field("linkSet")));
+        assertEquals(extr.<Object>field("linkList"), document.field("linkList"));
+      }
+      ctx.drop("test");
     }
   }
 
@@ -632,38 +634,38 @@ public class ODocumentSchemalessBinarySerializationTest {
   @Test
   public void testMapOfLink() {
     // needs a database because of the lazy loading
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
-    try {
-      ODocument document = new ODocument();
+    try (OrientDB ctx = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
+      ctx.execute("create database test memory users(admin identified by 'adminpwd' role admin)");
+      try (ODatabaseDocument db = ctx.open("test", "admin", "adminpwd")) {
+        ODocument document = new ODocument();
 
-      Map<String, OIdentifiable> map = new HashMap<String, OIdentifiable>();
-      map.put("link", new ORecordId(0, 0));
-      document.field("map", map, OType.LINKMAP);
+        Map<String, OIdentifiable> map = new HashMap<String, OIdentifiable>();
+        map.put("link", new ORecordId(0, 0));
+        document.field("map", map, OType.LINKMAP);
 
-      byte[] res = serializer.toStream(document);
-      ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
-      assertEquals(extr.fields(), document.fields());
-      assertEquals(extr.<Object>field("map"), document.field("map"));
-    } finally {
-      db.drop();
+        byte[] res = serializer.toStream(document);
+        ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+        assertEquals(extr.fields(), document.fields());
+        assertEquals(extr.<Object>field("map"), document.field("map"));
+      }
+      ctx.drop("test");
     }
   }
 
   @Test
   public void testDocumentSimple() {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
-    try {
-      ODocument document = new ODocument("TestClass");
-      document.field("test", "test");
-      byte[] res = serializer.toStream(document);
-      ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
-      //      assertEquals(extr.getClassName(), document.getClassName());
-      assertEquals(extr.fields(), document.fields());
-      assertEquals(extr.<Object>field("test"), document.field("test"));
-    } finally {
-      db.drop();
+    try (OrientDB ctx = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
+      ctx.execute("create database test memory users(admin identified by 'adminpwd' role admin)");
+      try (ODatabaseDocument db = ctx.open("test", "admin", "adminpwd")) {
+        ODocument document = new ODocument("TestClass");
+        document.field("test", "test");
+        byte[] res = serializer.toStream(document);
+        ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+        //      assertEquals(extr.getClassName(), document.getClassName());
+        assertEquals(extr.fields(), document.fields());
+        assertEquals(extr.<Object>field("test"), document.field("test"));
+      }
+      ctx.drop("test");
     }
   }
 

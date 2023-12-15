@@ -3,7 +3,9 @@ package com.orientechnologies.orient.core.sql.functions.stat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionDecimal;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -50,14 +52,17 @@ public class OSQLFunctionDecimalTest {
   }
 
   public void testFromQuery() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testDecimalFunction");
-    db.create();
-    String initial = "12324124321234543256758654.76543212345676543254356765434567654";
-    List<ODocument> result =
-        db.query(new OSQLSynchQuery<ODocument>("select decimal('" + initial + "')"));
-    ODocument r = result.get(0);
-    assertEquals(result.size(), 1);
-    assertEquals(r.field("decimal"), new BigDecimal(initial));
-    db.close();
+    try (OrientDB ctx = new OrientDB("embedded:./", OrientDBConfig.defaultConfig())) {
+      ctx.execute("create database test memory users(admin identified by 'adminpwd' role admin)");
+      try (ODatabaseDocument db = ctx.open("test", "admin", "adminpwd")) {
+        String initial = "12324124321234543256758654.76543212345676543254356765434567654";
+        List<ODocument> result =
+            db.query(new OSQLSynchQuery<ODocument>("select decimal('" + initial + "')"));
+        ODocument r = result.get(0);
+        assertEquals(result.size(), 1);
+        assertEquals(r.field("decimal"), new BigDecimal(initial));
+      }
+      ctx.drop("test");
+    }
   }
 }

@@ -1,25 +1,15 @@
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import java.util.Map;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class TestLinkedDocumentInMap {
-
-  private ODatabaseDocumentTx db;
-
-  @Before
-  public void create() {
-    db = new ODatabaseDocumentTx("memory:" + TestLinkedDocumentInMap.class.getSimpleName());
-    db.create();
-  }
+public class TestLinkedDocumentInMap extends BaseMemoryDatabase {
 
   @Test
   public void testLinkedValue() {
@@ -39,17 +29,12 @@ public class TestLinkedDocumentInMap {
     Map<String, OIdentifiable> doc = res.get(0);
     Assert.assertTrue(doc.get("contact").getIdentity().isValid());
 
-    db.close();
-    db.open("admin", "admin");
+    reOpen("admin", "adminpwd");
+
     List<ODocument> result =
         db.query(new OSQLSynchQuery<ODocument>("select from " + tyrionDoc.getIdentity()));
     res = result.get(0).field("emergency_contact");
     doc = res.get(0);
     Assert.assertTrue(doc.get("contact").getIdentity().isValid());
-  }
-
-  @After
-  public void after() {
-    db.drop();
   }
 }

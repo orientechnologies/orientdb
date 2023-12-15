@@ -31,6 +31,11 @@ public class BaseMemoryDatabase {
     db = context.open(this.databaseName, "admin", "adminpwd");
   }
 
+  protected void reOpen(String user, String password) {
+    this.db.close();
+    this.db = context.open(this.databaseName, user, password);
+  }
+
   @After
   public void afterTest() throws Exception {
     db.close();
