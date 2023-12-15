@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
-
-import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -826,7 +823,7 @@ public class IndexTest extends ObjectDBBaseTest {
       long expectedIndexSize = 0;
 
       final int passCount = 10;
-      final int chunkSize = getEnvironment() == DatabaseAbstractTest.ENV.DEV ? 10 : 1000;
+      final int chunkSize = 10;
 
       for (int pass = 0; pass < passCount; pass++) {
         List<ODocument> recordsToDelete = new ArrayList<>();

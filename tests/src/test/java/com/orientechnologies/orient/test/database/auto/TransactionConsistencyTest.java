@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
-
-import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -459,7 +456,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     database.close();
 
     database.open("admin", "admin");
-    int chunkSize = getEnvironment() == DatabaseAbstractTest.ENV.DEV ? 10 : 500;
+    int chunkSize = 10;
     for (int initialValue = 0; initialValue < 10; initialValue++) {
       // System.out.println("initialValue = " + initialValue);
       Assert.assertEquals(database.countClusterElements("MyFruit"), 0);

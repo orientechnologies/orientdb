@@ -20,7 +20,7 @@
 
 package com.orientechnologies.orient.core.db.conflict;
 
-import com.orientechnologies.DatabaseAbstractTest;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -31,22 +31,20 @@ import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class OConflictManagementTest extends DatabaseAbstractTest {
+public class OConflictManagementTest extends BaseMemoryDatabase {
 
   @Test
   public void testDefaultStrategy() {
     final ODocument rootDoc =
-        new ODocument()
-            .field("name", "Jay")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+        new ODocument().field("name", "Jay").save(db.getClusterNameById(db.getDefaultClusterId()));
     final ODocument copy = rootDoc.copy();
 
     rootDoc.field("name", "Jay1");
-    rootDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    rootDoc.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     copy.field("name", "Jay2");
     try {
-      copy.save(database.getClusterNameById(database.getDefaultClusterId()));
+      copy.save(db.getClusterNameById(db.getDefaultClusterId()));
       Assert.assertTrue(false);
     } catch (OConcurrentModificationException e) {
     }
@@ -54,20 +52,18 @@ public class OConflictManagementTest extends DatabaseAbstractTest {
 
   @Test
   public void testVersionStrategy() {
-    database.setConflictStrategy("version");
+    db.setConflictStrategy("version");
     ODocument rootDoc =
-        new ODocument()
-            .field("name", "Jay")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+        new ODocument().field("name", "Jay").save(db.getClusterNameById(db.getDefaultClusterId()));
 
     ODocument copy = rootDoc.copy();
 
     rootDoc.field("name", "Jay1");
-    rootDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    rootDoc.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     copy.field("name", "Jay2");
     try {
-      copy.save(database.getClusterNameById(database.getDefaultClusterId()));
+      copy.save(db.getClusterNameById(db.getDefaultClusterId()));
       Assert.assertTrue(false);
     } catch (OConcurrentModificationException e) {
     }
@@ -75,51 +71,45 @@ public class OConflictManagementTest extends DatabaseAbstractTest {
 
   @Test
   public void testContentStrategy() {
-    database.setConflictStrategy("content");
+    db.setConflictStrategy("content");
     ODocument rootDoc =
-        new ODocument()
-            .field("name", "Jay")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+        new ODocument().field("name", "Jay").save(db.getClusterNameById(db.getDefaultClusterId()));
 
     ODocument copy = rootDoc.copy();
 
     rootDoc.field("name", "Jay1");
-    rootDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    rootDoc.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     copy.field("name", "Jay1");
-    copy.save(database.getClusterNameById(database.getDefaultClusterId()));
+    copy.save(db.getClusterNameById(db.getDefaultClusterId()));
   }
 
   @Test
   public void testAutomergeStrategy() {
-    database.setConflictStrategy("automerge");
+    db.setConflictStrategy("automerge");
     ODocument rootDoc =
-        new ODocument()
-            .field("name", "Jay")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+        new ODocument().field("name", "Jay").save(db.getClusterNameById(db.getDefaultClusterId()));
 
     ODocument copy = rootDoc.copy();
 
     rootDoc.field("name", "Jay1");
-    rootDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    rootDoc.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     copy.field("name", "Jay1");
-    copy.save(database.getClusterNameById(database.getDefaultClusterId()));
+    copy.save(db.getClusterNameById(db.getDefaultClusterId()));
   }
 
   @Test
   public void testAutomergeStrategyWithLinks() {
-    database.setConflictStrategy("automerge");
+    db.setConflictStrategy("automerge");
     ODocument rootDoc =
-        new ODocument()
-            .field("name", "Jay")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+        new ODocument().field("name", "Jay").save(db.getClusterNameById(db.getDefaultClusterId()));
     ODocument linkedDoc =
         new ODocument()
             .field("product", "Amiga")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+            .save(db.getClusterNameById(db.getDefaultClusterId()));
     rootDoc.field("relationships", new OIdentifiable[] {linkedDoc}, OType.LINKSET);
-    rootDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    rootDoc.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     ODocument copy = rootDoc.copy();
     ORecordInternal.setDirtyManager(copy, new ODirtyManager());
@@ -128,16 +118,16 @@ public class OConflictManagementTest extends DatabaseAbstractTest {
     ODocument linkedDoc2 =
         new ODocument()
             .field("company", "Commodore")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+            .save(db.getClusterNameById(db.getDefaultClusterId()));
     rootDoc.field("relationships", new OIdentifiable[] {linkedDoc, linkedDoc2}, OType.LINKSET);
-    rootDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    rootDoc.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     ODocument linkedDoc3 =
         new ODocument()
             .field("company", "Atari")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+            .save(db.getClusterNameById(db.getDefaultClusterId()));
     copy.field("relationships", new OIdentifiable[] {linkedDoc, linkedDoc3}, OType.LINKSET);
-    copy.save(database.getClusterNameById(database.getDefaultClusterId()));
+    copy.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     ODocument reloadedDoc = (ODocument) rootDoc.reload();
     Assert.assertEquals(((Collection) reloadedDoc.field("relationships")).size(), 3);

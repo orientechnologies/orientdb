@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.storage.index.sbtree.local.v2;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.DatabaseAbstractTest;
+import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -27,7 +27,7 @@ import org.junit.Test;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 15.08.13
  */
-public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
+public class SBTreeV2CompositeKeyTest extends BaseMemoryDatabase {
 
   private OSBTreeV2<OCompositeKey, OIdentifiable> localSBTree;
   private OAtomicOperationsManager atomicOperationsManager;
@@ -35,7 +35,7 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
   @Before
   public void beforeMethod() throws Exception {
     atomicOperationsManager =
-        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) database).getStorage())
+        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db).getStorage())
             .getAtomicOperationsManager();
     //noinspection deprecation
     localSBTree =
@@ -43,7 +43,7 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
             "localSBTreeCompositeKeyTest",
             ".sbt",
             ".nbt",
-            (OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) database).getStorage());
+            (OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db).getStorage());
     atomicOperationsManager.executeInsideAtomicOperation(
         null,
         atomicOperation ->
