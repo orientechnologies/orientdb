@@ -1522,8 +1522,14 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       Set<OBonsaiBucketPointer> blockedPointers)
       throws IOException {
 
-    try (final OCacheEntry sysCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), true)) {
+    OCacheEntry sysPage =
+        loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), true);
+    if (sysPage == null) {
+      initSysBucket(atomicOperation);
+      sysPage = loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), true);
+    }
+
+    try (final OCacheEntry sysCacheEntry = sysPage) {
 
       if (requestedPageIndex == -1) {
         final OSysBucket sysBucket = new OSysBucket(sysCacheEntry);
