@@ -18,8 +18,8 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -415,7 +415,7 @@ public class TraverseTest extends DocumentDBBaseTest {
     try {
 
       String q = "traverse in('married')  from " + nicoleKidman.getIdentity() + "";
-      ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.copy();
+      ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) database.copy();
       ODatabaseRecordThreadLocal.instance().set(db);
       List<Object> result1 = db.command(new OSQLSynchQuery<ODocument>(q)).execute();
       Assert.assertEquals(result1.size(), 2);

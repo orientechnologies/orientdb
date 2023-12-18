@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -52,7 +53,7 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
     public Void call() {
       this.id = createClassThreadCounter.getAndIncrement();
       for (int i = 0; i < CYCLES; i++) {
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
+        ODatabaseDocument db = new ODatabaseDocumentTx(url).open("admin", "admin");
         try {
           final String clsName = "ConcurrentClassTest-" + id + "-" + i;
 
@@ -84,7 +85,7 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
     public Void call() {
       this.id = dropClassThreadCounter.getAndIncrement();
       for (int i = 0; i < CYCLES; i++) {
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
+        ODatabaseDocument db = new ODatabaseDocumentTx(url).open("admin", "admin");
         try {
           final String clsName = "ConcurrentClassTest-" + id + "-" + i;
 

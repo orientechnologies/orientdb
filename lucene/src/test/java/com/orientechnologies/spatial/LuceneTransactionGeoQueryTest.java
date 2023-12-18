@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.spatial;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -36,7 +37,7 @@ public class LuceneTransactionGeoQueryTest {
   @Test
   public void testPointTransactionRollBack() {
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:txPoint");
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:txPoint");
 
     try {
       db.create();
@@ -86,7 +87,7 @@ public class LuceneTransactionGeoQueryTest {
   @Test
   public void testPointTransactionUpdate() {
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:txPoint");
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:txPoint");
 
     try {
       db.create();

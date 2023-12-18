@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
@@ -27,7 +29,7 @@ import org.testng.annotations.Test;
 @Test
 public class LocalMTCreateDocumentSpeedTest {
   private static final Random random = new Random();
-  private ODatabaseDocumentTx database;
+  private ODatabaseDocumentInternal database;
   private Date date = new Date();
   private CountDownLatch latch = new CountDownLatch(1);
   private List<Future> futures;
@@ -122,7 +124,7 @@ public class LocalMTCreateDocumentSpeedTest {
 
         final OPartitionedDatabasePool pool =
             poolFactory.get(System.getProperty("url"), user, user);
-        final ODatabaseDocumentTx database = pool.acquire();
+        final ODatabaseDocument database = pool.acquire();
 
         ODocument record = new ODocument("Account");
         record.field("id", 1);
@@ -159,7 +161,7 @@ public class LocalMTCreateDocumentSpeedTest {
       latch.await();
       final OPartitionedDatabasePool pool =
           poolFactory.get(System.getProperty("url"), "admin", "admin");
-      final ODatabaseDocumentTx database = pool.acquire();
+      final ODatabaseDocument database = pool.acquire();
 
       long counter = 0;
       long start = System.nanoTime();

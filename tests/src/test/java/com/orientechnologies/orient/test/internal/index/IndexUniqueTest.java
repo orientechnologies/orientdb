@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.test.internal.index;
 
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -72,7 +73,7 @@ public class IndexUniqueTest {
       indexNames[i] = nm;
     }
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:./uniqueIndexTest");
+    ODatabaseDocument db = new ODatabaseDocumentTx("plocal:./uniqueIndexTest");
     final int cores = Runtime.getRuntime().availableProcessors();
 
     if (db.exists()) {

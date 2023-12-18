@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -28,7 +29,7 @@ import org.testng.annotations.Test;
 
 @Test
 public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
-  private ODatabaseDocumentTx database;
+  private ODatabaseDocumentInternal database;
   private ODocument record;
   private Date date = new Date();
 

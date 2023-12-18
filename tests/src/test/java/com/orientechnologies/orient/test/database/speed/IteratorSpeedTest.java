@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -14,7 +15,7 @@ import org.testng.annotations.Test;
 @Test
 public class IteratorSpeedTest {
   public void testIterationSpeed() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:speedTest");
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:speedTest");
     db.create();
 
     OClass oClass = db.getMetadata().getSchema().createClass("SpeedTest");

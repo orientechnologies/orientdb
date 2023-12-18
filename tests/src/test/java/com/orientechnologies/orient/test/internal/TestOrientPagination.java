@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.internal;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -17,7 +18,7 @@ public class TestOrientPagination {
   public static final String dbUser = "admin";
   public static final String dbPwd = "admin";
 
-  private static ODatabaseDocumentTx database = null;
+  private static ODatabaseDocument database = null;
 
   @BeforeClass
   public static void init() throws IOException {

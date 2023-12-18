@@ -5,7 +5,9 @@ import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
@@ -82,7 +84,7 @@ public class StorageBackupMTStateTest {
     dbURL = "plocal:" + dbDirectory;
 
     System.out.println("Create database");
-    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbURL);
+    ODatabaseDocumentInternal databaseDocumentTx = new ODatabaseDocumentTx(dbURL);
     databaseDocumentTx.create();
 
     System.out.println("Create schema");
@@ -156,7 +158,8 @@ public class StorageBackupMTStateTest {
     storage.close(true, false);
 
     System.out.println("Create backup database");
-    final ODatabaseDocumentTx backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
+    final ODatabaseDocumentInternal backedUpDb =
+        new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
     backedUpDb.create(backupDir.getAbsolutePath());
 
     final OStorage backupStorage = backedUpDb.getStorage();
@@ -216,7 +219,7 @@ public class StorageBackupMTStateTest {
     public Void call() throws Exception {
       while (!stop) {
         while (true) {
-          ODatabaseDocumentTx db = pool.acquire();
+          ODatabaseDocument db = pool.acquire();
           try {
             flowLock.acquireReadLock();
             try {
@@ -252,7 +255,7 @@ public class StorageBackupMTStateTest {
 
       while (!stop) {
         while (true) {
-          ODatabaseDocumentTx db = pool.acquire();
+          ODatabaseDocument db = pool.acquire();
           try {
             flowLock.acquireReadLock();
             try {
@@ -287,7 +290,7 @@ public class StorageBackupMTStateTest {
   private abstract class Inserter implements Callable<Void> {
     protected final Random random = new Random();
 
-    protected void insertRecord(ODatabaseDocumentTx db) {
+    protected void insertRecord(ODatabaseDocument db) {
       final int docId;
       final int classes = classCounter.get();
 
@@ -350,7 +353,7 @@ public class StorageBackupMTStateTest {
   private final class IncrementalBackupThread implements Runnable {
     @Override
     public void run() {
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbURL);
+      ODatabaseDocument db = new ODatabaseDocumentTx(dbURL);
       db.open("admin", "admin");
       try {
         flowLock.acquireReadLock();
@@ -372,7 +375,7 @@ public class StorageBackupMTStateTest {
   private final class ClassAdder implements Runnable {
     @Override
     public void run() {
-      ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbURL);
+      ODatabaseDocument databaseDocumentTx = new ODatabaseDocumentTx(dbURL);
       databaseDocumentTx.open("admin", "admin");
       try {
         flowLock.acquireReadLock();
@@ -398,7 +401,7 @@ public class StorageBackupMTStateTest {
       int counter = 0;
       while (!stop) {
         while (true) {
-          ODatabaseDocumentTx databaseDocumentTx = pool.acquire();
+          ODatabaseDocument databaseDocumentTx = pool.acquire();
           try {
             flowLock.acquireReadLock();
             try {
@@ -470,7 +473,7 @@ public class StorageBackupMTStateTest {
 
     @Override
     public void run() {
-      ODatabaseDocumentTx db = pool.acquire();
+      ODatabaseDocument db = pool.acquire();
       try {
         flowLock.acquireWriteLock();
         try {

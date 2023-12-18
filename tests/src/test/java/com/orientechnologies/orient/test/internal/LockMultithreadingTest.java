@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.internal;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -27,7 +28,7 @@ public class LockMultithreadingTest {
   private static final int DELETOR_THREAD_COUNT = 10;
   private static final int DOCUMENT_COUNT = 10000000;
   private static final String URL = "plocal:megatest1";
-  private ODatabaseDocumentTx db;
+  private ODatabaseDocumentInternal db;
 
   private static final String STUDENT_CLASS_NAME = "Student";
   private static final String TRANSACTIONAL_WORD = "Transactional";

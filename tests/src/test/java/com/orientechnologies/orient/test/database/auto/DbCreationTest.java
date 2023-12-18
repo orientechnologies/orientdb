@@ -160,7 +160,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
       u = url.substring(0, pos + 1) + "sub/subTest";
     }
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
+    ODatabaseDocument db = new ODatabaseDocumentTx(u);
 
     ODatabaseHelper.dropDatabase(db, getStorageType());
     ODatabaseHelper.createDatabase(db, u, getStorageType());
@@ -181,7 +181,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
       u = url.substring(0, pos + 1) + "sub/subTest";
     }
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
+    ODatabaseDocument db = new ODatabaseDocumentTx(u);
 
     ODatabaseHelper.dropDatabase(db, getStorageType());
     ODatabaseHelper.createDatabase(db, u, getStorageType());
@@ -221,7 +221,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = {"testCreateAndConnectionPool"})
   public void testOpenCloseConnectionPool() throws IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    ODatabaseDocument db = new ODatabaseDocumentTx(url);
     if (!ODatabaseHelper.existsDatabase(db, null)) {
       ODatabaseHelper.createDatabase(db, url, getStorageType());
       db.close();
@@ -249,7 +249,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
 
     for (int i = 0; i < 3; ++i) {
       String ur = u + "/" + i + "$db";
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(ur);
+      ODatabaseDocument db = new ODatabaseDocumentTx(ur);
 
       try {
         ODatabaseHelper.dropDatabase(db, getStorageType());
@@ -263,7 +263,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
 
     for (int i = 0; i < 3; ++i) {
       String ur = u + "/" + i + "$db";
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(ur);
+      ODatabaseDocument db = new ODatabaseDocumentTx(ur);
       Assert.assertTrue(ODatabaseHelper.existsDatabase(db, getStorageType()));
       db.activateOnCurrentThread();
       ODatabaseHelper.dropDatabase(db, getStorageType());
@@ -295,13 +295,13 @@ public class DbCreationTest extends ObjectDBBaseTest {
         buildDirectory + File.separator + this.getClass().getSimpleName() + "Remove";
     final String dburl = "plocal:" + dbPath;
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dburl);
+    ODatabaseDocument db = new ODatabaseDocumentTx(dburl);
     db.create();
     db.close();
 
     Assert.assertTrue(new File(dbPath).exists());
 
-    final ODatabaseDocumentTx dbTwo = new ODatabaseDocumentTx(dburl);
+    final ODatabaseDocument dbTwo = new ODatabaseDocumentTx(dburl);
     try {
       dbTwo.create();
       Assert.fail();
@@ -322,7 +322,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
 
     // TRY UNIX PATH
     try {
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:/db");
+      ODatabaseDocument db = new ODatabaseDocumentTx("remote:/db");
       db.open("admin", "admin");
       Assert.fail("Security breach: database with path /db was created");
     } catch (Exception e) {
@@ -330,7 +330,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
 
     // TRY WINDOWS PATH
     try {
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:C:/db");
+      ODatabaseDocument db = new ODatabaseDocumentTx("remote:C:/db");
       db.open("admin", "admin");
       Assert.fail("Security breach: database with path c:/db was created");
     } catch (Exception e) {

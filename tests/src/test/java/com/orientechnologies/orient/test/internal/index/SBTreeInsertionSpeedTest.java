@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.internal.index;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -13,7 +14,7 @@ import org.testng.annotations.Test;
  * @since 14.08.13
  */
 public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
-  private ODatabaseDocumentTx databaseDocumentTx;
+  private ODatabaseDocumentInternal databaseDocumentTx;
   private OIndex index;
   private Random random = new Random();
 

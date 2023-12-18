@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -28,7 +29,7 @@ import org.testng.annotations.Test;
 @Test(enabled = false)
 public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OCommandResultListener {
   protected int resultCount = 0;
-  private ODatabaseDocumentTx database;
+  private ODatabaseDocument database;
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     SQLSynchQuerySpeedTest test = new SQLSynchQuerySpeedTest();

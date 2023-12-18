@@ -6,8 +6,6 @@ import static org.mockito.Mockito.atLeastOnce;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListener;
@@ -18,7 +16,6 @@ import com.orientechnologies.orient.server.network.protocol.binary.OLiveCommandR
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
 import java.io.IOException;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -26,7 +23,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 /** Created by tglman on 07/06/16. */
-public class OLiveCommandResultListenerTest {
+public class OLiveCommandResultListenerTest extends BaseMemoryInternalDatabase {
 
   @Mock private OServer server;
   @Mock private OChannelBinaryServer channelBinary;
@@ -35,7 +32,6 @@ public class OLiveCommandResultListenerTest {
 
   private ONetworkProtocolBinary protocol;
   private OClientConnection connection;
-  private ODatabaseDocumentInternal db;
 
   private static class TestResultListener implements OCommandResultListener {
     @Override
@@ -53,12 +49,10 @@ public class OLiveCommandResultListenerTest {
   }
 
   @Before
-  public void before() throws IOException {
+  public void beforeTests() {
     MockitoAnnotations.initMocks(this);
     Mockito.when(server.getContextConfiguration()).thenReturn(new OContextConfiguration());
 
-    db = new ODatabaseDocumentTx("memory:" + OLiveCommandResultListenerTest.class.getSimpleName());
-    db.create();
     OClientConnectionManager manager = new OClientConnectionManager(server);
     protocol = new ONetworkProtocolBinary(server);
     protocol.initVariables(server, channelBinary);
@@ -92,10 +86,5 @@ public class OLiveCommandResultListenerTest {
     ORecordOperation op = new ORecordOperation(new ODocument(), ORecordOperation.CREATED);
     listener.onLiveResult(10, op);
     assertFalse(OLiveQueryHook.getOpsReference(db).getQueueThread().hasToken(10));
-  }
-
-  @After
-  public void after() {
-    db.drop();
   }
 }

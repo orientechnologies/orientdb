@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -29,7 +30,7 @@ import org.testng.annotations.Test;
 @Test(enabled = false)
 public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread {
   protected int resultCount = 0;
-  private ODatabaseDocumentTx database;
+  private ODatabaseDocument database;
 
   public SQLAsynchQuerySpeedTest(String iURL) {
     super(1);

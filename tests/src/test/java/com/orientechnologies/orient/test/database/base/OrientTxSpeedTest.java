@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.test.database.base;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import java.io.UnsupportedEncodingException;
 
 public abstract class OrientTxSpeedTest extends SpeedTestMonoThread {
@@ -24,7 +24,7 @@ public abstract class OrientTxSpeedTest extends SpeedTestMonoThread {
     super(iCycles);
   }
 
-  protected void cycle(ODatabaseDocumentTx iDatabase) throws UnsupportedEncodingException {
+  protected void cycle(ODatabaseDocument iDatabase) throws UnsupportedEncodingException {
     if (data.getCyclesDone() == data.getCycles() - 1) iDatabase.commit();
   }
 }

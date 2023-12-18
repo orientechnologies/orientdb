@@ -19,6 +19,7 @@ import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.ODatabaseImportRemote;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -83,7 +84,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
     ODatabaseHelper.createDatabase(database, url + "_objectschema", getStorageType());
 
     try {
-      ODatabaseDocumentTx exportDatabase = new ODatabaseDocumentTx(url);
+      ODatabaseDocumentInternal exportDatabase = new ODatabaseDocumentTx(url);
       exportDatabase.open("admin", "admin");
 
       OCommandOutputListener listener =
@@ -95,7 +96,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
       export.exportDatabase();
       export.close();
       exportDatabase.close();
-      ODatabaseDocumentTx importDatabase = new ODatabaseDocumentTx(url + "_objectschema");
+      ODatabaseDocumentInternal importDatabase = new ODatabaseDocumentTx(url + "_objectschema");
 
       if (url.startsWith("remote")) {
         importDatabase.open("root", ODatabaseHelper.getServerRootPassword());

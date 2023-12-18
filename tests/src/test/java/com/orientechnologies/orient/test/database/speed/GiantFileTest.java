@@ -3,6 +3,7 @@ package com.orientechnologies.orient.test.database.speed;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -27,7 +28,7 @@ import java.util.Random;
 public class GiantFileTest {
   private static final boolean RECREATE_DATABASE = true;
   private static final String DATABASE_NAME = "GiantFileTest";
-  private static ODatabaseDocumentTx db = null;
+  private static ODatabaseDocument db = null;
 
   public static void main(final String[] args) throws Exception {
     OGlobalConfiguration.DISK_CACHE_SIZE.setValue(1024);

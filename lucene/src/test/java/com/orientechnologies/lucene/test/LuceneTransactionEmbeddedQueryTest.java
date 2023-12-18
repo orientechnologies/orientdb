@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -44,7 +45,7 @@ public class LuceneTransactionEmbeddedQueryTest {
   public void testRollback() {
 
     @SuppressWarnings("deprecation")
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:updateTxTest");
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:updateTxTest");
     db.create();
     createSchema(db);
     try {
@@ -67,7 +68,7 @@ public class LuceneTransactionEmbeddedQueryTest {
     }
   }
 
-  private static void createSchema(ODatabaseDocumentInternal db) {
+  private static void createSchema(ODatabaseDocument db) {
     final OClass c1 = db.createVertexClass("C1");
     c1.createProperty("p1", OType.EMBEDDEDLIST, OType.STRING);
     c1.createIndex("C1.p1", "FULLTEXT", null, null, "LUCENE", new String[] {"p1"});

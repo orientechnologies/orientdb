@@ -226,7 +226,7 @@ public class AutomaticBackupTest {
 
     aBackup.sendShutdown();
 
-    final ODatabaseDocumentTx database2 = new ODatabaseDocumentTx(URL2);
+    final ODatabaseDocument database2 = new ODatabaseDocumentTx(URL2);
     if (database2.exists()) database2.open("admin", "admin").drop();
     database2.create();
 

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -19,22 +20,21 @@ import org.junit.Test;
  * @since 5/15/14
  */
 public class HashTableDirectoryV2Test {
-  private static ODatabaseDocumentTx databaseDocumentTx;
+  private static ODatabaseDocumentInternal db;
 
   private static HashTableDirectory directory;
 
   @BeforeClass
   public static void beforeClass() throws IOException {
-    databaseDocumentTx =
-        new ODatabaseDocumentTx("memory:" + HashTableDirectoryV2Test.class.getSimpleName());
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
+    db = new ODatabaseDocumentTx("memory:" + HashTableDirectoryV2Test.class.getSimpleName());
+    if (db.exists()) {
+      db.open("admin", "admin");
+      db.drop();
     }
 
-    databaseDocumentTx.create();
+    db.create();
 
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     directory =
         new HashTableDirectory(".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest", storage);
 
@@ -49,7 +49,7 @@ public class HashTableDirectoryV2Test {
     directory.delete(atomicOperation);
     completeTx();
 
-    databaseDocumentTx.drop();
+    db.drop();
   }
 
   @Before
@@ -63,21 +63,21 @@ public class HashTableDirectoryV2Test {
   }
 
   private static OAtomicOperation startTx() throws IOException {
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     OAtomicOperationsManager manager = storage.getAtomicOperationsManager();
     Assert.assertNull(manager.getCurrentOperation());
     return manager.startAtomicOperation(null);
   }
 
   private static void rollbackTx() throws IOException {
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     OAtomicOperationsManager manager = storage.getAtomicOperationsManager();
     manager.endAtomicOperation(new OCommandInterruptedException(""));
     Assert.assertNull(manager.getCurrentOperation());
   }
 
   private static void completeTx() throws IOException {
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     OAtomicOperationsManager manager = storage.getAtomicOperationsManager();
     manager.endAtomicOperation(null);
     Assert.assertNull(manager.getCurrentOperation());

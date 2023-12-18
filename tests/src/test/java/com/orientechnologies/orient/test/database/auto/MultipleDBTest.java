@@ -16,6 +16,7 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
@@ -192,7 +193,7 @@ public class MultipleDBTest extends DocumentDBBaseTest {
 
             @Override
             public Void call() throws InterruptedException, IOException {
-              ODatabaseDocumentTx tx = new ODatabaseDocumentTx(dbUrl);
+              ODatabaseDocumentInternal tx = new ODatabaseDocumentTx(dbUrl);
 
               ODatabaseHelper.deleteDatabase(tx, getStorageType());
               // System.out.println("Thread " + this + " is creating database " + dbUrl);

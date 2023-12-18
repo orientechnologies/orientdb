@@ -2,6 +2,7 @@ package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -34,7 +35,7 @@ public class LocalPaginateStorageSpeedTest extends OrientMonoThreadTest {
   @Override
   @Test(enabled = false)
   public void init() {
-    ODatabaseDocumentTx.setDefaultSerializer(new ORecordSerializerBinary());
+    ODatabaseDocumentAbstract.setDefaultSerializer(new ORecordSerializerBinary());
     database = new ODatabaseDocumentTx("plocal:target/db/test");
     if (database.exists()) {
       database.open("admin", "admin");

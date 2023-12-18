@@ -32,7 +32,7 @@ import org.junit.Test;
 public class OSBTreeBonsaiLocalTestIT {
   private static final int KEYS_COUNT = 500000;
   protected static OSBTreeBonsaiLocal<Integer, OIdentifiable> sbTree;
-  protected static ODatabaseDocumentTx databaseDocumentTx;
+  protected static ODatabaseDocumentInternal db;
   private static OAtomicOperationsManager atomicOperationsManager;
 
   @BeforeClass
@@ -40,23 +40,20 @@ public class OSBTreeBonsaiLocalTestIT {
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null) buildDirectory = "./target";
 
-    databaseDocumentTx =
-        new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeBonsaiTest");
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
+    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeBonsaiTest");
+    if (db.exists()) {
+      db.open("admin", "admin");
+      db.drop();
     }
 
-    databaseDocumentTx.create();
+    db.create();
 
     sbTree =
         new OSBTreeBonsaiLocal<>(
-            "actualSBTreeBonsaiLocalTest",
-            ".irs",
-            (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+            "actualSBTreeBonsaiLocalTest", ".irs", (OAbstractPaginatedStorage) db.getStorage());
 
     atomicOperationsManager =
-        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) databaseDocumentTx).getStorage())
+        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db).getStorage())
             .getAtomicOperationsManager();
     atomicOperationsManager.executeInsideAtomicOperation(
         null, atomicOperation -> sbTree.createComponent(atomicOperation));
@@ -77,7 +74,7 @@ public class OSBTreeBonsaiLocalTestIT {
           sbTree.deleteComponent(atomicOperation);
         });
 
-    databaseDocumentTx.drop();
+    db.drop();
   }
 
   @After

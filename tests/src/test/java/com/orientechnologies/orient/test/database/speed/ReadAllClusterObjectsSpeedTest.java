@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
@@ -24,7 +25,7 @@ import org.testng.annotations.Test;
 
 public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
   private static final String CLASS_NAME = "Account";
-  private ODatabaseDocumentTx db;
+  private ODatabaseDocument db;
   private int objectsRead;
   private String url;
 

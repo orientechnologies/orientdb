@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -61,7 +61,7 @@ public class PoolTest extends DocumentDBBaseTest {
     public Void call() throws Exception {
       final int delay = random.nextInt(500) + 200;
 
-      ODatabaseDocumentTx databaseDocumentTx;
+      ODatabaseDocument databaseDocumentTx;
       synchronized (lock) {
         databaseDocumentTx = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
         counter++;

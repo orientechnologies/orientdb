@@ -5,13 +5,12 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.IOException;
 import java.util.Collection;
@@ -76,7 +75,7 @@ public abstract class BaseTest<T extends ODatabase> {
 
     if (!url.startsWith("remote:")) {
       //noinspection deprecation
-      try (ODatabaseDocumentTx db = new ODatabaseDocumentTx(url)) {
+      try (ODatabaseDocument db = new ODatabaseDocumentTx(url)) {
         if (!db.exists()) db.create().close();
       }
     }
@@ -100,7 +99,7 @@ public abstract class BaseTest<T extends ODatabase> {
 
     if (!url.startsWith("remote:")) {
       //noinspection deprecation
-      try (ODatabaseDocumentTx db = new ODatabaseDocumentTx(url)) {
+      try (ODatabaseDocument db = new ODatabaseDocumentTx(url)) {
         if (!db.exists()) db.create().close();
       }
     }
@@ -254,10 +253,8 @@ public abstract class BaseTest<T extends ODatabase> {
   }
 
   protected boolean skipTestIfRemote() {
-    final OStorage stg = ((ODatabaseDocumentTx) database).getStorage();
-
     // ONLY PLOCAL AND MEMORY STORAGES SUPPORTED
-    return !(stg instanceof OAbstractPaginatedStorage);
+    return !((ODatabaseDocumentInternal) database).isRemote();
   }
 
   protected void checkEmbeddedDB() {

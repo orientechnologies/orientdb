@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -14,7 +15,7 @@ import org.testng.annotations.Test;
  * @since 10/16/13
  */
 public class NotUniqueIndexSpeedTest extends OrientMonoThreadTest {
-  private ODatabaseDocumentTx database;
+  private ODatabaseDocument database;
   private int counter;
   private Date date;
 

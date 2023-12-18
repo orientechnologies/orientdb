@@ -21,6 +21,7 @@ import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -82,7 +83,7 @@ public class FreezeMultiThreadingTestNonTX {
   private class NonTransactionalAdder implements Callable<Void> {
     public Void call() throws Exception {
       Thread.currentThread().setName("Adder - " + Thread.currentThread().getId());
-      ODatabaseDocumentTx database = new ODatabaseDocumentTx(URL);
+      ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
         ODatabaseRecordThreadLocal.instance().set(database);
@@ -119,7 +120,7 @@ public class FreezeMultiThreadingTestNonTX {
   private class TransactionalAdder implements Callable<Void> {
     public Void call() throws Exception {
       Thread.currentThread().setName("TransactionalAdder - " + Thread.currentThread().getId());
-      ODatabaseDocumentTx database = new ODatabaseDocumentTx(URL);
+      ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
         ODatabaseRecordThreadLocal.instance().set(database);
@@ -162,7 +163,7 @@ public class FreezeMultiThreadingTestNonTX {
 
     public Void call() throws Exception {
       Thread.currentThread().setName("Updater - " + Thread.currentThread().getId());
-      ODatabaseDocumentTx database = new ODatabaseDocumentTx(URL);
+      ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
         ODatabaseRecordThreadLocal.instance().set(database);
@@ -255,7 +256,7 @@ public class FreezeMultiThreadingTestNonTX {
 
     public Void call() throws Exception {
       Thread.currentThread().setName("TransactionalUpdater - " + Thread.currentThread().getId());
-      ODatabaseDocumentTx database = new ODatabaseDocumentTx(URL);
+      ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
         ODatabaseRecordThreadLocal.instance().set(database);
@@ -354,7 +355,7 @@ public class FreezeMultiThreadingTestNonTX {
     public Void call() throws Exception {
       Thread.currentThread().setName("Deleter - " + Thread.currentThread().getId());
 
-      ODatabaseDocumentTx database = new ODatabaseDocumentTx(URL);
+      ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
         ODatabaseRecordThreadLocal.instance().set(database);
@@ -419,7 +420,7 @@ public class FreezeMultiThreadingTestNonTX {
       Thread.currentThread()
           .setName("TransactionalDeleterDeleter - " + Thread.currentThread().getId());
 
-      ODatabaseDocumentTx database = new ODatabaseDocumentTx(URL);
+      ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
         ODatabaseRecordThreadLocal.instance().set(database);
@@ -489,7 +490,7 @@ public class FreezeMultiThreadingTestNonTX {
 
     public Void call() throws Exception {
       Thread.currentThread().setName("Locker - " + Thread.currentThread().getId());
-      ODatabaseDocumentTx database = new ODatabaseDocumentTx(URL);
+      ODatabaseDocument database = new ODatabaseDocumentTx(URL);
 
       try {
         countDownLatch.await();
@@ -557,7 +558,7 @@ public class FreezeMultiThreadingTestNonTX {
     System.out.println("Create db");
     // SETUP DB
     try {
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
+      ODatabaseDocument db = new ODatabaseDocumentTx(URL);
 
       System.out.println("Recreating database");
       if (ODatabaseHelper.existsDatabase(db, "plocal")) {
@@ -571,7 +572,7 @@ public class FreezeMultiThreadingTestNonTX {
       throw ex;
     }
 
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(URL);
+    ODatabaseDocument database = new ODatabaseDocumentTx(URL);
     database.open("admin", "admin");
 
     OClass student = database.getMetadata().getSchema().createClass(STUDENT_CLASS_NAME);

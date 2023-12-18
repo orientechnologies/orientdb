@@ -29,7 +29,7 @@ import org.junit.Test;
 public class LocalHashTableV2IterationTestIT {
   private static final int KEYS_COUNT = 500000;
 
-  private ODatabaseDocumentTx databaseDocumentTx;
+  private ODatabaseDocumentInternal db;
 
   private LocalHashTableV2<Integer, String> localHashTable;
   private OAtomicOperationsManager atomicOperationsManager;
@@ -39,19 +39,18 @@ public class LocalHashTableV2IterationTestIT {
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null) buildDirectory = ".";
 
-    databaseDocumentTx =
-        new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableV2IterationTest");
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
+    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableV2IterationTest");
+    if (db.exists()) {
+      db.open("admin", "admin");
+      db.drop();
     }
 
-    databaseDocumentTx.create();
+    db.create();
 
     OHashFunction<Integer> hashFunction = value -> Long.MAX_VALUE / 2 + value;
 
     atomicOperationsManager =
-        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) databaseDocumentTx).getStorage())
+        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db).getStorage())
             .getAtomicOperationsManager();
 
     localHashTable =
@@ -61,7 +60,7 @@ public class LocalHashTableV2IterationTestIT {
             ".tsc",
             ".obf",
             ".nbh",
-            (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+            (OAbstractPaginatedStorage) db.getStorage());
 
     atomicOperationsManager.executeInsideAtomicOperation(
         null,
@@ -82,7 +81,7 @@ public class LocalHashTableV2IterationTestIT {
 
     atomicOperationsManager.executeInsideAtomicOperation(
         null, atomicOperation -> localHashTable.delete(atomicOperation));
-    databaseDocumentTx.drop();
+    db.drop();
   }
 
   @After

@@ -126,7 +126,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     @Override
     public void run() {
       try {
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+        ODatabaseDocument db = new ODatabaseDocumentTx(url);
 
         for (int i = 0; i < PESSIMISTIC_CYCLES; i++) {
           String cmd = "update " + rid + " increment total = 1";

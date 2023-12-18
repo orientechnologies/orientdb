@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.internal.index;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexUnique;
@@ -15,7 +16,7 @@ import org.testng.annotations.Test;
  * @since 30.01.13
  */
 public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
-  private ODatabaseDocumentTx databaseDocumentTx;
+  private ODatabaseDocumentInternal databaseDocumentTx;
   private OIndexUnique index;
   private Random random = new Random();
 

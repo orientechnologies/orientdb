@@ -953,7 +953,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testTransactionUniqueIndexTestTwo() {
     checkEmbeddedDB();
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
@@ -1000,7 +1000,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testTransactionUniqueIndexTestWithDotNameOne() {
     checkEmbeddedDB();
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexWithDotTest")) {
@@ -1048,7 +1048,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testTransactionUniqueIndexTestWithDotNameTwo() {
     checkEmbeddedDB();
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexWithDotTest")) {
@@ -1315,7 +1315,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testIndexWithLimitAndOffset() {
-    ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+    ODatabaseDocument databaseDocumentTx = database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     final OClass indexWithLimitAndOffset =
@@ -1348,7 +1348,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testNullIndexKeysSupport() {
-    final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+    final ODatabaseDocument databaseDocumentTx = database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     final OClass clazz = schema.createClass("NullIndexKeysSupport", 1, (OClass[]) null);
@@ -1399,7 +1399,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testNullHashIndexKeysSupport() {
-    final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+    final ODatabaseDocument databaseDocumentTx = database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     final OClass clazz = schema.createClass("NullHashIndexKeysSupport", 1, (OClass[]) null);
@@ -1450,7 +1450,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testNullIndexKeysSupportInTx() {
-    final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+    final ODatabaseDocument databaseDocumentTx = database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     final OClass clazz = schema.createClass("NullIndexKeysSupportInTx", 1, (OClass[]) null);
@@ -1508,7 +1508,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullIndexKeysSupportInMiddleTx() {
     if (database.getURL().startsWith("remote:")) return;
 
-    final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+    final ODatabaseDocument databaseDocumentTx = database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     final OClass clazz = schema.createClass("NullIndexKeysSupportInMiddleTx", 1, (OClass[]) null);
@@ -1566,7 +1566,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testCreateIndexAbstractClass() {
-    final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+    final ODatabaseDocument databaseDocumentTx = database.getUnderlying();
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
 
     OClass abstractClass = schema.createAbstractClass("TestCreateIndexAbstractClass");
@@ -1745,7 +1745,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testNullIteration() {
-    ODatabaseDocumentTx database = (ODatabaseDocumentTx) this.database.getUnderlying();
+    ODatabaseDocumentInternal database = this.database.getUnderlying();
     OrientGraph graph = new OrientGraph(database, false);
 
     OClass v = database.getMetadata().getSchema().getClass("V");
@@ -2012,7 +2012,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final ORID rid3 = doc3.getIdentity();
     final ORID rid4 = doc4.getIdentity();
 
-    ODatabaseDocumentTx database = (ODatabaseDocumentTx) this.database.getUnderlying();
+    ODatabaseDocumentInternal database = this.database.getUnderlying();
 
     final OSchema schema = database.getMetadata().getSchema();
     OClass clazz = schema.createClass("TestMultikeyWithoutFieldNoNullSupport");
@@ -2169,7 +2169,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountSBTreeUnique() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+    final ODatabaseDocumentInternal db = database.getUnderlying();
 
     OClass nullSBTreeClass =
         db.getMetadata().getSchema().createClass("NullValuesCountSBTreeUnique");
@@ -2198,7 +2198,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountSBTreeNotUniqueOne() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+    final ODatabaseDocumentInternal db = database.getUnderlying();
 
     OClass nullSBTreeClass =
         db.getMetadata().getSchema().createClass("NullValuesCountSBTreeNotUniqueOne");
@@ -2230,7 +2230,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountSBTreeNotUniqueTwo() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+    final ODatabaseDocumentInternal db = database.getUnderlying();
 
     OClass nullSBTreeClass =
         db.getMetadata().getSchema().createClass("NullValuesCountSBTreeNotUniqueTwo");
@@ -2264,7 +2264,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountHashUnique() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+    final ODatabaseDocumentInternal db = database.getUnderlying();
 
     OClass nullSBTreeClass = db.getMetadata().getSchema().createClass("NullValuesCountHashUnique");
     nullSBTreeClass.createProperty("field", OType.INTEGER);
@@ -2293,7 +2293,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountHashNotUniqueOne() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+    final ODatabaseDocumentInternal db = database.getUnderlying();
 
     OClass nullSBTreeClass =
         db.getMetadata().getSchema().createClass("NullValuesCountHashNotUniqueOne");
@@ -2325,7 +2325,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountHashNotUniqueTwo() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+    final ODatabaseDocumentInternal db = database.getUnderlying();
 
     OClass nullSBTreeClass =
         db.getMetadata().getSchema().createClass("NullValuesCountHashNotUniqueTwo");

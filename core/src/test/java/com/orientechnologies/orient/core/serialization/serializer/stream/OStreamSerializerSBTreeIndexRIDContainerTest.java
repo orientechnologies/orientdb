@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -15,31 +14,16 @@ import java.nio.ByteOrder;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class OStreamSerializerSBTreeIndexRIDContainerTest {
-  private ODatabaseDocumentTx database;
-  private OStreamSerializerSBTreeIndexRIDContainer streamSerializerSBTreeIndexRIDContainer;
-
-  @Before
-  public void beforeClass() {
-    database = new ODatabaseDocumentTx("memory:" + this.getClass().getSimpleName());
-    database.create();
-    streamSerializerSBTreeIndexRIDContainer = new OStreamSerializerSBTreeIndexRIDContainer();
-  }
-
-  @After
-  public void afterClass() {
-    database.drop();
-  }
+public class OStreamSerializerSBTreeIndexRIDContainerTest extends BaseMemoryInternalDatabase {
+  private OStreamSerializerSBTreeIndexRIDContainer streamSerializerSBTreeIndexRIDContainer =
+      new OStreamSerializerSBTreeIndexRIDContainer();;
 
   @Test
   public void testSerializeInByteBufferEmbeddedNonDurable() throws IOException {
-    final OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     atomicOperationsManager.startAtomicOperation(null);
     try {
@@ -91,8 +75,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
 
   @Test
   public void testSerializeInByteBufferEmbeddedDurable() throws IOException {
-    final OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     atomicOperationsManager.startAtomicOperation(null);
     try {
@@ -144,8 +127,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
 
   @Test
   public void testSerializeInByteBufferNonEmbeddedDurable() throws IOException {
-    final OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     atomicOperationsManager.startAtomicOperation(null);
     try {
@@ -197,8 +179,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
 
   @Test
   public void testSerializeWALChangesEmbeddedNonDurable() throws IOException {
-    final OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     atomicOperationsManager.startAtomicOperation(null);
     try {
@@ -247,8 +228,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
 
   @Test
   public void testSerializeWALChangesEmbeddedDurable() throws IOException {
-    final OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     atomicOperationsManager.startAtomicOperation(null);
     try {
@@ -298,8 +278,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
 
   @Test
   public void testSerializeWALChangesNonEmbeddedNonDurable() throws IOException {
-    final OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     atomicOperationsManager.startAtomicOperation(null);
     try {
@@ -349,8 +328,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
 
   @Test
   public void testSerializeWALChangesNonEmbeddedDurable() throws IOException {
-    final OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     atomicOperationsManager.startAtomicOperation(null);
     try {

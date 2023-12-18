@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.database.load;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.annotations.Test;
@@ -13,7 +14,7 @@ public class MemoryLeaksTest {
 
   @Test
   public void createLotsOfRecordsWithBigContent() {
-    ODatabaseDocumentTx vDb = new ODatabaseDocumentTx("plocal:target/MemoryLeaksTest");
+    ODatabaseDocument vDb = new ODatabaseDocumentTx("plocal:target/MemoryLeaksTest");
     vDb.create();
     for (int i = 0; i < 10000000; i++) {
       ODocument vDoc = new ODocument();

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.speed;
 import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -30,12 +31,12 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTest {
-  private ODatabaseDocumentTx mainDatabase;
+  private ODatabaseDocumentInternal mainDatabase;
   private long foundObjects;
 
   @Test(enabled = false)
   public static class CreateObjectsThread extends OrientThreadTest {
-    private ODatabaseDocumentTx database;
+    private ODatabaseDocumentInternal database;
     private ODocument record;
     private Date date = new Date();
 

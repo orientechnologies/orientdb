@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.java.lang;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -27,7 +28,7 @@ import org.testng.Assert;
 
 public class MathTest {
   public static final void main(String[] args) {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:test").create();
+    final ODatabaseDocument db = new ODatabaseDocumentTx("memory:test").create();
     final OSchema schema = db.getMetadata().getSchema();
     final OClass clazz = schema.createClass("test");
     clazz.createProperty("numericAtt", OType.DOUBLE);

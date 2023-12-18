@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -56,7 +57,7 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
 
   @Test
   public void testConcurrency() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(URL);
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
@@ -119,7 +120,7 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
 
       int addedRecords = 0;
 
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
+      ODatabaseDocument db = new ODatabaseDocumentTx(URL);
       db.open("admin", "admin");
       db.declareIntent(new OIntentMassiveInsert());
 
@@ -173,7 +174,7 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
       int deletedRecords = 0;
 
       Random rnd = new Random();
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
+      ODatabaseDocument db = new ODatabaseDocumentTx(URL);
       db.open("admin", "admin");
       db.declareIntent(new OIntentMassiveInsert());
 

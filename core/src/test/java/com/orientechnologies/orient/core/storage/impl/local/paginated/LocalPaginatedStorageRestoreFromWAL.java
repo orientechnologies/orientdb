@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
@@ -42,8 +43,8 @@ import org.junit.Test;
  */
 public class LocalPaginatedStorageRestoreFromWAL {
   private static File buildDir;
-  private ODatabaseDocumentTx testDocumentTx;
-  private ODatabaseDocumentTx baseDocumentTx;
+  private ODatabaseDocumentInternal testDocumentTx;
+  private ODatabaseDocumentInternal baseDocumentTx;
   private ExecutorService executorService = Executors.newCachedThreadPool();
 
   private static void copyFile(String from, String to) throws IOException {
@@ -281,7 +282,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
     }
   }
 
-  private void createSchema(ODatabaseDocumentTx databaseDocumentTx) {
+  private void createSchema(ODatabaseDocumentInternal databaseDocumentTx) {
     ODatabaseRecordThreadLocal.instance().set(databaseDocumentTx);
 
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -303,7 +304,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
       Random random = new Random();
 
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(baseDocumentTx.getURL());
+      final ODatabaseDocumentInternal db = new ODatabaseDocumentTx(baseDocumentTx.getURL());
       db.open("admin", "admin");
       try {
         List<ORID> testTwoList = new ArrayList<ORID>();
