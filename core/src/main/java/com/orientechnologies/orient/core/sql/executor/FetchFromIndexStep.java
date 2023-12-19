@@ -6,6 +6,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -52,66 +53,26 @@ import java.util.stream.Stream;
 
 /** Created by luigidellaquila on 23/07/16. */
 public class FetchFromIndexStep extends AbstractExecutionStep {
-  protected OIndexInternal index;
-  protected OBooleanExpression condition;
-  private OBinaryCondition additionalRangeCondition;
+  protected IndexSearchDescriptor desc;
 
   private boolean orderAsc;
-
-  protected String indexName;
 
   private long count = 0;
 
   public FetchFromIndexStep(
       IndexSearchDescriptor desc, boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
-    this(
-        desc.getIndex(),
-        desc.getKeyCondition(),
-        desc.getAdditionalRangeCondition(),
-        orderAsc,
-        ctx,
-        profilingEnabled);
-  }
-
-  public FetchFromIndexStep(
-      OIndex index,
-      OBooleanExpression condition,
-      OBinaryCondition additionalRangeCondition,
-      boolean orderAsc,
-      OCommandContext ctx,
-      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
-    this.index = index.getInternal();
-    this.indexName = index.getName();
-    this.condition = condition;
-    this.additionalRangeCondition = additionalRangeCondition;
+    this.desc = desc;
     this.orderAsc = orderAsc;
 
     ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    database.queryStartUsingViewIndex(indexName);
-  }
-
-  private FetchFromIndexStep(
-      String indexName,
-      OBooleanExpression condition,
-      OBinaryCondition additionalRangeCondition,
-      boolean orderAsc,
-      OCommandContext ctx,
-      boolean profilingEnabled) {
-    super(ctx, profilingEnabled);
-    this.indexName = indexName;
-    this.condition = condition;
-    this.additionalRangeCondition = additionalRangeCondition;
-    this.orderAsc = orderAsc;
-    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    database.queryStartUsingViewIndex(indexName);
+    database.queryStartUsingViewIndex(desc.getIndex().getName());
   }
 
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    Set<Stream<ORawPair<Object, ORID>>> streams =
-        init(condition, this.indexName, additionalRangeCondition, isOrderAsc(), ctx);
+    Set<Stream<ORawPair<Object, ORID>>> streams = init(desc, isOrderAsc(), ctx);
     Stream<OExecutionStream> resultStreams =
         streams.stream()
             .map(
@@ -153,6 +114,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private void updateIndexStats() {
     // stats
     OQueryStats stats = OQueryStats.get((ODatabaseDocumentInternal) ctx.getDatabase());
+    OIndex index = desc.getIndex();
+    OBooleanExpression condition = desc.getKeyCondition();
+    OBinaryCondition additionalRangeCondition = desc.getAdditionalRangeCondition();
     if (index == null) {
       return; // this could happen, if not inited yet
     }
@@ -182,14 +146,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private static Set<Stream<ORawPair<Object, ORID>>> init(
-      OBooleanExpression condition,
-      String indexName,
-      OBinaryCondition additionalRangeCondition,
-      boolean isOrderAsc,
-      OCommandContext ctx) {
-    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
-    OIndexInternal index =
-        db.getMetadata().getIndexManagerInternal().getIndex(db, indexName).getInternal();
+      IndexSearchDescriptor desc, boolean isOrderAsc, OCommandContext ctx) {
+
+    OIndexInternal index = desc.getIndex().getInternal();
+    OBooleanExpression condition = desc.getKeyCondition();
+    OBinaryCondition additionalRangeCondition = desc.getAdditionalRangeCondition();
+
     if (index.getDefinition() == null) {
       return Collections.emptySet();
     }
@@ -759,17 +721,23 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   @Override
   public String prettyPrint(int depth, int indent) {
     String result =
-        OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX " + indexName;
+        OExecutionStepInternal.getIndent(depth, indent)
+            + "+ FETCH FROM INDEX "
+            + desc.getIndex().getName();
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }
-    if (condition != null) {
+    if (desc.getKeyCondition() != null) {
       String additional =
-          Optional.ofNullable(additionalRangeCondition)
+          Optional.ofNullable(desc.getAdditionalRangeCondition())
               .map(rangeCondition -> " and " + rangeCondition)
               .orElse("");
       result +=
-          ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + additional);
+          ("\n"
+              + OExecutionStepInternal.getIndent(depth, indent)
+              + "  "
+              + desc.getKeyCondition()
+              + additional);
     }
 
     return result;
@@ -778,12 +746,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   @Override
   public OResult serialize() {
     OResultInternal result = OExecutionStepInternal.basicSerialize(this);
-    result.setProperty("indexName", index.getName());
-    if (condition != null) {
-      result.setProperty("condition", condition.serialize());
+    result.setProperty("indexName", desc.getIndex().getName());
+    if (desc.getKeyCondition() != null) {
+      result.setProperty("condition", desc.getKeyCondition().serialize());
     }
-    if (additionalRangeCondition != null) {
-      result.setProperty("additionalRangeCondition", additionalRangeCondition.serialize());
+    if (desc.getAdditionalRangeCondition() != null) {
+      result.setProperty(
+          "additionalRangeCondition", desc.getAdditionalRangeCondition().serialize());
     }
     result.setProperty("orderAsc", orderAsc);
     return result;
@@ -793,14 +762,19 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   public void deserialize(OResult fromResult) {
     try {
       OExecutionStepInternal.basicDeserialize(fromResult, this);
-      indexName = fromResult.getProperty("indexName");
+      String indexName = fromResult.getProperty("indexName");
+      OBooleanExpression condition = null;
       if (fromResult.getProperty("condition") != null) {
         condition = OBooleanExpression.deserializeFromOResult(fromResult.getProperty("condition"));
       }
+      OBinaryCondition additionalRangeCondition = null;
       if (fromResult.getProperty("additionalRangeCondition") != null) {
         additionalRangeCondition = new OBinaryCondition(-1);
         additionalRangeCondition.deserialize(fromResult.getProperty("additionalRangeCondition"));
       }
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+      OIndex index = db.getMetadata().getIndexManager().getIndex(indexName);
+      desc = new IndexSearchDescriptor(index, condition, additionalRangeCondition, null);
       orderAsc = fromResult.getProperty("orderAsc");
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
@@ -809,11 +783,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public void reset() {
-    index = null;
-    condition = Optional.ofNullable(condition).map(OBooleanExpression::copy).orElse(null);
-    additionalRangeCondition =
-        Optional.ofNullable(additionalRangeCondition).map(OBinaryCondition::copy).orElse(null);
-
+    desc = null;
     count = 0;
   }
 
@@ -824,13 +794,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStep copy(OCommandContext ctx) {
-    return new FetchFromIndexStep(
-        indexName,
-        Optional.ofNullable(this.condition).map(OBooleanExpression::copy).orElse(null),
-        Optional.ofNullable(this.additionalRangeCondition).map(OBinaryCondition::copy).orElse(null),
-        this.orderAsc,
-        ctx,
-        this.profilingEnabled);
+    return new FetchFromIndexStep(desc, this.orderAsc, ctx, this.profilingEnabled);
   }
 
   @Override
@@ -839,6 +803,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   public String getIndexName() {
-    return indexName;
+    return desc.getIndex().getName();
   }
 }
