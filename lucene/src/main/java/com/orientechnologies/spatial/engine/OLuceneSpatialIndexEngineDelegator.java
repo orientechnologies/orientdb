@@ -15,14 +15,12 @@
 package com.orientechnologies.spatial.engine;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -31,13 +29,11 @@ import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.spatial.shape.OShapeFactory;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.apache.lucene.analysis.Analyzer;
@@ -97,17 +93,7 @@ public class OLuceneSpatialIndexEngineDelegator
     delegate.flush();
   }
 
-  @Override
-  public void create(
-      OAtomicOperation atomicOperation,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      OBinarySerializer keySerializer,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption) {}
+  public void create(OAtomicOperation atomicOperation, IndexEngineData data) throws IOException {}
 
   @Override
   public void delete(OAtomicOperation atomicOperation) {

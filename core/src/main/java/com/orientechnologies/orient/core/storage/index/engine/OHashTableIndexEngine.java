@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -50,7 +49,6 @@ import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositi
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -131,37 +129,30 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     return name;
   }
 
-  @Override
-  public void create(
-      OAtomicOperation atomicOperation,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      OBinarySerializer keySerializer,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption)
-      throws IOException {
+  public void create(OAtomicOperation atomicOperation, IndexEngineData data) throws IOException {
+
+    OBinarySerializer valueSerializer =
+        storage.resolveObjectSerializer(data.getValueSerializerId());
+    OBinarySerializer keySerializer = storage.resolveObjectSerializer(data.getKeySerializedId());
+
+    final OEncryption encryption =
+        OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
     final OHashFunction<Object> hashFunction;
 
     if (encryption != null) {
-      //noinspection unchecked
       hashFunction = new OSHA256HashFunction<>(keySerializer);
     } else {
-      //noinspection unchecked
       hashFunction = new OMurmurHash3HashFunction<>(keySerializer);
     }
 
-    //noinspection unchecked
     hashTable.create(
         atomicOperation,
         keySerializer,
         valueSerializer,
-        keyTypes,
+        data.getKeyTypes(),
         encryption,
         hashFunction,
-        nullPointerSupport);
+        data.isNullValuesSupport());
     versionPositionMap.create(atomicOperation);
   }
 

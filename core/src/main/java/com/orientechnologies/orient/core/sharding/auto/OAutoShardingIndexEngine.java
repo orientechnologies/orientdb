@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -48,6 +47,7 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.LocalH
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -99,30 +99,25 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     return strategy;
   }
 
-  @Override
-  public void create(
-      OAtomicOperation atomicOperation,
-      final OBinarySerializer valueSerializer,
-      final boolean isAutomatic,
-      final OType[] keyTypes,
-      final boolean nullPointerSupport,
-      final OBinarySerializer keySerializer,
-      final int keySize,
-      final Map<String, String> engineProperties,
-      OEncryption encryption) {
+  public void create(OAtomicOperation atomicOperation, IndexEngineData data) throws IOException {
+
+    OBinarySerializer valueSerializer =
+        storage.resolveObjectSerializer(data.getValueSerializerId());
+    OBinarySerializer keySerializer = storage.resolveObjectSerializer(data.getKeySerializedId());
+
+    final OEncryption encryption =
+        OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
 
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
 
     final OHashFunction<Object> hashFunction;
 
     if (encryption != null) {
-      //noinspection unchecked
       hashFunction = new OSHA256HashFunction<>(keySerializer);
     } else {
-      //noinspection unchecked
       hashFunction = new OMurmurHash3HashFunction<>(keySerializer);
     }
-
+    Map<String, String> engineProperties = data.getEngineProperties();
     final String partitionsProperty = engineProperties.get("partitions");
     if (partitionsProperty != null) {
       try {
@@ -132,23 +127,22 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
             .error(
                 this, "Invalid value of 'partitions' property : `" + partitionsProperty + "`", e);
       }
+      engineProperties = new HashMap<>();
+      engineProperties.put("partitions", String.valueOf(partitionSize));
     }
-
-    engineProperties.put("partitions", String.valueOf(partitionSize));
 
     init();
 
     try {
       for (OHashTable<Object, Object> p : partitions) {
-        //noinspection unchecked
         p.create(
             atomicOperation,
             keySerializer,
             valueSerializer,
-            keyTypes,
+            data.getKeyTypes(),
             encryption,
             hashFunction,
-            nullPointerSupport);
+            data.isNullValuesSupport());
       }
     } catch (IOException e) {
       throw OException.wrapException(

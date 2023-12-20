@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.config;
 
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,7 +18,11 @@ public final class IndexEngineData {
   private final Boolean durableInNonTxMode;
 
   private final int version;
-  private final int apiVersion;
+
+  @Deprecated
+  // Needed only for disk backward compatibility
+  private int apiVersion = 1;
+
   private final boolean multivalue;
   private final byte valueSerializerId;
   private final byte keySerializedId;
@@ -27,6 +33,37 @@ public final class IndexEngineData {
   private final Map<String, String> engineProperties;
   private final String encryption;
   private final String encryptionOptions;
+
+  public IndexEngineData(
+      int indexId,
+      final OIndexMetadata metadata,
+      final Boolean durableInNonTxMode,
+      final byte valueSerializerId,
+      final byte keySerializedId,
+      final OType[] keyTypes,
+      final int keySize,
+      final String encryption,
+      final String encryptionOptions,
+      final Map<String, String> engineProperties) {
+    this.indexId = indexId;
+    OIndexDefinition definition = metadata.getIndexDefinition();
+    this.name = metadata.getName();
+    this.algorithm = metadata.getAlgorithm();
+    this.indexType = metadata.getType();
+    this.durableInNonTxMode = durableInNonTxMode;
+    this.version = metadata.getVersion();
+    this.multivalue = metadata.isMultivalue();
+    this.valueSerializerId = valueSerializerId;
+    this.keySerializedId = keySerializedId;
+    this.isAutomatic = definition.isAutomatic();
+    this.keyTypes = keyTypes;
+    this.nullValuesSupport = !definition.isNullValuesIgnored();
+    this.keySize = keySize;
+    this.encryption = encryption;
+    this.encryptionOptions = encryptionOptions;
+    if (engineProperties == null) this.engineProperties = null;
+    else this.engineProperties = new HashMap<>(engineProperties);
+  }
 
   public IndexEngineData(
       int indexId,
@@ -82,6 +119,7 @@ public final class IndexEngineData {
     return algorithm;
   }
 
+  @Deprecated
   public Boolean getDurableInNonTxMode() {
     return durableInNonTxMode;
   }
@@ -90,6 +128,7 @@ public final class IndexEngineData {
     return version;
   }
 
+  @Deprecated
   public int getApiVersion() {
     return apiVersion;
   }

@@ -23,7 +23,6 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.builder.OLuceneIndexType;
@@ -36,7 +35,6 @@ import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
@@ -45,7 +43,6 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
@@ -337,17 +334,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     }
   }
 
-  @Override
-  public void create(
-      OAtomicOperation atomicOperation,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      OBinarySerializer keySerializer,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption) {}
+  public void create(OAtomicOperation atomicOperation, IndexEngineData data) throws IOException {}
 
   @Override
   public void delete(OAtomicOperation atomicOperation) {

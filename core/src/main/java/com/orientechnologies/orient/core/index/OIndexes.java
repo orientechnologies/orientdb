@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.index;
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
 import com.orientechnologies.common.util.OCollections;
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -172,17 +173,18 @@ public final class OIndexes {
   }
 
   public static OBaseIndexEngine createIndexEngine(
-      int indexId,
-      final String name,
-      final String algorithm,
-      final String type,
-      final OStorage storage,
-      final int version,
-      boolean multivalue) {
+      final OStorage storage, final IndexEngineData metadata) {
 
-    final OIndexFactory factory = findFactoryByAlgorithmAndType(algorithm, type);
+    final OIndexFactory factory =
+        findFactoryByAlgorithmAndType(metadata.getAlgorithm(), metadata.getIndexType());
 
-    return factory.createIndexEngine(indexId, algorithm, name, storage, version, multivalue);
+    return factory.createIndexEngine(
+        metadata.getIndexId(),
+        metadata.getAlgorithm(),
+        metadata.getName(),
+        storage,
+        metadata.getVersion(),
+        metadata.isMultivalue());
   }
 
   public static String chooseDefaultIndexAlgorithm(String type) {

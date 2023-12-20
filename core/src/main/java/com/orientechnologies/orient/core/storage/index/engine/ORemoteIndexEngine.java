@@ -19,20 +19,17 @@
  */
 package com.orientechnologies.orient.core.storage.index.engine;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.IndexEngineData;
-import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import java.util.Map;
+import java.io.IOException;
 import java.util.stream.Stream;
 
 /**
@@ -84,17 +81,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public void flush() {}
 
-  @Override
-  public void create(
-      OAtomicOperation atomicOperation,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      OBinarySerializer keySerializer,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption) {}
+  public void create(OAtomicOperation atomicOperation, IndexEngineData data) throws IOException {}
 
   @Override
   public void delete(OAtomicOperation atomicOperation) {}

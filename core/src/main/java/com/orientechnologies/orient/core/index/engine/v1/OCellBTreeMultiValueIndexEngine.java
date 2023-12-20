@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellB
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueV3;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -103,28 +102,27 @@ public final class OCellBTreeMultiValueIndexEngine
     return name;
   }
 
-  @Override
-  public void create(
-      OAtomicOperation atomicOperation,
-      @SuppressWarnings("rawtypes") OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      @SuppressWarnings("rawtypes") OBinarySerializer keySerializer,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption) {
+  public void create(OAtomicOperation atomicOperation, IndexEngineData data) throws IOException {
+
+    OBinarySerializer keySerializer = storage.resolveObjectSerializer(data.getKeySerializedId());
+
+    final OEncryption encryption =
+        OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
     try {
       if (mvTree != null) {
-        //noinspection unchecked
-        mvTree.create(keySerializer, keyTypes, keySize, encryption, atomicOperation);
+        mvTree.create(
+            keySerializer, data.getKeyTypes(), data.getKeySize(), encryption, atomicOperation);
       } else {
-        final OType[] sbTypes = calculateTypes(keyTypes);
+        final OType[] sbTypes = calculateTypes(data.getKeyTypes());
         assert svTree != null;
         assert nullTree != null;
 
         svTree.create(
-            atomicOperation, new CompositeKeySerializer(), sbTypes, keySize + 1, encryption);
+            atomicOperation,
+            new CompositeKeySerializer(),
+            sbTypes,
+            data.getKeySize() + 1,
+            encryption);
         nullTree.create(
             atomicOperation, OCompactedLinkSerializer.INSTANCE, new OType[] {OType.LINK}, 1, null);
       }

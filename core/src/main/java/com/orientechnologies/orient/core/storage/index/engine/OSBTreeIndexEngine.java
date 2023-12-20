@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -42,7 +41,6 @@ import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -104,26 +102,23 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   @Override
   public void flush() {}
 
-  @Override
-  public void create(
-      OAtomicOperation atomicOperation,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      OBinarySerializer keySerializer,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption) {
+  public void create(OAtomicOperation atomicOperation, IndexEngineData data) throws IOException {
+
+    OBinarySerializer valueSerializer =
+        storage.resolveObjectSerializer(data.getValueSerializerId());
+    OBinarySerializer keySerializer = storage.resolveObjectSerializer(data.getKeySerializedId());
+
+    final OEncryption encryption =
+        OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
+
     try {
-      //noinspection unchecked
       sbTree.create(
           atomicOperation,
           keySerializer,
           valueSerializer,
-          keyTypes,
-          keySize,
-          nullPointerSupport,
+          data.getKeyTypes(),
+          data.getKeySize(),
+          data.isNullValuesSupport(),
           encryption);
       versionPositionMap.create(atomicOperation);
     } catch (IOException e) {

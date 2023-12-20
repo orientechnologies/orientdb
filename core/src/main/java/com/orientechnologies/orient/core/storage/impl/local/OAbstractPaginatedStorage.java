@@ -717,22 +717,11 @@ public abstract class OAbstractPaginatedStorage
 
     for (final String indexName : indexNames) {
       final IndexEngineData engineData = configuration.getIndexEngine(indexName, counter);
-      final OBaseIndexEngine engine =
-          OIndexes.createIndexEngine(
-              engineData.getIndexId(),
-              engineData.getName(),
-              engineData.getAlgorithm(),
-              engineData.getIndexType(),
-              this,
-              engineData.getVersion(),
-              engineData.isMultivalue());
 
-      if (engineData.getApiVersion() < 1) {
-        ((OIndexEngine) engine).load(engineData);
+      final OBaseIndexEngine engine = OIndexes.createIndexEngine(this, engineData);
 
-      } else {
-        ((OV1IndexEngine) engine).load(engineData);
-      }
+      engine.load(engineData);
+
       indexEngineNameMap.put(engineData.getName(), engine);
       while (engineData.getIndexId() >= indexEngines.size()) {
         indexEngines.add(null);
@@ -2639,13 +2628,7 @@ public abstract class OAbstractPaginatedStorage
 
   public int loadExternalIndexEngine(
       final OIndexMetadata indexMetadata, final Map<String, String> engineProperties) {
-    final String engineName = indexMetadata.getName();
-    final String algorithm = indexMetadata.getAlgorithm();
-    final String indexType = indexMetadata.getType();
     final OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
-    final boolean isAutomatic = indexMetadata.getIndexDefinition().isAutomatic();
-    final boolean multivalue = indexMetadata.isMultivalue();
-    final int version = indexMetadata.getVersion();
     try {
       stateLock.writeLock().lock();
       try {
@@ -2656,8 +2639,9 @@ public abstract class OAbstractPaginatedStorage
         if (configuration.getBinaryFormatVersion() > 15) {
           return -1;
         }
-        if (indexEngineNameMap.containsKey(engineName)) {
-          throw new OIndexException("Index with name " + engineName + " already exists");
+        if (indexEngineNameMap.containsKey(indexMetadata.getName())) {
+          throw new OIndexException(
+              "Index with name " + indexMetadata.getName() + " already exists");
         }
         makeStorageDirty();
 
@@ -2671,47 +2655,38 @@ public abstract class OAbstractPaginatedStorage
         final int keySize = determineKeySize(indexDefinition);
         final OType[] keyTypes =
             Optional.of(indexDefinition).map(OIndexDefinition::getTypes).orElse(null);
-        final boolean nullValuesSupport = !indexDefinition.isNullValuesIgnored();
-        final OBaseIndexEngine engine =
-            OIndexes.createIndexEngine(
-                indexEngines.size(), engineName, algorithm, indexType, this, version, multivalue);
+        int generatedId = indexEngines.size();
         final IndexEngineData engineData =
             new IndexEngineData(
-                engine.getId(),
-                engineName,
-                algorithm,
-                indexType,
+                generatedId,
+                indexMetadata,
                 true,
-                version,
-                engine.getEngineAPIVersion(),
-                multivalue,
                 valueSerializerId,
                 keySerializer.getId(),
-                isAutomatic,
                 keyTypes,
-                nullValuesSupport,
                 keySize,
                 null,
                 null,
                 engineProperties);
 
-        if (engineData.getApiVersion() < 1) {
-          ((OIndexEngine) engine).load(engineData);
-        } else {
-          ((OV1IndexEngine) engine).load(engineData);
-        }
+        final OBaseIndexEngine engine = OIndexes.createIndexEngine(this, engineData);
+
+        engine.load(engineData);
+
         atomicOperationsManager.executeInsideAtomicOperation(
             null,
             atomicOperation -> {
-              indexEngineNameMap.put(engineName, engine);
+              indexEngineNameMap.put(indexMetadata.getName(), engine);
               indexEngines.add(engine);
               ((OClusterBasedStorageConfiguration) configuration)
-                  .addIndexEngine(atomicOperation, engineName, engineData);
+                  .addIndexEngine(atomicOperation, indexMetadata.getName(), engineData);
             });
-        return generateIndexId(indexEngines.size() - 1, engine);
+        return generateIndexId(engineData.getIndexId(), engine);
       } catch (final IOException e) {
         throw OException.wrapException(
-            new OStorageException("Cannot add index engine " + engineName + " in storage."), e);
+            new OStorageException(
+                "Cannot add index engine " + indexMetadata.getName() + " in storage."),
+            e);
       } finally {
         stateLock.writeLock().unlock();
       }
@@ -2726,7 +2701,6 @@ public abstract class OAbstractPaginatedStorage
 
   public int addIndexEngine(
       final OIndexMetadata indexMetadata, final Map<String, String> engineProperties) {
-    final String engineName = indexMetadata.getName();
     final OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
 
     try {
@@ -2755,81 +2729,69 @@ public abstract class OAbstractPaginatedStorage
         return atomicOperationsManager.calculateInsideAtomicOperation(
             null,
             atomicOperation -> {
-              if (indexEngineNameMap.containsKey(engineName)) {
+              if (indexEngineNameMap.containsKey(indexMetadata.getName())) {
                 // OLD INDEX FILE ARE PRESENT: THIS IS THE CASE OF PARTIAL/BROKEN INDEX
                 OLogManager.instance()
                     .warn(
                         this,
                         "Index with name '%s' already exists, removing it and re-create the index",
-                        engineName);
-                final OBaseIndexEngine engine = indexEngineNameMap.remove(engineName);
+                        indexMetadata.getName());
+                final OBaseIndexEngine engine = indexEngineNameMap.remove(indexMetadata.getName());
                 if (engine != null) {
                   indexEngines.set(engine.getId(), null);
 
                   engine.delete(atomicOperation);
                   ((OClusterBasedStorageConfiguration) configuration)
-                      .deleteIndexEngine(atomicOperation, engineName);
+                      .deleteIndexEngine(atomicOperation, indexMetadata.getName());
                 }
               }
               final int binaryFormatVersion = getConfiguration().getBinaryFormatVersion();
               final byte valueSerializerId =
                   indexMetadata.getValueSerializerId(binaryFormatVersion);
-              final OBaseIndexEngine engine =
-                  addIndexEngineInternal(
-                      atomicOperation,
-                      engineName,
-                      indexMetadata.getAlgorithm(),
-                      indexMetadata.getType(),
-                      resolveObjectSerializer(valueSerializerId),
-                      indexDefinition.isAutomatic(),
-                      indexMetadata.getVersion(),
-                      indexMetadata.isMultivalue(),
-                      engineProperties,
-                      keySerializer,
-                      keySize,
-                      keyTypes,
-                      !indexDefinition.isNullValuesIgnored());
-
               final OContextConfiguration ctxCfg = configuration.getContextConfiguration();
               @SuppressWarnings("deprecation")
               final String cfgEncryption =
                   ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
               final String cfgEncryptionKey =
                   ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
-
+              int genenrateId = indexEngines.size();
               final IndexEngineData engineData =
                   new IndexEngineData(
-                      engine.getId(),
-                      engineName,
-                      indexMetadata.getAlgorithm(),
-                      indexMetadata.getType(),
+                      genenrateId,
+                      indexMetadata,
                       true,
-                      indexMetadata.getVersion(),
-                      engine.getEngineAPIVersion(),
-                      indexMetadata.isMultivalue(),
                       valueSerializerId,
                       keySerializer.getId(),
-                      indexDefinition.isAutomatic(),
                       keyTypes,
-                      !indexDefinition.isNullValuesIgnored(),
                       keySize,
                       cfgEncryption,
                       cfgEncryptionKey,
                       engineProperties);
+
+              final OBaseIndexEngine engine = OIndexes.createIndexEngine(this, engineData);
+
+              engine.create(atomicOperation, engineData);
+              indexEngineNameMap.put(indexMetadata.getName(), engine);
+              indexEngines.add(engine);
+
               ((OClusterBasedStorageConfiguration) configuration)
-                  .addIndexEngine(atomicOperation, engineName, engineData);
+                  .addIndexEngine(atomicOperation, indexMetadata.getName(), engineData);
 
               if (indexMetadata.isMultivalue() && engine.hasRidBagTreesSupport()) {
                 final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree =
                     new OSBTreeBonsaiLocal<>(
-                        engineName, OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
+                        indexMetadata.getName(),
+                        OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION,
+                        this);
                 tree.createComponent(atomicOperation);
               }
-              return generateIndexId(indexEngines.size() - 1, engine);
+              return generateIndexId(engineData.getIndexId(), engine);
             });
       } catch (final IOException e) {
         throw OException.wrapException(
-            new OStorageException("Cannot add index engine " + engineName + " in storage."), e);
+            new OStorageException(
+                "Cannot add index engine " + indexMetadata.getName() + " in storage."),
+            e);
       } finally {
         stateLock.writeLock().unlock();
       }
@@ -2844,48 +2806,6 @@ public abstract class OAbstractPaginatedStorage
 
   public OBinarySerializer<?> resolveObjectSerializer(final byte serializerId) {
     return getComponentsFactory().binarySerializerFactory.getObjectSerializer(serializerId);
-  }
-
-  private OBaseIndexEngine addIndexEngineInternal(
-      final OAtomicOperation atomicOperation,
-      final String engineName,
-      final String algorithm,
-      final String indexType,
-      final OBinarySerializer<?> valueSerializer,
-      final boolean isAutomatic,
-      final int version,
-      final boolean multivalue,
-      final Map<String, String> engineProperties,
-      final OBinarySerializer<?> keySerializer,
-      final int keySize,
-      final OType[] keyTypes,
-      final boolean nullValuesSupport)
-      throws IOException {
-    final OBaseIndexEngine engine;
-    engine =
-        OIndexes.createIndexEngine(
-            indexEngines.size(), engineName, algorithm, indexType, this, version, multivalue);
-    final OContextConfiguration ctxCfg = configuration.getContextConfiguration();
-    @SuppressWarnings("deprecation")
-    final String cfgEncryption =
-        ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
-    final String cfgEncryptionKey =
-        ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
-
-    final OEncryption encryption = loadEncryption(cfgEncryption, cfgEncryptionKey);
-    engine.create(
-        atomicOperation,
-        valueSerializer,
-        isAutomatic,
-        keyTypes,
-        nullValuesSupport,
-        keySerializer,
-        keySize,
-        engineProperties,
-        encryption);
-    indexEngineNameMap.put(engineName, engine);
-    indexEngines.add(engine);
-    return engine;
   }
 
   public static OEncryption loadEncryption(

@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.Cel
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
 import java.io.IOException;
-import java.util.Map;
 import java.util.stream.Stream;
 
 public final class OCellBTreeSingleValueIndexEngine
@@ -78,20 +77,16 @@ public final class OCellBTreeSingleValueIndexEngine
     return name;
   }
 
-  @Override
-  public void create(
-      OAtomicOperation atomicOperation,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      OBinarySerializer keySerializer,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption) {
+  public void create(OAtomicOperation atomicOperation, IndexEngineData data) throws IOException {
+
+    OBinarySerializer keySerializer = storage.resolveObjectSerializer(data.getKeySerializedId());
+
+    final OEncryption encryption =
+        OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
+
     try {
-      //noinspection unchecked
-      sbTree.create(atomicOperation, keySerializer, keyTypes, keySize, encryption);
+      sbTree.create(
+          atomicOperation, keySerializer, data.getKeyTypes(), data.getKeySize(), encryption);
       versionPositionMap.create(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error of creation of index " + name), e);
