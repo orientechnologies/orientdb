@@ -21,10 +21,13 @@ package com.orientechnologies.orient.core.storage.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -97,16 +100,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
   public void delete(OAtomicOperation atomicOperation) {}
 
   @Override
-  public void load(
-      String indexName,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OBinarySerializer keySerializer,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption) {}
+  public void load(IndexEngineData data) {}
 
   @Override
   public boolean remove(OAtomicOperation atomicOperation, Object key) {
@@ -133,7 +127,10 @@ public class ORemoteIndexEngine implements OIndexEngine {
 
   @Override
   public boolean validatedPut(
-      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+      OAtomicOperation atomicOperation,
+      Object key,
+      ORID value,
+      IndexEngineValidator<Object, ORID> validator) {
     return false;
   }
 
@@ -144,24 +141,30 @@ public class ORemoteIndexEngine implements OIndexEngine {
       Object rangeTo,
       boolean toInclusive,
       boolean ascSortOrder,
-      ValuesTransformer transformer) {
+      IndexEngineValuesTransformer transformer) {
     throw new UnsupportedOperationException("stream");
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
-      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object fromKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     throw new UnsupportedOperationException("stream");
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
-      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object toKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     throw new UnsupportedOperationException("stream");
   }
 
   @Override
-  public long size(ValuesTransformer transformer) {
+  public long size(IndexEngineValuesTransformer transformer) {
     return 0;
   }
 
@@ -171,12 +174,12 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(IndexEngineValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("stream");
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(IndexEngineValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException();
   }
 

@@ -33,10 +33,6 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface OIndex extends Comparable<OIndex> {
-  String MERGE_KEYS = "mergeKeys";
-
-  OIndex create(OIndexMetadata metadata, boolean rebuild, OProgressListener progressListener);
-
   String getDatabaseName();
 
   /**
@@ -297,8 +293,6 @@ public interface OIndex extends Comparable<OIndex> {
   ODocument getMetadata();
 
   boolean supportsOrderedIterations();
-
-  int getIndexId();
 
   boolean isUnique();
 }

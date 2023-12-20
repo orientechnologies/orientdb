@@ -95,6 +95,8 @@ import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
@@ -725,37 +727,11 @@ public abstract class OAbstractPaginatedStorage
               engineData.getVersion(),
               engineData.isMultivalue());
 
-      final OEncryption encryption;
-      if (engineData.getEncryption() == null
-          || engineData.getEncryption().toLowerCase().equals(ONothingEncryption.NAME)) {
-        encryption = null;
-      } else {
-        encryption =
-            OEncryptionFactory.INSTANCE.getEncryption(
-                engineData.getEncryption(), engineData.getEncryptionOptions());
-      }
-
       if (engineData.getApiVersion() < 1) {
-        ((OIndexEngine) engine)
-            .load(
-                engineData.getName(),
-                cf.binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
-                engineData.isAutomatic(),
-                cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
-                engineData.getKeyTypes(),
-                engineData.isNullValuesSupport(),
-                engineData.getKeySize(),
-                engineData.getEngineProperties(),
-                encryption);
+        ((OIndexEngine) engine).load(engineData);
 
       } else {
-        ((OV1IndexEngine) engine)
-            .load(
-                engineData.getName(),
-                engineData.getKeySize(),
-                engineData.getKeyTypes(),
-                cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
-                encryption);
+        ((OV1IndexEngine) engine).load(engineData);
       }
       indexEngineNameMap.put(engineData.getName(), engine);
       while (engineData.getIndexId() >= indexEngines.size()) {
@@ -2720,22 +2696,9 @@ public abstract class OAbstractPaginatedStorage
                 engineProperties);
 
         if (engineData.getApiVersion() < 1) {
-
-          OBinarySerializer<?> valueSerializer =
-              getComponentsFactory().binarySerializerFactory.getObjectSerializer(valueSerializerId);
-          ((OIndexEngine) engine)
-              .load(
-                  engineName,
-                  valueSerializer,
-                  isAutomatic,
-                  keySerializer,
-                  keyTypes,
-                  nullValuesSupport,
-                  keySize,
-                  engineData.getEngineProperties(),
-                  null);
+          ((OIndexEngine) engine).load(engineData);
         } else {
-          ((OV1IndexEngine) engine).load(engineName, keySize, keyTypes, keySerializer, null);
+          ((OV1IndexEngine) engine).load(engineData);
         }
         atomicOperationsManager.executeInsideAtomicOperation(
             null,
@@ -2916,12 +2879,7 @@ public abstract class OAbstractPaginatedStorage
     final String cfgEncryptionKey =
         ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
 
-    final OEncryption encryption;
-    if (cfgEncryption == null || cfgEncryption.equals(ONothingEncryption.NAME)) {
-      encryption = null;
-    } else {
-      encryption = OEncryptionFactory.INSTANCE.getEncryption(cfgEncryption, cfgEncryptionKey);
-    }
+    final OEncryption encryption = loadEncryption(cfgEncryption, cfgEncryptionKey);
     engine.create(
         atomicOperation,
         valueSerializer,
@@ -2935,6 +2893,17 @@ public abstract class OAbstractPaginatedStorage
     indexEngineNameMap.put(engineName, engine);
     indexEngines.add(engine);
     return engine;
+  }
+
+  public static OEncryption loadEncryption(
+      final String cfgEncryption, final String cfgEncryptionKey) {
+    final OEncryption encryption;
+    if (cfgEncryption == null || cfgEncryption.toLowerCase().equals(ONothingEncryption.NAME)) {
+      encryption = null;
+    } else {
+      encryption = OEncryptionFactory.INSTANCE.getEncryption(cfgEncryption, cfgEncryptionKey);
+    }
+    return encryption;
   }
 
   private static int generateIndexId(final int internalId, final OBaseIndexEngine indexEngine) {
@@ -3484,14 +3453,14 @@ public abstract class OAbstractPaginatedStorage
    * @param value the value to put.
    * @param validator the operation validator.
    * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   * @see OBaseIndexEngine.Validator#validate(Object, Object, Object)
+   * @see IndexEngineValidator#validate(Object, Object, Object)
    */
   @SuppressWarnings("UnusedReturnValue")
   public boolean validatedPutIndexValue(
       final int indexId,
       final Object key,
       final ORID value,
-      final OBaseIndexEngine.Validator<Object, ORID> validator)
+      final IndexEngineValidator<Object, ORID> validator)
       throws OInvalidIndexEngineIdException {
     final int internalIndexId = extractInternalId(indexId);
 
@@ -3516,7 +3485,7 @@ public abstract class OAbstractPaginatedStorage
       final int indexId,
       final Object key,
       final ORID value,
-      final OBaseIndexEngine.Validator<Object, ORID> validator)
+      final IndexEngineValidator<Object, ORID> validator)
       throws OInvalidIndexEngineIdException {
     try {
       checkIndexId(indexId);
@@ -3550,7 +3519,7 @@ public abstract class OAbstractPaginatedStorage
       final Object rangeTo,
       final boolean toInclusive,
       final boolean ascSortOrder,
-      final OBaseIndexEngine.ValuesTransformer transformer)
+      final IndexEngineValuesTransformer transformer)
       throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
@@ -3588,7 +3557,7 @@ public abstract class OAbstractPaginatedStorage
       final Object rangeTo,
       final boolean toInclusive,
       final boolean ascSortOrder,
-      final OBaseIndexEngine.ValuesTransformer transformer)
+      final IndexEngineValuesTransformer transformer)
       throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
@@ -3604,7 +3573,7 @@ public abstract class OAbstractPaginatedStorage
       final Object fromKey,
       final boolean isInclusive,
       final boolean ascSortOrder,
-      final OBaseIndexEngine.ValuesTransformer transformer)
+      final IndexEngineValuesTransformer transformer)
       throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
@@ -3638,7 +3607,7 @@ public abstract class OAbstractPaginatedStorage
       final Object fromKey,
       final boolean isInclusive,
       final boolean ascSortOrder,
-      final OBaseIndexEngine.ValuesTransformer transformer)
+      final IndexEngineValuesTransformer transformer)
       throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
@@ -3653,7 +3622,7 @@ public abstract class OAbstractPaginatedStorage
       final Object toKey,
       final boolean isInclusive,
       final boolean ascSortOrder,
-      final OBaseIndexEngine.ValuesTransformer transformer)
+      final IndexEngineValuesTransformer transformer)
       throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
@@ -3687,7 +3656,7 @@ public abstract class OAbstractPaginatedStorage
       final Object toKey,
       final boolean isInclusive,
       final boolean ascSortOrder,
-      final OBaseIndexEngine.ValuesTransformer transformer)
+      final IndexEngineValuesTransformer transformer)
       throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
@@ -3698,7 +3667,7 @@ public abstract class OAbstractPaginatedStorage
   }
 
   public Stream<ORawPair<Object, ORID>> getIndexStream(
-      int indexId, final OBaseIndexEngine.ValuesTransformer valuesTransformer)
+      int indexId, final IndexEngineValuesTransformer valuesTransformer)
       throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
@@ -3728,7 +3697,7 @@ public abstract class OAbstractPaginatedStorage
   }
 
   private Stream<ORawPair<Object, ORID>> doGetIndexStream(
-      final int indexId, final OBaseIndexEngine.ValuesTransformer valuesTransformer)
+      final int indexId, final IndexEngineValuesTransformer valuesTransformer)
       throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
@@ -3739,7 +3708,7 @@ public abstract class OAbstractPaginatedStorage
   }
 
   public Stream<ORawPair<Object, ORID>> getIndexDescStream(
-      int indexId, final OBaseIndexEngine.ValuesTransformer valuesTransformer)
+      int indexId, final IndexEngineValuesTransformer valuesTransformer)
       throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
@@ -3769,7 +3738,7 @@ public abstract class OAbstractPaginatedStorage
   }
 
   private Stream<ORawPair<Object, ORID>> doGetIndexDescStream(
-      final int indexId, final OBaseIndexEngine.ValuesTransformer valuesTransformer)
+      final int indexId, final IndexEngineValuesTransformer valuesTransformer)
       throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
@@ -3817,7 +3786,7 @@ public abstract class OAbstractPaginatedStorage
     return engine.keyStream();
   }
 
-  public long getIndexSize(int indexId, final OBaseIndexEngine.ValuesTransformer transformer)
+  public long getIndexSize(int indexId, final IndexEngineValuesTransformer transformer)
       throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
@@ -3846,8 +3815,7 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  private long doGetIndexSize(
-      final int indexId, final OBaseIndexEngine.ValuesTransformer transformer)
+  private long doGetIndexSize(final int indexId, final IndexEngineValuesTransformer transformer)
       throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 

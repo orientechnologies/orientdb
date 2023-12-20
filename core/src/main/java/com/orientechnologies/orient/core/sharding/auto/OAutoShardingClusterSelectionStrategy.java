@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
@@ -63,7 +64,9 @@ public class OAutoShardingClusterSelectionStrategy implements OClusterSelectionS
 
     try {
       indexEngine =
-          (OIndexEngine) ((OAbstractPaginatedStorage) stg).getIndexEngine(index.getIndexId());
+          (OIndexEngine)
+              ((OAbstractPaginatedStorage) stg)
+                  .getIndexEngine(((OIndexInternal) index).getIndexId());
     } catch (OInvalidIndexEngineIdException e) {
       throw OException.wrapException(
           new OConfigurationException(

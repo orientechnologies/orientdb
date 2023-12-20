@@ -21,8 +21,8 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
+import com.orientechnologies.orient.core.index.engine.UniqueIndexEngineValidator;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -34,32 +34,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  */
 public class OIndexUnique extends OIndexOneValue {
 
-  private final OBaseIndexEngine.Validator<Object, ORID> uniqueValidator =
-      (key, oldValue, newValue) -> {
-        if (oldValue != null) {
-          // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-          if (!oldValue.equals(newValue)) {
-            final Boolean mergeSameKey =
-                metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
-            if (mergeSameKey == null || !mergeSameKey) {
-              throw new ORecordDuplicatedException(
-                  String.format(
-                      "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                      newValue.getIdentity(), key, getName(), oldValue.getIdentity()),
-                  getName(),
-                  oldValue.getIdentity(),
-                  key);
-            }
-          } else {
-            return OBaseIndexEngine.Validator.IGNORE;
-          }
-        }
-
-        if (!newValue.getIdentity().isPersistent()) {
-          newValue = newValue.getRecord().getIdentity();
-        }
-        return newValue.getIdentity();
-      };
+  private final IndexEngineValidator<Object, ORID> uniqueValidator =
+      new UniqueIndexEngineValidator(this);
 
   public OIndexUnique(OIndexMetadata im, final OStorage storage) {
     super(im, storage);

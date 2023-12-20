@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.encryption.OEncryption;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import java.io.IOException;
@@ -51,10 +51,10 @@ public interface OHashTable<K, V> {
    * @param value the value to put.
    * @param validator the operation validator.
    * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   * @see OBaseIndexEngine.Validator#validate(Object, Object, Object)
+   * @see IndexEngineValidator#validate(Object, Object, Object)
    */
   boolean validatedPut(
-      OAtomicOperation atomicOperation, K key, V value, OBaseIndexEngine.Validator<K, V> validator)
+      OAtomicOperation atomicOperation, K key, V value, IndexEngineValidator<K, V> validator)
       throws IOException;
 
   void put(OAtomicOperation atomicOperation, K key, V value) throws IOException;

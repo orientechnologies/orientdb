@@ -6,7 +6,10 @@ import java.io.IOException;
 
 public interface OSingleValueIndexEngine extends OV1IndexEngine {
   boolean validatedPut(
-      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator);
+      OAtomicOperation atomicOperation,
+      Object key,
+      ORID value,
+      IndexEngineValidator<Object, ORID> validator);
 
   boolean remove(OAtomicOperation atomicOperation, Object key) throws IOException;
 

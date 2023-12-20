@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -60,6 +61,7 @@ public interface OIndexInternal extends OIndex {
   String INDEX_DEFINITION_CLASS = "indexDefinitionClass";
   String INDEX_VERSION = "indexVersion";
   String METADATA = "metadata";
+  String MERGE_KEYS = "mergeKeys";
 
   Object getCollatingValue(final Object key);
 
@@ -353,4 +355,8 @@ public interface OIndexInternal extends OIndex {
       throws OInvalidIndexEngineIdException;
 
   Stream<ORID> getRidsIgnoreTx(Object key);
+
+  OIndex create(OIndexMetadata metadata, boolean rebuild, OProgressListener progressListener);
+
+  int getIndexId();
 }

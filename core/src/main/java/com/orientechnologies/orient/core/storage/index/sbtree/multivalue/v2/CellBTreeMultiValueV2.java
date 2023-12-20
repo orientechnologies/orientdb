@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.comparator.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.comparator.OAlwaysLessKey;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -481,14 +480,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
                       atomicOperation,
                       new MultiValueEntry(result, value.getClusterId(), value.getClusterPosition()),
                       (byte) 1,
-                      (k, ov, v) -> {
-                        if (ov != null) {
-                          return OBaseIndexEngine.Validator.IGNORE;
-                        }
-
-                        nullBucket.incrementSize();
-                        return v;
-                      });
+                      new IndexEngineValidatorNullIncrement(nullBucket));
                 }
               }
             }
@@ -519,14 +511,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
           atomicOperation,
           new MultiValueEntry(result, value.getClusterId(), value.getClusterPosition()),
           (byte) 1,
-          (k, ov, v) -> {
-            if (ov != null) {
-              return OBaseIndexEngine.Validator.IGNORE;
-            }
-
-            bucketMultiValue.incrementEntriesCount(index);
-            return v;
-          });
+          new IndexEngineValidatorIncrement(bucketMultiValue, index));
       return true;
     }
 

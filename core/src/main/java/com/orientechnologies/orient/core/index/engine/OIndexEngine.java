@@ -20,14 +20,11 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -54,10 +51,13 @@ public interface OIndexEngine extends OBaseIndexEngine {
    * @param value the value to put.
    * @param validator the operation validator.
    * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   * @see Validator#validate(Object, Object, Object)
+   * @see IndexEngineValidator#validate(Object, Object, Object)
    */
   boolean validatedPut(
-      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator)
+      OAtomicOperation atomicOperation,
+      Object key,
+      ORID value,
+      IndexEngineValidator<Object, ORID> validator)
       throws IOException;
 
   @Override
@@ -65,14 +65,5 @@ public interface OIndexEngine extends OBaseIndexEngine {
     return VERSION;
   }
 
-  void load(
-      String indexName,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OBinarySerializer keySerializer,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption);
+  void load(IndexEngineData data);
 }

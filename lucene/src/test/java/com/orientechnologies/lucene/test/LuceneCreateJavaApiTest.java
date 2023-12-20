@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -208,7 +209,8 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
 
   private void checkCreatedEmbeddedMapIndex(final OClass clazz, final String expectedAlgorithm) {
     final OIndex index = clazz.getIndexes().iterator().next();
-    System.out.println("key-name: " + index.getIndexId() + "-" + index.getName());
+    System.out.println(
+        "key-name: " + ((OIndexInternal) index).getIndexId() + "-" + index.getName());
 
     Assert.assertEquals("index algorithm", expectedAlgorithm, index.getAlgorithm());
     Assert.assertEquals("index type", "FULLTEXT", index.getType());

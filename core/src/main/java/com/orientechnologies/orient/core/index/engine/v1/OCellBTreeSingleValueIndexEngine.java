@@ -3,10 +3,14 @@ package com.orientechnologies.orient.core.index.engine.v1;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.config.IndexEngineData;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OSingleValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -30,11 +34,13 @@ public final class OCellBTreeSingleValueIndexEngine
   private final OVersionPositionMap versionPositionMap;
   private final String name;
   private final int id;
+  private OAbstractPaginatedStorage storage;
 
   public OCellBTreeSingleValueIndexEngine(
       int id, String name, OAbstractPaginatedStorage storage, int version) {
     this.name = name;
     this.id = id;
+    this.storage = storage;
 
     if (version < 3) {
       this.sbTree =
@@ -120,6 +126,26 @@ public final class OCellBTreeSingleValueIndexEngine
   }
 
   @Override
+  public void load(IndexEngineData data) {
+    OCurrentStorageComponentsFactory cf = storage.getComponentsFactory();
+    final OEncryption encryption =
+        OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
+
+    String name = data.getName();
+    int keySize = data.getKeySize();
+    OType[] keyTypes = data.getKeyTypes();
+    OBinarySerializer keySerializer =
+        cf.binarySerializerFactory.getObjectSerializer(data.getKeySerializedId());
+    sbTree.load(name, keySize, keyTypes, keySerializer, encryption);
+    try {
+      versionPositionMap.open();
+    } catch (final IOException e) {
+      throw OException.wrapException(
+          new OIndexException("Error during VPM load of index " + name), e);
+    }
+  }
+
+  @Override
   public void load(
       String indexName,
       final int keySize,
@@ -170,7 +196,7 @@ public final class OCellBTreeSingleValueIndexEngine
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(IndexEngineValuesTransformer valuesTransformer) {
     final Object firstKey = sbTree.firstKey();
     if (firstKey == null) {
       return Stream.empty();
@@ -179,7 +205,7 @@ public final class OCellBTreeSingleValueIndexEngine
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(IndexEngineValuesTransformer valuesTransformer) {
     final Object lastKey = sbTree.lastKey();
     if (lastKey == null) {
       return Stream.empty();
@@ -204,7 +230,10 @@ public final class OCellBTreeSingleValueIndexEngine
 
   @Override
   public boolean validatedPut(
-      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+      OAtomicOperation atomicOperation,
+      Object key,
+      ORID value,
+      IndexEngineValidator<Object, ORID> validator) {
     try {
       return sbTree.validatedPut(atomicOperation, key, value, validator);
     } catch (IOException e) {
@@ -220,25 +249,31 @@ public final class OCellBTreeSingleValueIndexEngine
       Object rangeTo,
       boolean toInclusive,
       boolean ascSortOrder,
-      ValuesTransformer transformer) {
+      IndexEngineValuesTransformer transformer) {
     return sbTree.iterateEntriesBetween(
         rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder);
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
-      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object fromKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     return sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder);
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
-      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object toKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     return sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder);
   }
 
   @Override
-  public long size(final ValuesTransformer transformer) {
+  public long size(final IndexEngineValuesTransformer transformer) {
     return sbTree.size();
   }
 

@@ -24,6 +24,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.config.IndexEngineData;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
@@ -31,6 +33,8 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexUpdateAction;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -154,16 +158,16 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void load(
-      final String indexName,
-      final OBinarySerializer valueSerializer,
-      final boolean isAutomatic,
-      final OBinarySerializer keySerializer,
-      final OType[] keyTypes,
-      final boolean nullPointerSupport,
-      final int keySize,
-      final Map<String, String> engineProperties,
-      OEncryption encryption) {
+  public void load(IndexEngineData data) {
+    OCurrentStorageComponentsFactory cf = this.storage.getComponentsFactory();
+    OBinarySerializer keySerializer =
+        cf.binarySerializerFactory.getObjectSerializer(data.getValueSerializerId());
+    OBinarySerializer valueSerializer =
+        cf.binarySerializerFactory.getObjectSerializer(data.getKeySerializedId());
+    Map<String, String> engineProperties = data.getEngineProperties();
+
+    final OEncryption encryption =
+        OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
 
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
 
@@ -172,7 +176,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       if (partitionsAsString == null || partitionsAsString.isEmpty())
         throw new OIndexException(
             "Cannot load autosharding index '"
-                + indexName
+                + data.getName()
                 + "' because there is no metadata about the number of partitions");
 
       partitionSize = Integer.parseInt(partitionsAsString);
@@ -193,9 +197,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       for (OHashTable<Object, Object> p : partitions)
         //noinspection unchecked
         p.load(
-            indexName + "_" + (i++),
-            keyTypes,
-            nullPointerSupport,
+            data.getName() + "_" + (i++),
+            data.getKeyTypes(),
+            data.isNullValuesSupport(),
             encryption,
             hashFunction,
             keySerializer,
@@ -333,9 +337,13 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   @SuppressWarnings("unchecked")
   @Override
   public boolean validatedPut(
-      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+      OAtomicOperation atomicOperation,
+      Object key,
+      ORID value,
+      IndexEngineValidator<Object, ORID> validator) {
     try {
-      return getPartition(key).validatedPut(atomicOperation, key, value, (Validator) validator);
+      return getPartition(key)
+          .validatedPut(atomicOperation, key, value, (IndexEngineValidator) validator);
     } catch (IOException e) {
       throw OException.wrapException(
           new OIndexException(
@@ -345,7 +353,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public long size(final ValuesTransformer transformer) {
+  public long size(final IndexEngineValuesTransformer transformer) {
     long counter = 0;
 
     if (partitions != null)
@@ -374,7 +382,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> stream(final ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(
+      final IndexEngineValuesTransformer valuesTransformer) {
     //noinspection resource
     return partitions.stream()
         .flatMap(
@@ -384,7 +393,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descStream(final ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(
+      final IndexEngineValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("descCursor");
   }
 
@@ -463,7 +473,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       final Object rangeTo,
       final boolean toInclusive,
       boolean ascSortOrder,
-      ValuesTransformer transformer) {
+      IndexEngineValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
   }
 
@@ -472,13 +482,16 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       final Object fromKey,
       final boolean isInclusive,
       final boolean ascSortOrder,
-      ValuesTransformer transformer) {
+      IndexEngineValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
-      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object toKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
@@ -514,13 +527,14 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   private static final class HashTableSpliterator implements Spliterator<ORawPair<Object, ORID>> {
     private int nextEntriesIndex;
     private OHashTable.Entry<Object, Object>[] entries;
-    private final ValuesTransformer valuesTransformer;
+    private final IndexEngineValuesTransformer valuesTransformer;
 
     private Iterator<ORID> currentIterator = new OEmptyIterator<>();
     private Object currentKey;
     private final OHashTable hashTable;
 
-    private HashTableSpliterator(ValuesTransformer valuesTransformer, OHashTable hashTable) {
+    private HashTableSpliterator(
+        IndexEngineValuesTransformer valuesTransformer, OHashTable hashTable) {
       this.valuesTransformer = valuesTransformer;
       this.hashTable = hashTable;
 

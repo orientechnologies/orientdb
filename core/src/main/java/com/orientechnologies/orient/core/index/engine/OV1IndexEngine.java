@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -18,6 +19,8 @@ public interface OV1IndexEngine extends OBaseIndexEngine {
   default int getEngineAPIVersion() {
     return API_VERSION;
   }
+
+  void load(IndexEngineData data);
 
   void load(
       final String name,

@@ -32,6 +32,7 @@ import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesMultiRid;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesSingleRid;
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -41,6 +42,7 @@ import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -556,16 +558,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   @Override
-  public void load(
-      String indexName,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OBinarySerializer keySerializer,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption) {}
+  public void load(IndexEngineData data) {}
 
   @Override
   public void clear(OAtomicOperation atomicOperation) {
@@ -602,12 +595,12 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(IndexEngineValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(IndexEngineValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
@@ -616,7 +609,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
-  public long size(final ValuesTransformer transformer) {
+  public long size(final IndexEngineValuesTransformer transformer) {
     return sizeInTx(null);
   }
 

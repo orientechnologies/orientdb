@@ -38,6 +38,8 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -149,7 +151,10 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public boolean validatedPut(
-      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+      OAtomicOperation atomicOperation,
+      Object key,
+      ORID value,
+      IndexEngineValidator<Object, ORID> validator) {
     throw new UnsupportedOperationException(
         "Validated put is not supported by OLuceneFullTextIndexEngine");
   }
@@ -161,7 +166,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       Object rangeTo,
       boolean toInclusive,
       boolean ascSortOrder,
-      ValuesTransformer transformer) {
+      IndexEngineValuesTransformer transformer) {
     return LuceneIndexTransformer.transformToStream((OLuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
@@ -180,13 +185,19 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
-      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object fromKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     return null;
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
-      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object toKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     return null;
   }
 

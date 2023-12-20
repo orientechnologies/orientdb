@@ -4,7 +4,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import java.io.IOException;
@@ -28,14 +28,14 @@ public interface OSBTree<K, V> {
   void put(OAtomicOperation atomicOperation, K key, V value) throws IOException;
 
   boolean validatedPut(
-      OAtomicOperation atomicOperation, K key, V value, OBaseIndexEngine.Validator<K, V> validator)
+      OAtomicOperation atomicOperation, K key, V value, IndexEngineValidator<K, V> validator)
       throws IOException;
 
   boolean update(
       OAtomicOperation atomicOperation,
       K key,
       OIndexKeyUpdater<V> updater,
-      OBaseIndexEngine.Validator<K, V> validator)
+      IndexEngineValidator<K, V> validator)
       throws IOException;
 
   void close(boolean flush);

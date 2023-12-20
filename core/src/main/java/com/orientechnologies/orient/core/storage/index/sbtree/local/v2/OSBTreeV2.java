@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexUpdateAction;
 import com.orientechnologies.orient.core.index.comparator.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.comparator.OAlwaysLessKey;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -245,7 +245,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
       final OAtomicOperation atomicOperation,
       final K key,
       final V value,
-      final OBaseIndexEngine.Validator<K, V> validator) {
+      final IndexEngineValidator<K, V> validator) {
     return put(atomicOperation, key, value, validator);
   }
 
@@ -253,7 +253,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
       final OAtomicOperation atomicOperation,
       final K key,
       final V value,
-      final OBaseIndexEngine.Validator<K, V> validator) {
+      final IndexEngineValidator<K, V> validator) {
     return update(
         atomicOperation, key, (x, bonsayFileId) -> OIndexUpdateAction.changed(value), validator);
   }
@@ -264,7 +264,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
       OAtomicOperation atomicOperation,
       final K k,
       final OIndexKeyUpdater<V> updater,
-      final OBaseIndexEngine.Validator<K, V> validator) {
+      final IndexEngineValidator<K, V> validator) {
     return calculateInsideComponentOperation(
         atomicOperation,
         operation -> {
@@ -319,7 +319,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
                   try {
 
                     final Object result = validator.validate(key, oldValue, value);
-                    if (result == OBaseIndexEngine.Validator.IGNORE) {
+                    if (result == IndexEngineValidator.IGNORE) {
                       ignored = true;
                       failure = false;
                       return false;
@@ -419,7 +419,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
                   final int valueSize = valueSerializer.getObjectSize(value);
                   if (validator != null) {
                     final Object result = validator.validate(null, oldValue, value);
-                    if (result == OBaseIndexEngine.Validator.IGNORE) {
+                    if (result == IndexEngineValidator.IGNORE) {
                       return false;
                     }
                   }

@@ -20,6 +20,7 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
@@ -27,6 +28,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -112,27 +115,10 @@ public class OLuceneSpatialIndexEngineDelegator
   }
 
   @Override
-  public void load(
-      String indexName,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OBinarySerializer keySerializer,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption) {
-    if (delegate != null)
-      delegate.load(
-          indexName,
-          valueSerializer,
-          isAutomatic,
-          keySerializer,
-          keyTypes,
-          nullPointerSupport,
-          keySize,
-          engineProperties,
-          encryption);
+  public void load(IndexEngineData data) {
+    if (delegate != null) {
+      delegate.load(data);
+    }
   }
 
   @Override
@@ -182,7 +168,10 @@ public class OLuceneSpatialIndexEngineDelegator
 
   @Override
   public boolean validatedPut(
-      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+      OAtomicOperation atomicOperation,
+      Object key,
+      ORID value,
+      IndexEngineValidator<Object, ORID> validator) {
     try {
       return delegate.validatedPut(atomicOperation, key, value, validator);
     } catch (IOException e) {
@@ -199,30 +188,36 @@ public class OLuceneSpatialIndexEngineDelegator
       Object rangeTo,
       boolean toInclusive,
       boolean ascSortOrder,
-      ValuesTransformer transformer) {
+      IndexEngineValuesTransformer transformer) {
     return delegate.iterateEntriesBetween(
         rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
-      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object fromKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     return delegate.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
-      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object toKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     return delegate.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(IndexEngineValuesTransformer valuesTransformer) {
     return delegate.stream(valuesTransformer);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(IndexEngineValuesTransformer valuesTransformer) {
     return delegate.descStream(valuesTransformer);
   }
 
@@ -232,7 +227,7 @@ public class OLuceneSpatialIndexEngineDelegator
   }
 
   @Override
-  public long size(ValuesTransformer transformer) {
+  public long size(IndexEngineValuesTransformer transformer) {
     return delegate.size(transformer);
   }
 

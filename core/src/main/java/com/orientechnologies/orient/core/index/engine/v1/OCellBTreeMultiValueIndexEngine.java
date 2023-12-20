@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.index.engine.v1;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.config.IndexEngineData;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -11,6 +13,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -44,11 +47,13 @@ public final class OCellBTreeMultiValueIndexEngine
   private final String name;
   private final int id;
   private final String nullTreeName;
+  private OAbstractPaginatedStorage storage;
 
   public OCellBTreeMultiValueIndexEngine(
       int id, String name, OAbstractPaginatedStorage storage, final int version) {
     this.id = id;
     this.name = name;
+    this.storage = storage;
     nullTreeName = name + "$null";
 
     if (version == 1) {
@@ -226,6 +231,33 @@ public final class OCellBTreeMultiValueIndexEngine
   }
 
   @Override
+  public void load(IndexEngineData data) {
+    OCurrentStorageComponentsFactory cf = storage.getComponentsFactory();
+    final OEncryption encryption =
+        OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
+
+    String name = data.getName();
+    int keySize = data.getKeySize();
+    OType[] keyTypes = data.getKeyTypes();
+    OBinarySerializer keySerializer =
+        cf.binarySerializerFactory.getObjectSerializer(data.getKeySerializedId());
+
+    if (mvTree != null) {
+      //noinspection unchecked
+      mvTree.load(name, keySize, keyTypes, keySerializer, encryption);
+    } else {
+      assert svTree != null;
+      assert nullTree != null;
+
+      final OType[] sbTypes = calculateTypes(keyTypes);
+
+      svTree.load(name, keySize + 1, sbTypes, new CompositeKeySerializer(), null);
+      nullTree.load(
+          nullTreeName, 1, new OType[] {OType.LINK}, OCompactedLinkSerializer.INSTANCE, null);
+    }
+  }
+
+  @Override
   public void load(
       final String name,
       final int keySize,
@@ -342,7 +374,7 @@ public final class OCellBTreeMultiValueIndexEngine
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(IndexEngineValuesTransformer valuesTransformer) {
     if (mvTree != null) {
       final Object firstKey = mvTree.firstKey();
       if (firstKey == null) {
@@ -372,7 +404,7 @@ public final class OCellBTreeMultiValueIndexEngine
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(IndexEngineValuesTransformer valuesTransformer) {
     if (mvTree != null) {
       final Object lastKey = mvTree.lastKey();
       if (lastKey == null) {
@@ -442,7 +474,7 @@ public final class OCellBTreeMultiValueIndexEngine
       Object rangeTo,
       boolean toInclusive,
       boolean ascSortOrder,
-      ValuesTransformer transformer) {
+      IndexEngineValuesTransformer transformer) {
     if (mvTree != null) {
       return mvTree.iterateEntriesBetween(
           rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder);
@@ -480,7 +512,10 @@ public final class OCellBTreeMultiValueIndexEngine
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
-      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object fromKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     if (mvTree != null) {
       return mvTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder);
     }
@@ -492,7 +527,10 @@ public final class OCellBTreeMultiValueIndexEngine
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
-      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object toKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     if (mvTree != null) {
       return mvTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder);
     }
@@ -503,7 +541,7 @@ public final class OCellBTreeMultiValueIndexEngine
   }
 
   @Override
-  public long size(final ValuesTransformer transformer) {
+  public long size(final IndexEngineValuesTransformer transformer) {
     if (mvTree != null) {
       return mvTreeSize(transformer);
     }
@@ -514,7 +552,7 @@ public final class OCellBTreeMultiValueIndexEngine
     return svTreeEntries();
   }
 
-  private long mvTreeSize(final ValuesTransformer transformer) {
+  private long mvTreeSize(final IndexEngineValuesTransformer transformer) {
     assert mvTree != null;
 
     // calculate amount of keys

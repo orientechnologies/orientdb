@@ -23,6 +23,8 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.config.IndexEngineData;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
@@ -30,6 +32,8 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexUpdateAction;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -75,8 +79,11 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   private final OVersionPositionMap versionPositionMap;
 
+  private OAbstractPaginatedStorage storage;
+
   public OHashTableIndexEngine(
       String name, int id, OAbstractPaginatedStorage storage, int version) {
+    this.storage = storage;
     this.id = id;
     if (version < 2) {
       throw new IllegalStateException("Unsupported version of hash index");
@@ -207,16 +214,15 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void load(
-      String indexName,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OBinarySerializer keySerializer,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption) {
+  public void load(IndexEngineData data) {
+    OCurrentStorageComponentsFactory cf = this.storage.getComponentsFactory();
+    OBinarySerializer keySerializer =
+        cf.binarySerializerFactory.getObjectSerializer(data.getKeySerializedId());
+    OBinarySerializer valueSerializer =
+        cf.binarySerializerFactory.getObjectSerializer(data.getValueSerializerId());
+
+    final OEncryption encryption =
+        OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
 
     final OHashFunction<Object> hashFunction;
 
@@ -229,9 +235,9 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     }
     //noinspection unchecked
     hashTable.load(
-        indexName,
-        keyTypes,
-        nullPointerSupport,
+        data.getName(),
+        data.getKeyTypes(),
+        data.isNullValuesSupport(),
         encryption,
         hashFunction,
         keySerializer,
@@ -241,7 +247,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       versionPositionMap.open();
     } catch (final IOException e) {
       throw OException.wrapException(
-          new OIndexException("Error during VPM load of index " + indexName), e);
+          new OIndexException("Error during VPM load of index " + data.getName()), e);
     }
   }
 
@@ -288,13 +294,16 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   @SuppressWarnings("unchecked")
   @Override
   public boolean validatedPut(
-      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator)
+      OAtomicOperation atomicOperation,
+      Object key,
+      ORID value,
+      IndexEngineValidator<Object, ORID> validator)
       throws IOException {
-    return hashTable.validatedPut(atomicOperation, key, value, (Validator) validator);
+    return hashTable.validatedPut(atomicOperation, key, value, (IndexEngineValidator) validator);
   }
 
   @Override
-  public long size(ValuesTransformer transformer) {
+  public long size(IndexEngineValuesTransformer transformer) {
     if (transformer == null) {
       return hashTable.size();
     } else {
@@ -338,24 +347,31 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       Object rangeTo,
       boolean toInclusive,
       boolean ascSortOrder,
-      ValuesTransformer transformer) {
+      IndexEngineValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
-      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object fromKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
-      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+      Object toKey,
+      boolean isInclusive,
+      boolean ascSortOrder,
+      IndexEngineValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> stream(final ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> stream(
+      final IndexEngineValuesTransformer valuesTransformer) {
     return StreamSupport.stream(
         new Spliterator<ORawPair<Object, ORID>>() {
           private int nextEntriesIndex;
@@ -444,7 +460,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> descStream(final ValuesTransformer valuesTransformer) {
+  public Stream<ORawPair<Object, ORID>> descStream(
+      final IndexEngineValuesTransformer valuesTransformer) {
     return StreamSupport.stream(
         new Spliterator<ORawPair<Object, ORID>>() {
           private int nextEntriesIndex;

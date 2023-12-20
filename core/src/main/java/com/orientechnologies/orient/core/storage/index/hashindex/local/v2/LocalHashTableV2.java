@@ -10,8 +10,7 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OLocalHashTableV2Exception;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
-import com.orientechnologies.orient.core.index.engine.OIndexEngine;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -277,7 +276,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       final OAtomicOperation atomicOperation,
       final K key,
       final V value,
-      final OBaseIndexEngine.Validator<K, V> validator) {
+      final IndexEngineValidator<K, V> validator) {
     return put(atomicOperation, key, value, validator);
   }
 
@@ -1309,7 +1308,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       final OAtomicOperation atomicOperation,
       K k,
       final V value,
-      final OBaseIndexEngine.Validator<K, V> validator) {
+      final IndexEngineValidator<K, V> validator) {
     return calculateInsideComponentOperation(
         atomicOperation,
         operation -> {
@@ -1350,7 +1349,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       final byte[] rawKey,
       V value,
       byte[] rawValue,
-      final OIndexEngine.Validator<K, V> validator,
+      final IndexEngineValidator<K, V> validator,
       final OAtomicOperation atomicOperation)
       throws IOException {
     int sizeDiff = 0;
@@ -1381,7 +1380,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         if (validator != null) {
           final Object result = validator.validate(null, oldValue, value);
-          if (result == OBaseIndexEngine.Validator.IGNORE) {
+          if (result == IndexEngineValidator.IGNORE) {
             return false;
           }
 
@@ -1433,7 +1432,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
         if (validator != null) {
           final Object result = validator.validate(key, oldValue, value);
-          if (result == OBaseIndexEngine.Validator.IGNORE) {
+          if (result == IndexEngineValidator.IGNORE) {
             return false;
           }
 

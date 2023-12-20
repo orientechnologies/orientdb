@@ -435,11 +435,6 @@ public abstract class OIndexRemote implements OIndex {
   }
 
   @Override
-  public int getIndexId() {
-    throw new UnsupportedOperationException("getIndexId");
-  }
-
-  @Override
   public OIndexCursor cursor() {
     final OInternalResultSet copy = new OInternalResultSet(); // TODO a raw array instead...?
     try (OResultSet result =
