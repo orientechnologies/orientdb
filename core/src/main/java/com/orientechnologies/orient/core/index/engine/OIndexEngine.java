@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
-import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -64,6 +63,4 @@ public interface OIndexEngine extends OBaseIndexEngine {
   default int getEngineAPIVersion() {
     return VERSION;
   }
-
-  void load(IndexEngineData data);
 }

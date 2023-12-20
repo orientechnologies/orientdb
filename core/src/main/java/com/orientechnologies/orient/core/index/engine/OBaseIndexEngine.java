@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -35,6 +36,8 @@ public interface OBaseIndexEngine {
       Map<String, String> engineProperties,
       OEncryption encryption)
       throws IOException;
+
+  void load(IndexEngineData data);
 
   void delete(OAtomicOperation atomicOperation) throws IOException;
 

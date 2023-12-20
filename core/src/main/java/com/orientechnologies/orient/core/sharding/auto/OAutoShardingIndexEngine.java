@@ -25,7 +25,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.IndexEngineData;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
@@ -159,11 +158,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
   @Override
   public void load(IndexEngineData data) {
-    OCurrentStorageComponentsFactory cf = this.storage.getComponentsFactory();
-    OBinarySerializer keySerializer =
-        cf.binarySerializerFactory.getObjectSerializer(data.getValueSerializerId());
+    OBinarySerializer keySerializer = storage.resolveObjectSerializer(data.getKeySerializedId());
     OBinarySerializer valueSerializer =
-        cf.binarySerializerFactory.getObjectSerializer(data.getKeySerializedId());
+        storage.resolveObjectSerializer(data.getValueSerializerId());
     Map<String, String> engineProperties = data.getEngineProperties();
 
     final OEncryption encryption =

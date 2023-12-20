@@ -24,7 +24,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.IndexEngineData;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -166,16 +165,13 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void load(IndexEngineData data) {
-    OCurrentStorageComponentsFactory cf = this.storage.getComponentsFactory();
     final OEncryption encryption =
         OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
 
     sbTree.load(
         data.getName(),
-        (OBinarySerializer)
-            cf.binarySerializerFactory.getObjectSerializer(data.getKeySerializedId()),
-        (OBinarySerializer)
-            cf.binarySerializerFactory.getObjectSerializer(data.getValueSerializerId()),
+        (OBinarySerializer) storage.resolveObjectSerializer(data.getKeySerializedId()),
+        (OBinarySerializer) storage.resolveObjectSerializer(data.getValueSerializerId()),
         data.getKeyTypes(),
         data.getKeySize(),
         data.isNullValuesSupport(),

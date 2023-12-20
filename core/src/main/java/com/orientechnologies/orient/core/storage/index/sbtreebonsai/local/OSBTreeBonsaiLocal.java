@@ -626,18 +626,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
                 this);
         //noinspection unchecked
         keySerializer =
-            (OBinarySerializer<K>)
-                storage
-                    .getComponentsFactory()
-                    .binarySerializerFactory
-                    .getObjectSerializer(rootBucket.getKeySerializerId());
+            (OBinarySerializer<K>) storage.resolveObjectSerializer(rootBucket.getKeySerializerId());
         //noinspection unchecked
         valueSerializer =
             (OBinarySerializer<V>)
-                storage
-                    .getComponentsFactory()
-                    .binarySerializerFactory
-                    .getObjectSerializer(rootBucket.getValueSerializerId());
+                storage.resolveObjectSerializer(rootBucket.getValueSerializerId());
 
         return !rootBucket.isDeleted();
       }

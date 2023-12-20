@@ -2727,16 +2727,11 @@ public abstract class OAbstractPaginatedStorage
   public int addIndexEngine(
       final OIndexMetadata indexMetadata, final Map<String, String> engineProperties) {
     final String engineName = indexMetadata.getName();
-    final String algorithm = indexMetadata.getAlgorithm();
-    final String indexType = indexMetadata.getType();
     final OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
-    final boolean isAutomatic = indexMetadata.getIndexDefinition().isAutomatic();
-    final boolean multivalue = indexMetadata.isMultivalue();
-    final int version = indexMetadata.getVersion();
 
     try {
       if (indexDefinition == null) {
-        throw new OIndexException("Index definition hav to be provided");
+        throw new OIndexException("Index definition has to be provided");
       }
       final OType[] keyTypes = indexDefinition.getTypes();
       if (keyTypes == null) {
@@ -2749,8 +2744,6 @@ public abstract class OAbstractPaginatedStorage
       }
 
       final int keySize = determineKeySize(indexDefinition);
-
-      final boolean nullValuesSupport = !indexDefinition.isNullValuesIgnored();
 
       checkBackupRunning();
       stateLock.writeLock().lock();
@@ -2781,25 +2774,21 @@ public abstract class OAbstractPaginatedStorage
               final int binaryFormatVersion = getConfiguration().getBinaryFormatVersion();
               final byte valueSerializerId =
                   indexMetadata.getValueSerializerId(binaryFormatVersion);
-              OBinarySerializer<?> valueSerializer =
-                  getComponentsFactory()
-                      .binarySerializerFactory
-                      .getObjectSerializer(valueSerializerId);
               final OBaseIndexEngine engine =
                   addIndexEngineInternal(
                       atomicOperation,
                       engineName,
-                      algorithm,
-                      indexType,
-                      valueSerializer,
-                      isAutomatic,
-                      version,
-                      multivalue,
+                      indexMetadata.getAlgorithm(),
+                      indexMetadata.getType(),
+                      resolveObjectSerializer(valueSerializerId),
+                      indexDefinition.isAutomatic(),
+                      indexMetadata.getVersion(),
+                      indexMetadata.isMultivalue(),
                       engineProperties,
                       keySerializer,
                       keySize,
                       keyTypes,
-                      nullValuesSupport);
+                      !indexDefinition.isNullValuesIgnored());
 
               final OContextConfiguration ctxCfg = configuration.getContextConfiguration();
               @SuppressWarnings("deprecation")
@@ -2812,17 +2801,17 @@ public abstract class OAbstractPaginatedStorage
                   new IndexEngineData(
                       engine.getId(),
                       engineName,
-                      algorithm,
-                      indexType,
+                      indexMetadata.getAlgorithm(),
+                      indexMetadata.getType(),
                       true,
-                      version,
+                      indexMetadata.getVersion(),
                       engine.getEngineAPIVersion(),
-                      multivalue,
+                      indexMetadata.isMultivalue(),
                       valueSerializerId,
                       keySerializer.getId(),
-                      isAutomatic,
+                      indexDefinition.isAutomatic(),
                       keyTypes,
-                      nullValuesSupport,
+                      !indexDefinition.isNullValuesIgnored(),
                       keySize,
                       cfgEncryption,
                       cfgEncryptionKey,
@@ -2830,7 +2819,7 @@ public abstract class OAbstractPaginatedStorage
               ((OClusterBasedStorageConfiguration) configuration)
                   .addIndexEngine(atomicOperation, engineName, engineData);
 
-              if (multivalue && engine.hasRidBagTreesSupport()) {
+              if (indexMetadata.isMultivalue() && engine.hasRidBagTreesSupport()) {
                 final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree =
                     new OSBTreeBonsaiLocal<>(
                         engineName, OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
@@ -2851,6 +2840,10 @@ public abstract class OAbstractPaginatedStorage
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
+  }
+
+  public OBinarySerializer<?> resolveObjectSerializer(final byte serializerId) {
+    return getComponentsFactory().binarySerializerFactory.getObjectSerializer(serializerId);
   }
 
   private OBaseIndexEngine addIndexEngineInternal(

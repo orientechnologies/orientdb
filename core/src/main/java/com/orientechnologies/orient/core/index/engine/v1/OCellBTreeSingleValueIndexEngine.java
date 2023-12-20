@@ -4,7 +4,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.IndexEngineData;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -127,38 +126,19 @@ public final class OCellBTreeSingleValueIndexEngine
 
   @Override
   public void load(IndexEngineData data) {
-    OCurrentStorageComponentsFactory cf = storage.getComponentsFactory();
     final OEncryption encryption =
         OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
 
     String name = data.getName();
     int keySize = data.getKeySize();
     OType[] keyTypes = data.getKeyTypes();
-    OBinarySerializer keySerializer =
-        cf.binarySerializerFactory.getObjectSerializer(data.getKeySerializedId());
+    OBinarySerializer keySerializer = storage.resolveObjectSerializer(data.getKeySerializedId());
     sbTree.load(name, keySize, keyTypes, keySerializer, encryption);
     try {
       versionPositionMap.open();
     } catch (final IOException e) {
       throw OException.wrapException(
           new OIndexException("Error during VPM load of index " + name), e);
-    }
-  }
-
-  @Override
-  public void load(
-      String indexName,
-      final int keySize,
-      final OType[] keyTypes,
-      final OBinarySerializer keySerializer,
-      final OEncryption encryption) {
-    //noinspection unchecked
-    sbTree.load(indexName, keySize, keyTypes, keySerializer, encryption);
-    try {
-      versionPositionMap.open();
-    } catch (final IOException e) {
-      throw OException.wrapException(
-          new OIndexException("Error during VPM load of index " + indexName), e);
     }
   }
 

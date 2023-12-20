@@ -4,7 +4,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.IndexEngineData;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -232,38 +231,14 @@ public final class OCellBTreeMultiValueIndexEngine
 
   @Override
   public void load(IndexEngineData data) {
-    OCurrentStorageComponentsFactory cf = storage.getComponentsFactory();
     final OEncryption encryption =
         OAbstractPaginatedStorage.loadEncryption(data.getEncryption(), data.getEncryptionOptions());
 
     String name = data.getName();
     int keySize = data.getKeySize();
     OType[] keyTypes = data.getKeyTypes();
-    OBinarySerializer keySerializer =
-        cf.binarySerializerFactory.getObjectSerializer(data.getKeySerializedId());
+    OBinarySerializer keySerializer = storage.resolveObjectSerializer(data.getKeySerializedId());
 
-    if (mvTree != null) {
-      //noinspection unchecked
-      mvTree.load(name, keySize, keyTypes, keySerializer, encryption);
-    } else {
-      assert svTree != null;
-      assert nullTree != null;
-
-      final OType[] sbTypes = calculateTypes(keyTypes);
-
-      svTree.load(name, keySize + 1, sbTypes, new CompositeKeySerializer(), null);
-      nullTree.load(
-          nullTreeName, 1, new OType[] {OType.LINK}, OCompactedLinkSerializer.INSTANCE, null);
-    }
-  }
-
-  @Override
-  public void load(
-      final String name,
-      final int keySize,
-      final OType[] keyTypes,
-      @SuppressWarnings("rawtypes") final OBinarySerializer keySerializer,
-      final OEncryption encryption) {
     if (mvTree != null) {
       //noinspection unchecked
       mvTree.load(name, keySize, keyTypes, keySerializer, encryption);
