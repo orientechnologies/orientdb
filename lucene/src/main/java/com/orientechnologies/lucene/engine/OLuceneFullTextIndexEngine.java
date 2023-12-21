@@ -95,23 +95,22 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       final OContextualRecordId recordId,
       final Document ret,
       final ScoreDoc score) {
-    recordId.setContext(
-        new HashMap<String, Object>() {
-          {
-            final Map<String, TextFragment[]> frag = queryContext.getFragments();
-            frag.forEach(
-                (key, fragments) -> {
-                  final StringBuilder hlField = new StringBuilder();
-                  for (final TextFragment fragment : fragments) {
-                    if ((fragment != null) && (fragment.getScore() > 0)) {
-                      hlField.append(fragment.toString());
-                    }
-                  }
-                  put("$" + key + "_hl", hlField.toString());
-                });
-            put("$score", score.score);
+    HashMap<String, Object> data = new HashMap<String, Object>();
+
+    final Map<String, TextFragment[]> frag = queryContext.getFragments();
+    frag.forEach(
+        (key, fragments) -> {
+          final StringBuilder hlField = new StringBuilder();
+          for (final TextFragment fragment : fragments) {
+            if ((fragment != null) && (fragment.getScore() > 0)) {
+              hlField.append(fragment.toString());
+            }
           }
+          data.put("$" + key + "_hl", hlField.toString());
         });
+    data.put("$score", score.score);
+
+    recordId.setContext(data);
   }
 
   @Override

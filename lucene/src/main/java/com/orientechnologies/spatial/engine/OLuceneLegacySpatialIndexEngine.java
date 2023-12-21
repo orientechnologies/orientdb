@@ -44,7 +44,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause;
@@ -132,8 +132,6 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
   private Set<OIdentifiable> searchWithin(
       OSpatialCompositeKey key, OCommandContext context, OLuceneTxChanges changes) {
 
-    Set<OIdentifiable> result = new HashSet<>();
-
     Shape shape = legacyBuilder.makeShape(key, ctx);
     if (shape == null) return null;
     SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
@@ -168,12 +166,9 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
           ctx.getDistCalc().distance(spatialContext.spatialArgs.getShape().getCenter(), docPoint);
       final double docDistInKM =
           DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
-      recordId.setContext(
-          new HashMap<String, Object>() {
-            {
-              put("distance", docDistInKM);
-            }
-          });
+      Map<String, Object> data = new HashMap<String, Object>();
+      data.put("distance", docDistInKM);
+      recordId.setContext(data);
     }
   }
 

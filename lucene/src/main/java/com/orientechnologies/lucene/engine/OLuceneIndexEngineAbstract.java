@@ -19,7 +19,6 @@ package com.orientechnologies.lucene.engine;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -81,8 +80,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
-public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
-    implements OLuceneIndexEngine {
+public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
 
   public static final String RID = "RID";
   public static final String KEY = "KEY";
@@ -109,7 +107,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   private final int id;
 
   public OLuceneIndexEngineAbstract(int id, OStorage storage, String name) {
-    super(true, 0, true);
+    super();
     this.id = id;
 
     this.storage = storage;
@@ -525,18 +523,6 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     }
 
     return OLuceneIndexType.createQueryId(value);
-  }
-
-  private void internalDelete() throws IOException {
-    if (indexWriter != null && indexWriter.isOpen()) {
-      close();
-    }
-
-    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) storage;
-    if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
-      OLocalPaginatedStorage localPaginatedStorage = (OLocalPaginatedStorage) storageLocalAbstract;
-      deleteIndexFolder(localPaginatedStorage.getStoragePath().toFile());
-    }
   }
 
   @Override

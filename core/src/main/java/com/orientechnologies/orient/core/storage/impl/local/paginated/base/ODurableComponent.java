@@ -20,7 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.function.TxConsumer;
 import com.orientechnologies.common.function.TxFunction;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -39,7 +39,7 @@ import java.io.IOException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/27/13
  */
-public abstract class ODurableComponent extends OSharedResourceAdaptive {
+public abstract class ODurableComponent extends OSharedResourceAbstract {
   protected final OAtomicOperationsManager atomicOperationsManager;
   protected final OAbstractPaginatedStorage storage;
   protected final OReadCache readCache;
@@ -57,7 +57,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       final String name,
       final String extension,
       final String lockName) {
-    super(true);
+    super();
 
     assert name != null;
     this.extension = extension;

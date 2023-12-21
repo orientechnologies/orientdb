@@ -107,12 +107,9 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
           ctx.getDistCalc().distance(spatialContext.spatialArgs.getShape().getCenter(), docPoint);
       final double docDistInKM =
           DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
-      recordId.setContext(
-          new HashMap<String, Object>() {
-            {
-              put("distance", docDistInKM);
-            }
-          });
+      Map<String, Object> data = new HashMap<String, Object>();
+      data.put("distance", docDistInKM);
+      recordId.setContext(data);
     }
   }
 
@@ -122,7 +119,6 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
     if (key instanceof OIdentifiable) {
       openIfClosed();
       ODocument location = ((OIdentifiable) key).getRecord();
-      @SuppressWarnings("unchecked")
       Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
       for (OIdentifiable oIdentifiable : container) {
         updateLastAccess();
