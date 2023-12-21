@@ -22,6 +22,7 @@ import com.orientechnologies.lucene.engine.OLuceneIndexWriterFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -65,15 +66,9 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
   }
 
   @Override
-  public void init(
-      String indexName,
-      String indexType,
-      OIndexDefinition indexDefinition,
-      boolean isAutomatic,
-      ODocument metadata) {
-    super.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
-
-    strategy = createSpatialStrategy(indexDefinition, metadata);
+  public void init(OIndexMetadata im) {
+    super.init(im);
+    strategy = createSpatialStrategy(im.getIndexDefinition(), im.getMetadata());
   }
 
   protected abstract SpatialStrategy createSpatialStrategy(

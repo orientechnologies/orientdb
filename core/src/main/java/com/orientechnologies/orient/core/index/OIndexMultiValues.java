@@ -172,7 +172,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid)
       throws OInvalidIndexEngineIdException {
     if (apiVersion == 0) {
-      doPutV0(indexId, storage, valueContainerAlgorithm, getName(), key, rid);
+      doPutV0(indexId, storage, im.getValueContainerAlgorithm(), getName(), key, rid);
     } else if (apiVersion == 1) {
       doPutV1(storage, indexId, key, rid);
     } else {

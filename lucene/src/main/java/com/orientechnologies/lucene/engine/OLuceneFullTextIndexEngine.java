@@ -35,9 +35,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -74,14 +74,9 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public void init(
-      String indexName,
-      String indexType,
-      OIndexDefinition indexDefinition,
-      boolean isAutomatic,
-      ODocument metadata) {
-    super.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
-    queryBuilder = new OLuceneQueryBuilder(metadata);
+  public void init(OIndexMetadata im) {
+    super.init(im);
+    queryBuilder = new OLuceneQueryBuilder(im.getMetadata());
   }
 
   @Override

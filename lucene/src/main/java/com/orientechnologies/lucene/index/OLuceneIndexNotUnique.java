@@ -301,8 +301,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
             indexId,
             engine -> {
               OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
-              oIndexEngine.init(
-                  getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
+              oIndexEngine.init(im);
               return null;
             });
         break;

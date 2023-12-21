@@ -3,8 +3,7 @@ package com.orientechnologies.orient.core.index.engine;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import java.io.IOException;
 import java.util.stream.Stream;
@@ -12,12 +11,7 @@ import java.util.stream.Stream;
 public interface OBaseIndexEngine {
   int getId();
 
-  void init(
-      String indexName,
-      String indexType,
-      OIndexDefinition indexDefinition,
-      boolean isAutomatic,
-      ODocument metadata);
+  void init(OIndexMetadata metadata);
 
   void flush();
 

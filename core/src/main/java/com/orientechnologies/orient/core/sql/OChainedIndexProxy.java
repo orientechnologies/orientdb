@@ -603,11 +603,6 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
   }
 
   @Override
-  public void setType(OType type) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public String getIndexNameByKey(Object key) {
     throw new UnsupportedOperationException();
   }

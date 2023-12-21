@@ -80,43 +80,31 @@ public abstract class OIndexAbstract implements OIndexInternal {
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
   protected static final String CONFIG_MAP_RID = "mapRid";
   private static final String CONFIG_CLUSTERS = "clusters";
-  protected final String type;
-  protected final ODocument metadata;
   protected final OAbstractPaginatedStorage storage;
-  private final String name;
   private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
-  private final int version;
-  protected volatile String valueContainerAlgorithm;
 
   protected volatile int indexId = -1;
   protected volatile int apiVersion = -1;
 
   protected Set<String> clustersToIndex = new HashSet<>();
-  private String algorithm;
-  private volatile OIndexDefinition indexDefinition;
-  private final Map<String, String> engineProperties = new HashMap<>();
+  protected OIndexMetadata im;
 
   public OIndexAbstract(OIndexMetadata im, final OStorage storage) {
-    int version = im.getVersion();
-    final String name = im.getName();
-    final ODocument metadata = im.getMetadata();
-    final String indexType = im.getType();
-    final String algorithm = im.getAlgorithm();
-    String valueContainerAlgorithm = im.getValueContainerAlgorithm();
-
     acquireExclusiveLock();
     try {
-
-      this.version = version;
-      this.name = name;
-      this.type = indexType;
-      this.algorithm = algorithm;
-      this.metadata = metadata;
-      this.valueContainerAlgorithm = valueContainerAlgorithm;
+      this.im = im;
       this.storage = (OAbstractPaginatedStorage) storage;
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  public static OIndexMetadata loadMetadataFromDoc(final ODocument config) {
+    return loadMetadataInternal(
+        config,
+        config.field(OIndexInternal.CONFIG_TYPE),
+        config.field(OIndexInternal.ALGORITHM),
+        config.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
   }
 
   public static OIndexMetadata loadMetadataInternal(
@@ -219,7 +207,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     acquireExclusiveLock();
     try {
       Set<String> clustersToIndex = indexMetadata.getClustersToIndex();
-      this.indexDefinition = indexMetadata.getIndexDefinition();
 
       if (clustersToIndex != null) this.clustersToIndex = new HashSet<>(clustersToIndex);
       else this.clustersToIndex = new HashSet<>();
@@ -230,15 +217,16 @@ public abstract class OIndexAbstract implements OIndexInternal {
           removeValuesContainer();
         }
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during deletion of index '%s'", e, name);
+        OLogManager.instance().error(this, "Error during deletion of index '%s'", e, im.getName());
       }
+      Map<String, String> engineProperties = new HashMap<>();
       // this property is used for autosharded index
-      if (metadata != null && metadata.containsField("partitions")) {
-        engineProperties.put("partitions", metadata.field("partitions"));
+      if (im.getMetadata() != null && im.getMetadata().containsField("partitions")) {
+        engineProperties.put("partitions", im.getMetadata().field("partitions"));
       } else {
         engineProperties.put("partitions", Integer.toString(clustersToIndex.size()));
       }
-      indexMetadata.setVersion(version);
+      indexMetadata.setVersion(im.getVersion());
       indexId = storage.addIndexEngine(indexMetadata, engineProperties);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
@@ -251,13 +239,13 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
       updateConfiguration();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Exception during index '%s' creation", e, name);
+      OLogManager.instance().error(this, "Exception during index '%s' creation", e, im.getName());
       // index is created inside of storage
       if (indexId >= 0) {
         doDelete();
       }
       throw OException.wrapException(
-          new OIndexException("Cannot create the index '" + name + "'"), e);
+          new OIndexException("Cannot create the index '" + im.getName() + "'"), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -266,11 +254,11 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   protected void doReloadIndexEngine() {
-    indexId = storage.loadIndexEngine(name);
+    indexId = storage.loadIndexEngine(im.getName());
     apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
     if (indexId < 0) {
-      throw new IllegalStateException("Index " + name + " can not be loaded");
+      throw new IllegalStateException("Index " + im.getName() + " can not be loaded");
     }
   }
 
@@ -280,16 +268,21 @@ public abstract class OIndexAbstract implements OIndexInternal {
       clustersToIndex.clear();
 
       final OIndexMetadata indexMetadata = loadMetadata(config);
-      indexDefinition = indexMetadata.getIndexDefinition();
+      this.im = indexMetadata;
       clustersToIndex.addAll(indexMetadata.getClustersToIndex());
-      algorithm = indexMetadata.getAlgorithm();
-      valueContainerAlgorithm = indexMetadata.getValueContainerAlgorithm();
 
       try {
-        indexId = storage.loadIndexEngine(name);
+        indexId = storage.loadIndexEngine(im.getName());
         apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
         if (indexId == -1) {
+          Map<String, String> engineProperties = new HashMap<>();
+          // this property is used for autosharded index
+          if (im.getMetadata() != null && im.getMetadata().containsField("partitions")) {
+            engineProperties.put("partitions", im.getMetadata().field("partitions"));
+          } else {
+            engineProperties.put("partitions", Integer.toString(clustersToIndex.size()));
+          }
           indexId = storage.loadExternalIndexEngine(indexMetadata, engineProperties);
           apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         }
@@ -306,11 +299,12 @@ public abstract class OIndexAbstract implements OIndexInternal {
                 this,
                 "Error during load of index '%s'",
                 e,
-                Optional.ofNullable(name).orElse("null"));
+                Optional.ofNullable(im.getName()).orElse("null"));
 
         if (isAutomatic()) {
           // AUTOMATIC REBUILD IT
-          OLogManager.instance().warn(this, "Cannot load index '%s' rebuilt it from scratch", name);
+          OLogManager.instance()
+              .warn(this, "Cannot load index '%s' rebuilt it from scratch", im.getName());
           try {
             rebuild();
           } catch (Exception t) {
@@ -321,7 +315,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
                         + t
                         + "'. The index will be removed in configuration",
                     e,
-                    name);
+                    im.getName());
             // REMOVE IT
             return false;
           }
@@ -336,7 +330,8 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   @Override
   public OIndexMetadata loadMetadata(final ODocument config) {
-    return loadMetadataInternal(config, type, algorithm, valueContainerAlgorithm);
+    return loadMetadataInternal(
+        config, im.getType(), im.getAlgorithm(), im.getValueContainerAlgorithm());
   }
 
   /** {@inheritDoc} */
@@ -479,10 +474,17 @@ public abstract class OIndexAbstract implements OIndexInternal {
           doDelete();
         }
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during index '%s' delete", e, name);
+        OLogManager.instance().error(this, "Error during index '%s' delete", e, im.getName());
       }
 
       OIndexMetadata indexMetadata = this.loadMetadata(updateConfiguration());
+      Map<String, String> engineProperties = new HashMap<>();
+      // this property is used for autosharded index
+      if (im.getMetadata() != null && im.getMetadata().containsField("partitions")) {
+        engineProperties.put("partitions", im.getMetadata().field("partitions"));
+      } else {
+        engineProperties.put("partitions", Integer.toString(clustersToIndex.size()));
+      }
       indexId = storage.addIndexEngine(indexMetadata, engineProperties);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
@@ -677,24 +679,18 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   public String getName() {
-    return name;
+    return im.getName();
   }
 
   public String getType() {
-    return type;
-  }
-
-  @Override
-  public void setType(OType type) {
-    indexDefinition = new OSimpleKeyIndexDefinition(type);
-    updateConfiguration();
+    return im.getType();
   }
 
   @Override
   public String getAlgorithm() {
     acquireSharedLock();
     try {
-      return algorithm;
+      return im.getAlgorithm();
     } finally {
       releaseSharedLock();
     }
@@ -704,7 +700,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public String toString() {
     acquireSharedLock();
     try {
-      return name;
+      return im.getName();
     } finally {
       releaseSharedLock();
     }
@@ -755,31 +751,33 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   @Override
   public int getVersion() {
-    return version;
+    return im.getVersion();
   }
 
   public ODocument updateConfiguration() {
     ODocument document = new ODocument();
-    document.field(OIndexInternal.CONFIG_TYPE, type);
-    document.field(OIndexInternal.CONFIG_NAME, name);
-    document.field(OIndexInternal.INDEX_VERSION, version);
+    document.field(OIndexInternal.CONFIG_TYPE, im.getType());
+    document.field(OIndexInternal.CONFIG_NAME, im.getName());
+    document.field(OIndexInternal.INDEX_VERSION, im.getVersion());
 
-    if (indexDefinition != null) {
+    if (im.getIndexDefinition() != null) {
 
-      final ODocument indexDefDocument = indexDefinition.toStream();
+      final ODocument indexDefDocument = im.getIndexDefinition().toStream();
       if (!indexDefDocument.hasOwners()) ODocumentInternal.addOwner(indexDefDocument, document);
 
       document.field(OIndexInternal.INDEX_DEFINITION, indexDefDocument, OType.EMBEDDED);
-      document.field(OIndexInternal.INDEX_DEFINITION_CLASS, indexDefinition.getClass().getName());
+      document.field(
+          OIndexInternal.INDEX_DEFINITION_CLASS, im.getIndexDefinition().getClass().getName());
     } else {
       document.removeField(OIndexInternal.INDEX_DEFINITION);
       document.removeField(OIndexInternal.INDEX_DEFINITION_CLASS);
     }
 
     document.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
-    document.field(ALGORITHM, algorithm);
-    document.field(VALUE_CONTAINER_ALGORITHM, valueContainerAlgorithm);
-    if (metadata != null) document.field(OIndexInternal.METADATA, metadata, OType.EMBEDDED);
+    document.field(ALGORITHM, im.getAlgorithm());
+    document.field(VALUE_CONTAINER_ALGORITHM, im.getValueContainerAlgorithm());
+    if (im.getMetadata() != null)
+      document.field(OIndexInternal.METADATA, im.getMetadata(), OType.EMBEDDED);
 
     return document;
   }
@@ -856,7 +854,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   @Override
   public ODocument getMetadata() {
-    return metadata;
+    return im.getMetadata();
   }
 
   @Override
@@ -867,7 +865,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public boolean isAutomatic() {
     acquireSharedLock();
     try {
-      return indexDefinition != null && indexDefinition.getClassName() != null;
+      return im.getIndexDefinition() != null && im.getIndexDefinition().getClassName() != null;
     } finally {
       releaseSharedLock();
     }
@@ -876,9 +874,9 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public OType[] getKeyTypes() {
     acquireSharedLock();
     try {
-      if (indexDefinition == null) return null;
+      if (im.getIndexDefinition() == null) return null;
 
-      return indexDefinition.getTypes();
+      return im.getIndexDefinition().getTypes();
     } finally {
       releaseSharedLock();
     }
@@ -900,7 +898,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   public OIndexDefinition getDefinition() {
-    return indexDefinition;
+    return im.getIndexDefinition();
   }
 
   @Override
@@ -912,7 +910,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
       final OIndexAbstract that = (OIndexAbstract) o;
 
-      return name.equals(that.name);
+      return im.getName().equals(that.im.getName());
     } finally {
       releaseSharedLock();
     }
@@ -922,7 +920,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public int hashCode() {
     acquireSharedLock();
     try {
-      return name.hashCode();
+      return im.getName().hashCode();
     } finally {
       releaseSharedLock();
     }
@@ -937,7 +935,8 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   public Object getCollatingValue(final Object key) {
-    if (key != null && indexDefinition != null) return indexDefinition.getCollate().transform(key);
+    if (key != null && im.getIndexDefinition() != null)
+      return im.getIndexDefinition().getCollate().transform(key);
     return key;
   }
 
@@ -966,7 +965,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     acquireSharedLock();
     try {
       final String name = index.getName();
-      return this.name.compareTo(name);
+      return this.im.getName().compareTo(name);
     } finally {
       releaseSharedLock();
     }
@@ -1013,12 +1012,12 @@ public abstract class OIndexAbstract implements OIndexInternal {
       long documentNum,
       long documentIndexed,
       long documentTotal) {
-    if (indexDefinition == null)
+    if (im.getIndexDefinition() == null)
       throw new OConfigurationException(
           "Index '"
-              + name
+              + im.getName()
               + "' cannot be rebuilt because has no a valid definition ("
-              + indexDefinition
+              + im.getIndexDefinition()
               + ")");
     ODatabaseDocumentInternal database = getDatabase();
     database.begin();
@@ -1063,7 +1062,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   private void removeValuesContainer() {
-    if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER)) {
+    if (im.getAlgorithm().equals(ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER)) {
 
       final OAtomicOperation atomicOperation =
           storage.getAtomicOperationsManager().getCurrentOperation();
@@ -1073,7 +1072,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
       if (atomicOperation == null) {
         try {
-          final String fileName = name + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+          final String fileName = im.getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
           if (writeCache.exists(fileName)) {
             final long fileId = writeCache.loadFile(fileName);
             readCache.deleteFile(fileId, writeCache);
@@ -1083,7 +1082,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         }
       } else {
         try {
-          final String fileName = name + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+          final String fileName = im.getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
           if (atomicOperation.isFileExists(fileName)) {
             final long fileId = atomicOperation.loadFile(fileName);
             atomicOperation.deleteFile(fileId);
@@ -1102,7 +1101,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
             false,
             indexId,
             engine -> {
-              engine.init(name, type, indexDefinition, isAutomatic(), metadata);
+              engine.init(im);
               return null;
             });
         break;

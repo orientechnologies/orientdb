@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityResourceProperty;
@@ -119,8 +118,6 @@ public interface OIndexInternal extends OIndex {
   void commit(OIndexAbstract.IndexTxSnapshot snapshots);
 
   void postCommit(OIndexAbstract.IndexTxSnapshot snapshots);
-
-  void setType(OType type);
 
   /**
    * Returns the index name for a key. The name is always the current index name, but in cases where

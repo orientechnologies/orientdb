@@ -904,12 +904,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
           final ODocument d = indexConfigurationIterator.next();
           try {
 
-            final OIndexMetadata newIndexMetadata =
-                OIndexAbstract.loadMetadataInternal(
-                    d,
-                    d.field(OIndexInternal.CONFIG_TYPE),
-                    d.field(OIndexInternal.ALGORITHM),
-                    d.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+            final OIndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataFromDoc(d);
 
             index = OIndexes.createIndex(storage, newIndexMetadata);
 

@@ -27,15 +27,14 @@ import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.OIndexUpdateAction;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
@@ -117,12 +116,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void init(
-      String indexName,
-      String indexType,
-      OIndexDefinition indexDefinition,
-      boolean isAutomatic,
-      ODocument metadata) {}
+  public void init(OIndexMetadata metadata) {}
 
   @Override
   public String getName() {

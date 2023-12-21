@@ -23,13 +23,12 @@ import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.spatial.shape.OShapeFactory;
@@ -65,15 +64,10 @@ public class OLuceneSpatialIndexEngineDelegator
   }
 
   @Override
-  public void init(
-      String indexName,
-      String indexType,
-      OIndexDefinition indexDefinition,
-      boolean isAutomatic,
-      ODocument metadata) {
+  public void init(OIndexMetadata im) {
     if (delegate == null) {
-      if (OClass.INDEX_TYPE.SPATIAL.name().equalsIgnoreCase(indexType)) {
-        if (indexDefinition.getFields().size() > 1) {
+      if (OClass.INDEX_TYPE.SPATIAL.name().equalsIgnoreCase(im.getType())) {
+        if (im.getIndexDefinition().getFields().size() > 1) {
           delegate =
               new OLuceneLegacySpatialIndexEngine(storage, indexName, id, OShapeFactory.INSTANCE);
         } else {
@@ -81,9 +75,9 @@ public class OLuceneSpatialIndexEngineDelegator
               new OLuceneGeoSpatialIndexEngine(storage, indexName, id, OShapeFactory.INSTANCE);
         }
 
-        delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
+        delegate.init(im);
       } else {
-        throw new IllegalStateException("Invalid index type " + indexType);
+        throw new IllegalStateException("Invalid index type " + im.getType());
       }
     }
   }

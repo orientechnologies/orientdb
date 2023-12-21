@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -139,15 +140,9 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   @Override
-  public void init(
-      String indexName,
-      String indexType,
-      OIndexDefinition indexDefinition,
-      boolean isAutomatic,
-      ODocument metadata) {
-
-    this.indexDefinition = indexDefinition;
-    this.metadata = metadata;
+  public void init(OIndexMetadata im) {
+    this.indexDefinition = im.getIndexDefinition();
+    this.metadata = im.getMetadata();
 
     OLuceneAnalyzerFactory fc = new OLuceneAnalyzerFactory();
     indexAnalyzer = fc.createAnalyzer(indexDefinition, INDEX, metadata);
