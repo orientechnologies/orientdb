@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sharding.auto;
 
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
@@ -110,33 +111,27 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OBaseIndexEngine createIndexEngine(
-      int indexId,
-      final String algorithm,
-      final String name,
-      final OStorage storage,
-      final int version,
-      boolean multiValue) {
-
+  public OBaseIndexEngine createIndexEngine(OStorage storage, IndexEngineData data) {
     final OIndexEngine indexEngine;
 
     final String storageType = storage.getType();
+    OAbstractPaginatedStorage realStorage = (OAbstractPaginatedStorage) storage;
     switch (storageType) {
       case "memory":
       case "plocal":
         indexEngine =
             new OAutoShardingIndexEngine(
-                name, indexId, (OAbstractPaginatedStorage) storage, version);
+                data.getName(), data.getIndexId(), realStorage, data.getVersion());
         break;
       case "distributed":
         // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
         indexEngine =
             new OAutoShardingIndexEngine(
-                name, indexId, (OAbstractPaginatedStorage) storage, version);
+                data.getName(), data.getIndexId(), realStorage, data.getVersion());
         break;
       case "remote":
         // MANAGE REMOTE SHARDED INDEX TO CALL THE INTERESTED SERVER
-        indexEngine = new ORemoteIndexEngine(indexId, name);
+        indexEngine = new ORemoteIndexEngine(data.getIndexId(), data.getName());
         break;
       default:
         throw new OIndexException("Unsupported storage type: " + storageType);

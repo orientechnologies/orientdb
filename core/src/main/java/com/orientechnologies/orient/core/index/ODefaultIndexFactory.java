@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeIndexEngine;
@@ -140,15 +141,9 @@ public class ODefaultIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OBaseIndexEngine createIndexEngine(
-      int indexId,
-      String algorithm,
-      String name,
-      OStorage storage,
-      int version,
-      @SuppressWarnings("SpellCheckingInspection") boolean multiValue) {
+  public OBaseIndexEngine createIndexEngine(OStorage storage, IndexEngineData data) {
 
-    if (algorithm == null) {
+    if (data.getAlgorithm() == null) {
       throw new OIndexException("Name of algorithm is not specified");
     }
     final OBaseIndexEngine indexEngine;
@@ -161,20 +156,22 @@ public class ODefaultIndexFactory implements OIndexFactory {
     switch (storageType) {
       case "memory":
       case "plocal":
-        switch (algorithm) {
+        OAbstractPaginatedStorage realStorage = (OAbstractPaginatedStorage) storage;
+        switch (data.getAlgorithm()) {
           case SBTREE_ALGORITHM:
             indexEngine =
-                new OSBTreeIndexEngine(indexId, name, (OAbstractPaginatedStorage) storage, version);
+                new OSBTreeIndexEngine(
+                    data.getIndexId(), data.getName(), realStorage, data.getVersion());
             break;
           case CELL_BTREE_ALGORITHM:
-            if (multiValue) {
+            if (data.isMultivalue()) {
               indexEngine =
                   new OCellBTreeMultiValueIndexEngine(
-                      indexId, name, (OAbstractPaginatedStorage) storage, version);
+                      data.getIndexId(), data.getName(), realStorage, data.getVersion());
             } else {
               indexEngine =
                   new OCellBTreeSingleValueIndexEngine(
-                      indexId, name, (OAbstractPaginatedStorage) storage, version);
+                      data.getIndexId(), data.getName(), realStorage, data.getVersion());
             }
             break;
           default:
@@ -182,7 +179,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
         }
         break;
       case "remote":
-        indexEngine = new ORemoteIndexEngine(indexId, name);
+        indexEngine = new ORemoteIndexEngine(data.getIndexId(), data.getName());
         break;
       default:
         throw new OIndexException("Unsupported storage type: " + storageType);

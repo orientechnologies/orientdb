@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -43,11 +44,5 @@ public interface OIndexFactory {
    */
   OIndexInternal createIndex(OStorage storage, OIndexMetadata im) throws OConfigurationException;
 
-  OBaseIndexEngine createIndexEngine(
-      int indexId,
-      String algorithm,
-      String name,
-      OStorage storage,
-      int version,
-      boolean multiValue);
+  OBaseIndexEngine createIndexEngine(OStorage storage, IndexEngineData data);
 }

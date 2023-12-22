@@ -20,6 +20,7 @@ import static com.orientechnologies.lucene.OLuceneIndexFactory.LUCENE_ALGORITHM;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -116,15 +117,9 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
   }
 
   @Override
-  public OBaseIndexEngine createIndexEngine(
-      int indexId,
-      String algorithm,
-      String name,
-      OStorage storage,
-      int version,
-      boolean multiValue) {
-
-    return new OLuceneSpatialIndexEngineDelegator(indexId, name, storage, version);
+  public OBaseIndexEngine createIndexEngine(OStorage storage, IndexEngineData data) {
+    return new OLuceneSpatialIndexEngineDelegator(
+        data.getIndexId(), data.getName(), storage, data.getVersion());
   }
 
   @Override

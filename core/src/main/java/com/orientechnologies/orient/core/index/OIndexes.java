@@ -178,13 +178,7 @@ public final class OIndexes {
     final OIndexFactory factory =
         findFactoryByAlgorithmAndType(metadata.getAlgorithm(), metadata.getIndexType());
 
-    return factory.createIndexEngine(
-        metadata.getIndexId(),
-        metadata.getAlgorithm(),
-        metadata.getName(),
-        storage,
-        metadata.getVersion(),
-        metadata.isMultivalue());
+    return factory.createIndexEngine(storage, metadata);
   }
 
   public static String chooseDefaultIndexAlgorithm(String type) {

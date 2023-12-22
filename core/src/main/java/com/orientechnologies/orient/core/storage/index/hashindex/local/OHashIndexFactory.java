@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
+import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndexDictionary;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -106,29 +107,26 @@ public final class OHashIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public final OBaseIndexEngine createIndexEngine(
-      final int indexId,
-      final String algorithm,
-      final String name,
-      final OStorage storage,
-      final int version,
-      final boolean multiValue) {
+  public OBaseIndexEngine createIndexEngine(OStorage storage, IndexEngineData data) {
     final OIndexEngine indexEngine;
 
     final String storageType = storage.getType();
+    OAbstractPaginatedStorage realStorage = (OAbstractPaginatedStorage) storage;
     switch (storageType) {
       case "memory":
       case "plocal":
         indexEngine =
-            new OHashTableIndexEngine(name, indexId, (OAbstractPaginatedStorage) storage, version);
+            new OHashTableIndexEngine(
+                data.getName(), data.getIndexId(), realStorage, data.getVersion());
         break;
       case "distributed":
         // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
         indexEngine =
-            new OHashTableIndexEngine(name, indexId, (OAbstractPaginatedStorage) storage, version);
+            new OHashTableIndexEngine(
+                data.getName(), data.getIndexId(), realStorage, data.getVersion());
         break;
       case "remote":
-        indexEngine = new ORemoteIndexEngine(indexId, name);
+        indexEngine = new ORemoteIndexEngine(data.getIndexId(), data.getName());
         break;
       default:
         throw new OIndexException("Unsupported storage type: " + storageType);
