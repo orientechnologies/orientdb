@@ -36,6 +36,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StoredField;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexableField;
@@ -132,7 +133,7 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
     return false;
   }
 
-  protected Document newGeoDocument(OIdentifiable oIdentifiable, Shape shape) {
+  protected Document newGeoDocument(OIdentifiable oIdentifiable, Shape shape, ODocument shapeDoc) {
 
     FieldType ft = new FieldType();
     ft.setIndexOptions(IndexOptions.DOCS);
@@ -149,6 +150,11 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
 
     //noinspection deprecation
     doc.add(new StoredField(strategy.getFieldName(), ctx.toString(shape)));
+    doc.add(
+        new StringField(
+            strategy.getFieldName() + "__orient_key_hash",
+            OLuceneIndexType.hashKey(shapeDoc),
+            Field.Store.YES));
     return doc;
   }
 

@@ -196,7 +196,10 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
       openIfClosed();
       OCompositeKey compositeKey = (OCompositeKey) key;
       addDocument(
-          newGeoDocument((OIdentifiable) value, legacyBuilder.makeShape(compositeKey, ctx)));
+          newGeoDocument(
+              (OIdentifiable) value,
+              legacyBuilder.makeShape(compositeKey, ctx),
+              ((OCompositeKey) key).toDocument()));
     }
   }
 
@@ -218,7 +221,10 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
 
   @Override
   public Document buildDocument(Object key, OIdentifiable value) {
-    return newGeoDocument(value, legacyBuilder.makeShape((OCompositeKey) key, ctx));
+    return newGeoDocument(
+        value,
+        legacyBuilder.makeShape((OCompositeKey) key, ctx),
+        ((OCompositeKey) key).toDocument());
   }
 
   @Override

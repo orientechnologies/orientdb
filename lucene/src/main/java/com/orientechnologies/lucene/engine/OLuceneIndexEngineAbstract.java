@@ -518,10 +518,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
     updateLastAccess();
     openIfClosed();
 
-    if (value == null || isCollectionDelete()) {
-      return OLuceneIndexType.createDeleteQuery(value, indexDefinition.getFields(), key);
-    }
-    return OLuceneIndexType.createQueryId(value);
+    return OLuceneIndexType.createDeleteQuery(value, indexDefinition.getFields(), key, metadata);
   }
 
   @Override

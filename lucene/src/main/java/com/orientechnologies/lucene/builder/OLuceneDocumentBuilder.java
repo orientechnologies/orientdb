@@ -100,7 +100,7 @@ public class OLuceneDocumentBuilder {
     return collectionFields.get(f) ? Field.Store.YES : Field.Store.NO;
   }
 
-  protected Boolean isSorted(String field, ODocument metadata) {
+  public static Boolean isSorted(String field, ODocument metadata) {
     if (metadata == null) return true;
     Boolean sorted = true;
     try {

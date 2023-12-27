@@ -16,16 +16,20 @@
 
 package com.orientechnologies.lucene.builder;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
+import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import org.apache.lucene.document.DoubleDocValuesField;
 import org.apache.lucene.document.DoublePoint;
 import org.apache.lucene.document.Field;
@@ -92,6 +96,7 @@ public class OLuceneIndexType {
       fields.add(new SortedDocValuesField(fieldName, new BytesRef(value.toString())));
     }
     fields.add(new TextField(fieldName, value.toString(), Field.Store.YES));
+    fields.add(new StringField(fieldName + "__orient_key_hash", hashKey(value), Field.Store.YES));
     return fields;
   }
 
@@ -128,19 +133,37 @@ public class OLuceneIndexType {
     return new TermQuery(new Term(OLuceneIndexEngineAbstract.RID, value.getIdentity().toString()));
   }
 
-  public static Query createDeleteQuery(OIdentifiable value, List<String> fields, Object key) {
+  public static String hashKey(Object key) {
+    try {
+      String keyString;
+      if (key instanceof ODocument) {
+        keyString = ((ODocument) key).toJSON();
+      } else {
+        keyString = key.toString();
+      }
+      MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+      byte[] bytes = sha256.digest(keyString.getBytes("UTF-8"));
+      return Base64.getEncoder().encodeToString(bytes);
+    } catch (NoSuchAlgorithmException e) {
+      throw OException.wrapException(new OLuceneIndexException("fail to find sha algorithm"), e);
+
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OLuceneIndexException("fail to find utf-8 encoding"), e);
+    }
+  }
+
+  public static Query createDeleteQuery(
+      OIdentifiable value, List<String> fields, Object key, ODocument metadata) {
     final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
     if (value != null) {
       queryBuilder.add(createQueryId(value), BooleanClause.Occur.MUST);
     }
-    Map<String, String> values = new HashMap<>();
     // TODO Implementation of Composite keys with Collection
     if (!(key instanceof OCompositeKey)) {
-      values.put(fields.iterator().next(), key.toString());
-    }
-    for (String s : values.keySet()) {
+      String field = fields.iterator().next();
+      //TODO: make or query for backward compatibility
       queryBuilder.add(
-          new TermQuery(new Term(s, values.get(s).toLowerCase(Locale.ENGLISH))), Occur.MUST);
+          new TermQuery(new Term(field + "__orient_key_hash", hashKey(key))), Occur.MUST);
     }
     return queryBuilder.build();
   }

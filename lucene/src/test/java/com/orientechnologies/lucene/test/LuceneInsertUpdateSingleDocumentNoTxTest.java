@@ -67,12 +67,19 @@ public class LuceneInsertUpdateSingleDocumentNoTxTest extends BaseLuceneTest {
     doc1.field("name", "Rome");
     db.save(doc);
     db.save(doc1);
+
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
+
     Collection<?> coll;
+
     try (Stream<ORID> stream = idx.getInternal().getRids("Rome")) {
       coll = stream.collect(Collectors.toList());
     }
     Assert.assertEquals(2, coll.size());
+    try (Stream<ORID> stream = idx.getInternal().getRids("")) {
+      coll = stream.collect(Collectors.toList());
+    }
+    Assert.assertEquals(0, coll.size());
     Assert.assertEquals(2, idx.getInternal().size());
   }
 }
