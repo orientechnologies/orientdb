@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
@@ -38,7 +37,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -578,27 +576,6 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
 
   @Override
   public void close() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void preCommit(OIndexAbstract.IndexTxSnapshot snapshots) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addTxOperation(
-      OIndexAbstract.IndexTxSnapshot snapshots, OTransactionIndexChanges changes) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void commit(OIndexAbstract.IndexTxSnapshot snapshots) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void postCommit(OIndexAbstract.IndexTxSnapshot snapshots) {
     throw new UnsupportedOperationException();
   }
 

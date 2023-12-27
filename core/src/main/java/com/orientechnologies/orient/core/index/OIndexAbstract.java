@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
@@ -782,21 +781,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     return document;
   }
 
-  public void addTxOperation(IndexTxSnapshot snapshots, final OTransactionIndexChanges changes) {
-    acquireSharedLock();
-    try {
-      if (changes.cleared) clearSnapshot(snapshots);
-      final Map<Object, Object> snapshot = snapshots.indexSnapshot;
-      for (final OTransactionIndexChangesPerKey entry : changes.changesPerKey.values()) {
-        applyIndexTxEntry(snapshot, entry);
-      }
-      applyIndexTxEntry(snapshot, changes.nullKeyChanges);
-
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   /**
    * Interprets transaction index changes for a certain key. Override it to customize index
    * behaviour on interpreting index changes. This may be viewed as an optimization, but in some
@@ -813,40 +797,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
       OTransactionIndexChangesPerKey changes) {
     return changes.getEntriesAsList();
   }
-
-  private void applyIndexTxEntry(
-      Map<Object, Object> snapshot, OTransactionIndexChangesPerKey entry) {
-    for (OTransactionIndexEntry op : interpretTxKeyChanges(entry)) {
-      switch (op.getOperation()) {
-        case PUT:
-          putInSnapshot(getCollatingValue(entry.key), op.getValue(), snapshot);
-          break;
-        case REMOVE:
-          if (op.getValue() != null)
-            removeFromSnapshot(getCollatingValue(entry.key), op.getValue(), snapshot);
-          else removeFromSnapshot(getCollatingValue(entry.key), snapshot);
-          break;
-        case CLEAR:
-          // SHOULD NEVER BE THE CASE HANDLE BY cleared FLAG
-          break;
-      }
-    }
-  }
-
-  public void commit(IndexTxSnapshot snapshots) {
-    acquireSharedLock();
-    try {
-      if (snapshots.clear) clear();
-
-      commitSnapshot(snapshots.indexSnapshot);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public void preCommit(IndexTxSnapshot snapshots) {}
-
-  public void postCommit(IndexTxSnapshot snapshots) {}
 
   public ODocument getConfiguration() {
     return updateConfiguration();
@@ -938,26 +888,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     if (key != null && im.getIndexDefinition() != null)
       return im.getIndexDefinition().getCollate().transform(key);
     return key;
-  }
-
-  protected void commitSnapshot(Map<Object, Object> snapshot) {
-    throw new UnsupportedOperationException();
-  }
-
-  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    throw new UnsupportedOperationException();
-  }
-
-  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    throw new UnsupportedOperationException();
-  }
-
-  protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
-    throw new UnsupportedOperationException();
-  }
-
-  protected void clearSnapshot(IndexTxSnapshot indexTxSnapshot) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -1108,11 +1038,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
       } catch (OInvalidIndexEngineIdException ignore) {
         doReloadIndexEngine();
       }
-  }
-
-  public static final class IndexTxSnapshot {
-    public Map<Object, Object> indexSnapshot = new HashMap<>();
-    public boolean clear = false;
   }
 
   public static void manualIndexesWarning() {

@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.util.Collection;
 import java.util.HashSet;
@@ -109,15 +108,6 @@ public interface OIndexInternal extends OIndex {
   OIndexMetadata loadMetadata(ODocument iConfig);
 
   void close();
-
-  void preCommit(OIndexAbstract.IndexTxSnapshot snapshots);
-
-  void addTxOperation(
-      OIndexAbstract.IndexTxSnapshot snapshots, final OTransactionIndexChanges changes);
-
-  void commit(OIndexAbstract.IndexTxSnapshot snapshots);
-
-  void postCommit(OIndexAbstract.IndexTxSnapshot snapshots);
 
   /**
    * Returns the index name for a key. The name is always the current index name, but in cases where

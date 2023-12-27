@@ -161,7 +161,7 @@ public class OLuceneIndexType {
     // TODO Implementation of Composite keys with Collection
     if (!(key instanceof OCompositeKey)) {
       String field = fields.iterator().next();
-      //TODO: make or query for backward compatibility
+      // TODO: make or query for backward compatibility
       queryBuilder.add(
           new TermQuery(new Term(field + "__orient_key_hash", hashKey(key))), Occur.MUST);
     }

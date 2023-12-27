@@ -20,7 +20,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.OLuceneIndex;
-import com.orientechnologies.lucene.OLuceneTxOperations;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -44,7 +43,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -212,51 +210,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     return key;
   }
 
-  @Override
-  protected void commitSnapshot(final Map<Object, Object> snapshot) {
-    while (true)
-      try {
-        storage.callIndexEngine(
-            false,
-            indexId,
-            engine -> {
-              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-
-              for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-                Object key = snapshotEntry.getKey();
-                OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
-
-                for (OIdentifiable oIdentifiable : operations.removed) {
-                  if (oIdentifiable == null) {
-                    indexEngine.remove(decodeKey(key));
-                  } else {
-                    indexEngine.remove(decodeKey(key), oIdentifiable);
-                  }
-                }
-              }
-              try {
-                for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-                  Object key = snapshotEntry.getKey();
-                  OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
-
-                  OAtomicOperation atomicOperation =
-                      storage.getAtomicOperationsManager().getCurrentOperation();
-                  indexEngine.put(atomicOperation, decodeKey(key), operations.added);
-                }
-                OTransaction transaction = getDatabase().getTransaction();
-                resetTransactionChanges(transaction);
-                return null;
-              } catch (IOException e) {
-                throw OException.wrapException(
-                    new OIndexException("Error during commit of index changes"), e);
-              }
-            });
-        break;
-      } catch (OInvalidIndexEngineIdException e) {
-        doReloadIndexEngine();
-      }
-  }
-
   public void doDelete() {
     while (true)
       try {
@@ -269,55 +222,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
 
   protected Object decodeKey(Object key) {
     return key;
-  }
-
-  private void resetTransactionChanges(OTransaction transaction) {
-    transaction.setCustomData(getName(), null);
-  }
-
-  @Override
-  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-
-    OLuceneTxOperations operations = (OLuceneTxOperations) snapshot.get(key);
-
-    if (operations == null) {
-      operations = new OLuceneTxOperations();
-      snapshot.put(key, operations);
-    }
-    operations.added.add(value.getIdentity());
-    snapshot.put(key, operations);
-  }
-
-  @Override
-  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-
-    OLuceneTxOperations operations = (OLuceneTxOperations) snapshot.get(key);
-    if (operations == null) {
-      operations = new OLuceneTxOperations();
-      snapshot.put(key, operations);
-    }
-    operations.removed.add(value.getIdentity());
-    snapshot.put(key, operations);
-  }
-
-  protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-
-    OLuceneTxOperations operations = (OLuceneTxOperations) snapshot.get(key);
-    if (operations == null) {
-      operations = new OLuceneTxOperations();
-      snapshot.put(key, operations);
-    }
-    operations.removed.add(null);
-    snapshot.put(key, operations);
-  }
-
-  @Override
-  protected void clearSnapshot(IndexTxSnapshot indexTxSnapshot) {
-    indexTxSnapshot.clear = true;
-    indexTxSnapshot.indexSnapshot.clear();
   }
 
   protected void populateIndex(ODocument doc, Object fieldValue) {
