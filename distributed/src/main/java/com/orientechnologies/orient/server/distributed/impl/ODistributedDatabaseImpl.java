@@ -644,33 +644,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  public void checkNodeInConfiguration(final String serverName, ODistributedConfiguration cfg) {
-    manager.executeInDistributedDatabaseLock(
-        databaseName,
-        20000,
-        cfg != null ? cfg.modify() : null,
-        lastCfg -> {
-          // GET LAST VERSION IN LOCK
-          final List<String> foundPartition = lastCfg.addNewNodeInServerList(serverName);
-          if (foundPartition != null) {
-            ODistributedServerLog.info(
-                this,
-                localNodeName,
-                null,
-                DIRECTION.NONE,
-                "Adding node '%s' in partition: %s db=%s v=%d",
-                serverName,
-                foundPartition,
-                databaseName,
-                lastCfg.getVersion());
-          }
-          return null;
-        });
-  }
-
   public void initFirstOpen(ODatabaseDocumentInternal session, OSharedContext context) {
     ODistributedConfiguration cfg = configurationManager.getDistributedConfiguration(session);
-    checkNodeInConfiguration(getLocalNodeName(), cfg);
+    manager.checkNodeInConfiguration(databaseName, cfg);
     resume();
     setOnline();
   }
