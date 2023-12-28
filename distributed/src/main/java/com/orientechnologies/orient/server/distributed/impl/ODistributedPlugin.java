@@ -1229,16 +1229,14 @@ public class ODistributedPlugin extends OServerPluginAbstract
       return false;
     }
 
-    final ODistributedDatabaseImpl distrDatabase =
-        ((OrientDBDistributed) getServerInstance().getDatabases()).registerDatabase(databaseName);
-
+    OrientDBDistributed context = (OrientDBDistributed) getServerInstance().getDatabases();
     try {
       return executeInDistributedDatabaseLock(
           databaseName,
           20000,
           null,
           cfg -> {
-            distrDatabase.checkNodeInConfiguration(nodeName, cfg);
+            checkNodeInConfiguration(databaseName, cfg);
 
             // GET ALL THE OTHER SERVERS
             final Collection<String> nodes = cfg.getServers(null, nodeName);
@@ -1268,10 +1266,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
               return false;
 
             // INIT STORAGE + UPDATE LOCAL FILE ONLY
-            distrDatabase.setDistributedConfiguration(cfg);
+            context.saveDistribuedConfiguration(databaseName, cfg);
 
-            // DISCARD MESSAGES DURING THE REQUEST OF DATABASE INSTALLATION
-            distrDatabase.suspend();
+            context.distributedPauseDatabase(databaseName);
 
             final Boolean deploy = forceDeployment ? Boolean.TRUE : (Boolean) cfg.isAutoDeploy();
 
@@ -1282,10 +1279,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
               // CREATE THE DISTRIBUTED QUEUE
               // TODO: This should check also but can't do it now
               // storage.getLastMetadata().isPresent();
-              if (!serverInstance.existsDatabase(databaseName)) {
+              if (!context.exists(databaseName, null, null)) {
 
                 if (deploy == null || !deploy) {
-                  distrDatabase.setOnline();
+                  context.distributedSetOnline(databaseName);
                   return false;
                 }
 
@@ -1301,8 +1298,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
                   } catch (ODistributedDatabaseDeltaSyncException e) {
                     if (deploy == null || !deploy) {
-                      // NO AUTO DEPLOY
-                      distrDatabase.setOnline();
+                      context.distributedSetOnline(databaseName);
                       return false;
                     }
 
@@ -1318,9 +1314,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
               }
 
             } catch (ODatabaseIsOldException e) {
+
               // CURRENT DATABASE IS NEWER, SET ALL OTHER DATABASES AS NOT_AVAILABLE TO FORCE THEM
               // TO ASK FOR THE CURRENT DATABASE
-              distrDatabase.setOnline();
+              context.distributedSetOnline(databaseName);
 
               ODistributedServerLog.info(
                   this,
@@ -1333,7 +1330,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
               databaseInstalled = true;
             } catch (RuntimeException e) {
               // UNLOCK ACCEPTING REQUESTS EVEN IN CASE OF ERROR.
-              distrDatabase.resume();
+              context.distributedSetOnline(databaseName);
               throw e;
             }
 
@@ -1342,6 +1339,30 @@ public class ODistributedPlugin extends OServerPluginAbstract
     } finally {
       installingDatabases.remove(databaseName);
     }
+  }
+
+  public void checkNodeInConfiguration(final String databaseName, ODistributedConfiguration cfg) {
+    executeInDistributedDatabaseLock(
+        databaseName,
+        20000,
+        cfg != null ? cfg.modify() : null,
+        lastCfg -> {
+          // GET LAST VERSION IN LOCK
+          final List<String> foundPartition = lastCfg.addNewNodeInServerList(nodeName);
+          if (foundPartition != null) {
+            ODistributedServerLog.info(
+                this,
+                nodeName,
+                null,
+                DIRECTION.NONE,
+                "Adding node '%s' in partition: %s db=%s v=%d",
+                nodeName,
+                foundPartition,
+                databaseName,
+                lastCfg.getVersion());
+          }
+          return null;
+        });
   }
 
   private boolean requestNewDatabaseDelta(

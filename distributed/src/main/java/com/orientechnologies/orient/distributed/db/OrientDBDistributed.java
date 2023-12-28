@@ -31,6 +31,7 @@ import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
@@ -451,6 +452,21 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     ODistributedDatabaseImpl distribDatabase = getDatabase(database);
     if (distribDatabase != null) {
       distribDatabase.setOnline();
+    }
+  }
+
+  public void distributedPauseDatabase(String database) {
+    ODistributedDatabaseImpl distribDatabase = getDatabase(database);
+    if (distribDatabase != null) {
+      distribDatabase.suspend();
+    }
+  }
+
+  public void saveDistribuedConfiguration(
+      String database, final OModifiableDistributedConfiguration distributedConfiguration) {
+    ODistributedDatabaseImpl distribDatabase = getDatabase(database);
+    if (distribDatabase != null) {
+      distribDatabase.setDistributedConfiguration(distributedConfiguration);
     }
   }
 
