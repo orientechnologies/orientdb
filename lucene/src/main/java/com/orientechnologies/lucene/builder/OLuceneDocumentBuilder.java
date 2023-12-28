@@ -20,7 +20,8 @@ package com.orientechnologies.lucene.builder;
 
 import static com.orientechnologies.lucene.builder.OLuceneIndexType.createField;
 import static com.orientechnologies.lucene.builder.OLuceneIndexType.createFields;
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
+import static com.orientechnologies.lucene.builder.OLuceneIndexType.createIdField;
+import static com.orientechnologies.lucene.builder.OLuceneIndexType.createOldIdField;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -51,7 +52,7 @@ public class OLuceneDocumentBuilder {
       final Map<String, Boolean> fieldsToStore,
       final ODocument metadata) {
     final Document doc = new Document();
-    this.addDefaultFieldsToDocument(definition, value, doc);
+    this.addDefaultFieldsToDocument(definition, key, value, doc);
 
     final List<Object> formattedKey = formatKeys(definition, key);
     int counter = 0;
@@ -71,9 +72,10 @@ public class OLuceneDocumentBuilder {
   }
 
   private void addDefaultFieldsToDocument(
-      OIndexDefinition definition, OIdentifiable value, Document doc) {
+      OIndexDefinition definition, Object key, OIdentifiable value, Document doc) {
     if (value != null) {
-      doc.add(createField(RID, value.getIdentity().toString(), Field.Store.YES));
+      doc.add(createOldIdField(value));
+      doc.add(createIdField(value, key));
       doc.add(createField("_CLUSTER", "" + value.getIdentity().getClusterId(), Field.Store.YES));
       doc.add(createField("_CLASS", definition.getClassName(), Field.Store.YES));
     }

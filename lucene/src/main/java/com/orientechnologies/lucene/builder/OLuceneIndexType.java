@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleDocValuesField;
 import org.apache.lucene.document.DoublePoint;
 import org.apache.lucene.document.Field;
@@ -43,7 +45,6 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -51,18 +52,44 @@ import org.apache.lucene.util.BytesRef;
 
 /** Created by enricorisa on 21/03/14. */
 public class OLuceneIndexType {
+  public static final String RID_HASH = "_RID_HASH";
+
   public static Field createField(
       final String fieldName, final Object value, final Field.Store store /*,Field.Index index*/) {
-    if (fieldName.equalsIgnoreCase(OLuceneIndexEngineAbstract.RID)) {
-      StringField ridField = new StringField(fieldName, value.toString(), store);
-      return ridField;
-    }
     // metadata fields: _CLASS, _CLUSTER
     if (fieldName.startsWith("_CLASS") || fieldName.startsWith("_CLUSTER")) {
-      StringField ridField = new StringField(fieldName, value.toString(), store);
-      return ridField;
+      return new StringField(fieldName, value.toString(), store);
     }
     return new TextField(fieldName, value.toString(), Field.Store.YES);
+  }
+
+  public static String extractId(Document doc) {
+    String value = doc.get(RID_HASH);
+    if (value != null) {
+      int pos = value.indexOf("|");
+      if (pos > 0) {
+        return value.substring(0, pos);
+      } else {
+        return value;
+      }
+    } else {
+      return null;
+    }
+  }
+
+  public static Field createIdField(final OIdentifiable id, final Object key) {
+    return new StringField(RID_HASH, genValueId(id, key), Field.Store.YES);
+  }
+
+  public static Field createOldIdField(final OIdentifiable id) {
+    return new StringField(
+        OLuceneIndexEngineAbstract.RID, id.getIdentity().toString(), Field.Store.YES);
+  }
+
+  public static String genValueId(final OIdentifiable id, final Object key) {
+    String value = id.getIdentity().toString() + "|";
+    value += hashKey(key);
+    return value;
   }
 
   public static List<Field> createFields(
@@ -96,7 +123,6 @@ public class OLuceneIndexType {
       fields.add(new SortedDocValuesField(fieldName, new BytesRef(value.toString())));
     }
     fields.add(new TextField(fieldName, value.toString(), Field.Store.YES));
-    fields.add(new StringField(fieldName + "__orient_key_hash", hashKey(value), Field.Store.YES));
     return fields;
   }
 
@@ -133,6 +159,10 @@ public class OLuceneIndexType {
     return new TermQuery(new Term(OLuceneIndexEngineAbstract.RID, value.getIdentity().toString()));
   }
 
+  public static Query createQueryId(OIdentifiable value, Object key) {
+    return new TermQuery(new Term(RID_HASH, genValueId(value, key)));
+  }
+
   public static String hashKey(Object key) {
     try {
       String keyString;
@@ -154,17 +184,24 @@ public class OLuceneIndexType {
 
   public static Query createDeleteQuery(
       OIdentifiable value, List<String> fields, Object key, ODocument metadata) {
-    final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
-    if (value != null) {
-      queryBuilder.add(createQueryId(value), BooleanClause.Occur.MUST);
-    }
+
     // TODO Implementation of Composite keys with Collection
-    if (!(key instanceof OCompositeKey)) {
-      String field = fields.iterator().next();
-      // TODO: make or query for backward compatibility
-      queryBuilder.add(
-          new TermQuery(new Term(field + "__orient_key_hash", hashKey(key))), Occur.MUST);
+    final BooleanQuery.Builder filter = new BooleanQuery.Builder();
+    final BooleanQuery.Builder builder = new BooleanQuery.Builder();
+    // TODO: Condition on Id and field key only for backward compatibility
+    if (value != null) {
+      builder.add(createQueryId(value), BooleanClause.Occur.MUST);
     }
-    return queryBuilder.build();
+    String field = fields.iterator().next();
+    builder.add(
+        new TermQuery(new Term(field, key.toString().toLowerCase(Locale.ENGLISH))),
+        BooleanClause.Occur.MUST);
+
+    filter.add(builder.build(), BooleanClause.Occur.SHOULD);
+    if (value != null) {
+      filter.add(createQueryId(value, key), BooleanClause.Occur.SHOULD);
+    }
+
+    return filter.build();
   }
 }

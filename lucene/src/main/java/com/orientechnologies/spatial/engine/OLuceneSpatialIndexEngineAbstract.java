@@ -140,9 +140,8 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
     ft.setStored(true);
 
     Document doc = new Document();
-
-    doc.add(
-        OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES));
+    doc.add(OLuceneIndexType.createOldIdField(oIdentifiable));
+    doc.add(OLuceneIndexType.createIdField(oIdentifiable, shapeDoc));
 
     for (IndexableField f : strategy.createIndexableFields(shape)) {
       doc.add(f);

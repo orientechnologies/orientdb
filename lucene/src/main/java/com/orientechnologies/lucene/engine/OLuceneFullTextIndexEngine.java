@@ -219,8 +219,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   private static Document putInManualindex(Object key, OIdentifiable oIdentifiable) {
     Document doc = new Document();
-    doc.add(
-        OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES));
+    doc.add(OLuceneIndexType.createOldIdField(oIdentifiable));
+    doc.add(OLuceneIndexType.createIdField(oIdentifiable, key));
 
     if (key instanceof OCompositeKey) {
 

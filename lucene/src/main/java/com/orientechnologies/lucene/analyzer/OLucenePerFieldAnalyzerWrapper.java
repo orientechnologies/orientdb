@@ -2,6 +2,7 @@ package com.orientechnologies.lucene.analyzer;
 
 import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
 
+import com.orientechnologies.lucene.builder.OLuceneIndexType;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.lucene.analysis.Analyzer;
@@ -45,6 +46,7 @@ public class OLucenePerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
     this.fieldAnalyzers.putAll(fieldAnalyzers);
 
     this.fieldAnalyzers.put(RID, new KeywordAnalyzer());
+    this.fieldAnalyzers.put(OLuceneIndexType.RID_HASH, new KeywordAnalyzer());
     this.fieldAnalyzers.put("_CLASS", new KeywordAnalyzer());
     this.fieldAnalyzers.put("_CLUSTER", new KeywordAnalyzer());
     this.fieldAnalyzers.put("_JSON", new KeywordAnalyzer());
