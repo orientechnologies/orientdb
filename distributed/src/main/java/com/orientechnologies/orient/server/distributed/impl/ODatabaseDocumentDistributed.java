@@ -257,7 +257,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     final ODistributedConfiguration cfg = distributedManager.getDatabaseConfiguration(databaseName);
 
     Map<String, Object> row = new HashMap<>();
-    final StringBuilder output = new StringBuilder();
     if (servers) row.put("servers", distributedManager.getClusterConfiguration());
     if (db) row.put("database", cfg.getDocument());
     if (latency)
@@ -699,12 +698,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         } catch (RuntimeException | Error e) {
           txContext.destroy();
           localDistributedDatabase.popTxContext(transactionId);
-          this.sharedContext
-              .getOrientDB()
-              .execute(
-                  () -> {
-                    getDistributedManager().installDatabase(false, getName(), true, true);
-                  });
+          this.sharedContext.getOrientDB().execute(this::forceRsync);
           throw e;
         } finally {
           if (manager != null) {
@@ -776,12 +770,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           } catch (RuntimeException | Error e) {
             txContext.destroy();
             localDistributedDatabase.popTxContext(transactionId);
-            this.sharedContext
-                .getOrientDB()
-                .execute(
-                    () -> {
-                      getDistributedManager().installDatabase(false, getName(), true, true);
-                    });
+            this.sharedContext.getOrientDB().execute(this::forceRsync);
 
             throw e;
           } finally {
@@ -800,14 +789,17 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                             ODatabaseDocumentDistributed.this,
                             "Reached limit of retry for commit tx:%s forcing database re-install",
                             transactionId);
-                    distributedManager.installDatabase(
-                        false, ODatabaseDocumentDistributed.this.getName(), true, true);
+                    forceRsync();
                   });
           return true;
         }
       }
     }
     return false;
+  }
+
+  public void forceRsync() {
+    distributedManager.installDatabase(false, this.getName(), true, true);
   }
 
   public boolean rollback2pc(ODistributedRequestId transactionId) {
@@ -1447,12 +1439,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   return null;
                 });
           } catch (RuntimeException | Error e) {
-            this.sharedContext
-                .getOrientDB()
-                .execute(
-                    () -> {
-                      getDistributedManager().installDatabase(false, getName(), true, true);
-                    });
+            this.sharedContext.getOrientDB().execute(this::forceRsync);
 
             throw e;
           }
@@ -1467,8 +1454,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                             ODatabaseDocumentDistributed.this,
                             "Reached limit of retry for commit tx:%s forcing database re-install",
                             id);
-                    distributedManager.installDatabase(
-                        false, ODatabaseDocumentDistributed.this.getName(), true, true);
+                    forceRsync();
                   });
         }
       }

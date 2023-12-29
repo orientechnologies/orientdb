@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
@@ -29,8 +28,6 @@ import java.util.Set;
 /**
  * This class is used inside of {@link OPaginatedCluster} class as container for the records ids
  * which were changed during active atomic operation.
- *
- * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
  */
 public class ORecordOperationMetadata implements OAtomicOperationMetadata<Set<ORID>> {
   public static final String RID_METADATA_KEY = "cluster.record.rid";

@@ -158,7 +158,7 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
                             OTransactionPhase2Task.this,
                             "Reached limit of retry for commit tx:%s forcing database re-install",
                             firstPhaseId);
-                    iManager.installDatabase(false, database.getName(), true, true);
+                    ((ODatabaseDocumentDistributed) database).forceRsync();
                   });
           hasResponse = true;
           return "KO";

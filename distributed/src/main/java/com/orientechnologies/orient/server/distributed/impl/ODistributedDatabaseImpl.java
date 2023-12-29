@@ -23,7 +23,6 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DIST
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
@@ -130,75 +129,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     startTxTimeoutTimerTask();
 
-    Orient.instance()
-        .getProfiler()
-        .registerHookValue(
-            "distributed.db." + databaseName + ".msgSent",
-            "Number of replication messages sent from current node",
-            OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return totalSentRequests.get();
-              }
-            },
-            "distributed.db.*.msgSent");
-
-    Orient.instance()
-        .getProfiler()
-        .registerHookValue(
-            "distributed.db." + databaseName + ".msgReceived",
-            "Number of replication messages received from external nodes",
-            OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return totalReceivedRequests.get();
-              }
-            },
-            "distributed.db.*.msgReceived");
-
-    Orient.instance()
-        .getProfiler()
-        .registerHookValue(
-            "distributed.db." + databaseName + ".activeContexts",
-            "Number of active distributed transactions",
-            OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return (long) activeTxContexts.size();
-              }
-            },
-            "distributed.db.*.activeContexts");
-
-    Orient.instance()
-        .getProfiler()
-        .registerHookValue(
-            "distributed.db." + databaseName + ".workerThreads",
-            "Number of worker threads",
-            OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return getPoolSize(requestExecutor);
-              }
-            },
-            "distributed.db.*.workerThreads");
-
-    Orient.instance()
-        .getProfiler()
-        .registerHookValue(
-            "distributed.db." + databaseName + ".recordLocks",
-            "Number of records locked",
-            OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return recordPromiseManager.size() + indexKeyPromiseManager.size();
-              }
-            },
-            "distributed.db.*.recordLocks");
+    initProfilerHooks();
 
     int sequenceSize =
         manager
@@ -208,6 +139,44 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     recordPromiseManager = new OTxPromiseManager<>();
     indexKeyPromiseManager = new OTxPromiseManager<>();
     sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
+  }
+
+  public void initProfilerHooks() {
+    OProfiler profiler = Orient.instance().getProfiler();
+    profiler.registerHookValue(
+        "distributed.db." + databaseName + ".msgSent",
+        "Number of replication messages sent from current node",
+        OProfiler.METRIC_TYPE.COUNTER,
+        () -> totalSentRequests.get(),
+        "distributed.db.*.msgSent");
+
+    profiler.registerHookValue(
+        "distributed.db." + databaseName + ".msgReceived",
+        "Number of replication messages received from external nodes",
+        OProfiler.METRIC_TYPE.COUNTER,
+        () -> totalReceivedRequests.get(),
+        "distributed.db.*.msgReceived");
+
+    profiler.registerHookValue(
+        "distributed.db." + databaseName + ".activeContexts",
+        "Number of active distributed transactions",
+        OProfiler.METRIC_TYPE.COUNTER,
+        () -> (long) activeTxContexts.size(),
+        "distributed.db.*.activeContexts");
+
+    profiler.registerHookValue(
+        "distributed.db." + databaseName + ".workerThreads",
+        "Number of worker threads",
+        OProfiler.METRIC_TYPE.COUNTER,
+        () -> (long) getPoolSize(requestExecutor),
+        "distributed.db.*.workerThreads");
+
+    profiler.registerHookValue(
+        "distributed.db." + databaseName + ".recordLocks",
+        "Number of records locked",
+        OProfiler.METRIC_TYPE.COUNTER,
+        () -> recordPromiseManager.size() + indexKeyPromiseManager.size(),
+        "distributed.db.*.recordLocks");
   }
 
   public static boolean sendResponseBack(
@@ -236,7 +205,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       remoteSenderServer.sendResponse(response);
 
     } catch (Exception e) {
-      ODistributedServerLog.debug(
+      ODistributedServerLog.error(
           current,
           local,
           sender,
@@ -448,8 +417,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         databaseName);
 
     // SET THE NODE.DB AS ONLINE
-    manager.setDatabaseStatus(
-        localNodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+    manager.setDatabaseStatus(localNodeName, databaseName, DB_STATUS.ONLINE);
     resume();
   }
 
@@ -609,39 +577,31 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       activeTxContexts.clear();
 
-      Orient.instance()
-          .getProfiler()
-          .unregisterHookValue("distributed.db." + databaseName + ".msgSent");
-      Orient.instance()
-          .getProfiler()
-          .unregisterHookValue("distributed.db." + databaseName + ".msgReceived");
-      Orient.instance()
-          .getProfiler()
-          .unregisterHookValue("distributed.db." + databaseName + ".activeContexts");
-      Orient.instance()
-          .getProfiler()
-          .unregisterHookValue("distributed.db." + databaseName + ".workerThreads");
-      Orient.instance()
-          .getProfiler()
-          .unregisterHookValue("distributed.db." + databaseName + ".recordLocks");
+      removeProfilerHook();
 
     } finally {
 
-      final ODistributedServerManager.DB_STATUS serverStatus =
+      final DB_STATUS serverStatus =
           manager.getDatabaseStatus(manager.getLocalNodeName(), databaseName);
 
-      if (serverStatus == ODistributedServerManager.DB_STATUS.ONLINE
-          || serverStatus == ODistributedServerManager.DB_STATUS.SYNCHRONIZING) {
+      if (serverStatus == DB_STATUS.ONLINE || serverStatus == DB_STATUS.SYNCHRONIZING) {
         try {
           manager.setDatabaseStatus(
-              manager.getLocalNodeName(),
-              databaseName,
-              ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+              manager.getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
         } catch (Exception e) {
           // IGNORE IT
         }
       }
     }
+  }
+
+  public void removeProfilerHook() {
+    OProfiler profiler = Orient.instance().getProfiler();
+    profiler.unregisterHookValue("distributed.db." + databaseName + ".msgSent");
+    profiler.unregisterHookValue("distributed.db." + databaseName + ".msgReceived");
+    profiler.unregisterHookValue("distributed.db." + databaseName + ".activeContexts");
+    profiler.unregisterHookValue("distributed.db." + databaseName + ".workerThreads");
+    profiler.unregisterHookValue("distributed.db." + databaseName + ".recordLocks");
   }
 
   public void initFirstOpen(ODatabaseDocumentInternal session, OSharedContext context) {
@@ -698,70 +658,73 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         new TimerTask() {
           @Override
           public void run() {
-            ODatabaseDocumentInternal database = null;
+            checkTxTimeout();
+          }
+        };
+  }
+
+  public void checkTxTimeout() {
+    ODatabaseDocumentInternal database = null;
+    try {
+      final long now = System.currentTimeMillis();
+      final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
+
+      for (final Iterator<ODistributedTxContext> it = activeTxContexts.values().iterator();
+          it.hasNext(); ) {
+        if (!isRunning()) break;
+
+        final ODistributedTxContext ctx = it.next();
+        if (ctx != null) {
+          final long started = ctx.getStartedOn();
+          final long elapsed = now - started;
+          if (elapsed > timeout) {
+            // TRANSACTION EXPIRED, ROLLBACK IT
+
+            if (database == null)
+              // GET THE DATABASE THE FIRST TIME
+              database = getDatabaseInstance();
+
+            if (database != null) database.activateOnCurrentThread();
+
             try {
-              final long now = System.currentTimeMillis();
-              final long timeout =
-                  OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
+              ctx.cancel(manager, database);
 
-              for (final Iterator<ODistributedTxContext> it = activeTxContexts.values().iterator();
-                  it.hasNext(); ) {
-                if (!isRunning()) break;
-
-                final ODistributedTxContext ctx = it.next();
-                if (ctx != null) {
-                  final long started = ctx.getStartedOn();
-                  final long elapsed = now - started;
-                  if (elapsed > timeout) {
-                    // TRANSACTION EXPIRED, ROLLBACK IT
-
-                    if (database == null)
-                      // GET THE DATABASE THE FIRST TIME
-                      database = getDatabaseInstance();
-
-                    if (database != null) database.activateOnCurrentThread();
-
-                    try {
-                      ctx.cancel(manager, database);
-
-                      if (ctx.getReqId().getNodeId() == manager.getLocalNodeId())
-                        // REQUEST WAS ORIGINATED FROM CURRENT SERVER
-                        manager.getMessageService().timeoutRequest(ctx.getReqId().getMessageId());
-
-                    } catch (Exception t) {
-                      ODistributedServerLog.info(
-                          this,
-                          localNodeName,
-                          null,
-                          DIRECTION.NONE,
-                          "Error on rolling back distributed transaction %s on database '%s' (err=%s)",
-                          ctx.getReqId(),
-                          databaseName,
-                          t);
-                    } finally {
-                      it.remove();
-                    }
-                  }
-                }
-              }
+              if (ctx.getReqId().getNodeId() == manager.getLocalNodeId())
+                // REQUEST WAS ORIGINATED FROM CURRENT SERVER
+                manager.getMessageService().timeoutRequest(ctx.getReqId().getMessageId());
 
             } catch (Exception t) {
-              // CATCH EVERYTHING TO AVOID THE TIMER IS CANCELED
               ODistributedServerLog.info(
                   this,
                   localNodeName,
                   null,
                   DIRECTION.NONE,
-                  "Error on checking for expired distributed transaction on database '%s'",
-                  databaseName);
+                  "Error on rolling back distributed transaction %s on database '%s' (err=%s)",
+                  ctx.getReqId(),
+                  databaseName,
+                  t);
             } finally {
-              if (database != null) {
-                database.activateOnCurrentThread();
-                database.close();
-              }
+              it.remove();
             }
           }
-        };
+        }
+      }
+
+    } catch (Exception t) {
+      // CATCH EVERYTHING TO AVOID THE TIMER IS CANCELED
+      ODistributedServerLog.info(
+          this,
+          localNodeName,
+          null,
+          DIRECTION.NONE,
+          "Error on checking for expired distributed transaction on database '%s'",
+          databaseName);
+    } finally {
+      if (database != null) {
+        database.activateOnCurrentThread();
+        database.close();
+      }
+    }
   }
 
   private boolean isRunning() {
@@ -851,15 +814,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
+  private void runReverseSync() {
+    manager.installDatabase(false, databaseName, true, true);
+  }
+
   @Override
   public void checkReverseSync(OTransactionSequenceStatus lastState) {
     List<OTransactionId> res = sequenceManager.checkSelfStatus(lastState);
     if (!res.isEmpty()) {
-      new Thread(
-              () -> {
-                manager.installDatabase(false, databaseName, true, true);
-              })
-          .start();
+      new Thread(this::runReverseSync).start();
     }
   }
 
@@ -930,10 +893,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public synchronized void freezeStatus() {
     final String localNode = manager.getLocalNodeName();
     freezePrevStatus = manager.getDatabaseStatus(localNode, databaseName);
-    if (freezePrevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
+    if (freezePrevStatus == DB_STATUS.ONLINE)
       // SET STATUS = BACKUP
-      manager.setDatabaseStatus(
-          localNode, databaseName, ODistributedServerManager.DB_STATUS.BACKUP);
+      manager.setDatabaseStatus(localNode, databaseName, DB_STATUS.BACKUP);
   }
 
   public synchronized void releaseStatus() {

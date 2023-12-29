@@ -31,6 +31,7 @@ import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
@@ -305,10 +306,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       return true;
     }
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return true;
-    ODistributedServerManager.DB_STATUS dbStatus =
-        plugin.getDatabaseStatus(plugin.getLocalNodeName(), name);
-    return dbStatus == ODistributedServerManager.DB_STATUS.ONLINE
-        || dbStatus == ODistributedServerManager.DB_STATUS.BACKUP;
+    DB_STATUS dbStatus = plugin.getDatabaseStatus(plugin.getLocalNodeName(), name);
+    return dbStatus == DB_STATUS.ONLINE || dbStatus == DB_STATUS.BACKUP;
   }
 
   @Override
@@ -394,10 +393,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       if (OSystemDatabase.SYSTEM_DB_NAME.equals(m.getKey())) continue;
 
       try {
-        plugin.setDatabaseStatus(
-            plugin.getLocalNodeName(),
-            m.getKey(),
-            ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+        plugin.setDatabaseStatus(plugin.getLocalNodeName(), m.getKey(), DB_STATUS.NOT_AVAILABLE);
       } catch (Exception t) {
         // IGNORE IT
       }
@@ -421,8 +417,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
     try {
-      plugin.setDatabaseStatus(
-          plugin.getLocalNodeName(), iDatabaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
+      plugin.setDatabaseStatus(plugin.getLocalNodeName(), iDatabaseName, DB_STATUS.OFFLINE);
     } catch (Exception t) {
       ODistributedServerLog.warn(
           this, plugin.getLocalNodeName(), null, null, "error un-registering database", t);

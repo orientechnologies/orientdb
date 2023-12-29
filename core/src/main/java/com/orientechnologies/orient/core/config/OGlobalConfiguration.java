@@ -1563,6 +1563,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   /** @Since 2.2.15 */
   @OApi(maturity = OApi.MATURITY.NEW)
+  @Deprecated
   DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST(
       "distributed.backupTryIncrementalFirst",
       "Try to execute an incremental backup first.",

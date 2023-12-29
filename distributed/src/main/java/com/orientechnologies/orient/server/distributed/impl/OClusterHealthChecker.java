@@ -260,13 +260,7 @@ public class OClusterHealthChecker implements Runnable {
 
         final ODistributedConfiguration dCfg = ddImpl.getDistributedConfiguration();
         if (dCfg != null) {
-          final boolean result =
-              manager.installDatabase(
-                  true,
-                  dbName,
-                  false,
-                  OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST
-                      .getValueAsBoolean());
+          final boolean result = manager.installDatabase(true, dbName, false, true);
 
           if (result)
             ODistributedServerLog.info(
