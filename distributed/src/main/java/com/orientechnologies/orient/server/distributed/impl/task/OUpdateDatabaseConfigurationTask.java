@@ -23,8 +23,8 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
@@ -61,10 +61,9 @@ public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
       final ODatabaseDocumentInternal database)
       throws Exception {
 
-    ODistributedDatabase local = iManager.getDatabase(databaseName);
-    if (local != null) {
-      local.setDistributedConfiguration(new OModifiableDistributedConfiguration(configuration));
-    }
+    ((OrientDBDistributed) iServer.getDatabases())
+        .setDistributedConfiguration(
+            databaseName, new OModifiableDistributedConfiguration(configuration));
 
     return true;
   }

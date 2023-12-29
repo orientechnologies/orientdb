@@ -18,11 +18,11 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
 import java.io.FileNotFoundException;
@@ -585,10 +585,8 @@ public class OHazelcastClusterMetadataManager
       final String databaseName, final OModifiableDistributedConfiguration cfg) {
     // VALIDATE THE CONFIGURATION FIRST
     distributedPlugin.getDistributedStrategy().validateConfiguration(cfg);
-    ODistributedDatabaseImpl local = distributedPlugin.getDatabase(databaseName);
-    if (local == null) return false;
-
-    boolean updated = local.tryUpdatingDatabaseConfigurationLocally(databaseName, cfg);
+    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
+    boolean updated = context.tryUpdatingDatabaseConfigurationLocally(databaseName, cfg);
 
     if (!updated && !getConfigurationMap().existsDatabaseConfiguration(databaseName))
       // FIRST TIME, FORCE PUBLISHING
@@ -1428,12 +1426,8 @@ public class OHazelcastClusterMetadataManager
 
   public ODistributedConfiguration getDatabaseConfiguration(
       final String iDatabaseName, final boolean createIfNotPresent) {
-    ODistributedDatabaseImpl local = distributedPlugin.getDatabase(iDatabaseName);
-    if (local == null) {
-      return null;
-    }
-
-    return local.getDistributedConfiguration();
+    return ((OrientDBDistributed) serverInstance.getDatabases())
+        .getDistributedConfiguration(iDatabaseName);
   }
 
   public void setNodeStatus(final ODistributedServerManager.NODE_STATUS iStatus) {

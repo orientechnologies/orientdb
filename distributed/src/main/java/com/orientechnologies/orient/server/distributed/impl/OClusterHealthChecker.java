@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -98,8 +100,9 @@ public class OClusterHealthChecker implements Runnable {
 
   private void checkServerConfig() {
     // NO NODES CONFIGURED: CHECK IF THERE IS ANY MISCONFIGURATION BY CHECKING THE DATABASE STATUSES
+    OrientDBDistributed context = (OrientDBDistributed) manager.getServerInstance().getDatabases();
     for (String databaseName : manager.getMessageService().getDatabases()) {
-      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+      final ODistributedConfiguration cfg = context.getDistributedConfiguration(databaseName);
 
       final Set<String> confServers = cfg.getServers(null);
 
@@ -142,8 +145,8 @@ public class OClusterHealthChecker implements Runnable {
 
               if (cfg.getVersion() < mostUpdatedServerVersion) {
                 // OVERWRITE DB VERSION
-                ODistributedDatabase local = manager.getDatabase(databaseName);
-                local.setDistributedConfiguration(
+                context.setDistributedConfiguration(
+                    databaseName,
                     new OModifiableDistributedConfiguration(
                         (ODocument) responses.get(mostUpdatedServer)));
               }
@@ -217,8 +220,10 @@ public class OClusterHealthChecker implements Runnable {
       // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
       return;
 
-    if (!manager.getServerInstance().isActive()) return;
+    OServer server = manager.getServerInstance();
+    if (!server.isActive()) return;
 
+    OrientDBDistributed context = (OrientDBDistributed) server.getDatabases();
     for (String dbName : manager.getMessageService().getDatabases()) {
       final ODistributedServerManager.DB_STATUS localNodeStatus =
           manager.getDatabaseStatus(manager.getLocalNodeName(), dbName);
@@ -241,7 +246,7 @@ public class OClusterHealthChecker implements Runnable {
             "No server are ONLINE for database '%s'. Considering local copy of database as the good one. Setting status=ONLINE...",
             dbName);
 
-        manager.getDatabase(dbName).setOnline();
+        context.distributedSetOnline(dbName);
 
       } else {
         ODistributedServerLog.info(
@@ -256,9 +261,7 @@ public class OClusterHealthChecker implements Runnable {
           // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
           return;
 
-        ODistributedDatabase ddImpl = manager.getDatabase(dbName);
-
-        final ODistributedConfiguration dCfg = ddImpl.getDistributedConfiguration();
+        final ODistributedConfiguration dCfg = context.getDistributedConfiguration(dbName);
         if (dCfg != null) {
           final boolean result = manager.installDatabase(true, dbName, false, true);
 

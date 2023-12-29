@@ -64,6 +64,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
@@ -420,8 +421,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
       ODistributedDatabase localDistributedDatabase = getDistributedShared();
-      final ODistributedConfiguration dbCfg =
-          localDistributedDatabase.getDistributedConfiguration(this);
+      final ODistributedConfiguration dbCfg = getDistributedConfiguration();
       ODistributedServerManager dManager = getDistributedManager();
       final String localNodeName = dManager.getLocalNodeName();
       checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
@@ -1024,8 +1024,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public ODistributedConfiguration getDistributedConfiguration() {
-    ODistributedDatabaseImpl local = distributedManager.getDatabase(getName());
-    return local.getDistributedConfiguration(this);
+    return ((OrientDBDistributed) getSharedContext().getOrientDB())
+        .getDistributedConfiguration(this);
   }
 
   public void sendDDLCommand(String command, boolean excludeLocal) {

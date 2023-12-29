@@ -119,7 +119,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     this.configurationManager =
         new ODistributedConfigurationManager(context, manager, iDatabaseName);
 
-    startAcceptingRequests();
+    initExecutor();
 
     if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
       recordPromiseManager = null;
@@ -615,7 +615,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return localNodeName;
   }
 
-  private void startAcceptingRequests() {
+  private void initExecutor() {
     // START ALL THE WORKER THREADS (CONFIGURABLE)
     int totalWorkers = OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getValueAsInteger();
     if (totalWorkers < 0)
@@ -633,15 +633,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     synchronized (this) {
+      String name =
+          String.format(
+              "OrientDB DistributedWorker node=%s db=%s", getLocalNodeName(), databaseName);
       ExecutorService exec =
-          OThreadPoolExecutors.newScalingThreadPool(
-              String.format(
-                  "OrientDB DistributedWorker node=%s db=%s", getLocalNodeName(), databaseName),
-              0,
-              totalWorkers,
-              0,
-              1,
-              TimeUnit.HOURS);
+          OThreadPoolExecutors.newScalingThreadPool(name, 0, totalWorkers, 0, 1, TimeUnit.HOURS);
       if (manager
           .getServerInstance()
           .getContextConfiguration()

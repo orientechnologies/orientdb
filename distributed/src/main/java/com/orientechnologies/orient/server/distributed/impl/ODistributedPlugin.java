@@ -2188,13 +2188,12 @@ public class ODistributedPlugin extends OServerPluginAbstract
   private Object internalInstallDatabase(
       final String databaseName, final String iNode, boolean incremental, OSyncReceiver receiver) {
     try {
-      OrientDBInternal context = serverInstance.getDatabases();
+      OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
       if (incremental) {
         context.fullSync(databaseName, receiver.getInputStream(), OrientDBConfig.defaultConfig());
-        ODistributedDatabaseImpl distrDatabase = getDatabase(databaseName);
-        distrDatabase.saveDatabaseConfiguration();
+        context.saveDatabaseConfiguration(databaseName);
 
-        try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
+        try (ODatabaseDocumentInternal inst = context.openNoAuthorization(databaseName)) {
           Optional<byte[]> read = ((OAbstractPaginatedStorage) inst.getStorage()).getLastMetadata();
           if (read.isPresent()) {
             OTxMetadataHolder metadata = OTxMetadataHolderImpl.read(read.get());

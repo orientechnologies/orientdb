@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
@@ -28,6 +29,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -483,6 +485,46 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public Collection<ODistributedDatabaseImpl> getDistributedDatabases() {
     return databases.values();
+  }
+
+  public ODistributedConfiguration getDistributedConfiguration(String database) {
+    ODistributedDatabaseImpl ddi = databases.get(database);
+    if (ddi == null) {
+      return null;
+    }
+    return ddi.getDistributedConfiguration();
+  }
+
+  public ODistributedConfiguration getDistributedConfiguration(ODatabaseSession session) {
+    return databases.get(session.getName()).getDistributedConfiguration(session);
+  }
+
+  public void setDistributedConfiguration(
+      String database, final OModifiableDistributedConfiguration distributedConfiguration) {
+    ODistributedDatabaseImpl ddi = databases.get(database);
+    if (ddi != null) {
+      ddi.setDistributedConfiguration(distributedConfiguration);
+    }
+  }
+
+  public void saveDatabaseConfiguration(String database) {
+    ODistributedDatabaseImpl ddi = databases.get(database);
+    ddi.saveDatabaseConfiguration();
+  }
+
+  public ODistributedConfiguration getExistingDatabaseConfiguration(String database) {
+    ODistributedDatabaseImpl ddi = databases.get(database);
+    return ddi.getExistingDatabaseConfiguration();
+  }
+
+  public boolean tryUpdatingDatabaseConfigurationLocally(
+      final String database, final OModifiableDistributedConfiguration cfg) {
+    ODistributedDatabaseImpl ddi = databases.get(database);
+    if (ddi != null) {
+      return ddi.tryUpdatingDatabaseConfigurationLocally(database, cfg);
+    } else {
+      return false;
+    }
   }
 
   @Override
