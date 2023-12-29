@@ -37,6 +37,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedConfigurationManager;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ONewDeltaSyncImporter;
@@ -62,6 +63,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private volatile ODistributedPlugin plugin;
   protected final ConcurrentHashMap<String, ODistributedDatabaseImpl> databases =
       new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  protected final ConcurrentHashMap<String, ODistributedConfigurationManager> configurations =
+      new ConcurrentHashMap<String, ODistributedConfigurationManager>();
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -410,11 +413,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   /** Creates a distributed database instance if not defined yet. */
   public ODistributedDatabaseImpl registerDatabase(final String db) {
-    return databases.computeIfAbsent(
-        db,
-        (key) -> {
-          return new ODistributedDatabaseImpl(this, plugin, key);
-        });
+    return databases.computeIfAbsent(db, this::newDistributedDatabase);
+  }
+
+  private ODistributedDatabaseImpl newDistributedDatabase(String key) {
+    return new ODistributedDatabaseImpl(this, plugin, key);
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
@@ -439,7 +442,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     if (distribDatabase == null) {
       // CHECK TO PUBLISH IT TO THE CLUSTER
       distribDatabase = registerDatabase(dbName);
-      distribDatabase.initFirstOpen(session, context);
+      distribDatabase.initFirstOpen(session);
       return true;
     }
     return false;
@@ -461,10 +464,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void saveDistribuedConfiguration(
       String database, final OModifiableDistributedConfiguration distributedConfiguration) {
-    ODistributedDatabaseImpl distribDatabase = getDatabase(database);
-    if (distribDatabase != null) {
-      distribDatabase.setDistributedConfiguration(distributedConfiguration);
-    }
+    getConfigurationManager(database).setDistributedConfiguration(distributedConfiguration);
   }
 
   public Set<String> getActiveDatabases() {
@@ -488,43 +488,33 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public ODistributedConfiguration getDistributedConfiguration(String database) {
-    ODistributedDatabaseImpl ddi = databases.get(database);
-    if (ddi == null) {
-      return null;
-    }
-    return ddi.getDistributedConfiguration();
+    return getConfigurationManager(database).getDistributedConfiguration();
+  }
+
+  public ODistributedConfigurationManager getConfigurationManager(String database) {
+    return configurations.computeIfAbsent(
+        database,
+        (key) -> {
+          return new ODistributedConfigurationManager(this, plugin, key);
+        });
   }
 
   public ODistributedConfiguration getDistributedConfiguration(ODatabaseSession session) {
-    return databases.get(session.getName()).getDistributedConfiguration(session);
+    return getConfigurationManager(session.getName()).getDistributedConfiguration(session);
   }
 
   public void setDistributedConfiguration(
       String database, final OModifiableDistributedConfiguration distributedConfiguration) {
-    ODistributedDatabaseImpl ddi = databases.get(database);
-    if (ddi != null) {
-      ddi.setDistributedConfiguration(distributedConfiguration);
-    }
+    getConfigurationManager(database).setDistributedConfiguration(distributedConfiguration);
   }
 
   public void saveDatabaseConfiguration(String database) {
-    ODistributedDatabaseImpl ddi = databases.get(database);
-    ddi.saveDatabaseConfiguration();
-  }
-
-  public ODistributedConfiguration getExistingDatabaseConfiguration(String database) {
-    ODistributedDatabaseImpl ddi = databases.get(database);
-    return ddi.getExistingDatabaseConfiguration();
+    getConfigurationManager(database).saveDatabaseConfiguration();
   }
 
   public boolean tryUpdatingDatabaseConfigurationLocally(
       final String database, final OModifiableDistributedConfiguration cfg) {
-    ODistributedDatabaseImpl ddi = databases.get(database);
-    if (ddi != null) {
-      return ddi.tryUpdatingDatabaseConfigurationLocally(database, cfg);
-    } else {
-      return false;
-    }
+    return getConfigurationManager(database).tryUpdatingDatabaseConfigurationLocally(database, cfg);
   }
 
   @Override

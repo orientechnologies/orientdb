@@ -1226,8 +1226,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       return false;
     }
 
-    OrientDBDistributed context = (OrientDBDistributed) getServerInstance().getDatabases();
-    context.registerDatabase(databaseName);
     try {
       return executeInDistributedDatabaseLock(
           databaseName,
@@ -1249,7 +1247,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final boolean tryWithDeltaFirst,
       OModifiableDistributedConfiguration cfg) {
     OrientDBDistributed context = (OrientDBDistributed) getServerInstance().getDatabases();
-    context.registerDatabase(databaseName);
     checkNodeInConfiguration(databaseName, cfg);
 
     // GET ALL THE OTHER SERVERS

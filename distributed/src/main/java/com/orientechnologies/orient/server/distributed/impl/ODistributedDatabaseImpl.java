@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -51,7 +50,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.lock.OFreezeGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
@@ -92,7 +90,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final String localNodeName;
   private final OTxPromiseManager<ORID> recordPromiseManager;
   private final OTxPromiseManager<Object> indexKeyPromiseManager;
-  private final ODistributedConfigurationManager configurationManager;
   protected Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
       new ConcurrentHashMap<>(64);
   private AtomicLong totalSentRequests = new AtomicLong();
@@ -116,8 +113,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     this.manager = manager;
     this.databaseName = iDatabaseName;
     this.localNodeName = manager.getLocalNodeName();
-    this.configurationManager =
-        new ODistributedConfigurationManager(context, manager, iDatabaseName);
 
     initExecutor();
 
@@ -604,8 +599,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     profiler.unregisterHookValue("distributed.db." + databaseName + ".recordLocks");
   }
 
-  public void initFirstOpen(ODatabaseDocumentInternal session, OSharedContext context) {
-    ODistributedConfiguration cfg = configurationManager.getDistributedConfiguration(session);
+  public void initFirstOpen(ODatabaseDocumentInternal session) {
+    ODistributedConfiguration cfg = this.context.getDistributedConfiguration(session);
     manager.checkNodeInConfiguration(databaseName, cfg);
     resume();
     setOnline();
@@ -849,19 +844,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     this.lockManager.unlock(guards);
   }
 
-  public ODistributedConfiguration getDistributedConfiguration() {
-    return configurationManager.getDistributedConfiguration();
-  }
-
-  public ODistributedConfiguration getDistributedConfiguration(ODatabaseSession session) {
-    return configurationManager.getDistributedConfiguration(session);
-  }
-
-  public void setDistributedConfiguration(
-      final OModifiableDistributedConfiguration distributedConfiguration) {
-    configurationManager.setDistributedConfiguration(distributedConfiguration);
-  }
-
   public OSyncSource getLastValidBackup() {
     return lastValidBackup;
   }
@@ -880,10 +862,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (lastValidBackup != null) {
       lastValidBackup = null;
     }
-  }
-
-  public void saveDatabaseConfiguration() {
-    configurationManager.saveDatabaseConfiguration();
   }
 
   public synchronized void freezeStatus() {
@@ -907,15 +885,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public Set<String> getAvailableNodesButLocal(
       ODatabaseSession database, Set<String> involvedClusters) {
-    final Set<String> nodes = getDistributedConfiguration(database).getServers(involvedClusters);
+    final Set<String> nodes =
+        context.getDistributedConfiguration(database).getServers(involvedClusters);
 
     // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
     nodes.remove(localNodeName);
     return nodes;
-  }
-
-  public boolean tryUpdatingDatabaseConfigurationLocally(
-      final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
-    return this.configurationManager.tryUpdatingDatabaseConfigurationLocally(iDatabaseName, cfg);
   }
 }
