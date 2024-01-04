@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -75,6 +76,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -105,7 +107,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private volatile boolean parsing = true;
   private AtomicLong operationsRunnig = new AtomicLong(0);
   private ODistributedSynchronizedSequence sequenceManager;
-  private ThreadPoolExecutor requestExecutor;
+  private ExecutorService requestExecutor;
   private OLockManager lockManager = new OLockManagerImpl();
   private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private OSyncSource lastValidBackup;
@@ -191,7 +193,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             new OAbstractProfiler.OProfilerHookValue() {
               @Override
               public Object getValue() {
-                return (long) requestExecutor.getPoolSize();
+                return getPoolSize(requestExecutor);
               }
             },
             "distributed.db.*.workerThreads");
@@ -265,6 +267,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     return true;
+  }
+
+  public int getPoolSize(ExecutorService service) {
+    if (service instanceof ThreadPoolExecutor) {
+      return ((ThreadPoolExecutor) service).getPoolSize();
+    } else {
+      return 0;
+    }
   }
 
   public OTxPromiseManager<ORID> getRecordPromiseManager() {
@@ -587,7 +597,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public long getProcessedRequests() {
-    return requestExecutor.getCompletedTaskCount();
+    if (requestExecutor instanceof ThreadPoolExecutor) {
+      return ((ThreadPoolExecutor) requestExecutor).getCompletedTaskCount();
+    } else {
+      return 0;
+    }
   }
 
   public void onDropShutdown() {
@@ -705,16 +719,23 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     synchronized (this) {
-      this.requestExecutor =
-          (ThreadPoolExecutor)
-              OThreadPoolExecutors.newScalingThreadPool(
-                  String.format(
-                      "OrientDB DistributedWorker node=%s db=%s", getLocalNodeName(), databaseName),
-                  0,
-                  totalWorkers,
-                  0,
-                  1,
-                  TimeUnit.HOURS);
+      ExecutorService exec =
+          OThreadPoolExecutors.newScalingThreadPool(
+              String.format(
+                  "OrientDB DistributedWorker node=%s db=%s", getLocalNodeName(), databaseName),
+              0,
+              totalWorkers,
+              0,
+              1,
+              TimeUnit.HOURS);
+      if (manager
+          .getServerInstance()
+          .getContextConfiguration()
+          .getValueAsBoolean(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
+        exec = new OSourceTraceExecutorService(exec);
+      }
+
+      this.requestExecutor = exec;
     }
   }
 
@@ -846,7 +867,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         "\n\nDATABASE '" + databaseName + "' ON SERVER '" + manager.getLocalNodeName() + "'");
 
     buffer.append("\n- MESSAGES IN QUEUES");
-    buffer.append(" (" + (requestExecutor.getPoolSize()) + " WORKERS):");
+    buffer.append(" (" + getPoolSize(requestExecutor) + " WORKERS):");
 
     return buffer.toString();
   }

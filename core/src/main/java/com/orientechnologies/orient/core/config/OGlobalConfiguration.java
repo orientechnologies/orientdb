@@ -1851,6 +1851,11 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       2500,
       false,
       false),
+  EXECUTOR_DEBUG_TRACE_SOURCE(
+      "executor.debug.traceSource",
+      "Enable tracing of the source that submit a task in database executor in case of exception",
+      Boolean.class,
+      false),
   EXECUTOR_POOL_MAX_SIZE(
       "executor.pool.maxSize",
       "Maximum number of threads in the executor pool (-1 will base the size on the number CPUs)",

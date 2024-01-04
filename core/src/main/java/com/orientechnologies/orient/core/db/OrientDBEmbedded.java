@@ -26,6 +26,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARN
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -166,10 +167,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     initAutoClose();
 
-    long timeout =
-        this.configurations
-            .getConfigurations()
-            .getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
+    long timeout = getLongConfig(OGlobalConfiguration.COMMAND_TIMEOUT);
     timeoutChecker = new OCommandTimeoutChecker(timeout, this);
     systemDatabase = new OSystemDatabase(this);
     securitySystem = new ODefaultSecuritySystem();
@@ -189,8 +187,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private ExecutorService newIoExecutor() {
     if (getBoolConfig(OGlobalConfiguration.EXECUTOR_POOL_IO_ENABLED)) {
       int ioSize = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_IO_MAX_SIZE);
-      return OThreadPoolExecutors.newScalingThreadPool(
-          "OrientDB-IO", 1, excutorBaseSize(ioSize), ioSize, 30, TimeUnit.MINUTES);
+      ExecutorService exec =
+          OThreadPoolExecutors.newScalingThreadPool(
+              "OrientDB-IO", 1, excutorBaseSize(ioSize), ioSize, 30, TimeUnit.MINUTES);
+      if (getBoolConfig(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
+        exec = new OSourceTraceExecutorService(exec);
+      }
+      return exec;
     } else {
       return null;
     }
@@ -198,8 +201,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   private ExecutorService newExecutor() {
     int size = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
-    return OThreadPoolExecutors.newScalingThreadPool(
-        "OrientDBEmbedded", 1, excutorBaseSize(size), size, 30, TimeUnit.MINUTES);
+    ExecutorService exec =
+        OThreadPoolExecutors.newScalingThreadPool(
+            "OrientDBEmbedded", 1, excutorBaseSize(size), size, 30, TimeUnit.MINUTES);
+    if (getBoolConfig(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
+      exec = new OSourceTraceExecutorService(exec);
+    }
+    return exec;
   }
 
   private boolean getBoolConfig(OGlobalConfiguration config) {

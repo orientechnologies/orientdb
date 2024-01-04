@@ -59,21 +59,6 @@ public class OThreadPoolExecutors {
         new NamedThreadFactory(threadName, parentThreadGroup));
   }
 
-  public static ExecutorService newFixedThreadPool(String threadName, int poolSize) {
-    return newFixedThreadPool(threadName, Thread.currentThread().getThreadGroup(), poolSize);
-  }
-
-  public static ExecutorService newFixedThreadPool(
-      String threadName, ThreadGroup parentThreadGroup, int poolSize) {
-    return new OThreadPoolExecutorWithLogging(
-        poolSize,
-        poolSize,
-        0,
-        TimeUnit.SECONDS,
-        new LinkedBlockingQueue<>(),
-        new NamedThreadFactory(threadName, parentThreadGroup));
-  }
-
   public static ExecutorService newCachedThreadPool(String threadName) {
     return newCachedThreadPool(threadName, Thread.currentThread().getThreadGroup());
   }
