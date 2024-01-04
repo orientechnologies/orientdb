@@ -128,6 +128,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TimerTask;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
@@ -261,6 +262,11 @@ public class ODistributedPlugin extends OServerPluginAbstract
       OCallable<T, OModifiableDistributedConfiguration> iCallback) {
     return clusterManager.executeInDistributedDatabaseLock(
         databaseName, timeoutLocking, lastCfg, iCallback);
+  }
+
+  public <T> T executeInDistributedDatabaseLock(
+      String databaseName, long timeoutLocking, Callable<T> iCallback) {
+    return clusterManager.executeInDistributedDatabaseLock(databaseName, timeoutLocking, iCallback);
   }
 
   @Override
@@ -1230,10 +1236,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
       return executeInDistributedDatabaseLock(
           databaseName,
           20000,
-          null,
-          cfg -> {
+          () -> {
             return internalInstallDatabase(
-                iStartup, databaseName, forceDeployment, tryWithDeltaFirst, cfg);
+                iStartup, databaseName, forceDeployment, tryWithDeltaFirst);
           });
     } finally {
       installingDatabases.remove(databaseName);
@@ -1244,10 +1249,11 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final boolean iStartup,
       final String databaseName,
       final boolean forceDeployment,
-      final boolean tryWithDeltaFirst,
-      OModifiableDistributedConfiguration cfg) {
+      final boolean tryWithDeltaFirst) {
     OrientDBDistributed context = (OrientDBDistributed) getServerInstance().getDatabases();
-    checkNodeInConfiguration(databaseName, cfg);
+    OModifiableDistributedConfiguration cfg =
+        context.getOrInitDistributedConfiguration(databaseName).modify();
+    internalCheckNodeInConfig(databaseName, cfg);
 
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers(null, nodeName);
@@ -1353,22 +1359,27 @@ public class ODistributedPlugin extends OServerPluginAbstract
         20000,
         cfg != null ? cfg.modify() : null,
         lastCfg -> {
-          // GET LAST VERSION IN LOCK
-          final List<String> foundPartition = lastCfg.addNewNodeInServerList(nodeName);
-          if (foundPartition != null) {
-            ODistributedServerLog.info(
-                this,
-                nodeName,
-                null,
-                DIRECTION.NONE,
-                "Adding node '%s' in partition: %s db=%s v=%d",
-                nodeName,
-                foundPartition,
-                databaseName,
-                lastCfg.getVersion());
-          }
-          return null;
+          return internalCheckNodeInConfig(databaseName, lastCfg);
         });
+  }
+
+  public Object internalCheckNodeInConfig(
+      final String databaseName, OModifiableDistributedConfiguration lastCfg) {
+    // GET LAST VERSION IN LOCK
+    final List<String> foundPartition = lastCfg.addNewNodeInServerList(nodeName);
+    if (foundPartition != null) {
+      ODistributedServerLog.info(
+          this,
+          nodeName,
+          null,
+          DIRECTION.NONE,
+          "Adding node '%s' in partition: %s db=%s v=%d",
+          nodeName,
+          foundPartition,
+          databaseName,
+          lastCfg.getVersion());
+    }
+    return null;
   }
 
   private boolean requestNewDatabaseDelta(
@@ -2176,8 +2187,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     executeInDistributedDatabaseLock(
         databaseName,
         20000,
-        null,
-        cfg -> {
+        () -> {
           return internalInstallDatabase(databaseName, iNode, incremental, receiver);
         });
   }

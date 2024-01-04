@@ -2,7 +2,20 @@ package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
-import com.hazelcast.core.*;
+import com.hazelcast.core.Cluster;
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
+import com.hazelcast.core.LifecycleEvent;
+import com.hazelcast.core.LifecycleListener;
+import com.hazelcast.core.LifecycleService;
+import com.hazelcast.core.MapEvent;
+import com.hazelcast.core.Member;
+import com.hazelcast.core.MemberAttributeEvent;
+import com.hazelcast.core.MembershipEvent;
+import com.hazelcast.core.MembershipListener;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -21,13 +34,29 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
+import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -1387,9 +1416,13 @@ public class OHazelcastClusterMetadataManager
     getLockManagerExecutor().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
     try {
 
-      if (lastCfg == null)
+      if (lastCfg == null) {
         // ACQUIRE CFG INSIDE THE LOCK
-        lastCfg = getDatabaseConfiguration(databaseName).modify();
+        lastCfg =
+            ((OrientDBDistributed) serverInstance.getDatabases())
+                .getDistributedConfiguration(databaseName)
+                .modify();
+      }
 
       try {
 
@@ -1412,6 +1445,38 @@ public class OHazelcastClusterMetadataManager
       // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
       distributedPlugin.notifyClients(databaseName);
       serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
+    }
+    return result;
+  }
+
+  /**
+   * Executes an operation protected by a distributed lock (one per database).
+   *
+   * @param <T> Return type
+   * @param databaseName Database name
+   * @param iCallback Operation @return The operation's result of type T
+   */
+  public <T> T executeInDistributedDatabaseLock(
+      final String databaseName, final long timeoutLocking, final Callable<T> iCallback) {
+
+    T result;
+    getLockManagerExecutor().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
+    try {
+
+      try {
+
+        result = iCallback.call();
+
+      } finally {
+      }
+
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+
+    } finally {
+      getLockManagerRequester().releaseExclusiveLock(databaseName, nodeName);
     }
     return result;
   }
