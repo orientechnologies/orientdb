@@ -139,7 +139,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     } else {
       try {
         doubleWriteLogMaxSegSize = calculateDoubleWriteLogMaxSegSize(Paths.get(basePath));
-        maxWALSegmentSize = calculateInitialMaxWALSegSize(configurations);
+        maxWALSegmentSize = calculateInitialMaxWALSegSize();
 
         if (maxWALSegmentSize <= 0) {
           throw new ODatabaseException(
@@ -158,37 +158,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
     orient.addOrientDB(this);
-    int size = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
-    executor =
-        OThreadPoolExecutors.newScalingThreadPool(
-            "OrientDBEmbedded", 1, excutorBaseSize(size), size, 30, TimeUnit.MINUTES);
-
-    if (this.configurations
-        .getConfigurations()
-        .getValueAsBoolean(OGlobalConfiguration.EXECUTOR_POOL_IO_ENABLED)) {
-      int ioSize = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_IO_MAX_SIZE);
-      ioExecutor =
-          OThreadPoolExecutors.newScalingThreadPool(
-              "OrientDB-IO", 1, excutorBaseSize(ioSize), ioSize, 30, TimeUnit.MINUTES);
-    } else {
-      ioExecutor = null;
-    }
+    executor = newExecutor();
+    ioExecutor = newIoExecutor();
     timer = new Timer();
 
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
 
-    boolean autoClose =
-        this.configurations
-            .getConfigurations()
-            .getValueAsBoolean(OGlobalConfiguration.AUTO_CLOSE_AFTER_DELAY);
-    if (autoClose) {
-      int autoCloseDelay =
-          this.configurations
-              .getConfigurations()
-              .getValueAsInteger(OGlobalConfiguration.AUTO_CLOSE_DELAY);
-      final long delay = autoCloseDelay * 60 * 1000;
-      initAutoClose(delay);
-    }
+    initAutoClose();
+
     long timeout =
         this.configurations
             .getConfigurations()
@@ -199,8 +176,46 @@ public class OrientDBEmbedded implements OrientDBInternal {
     securitySystem.activate(this, this.configurations.getSecurityConfig());
   }
 
+  private void initAutoClose() {
+
+    boolean autoClose = getBoolConfig(OGlobalConfiguration.AUTO_CLOSE_AFTER_DELAY);
+    if (autoClose) {
+      int autoCloseDelay = getIntConfig(OGlobalConfiguration.AUTO_CLOSE_DELAY);
+      final long delay = autoCloseDelay * 60 * 1000;
+      initAutoClose(delay);
+    }
+  }
+
+  private ExecutorService newIoExecutor() {
+    if (getBoolConfig(OGlobalConfiguration.EXECUTOR_POOL_IO_ENABLED)) {
+      int ioSize = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_IO_MAX_SIZE);
+      return OThreadPoolExecutors.newScalingThreadPool(
+          "OrientDB-IO", 1, excutorBaseSize(ioSize), ioSize, 30, TimeUnit.MINUTES);
+    } else {
+      return null;
+    }
+  }
+
+  private ExecutorService newExecutor() {
+    int size = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
+    return OThreadPoolExecutors.newScalingThreadPool(
+        "OrientDBEmbedded", 1, excutorBaseSize(size), size, 30, TimeUnit.MINUTES);
+  }
+
+  private boolean getBoolConfig(OGlobalConfiguration config) {
+    return this.configurations.getConfigurations().getValueAsBoolean(config);
+  }
+
+  private int getIntConfig(OGlobalConfiguration config) {
+    return this.configurations.getConfigurations().getValueAsInteger(config);
+  }
+
+  private long getLongConfig(OGlobalConfiguration config) {
+    return this.configurations.getConfigurations().getValueAsLong(config);
+  }
+
   private int excutorMaxSize(OGlobalConfiguration config) {
-    int size = this.configurations.getConfigurations().getValueAsInteger(config);
+    int size = getIntConfig(config);
     if (size == 0) {
       OLogManager.instance()
           .warn(
@@ -229,12 +244,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
-    int capacity =
-        config.getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY);
-    long timeout =
-        config
-            .getConfigurations()
-            .getValueAsInteger(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT);
+    int capacity = getIntConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY);
+    long timeout = getIntConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT);
     return new OCachedDatabasePoolFactoryImpl(this, capacity, timeout);
   }
 
@@ -266,20 +277,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  private long calculateInitialMaxWALSegSize(OrientDBConfig configurations) throws IOException {
-    String walPath;
-
-    if (configurations != null) {
-      final OContextConfiguration config = configurations.getConfigurations();
-
-      if (config != null) {
-        walPath = config.getValueAsString(OGlobalConfiguration.WAL_LOCATION);
-      } else {
-        walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
-      }
-    } else {
-      walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
-    }
+  private long calculateInitialMaxWALSegSize() throws IOException {
+    String walPath =
+        configurations.getConfigurations().getValueAsString(OGlobalConfiguration.WAL_LOCATION);
 
     if (walPath == null) {
       walPath = basePath;
@@ -313,33 +313,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
       filesSize = 0;
     }
 
-    long maxSegSize;
-
-    if (configurations != null) {
-      final OContextConfiguration config = configurations.getConfigurations();
-      if (config != null) {
-        maxSegSize = config.getValueAsLong(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024;
-      } else {
-        maxSegSize = OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsLong() * 1024 * 1024;
-      }
-    } else {
-      maxSegSize = OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsLong() * 1024 * 1024;
-    }
+    long maxSegSize = getLongConfig(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024;
 
     if (maxSegSize <= 0) {
-      int sizePercent;
-      if (configurations != null) {
-        final OContextConfiguration config = configurations.getConfigurations();
-
-        if (config != null) {
-          sizePercent = config.getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE_PERCENT);
-        } else {
-          sizePercent = OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE_PERCENT.getValueAsInteger();
-        }
-      } else {
-        sizePercent = OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE_PERCENT.getValueAsInteger();
-      }
-
+      int sizePercent = getIntConfig(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE_PERCENT);
       if (sizePercent <= 0) {
         throw new ODatabaseException(
             "Invalid configuration settings. Can not set maximum size of WAL segment");
@@ -350,17 +327,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     final long minSegSizeLimit = (long) (freeSpace * 0.25);
 
-    long minSegSize = 0;
-    if (configurations != null) {
-      OContextConfiguration config = configurations.getConfigurations();
-      if (config != null) {
-        minSegSize = config.getValueAsLong(OGlobalConfiguration.WAL_MIN_SEG_SIZE) * 1024 * 1024;
-      }
-    }
-
-    if (minSegSize <= 0) {
-      minSegSize = OGlobalConfiguration.WAL_MIN_SEG_SIZE.getValueAsLong() * 1024 * 1024;
-    }
+    long minSegSize = getLongConfig(OGlobalConfiguration.WAL_MIN_SEG_SIZE) * 1024 * 1024;
 
     if (minSegSize > minSegSizeLimit) {
       minSegSize = minSegSizeLimit;
@@ -402,44 +369,12 @@ public class OrientDBEmbedded implements OrientDBInternal {
       filesSize = 0;
     }
 
-    long maxSegSize;
-
-    if (configurations != null) {
-      final OContextConfiguration config = configurations.getConfigurations();
-      if (config != null) {
-        maxSegSize =
-            config.getValueAsLong(OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE)
-                * 1024
-                * 1024;
-      } else {
-        maxSegSize =
-            OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE.getValueAsLong()
-                * 1024
-                * 1024;
-      }
-    } else {
-      maxSegSize =
-          OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE.getValueAsLong() * 1024 * 1024;
-    }
+    long maxSegSize =
+        getLongConfig(OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE) * 1024 * 1024;
 
     if (maxSegSize <= 0) {
-      int sizePercent;
-      if (configurations != null) {
-        final OContextConfiguration config = configurations.getConfigurations();
-
-        if (config != null) {
-          sizePercent =
-              config.getValueAsInteger(
-                  OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE_PERCENT);
-        } else {
-          sizePercent =
-              OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE_PERCENT
-                  .getValueAsInteger();
-        }
-      } else {
-        sizePercent =
-            OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE_PERCENT.getValueAsInteger();
-      }
+      int sizePercent =
+          getIntConfig(OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE_PERCENT);
 
       if (sizePercent <= 0) {
         throw new ODatabaseException(
@@ -449,21 +384,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
       maxSegSize = (freeSpace + filesSize) / 100 * sizePercent;
     }
 
-    long minSegSize = 0;
-    if (configurations != null) {
-      OContextConfiguration config = configurations.getConfigurations();
-      if (config != null) {
-        minSegSize =
-            config.getValueAsLong(OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MIN_SEG_SIZE)
-                * 1024
-                * 1024;
-      }
-    }
-
-    if (minSegSize <= 0) {
-      minSegSize =
-          OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MIN_SEG_SIZE.getValueAsLong() * 1024 * 1024;
-    }
+    long minSegSize =
+        getLongConfig(OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MIN_SEG_SIZE) * 1024 * 1024;
 
     if (minSegSize > 0 && maxSegSize < minSegSize) {
       maxSegSize = minSegSize;
