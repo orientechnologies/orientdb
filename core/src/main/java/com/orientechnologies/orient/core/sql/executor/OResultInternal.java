@@ -13,7 +13,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import java.io.Serializable;
 import java.util.Collection;
@@ -117,8 +117,8 @@ public class OResultInternal implements OResult {
     T result = null;
     if (content != null && content.containsKey(name)) {
       result = (T) wrap(content.get(name));
-    } else if (element != null) {
-      result = (T) wrap(((ODocument) element.getRecord()).rawField(name));
+    } else if (isElement()) {
+      result = (T) wrap((T) ODocumentInternal.rawPropertyRead((OElement) element, name));
     }
     if (result instanceof OIdentifiable && ((OIdentifiable) result).getIdentity().isPersistent()) {
       result = (T) ((OIdentifiable) result).getIdentity();
@@ -132,8 +132,8 @@ public class OResultInternal implements OResult {
     Object result = null;
     if (content != null && content.containsKey(name)) {
       result = content.get(name);
-    } else if (element != null) {
-      result = ((ODocument) element.getRecord()).getProperty(name);
+    } else if (isElement()) {
+      result = ODocumentInternal.rawPropertyRead((OElement) element, name);
     }
 
     if (result instanceof OResult) {
@@ -153,8 +153,8 @@ public class OResultInternal implements OResult {
     Object result = null;
     if (content != null && content.containsKey(name)) {
       result = content.get(name);
-    } else if (element != null) {
-      result = ((ODocument) element.getRecord()).getProperty(name);
+    } else if (isElement()) {
+      result = ODocumentInternal.rawPropertyRead((OElement) element, name);
     }
 
     if (result instanceof OResult) {
@@ -174,8 +174,8 @@ public class OResultInternal implements OResult {
     Object result = null;
     if (content != null && content.containsKey(name)) {
       result = content.get(name);
-    } else if (element != null) {
-      result = ((ODocument) element.getRecord()).getProperty(name);
+    } else if (isElement()) {
+      result = ODocumentInternal.rawPropertyRead((OElement) element, name);
     }
 
     if (result instanceof OResult) {
@@ -195,8 +195,8 @@ public class OResultInternal implements OResult {
     Object result = null;
     if (content != null && content.containsKey(name)) {
       result = content.get(name);
-    } else if (element != null) {
-      result = ((ODocument) element.getRecord()).getProperty(name);
+    } else if (isElement()) {
+      result = ODocumentInternal.rawPropertyRead((OElement) element, name);
     }
 
     if (result instanceof OResult) {
@@ -247,8 +247,8 @@ public class OResultInternal implements OResult {
 
   public Set<String> getPropertyNames() {
     loadElement();
-    if (element != null && !(element instanceof ORecordBytes)) {
-      return ((ODocument) element.getRecord()).getPropertyNames();
+    if (isElement()) {
+      return ((OElement) element).getPropertyNames();
     } else if (content != null) {
       return new LinkedHashSet<>(content.keySet());
     } else {
@@ -258,7 +258,7 @@ public class OResultInternal implements OResult {
 
   public boolean hasProperty(String propName) {
     loadElement();
-    if (element != null && ((ODocument) element.getRecord()).containsField(propName)) {
+    if (isElement() && ((OElement) element).hasProperty(propName)) {
       return true;
     }
     if (content != null) {
@@ -283,12 +283,8 @@ public class OResultInternal implements OResult {
 
   public Optional<OElement> getElement() {
     loadElement();
-    if (element == null || element instanceof OElement) {
+    if (isElement()) {
       return Optional.ofNullable((OElement) element);
-    }
-    ORecord rec = element.getRecord();
-    if (rec instanceof OElement) {
-      return Optional.ofNullable((OElement) rec);
     }
     return Optional.empty();
   }
@@ -442,7 +438,6 @@ public class OResultInternal implements OResult {
 
   public void setElement(OIdentifiable element) {
     this.element = element;
-    //    loadElement();
     this.content = null;
   }
 

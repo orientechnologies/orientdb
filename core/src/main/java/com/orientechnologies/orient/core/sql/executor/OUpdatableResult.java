@@ -1,35 +1,15 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.Optional;
-import java.util.Set;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OUpdatableResult extends OResultInternal {
   protected OResultInternal previousValue = null;
-  private final OElement element;
 
   public OUpdatableResult(OElement element) {
     super(element);
-    this.element = element;
-  }
-
-  @Override
-  public <T> T getProperty(String name) {
-    return element.getProperty(name);
-  }
-
-  @Override
-  public Set<String> getPropertyNames() {
-    return element.getPropertyNames();
-  }
-
-  public boolean hasProperty(String propName) {
-    if (element != null && ((ODocument) element.getRecord()).containsField(propName)) {
-      return true;
-    }
-    return false;
   }
 
   @Override
@@ -37,22 +17,31 @@ public class OUpdatableResult extends OResultInternal {
     return true;
   }
 
-  @Override
-  public Optional<OElement> getElement() {
-    return Optional.of(element);
+  public <T> T getProperty(String name) {
+    loadElement();
+    T result = null;
+    if (content != null && content.containsKey(name)) {
+      result = (T) content.get(name);
+    } else if (isElement()) {
+      result = (T) ODocumentInternal.rawPropertyRead((OElement) element, name);
+    }
+    if (result instanceof OIdentifiable && ((OIdentifiable) result).getIdentity().isPersistent()) {
+      result = (T) ((OIdentifiable) result).getIdentity();
+    }
+    return result;
   }
 
   @Override
   public OElement toElement() {
-    return element;
+    return (OElement) element;
   }
 
   @Override
   public void setProperty(String name, Object value) {
-    element.setProperty(name, value);
+    ((OElement) element).setProperty(name, value);
   }
 
   public void removeProperty(String name) {
-    element.removeProperty(name);
+    ((OElement) element).removeProperty(name);
   }
 }
