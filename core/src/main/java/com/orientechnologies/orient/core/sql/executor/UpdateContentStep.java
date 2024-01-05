@@ -62,9 +62,17 @@ public class UpdateContentStep extends AbstractExecutionStep {
             .getImmutableSchemaSnapshot()
             .getClass(OSecurity.RESTRICTED_CLASSNAME);
 
-    if (restricted != null && restricted.isSuperClassOf(record.getSchemaType().orElse(null))) {
+    OClass clazz = record.getSchemaType().orElse(null);
+    if (restricted != null && restricted.isSuperClassOf(clazz)) {
       for (OProperty prop : restricted.properties()) {
         fieldsToPreserve.field(prop.getName(), record.<Object>getProperty(prop.getName()));
+      }
+    }
+    if (clazz != null) {
+      for (OProperty prop : clazz.properties()) {
+        if (prop.getDefaultValue() != null) {
+          fieldsToPreserve.field(prop.getName(), record.<Object>getProperty(prop.getName()));
+        }
       }
     }
 

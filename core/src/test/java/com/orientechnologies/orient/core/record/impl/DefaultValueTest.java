@@ -5,12 +5,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryDatabase;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import java.util.Date;
 import org.junit.Test;
@@ -51,8 +50,8 @@ public class DefaultValueTest extends BaseMemoryDatabase {
     assertTrue(saved.field("date") instanceof Date);
     assertNotNull(saved.field("id"));
 
-    OIdentifiable id = db.command(new OCommandSQL("insert into ClassA content {}")).execute();
-    ODocument seved1 = db.load(id.getIdentity());
+    OResult inserted = db.command("insert into ClassA content {}").next();
+    ODocument seved1 = db.load(inserted.getIdentity().get());
     assertNotNull(seved1.field("date"));
     assertNotNull(seved1.field("id"));
     assertTrue(seved1.field("date") instanceof Date);
