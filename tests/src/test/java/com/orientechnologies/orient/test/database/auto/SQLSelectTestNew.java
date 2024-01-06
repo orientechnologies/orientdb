@@ -51,6 +51,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -81,7 +82,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   @BeforeClass
   public void init() {
     if (!database.getMetadata().getSchema().existsClass("Profile")) {
-      database.getMetadata().getSchema().createClass("Profile", 1, null);
+      database.getMetadata().getSchema().createClass("Profile", 1);
 
       for (int i = 0; i < 1000; ++i) {
         database.<ODocument>newInstance("Profile").field("test", i).field("name", "N" + i).save();
@@ -89,7 +90,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     }
 
     if (!database.getMetadata().getSchema().existsClass("company")) {
-      database.getMetadata().getSchema().createClass("company", 1, null);
+      database.getMetadata().getSchema().createClass("company", 1);
       for (int i = 0; i < 20; ++i) new ODocument("company").field("id", i).save();
     }
 
@@ -162,9 +163,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   public void testQueryCount() {
     database.getMetadata().reload();
     final long vertexesCount = database.countClass("V");
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
-    Assert.assertEquals(result.get(0).<Object>field("count"), vertexesCount);
+    List<OResult> result =
+        database.query("select count(*) as count from V").stream().collect(Collectors.toList());
+    Assert.assertEquals(result.get(0).<Object>getProperty("count"), vertexesCount);
   }
 
   @Test
@@ -1131,10 +1132,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryParenthesisInStrings() {
-    Assert.assertNotNull(
-        database
-            .command(new OCommandSQL("INSERT INTO account (name) VALUES ('test (demo)')"))
-            .execute());
+
+    database.command("INSERT INTO account (name) VALUES ('test (demo)')").close();
 
     List<ODocument> result =
         executeQuery("select * from account where name = 'test (demo)'", database);
@@ -1444,7 +1443,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void testSelectFromListParameter() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1);
     placeClass.createProperty("id", OType.STRING);
     placeClass.createProperty("descr", OType.STRING);
     placeClass.createIndex("place_id_index", INDEX_TYPE.UNIQUE, "id");
@@ -1473,7 +1472,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void testSelectRidFromListParameter() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1);
     placeClass.createProperty("id", OType.STRING);
     placeClass.createProperty("descr", OType.STRING);
     placeClass.createIndex("place_id_index", INDEX_TYPE.UNIQUE, "id");
@@ -1504,7 +1503,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void testSelectRidInList() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1);
     database.getMetadata().getSchema().createClass("FamousPlace", 1, placeClass);
 
     ODocument firstPlace = new ODocument("Place");
@@ -1815,7 +1814,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   public void testQueryParameterNotPersistent() {
     ODocument doc = new ODocument();
     doc.field("test", "test");
-    database.query(new OSQLSynchQuery<Object>("select from OUser where @rid = ?"), doc);
+    database.query("select from OUser where @rid = ?", doc).close();
     Assert.assertTrue(doc.isDirty());
   }
 
@@ -1947,42 +1946,46 @@ public class SQLSelectTestNew extends AbstractSelectTest {
         .close();
 
     List<OIdentifiable> result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1'"));
+        database.query("select expand(out()) from TestExpandSkip where name = '1'").stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 3);
 
     Map<Object, Object> params = new HashMap<Object, Object>();
     params.put("values", Arrays.asList(new String[] {"2", "3", "antani"}));
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()[name in :values]) from TestExpandSkip where name = '1'"),
-            params);
+        database
+            .query(
+                "select expand(out()[name in :values]) from TestExpandSkip where name = '1'",
+                params)
+            .stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 2);
 
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 1"));
+        database.query("select expand(out()) from TestExpandSkip where name = '1' skip 1").stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 2);
 
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 2"));
+        database.query("select expand(out()) from TestExpandSkip where name = '1' skip 2").stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 1);
 
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 3"));
+        database.query("select expand(out()) from TestExpandSkip where name = '1' skip 3").stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 0);
 
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1"));
+        database.query("select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1")
+            .stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -2009,15 +2012,21 @@ public class SQLSelectTestNew extends AbstractSelectTest {
         .close();
 
     List<OIdentifiable> result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out('TestPolymorphicEdges_E1')) from TestPolymorphicEdges_V where name = '1'"));
+        database
+            .query(
+                "select expand(out('TestPolymorphicEdges_E1')) from TestPolymorphicEdges_V where name = '1'")
+            .stream()
+            .map((r) -> r.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 2);
 
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out('TestPolymorphicEdges_E2')) from TestPolymorphicEdges_V where name = '1' "));
+        database
+            .query(
+                "select expand(out('TestPolymorphicEdges_E2')) from TestPolymorphicEdges_V where name = '1' ")
+            .stream()
+            .map((r) -> r.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -2035,9 +2044,12 @@ public class SQLSelectTestNew extends AbstractSelectTest {
         .close();
 
     List<OIdentifiable> result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                " select from (select from TestSizeOfLink where name = '1') where out()[name=2].size() > 0"));
+        database
+            .query(
+                " select from (select from TestSizeOfLink where name = '1') where out()[name=2].size() > 0")
+            .stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 1);
   }
 

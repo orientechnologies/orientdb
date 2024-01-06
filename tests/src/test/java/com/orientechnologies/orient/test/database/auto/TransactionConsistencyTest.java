@@ -18,7 +18,6 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -26,7 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -372,10 +371,9 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     database.close();
 
     database.open("admin", "admin");
-    List<ODocument> result =
-        database.command(new OSQLSynchQuery<ODocument>("select from MyProfile ")).execute();
+    OResultSet result = database.command("select from MyProfile ");
 
-    Assert.assertTrue(result.size() != 0);
+    Assert.assertTrue(result.stream().count() != 0);
 
     database.close();
   }
@@ -652,10 +650,8 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     }
     database.commit();
 
-    final List<ODocument> result1 =
-        database.command(new OCommandSQL("select from TRPerson")).execute();
-    Assert.assertNotNull(result1);
-    Assert.assertEquals(result1.size(), cnt);
+    final OResultSet result1 = database.command("select from TRPerson");
+    Assert.assertEquals(result1.stream().count(), cnt);
     // System.out.println("Before transaction commit");
     // for (ODocument d : result1)
     // System.out.println(d);
@@ -701,13 +697,12 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       database.rollback();
     }
 
-    final List<ODocument> result2 =
-        database.command(new OCommandSQL("select from TRPerson")).execute();
+    final OResultSet result2 = database.command("select from TRPerson");
     Assert.assertNotNull(result2);
     // System.out.println("After transaction commit failure/rollback");
     // for (ODocument d : result2)
     // System.out.println(d);
-    Assert.assertEquals(result2.size(), cnt);
+    Assert.assertEquals(result2.stream().count(), cnt);
 
     // System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
   }
@@ -718,24 +713,15 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     try {
       graph.addVertex(null, "purpose", "testQueryIsolation");
 
-      if (!url.startsWith("remote")) {
-        List<OIdentifiable> result =
-            graph
-                .getRawGraph()
-                .query(
-                    new OSQLSynchQuery<Object>(
-                        "select from V where purpose = 'testQueryIsolation'"));
-        Assert.assertEquals(result.size(), 1);
-      }
+      OResultSet result =
+          graph.getRawGraph().query("select from V where purpose = 'testQueryIsolation'");
+
+      Assert.assertEquals(result.stream().count(), 1);
 
       graph.commit();
 
-      List<OIdentifiable> result =
-          graph
-              .getRawGraph()
-              .query(
-                  new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
-      Assert.assertEquals(result.size(), 1);
+      result = graph.getRawGraph().query("select from V where purpose = 'testQueryIsolation'");
+      Assert.assertEquals(result.stream().count(), 1);
 
     } finally {
       graph.shutdown();

@@ -1603,9 +1603,9 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testDoubleExponentNotation() {
     // issue #7013
 
-    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select 1e-2 as a"));
+    List<OResult> results = db.query("select 1e-2 as a").stream().collect(Collectors.toList());
     assertEquals(results.size(), 1);
-    assertEquals(results.get(0).field("a"), (Object) 0.01d);
+    assertEquals(results.get(0).getProperty("a"), (Object) 0.01f);
   }
 
   @Test
