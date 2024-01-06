@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.IOException;
@@ -393,13 +392,13 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       database.command("create class A extends V").close();
       database.command("create class B extends E").close();
       OIdentifiable id =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+          database.command("insert into A (a,b) values ('a','b')").next().getIdentity().get();
       OIdentifiable id2 =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+          database.command("insert into A (a,b) values ('a','b')").next().getIdentity().get();
       OIdentifiable id3 =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+          database.command("insert into A (a,b) values ('a','b')").next().getIdentity().get();
       OIdentifiable id4 =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+          database.command("insert into A (a,b) values ('a','b')").next().getIdentity().get();
       database
           .command("create edge B from " + id.getIdentity() + " to " + id2.getIdentity())
           .close();
@@ -447,11 +446,11 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       database.command("create class B extends E").close();
       database.command("create class C extends E").close();
       OIdentifiable id =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a1','b1')")).execute();
+          database.command("insert into A (a,b) values ('a1','b1')").next().getIdentity().get();
       OIdentifiable id2 =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a2','b2')")).execute();
+          database.command("insert into A (a,b) values ('a2','b2')").next().getIdentity().get();
       OIdentifiable id3 =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a3','b3')")).execute();
+          database.command("insert into A (a,b) values ('a3','b3')").next().getIdentity().get();
       database
           .command("create edge B from " + id.getIdentity() + " to " + id2.getIdentity())
           .close();
