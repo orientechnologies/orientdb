@@ -23,6 +23,7 @@
 
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.Map;
 
@@ -50,7 +51,13 @@ public class OGeOperator extends SimpleNode implements OBinaryCompareOperator {
       iLeft = couple[0];
       iRight = couple[1];
     } else {
-      iRight = OType.convert(iRight, iLeft.getClass());
+      try {
+        iRight = OType.convert(iRight, iLeft.getClass());
+      } catch (RuntimeException e) {
+        // Can't convert to the target value.
+        OLogManager.instance()
+            .warn(this, "Issue converting value to target type, ignoring value", e);
+      }
     }
     if (iRight == null) return false;
     return ((Comparable<Object>) iLeft).compareTo(iRight) >= 0;

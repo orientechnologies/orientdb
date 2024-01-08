@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.Map;
@@ -27,7 +28,13 @@ public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
       iLeft = couple[0];
       iRight = couple[1];
     } else {
-      iRight = OType.convert(iRight, iLeft.getClass());
+      try {
+        iRight = OType.convert(iRight, iLeft.getClass());
+      } catch (RuntimeException e) {
+        // Can't convert to the target value do nothing will return false
+        OLogManager.instance()
+            .warn(this, "Issue converting value to target type, ignoring value", e);
+      }
     }
     if (iRight == null) return false;
     if (iLeft instanceof OIdentifiable && !(iRight instanceof OIdentifiable)) {
