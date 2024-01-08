@@ -21,13 +21,17 @@ package com.orientechnologies.orient.test.object;
 
 import static org.testng.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.IOException;
+
 import javax.persistence.Id;
 import javax.persistence.Version;
+
 import org.testng.annotations.Test;
+
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 /** Created by luigidellaquila on 01/07/15. */
 public class MultipleObjectDbInstancesTest {
@@ -39,22 +43,26 @@ public class MultipleObjectDbInstancesTest {
    */
   @Test
   public void testTwiceCreateDBSchemaRegistered() throws IOException {
-    createDatabase("MultipleDbInstancesTest_first");
-    Connection conFirst = new Connection("MultipleDbInstancesTest_first");
-    assertTrue(conFirst.objectDb.getMetadata().getSchema().existsClass("V"));
-    assertTrue(conFirst.objectDb.getMetadata().getSchema().existsClass("X"));
+    OrientDB orientDB = new OrientDB("memory:",OrientDBConfig.defaultConfig());
+    orientDB.execute("create database MultipleDbInstancesTest_first memory users(admin identified by 'adminpwd' role admin)");
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal)orientDB.open("MultipleDbInstancesTest_first", "admin", "adminpwd");
+    OObjectDatabaseTx objectDb = new OObjectDatabaseTx(db);
+    objectDb.setAutomaticSchemaGeneration(true);
+    objectDb.getEntityManager().registerEntityClass(V.class);
+    objectDb.getEntityManager().registerEntityClass(X.class);
 
-    createDatabase("MultipleDbInstancesTest_second");
-    Connection conSecond = new Connection("MultipleDbInstancesTest_second");
-    assertTrue(conSecond.objectDb.getMetadata().getSchema().existsClass("V"));
-    assertTrue(conSecond.objectDb.getMetadata().getSchema().existsClass("X"));
-  }
+    assertTrue(objectDb.getMetadata().getSchema().existsClass("V"));
+    assertTrue(objectDb.getMetadata().getSchema().existsClass("X"));
+    objectDb.close();
 
-  private void createDatabase(String databaseName) throws IOException {
+    orientDB.execute("create database MultipleDbInstancesTest_second memory users(admin identified by 'adminpwd' role admin)");
+    ODatabaseDocumentInternal db1 = (ODatabaseDocumentInternal)orientDB.open("MultipleDbInstancesTest_second", "admin", "adminpwd");
+    OObjectDatabaseTx objectDb1 = new OObjectDatabaseTx(db1);
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + databaseName);
-    db.create();
-    db.close();
+    assertTrue(objectDb1.getMetadata().getSchema().existsClass("V"));
+    assertTrue(objectDb1.getMetadata().getSchema().existsClass("X"));
+    objectDb1.close();
+    orientDB.close();
   }
 
   public class V {
@@ -72,21 +80,4 @@ public class MultipleObjectDbInstancesTest {
 
   public class X extends V {}
 
-  private class Connection {
-    OObjectDatabaseTx objectDb;
-
-    public Connection(String databaseName) {
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + databaseName);
-
-      // Create object API access
-      objectDb = new OObjectDatabaseTx(db);
-      objectDb.setAutomaticSchemaGeneration(true);
-      objectDb.getEntityManager().registerEntityClass(V.class);
-      objectDb.getEntityManager().registerEntityClass(X.class);
-    }
-
-    public void close() {
-      objectDb.close();
-    }
-  }
 }

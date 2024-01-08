@@ -26,6 +26,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -1010,7 +1011,10 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
                     fieldName, connection.getKey(), connection.getValue()));
         }
       } else {
-        OSchema schema = getGraph().getRawGraph().getMetadata().getImmutableSchemaSnapshot();
+        OSchema schema =
+            ((ODatabaseDocumentInternal) getGraph().getRawGraph())
+                .getMetadata()
+                .getImmutableSchemaSnapshot();
 
         Set<String> allClassNames = new HashSet<String>();
         for (String className : iClassNames) {

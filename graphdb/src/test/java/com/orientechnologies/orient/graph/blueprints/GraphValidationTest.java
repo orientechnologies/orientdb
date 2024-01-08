@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -162,7 +162,7 @@ public class GraphValidationTest {
     OrientGraphNoTx graphNoTx = new OrientGraphNoTx(URL, "admin", "admin");
     try {
 
-      ODatabaseDocumentTx database = graphNoTx.getRawGraph();
+      ODatabaseDocument database = graphNoTx.getRawGraph();
       OSchema oScchema = database.getMetadata().getSchema();
 
       oScchema.getClass("V").setStrictMode(true);

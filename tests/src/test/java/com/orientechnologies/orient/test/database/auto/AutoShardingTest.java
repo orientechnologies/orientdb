@@ -94,9 +94,11 @@ public class AutoShardingTest extends DocumentDBBaseTest {
   public void testDelete() {
     create();
     for (int i = 0; i < ITERATIONS; ++i) {
-      @SuppressWarnings("deprecation")
-      Integer deleted =
-          database.command(new OCommandSQL("delete from AutoShardingTest where id = ?")).execute(i);
+      Long deleted =
+          database
+              .command("delete from AutoShardingTest where id = ?", i)
+              .next()
+              .getProperty("count");
 
       Assert.assertEquals(deleted.intValue(), 2);
 

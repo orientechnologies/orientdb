@@ -57,7 +57,7 @@ public class OrientGraphFactoryEncryptionTest {
         .isEqualTo("T1JJRU5UREJfSVNfQ09PTA==");
     db.close();
 
-    db = graphFactory.getNoTx().getRawGraph();
+    db = (ODatabaseDocumentInternal) graphFactory.getNoTx().getRawGraph();
 
     //noinspection deprecation
     assertThat(db.getProperty(STORAGE_ENCRYPTION_KEY.getKey()))

@@ -19,15 +19,16 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentComparator;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -140,25 +141,25 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     database.getMetadata().reload();
     database.close();
     database.open("admin", "admin");
-    OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
-    List<ODocument> result = database.query(query, "K1");
+    List<OResult> result =
+        database.query("SELECT FROM MyTestClass WHERE keyField = ?", "K1").stream()
+            .collect(Collectors.toList());
     Assert.assertEquals(1, result.size());
-    ODocument doc = result.get(0);
-    Assert.assertTrue(doc.containsField("keyField"));
-    Assert.assertTrue(doc.containsField("dateTimeField"));
-    Assert.assertTrue(doc.containsField("stringField"));
+    OResult doc = result.get(0);
+    Assert.assertTrue(doc.hasProperty("keyField"));
+    Assert.assertTrue(doc.hasProperty("dateTimeField"));
+    Assert.assertTrue(doc.hasProperty("stringField"));
   }
 
   @Test(dependsOnMethods = "createSchemaForMandatoryNullableTest")
   public void testUpdateDocDefined() {
-    OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
-    List<ODocument> result = database.query(query, "K1");
+    List<OResult> result =
+        database.query("SELECT FROM MyTestClass WHERE keyField = ?", "K1").stream()
+            .collect(Collectors.toList());
     Assert.assertEquals(1, result.size());
-    ODocument doc = result.get(0);
-    doc.field("keyField", "K1N");
-    doc.save();
+    OElement readDoc = result.get(0).toElement();
+    readDoc.setProperty("keyField", "K1N");
+    readDoc.save();
   }
 
   @Test(dependsOnMethods = "testUpdateDocDefined")
@@ -172,13 +173,13 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     database.close();
     database.open("admin", "admin");
 
-    OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
-    List<ODocument> result = database.query(query, "K2");
+    List<OResult> result =
+        database.query("SELECT FROM MyTestClass WHERE keyField = ?", "K2").stream()
+            .collect(Collectors.toList());
     Assert.assertEquals(1, result.size());
-    doc = result.get(0);
-    doc.field("keyField", "K2N");
-    doc.save();
+    OElement readDoc = result.get(0).toElement();
+    readDoc.setProperty("keyField", "K2N");
+    readDoc.save();
   }
 
   @Test(dependsOnMethods = "validationMandatoryNullableCloseDb")
@@ -189,13 +190,13 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     doc.field("stringField", (String) null);
     doc.save();
 
-    OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
-    List<ODocument> result = database.query(query, "K3");
+    List<OResult> result =
+        database.query("SELECT FROM MyTestClass WHERE keyField = ?", "K3").stream()
+            .collect(Collectors.toList());
     Assert.assertEquals(1, result.size());
-    doc = result.get(0);
-    doc.field("keyField", "K3N");
-    doc.save();
+    OElement readDoc = result.get(0).toElement();
+    readDoc.setProperty("keyField", "K3N");
+    readDoc.save();
   }
 
   @Test(dependsOnMethods = "validationMandatoryNullableNoCloseDb")
@@ -208,10 +209,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     } catch (OValidationException e) {
     }
 
-    database
-        .command(
-            new OCommandSQL("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " FALSE"))
-        .execute();
+    database.command("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " FALSE").close();
     database.setValidationEnabled(false);
     try {
 
@@ -222,9 +220,8 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     } finally {
       database.setValidationEnabled(true);
       database
-          .command(
-              new OCommandSQL("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " TRUE"))
-          .execute();
+          .command("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " TRUE")
+          .close();
     }
   }
 

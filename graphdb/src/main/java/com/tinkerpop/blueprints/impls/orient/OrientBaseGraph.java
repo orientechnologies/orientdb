@@ -501,7 +501,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     executeOutsideTx(
         g -> {
           try {
-            final ODatabaseDocumentInternal db = getRawGraph();
+            final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) getRawGraph();
             final OIndexManagerAbstract indexManager = db.getMetadata().getIndexManagerInternal();
             final OIndex index = indexManager.getIndex(db, indexName);
             if (index != null) {
@@ -818,7 +818,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     makeActive();
 
     final OClass cls =
-        getRawGraph().getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
+        ((ODatabaseDocumentInternal) getRawGraph())
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getClass(iClassName);
     if (cls == null)
       throw new IllegalArgumentException(
           "Cannot find class '" + iClassName + "' in database schema");
@@ -963,7 +966,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     makeActive();
 
     final OClass cls =
-        getRawGraph().getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
+        ((ODatabaseDocumentInternal) getRawGraph())
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getClass(iClassName);
     if (cls == null)
       throw new IllegalArgumentException(
           "Cannot find class '" + iClassName + "' in database schema");
@@ -1169,7 +1175,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
   }
 
   /** Returns the underlying Database instance as ODatabaseDocumentTx instance. */
-  public ODatabaseDocumentTx getRawGraph() {
+  public ODatabaseDocument getRawGraph() {
     if (getDatabase() instanceof ODatabaseDocumentTx) return (ODatabaseDocumentTx) getDatabase();
     else return ODatabaseDocumentTxInternal.wrap(getDatabase());
   }
@@ -1599,7 +1605,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
         (OCallable<OClass, OrientBaseGraph>)
             g -> {
               final String className = getClassName(elementClass);
-              final ODatabaseDocumentInternal db = getRawGraph();
+              final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) getRawGraph();
               db.getMetadata().getIndexManagerInternal().dropIndex(db, className + "." + key);
               return null;
             },
@@ -1663,7 +1669,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
 
             if (className == null) className = ancestorClassName;
 
-            final ODatabaseDocumentInternal db = getRawGraph();
+            final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) getRawGraph();
             final OSchema schema = db.getMetadata().getSchema();
 
             final OClass cls =
@@ -1720,7 +1726,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
 
     if (elementClass == null) throw ExceptionFactory.classForElementCannotBeNull();
 
-    final ODatabaseDocumentInternal db = getRawGraph();
+    final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) getRawGraph();
     final OSchema schema = db.getMetadata().getImmutableSchemaSnapshot();
     final String elementOClassName = getClassName(elementClass);
 
@@ -1858,7 +1864,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
   protected void autoStartTransaction() {}
 
   protected void saveIndexConfiguration() {
-    getRawGraph().getMetadata().getIndexManagerInternal().save();
+    ((ODatabaseDocumentInternal) getRawGraph()).getMetadata().getIndexManagerInternal().save();
   }
 
   protected <T> String getClassName(final Class<T> elementClass) {
@@ -2372,7 +2378,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
 
   public OrientConfigurableGraph setUseLightweightEdges(final boolean useDynamicEdges) {
     super.setUseLightweightEdges(useDynamicEdges);
-    getRawGraph().setUseLightweightEdges(useDynamicEdges);
+    ((ODatabaseDocumentInternal) getRawGraph()).setUseLightweightEdges(useDynamicEdges);
     return this;
   }
 

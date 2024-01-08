@@ -70,7 +70,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
 
     if (result != null && (result instanceof OrientGraph)) {
-      final ODatabaseDocumentInternal graphDb = result.getRawGraph();
+      final ODatabaseDocumentInternal graphDb = (ODatabaseDocumentInternal) result.getRawGraph();
 
       // CHECK IF THE DATABASE + USER IN TL IS THE SAME IN ORDER TO USE IT
       if (canReuseActiveGraph(graphDb, database)) {
@@ -105,7 +105,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
 
     if (result != null && (result instanceof OrientGraphNoTx)) {
-      final ODatabaseDocumentInternal graphDb = result.getRawGraph();
+      final ODatabaseDocumentInternal graphDb = (ODatabaseDocumentInternal) result.getRawGraph();
 
       // CHECK IF THE DATABASE + USER IN TL IS THE SAME IN ORDER TO USE IT
       if (canReuseActiveGraph(graphDb, database)) {
@@ -268,7 +268,10 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
 
   public static GRAPH_CONSISTENCY_MODE getConsistencyMode(final OrientBaseGraph graph) {
     final String consistencyMode =
-        graph.getRawGraph().getStorageInfo().getConfiguration().getProperty("graphConsistencyMode");
+        ((ODatabaseDocumentInternal) graph.getRawGraph())
+            .getStorageInfo()
+            .getConfiguration()
+            .getProperty("graphConsistencyMode");
     if (consistencyMode == null) return GRAPH_CONSISTENCY_MODE.TX;
 
     return GRAPH_CONSISTENCY_MODE.valueOf(consistencyMode);
