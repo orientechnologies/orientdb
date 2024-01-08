@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
-import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
 import com.orientechnologies.orient.test.domain.base.Musician;
@@ -115,7 +115,7 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
     startRecordNumber = database.countClass("Company");
 
     // DELETE ALL THE RECORD IN THE CLUSTER
-    OObjectIteratorClass<Company> companyClusterIterator = database.browseClass("Company");
+    OObjectIteratorClassInterface<Company> companyClusterIterator = database.browseClass("Company");
     for (Company obj : companyClusterIterator) {
       if (obj.getId() == 1) {
         database.delete(obj);

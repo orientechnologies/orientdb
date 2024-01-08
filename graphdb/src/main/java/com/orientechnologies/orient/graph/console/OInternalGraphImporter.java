@@ -39,7 +39,7 @@ public class OInternalGraphImporter {
 
     OConsoleDatabaseApp console =
         new OGremlinConsole(new String[] {"import database " + inputFile})
-            .setCurrentDatabase(g.getRawGraph());
+            .setCurrentDatabase((ODatabaseDocumentInternal) g.getRawGraph());
     console.run();
 
     System.out.println(

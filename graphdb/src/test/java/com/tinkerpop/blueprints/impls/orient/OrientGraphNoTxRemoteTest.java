@@ -3,6 +3,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
@@ -147,7 +148,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     if (graph != null) {
       if (graph.isClosed()) currentGraphs.remove(url);
       else {
-        ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());
+        ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) graph.getRawGraph());
         return graph;
       }
     }
