@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.common.test.SpeedTestMultiThreads;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -115,11 +116,10 @@ public class PLocalCreateVerticesMultiThreadSpeedTest extends OrientMultiThreadT
       Assert.assertEquals(total - foundObjects, threadCycles);
 
       final long indexedItems =
-          graph
-              .getRawGraph()
+          ((ODatabaseDocumentInternal) graph.getRawGraph())
               .getMetadata()
               .getIndexManagerInternal()
-              .getIndex(graph.getRawGraph(), "Client.uid")
+              .getIndex((ODatabaseDocumentInternal) graph.getRawGraph(), "Client.uid")
               .getInternal()
               .size();
       System.out.println("\nTotal indexed objects after the test: " + indexedItems);

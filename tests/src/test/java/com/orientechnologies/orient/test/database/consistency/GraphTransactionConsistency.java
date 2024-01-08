@@ -21,13 +21,15 @@ package com.orientechnologies.orient.test.database.consistency;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -50,9 +52,11 @@ public class GraphTransactionConsistency {
     System.out.println(
         "Records found V=" + database.countVertices() + " E=" + database.countEdges());
 
-    final Iterable<OrientVertex> vertices =
-        database.command(new OCommandSQL("select from V")).execute();
-    for (OrientVertex v : vertices) {
+    final List<OVertex> vertices =
+        database.getRawGraph().query("select from V").stream()
+            .map((r) -> r.getVertex().get())
+            .collect(Collectors.toList());
+    for (OVertex v : vertices) {
       final ODocument doc = v.getRecord();
 
       Assert.assertNotNull(doc);

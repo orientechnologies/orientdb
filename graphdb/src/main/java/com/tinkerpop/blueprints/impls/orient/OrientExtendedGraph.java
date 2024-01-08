@@ -23,7 +23,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.tinkerpop.blueprints.GraphQuery;
@@ -38,7 +38,7 @@ import com.tinkerpop.blueprints.Vertex;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public interface OrientExtendedGraph
-    extends IndexableGraph, MetaGraph<ODatabaseDocumentTx>, KeyIndexableGraph {
+    extends IndexableGraph, MetaGraph<ODatabaseDocument>, KeyIndexableGraph {
 
   /** (Blueprints Extension) Drops the database */
   void drop();

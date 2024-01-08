@@ -21,6 +21,7 @@ package com.orientechnologies.orient.test.object;
 
 import static org.testng.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -91,7 +92,7 @@ public class MultipleObjectDbInstancesTest {
       }
 
       // Create object API access
-      objectDb = new OObjectDatabaseTx(graph.getRawGraph());
+      objectDb = new OObjectDatabaseTx((ODatabaseDocumentInternal) graph.getRawGraph());
       objectDb.setAutomaticSchemaGeneration(true);
       objectDb.getEntityManager().registerEntityClass(V.class);
       objectDb.getEntityManager().registerEntityClass(X.class);

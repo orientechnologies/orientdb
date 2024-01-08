@@ -20,10 +20,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 
 public class MathTest {
@@ -33,10 +32,10 @@ public class MathTest {
     final OClass clazz = schema.createClass("test");
     clazz.createProperty("numericAtt", OType.DOUBLE);
 
-    db.command(new OCommandSQL("INSERT INTO test(numericAtt) VALUES (28.23)")).execute();
+    db.command("INSERT INTO test(numericAtt) VALUES (28.23)").close();
 
-    final List<ODocument> docs = db.query(new OSQLSynchQuery("SELECT FROM test"));
-    Double value = (Double) docs.get(0).field("numericAtt");
+    final List<OResult> docs = db.query("SELECT FROM test").stream().collect(Collectors.toList());
+    Double value = (Double) docs.get(0).getProperty("numericAtt");
 
     System.out.println(value);
 

@@ -17,13 +17,14 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -75,12 +76,12 @@ public class DateTest extends DocumentDBBaseTest {
     doc.field("date", ODateHelper.now(), OType.DATETIME);
     doc.save();
 
-    List<?> result =
+    List<OResult> result =
         database
             .command(
-                new OCommandSQL(
-                    "select * from Order where date >= ? and context = 'testPrecision'"))
-            .execute(dateAsString);
+                "select * from Order where date >= ? and context = 'testPrecision'", dateAsString)
+            .stream()
+            .collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 1);
   }
