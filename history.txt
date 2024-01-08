@@ -26,7 +26,26 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.26 - (January, 9 2024)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3226---9-January-2024
 
+
+# Core
+
+ - Corrected order by with database locale
+ - Used the correct property name in alter property statement propagation
+ - Make sure that old query engine use public schema API for create property
+ - Re-enabled tests for bonsai tree with fixes
+ - Simplification of index implementation in storage and lucene
+ - Introduced executor for tracking submitter in case of exception
+ - Simplification and optimization in query engine results
+ - Corrected insert content query to respect default values
+
+# Distributed
+ - Report DDL query errors in distributed correctly
+ - Make sure the distributed index drop works in the same way of embedded
+ - Minor change in configuration reading on context initialization
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.25 - (November, 30 2023)
