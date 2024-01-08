@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.record.OElement;
@@ -13,6 +14,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OInputParameter;
 import com.orientechnologies.orient.core.sql.parser.OJson;
+import java.util.HashMap;
 import java.util.Map;
 
 /** Created by luigidellaquila on 09/08/16. */
@@ -54,24 +56,31 @@ public class UpdateContentStep extends AbstractExecutionStep {
     boolean updated = false;
 
     // REPLACE ALL THE CONTENT
-    final ODocument fieldsToPreserve = new ODocument();
-
-    final OClass restricted =
-        ((ODatabaseDocumentInternal) ctx.getDatabase())
-            .getMetadata()
-            .getImmutableSchemaSnapshot()
-            .getClass(OSecurity.RESTRICTED_CLASSNAME);
+    ODocument fieldsToPreserve = null;
 
     OClass clazz = record.getSchemaType().orElse(null);
-    if (restricted != null && restricted.isSuperClassOf(clazz)) {
+    if (clazz != null && ((OImmutableClass) clazz).isRestricted()) {
+      if (fieldsToPreserve == null) {
+        fieldsToPreserve = new ODocument();
+      }
+
+      final OClass restricted =
+          ((ODatabaseDocumentInternal) ctx.getDatabase())
+              .getMetadata()
+              .getImmutableSchemaSnapshot()
+              .getClass(OSecurity.RESTRICTED_CLASSNAME);
       for (OProperty prop : restricted.properties()) {
         fieldsToPreserve.field(prop.getName(), record.<Object>getProperty(prop.getName()));
       }
     }
+    Map<String, Object> preDefaultValues = null;
     if (clazz != null) {
       for (OProperty prop : clazz.properties()) {
         if (prop.getDefaultValue() != null) {
-          fieldsToPreserve.field(prop.getName(), record.<Object>getProperty(prop.getName()));
+          if (preDefaultValues == null) {
+            preDefaultValues = new HashMap<>();
+          }
+          preDefaultValues.put(prop.getName(), record.<Object>getProperty(prop.getName()));
         }
       }
     }
@@ -82,12 +91,18 @@ public class UpdateContentStep extends AbstractExecutionStep {
     if (recordClass != null && recordClass.isSubClassOf("V")) {
       for (String fieldName : record.getPropertyNames()) {
         if (fieldName.startsWith("in_") || fieldName.startsWith("out_")) {
+          if (fieldsToPreserve == null) {
+            fieldsToPreserve = new ODocument();
+          }
           fieldsToPreserve.field(fieldName, record.<Object>getProperty(fieldName));
         }
       }
     } else if (recordClass != null && recordClass.isSubClassOf("E")) {
       for (String fieldName : record.getPropertyNames()) {
         if (fieldName.equals("in") || fieldName.equals("out")) {
+          if (fieldsToPreserve == null) {
+            fieldsToPreserve = new ODocument();
+          }
           fieldsToPreserve.field(fieldName, record.<Object>getProperty(fieldName));
         }
       }
@@ -105,7 +120,16 @@ public class UpdateContentStep extends AbstractExecutionStep {
         throw new OCommandExecutionException("Invalid value for UPDATE CONTENT: " + val);
       }
     }
-    doc.merge(fieldsToPreserve, true, false);
+    if (fieldsToPreserve != null) {
+      doc.merge(fieldsToPreserve, true, false);
+    }
+    if (preDefaultValues != null) {
+      for (Map.Entry<String, Object> val : preDefaultValues.entrySet()) {
+        if (!doc.containsField(val.getKey())) {
+          doc.setProperty(val.getKey(), val.getValue());
+        }
+      }
+    }
 
     updated = true;
 

@@ -58,6 +58,32 @@ public class DefaultValueTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testDefaultValueDateFromContent() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass classA = schema.createClass("ClassA");
+
+    OProperty prop = classA.createProperty("date", OType.DATE);
+    prop.setDefaultValue(ODateHelper.getDateTimeFormatInstance().format(new Date()));
+    OProperty some = classA.createProperty("id", OType.STRING);
+    some.setDefaultValue("uuid()");
+
+    String value = "2000-01-01 00:00:00";
+
+    ODocument doc = new ODocument(classA);
+    ODocument saved = db.save(doc);
+    assertNotNull(saved.field("date"));
+    assertTrue(saved.field("date") instanceof Date);
+    assertNotNull(saved.field("id"));
+
+    OResult inserted = db.command("insert into ClassA content {\"date\":\"" + value + "\"}").next();
+    ODocument seved1 = db.load(inserted.getIdentity().get());
+    assertNotNull(seved1.field("date"));
+    assertNotNull(seved1.field("id"));
+    assertTrue(seved1.field("date") instanceof Date);
+    assertEquals(ODateHelper.getDateTimeFormatInstance().format(seved1.field("date")), value);
+  }
+
+  @Test
   public void testDefaultValueFromJson() {
     OSchema schema = db.getMetadata().getSchema();
     OClass classA = schema.createClass("ClassA");

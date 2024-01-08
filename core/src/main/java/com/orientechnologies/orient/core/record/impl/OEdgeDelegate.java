@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
@@ -45,12 +46,13 @@ import java.util.Set;
 public class OEdgeDelegate implements OEdge {
   protected OVertex vOut;
   protected OVertex vIn;
-  protected OClass lightweightEdgeType;
+  protected OImmutableClass lightweightEdgeType;
   protected String lightwightEdgeLabel;
 
   protected ODocument element;
 
-  public OEdgeDelegate(OVertex out, OVertex in, OClass lightweightEdgeType, String edgeLabel) {
+  public OEdgeDelegate(
+      OVertex out, OVertex in, OImmutableClass lightweightEdgeType, String edgeLabel) {
     vOut = out;
     vIn = in;
     this.lightweightEdgeType = lightweightEdgeType;

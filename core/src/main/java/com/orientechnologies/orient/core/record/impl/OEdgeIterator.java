@@ -25,8 +25,12 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
 import java.util.Iterator;
 
 /** @author Luigi Dell'Aquila */
@@ -99,9 +103,11 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
     if (value.isVertex()) {
       // DIRECT VERTEX, CREATE DUMMY EDGE
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-      OClass clazz = null;
+      OImmutableClass clazz = null;
       if (db != null && connection.getValue() != null) {
-        clazz = db.getMetadata().getImmutableSchemaSnapshot().getClass(connection.getValue());
+        clazz =
+            (OImmutableClass)
+                db.getMetadata().getImmutableSchemaSnapshot().getClass(connection.getValue());
       }
       if (connection.getKey() == ODirection.OUT) {
         edge =

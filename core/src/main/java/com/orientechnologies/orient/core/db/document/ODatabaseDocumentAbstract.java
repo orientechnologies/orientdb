@@ -1957,7 +1957,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to) {
-    OClass clazz = getMetadata().getSchema().getClass(iClassName);
+    OImmutableClass clazz =
+        (OImmutableClass) getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
     OEdgeDelegate result = new OEdgeDelegate(from, to, clazz, iClassName);
 
     return result;
