@@ -3,7 +3,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-gremlin-parent</artifactId>
-        <version>3.2.26</version>
+        <version>3.2.27-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
     <groupId>com.orientechnologies</groupId>
@@ -48,7 +48,7 @@
         <connection>scm:git:git@github.com:orientechnologies/orientdb-gremlin.git</connection>
         <developerConnection>scm:git:git@github.com:orientechnologies/orientdb-gremlin.git</developerConnection>
         <url>https://github.com/orientechnologies/orientdb-gremlin</url>
-      <tag>3.2.26</tag>
+      <tag>HEAD</tag>
   </scm>
     <dependencies>
         <!-- orientdb -->
