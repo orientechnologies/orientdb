@@ -21,9 +21,9 @@ public class OSourceTraceExecutorService implements ExecutorService {
 
   @Override
   public void execute(Runnable command) {
+    final OTracedExecutionException trace = OTracedExecutionException.prepareTrace(command);
     this.service.execute(
         () -> {
-          final OTracedExecutionException trace = OTracedExecutionException.prepareTrace(command);
           try {
             command.run();
           } catch (RuntimeException e) {
@@ -59,9 +59,9 @@ public class OSourceTraceExecutorService implements ExecutorService {
 
   @Override
   public <T> Future<T> submit(Callable<T> task) {
+    final OTracedExecutionException trace = OTracedExecutionException.prepareTrace(task);
     return this.service.submit(
         () -> {
-          final OTracedExecutionException trace = OTracedExecutionException.prepareTrace(task);
           try {
             return task.call();
           } catch (RuntimeException e) {
@@ -72,9 +72,9 @@ public class OSourceTraceExecutorService implements ExecutorService {
 
   @Override
   public <T> Future<T> submit(Runnable task, T result) {
+    final OTracedExecutionException trace = OTracedExecutionException.prepareTrace(task);
     return this.service.submit(
         () -> {
-          final OTracedExecutionException trace = OTracedExecutionException.prepareTrace(task);
           try {
             task.run();
           } catch (RuntimeException e) {
@@ -86,9 +86,9 @@ public class OSourceTraceExecutorService implements ExecutorService {
 
   @Override
   public Future<?> submit(Runnable task) {
+    final OTracedExecutionException trace = OTracedExecutionException.prepareTrace(task);
     return this.service.submit(
         () -> {
-          final OTracedExecutionException trace = OTracedExecutionException.prepareTrace(task);
           try {
             task.run();
           } catch (RuntimeException e) {
