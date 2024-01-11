@@ -452,11 +452,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  public void saveDistribuedConfiguration(
-      String database, final OModifiableDistributedConfiguration distributedConfiguration) {
-    getOrInitConfigurationManager(database).setDistributedConfiguration(distributedConfiguration);
-  }
-
   public Set<String> getActiveDatabases() {
     // We assign the ConcurrentHashMap (databases) to the Map interface for this reason:
     // ConcurrentHashMap.keySet() in Java 8 returns a ConcurrentHashMap.KeySetView.
@@ -477,21 +472,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return databases.values();
   }
 
-  public ODistributedConfiguration getDistributedConfiguration(String database) {
-    ODistributedConfigurationManager cm = getConfigurationManager(database);
-    if (cm != null) {
-      return cm.getDistributedConfiguration();
-    } else {
-      return null;
-    }
-  }
-
   public ODistributedConfiguration getOrInitDistributedConfiguration(ODatabaseSession session) {
     return getOrInitConfigurationManager(session.getName()).getDistributedConfiguration(session);
-  }
-
-  public ODistributedConfiguration getOrInitDistributedConfiguration(String database) {
-    return getOrInitConfigurationManager(database).getDistributedConfiguration();
   }
 
   public ODistributedConfigurationManager getOrInitConfigurationManager(String database) {
@@ -515,20 +497,70 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
+  private interface ConfigOp<T> {
+    T op(ODistributedConfigurationManager cm, ODatabaseSession session);
+  }
+
+  public <T> T configOp(ODistributedConfigurationManager cm, String database, ConfigOp<T> op) {
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db != null && db.isDistributed() && db.getName().equals(database)) {
+      return op.op(cm, db);
+    } else if (exists(database, null, null)) {
+      ODatabaseDocumentInternal pre = ODatabaseRecordThreadLocal.instance().getIfDefined();
+      try (ODatabaseSession session = openNoAuthorization(database)) {
+        return op.op(cm, db);
+      } finally {
+        if (pre != null) {
+          ODatabaseRecordThreadLocal.instance().set(pre);
+        }
+      }
+    } else {
+      return op.op(cm, null);
+    }
+  }
+
+  public ODistributedConfiguration getDistributedConfiguration(String database) {
+    ODistributedConfigurationManager cm = getConfigurationManager(database);
+    if (cm != null) {
+      return configOp(cm, database, (m, s) -> m.getDistributedConfiguration(s));
+    } else {
+      return null;
+    }
+  }
+
   public void setDistributedConfiguration(
       String database, final OModifiableDistributedConfiguration distributedConfiguration) {
-    getOrInitConfigurationManager(database).setDistributedConfiguration(distributedConfiguration);
+    ODistributedConfigurationManager cm = getOrInitConfigurationManager(database);
+    configOp(
+        cm,
+        database,
+        (m, s) -> {
+          m.setDistributedConfiguration(s, distributedConfiguration);
+          return (Void) null;
+        });
   }
 
   public void saveDatabaseConfiguration(String database) {
-    getOrInitConfigurationManager(database).saveDatabaseConfiguration();
+    ODistributedConfigurationManager cm = getOrInitConfigurationManager(database);
+    configOp(
+        cm,
+        database,
+        (m, s) -> {
+          m.saveDatabaseConfiguration(s);
+          return (Void) null;
+        });
+  }
+
+  public ODistributedConfiguration getOrInitDistributedConfiguration(String database) {
+    ODistributedConfigurationManager cm = getOrInitConfigurationManager(database);
+    return configOp(cm, database, (m, s) -> m.getDistributedConfiguration(s));
   }
 
   public boolean tryUpdatingDatabaseConfigurationLocally(
       final String database, final OModifiableDistributedConfiguration cfg) {
     ODistributedConfigurationManager cm = getConfigurationManager(database);
     if (cm != null) {
-      return cm.tryUpdatingDatabaseConfigurationLocally(database, cfg);
+      return configOp(cm, database, (m, s) -> m.tryUpdatingDatabaseConfigurationLocally(s, cfg));
     } else {
       return false;
     }

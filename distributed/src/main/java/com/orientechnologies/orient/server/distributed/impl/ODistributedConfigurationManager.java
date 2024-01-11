@@ -31,10 +31,6 @@ public class ODistributedConfigurationManager {
     this.databaseName = name;
   }
 
-  public ODistributedConfiguration getDistributedConfiguration() {
-    return getDistributedConfiguration(null);
-  }
-
   public ODistributedConfiguration getDistributedConfiguration(ODatabaseSession session) {
     if (distributedConfiguration == null) {
       loadDistributedConfiguration(session);
@@ -53,7 +49,7 @@ public class ODistributedConfigurationManager {
           ODistributedServerLog.DIRECTION.NONE,
           "Downloaded configuration for database '%s' from the cluster",
           databaseName);
-      setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
+      setDistributedConfiguration(session, new OModifiableDistributedConfiguration(doc));
     } else if (!isMemory() && distributedConfigFileExists()) {
       doc = loadConfigurationFromFile(getDistributedConfigFile());
       if (doc == null) {
@@ -68,7 +64,7 @@ public class ODistributedConfigurationManager {
       }
 
       // SAVE THE GENERIC FILE AS DATABASE FILE
-      setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
+      setDistributedConfiguration(session, new OModifiableDistributedConfiguration(doc));
       // JUST LOAD THE FILE IN MEMORY
       distributedConfiguration = new ODistributedConfiguration(doc);
 
@@ -96,6 +92,7 @@ public class ODistributedConfigurationManager {
   }
 
   public void setDistributedConfiguration(
+      ODatabaseSession session,
       final OModifiableDistributedConfiguration distributedConfiguration) {
     if (this.distributedConfiguration == null
         || distributedConfiguration.getVersion() > this.distributedConfiguration.getVersion()) {
@@ -111,14 +108,14 @@ public class ODistributedConfigurationManager {
           databaseName,
           distributedConfiguration.getVersion());
 
-      saveDatabaseConfiguration();
+      saveDatabaseConfiguration(session);
     }
   }
 
   public boolean tryUpdatingDatabaseConfigurationLocally(
-      final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
+      final ODatabaseSession session, final OModifiableDistributedConfiguration cfg) {
 
-    final ODistributedConfiguration dCfg = getDistributedConfiguration();
+    final ODistributedConfiguration dCfg = getDistributedConfiguration(session);
 
     Integer oldVersion = dCfg != null ? dCfg.getVersion() : null;
     if (oldVersion == null) oldVersion = 0;
@@ -133,7 +130,7 @@ public class ODistributedConfigurationManager {
     }
 
     // SAVE IN NODE'S LOCAL RAM
-    setDistributedConfiguration(cfg);
+    setDistributedConfiguration(session, cfg);
 
     return modified;
   }
@@ -170,16 +167,13 @@ public class ODistributedConfigurationManager {
     return doc;
   }
 
-  public void saveDatabaseConfiguration() {
-    context.executeNoAuthorization(
-        databaseName,
-        (session) -> {
-          ODocument doc = distributedConfiguration.getDocument();
-          OSharedContextEmbedded value =
-              (OSharedContextEmbedded) ((ODatabaseDocumentInternal) session).getSharedContext();
-          value.saveConfig(session, "ditributedConfig", doc);
-          return null;
-        });
+  public void saveDatabaseConfiguration(ODatabaseSession session) {
+    if (session != null) {
+      ODocument doc = distributedConfiguration.getDocument();
+      OSharedContextEmbedded value =
+          (OSharedContextEmbedded) ((ODatabaseDocumentInternal) session).getSharedContext();
+      value.saveConfig(session, "ditributedConfig", doc);
+    }
     if (!isMemory()) {
       saveDatabaseConfigurationToFile();
     }

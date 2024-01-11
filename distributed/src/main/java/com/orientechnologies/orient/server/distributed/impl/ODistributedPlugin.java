@@ -1282,7 +1282,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       return false;
 
     // INIT STORAGE + UPDATE LOCAL FILE ONLY
-    context.saveDistribuedConfiguration(databaseName, cfg);
+    context.setDistributedConfiguration(databaseName, cfg);
 
     context.distributedPauseDatabase(databaseName);
 
