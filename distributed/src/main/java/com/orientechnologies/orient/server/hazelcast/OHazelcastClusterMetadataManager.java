@@ -507,7 +507,7 @@ public class OHazelcastClusterMetadataManager
     activeNodesNamesByUuid.clear();
     activeNodesUuidByName.clear();
 
-    if (membershipListenerRegistration != null) {
+    if (membershipListenerRegistration != null && hazelcastInstance != null) {
       try {
         Cluster instance = hazelcastInstance.getCluster();
         if (instance != null) {
