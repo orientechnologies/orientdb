@@ -646,7 +646,9 @@ public abstract class OAbstractPaginatedStorage
         }
 
         try {
-          writeAheadLog.close();
+          if (writeAheadLog != null) {
+            writeAheadLog.close();
+          }
         } catch (final Exception ee) {
           // ignore
         }
