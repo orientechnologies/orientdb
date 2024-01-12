@@ -55,19 +55,13 @@
                 <argLine>-ea
                     -Xmx${heapSize}
                     -Dstorage.diskCache.bufferSize=4096
-                    -Dindex.flushAfterCreate=false
-                    -Dstorage.makeFullCheckpointAfterCreate=false
                     -Dmemory.directMemory.trackMode=true
-                    -Dstorage.makeFullCheckpointAfterOpen=false
-                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
-                    -Dstorage.wal.syncOnPageFlush=false
                     -Dserver.backwardCompatibility=false
                     -Dstorage.configuration.syncOnUpdate=false
-                    -Ddb.makeFullCheckpointOnIndexChange=false
-                    -Ddb.makeFullCheckpointOnSchemaChange=false
                     -Dhazelcast.wait.seconds.before.join=3
                     -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
                     -Dstorage.diskCache.checksumMode=storeAndThrow
+                    -Dexecutor.debug.traceSource=true
                     -Dsecurity.warningDefaultUsers=false
                 </argLine>
             </properties>
@@ -81,20 +75,14 @@
                 <argLine>-ea
                     -Xmx${heapSize}
                     -Dstorage.diskCache.bufferSize=4096
-                    -Dindex.flushAfterCreate=false
-                    -Dstorage.makeFullCheckpointAfterCreate=false
                     -Dmemory.directMemory.trackMode=true
-                    -Dstorage.makeFullCheckpointAfterOpen=false
-                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
-                    -Dstorage.wal.syncOnPageFlush=false
                     -Dserver.backwardCompatibility=false
                     -Dstorage.configuration.syncOnUpdate=false
-                    -Ddb.makeFullCheckpointOnIndexChange=false
-                    -Ddb.makeFullCheckpointOnSchemaChange=false
                     -Dhazelcast.wait.seconds.before.join=3
                     -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
                     -Dstorage.diskCache.checksumMode=storeAndThrow
                     -Dsecurity.warningDefaultUsers=false
+                    -Dexecutor.debug.traceSource=true
                     --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
                     --add-opens java.base/sun.security.x509=ALL-UNNAMED
                 </argLine>
@@ -160,6 +148,7 @@
                                 <orientdbVolumeSize>2</orientdbVolumeSize>
                                 <databaseVolumeStorageClass />
                                 <configVolumeStorageClass />
+                                <executor.debug.traceSource>true</executor.debug.traceSource>
                                 <kubernetesNamespace>orientdb</kubernetesNamespace>
                             </systemPropertyVariables>
                         </configuration>
