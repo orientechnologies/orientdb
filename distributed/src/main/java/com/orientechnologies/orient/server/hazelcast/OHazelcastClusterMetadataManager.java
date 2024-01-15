@@ -395,7 +395,9 @@ public class OHazelcastClusterMetadataManager
   }
 
   public boolean isWriteQuorumPresent(final String databaseName) {
-    final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
+
+    final ODistributedConfiguration cfg = ctx.getDistributedConfiguration(databaseName);
     if (cfg != null) {
       final int availableServers = getAvailableNodes(databaseName);
       if (availableServers == 0) return false;
@@ -996,7 +998,9 @@ public class OHazelcastClusterMetadataManager
   // Remove the given distributed db from the current server's configuration and
   // return the name of all other servers that also have the db.
   public Set<String> dropDbFromConfiguration(final String dbName) {
-    final ODistributedConfiguration dCfg = getDatabaseConfiguration(dbName);
+    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
+
+    final ODistributedConfiguration dCfg = ctx.getDistributedConfiguration(dbName);
 
     final Set<String> servers = dCfg.getAllConfiguredServers();
     final long start = System.currentTimeMillis();
@@ -1116,8 +1120,10 @@ public class OHazelcastClusterMetadataManager
       final String databaseName,
       final boolean removeOnlyDynamicServers,
       final boolean statusOffline) {
+    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
 
-    final OModifiableDistributedConfiguration cfg = getDatabaseConfiguration(databaseName).modify();
+    final OModifiableDistributedConfiguration cfg =
+        ctx.getDistributedConfiguration(databaseName).modify();
 
     if (removeOnlyDynamicServers) {
       // CHECK THE SERVER IS NOT REGISTERED STATICALLY

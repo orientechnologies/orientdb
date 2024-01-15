@@ -498,12 +498,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     return clusterManager.getDatabaseConfiguration(iDatabaseName);
   }
 
-  @Override
-  public ODistributedConfiguration getDatabaseConfiguration(
-      String iDatabaseName, boolean createIfNotPresent) {
-    return clusterManager.getDatabaseConfiguration(iDatabaseName, createIfNotPresent);
-  }
-
   public boolean isEnabled() {
     return enabled;
   }
@@ -2646,9 +2640,11 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       clusterManager.removeServerFromCluster(member, nodeLeftName, removeOnlyDynamicServers);
 
+      OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
+
       for (String databaseName : getManagedDatabases()) {
         try {
-          if (getDatabaseConfiguration(databaseName).getServerRole(nodeName)
+          if (ctx.getDistributedConfiguration(databaseName).getServerRole(nodeName)
               == ODistributedConfiguration.ROLES.MASTER) {
             reassignClustersOwnership(nodeName, databaseName, null, false);
           }

@@ -38,6 +38,10 @@ public class ODistributedConfigurationManager {
     return distributedConfiguration;
   }
 
+  public ODistributedConfiguration getExistingDistributedConfiguration() {
+    return distributedConfiguration;
+  }
+
   private void loadDistributedConfiguration(ODatabaseSession session) {
     ODocument doc = distributedManager.getOnlineDatabaseConfiguration(databaseName);
     if (doc != null) {

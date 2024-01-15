@@ -503,15 +503,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public <T> T configOp(ODistributedConfigurationManager cm, String database, ConfigOp<T> op) {
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (db != null && db.isDistributed() && db.getName().equals(database)) {
+    if (db != null && !db.isClosed() && db.isDistributed() && db.getName().equals(database)) {
       return op.op(cm, db);
     } else if (exists(database, null, null)) {
-      ODatabaseDocumentInternal pre = ODatabaseRecordThreadLocal.instance().getIfDefined();
       try (ODatabaseSession session = openNoAuthorization(database)) {
-        return op.op(cm, db);
+        return op.op(cm, session);
       } finally {
-        if (pre != null) {
-          ODatabaseRecordThreadLocal.instance().set(pre);
+        if (db != null && !db.isClosed()) {
+          ODatabaseRecordThreadLocal.instance().set(db);
         }
       }
     } else {
@@ -519,10 +518,23 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
+  public ODistributedConfiguration getExistingDistributedConfiguration(String database) {
+    ODistributedConfigurationManager cm = getConfigurationManager(database);
+    if (cm != null) {
+      return cm.getExistingDistributedConfiguration();
+    } else {
+      return null;
+    }
+  }
+
   public ODistributedConfiguration getDistributedConfiguration(String database) {
     ODistributedConfigurationManager cm = getConfigurationManager(database);
     if (cm != null) {
-      return configOp(cm, database, (m, s) -> m.getDistributedConfiguration(s));
+      if (cm.getExistingDistributedConfiguration() != null) {
+        return cm.getExistingDistributedConfiguration();
+      } else {
+        return configOp(cm, database, (m, s) -> m.getDistributedConfiguration(s));
+      }
     } else {
       return null;
     }
@@ -553,7 +565,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public ODistributedConfiguration getOrInitDistributedConfiguration(String database) {
     ODistributedConfigurationManager cm = getOrInitConfigurationManager(database);
-    return configOp(cm, database, (m, s) -> m.getDistributedConfiguration(s));
+    if (cm.getExistingDistributedConfiguration() != null) {
+      return cm.getExistingDistributedConfiguration();
+    } else {
+      return configOp(cm, database, (m, s) -> m.getDistributedConfiguration(s));
+    }
   }
 
   public boolean tryUpdatingDatabaseConfigurationLocally(

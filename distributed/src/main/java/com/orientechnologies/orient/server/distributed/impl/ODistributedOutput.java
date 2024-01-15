@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -115,8 +116,9 @@ public class ODistributedOutput {
           int serverNum = 0;
           for (String dbName : databases) {
             final StringBuilder buffer = new StringBuilder();
-
-            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName, false);
+            OrientDBDistributed ctx =
+                (OrientDBDistributed) manager.getServerInstance().getDatabases();
+            final ODistributedConfiguration dbCfg = ctx.getExistingDistributedConfiguration(dbName);
             if (dbCfg == null) continue;
 
             buffer.append(dbName);
@@ -467,7 +469,9 @@ public class ODistributedOutput {
           buffer.append("{");
           int dbCount = 0;
           for (String dbName : databases) {
-            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName, false);
+            OrientDBDistributed ctx =
+                (OrientDBDistributed) manager.getServerInstance().getDatabases();
+            final ODistributedConfiguration dbCfg = ctx.getExistingDistributedConfiguration(dbName);
 
             if (dbCfg == null) continue;
 
