@@ -1900,7 +1900,9 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
         }
       } while (connectionManager.getReusableConnections(currentURL) > 0);
 
-      currentURL = useNewServerURL(currentURL);
+      if (currentURL != null) {
+        currentURL = useNewServerURL(currentURL);
+      }
 
     } while (currentURL != null);
 

@@ -187,6 +187,9 @@ public class ORemoteConnectionManager {
   }
 
   public int getReusableConnections(final String url) {
+    if (url == null) {
+      return 0;
+    }
     final ORemoteConnectionPool pool = connections.get(url);
     if (pool == null) return 0;
 
