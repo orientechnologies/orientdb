@@ -1616,19 +1616,18 @@ public class ODistributedPlugin extends OServerPluginAbstract
       OSyncDatabaseTask deployTask = new OSyncDatabaseTask();
       List<String> singleNode = new ArrayList<>();
       singleNode.add(noteToSend);
-      final Map<String, Object> results =
-          (Map<String, Object>)
-              sendRequest(
-                      databaseName,
-                      null,
-                      singleNode,
-                      deployTask,
-                      getNextMessageIdCounter(),
-                      ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                      null)
-                  .getPayload();
 
-      if (results == null) {
+      ODistributedResponse response =
+          sendRequest(
+              databaseName,
+              null,
+              singleNode,
+              deployTask,
+              getNextMessageIdCounter(),
+              ODistributedRequest.EXECUTION_MODE.RESPONSE,
+              null);
+
+      if (response == null || response.getPayload() == null) {
         ODistributedServerLog.error(
             this,
             nodeName,
@@ -1638,6 +1637,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
         setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
         return false;
       }
+
+      final Map<String, Object> results = (Map<String, Object>) response.getPayload();
       final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
 
       for (Map.Entry<String, Object> r : results.entrySet()) {
