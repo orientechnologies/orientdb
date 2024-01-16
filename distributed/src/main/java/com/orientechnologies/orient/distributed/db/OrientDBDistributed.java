@@ -269,10 +269,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       ODatabaseRecordThreadLocal.instance().set(current);
     }
 
-    synchronized (this) {
-      unregisterDatabase(name);
-      plugin.removeDbFromClusterMetadata(name);
+    unregisterDatabase(name);
+    plugin.removeDbFromClusterMetadata(name);
 
+    synchronized (this) {
       if (exists(name, null, null)) {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         OSharedContext sharedContext = sharedContexts.get(name);
