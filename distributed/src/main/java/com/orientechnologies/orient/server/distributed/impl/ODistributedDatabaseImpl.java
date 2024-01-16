@@ -813,7 +813,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void checkReverseSync(OTransactionSequenceStatus lastState) {
     List<OTransactionId> res = sequenceManager.checkSelfStatus(lastState);
     if (!res.isEmpty()) {
-      new Thread(this::runReverseSync).start();
+      context.execute(this::runReverseSync);
     }
   }
 

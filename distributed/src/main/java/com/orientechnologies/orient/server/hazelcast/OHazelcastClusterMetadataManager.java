@@ -23,9 +23,9 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
-import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -242,14 +242,13 @@ public class OHazelcastClusterMetadataManager
     membershipListenerMapRegistration =
         configurationMap.getHazelcastMap().addEntryListener(this, true);
     membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
-
-    new Thread(
-            () -> {
-              distributedPlugin.installNewDatabasesFromCluster();
-              distributedPlugin.loadLocalDatabases();
-              distributedPlugin.notifyStarted();
-            })
-        .start();
+    OrientDBInternal ctx = serverInstance.getDatabases();
+    ctx.execute(
+        () -> {
+          distributedPlugin.installNewDatabasesFromCluster();
+          distributedPlugin.loadLocalDatabases();
+          distributedPlugin.notifyStarted();
+        });
 
     // REGISTER CURRENT MEMBERS
     setNodeStatus(ODistributedServerManager.NODE_STATUS.ONLINE);
@@ -845,61 +844,47 @@ public class OHazelcastClusterMetadataManager
   /** Removes the node map entry. */
   @Override
   public void memberRemoved(final MembershipEvent iEvent) {
-    new Thread(
-            () -> {
-              try {
-                updateLastClusterChange();
+    OrientDBInternal ctx = serverInstance.getDatabases();
+    ctx.execute(
+        () -> {
+          if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
+            return;
 
-                if (iEvent.getMember() == null) return;
+          updateLastClusterChange();
 
-                final String nodeLeftName = getNodeName(iEvent.getMember(), true);
-                if (nodeLeftName == null) return;
+          if (iEvent.getMember() == null) return;
 
-                distributedPlugin.removeServer(nodeLeftName, true);
+          final String nodeLeftName = getNodeName(iEvent.getMember(), true);
+          if (nodeLeftName == null) return;
 
-              } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
-                OLogManager.instance().error(this, "Hazelcast is not running", e);
-              } catch (Exception e) {
-                OLogManager.instance()
-                    .error(
-                        this,
-                        "Error on removing the server '%s'",
-                        e,
-                        getNodeName(iEvent.getMember(), true));
-              }
-            })
-        .start();
+          distributedPlugin.removeServer(nodeLeftName, true);
+        });
   }
 
   @Override
   public void memberAdded(final MembershipEvent iEvent) {
-    new Thread(
-            () -> {
-              if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
-                return;
+    OrientDBInternal ctx = serverInstance.getDatabases();
+    ctx.execute(
+        () -> {
+          if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
+            return;
 
-              try {
-                updateLastClusterChange();
-                final String addedNodeName = getNodeName(iEvent.getMember(), true);
-                ODistributedServerLog.info(
-                    this,
-                    nodeName,
-                    null,
-                    ODistributedServerLog.DIRECTION.NONE,
-                    "Added new node id=%s name=%s",
-                    iEvent.getMember(),
-                    addedNodeName);
+          updateLastClusterChange();
+          final String addedNodeName = getNodeName(iEvent.getMember(), true);
+          ODistributedServerLog.info(
+              this,
+              nodeName,
+              null,
+              ODistributedServerLog.DIRECTION.NONE,
+              "Added new node id=%s name=%s",
+              iEvent.getMember(),
+              addedNodeName);
 
-                registerNode(iEvent.getMember(), addedNodeName);
+          registerNode(iEvent.getMember(), addedNodeName);
 
-                // REMOVE THE NODE FROM AUTO REMOVAL
-                autoRemovalOfServers.remove(addedNodeName);
-
-              } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
-                OLogManager.instance().error(this, "Hazelcast is not running", e);
-              }
-            })
-        .start();
+          // REMOVE THE NODE FROM AUTO REMOVAL
+          autoRemovalOfServers.remove(addedNodeName);
+        });
   }
 
   @Override
@@ -943,36 +928,30 @@ public class OHazelcastClusterMetadataManager
       // TEMPORARY PATCH TO FIX HAZELCAST'S BEHAVIOUR THAT ENQUEUES THE MERGING ITEM EVENT WITH
       // THIS
       // AND ACTIVE NODES MAP COULD BE STILL NOT FILLED
-      Thread t =
-          new Thread(
-              () -> {
-                try {
-                  for (final String databaseName :
-                      distributedPlugin.getMessageService().getDatabases()) {
-                    executeInDistributedDatabaseLock(
-                        databaseName,
-                        20000,
-                        null,
-                        new OCallable<Object, OModifiableDistributedConfiguration>() {
-                          @Override
-                          public Object call(final OModifiableDistributedConfiguration cfg) {
-                            cfg.override(configurationMap.getDatabaseConfiguration(databaseName));
-                            return null;
-                          }
-                        });
-                  }
-                } finally {
-                  ODistributedServerLog.warn(
-                      this,
-                      nodeName,
-                      null,
-                      ODistributedServerLog.DIRECTION.NONE,
-                      "Network merged ...");
-                  setNodeStatus(ODistributedServerManager.NODE_STATUS.ONLINE);
-                }
-              });
-      t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-      t.start();
+      OrientDBInternal ctx = serverInstance.getDatabases();
+      ctx.execute(
+          () -> {
+            try {
+              for (final String databaseName :
+                  distributedPlugin.getMessageService().getDatabases()) {
+                executeInDistributedDatabaseLock(
+                    databaseName,
+                    20000,
+                    null,
+                    new OCallable<Object, OModifiableDistributedConfiguration>() {
+                      @Override
+                      public Object call(final OModifiableDistributedConfiguration cfg) {
+                        cfg.override(configurationMap.getDatabaseConfiguration(databaseName));
+                        return null;
+                      }
+                    });
+              }
+            } finally {
+              ODistributedServerLog.warn(
+                  this, nodeName, null, ODistributedServerLog.DIRECTION.NONE, "Network merged ...");
+              setNodeStatus(ODistributedServerManager.NODE_STATUS.ONLINE);
+            }
+          });
     }
   }
 
