@@ -568,7 +568,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     if (cm.getExistingDistributedConfiguration() != null) {
       return cm.getExistingDistributedConfiguration();
     } else {
-      return configOp(cm, database, (m, s) -> m.getDistributedConfiguration(s));
+      return cm.getDistributedConfiguration(null);
     }
   }
 

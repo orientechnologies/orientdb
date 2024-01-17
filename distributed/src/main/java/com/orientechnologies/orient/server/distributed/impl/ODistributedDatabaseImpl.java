@@ -602,7 +602,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void initFirstOpen(ODatabaseDocumentInternal session) {
     ODistributedConfiguration cfg = this.context.getOrInitDistributedConfiguration(session);
     manager.checkNodeInConfiguration(databaseName, cfg);
-    resume();
     setOnline();
   }
 
