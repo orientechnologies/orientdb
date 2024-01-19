@@ -35,11 +35,8 @@ public class OServerShutdownHook extends Thread {
   public void run() {
     if (server != null)
       if (!server.shutdown()) {
-        // ALREADY IN SHUTDOWN, WAIT FOR 5 SEC MORE
-        try {
-          Thread.sleep(5000);
-        } catch (InterruptedException e) {
-        }
+        // ALREADY IN SHUTDOWN, WAIT FOR IT
+        server.waitForShutdown();
       }
   }
 
