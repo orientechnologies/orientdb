@@ -562,6 +562,7 @@ public class OServer {
 
   protected boolean deinit() {
     try {
+      if (!running) return false;
       running = false;
 
       OLogManager.instance().info(this, "OrientDB Server is shutting down...");

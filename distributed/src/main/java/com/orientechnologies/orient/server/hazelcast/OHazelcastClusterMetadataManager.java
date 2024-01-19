@@ -519,7 +519,7 @@ public class OHazelcastClusterMetadataManager
       }
     }
 
-    if (hazelcastInstance != null)
+    if (hazelcastInstance != null) {
       try {
         hazelcastInstance.shutdown();
       } catch (Exception e) {
@@ -527,6 +527,7 @@ public class OHazelcastClusterMetadataManager
       } finally {
         hazelcastInstance = null;
       }
+    }
 
     OCallableUtils.executeIgnoringAnyExceptions(
         new OCallableNoParamNoReturn() {
