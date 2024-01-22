@@ -1,7 +1,10 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
@@ -57,12 +60,13 @@ public class OInsertExecutionPlanner {
       } else {
         handleCreateRecord(result, this.insertBody, ctx, enableProfiling);
       }
-      handleTargetClass(result, targetClass, ctx, enableProfiling);
+      handleTargetClass(result, ctx, enableProfiling);
       handleSetFields(result, insertBody, ctx, enableProfiling);
+      ODatabaseSession database = ctx.getDatabase();
       if (targetCluster != null) {
         String name = targetCluster.getClusterName();
         if (name == null) {
-          name = ctx.getDatabase().getClusterNameById(targetCluster.getClusterNumber());
+          name = database.getClusterNameById(targetCluster.getClusterNumber());
         }
         handleSave(result, new OIdentifier(name), ctx, enableProfiling);
       } else {
@@ -128,12 +132,32 @@ public class OInsertExecutionPlanner {
   }
 
   private void handleTargetClass(
-      OInsertExecutionPlan result,
-      OIdentifier targetClass,
-      OCommandContext ctx,
-      boolean profilingEnabled) {
+      OInsertExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
+    ODatabaseSession database = ctx.getDatabase();
+    OSchema schema = database.getMetadata().getSchema();
+    OIdentifier tc = null;
     if (targetClass != null) {
-      result.chain(new SetDocumentClassStep(targetClass, ctx, profilingEnabled));
+      tc = targetClass;
+    } else if (targetCluster != null) {
+      String name = targetCluster.getClusterName();
+      if (name == null) {
+        name = database.getClusterNameById(targetCluster.getClusterNumber());
+      }
+      OClass targetClass = schema.getClassByClusterId(database.getClusterIdByName(name));
+      if (targetClass != null) {
+        tc = new OIdentifier(targetClass.getName());
+      }
+    } else if (this.targetClass == null) {
+
+      OClass targetClass =
+          schema.getClassByClusterId(
+              database.getClusterIdByName(targetClusterName.getStringValue()));
+      if (targetClass != null) {
+        tc = new OIdentifier(targetClass.getName());
+      }
+    }
+    if (tc != null) {
+      result.chain(new SetDocumentClassStep(tc, ctx, profilingEnabled));
     }
   }
 
