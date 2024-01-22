@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
@@ -47,35 +48,40 @@ public class OTransactionPhase2TaskTest {
 
   @Test
   public void testOkSecondPhase() throws Exception {
-    OIdentifiable id = session.save(new ODocument("TestClass"));
+    OElement element = session.save(new ODocument("TestClass"));
+    ODatabaseDocumentInternal internal = (ODatabaseDocumentInternal) session;
+    internal.getLocalCache().clear();
+    ODistributedDatabaseImpl distributed =
+        ((OrientDBDistributed) server.getDatabases()).getDatabase(session.getName());
+
+    ORID id = element.getIdentity();
+    int pre_version = element.getVersion();
     List<ORecordOperation> operations = new ArrayList<>();
-    ODocument rec1 = new ODocument(id.getIdentity());
+    ODocument rec1 = new ODocument(id);
     rec1.setClassName("TestClass");
     rec1.field("one", "two");
-
     TreeSet<ORID> ids = new TreeSet<ORID>();
     ids.add(rec1.getIdentity());
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
     SortedSet<OTransactionUniqueKey> uniqueIndexKeys = new TreeSet<>();
-    OTransactionId transactionId = new OTransactionId(Optional.empty(), 0, 1);
+    OTransactionId transactionId = distributed.nextId().get();
     OTransactionPhase1Task task =
         new OTransactionPhase1Task(operations, transactionId, new TreeSet<>());
-    task.execute(
-        new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
+    ODistributedRequestId firstPhaseId = new ODistributedRequestId(10, 20);
+    task.execute(firstPhaseId, server, null, internal);
     OTransactionPhase2Task task2 =
-        new OTransactionPhase2Task(
-            new ODistributedRequestId(10, 20), true, ids, uniqueIndexKeys, transactionId);
-    task2.execute(
-        new ODistributedRequestId(10, 21), server, null, (ODatabaseDocumentInternal) session);
+        new OTransactionPhase2Task(firstPhaseId, true, ids, uniqueIndexKeys, transactionId);
+    task2.execute(new ODistributedRequestId(10, 21), server, null, internal);
 
-    assertEquals(2, session.load(id.getIdentity()).getVersion());
+    assertEquals(pre_version + 1, session.load(id).getVersion());
   }
 
   @Test
   public void testSecondPhaseForcePromiseDespiteCompetingSuccessfulFirstPhase() throws Exception {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) session;
     OIdentifiable id = session.save(new ODocument("TestClass"));
-
+    ODistributedDatabaseImpl distributed =
+        ((OrientDBDistributed) server.getDatabases()).getDatabase(session.getName());
     OElement doc1 = db.load(id.getIdentity());
     doc1.setProperty("value", "1");
     List<ORecordOperation> doc1Ops = new ArrayList<>();
@@ -93,14 +99,14 @@ public class OTransactionPhase2TaskTest {
     doc2UniqueIndexKeys.add(new OTransactionUniqueKey("TestClass.value", "2", doc2.getVersion()));
 
     ODistributedRequestId tx1p1Id = new ODistributedRequestId(10, 20);
-    OTransactionId tx1Id = new OTransactionId(Optional.empty(), 0, 1);
+    OTransactionId tx1Id = distributed.nextId().get();
     OTransactionPhase1Task tx1p1 = new OTransactionPhase1Task(doc1Ops, tx1Id, doc1UniqueIndexKeys);
     OTransactionPhase1TaskResult tx1p1Result =
         (OTransactionPhase1TaskResult) tx1p1.execute(tx1p1Id, server, null, db);
     assertTrue(tx1p1Result.getResultPayload() instanceof OTxSuccess);
 
     ODistributedRequestId tx2p1Id = new ODistributedRequestId(10, 21);
-    OTransactionId tx2Id = new OTransactionId(Optional.empty(), 1, 1);
+    OTransactionId tx2Id = distributed.nextId().get();
     OTransactionPhase1Task tx2p1 = new OTransactionPhase1Task(doc2Ops, tx2Id, doc2UniqueIndexKeys);
     OTransactionPhase1TaskResult tx2p1Result =
         (OTransactionPhase1TaskResult) tx2p1.execute(tx2p1Id, server, null, db);
