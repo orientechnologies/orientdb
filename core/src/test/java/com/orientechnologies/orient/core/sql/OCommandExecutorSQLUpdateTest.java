@@ -31,12 +31,10 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -377,9 +375,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.command("CREATE class Bar").close();
     db.command("CREATE property Foo.bar EMBEDDED Bar").close();
 
-    db.command(new OCommandSQL("insert into cluster:foo set bar = {\"value\":\"zz\\\\\"}"))
-        .execute();
-    db.command(new OCommandSQL("UPDATE cluster:foo set bar = {\"value\":\"foo\\\\\"}")).execute();
+    db.command("insert into cluster:foo set bar = {\"value\":\"zz\\\\\"}").close();
+    db.command("UPDATE cluster:foo set bar = {\"value\":\"foo\\\\\"}").close();
     try (OResultSet result = db.query("select from cluster:foo")) {
       assertEquals(((OResult) result.next().getProperty("bar")).getProperty("value"), "foo\\");
     }
@@ -393,9 +390,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.command("CREATE class Bar").close();
     db.command("CREATE property Foo.bar EMBEDDED Bar").close();
 
-    db.command(new OCommandSQL("insert into cluster:foo set bar = {\"value\":\"zz\\\\\"}"))
-        .execute();
-    db.command(new OCommandSQL("UPDATE cluster:foo set bar = {\"value\":\"foo\\\\\"}")).execute();
+    db.command("insert into cluster:foo set bar = {\"value\":\"zz\\\\\"}").close();
+    db.command("UPDATE cluster:foo set bar = {\"value\":\"foo\\\\\"}").close();
     try (OResultSet result = db.query("select from cluster:foo")) {
       assertTrue(result.hasNext());
       OResult doc = result.next();
@@ -403,11 +399,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
       assertFalse(result.hasNext());
     }
 
-    db.command(
-            new OCommandSQL("insert into cluster:fooadditional1 set bar = {\"value\":\"zz\\\\\"}"))
-        .execute();
-    db.command(new OCommandSQL("UPDATE cluster:fooadditional1 set bar = {\"value\":\"foo\\\\\"}"))
-        .execute();
+    db.command("insert into cluster:fooadditional1 set bar = {\"value\":\"zz\\\\\"}").close();
+    db.command("UPDATE cluster:fooadditional1 set bar = {\"value\":\"foo\\\\\"}").close();
     try (OResultSet result = db.query("select from cluster:fooadditional1")) {
       assertTrue(result.hasNext());
       OResult doc = result.next();
@@ -425,30 +418,20 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.command("CREATE class Bar").close();
     db.command("CREATE property Foo.bar EMBEDDED Bar").close();
 
-    db.command(
-            new OCommandSQL("insert into cluster:fooadditional1 set bar = {\"value\":\"zz\\\\\"}"))
-        .execute();
-    db.command(
-            new OCommandSQL("insert into cluster:fooadditional2 set bar = {\"value\":\"zz\\\\\"}"))
-        .execute();
-    db.command(
-            new OCommandSQL("insert into cluster:fooadditional3 set bar = {\"value\":\"zz\\\\\"}"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "UPDATE cluster:[fooadditional1, fooadditional2] set bar = {\"value\":\"foo\\\\\"}"))
-        .execute();
-    List<?> result =
-        db.query(
-            new OSQLSynchQuery<Object>("select from cluster:[ fooadditional1, fooadditional2 ]"));
-    Iterator<?> iterator = result.iterator();
-    assertTrue(iterator.hasNext());
-    ODocument doc = (ODocument) iterator.next();
-    assertEquals(((ODocument) doc.field("bar")).field("value"), "foo\\");
-    assertTrue(iterator.hasNext());
-    doc = (ODocument) iterator.next();
-    assertEquals(((ODocument) doc.field("bar")).field("value"), "foo\\");
-    assertFalse(iterator.hasNext());
+    db.command("insert into cluster:fooadditional1 set bar = {\"value\":\"zz\\\\\"}").close();
+    db.command("insert into cluster:fooadditional2 set bar = {\"value\":\"zz\\\\\"}").close();
+    db.command("insert into cluster:fooadditional3 set bar = {\"value\":\"zz\\\\\"}").close();
+    db.command("UPDATE cluster:[fooadditional1, fooadditional2] set bar = {\"value\":\"foo\\\\\"}")
+        .close();
+    OResultSet resultSet = db.query("select from cluster:[ fooadditional1, fooadditional2 ]");
+    assertTrue(resultSet.hasNext());
+    OResult doc = resultSet.next();
+    assertEquals(((OResult) doc.getProperty("bar")).getProperty("value"), "foo\\");
+    assertTrue(resultSet.hasNext());
+    doc = resultSet.next();
+    assertEquals(((OResult) doc.getProperty("bar")).getProperty("value"), "foo\\");
+    assertFalse(resultSet.hasNext());
+    resultSet.close();
   }
 
   @Test
