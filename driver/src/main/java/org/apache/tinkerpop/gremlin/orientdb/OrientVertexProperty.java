@@ -5,10 +5,12 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.*;
 import java.util.stream.Stream;
+import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 
 public class OrientVertexProperty<V> extends OrientProperty<V> implements VertexProperty<V> {
 
@@ -87,6 +89,16 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
 
   private String metadataKey() {
     return "_meta_" + key;
+  }
+
+  @Override
+  public boolean equals(final Object object) {
+    return ElementHelper.areEqual(this, object);
+  }
+
+  @Override
+  public int hashCode() {
+    return ElementHelper.hashCode((Element) this);
   }
 
   @Override

@@ -95,7 +95,7 @@ public class OrientProperty<V> implements Property<V> {
   }
 
   @Override
-  public final boolean equals(final Object object) {
+  public boolean equals(final Object object) {
     return ElementHelper.areEqual(this, object);
   }
 
