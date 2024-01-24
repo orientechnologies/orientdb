@@ -22,15 +22,18 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.task.OEnterpriseStatsTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -38,7 +41,13 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OServerCommandDistributedManager extends OServerCommandDistributedScope {
 
@@ -150,9 +159,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     ODatabaseDocumentInternal db = server.openDatabase(database);
     try {
-      Object result =
-          db.command(new OCommandSQL(String.format("ha sync cluster  %s ", cluster))).execute();
-      final ODocument document = new ODocument().field("result", result);
+      OResult result = db.command(String.format("ha sync cluster  %s ", cluster)).next();
+      final ODocument document = new ODocument().field("result", result.toElement());
       iResponse.send(
           OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
     } finally {
@@ -174,12 +182,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
-    boolean installDatabase =
-        dManager.installDatabase(
-            true,
-            database,
-            false,
-            OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
+    boolean installDatabase = dManager.installDatabase(true, database, false, true);
 
     ODocument document = new ODocument().field("result", installDatabase);
     iResponse.send(
