@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 import com.orientechnologies.orient.server.OServer;
@@ -76,7 +77,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
 
   @Test
   public void minCharacterTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     db.open("root", ROOT_PASSWORD);
 
     try {
@@ -93,7 +94,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
 
   @Test
   public void minNumberTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     db.open("root", ROOT_PASSWORD);
 
     try {
@@ -109,7 +110,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
 
   @Test
   public void minSpecialTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     db.open("root", ROOT_PASSWORD);
 
     try {
@@ -125,7 +126,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
 
   @Test
   public void minUppercaseTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     db.open("root", ROOT_PASSWORD);
 
     try {
@@ -143,7 +144,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
 
   @Test
   public void uuidTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     db.open("root", ROOT_PASSWORD);
 
     final String sql =
@@ -157,7 +158,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
 
   @Test
   public void validTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     db.open("root", ROOT_PASSWORD);
 
     final String sql =

@@ -92,7 +92,7 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
     OSymmetricKey sk = new OSymmetricKey("AES", "8BC7LeGkFbmHEYNTz5GwDw==");
 
     // "sysuser" is the username.  We just created it in OSystem.
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
+    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
     // We encrypt the username and specify the Base64-encoded JSON document as the password.
     db.open(sysuser, sk.encrypt("AES/CBC/PKCS5Padding", sysuser));
     db.close();

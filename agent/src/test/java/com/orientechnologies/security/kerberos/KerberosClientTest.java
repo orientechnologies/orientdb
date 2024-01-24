@@ -2,6 +2,7 @@ package com.orientechnologies.security.kerberos;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.security.AbstractSecurityTest;
@@ -33,7 +34,7 @@ public class KerberosClientTest extends AbstractSecurityTest {
       serverAd.createDatabase(testDB, "graph", "plocal");
 
       // orientdb@ODBREALM.COM
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+      ODatabaseDocument db = new ODatabaseDocumentTx(url);
       db.open("root", "password");
 
       try {
@@ -65,7 +66,7 @@ public class KerberosClientTest extends AbstractSecurityTest {
 
     OGlobalConfiguration.CLIENT_KRB5_CCNAME.setValue(ccache);
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    ODatabaseDocument db = new ODatabaseDocumentTx(url);
     db.open(kerbUser, "");
 
     db.close();
@@ -79,7 +80,7 @@ public class KerberosClientTest extends AbstractSecurityTest {
 
     OGlobalConfiguration.CLIENT_KRB5_CCNAME.setValue(ccache);
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    ODatabaseDocument db = new ODatabaseDocumentTx(url);
     db.open(kerbUser, spn);
 
     db.close();
@@ -93,7 +94,7 @@ public class KerberosClientTest extends AbstractSecurityTest {
 
     OGlobalConfiguration.CLIENT_KRB5_CCNAME.setValue(wrongcache);
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    ODatabaseDocument db = new ODatabaseDocumentTx(url);
     db.open(kerbUser, spn);
 
     db.close();

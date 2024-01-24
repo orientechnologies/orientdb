@@ -20,6 +20,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -43,7 +45,7 @@ import org.junit.Before;
 public class StorageBackupTestWithLuceneIndex {
   private String buildDirectory;
 
-  private ODatabaseDocumentTx db;
+  private ODatabaseDocumentInternal db;
   private String dbDirectory;
   private String backedUpDbDirectory;
 
@@ -72,7 +74,7 @@ public class StorageBackupTestWithLuceneIndex {
       db.drop();
     }
 
-    final ODatabaseDocumentTx backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
+    final ODatabaseDocument backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
     if (backedUpDb.exists()) {
       if (backedUpDb.isClosed()) {
         backedUpDb.open("admin", "admin");
@@ -118,7 +120,8 @@ public class StorageBackupTestWithLuceneIndex {
 
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
-    final ODatabaseDocumentTx backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
+    final ODatabaseDocumentInternal backedUpDb =
+        new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
     backedUpDb.create(backupDir.getAbsolutePath());
 
     final OStorage backupStorage = backedUpDb.getStorage();
@@ -189,7 +192,8 @@ public class StorageBackupTestWithLuceneIndex {
             + "BackUp";
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
-    final ODatabaseDocumentTx backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
+    final ODatabaseDocumentInternal backedUpDb =
+        new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
     backedUpDb.create(backupDir.getAbsolutePath());
 
     final OStorage backupStorage = backedUpDb.getStorage();

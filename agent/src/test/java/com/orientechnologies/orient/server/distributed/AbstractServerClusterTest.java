@@ -22,7 +22,6 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -52,10 +51,6 @@ public abstract class AbstractServerClusterTest {
   protected AtomicLong totalVertices = new AtomicLong(0);
 
   protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
-
-  protected AbstractServerClusterTest() {
-    OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
-  }
 
   @SuppressWarnings("unchecked")
   public static void main(final String[] args) throws Exception {
