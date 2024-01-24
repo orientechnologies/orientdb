@@ -26,6 +26,29 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.27 - (January, 26 2024)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3227---26-January-2024
+
+# Core
+- Minor correction on value conversion for comparison in queries
+- Corrected implementation of tracing executor to trace source properly
+- Minor fix on storage open failure
+- Correct set of target class when query target a cluster
+
+# Client
+- Minor fix on retrying next host from client
+
+# Distributed
+- make sure to ignore empty response from distributed requests
+- Refactor distributed configuration management to be handled by distributed context 
+
+# Server
+- Minor fix on wait for shutdown
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.26 - (January, 9 2024)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3226---9-January-2024
