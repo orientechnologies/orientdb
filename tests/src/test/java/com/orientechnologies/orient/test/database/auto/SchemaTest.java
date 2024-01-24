@@ -349,10 +349,8 @@ public class SchemaTest extends DocumentDBBaseTest {
     }
 
     database
-        .command(
-            new OCommandSQL(
-                "alter class " + company.getName() + " superclass " + superClass.getName()))
-        .execute();
+        .command("alter class " + company.getName() + " superclass " + superClass.getName())
+        .close();
 
     database.getMetadata().getSchema().reload();
     company = database.getMetadata().getSchema().getClass("Company");
