@@ -13,6 +13,7 @@ import com.orientechnologies.agent.profiler.metrics.OMetricSet;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -89,7 +90,9 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
 
   private ODocument singleDBStatus(ODistributedServerManager manager, String database) {
     final ODocument entries = new ODocument();
-    final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(database, false);
+    final ODistributedConfiguration dbCfg =
+        ((OrientDBDistributed) manager.getServerInstance().getDatabases())
+            .getExistingDistributedConfiguration(database);
     final Set<String> servers = dbCfg.getAllConfiguredServers();
     for (String serverName : servers) {
       final ODistributedServerManager.DB_STATUS databaseStatus =

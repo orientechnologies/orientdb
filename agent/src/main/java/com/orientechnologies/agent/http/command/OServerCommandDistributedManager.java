@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -321,7 +322,9 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
   private ODocument singleDBStatus(ODistributedServerManager manager, String database) {
     final ODocument entries = new ODocument();
-    final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(database, false);
+    final ODistributedConfiguration dbCfg =
+        ((OrientDBDistributed) manager.getServerInstance().getDatabases())
+            .getExistingDistributedConfiguration(database);
     final Set<String> servers = dbCfg.getAllConfiguredServers();
     for (String serverName : servers) {
       final ODistributedServerManager.DB_STATUS databaseStatus =
