@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -553,12 +552,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "UPDATE "
-                    + document.getIdentity()
-                    + " put linkMap = 'key2',"
-                    + docThree.getIdentity()))
-        .execute();
+            "UPDATE " + document.getIdentity() + " set linkMap['key2'] = " + docThree.getIdentity())
+        .close();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
 
@@ -738,9 +733,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     document.field("linkMap", map);
     document.save();
 
-    database
-        .command(new OCommandSQL("UPDATE " + document.getIdentity() + " remove linkMap = 'key2'"))
-        .execute();
+    database.command("UPDATE " + document.getIdentity() + " remove linkMap = 'key2'").close();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getInternal().size(), 2);

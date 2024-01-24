@@ -61,6 +61,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverListener;
@@ -1778,6 +1779,26 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     makeActive();
 
     return new OrientGraphCommand(this, getRawGraph().command(iCommand));
+  }
+
+  public OResultSet sqlCommand(String iCommand) {
+    makeActive();
+    return getRawGraph().command(iCommand);
+  }
+
+  public OResultSet sqlQuery(String iCommand) {
+    makeActive();
+    return getRawGraph().command(iCommand);
+  }
+
+  public OResultSet sqlCommand(String iCommand, Object... args) {
+    makeActive();
+    return getRawGraph().command(iCommand, args);
+  }
+
+  public OResultSet sqlQuery(String iCommand, Object... args) {
+    makeActive();
+    return getRawGraph().command(iCommand, args);
   }
 
   /**
