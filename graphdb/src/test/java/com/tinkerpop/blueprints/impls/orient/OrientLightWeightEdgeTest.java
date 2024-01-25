@@ -2,7 +2,6 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Edge;
 import java.util.Iterator;
@@ -64,7 +63,7 @@ public class OrientLightWeightEdgeTest {
     Assert.assertTrue(((Iterable) fieldVal).iterator().hasNext());
     graph.commit();
 
-    graph.command(new OCommandSQL("DELETE VERTEX " + vertex2.getIdentity())).execute();
+    graph.sqlCommand("DELETE VERTEX " + vertex2.getIdentity()).close();
     graph.commit();
     result = graph.command(new OSQLSynchQuery("SELECT FROM " + vertexId)).execute();
     iterator = result.iterator();

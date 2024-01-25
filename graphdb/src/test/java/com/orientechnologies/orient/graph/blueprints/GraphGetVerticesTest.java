@@ -21,7 +21,6 @@ package com.orientechnologies.orient.graph.blueprints;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -88,8 +87,7 @@ public class GraphGetVerticesTest {
 
     // Defining an index (unique_hash_index) on a single property
     String statement = "create index Person.pkey on Person (person_id) unique_hash_index";
-    OCommandSQL sqlCommand = new OCommandSQL(statement);
-    graph.getRawGraph().command(sqlCommand).execute();
+    graph.getRawGraph().command(statement).close();
 
     // String key and value
     singleValue[0] = "02";
@@ -118,8 +116,7 @@ public class GraphGetVerticesTest {
     // Dropping precedent index and defining a new index (unique_hash_index) on two properties
     graph.dropIndex("Person.pkey");
     statement = "create index Person.pkey on Person (person_id,name) unique_hash_index";
-    sqlCommand = new OCommandSQL(statement);
-    graph.getRawGraph().command(sqlCommand).execute();
+    graph.getRawGraph().command(statement).close();
 
     // String key and value
     String[] keys = {"person_id", "name"};

@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
@@ -86,9 +87,8 @@ public class SQLGraphFunctionsTest {
 
   @Test
   public void checkMinusInString() {
-    Iterable<OrientVertex> result =
-        graph.command(new OCommandSQL("select expand( out()[name='D-D'] ) from V")).execute();
-    Assert.assertTrue(result.iterator().hasNext());
+    OResultSet result = graph.sqlQuery("select expand( out()[name='D-D'] ) from V");
+    Assert.assertTrue(result.hasNext());
   }
 
   @Test
@@ -98,8 +98,8 @@ public class SQLGraphFunctionsTest {
     graph.setAutoStartTx(false);
     graph.commit();
 
-    graph.command(new OCommandSQL("create class tc1 extends V clusters 1")).execute();
-    graph.command(new OCommandSQL("create class edge1 extends E clusters 1")).execute();
+    graph.sqlCommand("create class tc1 extends V clusters 1").close();
+    graph.sqlCommand("create class edge1 extends E clusters 1").close();
 
     graph.setAutoStartTx(true);
 

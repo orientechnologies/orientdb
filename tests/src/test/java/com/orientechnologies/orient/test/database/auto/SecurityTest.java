@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import java.io.IOException;
 import java.util.Date;
@@ -110,25 +110,26 @@ public class SecurityTest extends DocumentDBBaseTest {
   public void testEncryptPassword() throws IOException {
     database.open("admin", "admin");
 
-    Integer updated =
+    Long updated =
         database
-            .command(new OCommandSQL("update ouser set password = 'test' where name = 'reader'"))
-            .execute();
+            .command("update ouser set password = 'test' where name = 'reader'")
+            .next()
+            .getProperty("count");
     Assert.assertEquals(updated.intValue(), 1);
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<Object>("select from ouser where name = 'reader'"));
-    Assert.assertFalse(result.get(0).field("password").equals("test"));
+    OResultSet result = database.query("select from ouser where name = 'reader'");
+    Assert.assertFalse(result.next().getProperty("password").equals("test"));
 
     // RESET OLD PASSWORD
     updated =
         database
-            .command(new OCommandSQL("update ouser set password = 'reader' where name = 'reader'"))
-            .execute();
+            .command("update ouser set password = 'reader' where name = 'reader'")
+            .next()
+            .getProperty("count");
     Assert.assertEquals(updated.intValue(), 1);
 
-    result = database.query(new OSQLSynchQuery<Object>("select from ouser where name = 'reader'"));
-    Assert.assertFalse(result.get(0).field("password").equals("reader"));
+    result = database.query("select from ouser where name = 'reader'");
+    Assert.assertFalse(result.next().getProperty("password").equals("reader"));
 
     database.close();
   }

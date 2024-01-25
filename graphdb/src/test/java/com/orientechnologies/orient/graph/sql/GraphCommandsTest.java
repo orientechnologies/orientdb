@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.Vertex;
@@ -81,8 +80,8 @@ public class GraphCommandsTest extends GraphNoTxAbstractTest {
   @Test
   public void testAddValueSQL() {
     graph
-        .command(new OCommandSQL("update V add testprop = 'first' return after @this limit 1"))
-        .execute();
+        .sqlCommand("update V set testprop = testprop || ['first'] return after @this limit 1")
+        .close();
 
     Iterable<Vertex> results =
         ((Iterable<Vertex>)
@@ -90,8 +89,8 @@ public class GraphCommandsTest extends GraphNoTxAbstractTest {
     Assert.assertTrue(results.iterator().hasNext());
 
     graph
-        .command(new OCommandSQL("update V add testprop = 'second' return after @this limit 1"))
-        .execute();
+        .sqlCommand("update V set testprop = testprop || ['second'] return after @this limit 1")
+        .close();
 
     results =
         ((Iterable<Vertex>)
