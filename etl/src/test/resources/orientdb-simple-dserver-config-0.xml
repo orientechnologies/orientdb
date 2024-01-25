@@ -31,7 +31,7 @@
               name="replicator"/>
     </users>
     <properties>
-        <entry name="server.database.path" value="target/server0/"/>
+        <entry name="server.database.path" value="target/etlJobTest/server0/"/>
     </properties>
     <isAfterFirstTime>true</isAfterFirstTime>
 </orient-server>

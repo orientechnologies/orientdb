@@ -70,8 +70,11 @@ public class OETLContext extends OBasicCommandContext {
    */
   public String printExceptionMessage(Exception e, String message, String level) {
 
-    if (e.getMessage() != null) message += "\n" + e.getClass().getName() + " - " + e.getMessage();
-    else message += "\n" + e.getClass().getName();
+    if (e.getMessage() != null) {
+      message += "\n" + e.getClass().getName() + " - " + e.getMessage();
+    } else {
+      message += "\n" + e.getClass().getName();
+    }
 
     switch (level) {
       case "debug":
@@ -125,8 +128,9 @@ public class OETLContext extends OBasicCommandContext {
 
   public synchronized void registerOrientDB(OrientDB orientdb) {
     OrientDBInternal orientDBInternal = OrientDBInternal.extract(orientdb);
-    this.contexts.put(
-        "embedded:" + orientDBInternal.getBasePath(), orientDBInternal.newOrientDBNoClose());
+
+    var dbBasePath = orientDBInternal.getBasePath().replace('\\', '/');
+    this.contexts.put("embedded:" + dbBasePath, orientDBInternal.newOrientDBNoClose());
   }
 
   public synchronized OrientDB getOrientDB(String url, String user, String password) {
