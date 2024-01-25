@@ -21,17 +21,14 @@ package com.orientechnologies.orient.test.object;
 
 import static org.testng.Assert.assertTrue;
 
-import java.io.IOException;
-
-import javax.persistence.Id;
-import javax.persistence.Version;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import java.io.IOException;
+import javax.persistence.Id;
+import javax.persistence.Version;
+import org.testng.annotations.Test;
 
 /** Created by luigidellaquila on 01/07/15. */
 public class MultipleObjectDbInstancesTest {
@@ -43,9 +40,12 @@ public class MultipleObjectDbInstancesTest {
    */
   @Test
   public void testTwiceCreateDBSchemaRegistered() throws IOException {
-    OrientDB orientDB = new OrientDB("memory:",OrientDBConfig.defaultConfig());
-    orientDB.execute("create database MultipleDbInstancesTest_first memory users(admin identified by 'adminpwd' role admin)");
-    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal)orientDB.open("MultipleDbInstancesTest_first", "admin", "adminpwd");
+    OrientDB orientDB = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+    orientDB.execute(
+        "create database MultipleDbInstancesTest_first memory users(admin identified by 'adminpwd' role admin)");
+    ODatabaseDocumentInternal db =
+        (ODatabaseDocumentInternal)
+            orientDB.open("MultipleDbInstancesTest_first", "admin", "adminpwd");
     OObjectDatabaseTx objectDb = new OObjectDatabaseTx(db);
     objectDb.setAutomaticSchemaGeneration(true);
     objectDb.getEntityManager().registerEntityClass(V.class);
@@ -55,8 +55,11 @@ public class MultipleObjectDbInstancesTest {
     assertTrue(objectDb.getMetadata().getSchema().existsClass("X"));
     objectDb.close();
 
-    orientDB.execute("create database MultipleDbInstancesTest_second memory users(admin identified by 'adminpwd' role admin)");
-    ODatabaseDocumentInternal db1 = (ODatabaseDocumentInternal)orientDB.open("MultipleDbInstancesTest_second", "admin", "adminpwd");
+    orientDB.execute(
+        "create database MultipleDbInstancesTest_second memory users(admin identified by 'adminpwd' role admin)");
+    ODatabaseDocumentInternal db1 =
+        (ODatabaseDocumentInternal)
+            orientDB.open("MultipleDbInstancesTest_second", "admin", "adminpwd");
     OObjectDatabaseTx objectDb1 = new OObjectDatabaseTx(db1);
 
     assertTrue(objectDb1.getMetadata().getSchema().existsClass("V"));
@@ -79,5 +82,4 @@ public class MultipleObjectDbInstancesTest {
   }
 
   public class X extends V {}
-
 }

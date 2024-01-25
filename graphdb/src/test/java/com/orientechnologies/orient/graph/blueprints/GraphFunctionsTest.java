@@ -51,179 +51,92 @@ public class GraphFunctionsTest {
 
   @Test
   public void testOut() {
-    int found;
+    long found;
 
     // V1
-    found = 0;
-    for (Vertex v :
-        (Iterable<Vertex>)
-            graph.command(new OCommandSQL("select expand( out() ) from " + v1.getId())).execute())
-      found++;
+    found = graph.sqlQuery("select expand( out() ) from " + v1.getId()).stream().count();
     Assert.assertEquals(found, 2);
 
-    found = 0;
-    for (Vertex v :
-        (Iterable<Vertex>)
-            graph
-                .command(new OCommandSQL("select expand( out('SubEdge') ) from " + v1.getId()))
-                .execute()) found++;
+    found = graph.sqlQuery("select expand( out('SubEdge') ) from " + v1.getId()).stream().count();
     Assert.assertEquals(found, 1);
 
-    found = 0;
-    for (Vertex v :
-        (Iterable<Vertex>)
-            graph
-                .command(new OCommandSQL("select expand( out('dddd') ) from " + v1.getId()))
-                .execute()) found++;
+    found = graph.sqlQuery("select expand( out('dddd') ) from " + v1.getId()).stream().count();
     Assert.assertEquals(found, 0);
 
     // V2
-    found = 0;
-    for (Vertex v :
-        (Iterable<Vertex>)
-            graph.command(new OCommandSQL("select expand( out() ) from " + v2.getId())).execute())
-      found++;
+    found = graph.sqlQuery("select expand( out() ) from " + v2.getId()).stream().count();
     Assert.assertEquals(found, 0);
     // V3
-    found = 0;
-    for (Vertex v :
-        (Iterable<Vertex>)
-            graph.command(new OCommandSQL("select expand( out() ) from " + v3.getId())).execute())
-      found++;
+    found = graph.sqlQuery("select expand( out() ) from " + v3.getId()).stream().count();
     Assert.assertEquals(found, 0);
   }
 
   @Test
   public void testIn() {
-    int found;
+    long found;
 
     // V1
-    found = 0;
-    for (Vertex v :
-        (Iterable<Vertex>)
-            graph.command(new OCommandSQL("select expand( in() ) from " + v1.getId())).execute())
-      found++;
+
+    found = graph.sqlQuery("select expand( in() ) from " + v1.getId()).stream().count();
     Assert.assertEquals(found, 0);
 
     // V2
-    found = 0;
-    for (Vertex v :
-        (Iterable<Vertex>)
-            graph.command(new OCommandSQL("select expand( in() ) from " + v2.getId())).execute())
-      found++;
+    found = graph.sqlQuery("select expand( in() ) from " + v2.getId()).stream().count();
     Assert.assertEquals(found, 1);
 
-    found = 0;
-    for (Vertex v :
-        (Iterable<Vertex>)
-            graph
-                .command(new OCommandSQL("select expand( in('SubEdge') ) from " + v2.getId()))
-                .execute()) found++;
+    found = graph.sqlQuery("select expand( in('SubEdge') ) from " + v2.getId()).stream().count();
     Assert.assertEquals(found, 1);
 
-    found = 0;
-    for (Vertex v :
-        (Iterable<Vertex>)
-            graph
-                .command(new OCommandSQL("select expand( in('dddd') ) from " + v2.getId()))
-                .execute()) found++;
+    found = graph.sqlQuery("select expand( in('dddd') ) from " + v2.getId()).stream().count();
     Assert.assertEquals(found, 0);
 
     // V3
-    found = 0;
-    for (Vertex v :
-        (Iterable<Vertex>)
-            graph.command(new OCommandSQL("select expand( in() ) from " + v3.getId())).execute())
-      found++;
+    found = graph.sqlQuery("select expand( in() ) from " + v3.getId()).stream().count();
     Assert.assertEquals(found, 1);
   }
 
   @Test
   public void testOutE() {
-    int found;
+    long found;
 
     // V1
-    found = 0;
-    for (Edge v :
-        (Iterable<Edge>)
-            graph.command(new OCommandSQL("select expand( outE() ) from " + v1.getId())).execute())
-      found++;
+    found = graph.sqlQuery("select expand( outE() ) from " + v1.getId()).stream().count();
     Assert.assertEquals(found, 2);
 
-    found = 0;
-    for (Edge v :
-        (Iterable<Edge>)
-            graph
-                .command(new OCommandSQL("select expand( outE('SubEdge') ) from " + v1.getId()))
-                .execute()) found++;
+    found = graph.sqlQuery("select expand( outE('SubEdge') ) from " + v1.getId()).stream().count();
     Assert.assertEquals(found, 1);
 
-    found = 0;
-    for (Edge v :
-        (Iterable<Edge>)
-            graph
-                .command(new OCommandSQL("select expand( outE('dddd') ) from " + v1.getId()))
-                .execute()) found++;
+    found = graph.sqlQuery("select expand( outE('dddd') ) from " + v1.getId()).stream().count();
     Assert.assertEquals(found, 0);
 
     // V2
-    found = 0;
-    for (Edge v :
-        (Iterable<Edge>)
-            graph.command(new OCommandSQL("select expand( outE() ) from " + v2.getId())).execute())
-      found++;
+    found = graph.sqlQuery("select expand( outE() ) from " + v2.getId()).stream().count();
     Assert.assertEquals(found, 0);
     // V3
-    found = 0;
-    for (Edge v :
-        (Iterable<Edge>)
-            graph.command(new OCommandSQL("select expand( outE() ) from " + v3.getId())).execute())
-      found++;
+    found = graph.sqlQuery("select expand( outE() ) from " + v3.getId()).stream().count();
     Assert.assertEquals(found, 0);
   }
 
   @Test
   public void testInE() {
-    int found;
+    long found;
 
     // V1
-    found = 0;
-    for (Edge v :
-        (Iterable<Edge>)
-            graph.command(new OCommandSQL("select expand( inE() ) from " + v1.getId())).execute())
-      found++;
+    found = graph.sqlQuery("select expand( inE() ) from " + v1.getId()).stream().count();
     Assert.assertEquals(found, 0);
 
     // V2
-    found = 0;
-    for (Edge v :
-        (Iterable<Edge>)
-            graph.command(new OCommandSQL("select expand( inE() ) from " + v2.getId())).execute())
-      found++;
+    found = graph.sqlQuery("select expand( inE() ) from " + v2.getId()).stream().count();
     Assert.assertEquals(found, 1);
 
-    found = 0;
-    for (Edge v :
-        (Iterable<Edge>)
-            graph
-                .command(new OCommandSQL("select expand( inE('SubEdge') ) from " + v2.getId()))
-                .execute()) found++;
+    found = graph.sqlQuery("select expand( inE('SubEdge') ) from " + v2.getId()).stream().count();
     Assert.assertEquals(found, 1);
 
-    found = 0;
-    for (Edge v :
-        (Iterable<Edge>)
-            graph
-                .command(new OCommandSQL("select expand( inE('dddd') ) from " + v2.getId()))
-                .execute()) found++;
+    found = graph.sqlQuery("select expand( inE('dddd') ) from " + v2.getId()).stream().count();
     Assert.assertEquals(found, 0);
 
     // V3
-    found = 0;
-    for (Edge v :
-        (Iterable<Edge>)
-            graph.command(new OCommandSQL("select expand( inE() ) from " + v3.getId())).execute())
-      found++;
+    found = graph.sqlQuery("select expand( inE() ) from " + v3.getId()).stream().count();
     Assert.assertEquals(found, 1);
   }
 
@@ -264,15 +177,10 @@ public class GraphFunctionsTest {
 
   @Test
   public void testOutEPolymorphic() {
-    int found;
+    long found;
 
     // V1
-    found = 0;
-    for (Edge v :
-        (Iterable<Edge>)
-            graph
-                .command(new OCommandSQL("select expand( outE('E') ) from " + v1.getId()))
-                .execute()) found++;
+    found = graph.sqlQuery("select expand( outE('E') ) from " + v1.getId()).stream().count();
     Assert.assertEquals(found, 2);
   }
 }

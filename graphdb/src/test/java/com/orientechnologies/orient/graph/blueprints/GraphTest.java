@@ -286,9 +286,7 @@ public class GraphTest {
 
       g.commit();
 
-      g.command(new OCommandSQL("delete from " + vertexTwo.getRecord().getIdentity() + " unsafe"))
-          .execute();
-      // g.command(new OCommandSQL("update BrokenVertex1E set out = null")).execute();
+      g.sqlCommand("delete from " + vertexTwo.getRecord().getIdentity() + " unsafe").close();
 
       g.shutdown();
       g = new OrientGraph(URL, "admin", "admin");
@@ -416,14 +414,12 @@ public class GraphTest {
       if (!((ODatabaseInternal) graph.getRawGraph()).getStorage().isRemote()) {
         graph.createVertexType("Account");
 
-        graph.command(new OCommandSQL("create property account.description STRING")).execute();
-        graph.command(new OCommandSQL("create property account.namespace STRING")).execute();
-        graph.command(new OCommandSQL("create property account.name STRING")).execute();
+        graph.sqlCommand("create property account.description STRING").close();
+        graph.sqlCommand("create property account.namespace STRING").close();
+        graph.sqlCommand("create property account.name STRING").close();
         graph
-            .command(
-                new OCommandSQL(
-                    "create index account.composite on account (name, namespace) unique"))
-            .execute();
+            .sqlCommand("create index account.composite on account (name, namespace) unique")
+            .close();
 
         graph.addVertex(
             "class:account",

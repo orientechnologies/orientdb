@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverEventListener;
@@ -418,10 +417,8 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
                 if (!gVertexesIterator.hasNext()) {
                   graph
-                      .command(
-                          new OCommandSQL(
-                              "CREATE VERTEX TestVertex SET uuid = '" + fromVertex.uuid + "'"))
-                      .execute();
+                      .sqlCommand("CREATE VERTEX TestVertex SET uuid = '" + fromVertex.uuid + "'")
+                      .close();
 
                   vertexes =
                       graph
@@ -447,10 +444,8 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
                 gVertexesIterator = vertexes.iterator();
                 if (!gVertexesIterator.hasNext()) {
                   graph
-                      .command(
-                          new OCommandSQL(
-                              "CREATE VERTEX TestVertex SET uuid = '" + toVertex.uuid + "'"))
-                      .execute();
+                      .sqlCommand("CREATE VERTEX TestVertex SET uuid = '" + toVertex.uuid + "'")
+                      .close();
                   vertexes =
                       graph
                           .command(
@@ -473,16 +468,15 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
                 if (!edges.iterator().hasNext()) {
                   graph
-                      .command(
-                          new OCommandSQL(
-                              "CREATE EDGE TestEdge FROM "
-                                  + gFromVertex.getId()
-                                  + " TO "
-                                  + gToVertex.getId()
-                                  + " SET uuid = '"
-                                  + edge.uuid
-                                  + "'"))
-                      .execute();
+                      .sqlCommand(
+                          "CREATE EDGE TestEdge FROM "
+                              + gFromVertex.getId()
+                              + " TO "
+                              + gToVertex.getId()
+                              + " SET uuid = '"
+                              + edge.uuid
+                              + "'")
+                      .close();
                 }
 
                 graph.commit();
@@ -523,10 +517,8 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
                 if (!gVertexesIterator.hasNext()) {
                   graph
-                      .command(
-                          new OCommandSQL(
-                              "CREATE VERTEX TestVertex SET uuid = '" + fromVertex.uuid + "'"))
-                      .execute();
+                      .sqlCommand("CREATE VERTEX TestVertex SET uuid = '" + fromVertex.uuid + "'")
+                      .close();
                 }
 
                 success = true;
@@ -601,9 +593,7 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
         TestEdge edge = edges.get(randomEdge);
         do {
           try {
-            graph
-                .command(new OCommandSQL("delete edge TestEdge where uuid = '" + edge.uuid + "'"))
-                .execute();
+            graph.sqlCommand("delete edge TestEdge where uuid = '" + edge.uuid + "'").close();
             graph.commit();
             break;
 
@@ -638,10 +628,7 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
         do {
           try {
-            graph
-                .command(
-                    new OCommandSQL("delete vertex TestVertex where uuid = '" + vertex.uuid + "'"))
-                .execute();
+            graph.sqlCommand("delete vertex TestVertex where uuid = '" + vertex.uuid + "'").close();
             graph.commit();
             break;
 
