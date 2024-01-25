@@ -3,7 +3,6 @@ package com.orientechnologies.orient.graph.blueprints;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
@@ -107,9 +106,7 @@ public class BlueprintsTest {
 
   @Test
   public void testEdgePhysicalRemoval() {
-    graph
-        .command(new OCommandSQL("delete from e where name = 'forceCreationOfDocument'"))
-        .execute();
+    graph.sqlCommand("delete from e where name = 'forceCreationOfDocument'").close();
 
     Vertex v1 = graph.addVertex(null);
     Vertex v2 = graph.addVertex(null);

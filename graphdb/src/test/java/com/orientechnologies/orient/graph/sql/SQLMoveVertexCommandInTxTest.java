@@ -51,7 +51,7 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
           public Object call(OrientBaseGraph iArgument) {
             customer = graph.getVertexType("Customer");
             if (customer != null) {
-              graph.command(new OCommandSQL("delete vertex Customer"));
+              graph.sqlCommand("delete vertex Customer").close();
               graph.dropVertexType("Customer");
             }
 
@@ -63,7 +63,7 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
 
             provider = graph.getVertexType("Provider");
             if (provider != null) {
-              graph.command(new OCommandSQL("delete vertex Provider"));
+              graph.sqlCommand("delete vertex Provider").close();
               graph.dropVertexType("Provider");
             }
 
@@ -73,7 +73,7 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
 
             knows = graph.getEdgeType("Knows");
             if (knows != null) {
-              graph.command(new OCommandSQL("delete edge Knows"));
+              graph.sqlCommand("delete edge Knows").close();
               graph.dropVertexType("Knows");
             }
             knows = graph.createEdgeType("Knows");

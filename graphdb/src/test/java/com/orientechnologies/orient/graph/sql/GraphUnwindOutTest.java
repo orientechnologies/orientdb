@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
@@ -40,10 +39,9 @@ public class GraphUnwindOutTest {
       test3.save();
       graph.commit();
       graph
-          .command(
-              new OCommandSQL(
-                  "create edge edgetestedge from (select from edgetest where ida='parentckt1') to (select from edgetest where ida like 'childckt%')"))
-          .execute();
+          .sqlCommand(
+              "create edge edgetestedge from (select from edgetest where ida='parentckt1') to (select from edgetest where ida like 'childckt%')")
+          .close();
       graph.commit();
       Iterable<OrientElement> res =
           graph

@@ -24,7 +24,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.stresstest.workload.OCheckWorkload;
 import com.orientechnologies.orient.stresstest.workload.OWorkload;
 import com.orientechnologies.orient.stresstest.workload.OWorkloadFactory;
@@ -154,11 +155,15 @@ public class OStressTester {
           ODatabaseUtils.openDatabase(
               databaseIdentifier, OStorageRemote.CONNECTION_STRATEGY.STICKY);
       try {
-        final String output =
-            db.command(new OCommandSQL("ha status -latency -messages -output=text")).execute();
-        System.out.println("HA METRICS");
-        System.out.println(output);
-
+        try (OResultSet output = db.command("ha status -latency -messages -output=text")) {
+          System.out.println("HA METRICS");
+          while (output.hasNext()) {
+            OResult next = output.next();
+            for (String property : next.getPropertyNames()) {
+              System.out.println(property + " = " + next.getProperty(property));
+            }
+          }
+        }
       } catch (Exception e) {
         // IGNORE IT
       } finally {
