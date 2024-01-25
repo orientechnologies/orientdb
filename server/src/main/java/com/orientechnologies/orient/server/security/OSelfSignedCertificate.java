@@ -27,9 +27,8 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
  * @since 24/02/2021
  *     <p>Class developed to generate self-signed certificate
  */
-public class OSelfSignedCertificate<tmpLocalHost> {
+public class OSelfSignedCertificate {
 
-  public static final String DEFAULT_CERTIFICATE_TYPE = "X.509";
   public static final String DEFAULT_CERTIFICATE_ALGORITHM = "RSA";
   public static final int DEFAULT_CERTIFICATE_KEY_SIZE = 2048;
   public static final int DEFAULT_CERTIFICATE_VALIDITY = 365;
@@ -45,7 +44,6 @@ public class OSelfSignedCertificate<tmpLocalHost> {
   private X509Certificate certificate = null;
 
   private String certificateName;
-  private char[] certificate_pwd;
   private BigInteger certificateSN;
   private String ownerFDN;
 
@@ -59,9 +57,11 @@ public class OSelfSignedCertificate<tmpLocalHost> {
   }
 
   public void setAlgorithm(String algorithm) {
-    if ((algorithm == null) || (algorithm.isEmpty()))
+    if ((algorithm == null) || (algorithm.isEmpty())) {
       this.algorithm = DEFAULT_CERTIFICATE_ALGORITHM;
-    else this.algorithm = algorithm;
+    } else {
+      this.algorithm = algorithm;
+    }
   }
 
   public int getKey_size() {
@@ -76,10 +76,6 @@ public class OSelfSignedCertificate<tmpLocalHost> {
     }
   }
 
-  public int getValidity() {
-    return validity;
-  }
-
   public void setValidity(int validity) {
     this.validity = validity;
   }
@@ -92,18 +88,6 @@ public class OSelfSignedCertificate<tmpLocalHost> {
     this.certificateName = certificateName;
   }
 
-  public char[] getCertificatePwd() {
-    return certificate_pwd;
-  }
-
-  public void setCertificatePwd(char[] certificatePwd) {
-    this.certificate_pwd = certificatePwd;
-  }
-
-  public BigInteger getCertificateSN() {
-    return certificateSN;
-  }
-
   public void setCertificateSN(long certificateSN) throws SwitchToDefaultParamsException {
     if (certificateSN <= 11) {
       BigInteger sn = computeRandomSerialNumber();
@@ -113,7 +97,9 @@ public class OSelfSignedCertificate<tmpLocalHost> {
               + certificateSN
               + " culd not be used as a Certificate Serial Nuber, the value will be set to:"
               + sn);
-    } else this.certificateSN = BigInteger.valueOf(certificateSN);
+    } else {
+      this.certificateSN = BigInteger.valueOf(certificateSN);
+    }
   }
 
   public static BigInteger computeRandomSerialNumber() {
@@ -121,16 +107,8 @@ public class OSelfSignedCertificate<tmpLocalHost> {
     return BigInteger.valueOf(sr.nextLong());
   }
 
-  public String getOwnerFDN() {
-    return ownerFDN;
-  }
-
   public void setOwnerFDN(String ownerFDN) {
     this.ownerFDN = ownerFDN;
-  }
-
-  public void setOwner_FDN(String CN, String OU, String O, String L, String C) {
-    this.ownerFDN = "CN=" + CN + ", OU=" + OU + ", O=" + O + ", L=" + L + ", C=" + C;
   }
 
   /**
@@ -142,18 +120,17 @@ public class OSelfSignedCertificate<tmpLocalHost> {
    *
    * <p>This method will computes and returns a new key pair every time it is called.
    *
+   * @return a new key pair
    * @throws NoSuchAlgorithmException if the algorithm String not match with the supported key
    *     generation schemes.
-   * @return a new key pair
    */
   public static KeyPair computeKeyPair(String algorithm, int keySize)
       throws NoSuchAlgorithmException {
 
     KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
     keyPairGenerator.initialize(keySize, new SecureRandom());
-    KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-    return keyPair;
+    return keyPairGenerator.generateKeyPair();
   }
 
   /**
