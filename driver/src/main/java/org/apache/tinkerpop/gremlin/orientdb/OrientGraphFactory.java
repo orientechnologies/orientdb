@@ -269,6 +269,16 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
     factory.close();
   }
 
+  @Override
+  public String toString() {
+    return OrientGraph.class.getSimpleName().toLowerCase()
+        + "["
+        + connectionURI
+        + "/"
+        + dbName
+        + "]";
+  }
+
   public boolean isOpen() {
     return factory.isOpen();
   }

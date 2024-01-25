@@ -213,6 +213,6 @@ public class OrientStandardGraph implements OGraph {
 
   @Override
   public String toString() {
-    return graph().toString();
+    return factory.toString();
   }
 }
