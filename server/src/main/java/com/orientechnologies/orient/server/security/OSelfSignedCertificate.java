@@ -7,16 +7,16 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Date;
-import sun.security.x509.*;
+import javax.security.auth.x500.X500Principal;
+import org.bouncycastle.x509.X509V3CertificateGenerator;
 
 /**
  * @author Matteo Bollo (matteo.bollo-at-sap.com)
  * @since 24/02/2021
  *     <p>Class developed to generate self-signed certificate
  */
-public class OSelfSignedCertificate<tmpLocalHost> {
+public class OSelfSignedCertificate {
 
-  public static final String DEFAULT_CERTIFICATE_TYPE = "X.509";
   public static final String DEFAULT_CERTIFICATE_ALGORITHM = "RSA";
   public static final int DEFAULT_CERTIFICATE_KEY_SIZE = 2048;
   public static final int DEFAULT_CERTIFICATE_VALIDITY = 365;
@@ -32,7 +32,6 @@ public class OSelfSignedCertificate<tmpLocalHost> {
   private X509Certificate certificate = null;
 
   private String certificateName;
-  private char[] certificate_pwd;
   private BigInteger certificateSN;
   private String ownerFDN;
 
@@ -46,9 +45,11 @@ public class OSelfSignedCertificate<tmpLocalHost> {
   }
 
   public void setAlgorithm(String algorithm) {
-    if ((algorithm == null) || (algorithm.isEmpty()))
+    if ((algorithm == null) || (algorithm.isEmpty())) {
       this.algorithm = DEFAULT_CERTIFICATE_ALGORITHM;
-    else this.algorithm = algorithm;
+    } else {
+      this.algorithm = algorithm;
+    }
   }
 
   public int getKey_size() {
@@ -63,10 +64,6 @@ public class OSelfSignedCertificate<tmpLocalHost> {
     }
   }
 
-  public int getValidity() {
-    return validity;
-  }
-
   public void setValidity(int validity) {
     this.validity = validity;
   }
@@ -79,18 +76,6 @@ public class OSelfSignedCertificate<tmpLocalHost> {
     this.certificateName = certificateName;
   }
 
-  public char[] getCertificatePwd() {
-    return certificate_pwd;
-  }
-
-  public void setCertificatePwd(char[] certificatePwd) {
-    this.certificate_pwd = certificatePwd;
-  }
-
-  public BigInteger getCertificateSN() {
-    return certificateSN;
-  }
-
   public void setCertificateSN(long certificateSN) throws SwitchToDefaultParamsException {
     if (certificateSN <= 11) {
       BigInteger sn = computeRandomSerialNumber();
@@ -100,7 +85,9 @@ public class OSelfSignedCertificate<tmpLocalHost> {
               + certificateSN
               + " culd not be used as a Certificate Serial Nuber, the value will be set to:"
               + sn);
-    } else this.certificateSN = BigInteger.valueOf(certificateSN);
+    } else {
+      this.certificateSN = BigInteger.valueOf(certificateSN);
+    }
   }
 
   public static BigInteger computeRandomSerialNumber() {
@@ -108,16 +95,8 @@ public class OSelfSignedCertificate<tmpLocalHost> {
     return BigInteger.valueOf(sr.nextLong());
   }
 
-  public String getOwnerFDN() {
-    return ownerFDN;
-  }
-
   public void setOwnerFDN(String ownerFDN) {
     this.ownerFDN = ownerFDN;
-  }
-
-  public void setOwner_FDN(String CN, String OU, String O, String L, String C) {
-    this.ownerFDN = "CN=" + CN + ", OU=" + OU + ", O=" + O + ", L=" + L + ", C=" + C;
   }
 
   /**
@@ -129,18 +108,17 @@ public class OSelfSignedCertificate<tmpLocalHost> {
    *
    * <p>This method will computes and returns a new key pair every time it is called.
    *
+   * @return a new key pair
    * @throws NoSuchAlgorithmException if the algorithm String not match with the supported key
    *     generation schemes.
-   * @return a new key pair
    */
   public static KeyPair computeKeyPair(String algorithm, int keySize)
       throws NoSuchAlgorithmException {
 
     KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
     keyPairGenerator.initialize(keySize, new SecureRandom());
-    KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-    return keyPair;
+    return keyPairGenerator.generateKeyPair();
   }
 
   /**
@@ -190,40 +168,17 @@ public class OSelfSignedCertificate<tmpLocalHost> {
   public static X509Certificate generateSelfSignedCertificate(
       KeyPair keypair, int validity, String ownerFDN, BigInteger certSN)
       throws CertificateException, IOException, NoSuchAlgorithmException {
+    X509V3CertificateGenerator certGen = new X509V3CertificateGenerator();
 
-    X509CertImpl cert;
-
-    //  Build the X.509 certificate content:
-    X509CertInfo info = new X509CertInfo();
-    X500Name owner;
-    owner = new X500Name(ownerFDN);
-
-    // set certificate VERSION
-    try {
-      info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
-    } catch (IOException e) {
-      try {
-        info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V2));
-      } catch (IOException ex) {
-        info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V1));
-      }
-    }
-
+    X500Principal owner;
+    owner = new X500Principal(ownerFDN);
     // set certificate SERIAL NUMBER
-    info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(certSN));
+    certGen.setSerialNumber(certSN);
 
     // set certificate SUBJECT i.e. the owner of the certificate.
-    try {
-      info.set(X509CertInfo.SUBJECT, new CertificateSubjectName(owner));
-    } catch (CertificateException ignore) {
-      info.set(X509CertInfo.SUBJECT, owner);
-    }
+    certGen.setSubjectDN(owner);
     // set certificate ISSUER equal to SBUJECT as it is a self-signed certificate.
-    try {
-      info.set(X509CertInfo.ISSUER, new CertificateIssuerName(owner));
-    } catch (CertificateException ignore) {
-      info.set(X509CertInfo.ISSUER, owner);
-    }
+    certGen.setIssuerDN(owner);
 
     // set certificate VALIDITY from today to today+validity
 
@@ -233,52 +188,21 @@ public class OSelfSignedCertificate<tmpLocalHost> {
     from = c.getTime();
     c.add(Calendar.DAY_OF_YEAR, validity);
     to = c.getTime();
-    info.set(X509CertInfo.VALIDITY, new CertificateValidity(from, to));
+
+    certGen.setNotBefore(from);
+    certGen.setNotAfter(to);
 
     // set certificate PUBLIC_KEY
-    info.set(X509CertInfo.KEY, new CertificateX509Key(keypair.getPublic()));
+    certGen.setPublicKey(keypair.getPublic());
 
     // set certificate Signature ALGORITHM = RSA
-    info.set(
-        X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(AlgorithmId.get("SHA256WithRSA")));
-
-    // Sign the cert to identify the algorithm that's used.
-    cert = new X509CertImpl(info);
+    certGen.setSignatureAlgorithm("SHA256WithRSA");
 
     try {
-      cert.sign(keypair.getPrivate(), "SHA256withRSA");
-      //            cert.sign(keyPair.getPrivate(),"SHA1withDSA");
-    } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
-    } catch (InvalidKeyException e) {
-      e.printStackTrace();
-    } catch (NoSuchProviderException e) {
-      e.printStackTrace();
-    } catch (SignatureException e) {
-      e.printStackTrace();
+      return certGen.generate(keypair.getPrivate());
+    } catch (SignatureException | InvalidKeyException e) {
+      throw new RuntimeException(e);
     }
-
-    // Update the algorithm and sign again.
-    info.set(
-        CertificateAlgorithmId.NAME + '.' + CertificateAlgorithmId.ALGORITHM,
-        cert.get(X509CertImpl.SIG_ALG));
-
-    cert = new X509CertImpl(info);
-
-    try {
-      cert.sign(keypair.getPrivate(), "SHA256withRSA");
-      cert.verify(keypair.getPublic());
-    } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
-    } catch (InvalidKeyException e) {
-      e.printStackTrace();
-    } catch (NoSuchProviderException e) {
-      e.printStackTrace();
-    } catch (SignatureException e) {
-      e.printStackTrace();
-    }
-
-    return cert;
   }
 
   public X509Certificate getCertificate() throws CertificateException {

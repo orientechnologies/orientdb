@@ -25,7 +25,7 @@ import com.orientechnologies.orient.etl.OETLComponent;
 import com.orientechnologies.orient.etl.OETLPipeline;
 
 /** ETL Loader. */
-public interface OETLLoader extends OETLComponent {
+public interface OETLLoader extends OETLComponent, AutoCloseable {
 
   void load(ODatabaseDocument db, final Object input, OCommandContext context);
 

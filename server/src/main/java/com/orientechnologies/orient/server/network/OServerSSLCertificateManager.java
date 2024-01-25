@@ -127,7 +127,7 @@ public class OServerSSLCertificateManager {
           0); // trick to force it to conpute a random BigInteger
     } catch (SwitchToDefaultParamsException e) {
     }
-    this.oSelfSignedCertificate.setCertificatePwd(null);
+
     this.oSelfSignedCertificate.setKey_size(OSelfSignedCertificate.DEFAULT_CERTIFICATE_KEY_SIZE);
     this.oSelfSignedCertificate.setOwnerFDN(OSelfSignedCertificate.DEFAULT_CERTIFICATE_OWNER);
     this.oSelfSignedCertificate.setValidity(OSelfSignedCertificate.DEFAULT_CERTIFICATE_VALIDITY);

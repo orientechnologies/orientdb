@@ -33,6 +33,7 @@ import org.junit.rules.TestName;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OETLBaseTest {
+
   @Rule public TestName name = new TestName();
 
   protected String[] names =
@@ -46,7 +47,6 @@ public abstract class OETLBaseTest {
 
   @Before
   public void configureProcessor() throws Throwable {
-
     OLogManager.instance().installCustomFormatter();
     OETLComponentFactory factory =
         new OETLComponentFactory()
@@ -58,7 +58,10 @@ public abstract class OETLBaseTest {
 
   @After
   public void closeResources() {
-    if (proc != null) proc.close();
+    if (proc != null) {
+      proc.close();
+      proc = null;
+    }
   }
 
   protected List<ODocument> getResult() {

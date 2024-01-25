@@ -23,7 +23,6 @@ public class OSelfSignedCertificateTest extends TestCase {
     testInstance.setAlgorithm(OSelfSignedCertificate.DEFAULT_CERTIFICATE_ALGORITHM);
     testInstance.setCertificateName(OSelfSignedCertificate.DEFAULT_CERTIFICATE_NAME);
     testInstance.setCertificateSN(1701198707);
-    testInstance.setCertificatePwd(null);
     testInstance.setKey_size(OSelfSignedCertificate.DEFAULT_CERTIFICATE_KEY_SIZE);
     testInstance.setOwnerFDN(OSelfSignedCertificate.DEFAULT_CERTIFICATE_OWNER);
     testInstance.setValidity(OSelfSignedCertificate.DEFAULT_CERTIFICATE_VALIDITY);
