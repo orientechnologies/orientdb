@@ -161,7 +161,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
     orient.addOrientDB(this);
     executor = newExecutor();
     ioExecutor = newIoExecutor();
-    timer = new Timer();
+    String timerName;
+    if (basePath != null) {
+      timerName = "embedded:" + basePath;
+    } else {
+      timerName = "memory:";
+    }
+    timer = new Timer("OrientDB Timer[" + timerName + "]");
 
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
 

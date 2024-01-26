@@ -347,7 +347,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
   OElement newEmbeddedElement();
 
   OElement newEmbeddedElement(final String className);
-  
+
   default OElement reload(OElement element) {
     return (OElement) reload(element, null, true);
   }
