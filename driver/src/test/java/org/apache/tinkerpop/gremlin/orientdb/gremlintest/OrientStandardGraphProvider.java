@@ -50,6 +50,8 @@ public class OrientStandardGraphProvider extends OrientGraphProvider {
 
       if (g.isOpen()) {
         g.drop();
+      } else {
+        g.close();
       }
     }
   }
