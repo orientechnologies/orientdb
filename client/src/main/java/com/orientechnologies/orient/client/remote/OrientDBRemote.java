@@ -403,7 +403,6 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public void close() {
     if (!open) return;
-    timer.cancel();
     removeShutdownHook();
     internalClose();
   }
