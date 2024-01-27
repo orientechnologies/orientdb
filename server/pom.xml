@@ -65,7 +65,7 @@
         
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
+            <artifactId>bcpkix-jdk18on</artifactId>
             <version>1.77</version>
         </dependency>
 
@@ -74,8 +74,9 @@
             <artifactId>httpclient</artifactId>
             <version>4.5.14</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
+		</dependency>
+
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
             <version>4.5.14</version>
