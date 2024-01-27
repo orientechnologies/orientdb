@@ -7,8 +7,12 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Date;
-import javax.security.auth.x500.X500Principal;
-import org.bouncycastle.x509.X509V3CertificateGenerator;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 /**
  * @author Matteo Bollo (matteo.bollo-at-sap.com)
@@ -156,31 +160,17 @@ public class OSelfSignedCertificate {
       this.certificate =
           generateSelfSignedCertificate(
               this.keyPair, this.validity, this.ownerFDN, this.certificateSN);
-    } catch (CertificateException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
+    } catch (CertificateException | IOException | NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
     }
   }
 
   public static X509Certificate generateSelfSignedCertificate(
       KeyPair keypair, int validity, String ownerFDN, BigInteger certSN)
       throws CertificateException, IOException, NoSuchAlgorithmException {
-    X509V3CertificateGenerator certGen = new X509V3CertificateGenerator();
 
-    X500Principal owner;
-    owner = new X500Principal(ownerFDN);
-    // set certificate SERIAL NUMBER
-    certGen.setSerialNumber(certSN);
-
-    // set certificate SUBJECT i.e. the owner of the certificate.
-    certGen.setSubjectDN(owner);
-    // set certificate ISSUER equal to SBUJECT as it is a self-signed certificate.
-    certGen.setIssuerDN(owner);
-
-    // set certificate VALIDITY from today to today+validity
+    X500Name owner;
+    owner = new X500Name(ownerFDN);
 
     Date from, to;
     Calendar c = Calendar.getInstance();
@@ -189,18 +179,23 @@ public class OSelfSignedCertificate {
     c.add(Calendar.DAY_OF_YEAR, validity);
     to = c.getTime();
 
-    certGen.setNotBefore(from);
-    certGen.setNotAfter(to);
-
-    // set certificate PUBLIC_KEY
-    certGen.setPublicKey(keypair.getPublic());
-
-    // set certificate Signature ALGORITHM = RSA
-    certGen.setSignatureAlgorithm("SHA256WithRSA");
+    var certBuilder =
+        new X509v3CertificateBuilder(
+            owner,
+            certSN,
+            from,
+            to,
+            owner,
+            SubjectPublicKeyInfo.getInstance(keypair.getPublic().getEncoded()));
 
     try {
-      return certGen.generate(keypair.getPrivate());
-    } catch (SignatureException | InvalidKeyException e) {
+      var certHolder =
+          certBuilder.build(
+              new JcaContentSignerBuilder("SHA256WithRSA")
+                  .setProvider("BC")
+                  .build(keypair.getPrivate()));
+      return new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
+    } catch (OperatorCreationException e) {
       throw new RuntimeException(e);
     }
   }
@@ -208,32 +203,24 @@ public class OSelfSignedCertificate {
   public X509Certificate getCertificate() throws CertificateException {
 
     if (this.certificate == null) {
-      CertificateException cEx =
-          new CertificateException(
-              "The Self-Signed Certificate han not been genetated! You have to invoke the composeSelfSignedCertificate() before get it.");
-      throw cEx;
+      throw new CertificateException(
+          "The Self-Signed Certificate han not been genetated! "
+              + "You have to invoke the composeSelfSignedCertificate() before get it.");
     }
     return this.certificate;
   }
 
-  public static boolean checkCertificate(X509Certificate cert, PublicKey publicKey, Date date)
+  public static void checkCertificate(X509Certificate cert, PublicKey publicKey, Date date)
       throws NoSuchProviderException, CertificateException, NoSuchAlgorithmException,
           InvalidKeyException, SignatureException {
     cert.checkValidity(date);
     cert.verify(publicKey);
-    return true;
   }
 
-  public static boolean checkCertificate(X509Certificate cert, PublicKey publicKey)
-      throws NoSuchProviderException, CertificateException, NoSuchAlgorithmException,
-          InvalidKeyException, SignatureException {
-    return checkCertificate(cert, publicKey, new Date(System.currentTimeMillis()));
-  }
-
-  public boolean checkThisCertificate()
+  public void checkThisCertificate()
       throws NoSuchAlgorithmException, CertificateException, NoSuchProviderException,
           InvalidKeyException, SignatureException {
-    return checkCertificate(
+    checkCertificate(
         this.certificate, this.keyPair.getPublic(), new Date(System.currentTimeMillis()));
   }
 
