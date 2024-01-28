@@ -28,7 +28,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
-/** @author Luigi Dell'Aquila */
+/**
+ * @author Luigi Dell'Aquila
+ */
 public class OConsoleCommandStream implements OCommandStream {
   public static final int BUFFER_SIZE = 1024;
   private Reader reader;

@@ -16,7 +16,9 @@
  */
 package com.orientechnologies.orient.test.domain.base;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class Instrument extends IdObject {
   private String name;
 

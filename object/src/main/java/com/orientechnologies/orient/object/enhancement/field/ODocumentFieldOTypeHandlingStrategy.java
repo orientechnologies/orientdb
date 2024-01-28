@@ -42,6 +42,8 @@ public interface ODocumentFieldOTypeHandlingStrategy {
    */
   Object load(ODocument iRecord, String fieldName);
 
-  /** @return {@link OType} handled by the strategy. */
+  /**
+   * @return {@link OType} handled by the strategy.
+   */
   OType getOType();
 }

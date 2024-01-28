@@ -27,7 +27,9 @@ import com.tinkerpop.blueprints.CloseableIterable;
 import com.tinkerpop.blueprints.Element;
 import java.util.Iterator;
 
-/** @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com) */
+/**
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
+ */
 class OrientElementScanIterable<T extends Element> implements CloseableIterable<T> {
   private final String elementClass;
   private final OrientBaseGraph graph;

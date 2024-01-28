@@ -26,7 +26,9 @@ import org.junit.Test;
  *
  */
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class DistributedIndexesIT extends AbstractServerClusterTest {
   private static final int SERVERS = 2;
 

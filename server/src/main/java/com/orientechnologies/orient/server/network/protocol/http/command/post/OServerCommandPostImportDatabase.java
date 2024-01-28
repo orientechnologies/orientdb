@@ -32,7 +32,9 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OServerCommandPostImportDatabase
     extends OHttpMultipartRequestCommand<String, InputStream> implements OCommandOutputListener {
 

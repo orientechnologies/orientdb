@@ -113,7 +113,9 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
 
   private final ReferenceQueue<Thread> consumptionMapEvictionQueue = new ReferenceQueue<>();
 
-  /** @return singleton instance. */
+  /**
+   * @return singleton instance.
+   */
   public static ODirectMemoryAllocator instance() {
     final ODirectMemoryAllocator inst = INSTANCE_HOLDER.get();
     if (inst != null) {
@@ -306,7 +308,9 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     return stringBuilder.toString();
   }
 
-  /** @inheritDoc */
+  /**
+   * @inheritDoc
+   */
   @Override
   public long getMemoryConsumption() {
     return memoryConsumption.longValue();

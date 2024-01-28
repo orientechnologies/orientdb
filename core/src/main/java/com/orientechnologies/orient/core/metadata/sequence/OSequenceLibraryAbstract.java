@@ -19,7 +19,9 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
-/** @author mdjurovi */
+/**
+ * @author mdjurovi
+ */
 public abstract class OSequenceLibraryAbstract extends OProxedResource<OSequenceLibraryImpl>
     implements OSequenceLibrary {
 

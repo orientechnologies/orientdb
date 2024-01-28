@@ -23,7 +23,9 @@ package com.orientechnologies.orient.core.sql.functions;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public interface OSQLFunctionFiltered extends OSQLFunction {
 
   /**

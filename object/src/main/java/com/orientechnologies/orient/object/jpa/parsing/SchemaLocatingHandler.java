@@ -42,7 +42,9 @@ class SchemaLocatingHandler extends DefaultHandler {
     }
   }
 
-  /** @return The version of the JPA schema used */
+  /**
+   * @return The version of the JPA schema used
+   */
   public String getVersion() {
     return schemaVersion;
   }

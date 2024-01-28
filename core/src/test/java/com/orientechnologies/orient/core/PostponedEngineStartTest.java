@@ -56,7 +56,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/** @author Sergey Sitnikov */
+/**
+ * @author Sergey Sitnikov
+ */
 public class PostponedEngineStartTest {
 
   private static Orient ORIENT;
@@ -282,7 +284,7 @@ public class PostponedEngineStartTest {
         public void close() {}
 
         @Override
-        public void close(boolean iForce, boolean onDelete) {}
+        public void close(boolean iForce) {}
 
         @Override
         public boolean isClosed() {

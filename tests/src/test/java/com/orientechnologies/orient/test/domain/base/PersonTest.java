@@ -19,7 +19,9 @@ package com.orientechnologies.orient.test.domain.base;
 import java.util.HashSet;
 import java.util.Set;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class PersonTest {
   private String firstname;
 

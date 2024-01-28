@@ -5,7 +5,9 @@ final class PeriodicFlushTask implements Runnable {
   /** */
   private final OWOWCache owowCache;
 
-  /** @param owowCache */
+  /**
+   * @param owowCache
+   */
   public PeriodicFlushTask(OWOWCache owowCache) {
     this.owowCache = owowCache;
   }

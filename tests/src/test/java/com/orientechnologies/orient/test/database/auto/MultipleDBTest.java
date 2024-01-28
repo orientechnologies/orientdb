@@ -42,7 +42,9 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-/** @author Michael Hiess */
+/**
+ * @author Michael Hiess
+ */
 public class MultipleDBTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")

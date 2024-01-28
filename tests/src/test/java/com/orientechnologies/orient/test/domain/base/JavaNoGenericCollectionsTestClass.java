@@ -25,7 +25,9 @@ import java.util.Set;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class JavaNoGenericCollectionsTestClass {
   @Id private String id;
   @Version private Object version;

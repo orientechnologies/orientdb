@@ -4,7 +4,9 @@ import com.orientechnologies.BaseMemoryDatabase;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OForEachBlockExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testPlain() {

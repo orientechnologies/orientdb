@@ -28,7 +28,9 @@ import com.tinkerpop.blueprints.Element;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-/** @author Marko A. Rodriguez (http://markorodriguez.com) */
+/**
+ * @author Marko A. Rodriguez (http://markorodriguez.com)
+ */
 class OrientElementIterator<T extends Element> implements Iterator<T> {
 
   private final Iterator<?> itty;

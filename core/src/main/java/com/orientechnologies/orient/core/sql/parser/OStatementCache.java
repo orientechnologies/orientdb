@@ -23,7 +23,9 @@ public class OStatementCache {
   private Map<String, OStatement> map;
   private int mapSize;
 
-  /** @param size the size of the cache */
+  /**
+   * @param size the size of the cache
+   */
   public OStatementCache(int size) {
     this.mapSize = size;
     map =
@@ -79,6 +81,7 @@ public class OStatementCache {
     // TODO create a global cache!
     return parseServerStatement(statement);
   }
+
   /**
    * @param statement an SQL statement
    * @return the corresponding executor, taking it from the internal cache, if it exists

@@ -923,14 +923,16 @@ public final class OCronExpression implements Serializable, Cloneable {
   }
 
   protected int skipWhiteSpace(int i, String s) {
-    for (; i < s.length() && (s.charAt(i) == ' ' || s.charAt(i) == '\t'); i++) {;
+    for (; i < s.length() && (s.charAt(i) == ' ' || s.charAt(i) == '\t'); i++) {
+      ;
     }
 
     return i;
   }
 
   protected int findNextWhiteSpace(int i, String s) {
-    for (; i < s.length() && (s.charAt(i) != ' ' || s.charAt(i) != '\t'); i++) {;
+    for (; i < s.length() && (s.charAt(i) != ' ' || s.charAt(i) != '\t'); i++) {
+      ;
     }
 
     return i;

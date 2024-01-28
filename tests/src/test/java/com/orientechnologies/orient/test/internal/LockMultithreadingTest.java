@@ -20,7 +20,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/** @author Artem Loginov (logart2007-at-gmail.com) */
+/**
+ * @author Artem Loginov (logart2007-at-gmail.com)
+ */
 @Test
 public class LockMultithreadingTest {
   private static final int CREATOR_THREAD_COUNT = 10;
@@ -125,7 +127,8 @@ public class LockMultithreadingTest {
       int number = deleteCounter.getAndIncrement();
       while (number < DOCUMENT_COUNT) {
         // wait while necessary document will be created
-        while (number > createCounter.get()) ;
+        while (number > createCounter.get())
+          ;
         try {
           ODatabaseRecordThreadLocal.instance().set(db);
 

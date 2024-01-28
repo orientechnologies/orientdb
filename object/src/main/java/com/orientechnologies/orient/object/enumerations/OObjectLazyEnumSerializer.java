@@ -18,5 +18,7 @@ package com.orientechnologies.orient.object.enumerations;
 
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public interface OObjectLazyEnumSerializer<T> extends OObjectLazyMultivalueElement<T> {}

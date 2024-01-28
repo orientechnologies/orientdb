@@ -1672,6 +1672,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
                 "SELECT from TestDateComparison WHERE dateProp <= '2016-05-01'"));
     assertEquals(results.size(), 1);
   }
+
   // <<<<<<< HEAD
   // =======
 

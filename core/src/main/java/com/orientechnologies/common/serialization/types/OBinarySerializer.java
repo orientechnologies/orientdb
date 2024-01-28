@@ -69,10 +69,14 @@ public interface OBinarySerializer<T> {
    */
   T deserialize(byte[] stream, int startPosition);
 
-  /** @return Identifier of given serializer. */
+  /**
+   * @return Identifier of given serializer.
+   */
   byte getId();
 
-  /** @return <code>true</code> if binary presentation of object always has the same length. */
+  /**
+   * @return <code>true</code> if binary presentation of object always has the same length.
+   */
   boolean isFixedLength();
 
   /**

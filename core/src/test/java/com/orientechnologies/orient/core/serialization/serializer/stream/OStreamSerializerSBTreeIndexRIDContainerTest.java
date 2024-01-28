@@ -19,7 +19,8 @@ import org.junit.Test;
 
 public class OStreamSerializerSBTreeIndexRIDContainerTest extends BaseMemoryInternalDatabase {
   private OStreamSerializerSBTreeIndexRIDContainer streamSerializerSBTreeIndexRIDContainer =
-      new OStreamSerializerSBTreeIndexRIDContainer();;
+      new OStreamSerializerSBTreeIndexRIDContainer();
+  ;
 
   @Test
   public void testSerializeInByteBufferEmbeddedNonDurable() throws IOException {

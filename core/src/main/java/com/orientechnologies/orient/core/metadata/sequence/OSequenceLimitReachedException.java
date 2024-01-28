@@ -17,7 +17,9 @@ package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.exception.OException;
 
-/** @author mdjurovi */
+/**
+ * @author mdjurovi
+ */
 public class OSequenceLimitReachedException extends OException {
 
   public OSequenceLimitReachedException(String message) {

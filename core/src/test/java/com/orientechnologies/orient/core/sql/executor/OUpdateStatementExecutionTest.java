@@ -27,7 +27,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OUpdateStatementExecutionTest {
   @Rule public TestName name = new TestName();
 

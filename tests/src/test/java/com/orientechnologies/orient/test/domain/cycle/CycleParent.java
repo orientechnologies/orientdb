@@ -3,7 +3,9 @@ package com.orientechnologies.orient.test.domain.cycle;
 import java.util.ArrayList;
 import java.util.List;
 
-/** @author Wouter de Vaal */
+/**
+ * @author Wouter de Vaal
+ */
 public class CycleParent {
 
   private String name;

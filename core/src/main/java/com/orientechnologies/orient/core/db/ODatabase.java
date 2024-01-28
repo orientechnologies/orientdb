@@ -1115,7 +1115,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *     commit/retry
    */
   default <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
-      throws IllegalStateException, IllegalArgumentException, ONeedRetryException,
+      throws IllegalStateException,
+          IllegalArgumentException,
+          ONeedRetryException,
           UnsupportedOperationException {
     if (nRetries < 1) {
       throw new IllegalArgumentException("invalid number of retries: " + nRetries);

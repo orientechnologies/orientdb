@@ -27,7 +27,9 @@ import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author marko */
+/**
+ * @author marko
+ */
 public class OSequenceActionRequestTest {
 
   @Test

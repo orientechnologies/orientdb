@@ -32,7 +32,9 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
     checkAndCreateDatabase(dbName);
   }
 
-  /** @return */
+  /**
+   * @return
+   */
   private ExecutorService getExecutorService() {
     if (executorService == null) {
       executorService = Executors.newFixedThreadPool(10);
@@ -332,7 +334,9 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
     }
   }
 
-  /** @return */
+  /**
+   * @return
+   */
   public String getDBURL() {
     return "remote:" + "localhost:2424;localhost:2425;localhost:2426" + "/" + dbName;
   }

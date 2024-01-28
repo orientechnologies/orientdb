@@ -23,7 +23,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a> */
+/**
+ * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
+ */
 public class OObjectBinaryDataStorageTest {
 
   private OObjectDatabaseTx databaseTx;

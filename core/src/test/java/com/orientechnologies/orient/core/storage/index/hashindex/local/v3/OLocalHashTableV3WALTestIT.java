@@ -227,7 +227,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
 
     databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.close();
-    actualStorage.close(true, false);
+    actualStorage.shutdown();
 
     System.out.println("Start data restore");
     restoreDataFromWAL();
@@ -250,7 +250,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
 
     expectedDatabaseDocumentTx.activateOnCurrentThread();
     expectedDatabaseDocumentTx.close();
-    expectedStorage.close(true, false);
+    expectedStorage.shutdown();
 
     System.out.println("Start data comparison");
 

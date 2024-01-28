@@ -31,7 +31,9 @@ import javax.persistence.Id;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class JavaTestSchemaGeneration {
 
   @Id private Object id;

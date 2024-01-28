@@ -88,7 +88,7 @@ public interface OStorage extends OBackupable, OStorageInfo {
 
   void close();
 
-  void close(boolean iForce, boolean onDelete);
+  void close(boolean iForce);
 
   boolean isClosed();
 
@@ -192,7 +192,9 @@ public interface OStorage extends OBackupable, OStorageInfo {
 
   long getVersion();
 
-  /** @return Version of product release under which storage was created. */
+  /**
+   * @return Version of product release under which storage was created.
+   */
   String getCreatedAtVersion();
 
   void synch();
@@ -239,7 +241,9 @@ public interface OStorage extends OBackupable, OStorageInfo {
 
   void setConflictStrategy(ORecordConflictStrategy iResolver);
 
-  /** @return Backup file name */
+  /**
+   * @return Backup file name
+   */
   String incrementalBackup(String backupDirectory, OCallable<Void, Void> started)
       throws UnsupportedOperationException;
 

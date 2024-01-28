@@ -42,7 +42,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/** @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com) */
+/**
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
+ */
 @SuppressWarnings("unchecked")
 public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T> {
   public static final String CONFIG_CLASSNAME = "blueprintsIndexClass";

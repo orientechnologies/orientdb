@@ -8,7 +8,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class ParallelExecStep extends AbstractExecutionStep {
   private final List<OInternalExecutionPlan> subExecutionPlans;
 

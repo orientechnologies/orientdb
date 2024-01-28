@@ -300,9 +300,9 @@
                 </plugin>
 
                 <plugin>
-                    <groupId>com.coveo</groupId>
+                    <groupId>com.spotify.fmt</groupId>
                     <artifactId>fmt-maven-plugin</artifactId>
-                    <version>2.13</version>
+                    <version>2.22.1</version>
                 </plugin>
 
                 <plugin>
@@ -480,9 +480,8 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>com.coveo</groupId>
+                <groupId>com.spotify.fmt</groupId>
                 <artifactId>fmt-maven-plugin</artifactId>
-                <version>2.9.1</version>
                 <executions>
                     <execution>
                         <phase>compile</phase>

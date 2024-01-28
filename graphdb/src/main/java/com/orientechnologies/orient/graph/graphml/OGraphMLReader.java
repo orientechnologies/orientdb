@@ -65,7 +65,9 @@ public class OGraphMLReader {
       new HashMap<String, OGraphMLImportStrategy>();
   private OCommandOutputListener output;
 
-  /** @param graph the graph to populate with the GraphML data */
+  /**
+   * @param graph the graph to populate with the GraphML data
+   */
   public OGraphMLReader(OrientBaseGraph graph) {
     this.graph = graph;
   }

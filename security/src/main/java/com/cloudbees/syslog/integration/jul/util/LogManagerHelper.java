@@ -20,7 +20,9 @@ import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
-/** @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a> */
+/**
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
+ */
 public class LogManagerHelper {
 
   /**

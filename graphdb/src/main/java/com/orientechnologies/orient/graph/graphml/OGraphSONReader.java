@@ -34,7 +34,9 @@ public class OGraphSONReader {
   private OCommandOutputListener output;
   private long inputSize;
 
-  /** @param graph the graph to populate with the JSON data */
+  /**
+   * @param graph the graph to populate with the JSON data
+   */
   public OGraphSONReader(final Graph graph) {
     this.graph = graph;
   }

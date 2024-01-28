@@ -16,7 +16,9 @@
  */
 package com.orientechnologies.orient.core.exception;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OFetchException extends OCoreException {
   private static final long serialVersionUID = 7247597939953323863L;
 

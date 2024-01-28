@@ -17,7 +17,9 @@ import javax.persistence.Basic;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/** @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a> */
+/**
+ * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
+ */
 public class JavaBinaryDataTestClass {
   @Id private Object id;
   @Version private Object version;

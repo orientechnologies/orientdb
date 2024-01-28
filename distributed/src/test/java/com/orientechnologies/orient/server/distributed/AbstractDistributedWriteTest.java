@@ -40,6 +40,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
   protected int writerCount = 5;
   protected volatile int count = 100;
   protected CountDownLatch runningWriters;
+
   //  protected final OPartitionedDatabasePoolFactory poolFactory = new
   // OPartitionedDatabasePoolFactory();
 

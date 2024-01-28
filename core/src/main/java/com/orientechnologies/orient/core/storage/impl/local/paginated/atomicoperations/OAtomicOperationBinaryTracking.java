@@ -200,7 +200,9 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     return metadata.get(key);
   }
 
-  /** @return All keys and associated metadata contained inside of atomic operation */
+  /**
+   * @return All keys and associated metadata contained inside of atomic operation
+   */
   private Map<String, OAtomicOperationMetadata<?>> getMetadata() {
     return Collections.unmodifiableMap(metadata);
   }

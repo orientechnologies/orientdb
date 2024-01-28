@@ -1366,7 +1366,9 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
   @Override
   public <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
-      throws IllegalStateException, IllegalArgumentException, ONeedRetryException,
+      throws IllegalStateException,
+          IllegalArgumentException,
+          ONeedRetryException,
           UnsupportedOperationException {
     return underlying.executeWithRetry(nRetries, function);
   }

@@ -68,7 +68,9 @@ import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OObjectProxyMethodHandler implements MethodHandler {
 
   protected final Map<String, Integer> loadedFields;
@@ -229,7 +231,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
    * @throws NoSuchMethodException
    */
   public void attach(final Object self)
-      throws IllegalArgumentException, IllegalAccessException, NoSuchMethodException,
+      throws IllegalArgumentException,
+          IllegalAccessException,
+          NoSuchMethodException,
           InvocationTargetException {
     for (Class<?> currentClass = self.getClass(); currentClass != Object.class; ) {
       if (Proxy.class.isAssignableFrom(currentClass)) {
@@ -313,8 +317,12 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   protected Object manageGetMethod(
       final Object self, final Method m, final Method proceed, final Object[] args)
-      throws IllegalAccessException, InvocationTargetException, NoSuchMethodException,
-          SecurityException, IllegalArgumentException, NoSuchFieldException {
+      throws IllegalAccessException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          SecurityException,
+          IllegalArgumentException,
+          NoSuchFieldException {
     this.reading = true;
     final String fieldName =
         OObjectEntityEnhancer.getInstance().getMethodFilter(self.getClass()).getFieldName(m);

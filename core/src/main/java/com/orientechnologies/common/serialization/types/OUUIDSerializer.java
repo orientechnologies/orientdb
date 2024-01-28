@@ -24,7 +24,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class OUUIDSerializer implements OBinarySerializer<UUID> {
   public static final OUUIDSerializer INSTANCE = new OUUIDSerializer();
   public static final int UUID_SIZE = 2 * OLongSerializer.LONG_SIZE;

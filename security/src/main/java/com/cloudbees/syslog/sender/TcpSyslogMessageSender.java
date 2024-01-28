@@ -53,6 +53,7 @@ public class TcpSyslogMessageSender extends AbstractSyslogMessageSender {
    * <p>Default value: {@link #DEFAULT_SYSLOG_HOST}
    */
   protected CachingReference<InetAddress> syslogServerHostnameReference;
+
   /**
    * Listen port of the remote Syslog server.
    *
@@ -64,8 +65,10 @@ public class TcpSyslogMessageSender extends AbstractSyslogMessageSender {
   private Writer writer;
   private int socketConnectTimeoutInMillis = SETTING_SOCKET_CONNECT_TIMEOUT_IN_MILLIS_DEFAULT_VALUE;
   private boolean ssl;
+
   /** Number of retries to send a message before throwing an exception. */
   private int maxRetryCount = SETTING_MAX_RETRY;
+
   /** Number of exceptions trying to send message. */
   protected final AtomicInteger trySendErrorCounter = new AtomicInteger();
 

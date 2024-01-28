@@ -13,7 +13,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** @author Marko A. Rodriguez (http://markorodriguez.com) */
+/**
+ * @author Marko A. Rodriguez (http://markorodriguez.com)
+ */
 @RunWith(JUnit4.class)
 public class OrientBenchmarkTestSuite extends TestSuite {
 

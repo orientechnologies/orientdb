@@ -19,7 +19,9 @@
  */
 package com.orientechnologies.orient.core.record;
 
-/** @author Luigi Dell'Aquila */
+/**
+ * @author Luigi Dell'Aquila
+ */
 public enum ODirection {
   OUT,
   IN,

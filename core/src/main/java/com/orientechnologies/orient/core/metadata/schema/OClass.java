@@ -202,13 +202,19 @@ public interface OClass extends Comparable<OClass> {
   @Deprecated
   Collection<OClass> getAllBaseClasses();
 
-  /** @return all the subclasses (one level hierarchy only) */
+  /**
+   * @return all the subclasses (one level hierarchy only)
+   */
   Collection<OClass> getSubclasses();
 
-  /** @return all the subclass hierarchy */
+  /**
+   * @return all the subclass hierarchy
+   */
   Collection<OClass> getAllSubclasses();
 
-  /** @return all recursively collected super classes */
+  /**
+   * @return all recursively collected super classes
+   */
   Collection<OClass> getAllSuperClasses();
 
   long getSize();
@@ -429,7 +435,9 @@ public interface OClass extends Comparable<OClass> {
    */
   OIndex getClassIndex(String iName);
 
-  /** @return All indexes for given class, not the inherited ones. */
+  /**
+   * @return All indexes for given class, not the inherited ones.
+   */
   Set<OIndex> getClassIndexes();
 
   /**
@@ -441,16 +449,22 @@ public interface OClass extends Comparable<OClass> {
   /** Internal. All indexes for given class and its super classes. */
   void getIndexes(Collection<OIndex> indexes);
 
-  /** @return All indexes for given class and its super classes. */
+  /**
+   * @return All indexes for given class and its super classes.
+   */
   Set<OIndex> getIndexes();
 
   /** Returns the auto sharding index configured for the class if any. */
   OIndex getAutoShardingIndex();
 
-  /** @return true if this class represents a subclass of an edge class (E) */
+  /**
+   * @return true if this class represents a subclass of an edge class (E)
+   */
   boolean isEdgeType();
 
-  /** @return true if this class represents a subclass of a vertex class (V) */
+  /**
+   * @return true if this class represents a subclass of a vertex class (V)
+   */
   boolean isVertexType();
 
   String getCustom(String iName);

@@ -84,7 +84,9 @@ public final class OIndexes {
     return FACTORIES;
   }
 
-  /** @return Iterator of all index factories */
+  /**
+   * @return Iterator of all index factories
+   */
   public static Iterator<OIndexFactory> getAllFactories() {
     return getFactories().iterator();
   }

@@ -24,6 +24,8 @@ import java.util.Set;
  */
 public interface OQueryOperatorFactory {
 
-  /** @return set of operators */
+  /**
+   * @return set of operators
+   */
   Set<OQueryOperator> getOperators();
 }

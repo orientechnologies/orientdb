@@ -1150,7 +1150,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedServerManager dManager = getDistributedManager();
     final class HoldResponseManager {
       ODistributedTxResponseManagerImpl responseManager;
-    };
+    }
+    ;
 
     final HoldResponseManager holder = new HoldResponseManager();
     ((ODistributedPlugin) dManager)

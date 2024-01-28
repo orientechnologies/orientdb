@@ -23,7 +23,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import java.io.IOException;
 import java.util.Map;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OHttpMultipartFileToRecordContentParser implements OHttpMultipartContentParser<ORID> {
 
   @Override

@@ -43,6 +43,8 @@ public interface ORecordElement {
 
   void setDirtyNoChanged();
 
-  /** @return Returns record element which contains given one. */
+  /**
+   * @return Returns record element which contains given one.
+   */
   ORecordElement getOwner();
 }

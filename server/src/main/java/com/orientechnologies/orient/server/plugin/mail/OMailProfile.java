@@ -22,5 +22,7 @@ package com.orientechnologies.orient.server.plugin.mail;
 
 import java.util.Properties;
 
-/** @author Luca Garulli (l.garulli--(at)--orientdb.com) */
+/**
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ */
 public class OMailProfile extends Properties {}

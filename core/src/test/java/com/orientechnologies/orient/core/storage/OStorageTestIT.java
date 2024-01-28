@@ -80,7 +80,7 @@ public class OStorageTestIT {
     long fileId = wowCache.fileIdByName("pagebreak.pcl");
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
-    storage.close(true, false);
+    storage.shutdown();
     ctx.close();
 
     int position = 3 * 1024;
@@ -144,7 +144,7 @@ public class OStorageTestIT {
     long fileId = wowCache.fileIdByName("pagebreak.pcl");
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
-    storage.close(true, false);
+    storage.shutdown();
     ctx.close();
 
     int position = OFile.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
@@ -204,7 +204,7 @@ public class OStorageTestIT {
     long fileId = wowCache.fileIdByName("pagebreak.pcl");
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
-    storage.close(true, false);
+    storage.shutdown();
     ctx.close();
 
     int position = OFile.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
@@ -266,7 +266,7 @@ public class OStorageTestIT {
     long fileId = wowCache.fileIdByName("pagebreak.pcl");
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
-    storage.close(true, false);
+    storage.shutdown();
     ctx.close();
 
     int position = 3 * 1024;

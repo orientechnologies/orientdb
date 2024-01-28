@@ -32,7 +32,9 @@ public interface OShutdownHandler {
   /** Priority of com.orientechnologies.orient.core.Orient.OShutdownCallListenersHandler handler. */
   int SHUTDOWN_CALL_LISTENERS = 1400;
 
-  /** @return Handlers priority. */
+  /**
+   * @return Handlers priority.
+   */
   int getPriority();
 
   /**

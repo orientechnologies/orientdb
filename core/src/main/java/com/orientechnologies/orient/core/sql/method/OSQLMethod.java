@@ -26,7 +26,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  */
 public interface OSQLMethod extends Comparable<OSQLMethod> {
 
-  /** @return method name */
+  /**
+   * @return method name
+   */
   String getName();
 
   /**
@@ -44,10 +46,14 @@ public interface OSQLMethod extends Comparable<OSQLMethod> {
    */
   public String getSyntax();
 
-  /** @return minimum number of arguments requiered by this method */
+  /**
+   * @return minimum number of arguments requiered by this method
+   */
   int getMinParams();
 
-  /** @return maximum number of arguments requiered by this method */
+  /**
+   * @return maximum number of arguments requiered by this method
+   */
   int getMaxParams();
 
   /**

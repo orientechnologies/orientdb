@@ -18,7 +18,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-/** @author Luca Garulli */
+/**
+ * @author Luca Garulli
+ */
 public class OGraphImporterBasicAPITest {
   static int row = 0;
   static long lastVertexCount = 0;

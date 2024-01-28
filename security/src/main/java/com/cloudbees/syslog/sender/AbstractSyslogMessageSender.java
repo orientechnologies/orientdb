@@ -24,7 +24,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/** @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a> */
+/**
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
+ */
 public abstract class AbstractSyslogMessageSender implements SyslogMessageSender {
   protected static final Charset UTF_8 = Charset.forName("UTF-8");
   protected final InternalLogger logger = InternalLogger.getLogger(getClass());
@@ -33,6 +35,7 @@ public abstract class AbstractSyslogMessageSender implements SyslogMessageSender
   protected Facility defaultFacility = Facility.USER;
   protected String defaultMessageHostname;
   protected Severity defaultSeverity = Severity.INFORMATIONAL;
+
   // remote syslog server config
   /**
    * Format of messages accepted by the remote syslog server ({@link
@@ -40,6 +43,7 @@ public abstract class AbstractSyslogMessageSender implements SyslogMessageSender
    * com.cloudbees.syslog.MessageFormat#RFC_5424 RFC_5424})
    */
   protected MessageFormat messageFormat = DEFAULT_SYSLOG_MESSAGE_FORMAT;
+
   // statistics
   protected final AtomicInteger sendCounter = new AtomicInteger();
   protected final AtomicLong sendDurationInNanosCounter = new AtomicLong();

@@ -19,7 +19,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OHttpMultipartContentInputStream extends InputStream {
 
   protected String boundary;

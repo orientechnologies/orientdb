@@ -9,7 +9,9 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OCreateDatabaseStatementExecutionTest {
 
   @Test

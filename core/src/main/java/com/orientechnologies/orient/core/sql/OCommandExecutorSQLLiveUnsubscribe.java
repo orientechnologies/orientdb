@@ -30,7 +30,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Locale;
 import java.util.Map;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OCommandExecutorSQLLiveUnsubscribe extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_LIVE_UNSUBSCRIBE = "LIVE UNSUBSCRIBE";

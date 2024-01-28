@@ -29,7 +29,9 @@ import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.Map;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OHttpMultipartFileToDiskContentParser
     implements OHttpMultipartContentParser<InputStream> {
 

@@ -28,7 +28,9 @@ public class OCompositeCollate implements OCollate {
   private static final long serialVersionUID = 8683726773893639905L;
   private final OAbstractIndexDefinition oCompositeIndexDefinition;
 
-  /** @param oCompositeIndexDefinition */
+  /**
+   * @param oCompositeIndexDefinition
+   */
   public OCompositeCollate(final OAbstractIndexDefinition oCompositeIndexDefinition) {
     this.oCompositeIndexDefinition = oCompositeIndexDefinition;
   }

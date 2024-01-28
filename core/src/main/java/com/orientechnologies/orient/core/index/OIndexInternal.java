@@ -131,7 +131,9 @@ public interface OIndexInternal extends OIndex {
    */
   boolean acquireAtomicExclusiveLock(Object key);
 
-  /** @return number of entries in the index. */
+  /**
+   * @return number of entries in the index.
+   */
   long size();
 
   Stream<ORID> getRids(final Object key);

@@ -19,7 +19,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import java.io.IOException;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OHttpMultipartHelper {
 
   protected static boolean isMultipartPartHeader(StringBuilder header) {

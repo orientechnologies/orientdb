@@ -35,7 +35,9 @@ import java.util.List;
 public class OHttpResponseWrapper {
   private final OHttpResponse response;
 
-  /** @param iResponse */
+  /**
+   * @param iResponse
+   */
   public OHttpResponseWrapper(final OHttpResponse iResponse) {
     response = iResponse;
   }

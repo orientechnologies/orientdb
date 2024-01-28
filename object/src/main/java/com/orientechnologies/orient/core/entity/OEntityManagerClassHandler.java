@@ -24,7 +24,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OEntityManagerClassHandler {
 
   private Map<String, Class<?>> entityClasses = new HashMap<String, Class<?>>();

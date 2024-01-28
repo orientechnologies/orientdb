@@ -77,6 +77,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   private final OSBTreeCollectionManager collectionManager =
       ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
   private final NavigableMap<OIdentifiable, Change> changes = new ConcurrentSkipListMap<>();
+
   /** Entries with not valid id. */
   private final IdentityHashMap<OIdentifiable, OModifiableInteger> newEntries =
       new IdentityHashMap<>();

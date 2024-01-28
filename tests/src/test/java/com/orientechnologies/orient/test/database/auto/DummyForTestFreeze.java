@@ -1,4 +1,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
-/** @author Artem Loginov */
+/**
+ * @author Artem Loginov
+ */
 public class DummyForTestFreeze {}

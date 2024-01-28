@@ -17,7 +17,9 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OInsertStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test

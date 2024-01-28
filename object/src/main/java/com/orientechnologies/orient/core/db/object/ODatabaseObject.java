@@ -184,7 +184,9 @@ public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHa
 
   @Override
   default <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
-      throws IllegalStateException, IllegalArgumentException, ONeedRetryException,
+      throws IllegalStateException,
+          IllegalArgumentException,
+          ONeedRetryException,
           UnsupportedOperationException {
     throw new UnsupportedOperationException();
     // TODO test it before enabling it!

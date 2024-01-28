@@ -81,7 +81,9 @@ public final class DatabaseConflictStategyTest {
     //    }
   }
 
-  /** @return */
+  /**
+   * @return
+   */
   public String getDBURL() {
     return "memory:" + dbName;
   }

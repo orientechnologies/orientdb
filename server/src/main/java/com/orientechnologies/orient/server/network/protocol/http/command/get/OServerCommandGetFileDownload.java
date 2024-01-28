@@ -31,7 +31,9 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import java.io.IOException;
 import java.util.Date;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDbAbstract {
 
   private static final String[] NAMES = {"GET|fileDownload/*"};

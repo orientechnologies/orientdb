@@ -18,7 +18,9 @@ package com.orientechnologies.orient.core.db.object;
 
 import java.util.Map;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public interface OLazyObjectMapInterface<TYPE> extends Map<Object, Object> {
 
   public void setConvertToRecord(boolean convertToRecord);

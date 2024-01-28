@@ -55,7 +55,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public final class OSBTreeCollectionManagerShared
     implements OSBTreeCollectionManager, OOrientStartupListener, OOrientShutdownListener {
   public static final String FILE_EXTENSION = ".grb";

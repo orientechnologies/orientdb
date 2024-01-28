@@ -23,7 +23,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 @SuppressWarnings("unchecked")
 public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE>
     implements OObjectLazyEnumSerializer<Set<TYPE>>, Serializable {

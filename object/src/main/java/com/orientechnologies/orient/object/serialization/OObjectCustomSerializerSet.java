@@ -24,7 +24,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 @SuppressWarnings("unchecked")
 public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE>
     implements OObjectLazyCustomSerializer<Set<TYPE>>, Serializable {

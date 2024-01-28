@@ -26,7 +26,9 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 
-/** @author Emanuele Tagliafetti */
+/**
+ * @author Emanuele Tagliafetti
+ */
 public class ODirtyManager {
 
   private ODirtyManager overrider;

@@ -64,10 +64,14 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   /** Internal. Gets an instance of sb-tree collection manager for current database. */
   OSBTreeCollectionManager getSbTreeCollectionManager();
 
-  /** @return the factory of binary serializers. */
+  /**
+   * @return the factory of binary serializers.
+   */
   OBinarySerializerFactory getSerializerFactory();
 
-  /** @return serializer which is used for document serialization. */
+  /**
+   * @return serializer which is used for document serialization.
+   */
   ORecordSerializer getSerializer();
 
   void setSerializer(ORecordSerializer serializer);

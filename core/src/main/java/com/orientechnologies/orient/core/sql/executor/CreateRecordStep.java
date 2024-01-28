@@ -7,7 +7,9 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSe
 import java.util.Map;
 import java.util.Optional;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class CreateRecordStep extends AbstractExecutionStep {
 
   private long cost = 0;

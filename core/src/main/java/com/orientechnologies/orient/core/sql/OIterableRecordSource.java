@@ -24,7 +24,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.Iterator;
 import java.util.Map;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public interface OIterableRecordSource {
   Iterator<OIdentifiable> iterator(final Map<Object, Object> iArgs);
 }

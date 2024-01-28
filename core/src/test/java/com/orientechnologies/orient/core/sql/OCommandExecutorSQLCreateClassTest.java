@@ -26,7 +26,9 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Enrico Risa */
+/**
+ * @author Enrico Risa
+ */
 public class OCommandExecutorSQLCreateClassTest extends BaseMemoryDatabase {
 
   public void beforeTest() {

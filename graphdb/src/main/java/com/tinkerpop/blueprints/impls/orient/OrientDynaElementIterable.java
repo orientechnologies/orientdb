@@ -23,7 +23,9 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.tinkerpop.blueprints.CloseableIterable;
 import java.util.Iterator;
 
-/** @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com) */
+/**
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
+ */
 public class OrientDynaElementIterable implements CloseableIterable<Object> {
 
   private final Iterator<?> iterator;

@@ -23,7 +23,9 @@ import com.orientechnologies.orient.core.sql.parser.OLikeOperator;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OLikeOperatorTest {
   @Test
   public void test() {

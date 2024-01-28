@@ -20,7 +20,9 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-/** @author Luca Garulli (l.garulli--(at)--orientdb.com) */
+/**
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ */
 public class OSQLMethodLastIndexOf extends OAbstractSQLMethod {
 
   public static final String NAME = "lastindexof";

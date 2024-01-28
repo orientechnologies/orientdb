@@ -26,7 +26,9 @@ import java.util.Set;
  */
 public interface OCommandExecutorSQLFactory {
 
-  /** @return Set of supported command names of this factory */
+  /**
+   * @return Set of supported command names of this factory
+   */
   Set<String> getCommandNames();
 
   /**

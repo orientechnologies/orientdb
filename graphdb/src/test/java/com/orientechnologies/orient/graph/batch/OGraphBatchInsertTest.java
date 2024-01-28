@@ -11,7 +11,9 @@ import java.util.Map;
 import junit.framework.TestCase;
 import org.junit.Test;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) (l.dellaquila-at-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) (l.dellaquila-at-orientdb.com)
+ */
 public class OGraphBatchInsertTest extends TestCase {
 
   @Test

@@ -6,7 +6,9 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OInsertExecutionPlan extends OSelectExecutionPlan {
 
   private List<OResult> result = new ArrayList<>();

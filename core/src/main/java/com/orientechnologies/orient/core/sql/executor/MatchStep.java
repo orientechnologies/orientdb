@@ -8,7 +8,9 @@ import com.orientechnologies.orient.core.sql.parser.OMultiMatchPathItem;
 import java.util.Map;
 import java.util.Optional;
 
-/** @author Luigi Dell'Aquila */
+/**
+ * @author Luigi Dell'Aquila
+ */
 public class MatchStep extends AbstractExecutionStep {
   protected final EdgeTraversal edge;
 

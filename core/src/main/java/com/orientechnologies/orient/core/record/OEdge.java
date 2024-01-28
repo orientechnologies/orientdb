@@ -24,7 +24,9 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-/** @author Luigi Dell'Aquila */
+/**
+ * @author Luigi Dell'Aquila
+ */
 public interface OEdge extends OElement {
   public static final String DIRECTION_OUT = "out";
   public static final String DIRECTION_IN = "in";

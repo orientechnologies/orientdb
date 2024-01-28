@@ -21,7 +21,9 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OObjectEntityClassHandler extends OEntityManagerClassHandler {
 
   private static final ConcurrentMap<String, OObjectEntityClassHandler> instances =

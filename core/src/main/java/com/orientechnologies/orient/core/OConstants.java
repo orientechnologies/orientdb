@@ -22,7 +22,9 @@ public class OConstants {
     }
   }
 
-  /** @return Major part of OrientDB version */
+  /**
+   * @return Major part of OrientDB version
+   */
   public static int getVersionMajor() {
     final String[] versions = properties.getProperty("version").split("\\.");
     if (versions.length == 0) {
@@ -41,7 +43,9 @@ public class OConstants {
     }
   }
 
-  /** @return Minor part of OrientDB version */
+  /**
+   * @return Minor part of OrientDB version
+   */
   public static int getVersionMinor() {
     final String[] versions = properties.getProperty("version").split("\\.");
     if (versions.length < 2) {
@@ -61,7 +65,9 @@ public class OConstants {
     }
   }
 
-  /** @return Hotfix part of OrientDB version */
+  /**
+   * @return Hotfix part of OrientDB version
+   */
   @SuppressWarnings("unused")
   public static int getVersionHotfix() {
     final String[] versions = properties.getProperty("version").split("\\.");
@@ -86,7 +92,9 @@ public class OConstants {
     }
   }
 
-  /** @return Returns only current version without build number and etc. */
+  /**
+   * @return Returns only current version without build number and etc.
+   */
   public static String getRawVersion() {
     return properties.getProperty("version");
   }
@@ -106,7 +114,9 @@ public class OConstants {
     return properties.getProperty("version").endsWith("SNAPSHOT");
   }
 
-  /** @return the build number if any. */
+  /**
+   * @return the build number if any.
+   */
   public static String getBuildNumber() {
     return properties.getProperty("revision");
   }

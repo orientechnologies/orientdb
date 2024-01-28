@@ -64,6 +64,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /** Created by tglman on 20/07/16. @Deprecated use {@link OrientDB} instead. */
 @Deprecated
@@ -71,6 +73,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   protected static ConcurrentMap<String, OrientDBInternal> embedded = new ConcurrentHashMap<>();
   protected static ConcurrentMap<String, OrientDBInternal> remote = new ConcurrentHashMap<>();
+
+  protected static final Lock embeddedLock = new ReentrantLock();
+  protected static final Lock remoteLock = new ReentrantLock();
 
   protected ODatabaseDocumentInternal internal;
   private final String url;
@@ -110,37 +115,51 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   public static void closeAll() {
-    synchronized (embedded) {
+    embeddedLock.lock();
+    try {
       for (OrientDBInternal factory : embedded.values()) {
         factory.close();
       }
       embedded.clear();
+    } finally {
+      embeddedLock.unlock();
     }
-    synchronized (remote) {
+
+    remoteLock.lock();
+    try {
       for (OrientDBInternal factory : remote.values()) {
         factory.close();
       }
       remote.clear();
+    } finally {
+      remoteLock.unlock();
     }
   }
 
   protected static OrientDBInternal getOrCreateRemoteFactory(String baseUrl) {
     OrientDBInternal factory;
-    synchronized (remote) {
+
+    remoteLock.lock();
+    try {
       factory = remote.get(baseUrl);
       if (factory == null || !factory.isOpen()) {
         factory = OrientDBInternal.fromUrl("remote:" + baseUrl, null);
         remote.put(baseUrl, factory);
       }
+    } finally {
+      remoteLock.unlock();
     }
     return factory;
   }
 
   protected static OrientDBInternal getOrCreateEmbeddedFactory(
       String baseUrl, OrientDBConfig config) {
-    if (!baseUrl.endsWith("/")) baseUrl += "/";
+    if (!baseUrl.endsWith("/")) {
+      baseUrl += "/";
+    }
     OrientDBInternal factory;
-    synchronized (embedded) {
+    embeddedLock.lock();
+    try {
       factory = embedded.get(baseUrl);
       if (factory == null || !factory.isOpen()) {
         try {
@@ -150,11 +169,16 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         }
         embedded.put(baseUrl, factory);
       }
+    } finally {
+      embeddedLock.unlock();
     }
+
     return factory;
   }
 
-  /** @Deprecated use {{@link OrientDB}} instead. */
+  /**
+   * @Deprecated use {{@link OrientDB}} instead.
+   */
   @Deprecated
   public ODatabaseDocumentTx(String url) {
     this(url, true);
@@ -189,13 +213,17 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OCurrentStorageComponentsFactory getStorageVersions() {
-    if (internal == null) return null;
+    if (internal == null) {
+      return null;
+    }
     return internal.getStorageVersions();
   }
 
   @Override
   public OSBTreeCollectionManager getSbTreeCollectionManager() {
-    if (internal == null) return null;
+    if (internal == null) {
+      return null;
+    }
     return internal.getSbTreeCollectionManager();
   }
 
@@ -208,7 +236,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public ORecordSerializer getSerializer() {
     if (internal == null) {
-      if (serializer != null) return serializer;
+      if (serializer != null) {
+        return serializer;
+      }
       return ORecordSerializerFactory.instance().getDefaultRecordSerializer();
     }
     return internal.getSerializer();
@@ -378,7 +408,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   protected void checkOpenness() {
-    if (internal == null) throw new ODatabaseException("Database '" + getURL() + "' is closed");
+    if (internal == null) {
+      throw new ODatabaseException("Database '" + getURL() + "' is closed");
+    }
   }
 
   @Override
@@ -396,7 +428,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   @Deprecated
   public OStorage getStorage() {
-    if (internal == null) return delegateStorage;
+    if (internal == null) {
+      return delegateStorage;
+    }
     return internal.getStorage();
   }
 
@@ -412,23 +446,30 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void resetInitialization() {
-    if (internal != null) internal.resetInitialization();
+    if (internal != null) {
+      internal.resetInitialization();
+    }
   }
 
   @Override
   public ODatabaseInternal<?> getDatabaseOwner() {
     ODatabaseInternal<?> current = databaseOwner;
 
-    while (current != null && current != this && current.getDatabaseOwner() != current)
+    while (current != null && current != this && current.getDatabaseOwner() != current) {
       current = current.getDatabaseOwner();
-    if (current == null) return this;
+    }
+    if (current == null) {
+      return this;
+    }
     return current;
   }
 
   @Override
   public ODatabaseInternal<?> setDatabaseOwner(ODatabaseInternal<?> iOwner) {
     databaseOwner = iOwner;
-    if (internal != null) internal.setDatabaseOwner(iOwner);
+    if (internal != null) {
+      internal.setDatabaseOwner(iOwner);
+    }
     return this;
   }
 
@@ -557,7 +598,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OSecurityUser getUser() {
-    if (internal != null) return internal.getUser();
+    if (internal != null) {
+      return internal.getUser();
+    }
     return null;
   }
 
@@ -898,11 +941,18 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         OrientDBConfig config = buildConfig(null);
         internal = factory.open(dbName, iUserName, iUserPassword, config);
       }
-      if (databaseOwner != null) internal.setDatabaseOwner(databaseOwner);
-      if (conflictStrategy != null) internal.setConflictStrategy(conflictStrategy);
-      if (serializer != null) internal.setSerializer(serializer);
-      for (Entry<String, Object> pro : preopenProperties.entrySet())
+      if (databaseOwner != null) {
+        internal.setDatabaseOwner(databaseOwner);
+      }
+      if (conflictStrategy != null) {
+        internal.setConflictStrategy(conflictStrategy);
+      }
+      if (serializer != null) {
+        internal.setSerializer(serializer);
+      }
+      for (Entry<String, Object> pro : preopenProperties.entrySet()) {
         internal.setProperty(pro.getKey(), pro.getValue());
+      }
     } catch (RuntimeException e) {
       clearOwner();
       throw e;
@@ -911,7 +961,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   protected void setupThreadOwner() {
-    if (!ownerProtection) return;
+    if (!ownerProtection) {
+      return;
+    }
 
     final Thread current = Thread.currentThread();
     final Thread o = owner.get();
@@ -923,7 +975,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   protected void clearOwner() {
-    if (!ownerProtection) return;
+    if (!ownerProtection) {
+      return;
+    }
     owner.set(null);
   }
 
@@ -973,11 +1027,18 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
           internal.registerListener(oDatabaseListener);
         }
       }
-      if (databaseOwner != null) internal.setDatabaseOwner(databaseOwner);
-      if (conflictStrategy != null) internal.setConflictStrategy(conflictStrategy);
-      if (serializer != null) internal.setSerializer(serializer);
-      for (Entry<String, Object> pro : preopenProperties.entrySet())
+      if (databaseOwner != null) {
+        internal.setDatabaseOwner(databaseOwner);
+      }
+      if (conflictStrategy != null) {
+        internal.setConflictStrategy(conflictStrategy);
+      }
+      if (serializer != null) {
+        internal.setSerializer(serializer);
+      }
+      for (Entry<String, Object> pro : preopenProperties.entrySet()) {
         internal.setProperty(pro.getKey(), pro.getValue());
+      }
     } catch (RuntimeException e) {
       clearOwner();
       throw e;
@@ -987,13 +1048,17 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public ODatabase activateOnCurrentThread() {
-    if (internal != null) internal.activateOnCurrentThread();
+    if (internal != null) {
+      internal.activateOnCurrentThread();
+    }
     return this;
   }
 
   @Override
   public boolean isActiveOnCurrentThread() {
-    if (internal != null) return internal.isActiveOnCurrentThread();
+    if (internal != null) {
+      return internal.isActiveOnCurrentThread();
+    }
     return false;
   }
 
@@ -1021,8 +1086,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public boolean declareIntent(OIntent iIntent) {
-    if (internal != null) return internal.declareIntent(iIntent);
-    else {
+    if (internal != null) {
+      return internal.declareIntent(iIntent);
+    } else {
       intent = iIntent;
       return true;
     }
@@ -1030,13 +1096,17 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OIntent getActiveIntent() {
-    if (internal == null) return intent;
+    if (internal == null) {
+      return intent;
+    }
     return internal.getActiveIntent();
   }
 
   @Override
   public boolean exists() {
-    if (internal != null) return true;
+    if (internal != null) {
+      return true;
+    }
     if ("remote".equals(type)) {
       throw new UnsupportedOperationException();
     } else {
@@ -1216,14 +1286,20 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public Object setProperty(String iName, Object iValue) {
-    if (internal != null) return internal.setProperty(iName, iValue);
-    else return preopenProperties.put(iName, iValue);
+    if (internal != null) {
+      return internal.setProperty(iName, iValue);
+    } else {
+      return preopenProperties.put(iName, iValue);
+    }
   }
 
   @Override
   public Object getProperty(String iName) {
-    if (internal != null) return internal.getProperty(iName);
-    else return preopenProperties.get(iName);
+    if (internal != null) {
+      return internal.getProperty(iName);
+    } else {
+      return preopenProperties.get(iName);
+    }
   }
 
   @Override
@@ -1243,8 +1319,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <DB extends ODatabase> DB set(ATTRIBUTES iAttribute, Object iValue) {
-    if (internal != null) internal.set(iAttribute, iValue);
-    else preopenAttributes.put(iAttribute, iValue);
+    if (internal != null) {
+      internal.set(iAttribute, iValue);
+    } else {
+      preopenAttributes.put(iAttribute, iValue);
+    }
     return (DB) this;
   }
 
@@ -1370,32 +1449,39 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         pars != null
             ? (String) pars.get(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY.getKey())
             : null;
-    if (connectionStrategy != null)
+    if (connectionStrategy != null) {
       builder.addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
+    }
 
     final String compressionMethod =
         pars != null
             ? (String) pars.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey())
             : null;
     if (compressionMethod != null)
-      // SAVE COMPRESSION METHOD IN CONFIGURATION
+    // SAVE COMPRESSION METHOD IN CONFIGURATION
+    {
       builder.addConfig(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
+    }
 
     final String encryptionMethod =
         pars != null
             ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey())
             : null;
     if (encryptionMethod != null)
-      // SAVE ENCRYPTION METHOD IN CONFIGURATION
+    // SAVE ENCRYPTION METHOD IN CONFIGURATION
+    {
       builder.addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
+    }
 
     final String encryptionKey =
         pars != null
             ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey())
             : null;
     if (encryptionKey != null)
-      // SAVE ENCRYPTION KEY IN CONFIGURATION
+    // SAVE ENCRYPTION KEY IN CONFIGURATION
+    {
       builder.addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
+    }
 
     for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
       builder.addAttribute(attr.getKey(), attr.getValue());

@@ -30,7 +30,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import org.junit.Test;
 
-/** @author Michael MacFadden */
+/**
+ * @author Michael MacFadden
+ */
 public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDatabase {
 
   private static final String PROP_NAME = "name";

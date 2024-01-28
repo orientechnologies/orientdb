@@ -22,8 +22,7 @@ public class HttpQueryTest extends BaseHttpDatabaseTest {
             .setUserName("root")
             .setUserPassword("root")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
   }
 
@@ -38,8 +37,7 @@ public class HttpQueryTest extends BaseHttpDatabaseTest {
             .setUserName("admin")
             .setUserPassword("admin")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
   }
 

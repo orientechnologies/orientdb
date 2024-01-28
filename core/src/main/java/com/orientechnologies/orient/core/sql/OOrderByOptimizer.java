@@ -25,7 +25,9 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import java.util.List;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class OOrderByOptimizer {
   boolean canBeUsedByOrderBy(OIndex index, List<OPair<String, String>> orderedFields) {
     if (orderedFields.isEmpty()) return false;

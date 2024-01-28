@@ -47,6 +47,7 @@ import java.util.TreeMap;
 public class OCompositeKey
     implements Comparable<OCompositeKey>, Serializable, ODocumentSerializable {
   private static final long serialVersionUID = 1L;
+
   /** */
   private final List<Object> keys;
 

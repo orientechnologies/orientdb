@@ -33,9 +33,16 @@ public class BatchRemoteResultSetTest {
 
   @Before
   public void before()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException,
-          NoSuchMethodException, InstantiationException, IOException, IllegalAccessException {
+      throws ClassNotFoundException,
+          MalformedObjectNameException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          MBeanRegistrationException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          InstantiationException,
+          IOException,
+          IllegalAccessException {
 
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + File.separator + BaseHttpTest.class.getSimpleName();

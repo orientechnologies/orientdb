@@ -25,7 +25,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Ignore;
 import org.junit.Test;
 
-/** @author Sergey Sitnikov */
+/**
+ * @author Sergey Sitnikov
+ */
 public class VersionedDeleteTest extends BaseMemoryDatabase {
 
   @Test(expected = OConcurrentModificationException.class)

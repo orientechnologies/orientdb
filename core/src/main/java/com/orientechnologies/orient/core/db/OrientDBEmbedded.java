@@ -17,6 +17,7 @@
  *  * For more information: http://orientdb.com
  *
  */
+
 package com.orientechnologies.orient.core.db;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
@@ -61,7 +62,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -84,13 +84,15 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   /** Keeps track of next possible storage id. */
   private static final AtomicInteger nextStorageId = new AtomicInteger();
+
   /** Storage IDs current assigned to the storage. */
   private static final Set<Integer> currentStorageIds =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-  protected final Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
-  protected final Map<String, OSharedContext> sharedContexts = new HashMap<>();
-  protected final Set<ODatabasePoolInternal> pools = new HashSet<>();
+  protected final Map<String, OAbstractPaginatedStorage> storages = new ConcurrentHashMap<>();
+  protected final Map<String, OSharedContext> sharedContexts = new ConcurrentHashMap<>();
+  protected final Set<ODatabasePoolInternal> pools =
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
   protected final OrientDBConfig configurations;
   protected final String basePath;
   protected final OEngine memory;
@@ -273,7 +275,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     Set<String> toClose = new HashSet<>();
     for (OAbstractPaginatedStorage storage : storages.values()) {
       if (storage.getType().equalsIgnoreCase(ODatabaseType.PLOCAL.name())
-          && storage.getSessionCount() == 0) {
+          && storage.getSessionsCount() == 0) {
         long currentTime = System.currentTimeMillis();
         if (currentTime > storage.getLastCloseTime() + delay) {
           toClose.add(storage.getName());
@@ -414,7 +416,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         checkOpen();
         OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
-        storage.incOnOpen();
         embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
       }
       embedded.rebuildIndexes();
@@ -449,7 +450,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         checkOpen();
         OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
-        storage.incOnOpen();
         embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
       }
       embedded.rebuildIndexes();
@@ -474,8 +474,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
         OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
 
         embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
-
-        storage.incOnOpen();
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(user, password);
@@ -501,7 +499,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
         String database = authenticationInfo.getDatabase().get();
         OAbstractPaginatedStorage storage = getAndOpenStorage(database, config);
         embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
-        storage.incOnOpen();
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(authenticationInfo);
@@ -564,7 +561,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
       checkOpen();
       OAbstractPaginatedStorage storage = getAndOpenStorage(name, pool.getConfig());
       embedded = newPooledSessionInstance(pool, storage, getOrCreateSharedContext(storage));
-      storage.incOnOpen();
     }
     embedded.rebuildIndexes();
     embedded.internalOpen(user, password);
@@ -687,9 +683,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
           throw OException.wrapException(
               new ODatabaseException("Cannot create database '" + name + "'"), e);
         }
-      } else
+      } else {
         throw new ODatabaseException(
             "Cannot create new database '" + name + "' because it already exists");
+      }
     }
     embedded.callOnCreateListeners();
     ODatabaseRecordThreadLocal.instance().remove();
@@ -766,9 +763,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
           throw OException.wrapException(
               new ODatabaseException("Cannot restore database '" + name + "'"), e);
         }
-      } else
+      } else {
         throw new ODatabaseException(
             "Cannot create new storage '" + name + "' because it already exists");
+      }
     }
     storage.restoreFromIncrementalBackup(path);
     embedded.callOnCreateListeners();
@@ -836,7 +834,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
     if (storage == null) {
       if (basePath != null) {
         return OLocalPaginatedStorage.exists(Paths.get(buildName(name)));
-      } else return false;
+      } else {
+        return false;
+      }
     }
     return storage.exists();
   }
@@ -880,6 +880,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected interface DatabaseFound {
+
     void found(String name);
   }
 
@@ -946,7 +947,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   @Override
   public void close() {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     timeoutChecker.close();
     timer.cancel();
     securitySystem.shutdown();
@@ -980,12 +983,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   public synchronized void preClose() {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     this.sharedContexts.values().forEach(x -> x.getViewManager().close());
   }
 
   public synchronized void internalClose() {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     open = false;
     this.sharedContexts.values().forEach(x -> x.close());
     final List<OAbstractPaginatedStorage> storagesCopy = new ArrayList<>(storages.values());
@@ -1028,7 +1035,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private static void scanDatabaseDirectory(final File directory, DatabaseFound found) {
     if (directory.exists() && directory.isDirectory()) {
       final File[] files = directory.listFiles();
-      if (files != null)
+      if (files != null) {
         for (File db : files) {
           if (db.isDirectory()) {
             for (File cf : db.listFiles()) {
@@ -1043,6 +1050,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
             }
           }
         }
+      }
     }
   }
 
@@ -1089,13 +1097,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   public String getDatabasePath(String iDatabaseName) {
     OAbstractPaginatedStorage storage = storages.get(iDatabaseName);
-    if (storage != null && storage instanceof OLocalPaginatedStorage)
+    if (storage != null && storage instanceof OLocalPaginatedStorage) {
       return ((OLocalPaginatedStorage) storage).getStoragePath().toString();
+    }
     return null;
   }
 
   protected void checkOpen() {
-    if (!open) throw new ODatabaseException("OrientDB Instance is closed");
+    if (!open) {
+      throw new ODatabaseException("OrientDB Instance is closed");
+    }
   }
 
   public boolean isOpen() {

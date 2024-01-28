@@ -24,7 +24,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 @SuppressWarnings({"unchecked"})
 public class OObjectEnumLazyList<TYPE extends Enum<?>>
     implements List<TYPE>, OObjectLazyEnumSerializer<List<TYPE>>, Serializable {

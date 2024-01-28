@@ -27,7 +27,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Sergey Sitnikov */
+/**
+ * @author Sergey Sitnikov
+ */
 public class StorageNamingTests {
 
   @Test

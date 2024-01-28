@@ -22,7 +22,9 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public interface OReturnHandler {
   void reset();
 
@@ -30,6 +32,8 @@ public interface OReturnHandler {
 
   void afterUpdate(ODocument result);
 
-  /** @return collected result */
+  /**
+   * @return collected result
+   */
   Object ret();
 }

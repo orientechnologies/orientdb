@@ -29,10 +29,14 @@ public interface OIndexFactory {
 
   int getLastVersion(final String algorithm);
 
-  /** @return List of supported indexes of this factory */
+  /**
+   * @return List of supported indexes of this factory
+   */
   Set<String> getTypes();
 
-  /** @return List of supported algorithms of this factory */
+  /**
+   * @return List of supported algorithms of this factory
+   */
   Set<String> getAlgorithms();
 
   /**

@@ -27,7 +27,9 @@ import java.util.concurrent.locks.Lock;
 import org.junit.Before;
 import org.junit.Test;
 
-/** @author Sergey Sitnikov */
+/**
+ * @author Sergey Sitnikov
+ */
 public class OneEntryPerKeyLockManagerNullKeysTest {
 
   private OOneEntryPerKeyLockManager<String> manager;

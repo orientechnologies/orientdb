@@ -105,8 +105,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       final ODatabaseDocumentInternal database = getDatabase();
       if (ascOrder) {
         indexValuesIterator =
-            database.getMetadata().getIndexManagerInternal().getIndex(database, indexName)
-                .getInternal().stream()
+            database
+                .getMetadata()
+                .getIndexManagerInternal()
+                .getIndex(database, indexName)
+                .getInternal()
+                .stream()
                 .map((pair) -> pair.second)
                 .iterator();
       } else

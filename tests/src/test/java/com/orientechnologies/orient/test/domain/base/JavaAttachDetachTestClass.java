@@ -29,7 +29,9 @@ import javax.persistence.Id;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class JavaAttachDetachTestClass {
   public static final String testStatic = "10";
   @Transient public String testTransient;

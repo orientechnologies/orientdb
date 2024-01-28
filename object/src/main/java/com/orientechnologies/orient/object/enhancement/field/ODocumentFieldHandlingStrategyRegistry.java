@@ -35,7 +35,9 @@ public class ODocumentFieldHandlingStrategyRegistry {
     // Hidden
   }
 
-  /** @return an instance */
+  /**
+   * @return an instance
+   */
   public static ODocumentFieldHandlingStrategyRegistry getInstance() {
     return INSTANCE;
   }

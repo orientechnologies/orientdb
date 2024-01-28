@@ -26,7 +26,9 @@ import com.orientechnologies.orient.etl.context.OETLContext;
 /** ETL basic component. Each ETL component must implement this interface. */
 public interface OETLComponent {
 
-  /** @return */
+  /**
+   * @return
+   */
   ODocument getConfiguration();
 
   /**

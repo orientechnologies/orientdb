@@ -19,7 +19,9 @@ package com.orientechnologies.orient.test.domain.business;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class Child {
   @Id private Object id;
   @Version private Object version;

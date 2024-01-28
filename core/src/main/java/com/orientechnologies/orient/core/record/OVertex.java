@@ -22,7 +22,9 @@ package com.orientechnologies.orient.core.record;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
-/** @author Luigi Dell'Aquila */
+/**
+ * @author Luigi Dell'Aquila
+ */
 public interface OVertex extends OElement {
 
   Iterable<OEdge> getEdges(ODirection direction);

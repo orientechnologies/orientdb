@@ -155,7 +155,9 @@ public class OSQLEngine {
     SORTED_OPERATORS = null; // clear cache
   }
 
-  /** @return Iterator of all function factories */
+  /**
+   * @return Iterator of all function factories
+   */
   public static Iterator<OSQLFunctionFactory> getFunctionFactories() {
     if (FUNCTION_FACTORIES == null) {
       synchronized (INSTANCE) {
@@ -193,7 +195,9 @@ public class OSQLEngine {
     return METHOD_FACTORIES.iterator();
   }
 
-  /** @return Iterator of all function factories */
+  /**
+   * @return Iterator of all function factories
+   */
   public static Iterator<OCollateFactory> getCollateFactories() {
     if (COLLATE_FACTORIES == null) {
       synchronized (INSTANCE) {
@@ -213,7 +217,9 @@ public class OSQLEngine {
     return COLLATE_FACTORIES.iterator();
   }
 
-  /** @return Iterator of all operator factories */
+  /**
+   * @return Iterator of all operator factories
+   */
   public static Iterator<OQueryOperatorFactory> getOperatorFactories() {
     if (OPERATOR_FACTORIES == null) {
       synchronized (INSTANCE) {
@@ -233,7 +239,9 @@ public class OSQLEngine {
     return OPERATOR_FACTORIES.iterator();
   }
 
-  /** @return Iterator of all command factories */
+  /**
+   * @return Iterator of all command factories
+   */
   public static Iterator<OCommandExecutorSQLFactory> getCommandFactories() {
     if (EXECUTOR_FACTORIES == null) {
       synchronized (INSTANCE) {

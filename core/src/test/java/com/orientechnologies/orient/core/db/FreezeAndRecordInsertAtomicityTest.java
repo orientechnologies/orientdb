@@ -44,7 +44,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-/** @author Sergey Sitnikov */
+/**
+ * @author Sergey Sitnikov
+ */
 public class FreezeAndRecordInsertAtomicityTest {
 
   private static final String URL;

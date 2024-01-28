@@ -22,6 +22,7 @@ public class OAlterClassStatement extends ODDLStatement {
 
   /** the name of the class */
   protected OIdentifier name;
+
   /** the class property to be altered */
   public OClass.ATTRIBUTES property;
 

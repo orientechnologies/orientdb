@@ -18,7 +18,9 @@ package com.cloudbees.syslog.integration.jul;
 import com.cloudbees.syslog.integration.jul.util.LogManagerHelper;
 import java.util.logging.*;
 
-/** @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a> */
+/**
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
+ */
 public abstract class AbstractHandler extends Handler {
 
   private Level logLevel = Level.ALL;

@@ -28,7 +28,9 @@ import java.util.Set;
  */
 public interface OCollateFactory {
 
-  /** @return Set of supported collate names of this factory */
+  /**
+   * @return Set of supported collate names of this factory
+   */
   Set<String> getNames();
 
   /**

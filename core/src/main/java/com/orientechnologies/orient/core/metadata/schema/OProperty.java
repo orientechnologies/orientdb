@@ -239,7 +239,9 @@ public interface OProperty extends Comparable<OProperty> {
   @Deprecated
   public OIndex getIndex();
 
-  /** @return All indexes in which this property participates. */
+  /**
+   * @return All indexes in which this property participates.
+   */
   public Collection<OIndex> getAllIndexes();
 
   /**

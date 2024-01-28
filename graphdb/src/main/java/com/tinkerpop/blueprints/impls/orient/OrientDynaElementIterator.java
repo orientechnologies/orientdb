@@ -27,7 +27,9 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-/** @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com) */
+/**
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
+ */
 class OrientDynaElementIterator implements Iterator<Object> {
 
   private final Iterator<?> itty;

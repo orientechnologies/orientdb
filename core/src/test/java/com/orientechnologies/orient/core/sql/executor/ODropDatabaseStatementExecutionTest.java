@@ -8,7 +8,9 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class ODropDatabaseStatementExecutionTest {
   @Test
   public void testPlain() {

@@ -34,7 +34,9 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Sergey Sitnikov */
+/**
+ * @author Sergey Sitnikov
+ */
 public class DuplicateNonUniqueIndexChangesTxTest extends BaseMemoryDatabase {
 
   private OIndex index;

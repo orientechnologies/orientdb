@@ -176,7 +176,9 @@ public interface OTransaction {
 
   int getEntryCount();
 
-  /** @return {@code true} if this transaction is active, {@code false} otherwise. */
+  /**
+   * @return {@code true} if this transaction is active, {@code false} otherwise.
+   */
   boolean isActive();
 
   /**
@@ -275,7 +277,9 @@ public interface OTransaction {
    */
   void setCustomData(String name, Object value);
 
-  /** @return this transaction ID as seen by the client of this transaction. */
+  /**
+   * @return this transaction ID as seen by the client of this transaction.
+   */
   default int getClientTransactionId() {
     return getId();
   }

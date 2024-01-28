@@ -34,7 +34,9 @@ import org.junit.Test;
  *
  */
 
-/** @author Enrico Risa */
+/**
+ * @author Enrico Risa
+ */
 public class HaRemoveServerIT extends AbstractServerClusterTest {
   private static final int SERVERS = 2;
 

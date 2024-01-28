@@ -37,7 +37,9 @@ public class ODefaultCollateFactory implements OCollateFactory {
     register(new OCaseInsensitiveCollate());
   }
 
-  /** @return Set of supported collate names of this factory */
+  /**
+   * @return Set of supported collate names of this factory
+   */
   @Override
   public Set<String> getNames() {
     return COLLATES.keySet();

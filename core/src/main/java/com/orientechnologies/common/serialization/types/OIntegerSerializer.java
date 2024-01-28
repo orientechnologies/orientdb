@@ -34,6 +34,7 @@ import java.nio.ByteOrder;
  */
 public class OIntegerSerializer implements OBinarySerializer<Integer> {
   public static final byte ID = 8;
+
   /** size of int value in bytes */
   public static final int INT_SIZE = 4;
 

@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.object.db.entity;
 
-/** @author dominik.kopczynski */
+/**
+ * @author dominik.kopczynski
+ */
 public class NestedContent {
   private String name;
 

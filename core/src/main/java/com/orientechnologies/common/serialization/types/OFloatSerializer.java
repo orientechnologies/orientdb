@@ -34,6 +34,7 @@ import java.nio.ByteOrder;
  */
 public class OFloatSerializer implements OBinarySerializer<Float> {
   public static final byte ID = 7;
+
   /** size of float value in bytes */
   public static final int FLOAT_SIZE = 4;
 

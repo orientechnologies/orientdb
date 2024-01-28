@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public abstract class OHttpMultipartRequestCommand<B, F>
     extends OServerCommandAuthenticatedDbAbstract {
 

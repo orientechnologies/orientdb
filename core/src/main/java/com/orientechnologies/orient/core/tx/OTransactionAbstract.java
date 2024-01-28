@@ -41,6 +41,7 @@ public abstract class OTransactionAbstract implements OTransaction {
   protected TXSTATUS status = TXSTATUS.INVALID;
   protected ISOLATION_LEVEL isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
   protected Map<ORID, LockedRecordMetadata> locks = new HashMap<ORID, LockedRecordMetadata>();
+
   /**
    * Indicates the record deleted in a transaction.
    *

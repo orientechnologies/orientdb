@@ -464,7 +464,9 @@ public class OTransactionIndexChangesPerKey {
     return entries == null ? 0 : entries.size();
   }
 
-  /** @return a copy of the entries of this object */
+  /**
+   * @return a copy of the entries of this object
+   */
   public List<OTransactionIndexEntry> getEntriesAsList() {
     return Collections.unmodifiableList(new ArrayList<>(this.entries));
   }

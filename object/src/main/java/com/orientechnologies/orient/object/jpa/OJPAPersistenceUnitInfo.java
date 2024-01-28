@@ -51,6 +51,7 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
    * unit's root.
    */
   private final URL unitRootUrl;
+
   /**
    * the list of mapping file names that the persistence provider must load to determine the
    * mappings for the entity classes
@@ -122,37 +123,51 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
     this.transactionType = initTransactionType(transactionType);
   }
 
-  /** @param provider */
+  /**
+   * @param provider
+   */
   public void setProviderClassName(String providerClassName) {
     this.providerClassName = providerClassName;
   }
 
-  /** @param jtaDataSource */
+  /**
+   * @param jtaDataSource
+   */
   public void setJtaDataSource(String jtaDataSource) {
     // TODO: implement
   }
 
-  /** @param nonJtaDataSource */
+  /**
+   * @param nonJtaDataSource
+   */
   public void setNonJtaDataSource(String nonJtaDataSource) {
     // TODO: implement
   }
 
-  /** @param mappingFileName */
+  /**
+   * @param mappingFileName
+   */
   public void addMappingFileName(String mappingFileName) {
     mappingFileNames.add(mappingFileName);
   }
 
-  /** @param jarFileName */
+  /**
+   * @param jarFileName
+   */
   public void addJarFileName(String jarFileName) {
     jarFileUrls.add(initJarFile(jarFileName));
   }
 
-  /** @param className */
+  /**
+   * @param className
+   */
   public void addClassName(String className) {
     managedClassNames.add(className);
   }
 
-  /** @param exclude */
+  /**
+   * @param exclude
+   */
   public void setExcludeUnlisted(boolean exclude) {
     excludeUnlistedClasses = exclude;
   }
@@ -165,12 +180,16 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
     properties.setProperty(name, value);
   }
 
-  /** @param sharedCacheMode */
+  /**
+   * @param sharedCacheMode
+   */
   public void setSharedCacheMode(String sharedCacheMode) {
     this.sharedCacheMode = initSharedCacheMode(sharedCacheMode);
   }
 
-  /** @param validationMode */
+  /**
+   * @param validationMode
+   */
   public void setValidationMode(String validationMode) {
     this.validationMode = initValidationMode(validationMode);
   }

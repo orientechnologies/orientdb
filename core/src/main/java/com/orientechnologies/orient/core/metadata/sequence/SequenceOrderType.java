@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
-/** @author mdjurovi */
+/**
+ * @author mdjurovi
+ */
 public enum SequenceOrderType {
   ORDER_POSITIVE((byte) 1),
   ORDER_NEGATIVE((byte) 2);

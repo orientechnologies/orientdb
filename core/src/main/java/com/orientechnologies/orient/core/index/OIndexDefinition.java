@@ -47,7 +47,9 @@ public interface OIndexDefinition extends OIndexCallback {
    */
   List<String> getFieldsToIndex();
 
-  /** @return Name of the class which this index belongs to. */
+  /**
+   * @return Name of the class which this index belongs to.
+   */
   String getClassName();
 
   /** {@inheritDoc} */

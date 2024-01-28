@@ -33,7 +33,9 @@ public enum JPAVersion {
     this.minor = minor;
   }
 
-  /** @return jpa version formated as MAJOR_MINOR */
+  /**
+   * @return jpa version formated as MAJOR_MINOR
+   */
   public String getVersion() {
     return String.format("%d.%d", major, minor);
   }

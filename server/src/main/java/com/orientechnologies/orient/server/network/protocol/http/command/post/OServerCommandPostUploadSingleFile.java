@@ -32,7 +32,9 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCommand<String, ORID> {
 
   private static final String[] NAMES = {"POST|uploadSingleFile/*"};

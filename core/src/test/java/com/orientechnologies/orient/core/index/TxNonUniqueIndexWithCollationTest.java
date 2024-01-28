@@ -31,7 +31,9 @@ import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import org.junit.Before;
 import org.junit.Test;
 
-/** @author Sergey Sitnikov */
+/**
+ * @author Sergey Sitnikov
+ */
 public class TxNonUniqueIndexWithCollationTest extends BaseMemoryDatabase {
 
   @Before

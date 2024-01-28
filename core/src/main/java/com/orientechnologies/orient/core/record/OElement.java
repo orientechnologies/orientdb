@@ -24,7 +24,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.Optional;
 import java.util.Set;
 
-/** @author Luigi Dell'Aquila */
+/**
+ * @author Luigi Dell'Aquila
+ */
 public interface OElement extends ORecord {
 
   /**

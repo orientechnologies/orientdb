@@ -41,7 +41,9 @@ import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OObjectEntityEnhancer {
 
   private static final OObjectEntityEnhancer instance = new OObjectEntityEnhancer();
@@ -280,8 +282,12 @@ public class OObjectEntityEnhancer {
   }
 
   protected <T> T createInstanceNoParameters(Class<T> iProxiedClass, Class<?> iOriginalClass)
-      throws SecurityException, NoSuchMethodException, IllegalArgumentException,
-          InstantiationException, IllegalAccessException, InvocationTargetException {
+      throws SecurityException,
+          NoSuchMethodException,
+          IllegalArgumentException,
+          InstantiationException,
+          IllegalAccessException,
+          InvocationTargetException {
     T instanceToReturn = null;
     final Class<?> enclosingClass = OObjectEntitySerializer.getEnclosingClass(iOriginalClass);
 
@@ -308,8 +314,12 @@ public class OObjectEntityEnhancer {
   }
 
   protected <T> T createInstanceNoParameters(Class<T> iProxiedClass, Object iEnclosingInstance)
-      throws SecurityException, NoSuchMethodException, IllegalArgumentException,
-          InstantiationException, IllegalAccessException, InvocationTargetException {
+      throws SecurityException,
+          NoSuchMethodException,
+          IllegalArgumentException,
+          InstantiationException,
+          IllegalAccessException,
+          InvocationTargetException {
     T instanceToReturn = null;
     final Class<?> enclosingClass = iEnclosingInstance.getClass();
 

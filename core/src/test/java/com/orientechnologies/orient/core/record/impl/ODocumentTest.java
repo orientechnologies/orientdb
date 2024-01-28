@@ -26,7 +26,9 @@ import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class ODocumentTest {
   private static final String dbName = ODocumentTest.class.getSimpleName();
   private static final String defaultDbAdminCredentials = "admin";

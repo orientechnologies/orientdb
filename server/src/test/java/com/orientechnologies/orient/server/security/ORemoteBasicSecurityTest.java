@@ -25,9 +25,16 @@ public class ORemoteBasicSecurityTest {
 
   @Before
   public void before()
-      throws IOException, InstantiationException, InvocationTargetException, NoSuchMethodException,
-          MBeanRegistrationException, IllegalAccessException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, ClassNotFoundException, MalformedObjectNameException {
+      throws IOException,
+          InstantiationException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          MBeanRegistrationException,
+          IllegalAccessException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          ClassNotFoundException,
+          MalformedObjectNameException {
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     server = OServer.startFromClasspathConfig("abstract-orientdb-server-config.xml");
 

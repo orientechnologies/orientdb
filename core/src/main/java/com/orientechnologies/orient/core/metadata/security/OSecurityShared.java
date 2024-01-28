@@ -76,6 +76,7 @@ public class OSecurityShared implements OSecurityInternal {
 
   /** role name -> class name -> true: has some rules, ie. it's not all allowed */
   protected Map<String, Map<String, Boolean>> roleHasPredicateSecurityForClass;
+
   // used to avoid updating the above while the security schema is being created
   protected boolean skipRoleHasPredicateSecurityForClassUpdate = false;
 

@@ -11,7 +11,9 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Luigi Dell'Aquila */
+/**
+ * @author Luigi Dell'Aquila
+ */
 public class ORebuildIndexStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test

@@ -2,11 +2,10 @@ package com.orientechnologies.orient.test.server.network.http;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.test.server.network.http.BaseHttpTest.CONTENT;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Map;
-import org.apache.http.HttpResponse;
+import org.apache.hc.core5.http.HttpResponse;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,8 +24,7 @@ public class HttpDatabaseTest extends BaseHttpTest {
             .setUserPassword("root")
             .post("database/" + getDatabaseName())
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         500);
   }
 
@@ -37,8 +35,7 @@ public class HttpDatabaseTest extends BaseHttpTest {
             .setUserPassword("wrongPasswod")
             .post("database/wrongpasswd")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         401);
   }
 
@@ -53,8 +50,7 @@ public class HttpDatabaseTest extends BaseHttpTest {
             .post("database/" + getDatabaseName() + "/memory")
             .payload(pass.toJSON(), CONTENT.JSON)
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
 
     HttpResponse response =
@@ -63,7 +59,7 @@ public class HttpDatabaseTest extends BaseHttpTest {
             .get("database/" + getDatabaseName())
             .getResponse();
 
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getCode());
 
     final ODocument payload = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
@@ -81,8 +77,7 @@ public class HttpDatabaseTest extends BaseHttpTest {
             .post("database/" + getDatabaseName() + "/memory")
             .payload(pass.toJSON(), CONTENT.JSON)
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
 
     Assert.assertEquals(
@@ -95,8 +90,7 @@ public class HttpDatabaseTest extends BaseHttpTest {
                     + URLEncoder.encode("select from OUSer", "UTF8")
                     + "/10")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
 
     Assert.assertEquals(
@@ -104,8 +98,7 @@ public class HttpDatabaseTest extends BaseHttpTest {
             .setUserPassword("root")
             .delete("database/" + getDatabaseName())
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         204);
   }
 
@@ -116,8 +109,7 @@ public class HttpDatabaseTest extends BaseHttpTest {
             .setUserPassword("root")
             .delete("database/whateverdbname")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         500);
   }
 

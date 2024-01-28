@@ -12,7 +12,9 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Artem Loginov */
+/**
+ * @author Artem Loginov
+ */
 public class ClassIteratorTest extends BaseMemoryDatabase {
   private Set<String> names;
 

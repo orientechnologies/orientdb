@@ -85,7 +85,8 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
           } else if (res instanceof OrientDynaElementIterable) {
             //            System.out.println("RETURNED ITER");
             OrientDynaElementIterable it = (OrientDynaElementIterable) res;
-            for (Object o : it) ;
+            for (Object o : it)
+              ;
             //              System.out.println("RETURNED: " + o);
           }
         }

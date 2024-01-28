@@ -31,7 +31,9 @@ import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Before;
 import org.junit.Test;
 
-/** @author Luca Garulli */
+/**
+ * @author Luca Garulli
+ */
 public class OETLLoadTransformerTest extends OETLBaseTest {
 
   @Before

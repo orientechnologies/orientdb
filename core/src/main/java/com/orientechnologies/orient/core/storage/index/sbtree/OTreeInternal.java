@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public interface OTreeInternal<K, V> {
   boolean isEmpty();
 
@@ -37,7 +39,9 @@ public interface OTreeInternal<K, V> {
 
   V remove(OAtomicOperation atomicOperation, K key) throws IOException;
 
-  /** @author Artem Orobets (enisher-at-gmail.com) */
+  /**
+   * @author Artem Orobets (enisher-at-gmail.com)
+   */
   interface RangeResultListener<K, V> {
     /**
      * Callback method for result entries.

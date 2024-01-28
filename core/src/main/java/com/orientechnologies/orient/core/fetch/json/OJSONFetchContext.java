@@ -37,7 +37,9 @@ import java.util.Date;
 import java.util.Set;
 import java.util.Stack;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OJSONFetchContext implements OFetchContext {
 
   protected final OJSONWriter jsonWriter;

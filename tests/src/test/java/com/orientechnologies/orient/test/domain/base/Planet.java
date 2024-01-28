@@ -23,7 +23,9 @@ import java.util.Map;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class Planet {
 
   @Id private String id;

@@ -111,7 +111,9 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T>
     return result;
   }
 
-  /** @return RID of the record that will be processed first during pagination mode. */
+  /**
+   * @return RID of the record that will be processed first during pagination mode.
+   */
   public ORID getNextPageRID() {
     return nextPageRID;
   }

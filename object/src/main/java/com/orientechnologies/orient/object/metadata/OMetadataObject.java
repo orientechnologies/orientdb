@@ -30,7 +30,9 @@ import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 import java.io.IOException;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OMetadataObject implements OMetadataInternal {
 
   protected OMetadataInternal underlying;

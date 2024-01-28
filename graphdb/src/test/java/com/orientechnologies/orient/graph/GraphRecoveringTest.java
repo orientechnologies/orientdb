@@ -53,7 +53,8 @@ public class GraphRecoveringTest {
     public void onRepairedVertex(ODocument vertex) {
       repairedVertices++;
     }
-  };
+  }
+  ;
 
   private void init(OrientBaseGraph g, boolean lightweight) {
     g.setUseLightweightEdges(lightweight);

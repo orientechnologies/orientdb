@@ -26,7 +26,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.List;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public abstract class ORecordsReturnHandler implements OReturnHandler {
   private final Object returnExpression;
   private final OCommandContext context;

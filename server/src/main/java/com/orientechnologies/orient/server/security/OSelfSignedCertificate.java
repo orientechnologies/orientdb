@@ -191,10 +191,8 @@ public class OSelfSignedCertificate {
     try {
       var certHolder =
           certBuilder.build(
-              new JcaContentSignerBuilder("SHA256WithRSA")
-                  .setProvider("BC")
-                  .build(keypair.getPrivate()));
-      return new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
+              new JcaContentSignerBuilder("SHA256WithRSA").build(keypair.getPrivate()));
+      return new JcaX509CertificateConverter().getCertificate(certHolder);
     } catch (OperatorCreationException e) {
       throw new RuntimeException(e);
     }
@@ -211,15 +209,21 @@ public class OSelfSignedCertificate {
   }
 
   public static void checkCertificate(X509Certificate cert, PublicKey publicKey, Date date)
-      throws NoSuchProviderException, CertificateException, NoSuchAlgorithmException,
-          InvalidKeyException, SignatureException {
+      throws NoSuchProviderException,
+          CertificateException,
+          NoSuchAlgorithmException,
+          InvalidKeyException,
+          SignatureException {
     cert.checkValidity(date);
     cert.verify(publicKey);
   }
 
   public void checkThisCertificate()
-      throws NoSuchAlgorithmException, CertificateException, NoSuchProviderException,
-          InvalidKeyException, SignatureException {
+      throws NoSuchAlgorithmException,
+          CertificateException,
+          NoSuchProviderException,
+          InvalidKeyException,
+          SignatureException {
     checkCertificate(
         this.certificate, this.keyPair.getPublic(), new Date(System.currentTimeMillis()));
   }

@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-/** @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
+ */
 public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLockKeySource {
   public static final int FACTORYID = 44;
 

@@ -296,32 +296,44 @@ public class OGraphBatchInsertBasic {
     this.averageEdgeNumberPerNode = averageEdgeNumberPerNode;
   }
 
-  /** @return the property name where ids are written on vertices */
+  /**
+   * @return the property name where ids are written on vertices
+   */
   public String getIdPropertyName() {
     return idPropertyName;
   }
 
-  /** @param idPropertyName the property name where ids are written on vertices */
+  /**
+   * @param idPropertyName the property name where ids are written on vertices
+   */
   public void setIdPropertyName(final String idPropertyName) {
     this.idPropertyName = idPropertyName;
   }
 
-  /** @return the edge class name (E by default) */
+  /**
+   * @return the edge class name (E by default)
+   */
   public String getEdgeClass() {
     return edgeClass;
   }
 
-  /** @param edgeClass the edge class name */
+  /**
+   * @param edgeClass the edge class name
+   */
   public void setEdgeClass(final String edgeClass) {
     this.edgeClass = edgeClass;
   }
 
-  /** @return the vertex class name (V by default) */
+  /**
+   * @return the vertex class name (V by default)
+   */
   public String getVertexClass() {
     return vertexClass;
   }
 
-  /** @param vertexClass the vertex class name */
+  /**
+   * @param vertexClass the vertex class name
+   */
   public void setVertexClass(final String vertexClass) {
     this.vertexClass = vertexClass;
   }
@@ -358,7 +370,9 @@ public class OGraphBatchInsertBasic {
     this.estimatedEntries = estimatedEntries;
   }
 
-  /** @return number of parallel threads used for batch import */
+  /**
+   * @return number of parallel threads used for batch import
+   */
   public int getParallel() {
     return parallel;
   }

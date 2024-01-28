@@ -32,7 +32,9 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-/** @author mdjurovi */
+/**
+ * @author mdjurovi
+ */
 public class OResultBinary implements OResult {
 
   private ODocumentSerializer serializer;

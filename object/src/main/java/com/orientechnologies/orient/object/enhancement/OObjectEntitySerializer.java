@@ -85,7 +85,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OObjectEntitySerializer {
 
   public static final String SIMPLE_NAME = OObjectEntitySerializedSchema.class.getSimpleName();

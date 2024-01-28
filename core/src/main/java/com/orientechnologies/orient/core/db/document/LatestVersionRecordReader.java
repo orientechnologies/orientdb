@@ -5,7 +5,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-/** @Internal */
+/**
+ * @Internal
+ */
 public final class LatestVersionRecordReader implements RecordReader {
   @Override
   public ORawBuffer readRecord(

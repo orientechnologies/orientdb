@@ -16,7 +16,9 @@
  */
 package com.orientechnologies.orient.test.domain.inheritance;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public abstract class InheritanceTestAbstractClass {
   protected int cField;
 

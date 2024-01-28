@@ -59,10 +59,14 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
    */
   long getFileId();
 
-  /** @return the pointer to the root bucket in tree. */
+  /**
+   * @return the pointer to the root bucket in tree.
+   */
   OBonsaiBucketPointer getRootBucketPointer();
 
-  /** @return pointer to a collection. */
+  /**
+   * @return pointer to a collection.
+   */
   OBonsaiCollectionPointer getCollectionPointer();
 
   /**

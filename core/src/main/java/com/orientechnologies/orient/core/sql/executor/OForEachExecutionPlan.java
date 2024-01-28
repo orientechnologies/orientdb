@@ -4,7 +4,9 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.WhileStep;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OForEachExecutionPlan extends OUpdateExecutionPlan {
   public OForEachExecutionPlan(OCommandContext ctx) {
     super(ctx);

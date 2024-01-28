@@ -25,9 +25,13 @@ import java.io.Serializable;
  */
 @SuppressWarnings("SameReturnValue")
 public interface OAtomicOperationMetadata<T> extends Serializable {
-  /** @return Key associated with given metadata */
+  /**
+   * @return Key associated with given metadata
+   */
   String getKey();
 
-  /** @return Metadata value. */
+  /**
+   * @return Metadata value.
+   */
   T getValue();
 }

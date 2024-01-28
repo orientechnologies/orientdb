@@ -52,6 +52,7 @@ import java.util.Set;
 public class OImmutableClass implements OClass {
   /** use OClass.EDGE_CLASS_NAME instead */
   @Deprecated public static final String EDGE_CLASS_NAME = OClass.EDGE_CLASS_NAME;
+
   /** use OClass.EDGE_CLASS_NAME instead */
   @Deprecated public static final String VERTEX_CLASS_NAME = OClass.VERTEX_CLASS_NAME;
 

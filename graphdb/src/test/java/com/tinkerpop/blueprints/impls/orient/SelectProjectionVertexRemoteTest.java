@@ -26,9 +26,16 @@ public class SelectProjectionVertexRemoteTest {
 
   @Before
   public void before()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException,
-          NoSuchMethodException, InstantiationException, IOException, IllegalAccessException {
+      throws ClassNotFoundException,
+          MalformedObjectNameException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          MBeanRegistrationException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          InstantiationException,
+          IOException,
+          IllegalAccessException {
     server = new OServer(false);
     server.startup(
         OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));

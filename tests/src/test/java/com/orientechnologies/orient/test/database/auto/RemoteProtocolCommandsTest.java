@@ -18,7 +18,9 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 @Test(groups = "db")
 public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
   private static final String serverPort = System.getProperty("orient.server.port", "2424");

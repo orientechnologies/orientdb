@@ -300,7 +300,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           case KEY:
           case IDENTIFIER:
           case QUOTED_IDENTIFIER:
-          case 271:;
+          case 271:
+            ;
             break;
           default:
             jj_la1[2] = jj_gen;
@@ -2224,7 +2225,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_2:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[47] = jj_gen;
@@ -2341,7 +2343,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       label_3:
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case COMMA:;
+          case COMMA:
+            ;
             break;
           default:
             jj_la1[54] = jj_gen;
@@ -2409,7 +2412,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       label_4:
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case COMMA:;
+          case COMMA:
+            ;
             break;
           default:
             jj_la1[59] = jj_gen;
@@ -2772,7 +2776,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
               label_5:
               while (true) {
                 switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                  case COMMA:;
+                  case COMMA:
+                    ;
                     break;
                   default:
                     jj_la1[76] = jj_gen;
@@ -3395,7 +3400,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           case MERGE:
           case CONTENT:
           case REMOVE:
-          case INCREMENT:;
+          case INCREMENT:
+            ;
             break;
           default:
             jj_la1[95] = jj_gen;
@@ -3689,7 +3695,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           case MERGE:
           case CONTENT:
           case REMOVE:
-          case INCREMENT:;
+          case INCREMENT:
+            ;
             break;
           default:
             jj_la1[105] = jj_gen;
@@ -3985,7 +3992,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_8:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[115] = jj_gen;
@@ -4004,7 +4012,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_9:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[116] = jj_gen;
@@ -4054,7 +4063,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_10:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[119] = jj_gen;
@@ -4073,7 +4083,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_11:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[120] = jj_gen;
@@ -4504,7 +4515,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       }
       if (jj_2_65(2147483647)) {
         jjtn000.insertBody = InsertBody();
-      } else {;
+      } else {
+        ;
       }
       switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
         case RETURN:
@@ -4636,7 +4648,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         label_12:
         while (true) {
           switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-            case COMMA:;
+            case COMMA:
+              ;
               break;
             default:
               jj_la1[135] = jj_gen;
@@ -4656,7 +4669,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         label_13:
         while (true) {
           switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-            case COMMA:;
+            case COMMA:
+              ;
               break;
             default:
               jj_la1[136] = jj_gen;
@@ -4670,7 +4684,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         label_14:
         while (true) {
           switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-            case COMMA:;
+            case COMMA:
+              ;
               break;
             default:
               jj_la1[137] = jj_gen;
@@ -4685,7 +4700,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_15:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[138] = jj_gen;
@@ -4707,7 +4723,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         label_16:
         while (true) {
           switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-            case COMMA:;
+            case COMMA:
+              ;
               break;
             default:
               jj_la1[139] = jj_gen;
@@ -4742,7 +4759,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
             label_17:
             while (true) {
               switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                case COMMA:;
+                case COMMA:
+                  ;
                   break;
                 default:
                   jj_la1[141] = jj_gen;
@@ -4870,7 +4888,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       }
       if (jj_2_73(2147483647)) {
         jjtn000.insertBody = InsertBody();
-      } else {;
+      } else {
+        ;
       }
       jjtree.closeNodeScope(jjtn000, true);
       jjtc000 = false;
@@ -5533,7 +5552,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         label_18:
         while (true) {
           switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-            case COMMA:;
+            case COMMA:
+              ;
               break;
             default:
               jj_la1[158] = jj_gen;
@@ -5553,7 +5573,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
             label_19:
             while (true) {
               switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                case COMMA:;
+                case COMMA:
+                  ;
                   break;
                 default:
                   jj_la1[159] = jj_gen;
@@ -5696,7 +5717,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       label_20:
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case COMMA:;
+          case COMMA:
+            ;
             break;
           default:
             jj_la1[164] = jj_gen;
@@ -6086,7 +6108,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       label_21:
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case COMMA:;
+          case COMMA:
+            ;
             break;
           default:
             jj_la1[170] = jj_gen;
@@ -6557,7 +6580,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_22:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[174] = jj_gen;
@@ -6756,7 +6780,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_23:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[176] = jj_gen;
@@ -7021,7 +7046,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       }
       if (jj_2_91(2147483647)) {
         jjtn000.next = Modifier();
-      } else {;
+      } else {
+        ;
       }
       jjtree.closeNodeScope(jjtn000, true);
       jjtc000 = false;
@@ -7160,7 +7186,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         sub = ArrayConcatExpressionElement();
         jjtn000.addChildExpression(sub);
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case SC_OR:;
+          case SC_OR:
+            ;
             break;
           default:
             jj_la1[184] = jj_gen;
@@ -7295,7 +7322,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       jjtn000.addChildExpression(sub);
       label_25:
       while (true) {
-        if (jj_2_97(2)) {;
+        if (jj_2_97(2)) {
+          ;
         } else {
           break label_25;
         }
@@ -7767,7 +7795,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           jjtn000.setIdentifier(identifier);
           if (jj_2_101(2147483647)) {
             jjtn000.modifier = Modifier();
-          } else {;
+          } else {
+            ;
           }
           break;
         case HOOK:
@@ -7775,7 +7804,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           jjtn000.inputParam = InputParameter();
           if (jj_2_102(2147483647)) {
             jjtn000.modifier = Modifier();
-          } else {;
+          } else {
+            ;
           }
           break;
         case RID_STRING:
@@ -7797,7 +7827,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           }
           if (jj_2_103(2147483647)) {
             jjtn000.modifier = Modifier();
-          } else {;
+          } else {
+            ;
           }
           break;
         default:
@@ -7897,7 +7928,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       label_26:
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case COMMA:;
+          case COMMA:
+            ;
             break;
           default:
             jj_la1[191] = jj_gen;
@@ -8030,7 +8062,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
             label_27:
             while (true) {
               switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                case COMMA:;
+                case COMMA:
+                  ;
                   break;
                 default:
                   jj_la1[193] = jj_gen;
@@ -8063,7 +8096,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
                 while (true) {
                   switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
                     case COMMA:
-                    case COLON:;
+                    case COLON:
+                      ;
                       break;
                     default:
                       jj_la1[195] = jj_gen;
@@ -8109,7 +8143,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
                       jj_consume_token(RPAREN);
                       if (jj_2_105(2147483647)) {
                         jjtn000.modifier = Modifier();
-                      } else {;
+                      } else {
+                        ;
                       }
                       break;
                     case HOOK:
@@ -8122,7 +8157,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
                         jjtn000.functionCall = FunctionCall();
                         if (jj_2_106(2147483647)) {
                           jjtn000.modifier = Modifier();
-                        } else {;
+                        } else {
+                          ;
                         }
                       } else {
                         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
@@ -8242,7 +8278,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
                             jjtn000.setIdentifier(identifier);
                             if (jj_2_107(2147483647)) {
                               jjtn000.modifier = Modifier();
-                            } else {;
+                            } else {
+                              ;
                             }
                             break;
                           default:
@@ -8457,7 +8494,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_29:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[202] = jj_gen;
@@ -8558,7 +8596,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
           case DOT:
-          case MINUS:;
+          case MINUS:
+            ;
             break;
           default:
             jj_la1[205] = jj_gen;
@@ -8750,7 +8789,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       label_31:
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case OR:;
+          case OR:
+            ;
             break;
           default:
             jj_la1[209] = jj_gen;
@@ -8808,7 +8848,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       label_32:
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case AND:;
+          case AND:
+            ;
             break;
           default:
             jj_la1[210] = jj_gen;
@@ -11385,7 +11426,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       label_33:
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case COMMA:;
+          case COMMA:
+            ;
             break;
           default:
             jj_la1[234] = jj_gen;
@@ -11919,7 +11961,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       label_34:
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case COMMA:;
+          case COMMA:
+            ;
             break;
           default:
             jj_la1[246] = jj_gen;
@@ -11978,7 +12021,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       label_35:
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case COMMA:;
+          case COMMA:
+            ;
             break;
           default:
             jj_la1[247] = jj_gen;
@@ -12523,7 +12567,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_36:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[255] = jj_gen;
@@ -12701,7 +12746,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           case IN:
           case KEY:
           case IDENTIFIER:
-          case QUOTED_IDENTIFIER:;
+          case QUOTED_IDENTIFIER:
+            ;
             break;
           default:
             jj_la1[257] = jj_gen;
@@ -12914,7 +12960,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_38:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case DOT:;
+              case DOT:
+                ;
                 break;
               default:
                 jj_la1[261] = jj_gen;
@@ -12991,7 +13038,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       jjtn000.base = BaseIdentifier();
       if (jj_2_145(2147483647)) {
         jjtn000.modifier = Modifier();
-      } else {;
+      } else {
+        ;
       }
       jjtree.closeNodeScope(jjtn000, true);
       jjtc000 = false;
@@ -13296,7 +13344,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_39:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[265] = jj_gen;
@@ -13498,7 +13547,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           case DOT:
           case LT:
           case DECR:
-          case MINUS:;
+          case MINUS:
+            ;
             break;
           default:
             jj_la1[268] = jj_gen;
@@ -13739,7 +13789,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       jjtn000.addItem(nextItem);
       label_41:
       while (true) {
-        if (jj_2_151(2147483647)) {;
+        if (jj_2_151(2147483647)) {
+          ;
         } else {
           break label_41;
         }
@@ -13825,7 +13876,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
           case LT:
           case DECR:
-          case MINUS:;
+          case MINUS:
+            ;
             break;
           default:
             jj_la1[275] = jj_gen;
@@ -13904,7 +13956,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_43:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[277] = jj_gen;
@@ -15612,7 +15665,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
               label_44:
               while (true) {
                 switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                  case COMMA:;
+                  case COMMA:
+                    ;
                     break;
                   default:
                     jj_la1[303] = jj_gen;
@@ -15828,7 +15882,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_45:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[308] = jj_gen;
@@ -16034,7 +16089,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_46:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[312] = jj_gen;
@@ -16058,7 +16114,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_47:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[314] = jj_gen;
@@ -16618,7 +16675,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
               label_48:
               while (true) {
                 switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                  case COMMA:;
+                  case COMMA:
+                    ;
                     break;
                   default:
                     jj_la1[324] = jj_gen;
@@ -17792,7 +17850,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       if (jj_2_155(3)) {
         IfNotExists();
         jjtn000.ifNotExists = true;
-      } else {;
+      } else {
+        ;
       }
       jjtn000.propertyType = Identifier();
       switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
@@ -17922,7 +17981,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_49:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[341] = jj_gen;
@@ -17994,7 +18054,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       jjtn000.settingName = Identifier();
       if (getToken(1).kind != COMMA && getToken(1).kind != RPAREN) {
         jjtn000.settingValue = Expression();
-      } else {;
+      } else {
+        ;
       }
       jjtree.closeNodeScope(jjtn000, true);
       jjtc000 = false;
@@ -18463,7 +18524,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         label_50:
         while (true) {
           switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-            case COMMA:;
+            case COMMA:
+              ;
               break;
             default:
               jj_la1[352] = jj_gen;
@@ -19120,7 +19182,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
                   label_51:
                   while (true) {
                     switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                      case COMMA:;
+                      case COMMA:
+                        ;
                         break;
                       default:
                         jj_la1[359] = jj_gen;
@@ -19387,7 +19450,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
                   label_52:
                   while (true) {
                     switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                      case COMMA:;
+                      case COMMA:
+                        ;
                         break;
                       default:
                         jj_la1[363] = jj_gen;
@@ -20344,7 +20408,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       label_53:
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-          case MINUS:;
+          case MINUS:
+            ;
             break;
           default:
             jj_la1[377] = jj_gen;
@@ -20996,7 +21061,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_54:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[384] = jj_gen;
@@ -21461,7 +21527,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
                   label_55:
                   while (true) {
                     switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                      case COMMA:;
+                      case COMMA:
+                        ;
                         break;
                       default:
                         jj_la1[390] = jj_gen;
@@ -22074,7 +22141,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
                   label_56:
                   while (true) {
                     switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                      case COMMA:;
+                      case COMMA:
+                        ;
                         break;
                       default:
                         jj_la1[396] = jj_gen;
@@ -22227,7 +22295,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         }
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
           case SET:
-          case REMOVE:;
+          case REMOVE:
+            ;
             break;
           default:
             jj_la1[401] = jj_gen;
@@ -22317,7 +22386,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         }
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
           case SET:
-          case REMOVE:;
+          case REMOVE:
+            ;
             break;
           default:
             jj_la1[403] = jj_gen;
@@ -22516,7 +22586,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
                       case SLEEP:
                       case CONSOLE:
                       case HA:
-                      case MOVE:;
+                      case MOVE:
+                        ;
                         break;
                       default:
                         jj_la1[405] = jj_gen;
@@ -22976,7 +23047,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           case KEY:
           case IDENTIFIER:
           case QUOTED_IDENTIFIER:
-          case 271:;
+          case 271:
+            ;
             break;
           default:
             jj_la1[413] = jj_gen;
@@ -23177,7 +23249,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           case DESC:
           case CACHE:
           case CYCLE:
-          case START:;
+          case START:
+            ;
             break;
           default:
             jj_la1[416] = jj_gen;
@@ -23287,7 +23360,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           case CACHE:
           case CYCLE:
           case NOLIMIT:
-          case START:;
+          case START:
+            ;
             break;
           default:
             jj_la1[419] = jj_gen;
@@ -23455,7 +23529,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           case 277:
           case 278:
           case 279:
-          case 280:;
+          case 280:
+            ;
             break;
           default:
             jj_la1[423] = jj_gen;
@@ -23575,7 +23650,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       while (true) {
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
           case 281:
-          case 282:;
+          case 282:
+            ;
             break;
           default:
             jj_la1[425] = jj_gen;
@@ -23888,7 +23964,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           case KEY:
           case IDENTIFIER:
           case QUOTED_IDENTIFIER:
-          case 271:;
+          case 271:
+            ;
             break;
           default:
             jj_la1[429] = jj_gen;
@@ -24115,7 +24192,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           case KEY:
           case IDENTIFIER:
           case QUOTED_IDENTIFIER:
-          case 271:;
+          case 271:
+            ;
             break;
           default:
             jj_la1[431] = jj_gen;
@@ -24486,7 +24564,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_67:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[436] = jj_gen;
@@ -24654,7 +24733,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
             label_69:
             while (true) {
               switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                case COMMA:;
+                case COMMA:
+                  ;
                   break;
                 default:
                   jj_la1[440] = jj_gen;
@@ -24750,7 +24830,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
             label_70:
             while (true) {
               switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                case COMMA:;
+                case COMMA:
+                  ;
                   break;
                 default:
                   jj_la1[443] = jj_gen;
@@ -24798,7 +24879,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         }
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
           case SET:
-          case REMOVE:;
+          case REMOVE:
+            ;
             break;
           default:
             jj_la1[446] = jj_gen;
@@ -25341,7 +25423,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
                   label_71:
                   while (true) {
                     switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-                      case COMMA:;
+                      case COMMA:
+                        ;
                         break;
                       default:
                         jj_la1[449] = jj_gen;
@@ -25558,7 +25641,8 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           label_72:
           while (true) {
             switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
-              case COMMA:;
+              case COMMA:
+                ;
                 break;
               default:
                 jj_la1[455] = jj_gen;
@@ -37619,8 +37703,10 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
 
   /** Generated Token Manager. */
   public OrientSqlTokenManager token_source;
+
   /** Current token. */
   public Token token;
+
   /** Next token. */
   public Token jj_nt;
 

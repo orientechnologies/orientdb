@@ -10,7 +10,9 @@ public class ODatabaseDocumentTxInternal {
   private ODatabaseDocumentTxInternal() {}
 
   public static ODatabaseDocumentInternal getInternal(ODatabaseDocumentInternal db) {
-    if (db instanceof ODatabaseDocumentTx) db = ((ODatabaseDocumentTx) db).internal;
+    if (db instanceof ODatabaseDocumentTx) {
+      db = ((ODatabaseDocumentTx) db).internal;
+    }
     return db;
   }
 
@@ -28,14 +30,21 @@ public class ODatabaseDocumentTxInternal {
   }
 
   public static void closeAllOnShutdown() {
-    synchronized (ODatabaseDocumentTx.embedded) {
+    ODatabaseDocumentTx.embeddedLock.lock();
+    try {
       for (OrientDBInternal factory : ODatabaseDocumentTx.embedded.values()) {
         factory.internalClose();
       }
       ODatabaseDocumentTx.embedded.clear();
+    } finally {
+      ODatabaseDocumentTx.embeddedLock.unlock();
     }
-    synchronized (ODatabaseDocumentTx.remote) {
+
+    ODatabaseDocumentTx.remoteLock.lock();
+    try {
       ODatabaseDocumentTx.remote.clear();
+    } finally {
+      ODatabaseDocumentTx.remoteLock.unlock();
     }
   }
 }

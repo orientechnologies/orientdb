@@ -78,7 +78,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable>
     this(iDatabase, OStorage.LOCKING_STRATEGY.NONE);
   }
 
-  /** @deprecated usage of this constructor may lead to deadlocks. */
+  /**
+   * @deprecated usage of this constructor may lead to deadlocks.
+   */
   @Deprecated
   public OIdentifiableIterator(
       final ODatabaseDocumentInternal iDatabase, final OStorage.LOCKING_STRATEGY iLockingStrategy) {

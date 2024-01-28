@@ -24,7 +24,9 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-/** @author marko */
+/**
+ * @author marko
+ */
 @Test
 public class TraverseStrategiesTest extends DocumentDBBaseTest {
 

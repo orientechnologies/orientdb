@@ -8,7 +8,9 @@ import com.orientechnologies.orient.core.sql.parser.OSimpleExecStatement;
 import java.util.Collections;
 import java.util.List;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
 
   protected final OSimpleExecStatement statement;

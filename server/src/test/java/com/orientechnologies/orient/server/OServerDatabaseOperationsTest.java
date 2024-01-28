@@ -32,9 +32,16 @@ public class OServerDatabaseOperationsTest {
 
   @Before
   public void before()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, MBeanRegistrationException, NoSuchMethodException,
-          IOException, InvocationTargetException, IllegalAccessException, InstantiationException {
+      throws ClassNotFoundException,
+          MalformedObjectNameException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          MBeanRegistrationException,
+          NoSuchMethodException,
+          IOException,
+          InvocationTargetException,
+          IllegalAccessException,
+          InstantiationException {
     OLogManager.instance().setConsoleLevel(Level.OFF.getName());
     OServerConfiguration conf = new OServerConfiguration();
 

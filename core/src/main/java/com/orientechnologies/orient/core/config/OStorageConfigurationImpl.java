@@ -110,6 +110,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
   private transient boolean validation = true;
   protected OStorageConfigurationUpdateListener updateListener;
+
   /** Version of product release under which storage was created */
   private String createdAtVersion;
 
@@ -194,7 +195,9 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     }
   }
 
-  /** @return version of product release under which storage was created. */
+  /**
+   * @return version of product release under which storage was created.
+   */
   public String getCreatedAtVersion() {
     lock.readLock().lock();
     try {
@@ -672,7 +675,9 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     return this;
   }
 
-  /** @deprecated because method uses native encoding use {@link #toStream(Charset)} instead. */
+  /**
+   * @deprecated because method uses native encoding use {@link #toStream(Charset)} instead.
+   */
   @Override
   public byte[] toStream() throws OSerializationException {
     return toStream(Integer.MAX_VALUE, Charset.defaultCharset());

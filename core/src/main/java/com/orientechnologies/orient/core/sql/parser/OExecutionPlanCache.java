@@ -27,7 +27,9 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
   protected long lastInvalidation = -1;
   protected long lastGlobalTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
 
-  /** @param size the size of the cache */
+  /**
+   * @param size the size of the cache
+   */
   public OExecutionPlanCache(int size) {
     this.mapSize = size;
     map =

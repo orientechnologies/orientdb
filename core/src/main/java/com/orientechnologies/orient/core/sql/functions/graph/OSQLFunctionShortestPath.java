@@ -65,6 +65,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     private OVertex current;
     private OVertex currentRight;
     public Integer maxDepth;
+
     /** option that decides whether or not to return the edge information */
     public Boolean edge;
   }

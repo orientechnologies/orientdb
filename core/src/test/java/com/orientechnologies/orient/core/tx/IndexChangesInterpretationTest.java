@@ -32,7 +32,9 @@ import java.util.regex.Pattern;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Sergey Sitnikov */
+/**
+ * @author Sergey Sitnikov
+ */
 public class IndexChangesInterpretationTest {
 
   // @formatter:off

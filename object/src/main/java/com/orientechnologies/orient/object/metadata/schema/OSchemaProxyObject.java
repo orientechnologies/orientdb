@@ -46,7 +46,9 @@ import java.util.Map;
 import java.util.Set;
 import javassist.util.proxy.Proxy;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OSchemaProxyObject implements OSchemaObject {
 
   protected OSchema underlying;

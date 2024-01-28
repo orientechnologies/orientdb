@@ -26,7 +26,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.logging.*;
 
-/** @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a> */
+/**
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
+ */
 public class SyslogHandler extends AbstractHandler {
 
   private SyslogMessageSender syslogMessageSender;

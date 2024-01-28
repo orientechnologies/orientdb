@@ -25,7 +25,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-/** @author Luca Garulli (l.garulli--(at)--orientdb.com) */
+/**
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ */
 public class ODistributedRequest {
   public enum EXECUTION_MODE {
     RESPONSE,

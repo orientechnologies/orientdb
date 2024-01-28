@@ -94,7 +94,9 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
     return super.isEmpty();
   }
 
-  /** @return iterator that just returns the elements without conversion. */
+  /**
+   * @return iterator that just returns the elements without conversion.
+   */
   public Iterator<OIdentifiable> rawIterator() {
     lazyLoad(false);
     final Iterator<OIdentifiable> subIterator =

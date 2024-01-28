@@ -45,7 +45,9 @@ import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import java.util.Map;
 import java.util.Random;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect
     implements OLiveQueryListener {
   public static final String KEYWORD_LIVE_SELECT = "LIVE SELECT";

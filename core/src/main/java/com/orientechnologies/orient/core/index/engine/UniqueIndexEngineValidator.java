@@ -11,7 +11,9 @@ public class UniqueIndexEngineValidator implements IndexEngineValidator<Object, 
   /** */
   private final OIndexUnique indexUnique;
 
-  /** @param oIndexUnique */
+  /**
+   * @param oIndexUnique
+   */
   public UniqueIndexEngineValidator(OIndexUnique oIndexUnique) {
     indexUnique = oIndexUnique;
   }

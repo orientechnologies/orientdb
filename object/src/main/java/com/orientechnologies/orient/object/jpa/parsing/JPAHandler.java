@@ -34,12 +34,16 @@ public class JPAHandler extends DefaultHandler {
   /** The Persistence Units that we have parsed */
   private final Stack<OJPAPersistenceUnitInfo> persistenceUnits =
       new Stack<OJPAPersistenceUnitInfo>();
+
   /** root of the persistence unit */
   private final URL persistenceXmlRoot;
+
   /** The version of the persistence.xml file */
   private String xmlSchemaVersion;
+
   /** The name of the current element */
   private PersistenceXml element;
+
   /** A StringBuilder for caching the information from getCharacters */
   private StringBuilder builder = new StringBuilder();
 
@@ -153,7 +157,9 @@ public class JPAHandler extends DefaultHandler {
     throw spe;
   }
 
-  /** @return The collection of persistence units that we have parsed */
+  /**
+   * @return The collection of persistence units that we have parsed
+   */
   public Collection<OJPAPersistenceUnitInfo> getPersistenceUnits() {
     return persistenceUnits;
   }

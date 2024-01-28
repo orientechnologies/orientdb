@@ -40,7 +40,9 @@ public class ODocumentFieldHandlingStrategyFactory {
     // Hidden
   }
 
-  /** @return an instance */
+  /**
+   * @return an instance
+   */
   public static ODocumentFieldHandlingStrategyFactory getInstance() {
     return INSTANCE;
   }

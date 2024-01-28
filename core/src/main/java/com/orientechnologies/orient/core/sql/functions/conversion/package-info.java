@@ -13,5 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/** @author Luca Garulli (l.garulli--(at)--orientdb.com) */
+/**
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ */
 package com.orientechnologies.orient.core.sql.functions.conversion;

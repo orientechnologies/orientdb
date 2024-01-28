@@ -23,7 +23,9 @@ package com.orientechnologies.orient.core.command.traverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.ArrayDeque;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class OTraversePath {
   private static final OTraversePath EMPTY_PATH = new OTraversePath(new FirstPathItem());
 

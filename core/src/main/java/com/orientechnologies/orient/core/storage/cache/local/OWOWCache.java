@@ -540,13 +540,17 @@ public final class OWOWCache extends OAbstractWriteCache
     return storagePath;
   }
 
-  /** @inheritDoc */
+  /**
+   * @inheritDoc
+   */
   @Override
   public void addPageIsBrokenListener(final OPageIsBrokenListener listener) {
     pageIsBrokenListeners.add(new WeakReference<>(listener));
   }
 
-  /** @inheritDoc */
+  /**
+   * @inheritDoc
+   */
   @Override
   public void removePageIsBrokenListener(final OPageIsBrokenListener listener) {
     final List<WeakReference<OPageIsBrokenListener>> itemsToRemove = new ArrayList<>(1);
@@ -608,7 +612,9 @@ public final class OWOWCache extends OAbstractWriteCache
     }
   }
 
-  /** @inheritDoc */
+  /**
+   * @inheritDoc
+   */
   @Override
   public int pageSize() {
     return pageSize;

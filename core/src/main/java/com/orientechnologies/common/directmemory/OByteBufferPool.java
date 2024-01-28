@@ -52,7 +52,9 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
   /** Limit of direct memory pointers are hold inside of the pool */
   private final int poolSize;
 
-  /** @return Singleton instance */
+  /**
+   * @return Singleton instance
+   */
   public static OByteBufferPool instance(OContextConfiguration contextConfiguration) {
     final OByteBufferPool instance = INSTANCE_HOLDER.get();
     if (instance != null) {
@@ -171,7 +173,9 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
     }
   }
 
-  /** @inheritDoc */
+  /**
+   * @inheritDoc
+   */
   @Override
   public final int getPoolSize() {
     return pointersPoolSize.get();

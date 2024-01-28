@@ -4,7 +4,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import java.text.DecimalFormat;
 import java.util.Optional;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public abstract class AbstractExecutionStep implements OExecutionStepInternal {
 
   protected final OCommandContext ctx;

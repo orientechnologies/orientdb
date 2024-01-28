@@ -33,7 +33,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/** @author Luca Garulli (l.garulli--(at)--orientdb.com) */
+/**
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ */
 public class AutomaticBackupTest {
   private static final String DBNAME = "testautobackup";
   private static final String DBNAME2 = DBNAME + "2";
@@ -47,10 +49,18 @@ public class AutomaticBackupTest {
   private final OServer server;
 
   public AutomaticBackupTest()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, MBeanRegistrationException, IOException,
-          InstantiationException, IllegalAccessException, IllegalArgumentException,
-          SecurityException, InvocationTargetException, NoSuchMethodException {
+      throws ClassNotFoundException,
+          MalformedObjectNameException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          MBeanRegistrationException,
+          IOException,
+          InstantiationException,
+          IllegalAccessException,
+          IllegalArgumentException,
+          SecurityException,
+          InvocationTargetException,
+          NoSuchMethodException {
 
     // SET THE ORIENTDB_HOME DIRECTORY TO CHECK JSON FILE CREATION
     tempDirectory = new File("target/testhome").getAbsolutePath();
@@ -88,8 +98,12 @@ public class AutomaticBackupTest {
 
   @Before
   public void init()
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException,
-          IllegalArgumentException, SecurityException, InvocationTargetException,
+      throws InstantiationException,
+          IllegalAccessException,
+          ClassNotFoundException,
+          IllegalArgumentException,
+          SecurityException,
+          InvocationTargetException,
           NoSuchMethodException {
     final File f =
         new File(
@@ -239,8 +253,12 @@ public class AutomaticBackupTest {
 
   @Test
   public void testAutomaticBackupDisable()
-      throws IOException, ClassNotFoundException, MalformedObjectNameException,
-          InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
+      throws IOException,
+          ClassNotFoundException,
+          MalformedObjectNameException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          MBeanRegistrationException {
 
     String jsonConfig =
         OIOUtils.readStreamAsString(getClass().getResourceAsStream("automatic-backup.json"));

@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
-/** @author marko */
+/**
+ * @author marko
+ */
 public class OSequenceAction {
 
   public static final int CREATE = 1;

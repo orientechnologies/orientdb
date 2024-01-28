@@ -20,7 +20,9 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-/** @since 21.03.12 */
+/**
+ * @since 21.03.12
+ */
 @Test(groups = {"index"})
 public class LinkListIndexTest extends DocumentDBBaseTest {
 

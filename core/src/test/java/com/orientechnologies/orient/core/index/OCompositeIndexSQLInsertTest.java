@@ -76,7 +76,8 @@ public class OCompositeIndexSQLInsertTest extends BaseMemoryDatabase {
     Assert.assertEquals(count2, 1);
 
     long count3 =
-        db.query("select from CompositeIndexWithRangeAndConditions where id > 0 and bar = 1")
+        db
+            .query("select from CompositeIndexWithRangeAndConditions where id > 0 and bar = 1")
             .stream()
             .count();
 

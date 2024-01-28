@@ -18,12 +18,16 @@ package com.orientechnologies.orient.core.sql.functions;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import java.util.Set;
 
-/** @author Johann Sorel (Geomatys) */
+/**
+ * @author Johann Sorel (Geomatys)
+ */
 public interface OSQLFunctionFactory {
 
   boolean hasFunction(String iName);
 
-  /** @return Set of supported function names of this factory */
+  /**
+   * @return Set of supported function names of this factory
+   */
   Set<String> getFunctionNames();
 
   /**

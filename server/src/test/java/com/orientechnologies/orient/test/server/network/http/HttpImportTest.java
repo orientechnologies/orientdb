@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
-import org.apache.http.HttpResponse;
 import org.junit.Test;
 
 /** Created by tglman on 16/03/16. */
@@ -20,8 +19,8 @@ public class HttpImportTest extends BaseHttpDatabaseTest {
     String content =
         "{\"records\": [{\"@type\": \"d\", \"@rid\": \"#9:0\",\"@version\": 1,\"@class\": \"V\"}]}";
     post("import/" + getDatabaseName() + "?merge=true").payload(content, CONTENT.TEXT);
-    HttpResponse response = getResponse();
-    assertEquals(200, response.getStatusLine().getStatusCode());
+    var response = getResponse();
+    assertEquals(200, response.getCode());
 
     InputStream is = response.getEntity().getContent();
     List<String> out = new LinkedList<>();

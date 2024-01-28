@@ -43,6 +43,8 @@ public interface OWALPage {
    */
   boolean mergeWithNextPage(int position);
 
-  /** @return Amount of free space available to store new records inside of page. */
+  /**
+   * @return Amount of free space available to store new records inside of page.
+   */
   int getFreeSpace();
 }

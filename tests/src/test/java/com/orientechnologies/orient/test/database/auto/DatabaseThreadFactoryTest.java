@@ -30,7 +30,9 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 @Test
 public class DatabaseThreadFactoryTest extends DocumentDBBaseTest {
   private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();

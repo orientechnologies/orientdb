@@ -35,7 +35,9 @@ public class ORidSet implements Set<ORID> {
     this(Integer.MAX_VALUE / 10);
   }
 
-  /** @param bucketSize */
+  /**
+   * @param bucketSize
+   */
   public ORidSet(int bucketSize) {
     maxArraySize = bucketSize;
   }

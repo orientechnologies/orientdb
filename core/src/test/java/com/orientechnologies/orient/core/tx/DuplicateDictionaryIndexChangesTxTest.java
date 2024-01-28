@@ -29,7 +29,9 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Sergey Sitnikov */
+/**
+ * @author Sergey Sitnikov
+ */
 public class DuplicateDictionaryIndexChangesTxTest extends BaseMemoryDatabase {
 
   private OIndex index;

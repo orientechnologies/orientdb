@@ -28,7 +28,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-/** @author Sergey Sitnikov */
+/**
+ * @author Sergey Sitnikov
+ */
 public class EdgeSaveShouldNotReinsertVerticesTest {
 
   private OrientGraphFactory factory;

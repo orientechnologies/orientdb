@@ -21,7 +21,9 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-/** @since 22.03.12 */
+/**
+ * @since 22.03.12
+ */
 @SuppressWarnings("deprecation")
 @Test(groups = {"index"})
 public class LinkMapIndexTest extends DocumentDBBaseTest {

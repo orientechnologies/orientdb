@@ -40,7 +40,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class OFilterAnalyzer {
 
   public List<OIndex> getInvolvedIndexes(

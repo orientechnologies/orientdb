@@ -20,7 +20,9 @@ import java.io.StringWriter;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
-/** @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a> */
+/**
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
+ */
 public class SyslogMessageFormatter extends Formatter {
 
   @Override

@@ -38,7 +38,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-/** @author tglman */
+/**
+ * @author tglman
+ */
 public class OTransactionPhase1TaskResult implements OStreamable {
 
   private OTransactionResultPayload resultPayload;

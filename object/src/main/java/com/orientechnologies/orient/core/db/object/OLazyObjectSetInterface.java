@@ -18,7 +18,9 @@ package com.orientechnologies.orient.core.db.object;
 
 import java.util.Set;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public interface OLazyObjectSetInterface<T> extends Set<T> {
 
   public void setConvertToRecord(boolean convertToRecord);

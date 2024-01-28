@@ -6,7 +6,9 @@ final class FindMinDirtySegment implements Callable<Long> {
   /** */
   private final OWOWCache cache;
 
-  /** @param owowCache */
+  /**
+   * @param owowCache
+   */
   FindMinDirtySegment(OWOWCache owowCache) {
     cache = owowCache;
   }

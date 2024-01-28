@@ -34,6 +34,7 @@ import java.nio.ByteOrder;
  */
 public class OShortSerializer implements OBinarySerializer<Short> {
   public static final byte ID = 12;
+
   /** size of short value in bytes */
   public static final int SHORT_SIZE = 2;
 

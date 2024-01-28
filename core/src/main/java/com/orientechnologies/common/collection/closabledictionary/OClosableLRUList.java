@@ -131,7 +131,9 @@ class OClosableLRUList<K, V extends OClosableItem> implements Iterable<OClosable
     return entry;
   }
 
-  /** @return Iterator to iterate from head to the tail. */
+  /**
+   * @return Iterator to iterate from head to the tail.
+   */
   public Iterator<OClosableEntry<K, V>> iterator() {
     return new Iterator<OClosableEntry<K, V>>() {
       private OClosableEntry<K, V> next = head;

@@ -19,7 +19,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
-/** @author mdjurovi */
+/**
+ * @author mdjurovi
+ */
 public class OSQLFunctionStrcmpci extends OSQLFunctionAbstract {
 
   public static final String NAME = "strcmpci";

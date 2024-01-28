@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.test.server.network.http;
 
 import java.io.IOException;
-import org.apache.http.HttpResponse;
+import org.apache.hc.core5.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,12 +20,12 @@ public class HttpGephiTest extends BaseHttpDatabaseTest {
             .setUserPassword("root")
             .getResponse();
 
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getCode());
   }
 
   @Test
   public void commandDatabaseCredentials() throws IOException {
-    HttpResponse response =
+    var response =
         get("gephi/" + getDatabaseName() + "/sql/select%20from%20V")
             .setUserName("admin")
             .setUserPassword("admin")
@@ -33,7 +33,7 @@ public class HttpGephiTest extends BaseHttpDatabaseTest {
 
     response.getEntity().writeTo(System.out);
 
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getCode());
   }
 
   @Override
@@ -48,8 +48,7 @@ public class HttpGephiTest extends BaseHttpDatabaseTest {
             .setUserName("admin")
             .setUserPassword("admin")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
 
     Assert.assertEquals(
@@ -60,8 +59,7 @@ public class HttpGephiTest extends BaseHttpDatabaseTest {
             .setUserName("admin")
             .setUserPassword("admin")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
 
     Assert.assertEquals(
@@ -72,8 +70,7 @@ public class HttpGephiTest extends BaseHttpDatabaseTest {
             .setUserName("admin")
             .setUserPassword("admin")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
   }
 

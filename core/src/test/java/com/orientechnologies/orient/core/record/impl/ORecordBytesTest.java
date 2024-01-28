@@ -25,7 +25,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/** @author bogdan */
+/**
+ * @author bogdan
+ */
 public class ORecordBytesTest {
   private static final int SMALL_ARRAY = 3;
   private static final int BIG_ARRAY = 7;

@@ -131,7 +131,9 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
     return false;
   }
 
-  /** @return an endpoint for Enterprise features. Null in Community Edition */
+  /**
+   * @return an endpoint for Enterprise features. Null in Community Edition
+   */
   default OEnterpriseEndpoint getEnterpriseEndpoint() {
     return null;
   }

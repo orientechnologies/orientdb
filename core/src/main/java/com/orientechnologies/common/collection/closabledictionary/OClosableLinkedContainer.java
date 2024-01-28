@@ -395,7 +395,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
 
       stateBuffer.clear();
 
-      while (lruList.poll() != null) ;
+      while (lruList.poll() != null)
+        ;
     } finally {
       lruLock.unlock();
     }

@@ -155,7 +155,7 @@ public class StorageBackupMTStateTest {
     OStorage storage = databaseDocumentTx.getStorage();
     databaseDocumentTx.close();
 
-    storage.close(true, false);
+    storage.shutdown();
 
     System.out.println("Create backup database");
     final ODatabaseDocumentInternal backedUpDb =
@@ -165,7 +165,7 @@ public class StorageBackupMTStateTest {
     final OStorage backupStorage = backedUpDb.getStorage();
     backedUpDb.close();
 
-    backupStorage.close(true, false);
+    backupStorage.shutdown();
 
     System.out.println("Compare databases");
 

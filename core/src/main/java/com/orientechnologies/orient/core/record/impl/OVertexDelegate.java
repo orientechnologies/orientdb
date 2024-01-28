@@ -51,7 +51,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/** @author Luigi Dell'Aquila */
+/**
+ * @author Luigi Dell'Aquila
+ */
 public class OVertexDelegate implements OVertex {
   private static final String CONNECTION_OUT_PREFIX = "out_";
   private static final String CONNECTION_IN_PREFIX = "in_";

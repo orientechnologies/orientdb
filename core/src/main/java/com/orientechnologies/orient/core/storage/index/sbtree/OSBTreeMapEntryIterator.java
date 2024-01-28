@@ -32,7 +32,9 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> {
   private LinkedList<Map.Entry<K, V>> preFetchedValues;
   private final OTreeInternal<K, V> sbTree;

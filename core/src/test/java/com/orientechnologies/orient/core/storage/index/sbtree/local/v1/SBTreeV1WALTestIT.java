@@ -237,7 +237,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
 
     databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.close();
-    actualStorage.close(true, false);
+    actualStorage.shutdown();
 
     restoreDataFromWAL();
 
@@ -247,7 +247,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
 
     expectedDatabaseDocumentTx.activateOnCurrentThread();
     expectedDatabaseDocumentTx.close();
-    expectedStorage.close(true, false);
+    expectedStorage.shutdown();
 
     assertFileContentIsTheSame(expectedSBTreeNativeFileName, nativeSBTreeFileName);
   }

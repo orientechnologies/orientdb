@@ -6,7 +6,9 @@ public class OPeriodicFuzzyCheckpoint implements Runnable {
   /** */
   private final OLocalPaginatedStorage storage;
 
-  /** @param storage */
+  /**
+   * @param storage
+   */
   public OPeriodicFuzzyCheckpoint(OLocalPaginatedStorage storage) {
     this.storage = storage;
   }

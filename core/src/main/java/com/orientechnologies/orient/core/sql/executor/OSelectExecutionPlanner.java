@@ -75,7 +75,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OSelectExecutionPlanner {
 
   private QueryPlanningInfo info;

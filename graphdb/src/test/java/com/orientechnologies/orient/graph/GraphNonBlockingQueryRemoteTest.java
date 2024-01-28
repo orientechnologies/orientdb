@@ -40,9 +40,16 @@ public class GraphNonBlockingQueryRemoteTest {
 
   @Before
   public void before()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException,
-          NoSuchMethodException, InstantiationException, IOException, IllegalAccessException {
+      throws ClassNotFoundException,
+          MalformedObjectNameException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          MBeanRegistrationException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          InstantiationException,
+          IOException,
+          IllegalAccessException {
 
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + GraphNonBlockingQueryRemoteTest.class.getSimpleName();

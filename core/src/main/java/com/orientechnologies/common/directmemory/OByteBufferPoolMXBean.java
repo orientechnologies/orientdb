@@ -24,6 +24,8 @@ package com.orientechnologies.common.directmemory;
  * @author Sergey Sitnikov
  */
 public interface OByteBufferPoolMXBean {
-  /** @return Current size of the memory pool */
+  /**
+   * @return Current size of the memory pool
+   */
   int getPoolSize();
 }

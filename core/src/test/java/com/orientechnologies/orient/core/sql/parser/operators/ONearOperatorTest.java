@@ -22,7 +22,9 @@ package com.orientechnologies.orient.core.sql.parser.operators;
 import com.orientechnologies.orient.core.sql.parser.OLuceneOperator;
 import org.junit.Test;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class ONearOperatorTest {
   @Test
   public void test() {

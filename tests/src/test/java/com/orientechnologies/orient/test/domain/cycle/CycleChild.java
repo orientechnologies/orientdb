@@ -3,7 +3,9 @@ package com.orientechnologies.orient.test.domain.cycle;
 import java.util.HashSet;
 import java.util.Set;
 
-/** @author Wouter de Vaal */
+/**
+ * @author Wouter de Vaal
+ */
 public class CycleChild {
 
   private String name;

@@ -23,7 +23,9 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/** @author marko */
+/**
+ * @author marko
+ */
 public class OSequenceActionRequest {
 
   private OSequenceAction action = null;

@@ -30,7 +30,9 @@ import javax.persistence.Embedded;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class JavaComplexTestClass {
   @Id private String id;
   @Version private Object version;

@@ -63,7 +63,9 @@ import java.util.SortedSet;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
-/** @author luigi dell'aquila (l.dellaquila - at - orientdb.com) */
+/**
+ * @author luigi dell'aquila (l.dellaquila - at - orientdb.com)
+ */
 public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLockKeySource {
   public static final int FACTORYID = 43;
   private volatile boolean hasResponse;

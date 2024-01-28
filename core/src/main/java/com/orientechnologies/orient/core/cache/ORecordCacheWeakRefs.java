@@ -25,7 +25,9 @@ import com.orientechnologies.orient.core.record.ORecord;
 import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class ORecordCacheWeakRefs
     extends OAbstractMapCache<WeakHashMap<ORID, WeakReference<ORecord>>> implements ORecordCache {
 

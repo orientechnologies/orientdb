@@ -6,7 +6,9 @@ import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.ArrayList;
 import java.util.List;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class OCreateVertexExecutionPlanner extends OInsertExecutionPlanner {
 
   public OCreateVertexExecutionPlanner(OCreateVertexStatement statement) {

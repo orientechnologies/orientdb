@@ -39,7 +39,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public final class OHashIndexFactory implements OIndexFactory {
 
   private static final Set<String> TYPES;

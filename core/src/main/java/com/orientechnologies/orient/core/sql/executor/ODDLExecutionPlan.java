@@ -7,7 +7,9 @@ import com.orientechnologies.orient.core.sql.parser.ODDLStatement;
 import java.util.Collections;
 import java.util.List;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class ODDLExecutionPlan implements OInternalExecutionPlan {
 
   private final ODDLStatement statement;

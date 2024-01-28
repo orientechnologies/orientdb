@@ -9,7 +9,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/** @author Luca Garulli (l.garulli--(at)--orientdb.com) */
+/**
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ */
 public class TestTypeGuessingWorkingWithSQLAndMultiValues extends BaseMemoryDatabase {
 
   @Before

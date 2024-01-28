@@ -23,7 +23,9 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class OUpdatedRecordsReturnHandler extends ORecordsReturnHandler {
   public OUpdatedRecordsReturnHandler(Object returnExpression, OCommandContext context) {
     super(returnExpression, context);

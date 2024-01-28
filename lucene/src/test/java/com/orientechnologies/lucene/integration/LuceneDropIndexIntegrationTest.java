@@ -75,8 +75,12 @@ public class LuceneDropIndexIntegrationTest {
 
   @After
   public void after()
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException,
-          NoSuchMethodException, IOException, InvocationTargetException {
+      throws InstantiationException,
+          IllegalAccessException,
+          ClassNotFoundException,
+          NoSuchMethodException,
+          IOException,
+          InvocationTargetException {
 
     server0.shutdown();
     server1.shutdown();

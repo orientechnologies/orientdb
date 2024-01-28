@@ -61,7 +61,9 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.UUID;
 
-/** @author mdjurovi */
+/**
+ * @author mdjurovi
+ */
 public class HelperClasses {
   public static final String CHARSET_UTF_8 = "UTF-8";
   protected static final ORecordId NULL_RECORD_ID = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);

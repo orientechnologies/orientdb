@@ -18,7 +18,9 @@ package com.orientechnologies.orient.core.db.object;
 
 import java.util.Map;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public interface OObjectLazyMultivalueElement<T> {
 
   public void detach(boolean nonProxiedInstance);

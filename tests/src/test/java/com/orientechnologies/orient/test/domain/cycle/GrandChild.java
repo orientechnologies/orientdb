@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.test.domain.cycle;
 
-/** @author Wouter de Vaal */
+/**
+ * @author Wouter de Vaal
+ */
 public class GrandChild {
 
   private String name;

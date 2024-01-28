@@ -228,8 +228,12 @@ public class OServer {
   }
 
   public void restart()
-      throws ClassNotFoundException, InvocationTargetException, InstantiationException,
-          NoSuchMethodException, IllegalAccessException, IOException {
+      throws ClassNotFoundException,
+          InvocationTargetException,
+          InstantiationException,
+          NoSuchMethodException,
+          IllegalAccessException,
+          IOException {
     try {
       deinit();
     } finally {

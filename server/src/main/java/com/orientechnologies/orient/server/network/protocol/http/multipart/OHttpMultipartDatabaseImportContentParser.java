@@ -23,7 +23,9 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OHttpMultipartDatabaseImportContentParser
     implements OHttpMultipartContentParser<InputStream> {
 

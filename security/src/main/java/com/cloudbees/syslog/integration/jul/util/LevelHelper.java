@@ -19,7 +19,9 @@ import com.cloudbees.syslog.Severity;
 import java.util.*;
 import java.util.logging.Level;
 
-/** @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a> */
+/**
+ * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
+ */
 public class LevelHelper {
 
   public static final List<Level> levels =

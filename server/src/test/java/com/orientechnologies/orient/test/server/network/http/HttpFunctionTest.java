@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.test.server.network.http;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.io.IOException;
 import java.util.List;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -15,7 +14,7 @@ import org.junit.Test;
 public class HttpFunctionTest extends BaseHttpDatabaseTest {
 
   @Test
-  public void callFunction() throws IOException {
+  public void callFunction() throws Exception {
     // CREATE FUNCTION FIRST
     Assert.assertEquals(
         post("command/" + getDatabaseName() + "/sql/")
@@ -23,8 +22,7 @@ public class HttpFunctionTest extends BaseHttpDatabaseTest {
                 "CREATE FUNCTION hello \"return 'Hello ' + name + ' ' + surname;\" PARAMETERS [name,surname] LANGUAGE javascript",
                 CONTENT.TEXT)
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
 
     Assert.assertEquals(
@@ -33,8 +31,7 @@ public class HttpFunctionTest extends BaseHttpDatabaseTest {
             .setUserName("admin")
             .setUserPassword("admin")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
 
     String response = EntityUtils.toString(getResponse().getEntity());

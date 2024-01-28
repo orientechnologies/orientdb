@@ -84,6 +84,7 @@ import net.jpountz.xxhash.XXHashFactory;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
+
   @SuppressWarnings("WeakerAccess")
   protected static final long IV_SEED = 234120934;
 
@@ -182,12 +183,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     try {
       stateLock.writeLock().lock();
       try {
-        final Path storageFolder = storagePath;
-        if (!Files.exists(storageFolder)) {
-          Files.createDirectories(storageFolder);
-        }
-
-        super.create(contextConfiguration);
+        doCreate(contextConfiguration);
       } finally {
         stateLock.writeLock().unlock();
       }
@@ -200,14 +196,26 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     }
   }
 
+  protected void doCreate(OContextConfiguration contextConfiguration)
+      throws IOException, InterruptedException {
+    final Path storageFolder = storagePath;
+    if (!Files.exists(storageFolder)) {
+      Files.createDirectories(storageFolder);
+    }
+
+    super.doCreate(contextConfiguration);
+  }
+
   @Override
   public final boolean exists() {
     try {
-      if (status == STATUS.OPEN || isInError() || status == STATUS.MIGRATION) return true;
+      if (status == STATUS.OPEN || isInError() || status == STATUS.MIGRATION) {
+        return true;
+      }
 
       return exists(storagePath);
     } catch (final RuntimeException e) {
-      throw logAndPrepareForRethrow(e, false);
+      throw logAndPrepareForRethrow(e);
     } catch (final Error e) {
       throw logAndPrepareForRethrow(e, false);
     } catch (final Throwable t) {
@@ -239,16 +247,19 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       final int bufferSize) {
     stateLock.readLock().lock();
     try {
-      if (out == null) throw new IllegalArgumentException("Backup output is null");
+      if (out == null) {
+        throw new IllegalArgumentException("Backup output is null");
+      }
 
       freeze(false);
       try {
-        if (callable != null)
+        if (callable != null) {
           try {
             callable.call();
           } catch (final Exception e) {
             OLogManager.instance().error(this, "Error on callback invocation during backup", e);
           }
+        }
         OLogSequenceNumber freezeLSN = null;
         if (writeAheadLog != null) {
           freezeLSN = writeAheadLog.begin();
@@ -289,7 +300,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         release();
       }
     } catch (final RuntimeException e) {
-      throw logAndPrepareForRethrow(e, false);
+      throw logAndPrepareForRethrow(e);
     } catch (final Error e) {
       throw logAndPrepareForRethrow(e, false);
     } catch (final Throwable t) {
@@ -308,8 +319,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     try {
       stateLock.writeLock().lock();
       try {
-        if (!isClosed()) {
-          close(true, false);
+        if (!isClosedInternal()) {
+          doShutdown();
         }
 
         final java.io.File dbDir =
@@ -321,12 +332,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           // TRY TO DELETE ALL THE FILES
           for (final java.io.File f : storageFiles) {
             // DELETE ONLY THE SUPPORTED FILES
-            for (final String ext : ALL_FILE_EXTENSIONS)
+            for (final String ext : ALL_FILE_EXTENSIONS) {
               if (f.getPath().endsWith(ext)) {
                 //noinspection ResultOfMethodCallIgnored
                 f.delete();
                 break;
               }
+            }
           }
         }
         Files.createDirectories(Paths.get(storagePath.toString()));
@@ -352,22 +364,19 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           }
         }
 
-        if (callable != null)
+        if (callable != null) {
           try {
             callable.call();
           } catch (final Exception e) {
             OLogManager.instance().error(this, "Error on calling callback on database restore", e);
           }
+        }
       } finally {
         stateLock.writeLock().unlock();
       }
 
       open(new OContextConfiguration());
-      atomicOperationsManager.executeInsideAtomicOperation(
-          null,
-          (atomicOperation) -> {
-            generateDatabaseInstanceId(atomicOperation);
-          });
+      atomicOperationsManager.executeInsideAtomicOperation(null, this::generateDatabaseInstanceId);
     } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (final Error e) {
@@ -427,9 +436,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       OFileUtils.deleteRecursively(walDirectory);
     }
 
-    if (!walDirectory.mkdirs())
+    if (!walDirectory.mkdirs()) {
       throw new OStorageException(
           "Can not create temporary directory to store files created during incremental backup");
+    }
 
     return walDirectory;
   }
@@ -503,8 +513,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected OStartupMetadata checkIfStorageDirty() throws IOException {
-    if (startupMetadata.exists()) startupMetadata.open(OConstants.getVersion());
-    else {
+    if (startupMetadata.exists()) {
+      startupMetadata.open(OConstants.getVersion());
+    } else {
       startupMetadata.create(OConstants.getVersion());
       startupMetadata.makeDirty(OConstants.getVersion());
     }
@@ -549,11 +560,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void postCloseStepsAfterLock(final Map<String, Object> params) {
-    super.postCloseStepsAfterLock(params);
-  }
-
-  @Override
   protected void preCreateSteps() throws IOException {
     startupMetadata.create(OConstants.getVersion());
   }
@@ -584,7 +590,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   public static void deleteFilesFromDisc(
       final String name, final int maxRetries, final int waitTime, final String databaseDirectory) {
     File dbDir = new java.io.File(databaseDirectory);
-    if (!dbDir.exists() || !dbDir.isDirectory()) dbDir = dbDir.getParentFile();
+    if (!dbDir.exists() || !dbDir.isDirectory()) {
+      dbDir = dbDir.getParentFile();
+    }
 
     // RETRIES
     for (int i = 0; i < maxRetries; ++i) {
@@ -592,23 +600,26 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         int notDeletedFiles = 0;
 
         final File[] storageFiles = dbDir.listFiles();
-        if (storageFiles == null) continue;
+        if (storageFiles == null) {
+          continue;
+        }
 
         // TRY TO DELETE ALL THE FILES
         for (final File f : storageFiles) {
           // DELETE ONLY THE SUPPORTED FILES
-          for (final String ext : ALL_FILE_EXTENSIONS)
+          for (final String ext : ALL_FILE_EXTENSIONS) {
             if (f.getPath().endsWith(ext)) {
               if (!f.delete()) {
                 notDeletedFiles++;
               }
               break;
             }
+          }
         }
 
         if (notDeletedFiles == 0) {
           // TRY TO DELETE ALSO THE DIRECTORY IF IT'S EMPTY
-          if (!dbDir.delete())
+          if (!dbDir.delete()) {
             OLogManager.instance()
                 .error(
                     OLocalPaginatedStorage.class,
@@ -617,9 +628,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
                         + " because directory is not empty. Files: "
                         + Arrays.toString(dbDir.listFiles()),
                     null);
+          }
           return;
         }
-      } else return;
+      } else {
+        return;
+      }
       OLogManager.instance()
           .debug(
               OLocalPaginatedStorage.class,

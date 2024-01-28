@@ -571,13 +571,17 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
     return result;
   }
 
-  /** @inheritDoc */
+  /**
+   * @inheritDoc
+   */
   @Override
   public final int pageSize() {
     return pageSize;
   }
 
-  /** @inheritDoc */
+  /**
+   * @inheritDoc
+   */
   @Override
   public final boolean fileIdsAreEqual(final long firsId, final long secondId) {
     final int firstIntId = extractFileId(firsId);

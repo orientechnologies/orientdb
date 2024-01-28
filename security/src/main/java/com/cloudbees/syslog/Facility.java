@@ -93,6 +93,7 @@ public enum Facility implements Comparable<Facility> {
 
   /** Syslog facility numerical code */
   private final int numericalCode;
+
   /** Syslog facility textual code. Not {@code null} */
   private final String label;
 

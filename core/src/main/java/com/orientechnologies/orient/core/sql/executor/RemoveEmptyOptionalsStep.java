@@ -5,7 +5,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
-/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+/**
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ */
 public class RemoveEmptyOptionalsStep extends AbstractExecutionStep {
 
   public RemoveEmptyOptionalsStep(

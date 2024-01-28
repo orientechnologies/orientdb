@@ -16,7 +16,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 /*
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *

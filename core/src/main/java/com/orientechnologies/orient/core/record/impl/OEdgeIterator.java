@@ -33,7 +33,9 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import java.util.Iterator;
 
-/** @author Luigi Dell'Aquila */
+/**
+ * @author Luigi Dell'Aquila
+ */
 public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
 
   private final OVertex sourceVertex;

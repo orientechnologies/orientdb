@@ -19,7 +19,9 @@ package com.orientechnologies.orient.test.domain.base;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class Satellite {
   @Id private String id;
 

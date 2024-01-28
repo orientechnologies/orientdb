@@ -22,7 +22,9 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class ORecordCountHandler implements OReturnHandler {
   private int count = 0;
 

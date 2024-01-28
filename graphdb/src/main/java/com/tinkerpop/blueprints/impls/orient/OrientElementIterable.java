@@ -25,7 +25,9 @@ import com.tinkerpop.blueprints.Element;
 import java.util.Collections;
 import java.util.Iterator;
 
-/** @author Marko A. Rodriguez (http://markorodriguez.com) */
+/**
+ * @author Marko A. Rodriguez (http://markorodriguez.com)
+ */
 public class OrientElementIterable<T extends Element> implements CloseableIterable<T> {
 
   private final Iterable<?> iterable;

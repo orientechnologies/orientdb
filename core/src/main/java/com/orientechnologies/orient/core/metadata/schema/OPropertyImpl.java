@@ -248,7 +248,9 @@ public abstract class OPropertyImpl implements OProperty {
     }
   }
 
-  /** @deprecated Use {@link OClass#getInvolvedIndexes(String...)} instead. */
+  /**
+   * @deprecated Use {@link OClass#getInvolvedIndexes(String...)} instead.
+   */
   @Deprecated
   public Set<OIndex> getIndexes() {
     acquireSchemaReadLock();
@@ -259,7 +261,9 @@ public abstract class OPropertyImpl implements OProperty {
     }
   }
 
-  /** @deprecated Use {@link OClass#areIndexed(String...)} instead. */
+  /**
+   * @deprecated Use {@link OClass#areIndexed(String...)} instead.
+   */
   @Deprecated
   public boolean isIndexed() {
     acquireSchemaReadLock();

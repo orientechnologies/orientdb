@@ -9,7 +9,9 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class OTraverseTest extends BaseMemoryDatabase {
 
   private ODocument rootDocument;

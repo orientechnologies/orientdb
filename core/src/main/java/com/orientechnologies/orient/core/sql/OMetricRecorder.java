@@ -25,7 +25,9 @@ import com.orientechnologies.orient.core.index.OIndex;
 import java.util.HashSet;
 import java.util.Set;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class OMetricRecorder {
   protected OCommandContext context;
 

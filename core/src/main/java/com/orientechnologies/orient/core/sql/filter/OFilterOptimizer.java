@@ -27,7 +27,9 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import java.util.Map;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class OFilterOptimizer {
   public void optimize(OSQLFilter filter, OIndexSearchResult indexMatch) {
     filter.setRootCondition(optimize(filter.getRootCondition(), indexMatch));

@@ -134,13 +134,17 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
     }
   }
 
-  /** @return true if factory is closed */
+  /**
+   * @return true if factory is closed
+   */
   @Override
   public boolean isClosed() {
     return closed;
   }
 
-  /** @return max pool size. Default is 64 */
+  /**
+   * @return max pool size. Default is 64
+   */
   public int getMaxPoolSize() {
     return maxPoolSize;
   }
@@ -156,7 +160,9 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
     return this;
   }
 
-  /** @throws IllegalStateException if pool factory is closed */
+  /**
+   * @throws IllegalStateException if pool factory is closed
+   */
   private void checkForClose() {
     if (closed) {
       throw new IllegalStateException("Cached pool factory is closed!");

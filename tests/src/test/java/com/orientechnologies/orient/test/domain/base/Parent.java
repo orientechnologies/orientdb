@@ -18,7 +18,9 @@ package com.orientechnologies.orient.test.domain.base;
 
 import javax.persistence.Embedded;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class Parent {
   private String name;
 

@@ -18,7 +18,9 @@ public class OPredicateCache {
   private Map<String, OOrBlock> map;
   private int mapSize;
 
-  /** @param size the size of the cache */
+  /**
+   * @param size the size of the cache
+   */
   public OPredicateCache(int size) {
     this.mapSize = size;
     map =

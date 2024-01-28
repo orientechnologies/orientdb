@@ -22,7 +22,9 @@ package com.orientechnologies.common.console;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public interface OCommandStream extends OCloseable {
   boolean hasNext();
 

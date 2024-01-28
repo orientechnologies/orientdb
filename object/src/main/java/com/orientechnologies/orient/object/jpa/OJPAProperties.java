@@ -35,6 +35,7 @@ final class OJPAProperties extends Properties {
   public static final String URL = "javax.persistence.jdbc.url";
   public static final String USER = "javax.persistence.jdbc.user";
   public static final String PASSWORD = "javax.persistence.jdbc.password";
+
   /** OrientDB specific */
   public static final String ENTITY_CLASSES_PACKAGE = "com.orientdb.entityClasses";
 
@@ -63,7 +64,9 @@ final class OJPAProperties extends Properties {
     }
   }
 
-  /** @return Unmodifiable Map of properties for use by the persistence provider. */
+  /**
+   * @return Unmodifiable Map of properties for use by the persistence provider.
+   */
   @SuppressWarnings({"unchecked", "rawtypes"})
   public Map<String, Object> getUnmodifiableProperties() {
     return Collections.unmodifiableMap((Map) this);

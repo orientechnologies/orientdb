@@ -18,12 +18,16 @@ package com.orientechnologies.orient.core.sql.method;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import java.util.Set;
 
-/** @author Johann Sorel (Geomatys) */
+/**
+ * @author Johann Sorel (Geomatys)
+ */
 public interface OSQLMethodFactory {
 
   boolean hasMethod(String iName);
 
-  /** @return Set of supported method names of this factory */
+  /**
+   * @return Set of supported method names of this factory
+   */
   Set<String> getMethodNames();
 
   /**

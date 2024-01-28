@@ -34,7 +34,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbstract {
 
   protected static final String KEYWORD_SET = "SET";

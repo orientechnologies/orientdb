@@ -4,7 +4,9 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
-/** @author Wouter de Vaal */
+/**
+ * @author Wouter de Vaal
+ */
 public class OLazyCollectionUtil {
 
   /** Gets the current thread database as a ODatabasePojoAbstract, wrapping it where necessary. */

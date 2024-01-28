@@ -23,7 +23,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import java.util.Arrays;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
 
   public static final String DATABASE_CONF = "database";

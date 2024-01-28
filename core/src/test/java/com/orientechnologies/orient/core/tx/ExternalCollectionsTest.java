@@ -27,7 +27,9 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-/** @author Sergey Sitnikov */
+/**
+ * @author Sergey Sitnikov
+ */
 public class ExternalCollectionsTest extends BaseMemoryDatabase {
 
   @Ignore // re-enable or remove after decision on #6370 is made

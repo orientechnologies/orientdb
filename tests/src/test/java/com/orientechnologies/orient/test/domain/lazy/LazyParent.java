@@ -4,7 +4,9 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 
-/** @author Wouter de Vaal */
+/**
+ * @author Wouter de Vaal
+ */
 public class LazyParent {
 
   @Id private String id;

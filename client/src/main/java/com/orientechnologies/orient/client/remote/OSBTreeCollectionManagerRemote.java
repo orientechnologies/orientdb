@@ -37,7 +37,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/** @author Artem Orobets (enisher-at-gmail.com) */
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
 public class OSBTreeCollectionManagerRemote
     implements OCloseable,
         OSBTreeCollectionManager,

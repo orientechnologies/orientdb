@@ -341,7 +341,9 @@ public abstract class OIndexAbstract implements OIndexInternal {
   @Override
   public void close() {}
 
-  /** @return number of entries in the index. */
+  /**
+   * @return number of entries in the index.
+   */
   @Deprecated
   public long getSize() {
     return size();
@@ -356,7 +358,9 @@ public abstract class OIndexAbstract implements OIndexInternal {
     }
   }
 
-  /** @return Number of keys in index */
+  /**
+   * @return Number of keys in index
+   */
   @Deprecated
   public long getKeySize() {
     try (Stream<Object> stream = keyStream()) {

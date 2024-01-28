@@ -58,6 +58,7 @@ public class InternalLogger {
 
   private DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
   private final String name;
+
   /** use java.util.logger to find the logger level if not specified by system property. */
   private final Logger julLogger;
 

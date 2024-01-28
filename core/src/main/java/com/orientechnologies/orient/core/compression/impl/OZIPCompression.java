@@ -28,7 +28,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-/** @author Luca Garulli */
+/**
+ * @author Luca Garulli
+ */
 public abstract class OZIPCompression extends OAbstractCompression {
   @Override
   public byte[] compress(final byte[] content, final int offset, final int length) {

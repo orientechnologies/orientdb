@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import org.junit.Assert;
 
-/** @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com) */
+/**
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
+ */
 public class HttpAuthenticationTest extends BaseHttpDatabaseTest {
   public void testChangeOfUserOnSameConnectionIsAllowed() throws IOException {
     Assert.assertEquals(
@@ -16,8 +18,7 @@ public class HttpAuthenticationTest extends BaseHttpDatabaseTest {
             .setUserName("root")
             .setUserPassword("root")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
 
     Assert.assertEquals(
@@ -29,8 +30,7 @@ public class HttpAuthenticationTest extends BaseHttpDatabaseTest {
             .setUserName("admin")
             .setUserPassword("admin")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
   }
 
