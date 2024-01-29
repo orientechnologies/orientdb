@@ -1815,7 +1815,7 @@ public abstract class OAbstractPaginatedStorage
               return Optional.of(new OBackgroundNewDelta(transactions));
             }
           }
-          records = writeAheadLog.next(records.getLast().getLsn(), 1_000);
+          records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
         }
       } finally {
         writeAheadLog.removeCutTillLimit(beginLsn);
@@ -2601,7 +2601,7 @@ public abstract class OAbstractPaginatedStorage
             .debug(
                 this,
                 "%d Committed transaction %d on database '%s' (result=%s)",
-                Thread.currentThread().threadId(),
+                Thread.currentThread().getId(),
                 transaction.getId(),
                 database.getName(),
                 result);
@@ -5909,73 +5909,67 @@ public abstract class OAbstractPaginatedStorage
 
       while (!records.isEmpty()) {
         for (final WriteableWALRecord walRecord : records) {
-          switch (walRecord) {
-            case OAtomicUnitEndRecord atomicUnitEndRecord -> {
-              final List<OWALRecord> atomicUnit =
-                  operationUnits.remove(atomicUnitEndRecord.getOperationUnitId());
+          if (walRecord instanceof OAtomicUnitEndRecord atomicUnitEndRecord) {
+            final List<OWALRecord> atomicUnit =
+                operationUnits.remove(atomicUnitEndRecord.getOperationUnitId());
 
-              // in case of data restore from fuzzy checkpoint part of operations may be already
-              // flushed to the disk
-              if (atomicUnit != null) {
-                atomicUnit.add(walRecord);
-                if (!restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate)) {
-                  return lastUpdatedLSN;
-                } else {
-                  lastUpdatedLSN = walRecord.getLsn();
-                }
-              }
-              byte[] metadata = operationMetadata.remove(atomicUnitEndRecord.getOperationUnitId());
-              if (metadata != null) {
-                this.lastMetadata = metadata;
+            // in case of data restore from fuzzy checkpoint part of operations may be already
+            // flushed to the disk
+            if (atomicUnit != null) {
+              atomicUnit.add(walRecord);
+              if (!restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate)) {
+                return lastUpdatedLSN;
+              } else {
+                lastUpdatedLSN = walRecord.getLsn();
               }
             }
-            case OAtomicUnitStartRecord oAtomicUnitStartRecord -> {
-              if (walRecord instanceof OAtomicUnitStartMetadataRecord) {
-                byte[] metadata = ((OAtomicUnitStartMetadataRecord) walRecord).getMetadata();
-                operationMetadata.put(
-                    ((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), metadata);
-              }
-
-              final List<OWALRecord> operationList = new ArrayList<>(1024);
-
-              assert !operationUnits.containsKey(oAtomicUnitStartRecord.getOperationUnitId());
-
-              operationUnits.put(oAtomicUnitStartRecord.getOperationUnitId(), operationList);
-              operationList.add(walRecord);
+            byte[] metadata = operationMetadata.remove(atomicUnitEndRecord.getOperationUnitId());
+            if (metadata != null) {
+              this.lastMetadata = metadata;
             }
-            case OOperationUnitRecord operationUnitRecord -> {
-              List<OWALRecord> operationList =
-                  operationUnits.get(operationUnitRecord.getOperationUnitId());
-
-              if (operationList == null || operationList.isEmpty()) {
-                OLogManager.instance()
-                    .errorNoDb(
-                        this, "'Start transaction' record is absent for atomic operation", null);
-
-                if (operationList == null) {
-                  operationList = new ArrayList<>(1024);
-                  operationUnits.put(operationUnitRecord.getOperationUnitId(), operationList);
-                }
-              }
-
-              operationList.add(operationUnitRecord);
+          } else if (walRecord instanceof OAtomicUnitStartRecord oAtomicUnitStartRecord) {
+            if (walRecord instanceof OAtomicUnitStartMetadataRecord) {
+              byte[] metadata = ((OAtomicUnitStartMetadataRecord) walRecord).getMetadata();
+              operationMetadata.put(
+                  ((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), metadata);
             }
-            case ONonTxOperationPerformedWALRecord ignored -> {
-              if (!wereNonTxOperationsPerformedInPreviousOpen) {
-                OLogManager.instance()
-                    .warnNoDb(
-                        this,
-                        "Non tx operation was used during data modification we will need index rebuild.");
-                wereNonTxOperationsPerformedInPreviousOpen = true;
+
+            final List<OWALRecord> operationList = new ArrayList<>(1024);
+
+            assert !operationUnits.containsKey(oAtomicUnitStartRecord.getOperationUnitId());
+
+            operationUnits.put(oAtomicUnitStartRecord.getOperationUnitId(), operationList);
+            operationList.add(walRecord);
+          } else if (walRecord instanceof OOperationUnitRecord operationUnitRecord) {
+            List<OWALRecord> operationList =
+                operationUnits.get(operationUnitRecord.getOperationUnitId());
+
+            if (operationList == null || operationList.isEmpty()) {
+              OLogManager.instance()
+                  .errorNoDb(
+                      this, "'Start transaction' record is absent for atomic operation", null);
+
+              if (operationList == null) {
+                operationList = new ArrayList<>(1024);
+                operationUnits.put(operationUnitRecord.getOperationUnitId(), operationList);
               }
             }
-            case MetaDataRecord metaDataRecord -> {
-              this.lastMetadata = metaDataRecord.getMetadata();
-              lastUpdatedLSN = walRecord.getLsn();
+
+            operationList.add(operationUnitRecord);
+          } else if (walRecord instanceof ONonTxOperationPerformedWALRecord ignored) {
+            if (!wereNonTxOperationsPerformedInPreviousOpen) {
+              OLogManager.instance()
+                  .warnNoDb(
+                      this,
+                      "Non tx operation was used during data modification we will need index rebuild.");
+              wereNonTxOperationsPerformedInPreviousOpen = true;
             }
-            case null, default ->
-                OLogManager.instance()
-                    .warnNoDb(this, "Record %s will be skipped during data restore", walRecord);
+          } else if (walRecord instanceof MetaDataRecord metaDataRecord) {
+            this.lastMetadata = metaDataRecord.getMetadata();
+            lastUpdatedLSN = walRecord.getLsn();
+          } else {
+            OLogManager.instance()
+                .warnNoDb(this, "Record %s will be skipped during data restore", walRecord);
           }
 
           recordsProcessed++;
@@ -5994,7 +5988,7 @@ public abstract class OAbstractPaginatedStorage
           }
         }
 
-        records = writeAheadLog.next(records.getLast().getLsn(), 1_000);
+        records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
       }
     } catch (final OWALPageBrokenException e) {
       OLogManager.instance()
@@ -6016,7 +6010,7 @@ public abstract class OAbstractPaginatedStorage
   protected final boolean restoreAtomicUnit(
       final List<OWALRecord> atomicUnit, final OModifiableBoolean atLeastOnePageUpdate)
       throws IOException {
-    assert atomicUnit.getLast() instanceof OAtomicUnitEndRecord;
+    assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
 
     final HashSet<PageKey> pages = new HashSet<>();
     boolean integrityCheckPassed = true;
@@ -6111,90 +6105,81 @@ public abstract class OAbstractPaginatedStorage
     }
 
     for (final OWALRecord walRecord : atomicUnit) {
-      switch (walRecord) {
-        case OFileDeletedWALRecord fileDeletedWALRecord -> {
-          if (writeCache.exists(fileDeletedWALRecord.getFileId())) {
-            readCache.deleteFile(fileDeletedWALRecord.getFileId(), writeCache);
-          }
+      if (walRecord instanceof OFileDeletedWALRecord fileDeletedWALRecord) {
+        if (writeCache.exists(fileDeletedWALRecord.getFileId())) {
+          readCache.deleteFile(fileDeletedWALRecord.getFileId(), writeCache);
         }
-        case OFileCreatedWALRecord fileCreatedCreatedWALRecord -> {
-          if (!writeCache.exists(fileCreatedCreatedWALRecord.getFileName())) {
-            readCache.addFile(
-                fileCreatedCreatedWALRecord.getFileName(),
-                fileCreatedCreatedWALRecord.getFileId(),
-                writeCache);
-          }
+      } else if (walRecord instanceof OFileCreatedWALRecord fileCreatedCreatedWALRecord) {
+        if (!writeCache.exists(fileCreatedCreatedWALRecord.getFileName())) {
+          readCache.addFile(
+              fileCreatedCreatedWALRecord.getFileName(),
+              fileCreatedCreatedWALRecord.getFileId(),
+              writeCache);
         }
-        case OUpdatePageRecord updatePageRecord -> {
-          long fileId = updatePageRecord.getFileId();
-          if (!writeCache.exists(fileId)) {
-            final String fileName = writeCache.restoreFileById(fileId);
+      } else if (walRecord instanceof OUpdatePageRecord updatePageRecord) {
+        long fileId = updatePageRecord.getFileId();
+        if (!writeCache.exists(fileId)) {
+          final String fileName = writeCache.restoreFileById(fileId);
 
-            if (fileName == null) {
-              throw new OStorageException(
-                  "File with id "
-                      + fileId
-                      + " was deleted from storage, the rest of operations can not be restored");
-            } else {
-              OLogManager.instance()
-                  .warn(
-                      this,
-                      "Previously deleted file with name "
-                          + fileName
-                          + " was deleted but new empty file was added to continue restore process");
+          if (fileName == null) {
+            throw new OStorageException(
+                "File with id "
+                    + fileId
+                    + " was deleted from storage, the rest of operations can not be restored");
+          } else {
+            OLogManager.instance()
+                .warn(
+                    this,
+                    "Previously deleted file with name "
+                        + fileName
+                        + " was deleted but new empty file was added to continue restore process");
+          }
+        }
+
+        final long pageIndex = updatePageRecord.getPageIndex();
+        fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
+
+        OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, writeCache, true, null);
+        if (cacheEntry == null) {
+          do {
+            if (cacheEntry != null) {
+              readCache.releaseFromWrite(cacheEntry, writeCache, true);
             }
+
+            cacheEntry = readCache.allocateNewPage(fileId, writeCache, null);
+          } while (cacheEntry.getPageIndex() != pageIndex);
+        }
+
+        try {
+          final ODurablePage durablePage = new ODurablePage(cacheEntry);
+          if (durablePage.getLSN().compareTo(walRecord.getLsn()) < 0) {
+            durablePage.restoreChanges(updatePageRecord.getChanges());
+            durablePage.setLsn(updatePageRecord.getLsn());
           }
-
-          final long pageIndex = updatePageRecord.getPageIndex();
-          fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
-
-          OCacheEntry cacheEntry =
-              readCache.loadForWrite(fileId, pageIndex, writeCache, true, null);
-          if (cacheEntry == null) {
-            do {
-              if (cacheEntry != null) {
-                readCache.releaseFromWrite(cacheEntry, writeCache, true);
-              }
-
-              cacheEntry = readCache.allocateNewPage(fileId, writeCache, null);
-            } while (cacheEntry.getPageIndex() != pageIndex);
-          }
-
-          try {
-            final ODurablePage durablePage = new ODurablePage(cacheEntry);
-            if (durablePage.getLSN().compareTo(walRecord.getLsn()) < 0) {
-              durablePage.restoreChanges(updatePageRecord.getChanges());
-              durablePage.setLsn(updatePageRecord.getLsn());
-            }
-          } finally {
-            readCache.releaseFromWrite(cacheEntry, writeCache, true);
-          }
-
-          atLeastOnePageUpdate.setValue(true);
+        } finally {
+          readCache.releaseFromWrite(cacheEntry, writeCache, true);
         }
-        case OAtomicUnitStartRecord ignored -> {
-          //noinspection UnnecessaryContinue
-          continue;
-        }
-        case OAtomicUnitEndRecord ignored -> {
-          //noinspection UnnecessaryContinue
-          continue;
-        }
-        case OHighLevelTransactionChangeRecord ignored -> {
-          //noinspection UnnecessaryContinue
-          continue;
-        }
-        case null, default -> {
-          assert walRecord != null;
-          OLogManager.instance()
-              .error(
-                  this,
-                  "Invalid WAL record type was passed %s. Given record will be skipped.",
-                  null,
-                  walRecord.getClass());
 
-          assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
-        }
+        atLeastOnePageUpdate.setValue(true);
+      } else if (walRecord instanceof OAtomicUnitStartRecord) {
+        //noinspection UnnecessaryContinue
+        continue;
+      } else if (walRecord instanceof OAtomicUnitEndRecord) {
+        //noinspection UnnecessaryContinue
+        continue;
+      } else if (walRecord instanceof OHighLevelTransactionChangeRecord) {
+        //noinspection UnnecessaryContinue
+        continue;
+      } else {
+        assert walRecord != null;
+        OLogManager.instance()
+            .error(
+                this,
+                "Invalid WAL record type was passed %s. Given record will be skipped.",
+                null,
+                walRecord.getClass());
+
+        assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
       }
     }
 
