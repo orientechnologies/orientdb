@@ -5825,8 +5825,7 @@ public abstract class OAbstractPaginatedStorage
 
       while (!records.isEmpty()) {
         for (final WriteableWALRecord walRecord : records) {
-          if (walRecord instanceof OAtomicUnitEndRecord) {
-            final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
+          if (walRecord instanceof OAtomicUnitEndRecord atomicUnitEndRecord) {
             final List<OWALRecord> atomicUnit =
                 operationUnits.remove(atomicUnitEndRecord.getOperationUnitId());
 
@@ -5844,7 +5843,7 @@ public abstract class OAbstractPaginatedStorage
             if (metadata != null) {
               this.lastMetadata = metadata;
             }
-          } else if (walRecord instanceof OAtomicUnitStartRecord) {
+          } else if (walRecord instanceof OAtomicUnitStartRecord oAtomicUnitStartRecord) {
             if (walRecord instanceof OAtomicUnitStartMetadataRecord) {
               byte[] metadata = ((OAtomicUnitStartMetadataRecord) walRecord).getMetadata();
               operationMetadata.put(
@@ -5853,15 +5852,11 @@ public abstract class OAbstractPaginatedStorage
 
             final List<OWALRecord> operationList = new ArrayList<>(1024);
 
-            assert !operationUnits.containsKey(
-                ((OAtomicUnitStartRecord) walRecord).getOperationUnitId());
+            assert !operationUnits.containsKey(oAtomicUnitStartRecord.getOperationUnitId());
 
-            operationUnits.put(
-                ((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), operationList);
+            operationUnits.put(oAtomicUnitStartRecord.getOperationUnitId(), operationList);
             operationList.add(walRecord);
-          } else if (walRecord instanceof OOperationUnitRecord) {
-            final OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
-
+          } else if (walRecord instanceof OOperationUnitRecord operationUnitRecord) {
             List<OWALRecord> operationList =
                 operationUnits.get(operationUnitRecord.getOperationUnitId());
 
@@ -5877,7 +5872,7 @@ public abstract class OAbstractPaginatedStorage
             }
 
             operationList.add(operationUnitRecord);
-          } else if (walRecord instanceof ONonTxOperationPerformedWALRecord) {
+          } else if (walRecord instanceof ONonTxOperationPerformedWALRecord ignored) {
             if (!wereNonTxOperationsPerformedInPreviousOpen) {
               OLogManager.instance()
                   .warnNoDb(
@@ -5885,8 +5880,7 @@ public abstract class OAbstractPaginatedStorage
                       "Non tx operation was used during data modification we will need index rebuild.");
               wereNonTxOperationsPerformedInPreviousOpen = true;
             }
-          } else if (walRecord instanceof MetaDataRecord) {
-            final MetaDataRecord metaDataRecord = (MetaDataRecord) walRecord;
+          } else if (walRecord instanceof MetaDataRecord metaDataRecord) {
             this.lastMetadata = metaDataRecord.getMetadata();
             lastUpdatedLSN = walRecord.getLsn();
           } else {
@@ -6029,23 +6023,18 @@ public abstract class OAbstractPaginatedStorage
     }
 
     for (final OWALRecord walRecord : atomicUnit) {
-      if (walRecord instanceof OFileDeletedWALRecord) {
-        final OFileDeletedWALRecord fileDeletedWALRecord = (OFileDeletedWALRecord) walRecord;
+      if (walRecord instanceof OFileDeletedWALRecord fileDeletedWALRecord) {
         if (writeCache.exists(fileDeletedWALRecord.getFileId())) {
           readCache.deleteFile(fileDeletedWALRecord.getFileId(), writeCache);
         }
-      } else if (walRecord instanceof OFileCreatedWALRecord) {
-        final OFileCreatedWALRecord fileCreatedCreatedWALRecord = (OFileCreatedWALRecord) walRecord;
-
+      } else if (walRecord instanceof OFileCreatedWALRecord fileCreatedCreatedWALRecord) {
         if (!writeCache.exists(fileCreatedCreatedWALRecord.getFileName())) {
           readCache.addFile(
               fileCreatedCreatedWALRecord.getFileName(),
               fileCreatedCreatedWALRecord.getFileId(),
               writeCache);
         }
-      } else if (walRecord instanceof OUpdatePageRecord) {
-        final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) walRecord;
-
+      } else if (walRecord instanceof OUpdatePageRecord updatePageRecord) {
         long fileId = updatePageRecord.getFileId();
         if (!writeCache.exists(fileId)) {
           final String fileName = writeCache.restoreFileById(fileId);
@@ -6100,6 +6089,7 @@ public abstract class OAbstractPaginatedStorage
         //noinspection UnnecessaryContinue
         continue;
       } else {
+        assert walRecord != null;
         OLogManager.instance()
             .error(
                 this,

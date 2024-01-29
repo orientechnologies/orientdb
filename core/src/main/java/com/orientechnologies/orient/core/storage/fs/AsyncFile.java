@@ -26,6 +26,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class AsyncFile implements OFile {
+
   private final ScalableRWLock lock = new ScalableRWLock();
   private volatile Path osFile;
 
@@ -338,6 +339,7 @@ public final class AsyncFile implements OFile {
     try {
       doClose();
 
+      OLogManager.instance().infoNoDb(this, "File " + osFile + " has been deleted.");
       Files.delete(osFile);
     } finally {
       lock.exclusiveUnlock();
@@ -391,6 +393,7 @@ public final class AsyncFile implements OFile {
   }
 
   private final class WriteHandler implements CompletionHandler<Integer, CountDownLatch> {
+
     private final ByteBuffer byteBuffer;
     private final AsyncIOResult ioResult;
     private final long position;
@@ -429,6 +432,7 @@ public final class AsyncFile implements OFile {
   }
 
   private static final class AsyncIOResult implements IOResult {
+
     private final CountDownLatch latch;
     private Throwable exc;
 
