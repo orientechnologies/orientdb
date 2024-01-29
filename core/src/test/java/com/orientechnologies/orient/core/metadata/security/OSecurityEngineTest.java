@@ -25,7 +25,7 @@ public class OSecurityEngineTest {
   public static void beforeClass() {
     orient =
         new OrientDB(
-            "plocal:.",
+            "plocal:./target/securityEngineTest",
             OrientDBConfig.builder()
                 .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
                 .build());
