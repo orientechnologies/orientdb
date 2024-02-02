@@ -85,24 +85,6 @@
 
     <profiles>
         <profile>
-            <id>java8</id>
-            <activation>
-                <jdk>1.8</jdk>
-            </activation>
-            <properties>
-                <argLine>
-                    -ea
-                    -Xmx${heapSize}
-                    -Dstorage.diskCache.bufferSize=4096
-                    -Dsecurity.userPasswordSaltIterations=10
-                    -Dmemory.directMemory.trackMode=true
-                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
-                    -Dstorage.diskCache.checksumMode=storeAndThrow
-                    -Dsecurity.warningDefaultUsers=false
-                </argLine>
-            </properties>
-        </profile>
-        <profile>
             <id>java11</id>
             <activation>
                 <jdk>[11,)</jdk>
