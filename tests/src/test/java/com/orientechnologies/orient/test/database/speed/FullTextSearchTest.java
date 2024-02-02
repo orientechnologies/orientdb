@@ -2,7 +2,7 @@ package com.orientechnologies.orient.test.database.speed;
 
 import org.testng.annotations.Test;
 
-@Test(sequential = true)
+@Test
 public class FullTextSearchTest {
   // private static final int DOCUMENTS = 1000;
 

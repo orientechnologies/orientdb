@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be
  * because the order of clusters could be affected due to adding or removing cluster from storage.
  */
-@Test(groups = "sql-update", sequential = true)
+@Test(groups = "sql-update")
 public class SQLUpdateTest extends DocumentDBBaseTest {
   private int updatedRecords;
   private int addressClusterId;

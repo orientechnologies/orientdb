@@ -26,7 +26,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@Test(groups = "query", sequential = true)
+@Test(groups = "query")
 public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
