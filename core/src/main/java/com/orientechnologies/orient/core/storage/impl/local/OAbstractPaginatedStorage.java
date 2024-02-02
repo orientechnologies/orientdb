@@ -202,6 +202,7 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -265,7 +266,7 @@ public abstract class OAbstractPaginatedStorage
   private final OLockManager<ORID> recordVersionManager;
 
   private final Map<String, OCluster> clusterMap = new HashMap<>();
-  private final List<OCluster> clusters = new ArrayList<>();
+  private final List<OCluster> clusters = new CopyOnWriteArrayList<>();
 
   private volatile ThreadLocal<OStorageTransaction> transaction;
   private final AtomicBoolean walVacuumInProgress = new AtomicBoolean();
@@ -2175,7 +2176,7 @@ public abstract class OAbstractPaginatedStorage
         throw new IllegalArgumentException("Cluster name is null");
       }
 
-      if (clusterName.length() == 0) {
+      if (clusterName.isEmpty()) {
         throw new IllegalArgumentException("Cluster name is empty");
       }
 
@@ -2805,7 +2806,7 @@ public abstract class OAbstractPaginatedStorage
   public static OEncryption loadEncryption(
       final String cfgEncryption, final String cfgEncryptionKey) {
     final OEncryption encryption;
-    if (cfgEncryption == null || cfgEncryption.toLowerCase().equals(ONothingEncryption.NAME)) {
+    if (cfgEncryption == null || cfgEncryption.equalsIgnoreCase(ONothingEncryption.NAME)) {
       encryption = null;
     } else {
       encryption = OEncryptionFactory.INSTANCE.getEncryption(cfgEncryption, cfgEncryptionKey);
