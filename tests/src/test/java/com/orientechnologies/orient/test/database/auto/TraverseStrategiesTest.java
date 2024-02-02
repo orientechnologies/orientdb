@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -36,31 +35,48 @@ public class TraverseStrategiesTest extends DocumentDBBaseTest {
 
   @BeforeClass
   public void init() {
-    OrientGraph graph = new OrientGraph(database);
-    graph.setUseLightweightEdges(false);
+    var first = database.newVertex("tc");
+    first.setProperty("name", 1.0);
+    first.save();
 
-    graph.createVertexType("tc");
-    graph.createEdgeType("te");
+    ++totalElements;
+    var firstFirstChild = database.newVertex("tc");
+    firstFirstChild.setProperty("name", 1.1);
+    firstFirstChild.save();
 
-    ODocument first = graph.addVertex("class:tc", "name", 1.0).getRecord();
     ++totalElements;
-    ODocument firstFirstChild = graph.addVertex("class:tc", "name", 1.1).getRecord();
+    var firstSecondChild = database.newVertex("tc");
+    firstSecondChild.setProperty("name", 1.2);
+    firstSecondChild.save();
+
     ++totalElements;
-    ODocument firstSecondChild = graph.addVertex("class:tc", "name", 1.2).getRecord();
+    var second = database.newVertex("tc");
+    second.setProperty("name", 2.0);
+    second.save();
+
     ++totalElements;
-    ODocument second = graph.addVertex("class:tc", "name", 2.0).getRecord();
+    var secondFirstCHild = database.newVertex("tc");
+    secondFirstCHild.setProperty("name", 2.1);
+    secondFirstCHild.save();
+
     ++totalElements;
-    ODocument secondFirstCHild = graph.addVertex("class:tc", "name", 2.1).getRecord();
-    ++totalElements;
-    ODocument secondSecondChild = graph.addVertex("class:tc", "name", 2.2).getRecord();
+    var secondSecondChild = database.newVertex("tc");
+    secondSecondChild.setProperty("name", 2.2);
+    secondSecondChild.save();
+
     ++totalElements;
 
-    graph.addEdge(this, graph.getVertex(first), graph.getVertex(firstFirstChild), "te");
-    graph.addEdge(this, graph.getVertex(first), graph.getVertex(firstSecondChild), "te");
-    graph.addEdge(this, graph.getVertex(second), graph.getVertex(secondFirstCHild), "te");
-    graph.addEdge(this, graph.getVertex(second), graph.getVertex(secondSecondChild), "te");
+    var e = database.newEdge(first, firstFirstChild, "te");
+    e.save();
 
-    graph.commit();
+    e = database.newEdge(first, firstSecondChild, "te");
+    e.save();
+
+    e = database.newEdge(second, secondFirstCHild, "te");
+    e.save();
+
+    e = database.newEdge(second, secondSecondChild, "te");
+    e.save();
   }
 
   @Test

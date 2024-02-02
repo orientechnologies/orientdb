@@ -26,9 +26,6 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,10 +62,6 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
   public class DocumentChangeListener {
     final Map<ODocument, List<String>> changes = new HashMap<ODocument, List<String>>();
-
-    public DocumentChangeListener(OrientBaseGraph g) {
-      this(g.getRawGraph());
-    }
 
     public DocumentChangeListener(final ODatabaseDocument db) {
       db.registerHook(
@@ -305,15 +298,18 @@ public class DbListenerTest extends DocumentDBBaseTest {
     ODatabaseHelper.createDatabase(database, url, getStorageType());
 
     database.open("admin", "admin");
-    OrientGraph g = new OrientGraph(database);
-    OrientVertex v = g.addVertex(null);
-    v.setProperty("name", "Jay");
-    g.commit();
 
-    final DocumentChangeListener cl = new DocumentChangeListener(g);
+    database.begin();
+    var v = database.newVertex();
+    v.setProperty("name", "Jay");
+    v.save();
+
+    database.commit();
+    final DocumentChangeListener cl = new DocumentChangeListener(database);
 
     v.setProperty("surname", "Miner");
-    g.shutdown();
+    v.save();
+    database.close();
 
     Assert.assertEquals(cl.getChanges().size(), 1);
 

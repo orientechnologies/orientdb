@@ -24,8 +24,6 @@ import static org.testng.Assert.assertTrue;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import java.io.IOException;
 import javax.persistence.Id;
 import javax.persistence.Version;
@@ -75,23 +73,13 @@ public class MultipleObjectDbInstancesTest {
   public class X extends V {}
 
   private class Connection {
-    OrientBaseGraph graph;
     OObjectDatabaseTx objectDb;
 
     public Connection(String databaseName) {
-      OrientGraphFactory graphFactory =
-          new OrientGraphFactory("memory:" + databaseName, "admin", "admin");
-
-      // Create graph API access
-      graph = graphFactory.getNoTx();
-      graph.setUseLightweightEdges(false);
-
-      if (graph.getVertexType("V") == null) {
-        graph.createVertexType("V");
-      }
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + databaseName);
 
       // Create object API access
-      objectDb = new OObjectDatabaseTx(graph.getRawGraph());
+      objectDb = new OObjectDatabaseTx(db);
       objectDb.setAutomaticSchemaGeneration(true);
       objectDb.getEntityManager().registerEntityClass(V.class);
       objectDb.getEntityManager().registerEntityClass(X.class);

@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,8 +29,8 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
   public void testCreateVertexByContent() {
     System.out.println(System.getProperty("file.encoding"));
     System.out.println(Charset.defaultCharset());
-    OrientGraph graph = new OrientGraph(database, false);
-    graph.shutdown();
+    database.close();
+
     database.open("admin", "admin");
 
     OSchema schema = database.getMetadata().getSchema();
@@ -89,8 +88,7 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
   }
 
   public void testCreateVertexBooleanProp() {
-    OrientGraph graph = new OrientGraph(database, false);
-    graph.shutdown();
+    database.close();
     database.open("admin", "admin");
 
     database.command(new OCommandSQL("create vertex set script = true")).execute();
@@ -104,10 +102,9 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
   }
 
   public void testIsClassName() {
-    OrientGraph graph = new OrientGraph(database, false);
-    graph.shutdown();
+    database.close();
     database.open("admin", "admin");
-    graph.createVertexType("Like").createProperty("anything", OType.STRING);
-    graph.createVertexType("Is").createProperty("anything", OType.STRING);
+    database.createVertexClass("Like").createProperty("anything", OType.STRING);
+    database.createVertexClass("Is").createProperty("anything", OType.STRING);
   }
 }
