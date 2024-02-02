@@ -64,6 +64,7 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
     assertEquals("person", 1, db.countClass("Person"));
 
     assertThat(db.countClusterElements("custom")).isEqualTo(1);
+    db.close();
   }
 
   @Test

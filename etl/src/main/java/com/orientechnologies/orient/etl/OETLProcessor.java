@@ -52,7 +52,7 @@ import java.util.stream.IntStream;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli-at-orientdb.com)
  */
-public class OETLProcessor {
+public class OETLProcessor implements AutoCloseable {
   protected final OETLComponentFactory factory;
   protected final OETLProcessorStats stats;
   private final ExecutorService executor;
@@ -184,8 +184,6 @@ public class OETLProcessor {
   private void configure() {}
 
   public void close() {
-    loader.getPool().close();
-
     loader.close();
   }
 

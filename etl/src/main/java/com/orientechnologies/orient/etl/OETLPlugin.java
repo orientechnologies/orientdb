@@ -54,11 +54,10 @@ public class OETLPlugin extends OServerPluginAbstract {
       System.out.println("Syntax error, missing configuration file.");
     } else {
       String[] args = {outDBConfigPath};
-      final OETLProcessor processor =
+      try (final OETLProcessor processor =
           new OETLProcessorConfigurator()
-              .parseConfigAndParametersWithContext(server.getContext(), args);
+              .parseConfigAndParametersWithContext(server.getContext(), args)) {
 
-      try {
         // overriding default message handler if the chosen verbosity level is different from the
         // default one
         if (messageHandler.getOutputManagerLevel()
@@ -68,8 +67,6 @@ public class OETLPlugin extends OServerPluginAbstract {
 
         // execute the job
         processor.execute();
-      } finally {
-        processor.close();
       }
     }
   }
@@ -84,7 +81,9 @@ public class OETLPlugin extends OServerPluginAbstract {
 
     final OServerNetworkListener listener =
         server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-    if (listener == null) throw new OConfigurationException("HTTP listener not found");
+    if (listener == null) {
+      throw new OConfigurationException("HTTP listener not found");
+    }
 
     listener.registerStatelessCommand(new OServerCommandETL());
   }

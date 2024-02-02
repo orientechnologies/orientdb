@@ -49,14 +49,14 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
 
   @Before
   public void cleanFs() throws Exception {
-    OFileUtils.deleteRecursively(new File("./target/databases/"));
+    OFileUtils.deleteRecursively(new File("./target/databases/etlEdgeTransformerTest"));
   }
 
   @After
   public void tearDown() throws Exception {
     closeResources();
 
-    OFileUtils.deleteRecursively(new File("./target/databases/"));
+    OFileUtils.deleteRecursively(new File("./target/databases/etlEdgeTransformerTest"));
   }
 
   public void createClasses(ODatabaseDocument db) {
@@ -239,7 +239,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     configure(
         "{source: { content: { value: 'id,name\n1,Luigi\n2,Luca\n3,Enrico\n4,Franco\n5,Gianni' } }, extractor : { csv: {} },"
             + " transformers: [ {merge: {joinFieldName:'id',lookup:'PersonMF.id'}}, {vertex: {class:'PersonMF'}}"
-            + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/"
+            + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/etlEdgeTransformerTest"
             + name.getMethodName()
             + "', dbType:'graph', classes: [{name:'PersonMF',extends:'V'}] } } }");
 
@@ -272,7 +272,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
             + "{vertex: {class:'PersonMF'}},"
             + "{edge:{class:'FriendMF',joinFieldName:'friend_to',lookup:'PersonMF.id',edgeFields:{since:'${input.since}'} }},"
             + "{field: {operation:'remove', fieldNames:['friend_from','friend_to','since']}}"
-            + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/"
+            + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/etlEdgeTransformerTest"
             + name.getMethodName()
             + "', dbType:'graph', classes: [{name:'FriendMF',extends:'E'}] } } }");
 
