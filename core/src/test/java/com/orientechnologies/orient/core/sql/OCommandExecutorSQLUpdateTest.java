@@ -27,7 +27,10 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -500,5 +503,37 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
         db.command(new OCommandSQL("update Foo set surname = 'baz' return count")).execute();
 
     assertEquals(2, result);
+  }
+
+  @Test
+  public void testLinkedUpdate() {
+    db.command("CREATE class TestSource").close();
+    db.command("CREATE class TestLinked").close();
+    db.command("CREATE property TestLinked.id STRING").close();
+    db.command("CREATE INDEX TestLinked.id ON TestLinked (id) UNIQUE_HASH_INDEX ENGINE HASH_INDEX")
+        .close();
+
+    ODocument state = new ODocument("TestLinked");
+    state.setProperty("id", "idvalue");
+    db.save(state);
+
+    ODocument d = new ODocument("TestSource");
+    d.setProperty("name", "foo");
+    d.setProperty("linked", state);
+    db.save(d);
+
+    ((ODatabaseDocumentInternal) db).getLocalCache().clear();
+
+    db.command(
+            "Update TestSource set flag = true , linked.flag = true return after *, linked:{*} as infoLinked  where name = \"foo\"")
+        .close();
+    ((ODatabaseDocumentInternal) db).getLocalCache().clear();
+
+    OResultSet result = db.query("select from TestLinked where id = \"idvalue\"");
+    while (result.hasNext()) {
+      OResult res = result.next();
+      assertTrue(res.hasProperty("flag"));
+      assertTrue((Boolean) res.getProperty("flag"));
+    }
   }
 }
