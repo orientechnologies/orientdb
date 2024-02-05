@@ -359,7 +359,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("text"), "test");
     Assert.assertEquals(doc.<Object>field("numberSimple"), 12345);
     Assert.assertEquals(doc.field("doubleSimple"), 12.34d);
-    Assert.assertEquals(doc.field("floatSimple"), 123.45f);
+    Assert.assertEquals((float) doc.field("floatSimple"), 123.45f);
     Assert.assertEquals(doc.<Object>field("longSimple"), 12345678l);
     Assert.assertEquals(doc.<Object>field("byteSimple"), (byte) 1);
     Assert.assertEquals(doc.<Object>field("flagSimple"), true);
@@ -460,7 +460,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("text"), "test");
     Assert.assertEquals(doc.<Object>field("numberSimple"), 12345);
     Assert.assertEquals(doc.field("doubleSimple"), 12.34d);
-    Assert.assertEquals(doc.field("floatSimple"), 123.45f);
+    Assert.assertEquals((float) doc.field("floatSimple"), 123.45f);
     Assert.assertEquals(doc.<Object>field("longSimple"), 12345678l);
     Assert.assertEquals(doc.<Object>field("byteSimple"), (byte) 1);
     Assert.assertEquals(doc.<Object>field("flagSimple"), true);
@@ -548,7 +548,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("text"), "test");
     Assert.assertEquals(doc.<Object>field("numberSimple"), 12345);
     Assert.assertEquals(doc.field("doubleSimple"), 12.34d);
-    Assert.assertEquals(doc.field("floatSimple"), 123.45f);
+    Assert.assertEquals((float) doc.field("floatSimple"), 123.45f);
     Assert.assertEquals(doc.<Object>field("longSimple"), 12345678l);
     Assert.assertEquals(doc.<Object>field("byteSimple"), (byte) 1);
     Assert.assertEquals(doc.<Object>field("flagSimple"), true);
@@ -641,7 +641,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("text"), "test");
     Assert.assertEquals(doc.<Object>field("numberSimple"), 12345);
     Assert.assertEquals(doc.field("doubleSimple"), 12.34d);
-    Assert.assertEquals(doc.field("floatSimple"), 123.45f);
+    Assert.assertEquals((float) doc.field("floatSimple"), 123.45f);
     Assert.assertEquals(doc.<Object>field("longSimple"), 12345678l);
     Assert.assertEquals(doc.<Object>field("byteSimple"), (byte) 1);
     Assert.assertEquals(doc.<Object>field("flagSimple"), true);
