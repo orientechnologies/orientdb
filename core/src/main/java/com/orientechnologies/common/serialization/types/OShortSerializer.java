@@ -46,12 +46,12 @@ public class OShortSerializer implements OBinarySerializer<Short> {
 
   public void serialize(
       final Short object, final byte[] stream, final int startPosition, final Object... hints) {
-    serializeLiteral(object.shortValue(), stream, startPosition);
+    serializeLiteral(object, stream, startPosition);
   }
 
   public void serializeLiteral(final short value, final byte[] stream, final int startPosition) {
     stream[startPosition] = (byte) ((value >>> 8) & 0xFF);
-    stream[startPosition + 1] = (byte) ((value >>> 0) & 0xFF);
+    stream[startPosition + 1] = (byte) ((value) & 0xFF);
   }
 
   public Short deserialize(final byte[] stream, final int startPosition) {
@@ -89,8 +89,7 @@ public class OShortSerializer implements OBinarySerializer<Short> {
     return CONVERTER.getShort(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  public void serializeNative(
-      final short object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNative(final short object, final byte[] stream, final int startPosition) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putShort(stream, startPosition, object, ByteOrder.nativeOrder());
@@ -127,9 +126,19 @@ public class OShortSerializer implements OBinarySerializer<Short> {
     return buffer.getShort();
   }
 
+  @Override
+  public Short deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    return buffer.getShort(offset);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return SHORT_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return SHORT_SIZE;
   }
 

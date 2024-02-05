@@ -50,6 +50,30 @@ public class EdgeKeySerializerTest {
   }
 
   @Test
+  public void testImmutableBufferPositionSerialization() {
+    final EdgeKey edgeKey = new EdgeKey(42, 24, 67);
+    final EdgeKeySerializer edgeKeySerializer = new EdgeKeySerializer();
+
+    final int serializedSize = edgeKeySerializer.getObjectSize(edgeKey);
+    final ByteBuffer buffer = ByteBuffer.allocate(serializedSize + 3);
+
+    buffer.position(3);
+    edgeKeySerializer.serializeInByteBufferObject(edgeKey, buffer);
+
+    Assert.assertEquals(3 + serializedSize, buffer.position());
+
+    buffer.position(0);
+    Assert.assertEquals(serializedSize, edgeKeySerializer.getObjectSizeInByteBuffer(3, buffer));
+
+    Assert.assertEquals(0, buffer.position());
+
+    final EdgeKey deserializedKey = edgeKeySerializer.deserializeFromByteBufferObject(3, buffer);
+    Assert.assertEquals(0, buffer.position());
+
+    Assert.assertEquals(edgeKey, deserializedKey);
+  }
+
+  @Test
   public void testChangesSerialization() {
     final EdgeKey edgeKey = new EdgeKey(42, 24, 67);
     final EdgeKeySerializer edgeKeySerializer = new EdgeKeySerializer();

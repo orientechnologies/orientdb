@@ -151,10 +151,24 @@ public class IntSerializerTest {
   }
 
   @Test
+  public void serializeImmutableByteBufferPositionOneByteTest() {
+    final int value = 0xE5;
+
+    byteBufferImmutablePositionSerializationTest(value);
+  }
+
+  @Test
   public void serializeByteBufferTwoBytesTest() {
     final int value = 0xE4_E5;
 
     byteBufferSerializationTest(value);
+  }
+
+  @Test
+  public void serializeImmutableByteBufferPositionTwoBytesTest() {
+    final int value = 0xE4_E5;
+
+    byteBufferImmutablePositionSerializationTest(value);
   }
 
   @Test
@@ -165,10 +179,24 @@ public class IntSerializerTest {
   }
 
   @Test
+  public void serializeImmutableByteBufferPositionThreeBytesTest() {
+    final int value = 0xA5_E4_E5;
+
+    byteBufferImmutablePositionSerializationTest(value);
+  }
+
+  @Test
   public void serializeByteBufferFourBytesTest() {
     final int value = 0xFE_A5_E4_E5;
 
     byteBufferSerializationTest(value);
+  }
+
+  @Test
+  public void serializeImmutableByteBufferPositionFourBytesTest() {
+    final int value = 0xFE_A5_E4_E5;
+
+    byteBufferImmutablePositionSerializationTest(value);
   }
 
   private void byteBufferSerializationTest(int value) {
@@ -188,6 +216,28 @@ public class IntSerializerTest {
 
     byteBuffer.position(3);
     final int deserialized = serializer.deserializeFromByteBufferObject(byteBuffer);
+
+    Assert.assertEquals(value, deserialized);
+  }
+
+  private void byteBufferImmutablePositionSerializationTest(int value) {
+    final IntSerializer serializer = new IntSerializer();
+
+    final int size = serializer.getObjectSize(value);
+    final ByteBuffer byteBuffer = ByteBuffer.allocate(size + 3);
+
+    byteBuffer.position(3);
+
+    serializer.serializeInByteBufferObject(value, byteBuffer, (Object[]) null);
+    Assert.assertEquals(size + 3, byteBuffer.position());
+
+    byteBuffer.position(0);
+    final int serializedSize = serializer.getObjectSizeInByteBuffer(3, byteBuffer);
+    Assert.assertEquals(size, serializedSize);
+    Assert.assertEquals(0, byteBuffer.position());
+
+    final int deserialized = serializer.deserializeFromByteBufferObject(3, byteBuffer);
+    Assert.assertEquals(0, byteBuffer.position());
 
     Assert.assertEquals(value, deserialized);
   }
@@ -238,5 +288,7 @@ public class IntSerializerTest {
     final int deserialized = serializer.deserializeFromByteBufferObject(byteBuffer, walChanges, 3);
 
     Assert.assertEquals(value, deserialized);
+
+    Assert.assertEquals(0, byteBuffer.position());
   }
 }

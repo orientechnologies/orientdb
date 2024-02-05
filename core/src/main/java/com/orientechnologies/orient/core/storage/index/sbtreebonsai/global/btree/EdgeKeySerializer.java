@@ -111,6 +111,21 @@ public final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
   }
 
   @Override
+  public EdgeKey deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    var delta = LongSerializer.getObjectSize(buffer, offset);
+    final long ownerId = LongSerializer.deserialize(buffer, offset);
+    offset += delta;
+
+    delta = IntSerializer.INSTANCE.getObjectSizeInByteBuffer(offset, buffer);
+    final int targetCluster =
+        IntSerializer.INSTANCE.deserializeFromByteBufferObject(offset, buffer);
+    offset += delta;
+
+    final long targetPosition = LongSerializer.deserialize(buffer, offset);
+    return new EdgeKey(ownerId, targetCluster, targetPosition);
+  }
+
+  @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     final int position = buffer.position();
     int size = LongSerializer.getObjectSize(buffer);
@@ -120,6 +135,18 @@ public final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
     buffer.position(position + size);
 
     return size + LongSerializer.getObjectSize(buffer);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
+    final int position = offset;
+    int size = LongSerializer.getObjectSize(buffer, offset);
+    offset = position + size;
+
+    size += IntSerializer.INSTANCE.getObjectSizeInByteBuffer(offset, buffer);
+    offset = position + size;
+
+    return size + LongSerializer.getObjectSize(buffer, offset);
   }
 
   @Override

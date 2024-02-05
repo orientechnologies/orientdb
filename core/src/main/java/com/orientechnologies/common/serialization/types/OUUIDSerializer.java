@@ -26,6 +26,7 @@ import java.util.UUID;
 
 /** @author Artem Orobets (enisher-at-gmail.com) */
 public class OUUIDSerializer implements OBinarySerializer<UUID> {
+
   public static final OUUIDSerializer INSTANCE = new OUUIDSerializer();
   public static final int UUID_SIZE = 2 * OLongSerializer.LONG_SIZE;
 
@@ -77,9 +78,9 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
   public void serializeNativeObject(
       final UUID object, final byte[] stream, final int startPosition, final Object... hints) {
     OLongSerializer.INSTANCE.serializeNative(
-        object.getMostSignificantBits(), stream, startPosition, hints);
+        object.getMostSignificantBits(), stream, startPosition);
     OLongSerializer.INSTANCE.serializeNative(
-        object.getLeastSignificantBits(), stream, startPosition + OLongSerializer.LONG_SIZE, hints);
+        object.getLeastSignificantBits(), stream, startPosition + OLongSerializer.LONG_SIZE);
   }
 
   @Override
@@ -117,9 +118,24 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 
+  @Override
+  public UUID deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final long mostSignificantBits = buffer.getLong(offset);
+    offset += Long.BYTES;
+
+    final long leastSignificantBits = buffer.getLong(offset);
+
+    return new UUID(mostSignificantBits, leastSignificantBits);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return UUID_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return UUID_SIZE;
   }
 

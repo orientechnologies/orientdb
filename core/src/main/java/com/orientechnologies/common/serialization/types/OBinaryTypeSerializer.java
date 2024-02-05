@@ -31,6 +31,7 @@ import java.util.Arrays;
  * @since 20.01.12
  */
 public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
+
   public static final OBinaryTypeSerializer INSTANCE = new OBinaryTypeSerializer();
   public static final byte ID = 17;
 
@@ -70,7 +71,7 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
   public void serializeNativeObject(
       byte[] object, byte[] stream, int startPosition, Object... hints) {
     final int len = object.length;
-    OIntegerSerializer.INSTANCE.serializeNative(len, stream, startPosition, hints);
+    OIntegerSerializer.INSTANCE.serializeNative(len, stream, startPosition);
     System.arraycopy(object, 0, stream, startPosition + OIntegerSerializer.INT_SIZE, len);
   }
 
@@ -116,10 +117,26 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
     return result;
   }
 
+  @Override
+  public byte[] deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final int len = buffer.getInt(offset);
+    offset += Integer.BYTES;
+
+    final byte[] result = new byte[len];
+    buffer.get(offset, result);
+
+    return result;
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.getInt() + OIntegerSerializer.INT_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
+    return buffer.getInt(offset) + OIntegerSerializer.INT_SIZE;
   }
 
   /** {@inheritDoc} */

@@ -12,13 +12,14 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.
  * @since 8/17/2015
  */
-public class OWALPageChangesPortion implements OWALChanges {
+public final class OWALPageChangesPortion implements OWALChanges {
+
   private static final int PAGE_SIZE =
       OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
   private static final int CHUNK_SIZE = 32;
   private static final int PORTION_SIZE = 32;
-  static final int PORTION_BYTES = PORTION_SIZE * CHUNK_SIZE;
+  public static final int PORTION_BYTES = PORTION_SIZE * CHUNK_SIZE;
 
   private byte[][][] pageChunks;
 
@@ -125,14 +126,15 @@ public class OWALPageChangesPortion implements OWALChanges {
 
   @Override
   public void applyChanges(ByteBuffer pointer) {
-    if (pageChunks == null) return;
+    if (pageChunks == null) {
+      return;
+    }
     for (int i = 0; i < pageChunks.length; i++) {
       if (pageChunks[i] != null) {
         for (int j = 0; j < PORTION_SIZE; j++) {
           byte[] chunk = pageChunks[i][j];
           if (chunk != null) {
-            pointer.position(i * PORTION_BYTES + j * CHUNK_SIZE);
-            pointer.put(chunk, 0, chunk.length);
+            pointer.put(i * PORTION_BYTES + j * CHUNK_SIZE, chunk, 0, chunk.length);
           }
         }
       }
@@ -279,8 +281,7 @@ public class OWALPageChangesPortion implements OWALChanges {
   private void readData(ByteBuffer pointer, int offset, byte[] data) {
     if (pageChunks == null) {
       if (pointer != null) {
-        pointer.position(offset);
-        pointer.get(data, 0, data.length);
+        pointer.get(offset, data, 0, data.length);
       }
       return;
     }
@@ -289,8 +290,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     if (portionIndex == (offset + data.length - 1) / PORTION_BYTES
         && pageChunks[portionIndex] == null) {
       if (pointer != null) {
-        pointer.position(offset);
-        pointer.get(data, 0, data.length);
+        pointer.get(offset, data, 0, data.length);
       }
       return;
     }
@@ -302,15 +302,17 @@ public class OWALPageChangesPortion implements OWALChanges {
 
     while (read < data.length) {
       byte[] chunk = null;
-      if (pageChunks[portionIndex] != null) chunk = pageChunks[portionIndex][chunkIndex];
+      if (pageChunks[portionIndex] != null) {
+        chunk = pageChunks[portionIndex][chunkIndex];
+      }
 
       final int rl = Math.min(CHUNK_SIZE - chunkOffset, data.length - read);
       if (chunk == null) {
         if (pointer != null) {
-          pointer.position(portionIndex * PORTION_BYTES + (chunkIndex * CHUNK_SIZE) + chunkOffset);
-          pointer.get(data, read, rl);
+          var position = portionIndex * PORTION_BYTES + (chunkIndex * CHUNK_SIZE) + chunkOffset;
+          pointer.get(position, data, read, rl);
         }
-      } else
+      } else {
         try {
           System.arraycopy(chunk, chunkOffset, data, read, rl);
         } catch (Exception e) {
@@ -330,6 +332,7 @@ public class OWALPageChangesPortion implements OWALChanges {
                   e);
           throw e;
         }
+      }
 
       read += rl;
       chunkOffset = 0;
@@ -368,8 +371,8 @@ public class OWALPageChangesPortion implements OWALChanges {
 
         // pointer can be null for new pages
         if (pointer != null) {
-          pointer.position(portionIndex * PORTION_BYTES + chunkIndex * CHUNK_SIZE);
-          pointer.get(chunk);
+          var position = portionIndex * PORTION_BYTES + chunkIndex * CHUNK_SIZE;
+          pointer.get(position, chunk);
         }
 
         pageChunks[portionIndex][chunkIndex] = chunk;

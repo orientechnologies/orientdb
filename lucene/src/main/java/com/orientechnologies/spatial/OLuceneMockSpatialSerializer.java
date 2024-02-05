@@ -88,7 +88,17 @@ public class OLuceneMockSpatialSerializer implements OBinarySerializer<ODocument
   }
 
   @Override
+  public ODocument deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    return null;
+  }
+
+  @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return 0;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return 0;
   }
 

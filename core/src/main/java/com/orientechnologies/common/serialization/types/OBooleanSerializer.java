@@ -30,6 +30,7 @@ import java.nio.ByteBuffer;
  * @since 18.01.12
  */
 public class OBooleanSerializer implements OBinarySerializer<Boolean> {
+
   /** size of boolean value in bytes */
   public static final int BOOLEAN_SIZE = 1;
 
@@ -75,8 +76,7 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
     serialize(object, stream, startPosition);
   }
 
-  public void serializeNative(
-      final boolean object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNative(final boolean object, final byte[] stream, final int startPosition) {
     serializeLiteral(object, stream, startPosition);
   }
 
@@ -105,7 +105,7 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(Boolean object, ByteBuffer buffer, Object... hints) {
-    buffer.put(object.booleanValue() ? (byte) 1 : (byte) 0);
+    buffer.put(object ? (byte) 1 : (byte) 0);
   }
 
   /** {@inheritDoc} */
@@ -114,9 +114,19 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
     return buffer.get() > 0;
   }
 
+  @Override
+  public Boolean deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    return buffer.get(offset) > 0;
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return BOOLEAN_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return BOOLEAN_SIZE;
   }
 

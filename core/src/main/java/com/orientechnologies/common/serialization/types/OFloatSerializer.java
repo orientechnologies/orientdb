@@ -33,6 +33,7 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OFloatSerializer implements OBinarySerializer<Float> {
+
   public static final byte ID = 7;
   /** size of float value in bytes */
   public static final int FLOAT_SIZE = 4;
@@ -81,8 +82,7 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
     return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
-  public void serializeNative(
-      final float object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNative(final float object, final byte[] stream, final int startPosition) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object), ByteOrder.nativeOrder());
@@ -119,6 +119,11 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
     return Float.intBitsToFloat(buffer.getInt());
   }
 
+  @Override
+  public Float deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    return Float.intBitsToFloat(buffer.getInt(offset));
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
@@ -135,6 +140,11 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return FLOAT_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return FLOAT_SIZE;
   }
 

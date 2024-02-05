@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,7 +25,6 @@ import org.junit.Test;
  * @since 20.03.13
  */
 public class ClusterPageTest {
-  private static final int SYSTEM_OFFSET = 24;
 
   @Test
   public void testAddOneRecord() {
@@ -917,8 +915,9 @@ public class ClusterPageTest {
 
       Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
 
-      if (deletedPositions.contains(entry.getKey()))
+      if (deletedPositions.contains(entry.getKey())) {
         Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
+      }
     }
   }
 
@@ -1056,10 +1055,12 @@ public class ClusterPageTest {
         positionCounter.put(lastPosition, counter);
         counter++;
 
-        if (lastPosition == 0) Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 15);
-        else
+        if (lastPosition == 0) {
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 15);
+        } else {
           Assert.assertEquals(
               localPage.getFreeSpace(), freeSpace - (19 + ORecordVersionHelper.SERIALIZED_SIZE));
+        }
 
         freeSpace = localPage.getFreeSpace();
       }
@@ -1140,7 +1141,9 @@ public class ClusterPageTest {
 
     do {
       recordPosition = localPage.findFirstRecord(recordPosition);
-      if (recordPosition < 0) break;
+      if (recordPosition < 0) {
+        break;
+      }
 
       Assert.assertTrue(positions.contains(recordPosition));
       Assert.assertTrue(recordPosition > lastRecordPosition);
@@ -1219,7 +1222,9 @@ public class ClusterPageTest {
     int lastRecordPosition = Integer.MAX_VALUE;
     do {
       recordPosition = localPage.findLastRecord(recordPosition);
-      if (recordPosition < 0) break;
+      if (recordPosition < 0) {
+        break;
+      }
 
       Assert.assertTrue(positions.contains(recordPosition));
       Assert.assertTrue(recordPosition < lastRecordPosition);
@@ -1423,13 +1428,5 @@ public class ClusterPageTest {
     assertThat(localPage.getRecordBinaryValue(index, 0, 11))
         .isEqualTo(new byte[] {5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1});
     Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
-  }
-
-  private byte[] getBytes(ByteBuffer buffer, int len) {
-    byte[] result = new byte[len];
-    buffer.position(ClusterPageTest.SYSTEM_OFFSET);
-    buffer.get(result);
-
-    return result;
   }
 }

@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 import java.nio.ByteBuffer;
 
 public final class MultiValueEntrySerializer implements OBinarySerializer<MultiValueEntry> {
+
   public static final int ID = 27;
   public static final MultiValueEntrySerializer INSTANCE = new MultiValueEntrySerializer();
 
@@ -121,7 +122,25 @@ public final class MultiValueEntrySerializer implements OBinarySerializer<MultiV
   }
 
   @Override
+  public MultiValueEntry deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final long id = buffer.getLong(offset);
+    offset += Long.BYTES;
+
+    final int clusterId = buffer.getShort(offset);
+    offset += Short.BYTES;
+
+    final long clusterPosition = buffer.getLong(offset);
+
+    return new MultiValueEntry(id, clusterId, clusterPosition);
+  }
+
+  @Override
   public int getObjectSizeInByteBuffer(final ByteBuffer buffer) {
+    return 2 * OLongSerializer.LONG_SIZE + OShortSerializer.SHORT_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return 2 * OLongSerializer.LONG_SIZE + OShortSerializer.SHORT_SIZE;
   }
 

@@ -128,9 +128,20 @@ public class ODateSerializer implements OBinarySerializer<Date> {
     return dateTimeSerializer.deserializeFromByteBufferObject(buffer);
   }
 
+  @Override
+  public Date deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
+    return dateTimeSerializer.deserializeFromByteBufferObject(offset, buffer);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return OLongSerializer.LONG_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return OLongSerializer.LONG_SIZE;
   }
 

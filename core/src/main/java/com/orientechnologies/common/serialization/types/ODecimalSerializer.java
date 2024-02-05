@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
  * @since 03.04.12
  */
 public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
+
   public static final ODecimalSerializer INSTANCE = new ODecimalSerializer();
   public static final byte ID = 18;
 
@@ -41,11 +42,9 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
   }
 
   public int getObjectSize(byte[] stream, int startPosition) {
-    final int size =
-        OIntegerSerializer.INT_SIZE
-            + OBinaryTypeSerializer.INSTANCE.getObjectSize(
-                stream, startPosition + OIntegerSerializer.INT_SIZE);
-    return size;
+    return OIntegerSerializer.INT_SIZE
+        + OBinaryTypeSerializer.INSTANCE.getObjectSize(
+            stream, startPosition + OIntegerSerializer.INT_SIZE);
   }
 
   public void serialize(BigDecimal object, byte[] stream, int startPosition, Object... hints) {
@@ -69,11 +68,9 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
   }
 
   public int getObjectSizeNative(final byte[] stream, final int startPosition) {
-    final int size =
-        OIntegerSerializer.INT_SIZE
-            + OBinaryTypeSerializer.INSTANCE.getObjectSizeNative(
-                stream, startPosition + OIntegerSerializer.INT_SIZE);
-    return size;
+    return OIntegerSerializer.INT_SIZE
+        + OBinaryTypeSerializer.INSTANCE.getObjectSizeNative(
+            stream, startPosition + OIntegerSerializer.INT_SIZE);
   }
 
   @Override
@@ -127,12 +124,29 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
     return new BigDecimal(new BigInteger(unscaledValue), scale);
   }
 
+  @Override
+  public BigDecimal deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final int scale = buffer.getInt(offset);
+    offset += Integer.BYTES;
+
+    final byte[] unscaledValue =
+        OBinaryTypeSerializer.INSTANCE.deserializeFromByteBufferObject(offset, buffer);
+
+    return new BigDecimal(new BigInteger(unscaledValue), scale);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     buffer.position(buffer.position() + OIntegerSerializer.INT_SIZE);
     return OIntegerSerializer.INT_SIZE
         + OBinaryTypeSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
+    return Integer.BYTES
+        + OBinaryTypeSerializer.INSTANCE.getObjectSizeInByteBuffer(offset + Integer.BYTES, buffer);
   }
 
   /** {@inheritDoc} */

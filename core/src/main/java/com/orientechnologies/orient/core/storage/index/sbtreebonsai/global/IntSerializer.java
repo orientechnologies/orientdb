@@ -99,8 +99,27 @@ public final class IntSerializer implements OBinarySerializer<Integer> {
   }
 
   @Override
+  public Integer deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final int numberSize = buffer.get(offset);
+    offset++;
+
+    int value = 0;
+    for (int i = 0; i < numberSize; i++) {
+      value = value | ((0xFF & buffer.get(offset)) << (i * 8));
+      offset++;
+    }
+
+    return value;
+  }
+
+  @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.get() + 1;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
+    return buffer.get(offset) + 1;
   }
 
   @Override

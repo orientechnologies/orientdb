@@ -44,7 +44,7 @@ public class OCharSerializer implements OBinarySerializer<Character> {
 
   public void serialize(
       final Character object, final byte[] stream, final int startPosition, final Object... hints) {
-    serializeLiteral(object.charValue(), stream, startPosition);
+    serializeLiteral(object, stream, startPosition);
   }
 
   public void serializeLiteral(final char value, final byte[] stream, final int startPosition) {
@@ -87,8 +87,7 @@ public class OCharSerializer implements OBinarySerializer<Character> {
     return BINARY_CONVERTER.getChar(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  public void serializeNative(
-      final char object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNative(final char object, final byte[] stream, final int startPosition) {
     checkBoundaries(stream, startPosition);
 
     BINARY_CONVERTER.putChar(stream, startPosition, object, ByteOrder.nativeOrder());
@@ -125,9 +124,19 @@ public class OCharSerializer implements OBinarySerializer<Character> {
     return buffer.getChar();
   }
 
+  @Override
+  public Character deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    return buffer.getChar(offset);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return CHAR_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return CHAR_SIZE;
   }
 

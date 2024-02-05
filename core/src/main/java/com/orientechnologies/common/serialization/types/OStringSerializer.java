@@ -30,6 +30,7 @@ import java.nio.ByteBuffer;
  * @since 18.01.12
  */
 public class OStringSerializer implements OBinarySerializer<String> {
+
   public static final OStringSerializer INSTANCE = new OStringSerializer();
   public static final byte ID = 13;
 
@@ -171,10 +172,30 @@ public class OStringSerializer implements OBinarySerializer<String> {
     return new String(chars);
   }
 
+  @Override
+  public String deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    int len = buffer.getInt(offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    final char[] chars = new char[len];
+    final byte[] binaryData = new byte[2 * len];
+    buffer.get(offset, binaryData);
+
+    for (int i = 0; i < len; i++)
+      chars[i] = (char) ((0xFF & binaryData[i << 1]) | ((0xFF & binaryData[(i << 1) + 1]) << 8));
+
+    return new String(chars);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.getInt() * 2 + OIntegerSerializer.INT_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
+    return buffer.getInt(offset) * 2 + OIntegerSerializer.INT_SIZE;
   }
 
   /** {@inheritDoc} */

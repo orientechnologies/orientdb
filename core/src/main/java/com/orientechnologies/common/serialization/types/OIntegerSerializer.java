@@ -33,6 +33,7 @@ import java.nio.ByteOrder;
  * @since 17.01.12
  */
 public class OIntegerSerializer implements OBinarySerializer<Integer> {
+
   public static final byte ID = 8;
   /** size of int value in bytes */
   public static final int INT_SIZE = 4;
@@ -46,14 +47,14 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
 
   public void serialize(
       final Integer object, final byte[] stream, final int startPosition, final Object... hints) {
-    serializeLiteral(object.intValue(), stream, startPosition);
+    serializeLiteral(object, stream, startPosition);
   }
 
   public void serializeLiteral(final int value, final byte[] stream, final int startPosition) {
     stream[startPosition] = (byte) ((value >>> 24) & 0xFF);
     stream[startPosition + 1] = (byte) ((value >>> 16) & 0xFF);
     stream[startPosition + 2] = (byte) ((value >>> 8) & 0xFF);
-    stream[startPosition + 3] = (byte) ((value >>> 0) & 0xFF);
+    stream[startPosition + 3] = (byte) ((value) & 0xFF);
   }
 
   public Integer deserialize(final byte[] stream, final int startPosition) {
@@ -94,7 +95,7 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  public void serializeNative(int object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNative(int object, byte[] stream, int startPosition) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putInt(stream, startPosition, object, ByteOrder.nativeOrder());
@@ -131,9 +132,19 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return buffer.getInt();
   }
 
+  @Override
+  public Integer deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    return buffer.getInt(offset);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return INT_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return INT_SIZE;
   }
 

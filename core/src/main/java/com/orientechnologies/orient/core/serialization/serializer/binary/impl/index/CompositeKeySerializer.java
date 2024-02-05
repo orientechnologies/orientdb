@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 
 public final class CompositeKeySerializer implements OBinarySerializer<OCompositeKey> {
+
   public int getObjectSize(OCompositeKey compositeKey, Object... hints) {
     final OType[] types = (OType[]) hints;
     final List<Object> keys = compositeKey.getKeys();
@@ -42,32 +43,20 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
   }
 
   private static int sizeOfKey(final OType type, final Object key) {
-    switch (type) {
-      case BOOLEAN:
-      case BYTE:
-        return 1;
-      case DATE:
-      case DATETIME:
-      case DOUBLE:
-      case LONG:
-        return OLongSerializer.LONG_SIZE;
-      case BINARY:
-        return ((byte[]) key).length + OIntegerSerializer.INT_SIZE;
-      case DECIMAL:
+    return switch (type) {
+      case BOOLEAN, BYTE -> 1;
+      case DATE, DATETIME, DOUBLE, LONG -> OLongSerializer.LONG_SIZE;
+      case BINARY -> ((byte[]) key).length + OIntegerSerializer.INT_SIZE;
+      case DECIMAL -> {
         final BigDecimal bigDecimal = ((BigDecimal) key);
-        return 2 * OIntegerSerializer.INT_SIZE + bigDecimal.unscaledValue().toByteArray().length;
-      case FLOAT:
-      case INTEGER:
-        return OIntegerSerializer.INT_SIZE;
-      case LINK:
-        return OCompactedLinkSerializer.INSTANCE.getObjectSize((ORID) key);
-      case SHORT:
-        return OShortSerializer.SHORT_SIZE;
-      case STRING:
-        return OUTF8Serializer.INSTANCE.getObjectSize((String) key);
-      default:
-        throw new OIndexException("Unsupported key type " + type);
-    }
+        yield 2 * OIntegerSerializer.INT_SIZE + bigDecimal.unscaledValue().toByteArray().length;
+      }
+      case FLOAT, INTEGER -> OIntegerSerializer.INT_SIZE;
+      case LINK -> OCompactedLinkSerializer.INSTANCE.getObjectSize((ORID) key);
+      case SHORT -> OShortSerializer.SHORT_SIZE;
+      case STRING -> OUTF8Serializer.INSTANCE.getObjectSize((String) key);
+      default -> throw new OIndexException("Unsupported key type " + type);
+    };
   }
 
   public void serialize(
@@ -177,6 +166,30 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
     return keys;
   }
 
+  private static OCompositeKey deserialize(int offset, ByteBuffer buffer) {
+    offset += Integer.BYTES;
+    final int keyLen = buffer.getInt(offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    OCompositeKey keys = new OCompositeKey(keyLen);
+    for (int i = 0; i < keyLen; i++) {
+      final byte typeId = buffer.get(offset);
+      offset++;
+
+      if (typeId < 0) {
+        keys.addKey(null);
+      } else {
+        final OType type = OType.getById(typeId);
+        assert type != null;
+        var delta = getKeySizeInByteBuffer(offset, buffer, type);
+        keys.addKey(deserializeKeyFromByteBuffer(offset, buffer, type));
+        offset += delta;
+      }
+    }
+
+    return keys;
+  }
+
   private static Object deserializeKeyFromByteBuffer(final ByteBuffer buffer, final OType type) {
     switch (type) {
       case BINARY:
@@ -211,6 +224,80 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
         return buffer.getShort();
       case STRING:
         return OUTF8Serializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+      default:
+        throw new OIndexException("Unsupported index type " + type);
+    }
+  }
+
+  private static Object deserializeKeyFromByteBuffer(
+      int offset, final ByteBuffer buffer, final OType type) {
+    switch (type) {
+      case BINARY:
+        final int len = buffer.getInt(offset);
+        offset += Integer.BYTES;
+
+        final byte[] array = new byte[len];
+        buffer.get(offset, array);
+        return array;
+      case BOOLEAN:
+        return buffer.get(offset) > 0;
+      case BYTE:
+        return buffer.get(offset);
+      case DATE:
+      case DATETIME:
+        return new Date(buffer.getLong(offset));
+      case DECIMAL:
+        final int scale = buffer.getInt(offset);
+        offset += Integer.BYTES;
+
+        final int unscaledValueLen = buffer.getInt(offset);
+        offset += Integer.BYTES;
+
+        final byte[] unscaledValue = new byte[unscaledValueLen];
+        buffer.get(offset, unscaledValue);
+
+        return new BigDecimal(new BigInteger(unscaledValue), scale);
+      case DOUBLE:
+        return Double.longBitsToDouble(buffer.getLong(offset));
+      case FLOAT:
+        return Float.intBitsToFloat(buffer.getInt(offset));
+      case INTEGER:
+        return buffer.getInt(offset);
+      case LINK:
+        return OCompactedLinkSerializer.INSTANCE.deserializeFromByteBufferObject(offset, buffer);
+      case LONG:
+        return buffer.getLong(offset);
+      case SHORT:
+        return buffer.getShort(offset);
+      case STRING:
+        return OUTF8Serializer.INSTANCE.deserializeFromByteBufferObject(offset, buffer);
+      default:
+        throw new OIndexException("Unsupported index type " + type);
+    }
+  }
+
+  private static int getKeySizeInByteBuffer(int offset, final ByteBuffer buffer, final OType type) {
+    switch (type) {
+      case BINARY:
+        final int len = buffer.getInt(offset);
+        return Integer.BYTES + len;
+      case BOOLEAN, BYTE:
+        return Byte.BYTES;
+      case DATE:
+      case DATETIME, DOUBLE, LONG:
+        return Long.BYTES;
+      case DECIMAL:
+        offset += Integer.BYTES;
+        final int unscaledValueLen = buffer.getInt(offset);
+        return 2 * Integer.BYTES + unscaledValueLen;
+      case FLOAT, INTEGER:
+        return Integer.BYTES;
+      case LINK:
+        return OCompactedLinkSerializer.INSTANCE.getObjectSizeInByteBuffer(offset, buffer);
+      case SHORT:
+        return Short.BYTES;
+      case STRING:
+        return OUTF8Serializer.INSTANCE.getObjectSizeInByteBuffer(offset, buffer);
       default:
         throw new OIndexException("Unsupported index type " + type);
     }
@@ -360,10 +447,20 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
     return deserialize(buffer);
   }
 
+  @Override
+  public OCompositeKey deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    return deserialize(offset, buffer);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.getInt();
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
+    return buffer.getInt(offset);
   }
 
   /** {@inheritDoc} */
