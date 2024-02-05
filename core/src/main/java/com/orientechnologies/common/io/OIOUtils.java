@@ -211,9 +211,7 @@ public class OIOUtils {
     }
   }
 
-  /**
-   * Returns the Unix file name format converting backslashes (\) to slasles (/)
-   */
+  /** Returns the Unix file name format converting backslashes (\) to slasles (/) */
   public static String getUnixFileName(final String iFileName) {
     return iFileName != null ? iFileName.replace('\\', '/') : null;
   }
@@ -320,7 +318,7 @@ public class OIOUtils {
 
     return s.length() > 1
         && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''
-        || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"');
+            || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"');
   }
 
   public static String getStringContent(final Object iValue) {
@@ -336,7 +334,7 @@ public class OIOUtils {
 
     if (s.length() > 1
         && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''
-        || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"')) {
+            || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"')) {
       return s.substring(1, s.length() - 1);
     }
 
@@ -473,11 +471,13 @@ public class OIOUtils {
       var fileStore = Files.getFileStore(Paths.get(path));
       return (int) fileStore.getBlockSize();
     } catch (IOException | UnsupportedOperationException e) {
-      OLogManager.instance().errorNoDb(OIOUtils.class,
-          "Error during calculation file system "
-              + "block size, falling back to default one - 4K", e);
+      OLogManager.instance()
+          .errorNoDb(
+              OIOUtils.class,
+              "Error during calculation file system "
+                  + "block size, falling back to default one - 4K",
+              e);
       return 4 * 1024;
     }
   }
-
 }
