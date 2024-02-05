@@ -42,7 +42,7 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
 
   public void serialize(
       final Byte object, final byte[] stream, final int startPosition, final Object... hints) {
-    stream[startPosition] = object.byteValue();
+    stream[startPosition] = object;
   }
 
   public void serializeLiteral(final byte value, final byte[] stream, final int startPosition) {
@@ -75,12 +75,8 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
     serialize(object, stream, startPosition);
   }
 
-  public void serializeNative(byte object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNative(byte object, byte[] stream, int startPosition) {
     serializeLiteral(object, stream, startPosition);
-  }
-
-  public void serializeRawBytes(final byte[] bytesToWrite, final byte[] stream, int startPosition) {
-    System.arraycopy(bytesToWrite, 0, stream, startPosition, bytesToWrite.length);
   }
 
   @Override
@@ -117,9 +113,19 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
     return buffer.get();
   }
 
+  @Override
+  public Byte deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    return buffer.get(offset);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return BYTE_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return BYTE_SIZE;
   }
 

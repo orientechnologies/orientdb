@@ -20,6 +20,10 @@ public final class LongSerializer {
     return buffer.get() + 1;
   }
 
+  public static int getObjectSize(final ByteBuffer buffer, int offset) {
+    return buffer.get(offset) + 1;
+  }
+
   public static int getObjectSize(
       final ByteBuffer buffer, final OWALChanges changes, final int position) {
     return changes.getByteValue(buffer, position) + 1;
@@ -60,6 +64,19 @@ public final class LongSerializer {
     long value = 0;
     for (int i = 0; i < numberSize; i++) {
       value = value | ((0xFFL & buffer.get()) << (i * 8));
+    }
+
+    return value;
+  }
+
+  public static long deserialize(final ByteBuffer buffer, int offset) {
+    final int numberSize = buffer.get(offset);
+    offset++;
+
+    long value = 0;
+    for (int i = 0; i < numberSize; i++) {
+      value = value | ((0xFFL & buffer.get(offset)) << (i * 8));
+      offset++;
     }
 
     return value;

@@ -17,17 +17,19 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 18.01.12
  */
 public class ShortSerializerTest {
+
   private static final int FIELD_SIZE = 2;
   byte[] stream = new byte[FIELD_SIZE];
   private static final Short OBJECT = 1;
@@ -38,20 +40,24 @@ public class ShortSerializerTest {
     shortSerializer = new OShortSerializer();
   }
 
+  @Test
   public void testFieldSize() {
     Assert.assertEquals(shortSerializer.getObjectSize(null), FIELD_SIZE);
   }
 
+  @Test
   public void testSerialize() {
     shortSerializer.serialize(OBJECT, stream, 0);
     Assert.assertEquals(shortSerializer.deserialize(stream, 0), OBJECT);
   }
 
+  @Test
   public void testSerializeNative() {
     shortSerializer.serializeNative(OBJECT, stream, 0);
     Assert.assertEquals(shortSerializer.deserializeNativeObject(stream, 0), OBJECT);
   }
 
+  @Test
   public void testNativeDirectMemoryCompatibility() {
     shortSerializer.serializeNative(OBJECT, stream, 0);
 
@@ -62,6 +68,7 @@ public class ShortSerializerTest {
     Assert.assertEquals(shortSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
 
+  @Test
   public void testSerializationInByteBuffer() {
     final int serializationOffset = 5;
 
@@ -82,15 +89,18 @@ public class ShortSerializerTest {
     Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
   }
 
+  @Test
   public void testSerializationWALChanges() {
     final int serializationOffset = 5;
 
     final ByteBuffer buffer =
-        ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+        ByteBuffer.allocateDirect(
+                FIELD_SIZE + serializationOffset + OWALPageChangesPortion.PORTION_BYTES)
+            .order(ByteOrder.nativeOrder());
     final byte[] data = new byte[FIELD_SIZE];
     shortSerializer.serializeNative(OBJECT, data, 0);
 
-    final OWALChanges walChanges = new OWALChangesTree();
+    final OWALChanges walChanges = new OWALPageChangesPortion();
     walChanges.setBinaryValue(buffer, data, serializationOffset);
 
     Assert.assertEquals(

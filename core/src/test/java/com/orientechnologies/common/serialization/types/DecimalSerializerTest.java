@@ -17,19 +17,21 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 04.04.12
  */
 public class DecimalSerializerTest {
+
   private static final int FIELD_SIZE = 9;
   private static final byte[] stream = new byte[FIELD_SIZE];
   private static final BigDecimal OBJECT = new BigDecimal(new BigInteger("20"), 2);
@@ -40,20 +42,24 @@ public class DecimalSerializerTest {
     decimalSerializer = new ODecimalSerializer();
   }
 
+  @Test
   public void testFieldSize() {
     Assert.assertEquals(decimalSerializer.getObjectSize(OBJECT), FIELD_SIZE);
   }
 
+  @Test
   public void testSerialize() {
     decimalSerializer.serialize(OBJECT, stream, 0);
     Assert.assertEquals(decimalSerializer.deserialize(stream, 0), OBJECT);
   }
 
+  @Test
   public void testSerializeNative() {
     decimalSerializer.serializeNativeObject(OBJECT, stream, 0);
     Assert.assertEquals(decimalSerializer.deserializeNativeObject(stream, 0), OBJECT);
   }
 
+  @Test
   public void testNativeDirectMemoryCompatibility() {
     decimalSerializer.serializeNativeObject(OBJECT, stream, 0);
 
@@ -65,6 +71,7 @@ public class DecimalSerializerTest {
     Assert.assertEquals(decimalSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
 
+  @Test
   public void testSerializeInByteBuffer() {
     final int serializationOffset = 5;
 
@@ -85,14 +92,39 @@ public class DecimalSerializerTest {
     Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
   }
 
+  @Test
+  public void testSerializeInByteBufferImmutablePosition() {
+    final int serializationOffset = 5;
+
+    final ByteBuffer buffer = ByteBuffer.allocate(FIELD_SIZE + serializationOffset);
+
+    buffer.position(serializationOffset);
+    decimalSerializer.serializeInByteBufferObject(OBJECT, buffer);
+
+    final int binarySize = buffer.position() - serializationOffset;
+    Assert.assertEquals(binarySize, FIELD_SIZE);
+
+    buffer.position(0);
+    Assert.assertEquals(
+        decimalSerializer.getObjectSizeInByteBuffer(serializationOffset, buffer), FIELD_SIZE);
+    Assert.assertEquals(0, buffer.position());
+
+    Assert.assertEquals(
+        decimalSerializer.deserializeFromByteBufferObject(serializationOffset, buffer), OBJECT);
+    Assert.assertEquals(0, buffer.position());
+  }
+
+  @Test
   public void testSerializeWALChanges() {
     final int serializationOffset = 5;
     final ByteBuffer buffer =
-        ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+        ByteBuffer.allocateDirect(
+                FIELD_SIZE + serializationOffset + OWALPageChangesPortion.PORTION_BYTES)
+            .order(ByteOrder.nativeOrder());
 
     final byte[] data = new byte[FIELD_SIZE];
     decimalSerializer.serializeNativeObject(OBJECT, data, 0);
-    final OWALChanges walChanges = new OWALChangesTree();
+    final OWALChanges walChanges = new OWALPageChangesPortion();
     walChanges.setBinaryValue(buffer, data, serializationOffset);
 
     Assert.assertEquals(

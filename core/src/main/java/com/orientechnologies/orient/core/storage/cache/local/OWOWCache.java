@@ -117,7 +117,7 @@ import net.jpountz.xxhash.XXHashFactory;
  *   <li>It provides much less synchronization overhead
  * </ol>
  *
- * Background thread is running by with predefined intervals. Such approach allows SSD GC to use
+ * <p>Background thread is running by with predefined intervals. Such approach allows SSD GC to use
  * pauses to make some clean up of half empty erase blocks. Also write cache is used for checking of
  * free space left on disk and putting of database in "read mode" if space limit is reached and to
  * perform fuzzy checkpoints. Write cache holds two different type of pages, pages which are shared
@@ -268,7 +268,7 @@ public final class OWOWCache extends OAbstractWriteCache
    *   <li>If page with given index is absent into table we add it to this container
    * </ol>
    *
-   * Because we add last WAL LSN if we are going to modify page, it means that we can calculate
+   * <p>Because we add last WAL LSN if we are going to modify page, it means that we can calculate
    * smallest LSN of operation which is not flushed to the log yet without locking of all operations
    * on database. There is may be situation when thread locks the page but did not add LSN to the
    * dirty pages table yet. If at the moment of start of iteration over the dirty pages table we
@@ -392,7 +392,7 @@ public final class OWOWCache extends OAbstractWriteCache
   private final DoubleWriteLog doubleWriteLog;
 
   private boolean closed;
-  private ExecutorService executor;
+  private final ExecutorService executor;
 
   public OWOWCache(
       final int pageSize,
@@ -2302,6 +2302,7 @@ public final class OWOWCache extends OAbstractWriteCache
     serializedRecord.position(0);
 
     OIOUtils.writeByteBuffer(serializedRecord, nameIdMapHolder, nameIdMapHolder.size());
+    //noinspection ResultOfMethodCallIgnored
     nameIdMapHolder.write(serializedRecord);
 
     if (sync) {
@@ -2766,15 +2767,15 @@ public final class OWOWCache extends OAbstractWriteCache
           assert copy.position() == 0;
           try {
             version = pointer.getVersion();
-            final ByteBuffer buffer = pointer.getBufferDuplicate();
+            final ByteBuffer buffer = pointer.getBuffer();
 
             fullLogLSN = pointer.getEndLSN();
 
             assert buffer != null;
-            buffer.position(0);
-            copy.position(0);
+            assert buffer.position() == 0;
+            assert copy.position() == 0;
 
-            copy.put(buffer);
+            copy.put(0, buffer, 0, buffer.capacity());
 
             removeFromDirtyPages(pageKey);
 
@@ -2793,11 +2794,9 @@ public final class OWOWCache extends OAbstractWriteCache
           chunk.add(new OQuarto<>(version, copy, directPointer, pointer));
 
           if (chunksSize + chunk.size() >= pagesFlushLimit) {
-            if (!chunk.isEmpty()) {
-              chunks.add(chunk);
-              chunksSize += chunk.size();
-              chunk = new ArrayList<>();
-            }
+            chunks.add(chunk);
+            chunksSize += chunk.size();
+            chunk = new ArrayList<>();
 
             lastPageIndex = -1;
             lastFileId = -1;
@@ -3065,15 +3064,15 @@ public final class OWOWCache extends OAbstractWriteCache
             assert copy.position() == 0;
             try {
               version = pointer.getVersion();
-              final ByteBuffer buffer = pointer.getBufferDuplicate();
+              final ByteBuffer buffer = pointer.getBuffer();
 
               fullLSN = pointer.getEndLSN();
 
               assert buffer != null;
-              buffer.position(0);
-              copy.position(0);
+              assert buffer.position() == 0;
+              assert copy.position() == 0;
 
-              copy.put(buffer);
+              copy.put(0, buffer, 0, buffer.capacity());
 
               removeFromDirtyPages(pageKey);
 
@@ -3087,7 +3086,7 @@ public final class OWOWCache extends OAbstractWriteCache
               maxFullLogLSN = fullLSN;
             }
 
-            copy.position(0);
+            assert copy.position() == 0;
 
             if (!chunk.isEmpty()) {
               if (lastFileId != pointer.getFileId()
@@ -3198,15 +3197,15 @@ public final class OWOWCache extends OAbstractWriteCache
             continue;
           }
           try {
-            final ByteBuffer buffer = pagePointer.getBufferDuplicate();
+            final ByteBuffer buffer = pagePointer.getBuffer();
 
             final OPointer directPointer = bufferPool.acquireDirect(false, Intention.FILE_FLUSH);
             final ByteBuffer copy = directPointer.getNativeByteBuffer();
             assert copy.position() == 0;
 
             assert buffer != null;
-            buffer.position(0);
-            copy.put(buffer);
+            assert buffer.position() == 0;
+            copy.put(0, buffer, 0, buffer.capacity());
 
             final OLogSequenceNumber endLSN = pagePointer.getEndLSN();
 

@@ -32,6 +32,7 @@ import java.util.Date;
  * @since 20.01.12
  */
 public class ODateTimeSerializer implements OBinarySerializer<Date> {
+
   public static final byte ID = 5;
   public static final ODateTimeSerializer INSTANCE = new ODateTimeSerializer();
 
@@ -107,9 +108,22 @@ public class ODateTimeSerializer implements OBinarySerializer<Date> {
     return calendar.getTime();
   }
 
+  @Override
+  public Date deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final Calendar calendar = Calendar.getInstance();
+    calendar.setTimeInMillis(buffer.getLong(offset));
+
+    return calendar.getTime();
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return OLongSerializer.LONG_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return OLongSerializer.LONG_SIZE;
   }
 

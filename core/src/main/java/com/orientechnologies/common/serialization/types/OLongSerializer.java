@@ -33,6 +33,7 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OLongSerializer implements OBinarySerializer<Long> {
+
   public static final byte ID = 10;
 
   /** size of long value in bytes */
@@ -47,7 +48,7 @@ public class OLongSerializer implements OBinarySerializer<Long> {
 
   public void serialize(
       final Long object, final byte[] stream, final int startPosition, final Object... hints) {
-    serializeLiteral(object.longValue(), stream, startPosition);
+    serializeLiteral(object, stream, startPosition);
   }
 
   public void serializeLiteral(final long value, final byte[] stream, final int startPosition) {
@@ -58,7 +59,7 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     stream[startPosition + 4] = (byte) ((value >>> 24) & 0xFF);
     stream[startPosition + 5] = (byte) ((value >>> 16) & 0xFF);
     stream[startPosition + 6] = (byte) ((value >>> 8) & 0xFF);
-    stream[startPosition + 7] = (byte) ((value >>> 0) & 0xFF);
+    stream[startPosition + 7] = (byte) ((value) & 0xFF);
   }
 
   public Long deserialize(final byte[] stream, final int startPosition) {
@@ -103,8 +104,7 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  public void serializeNative(
-      final long object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNative(final long object, final byte[] stream, final int startPosition) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putLong(stream, startPosition, object, ByteOrder.nativeOrder());
@@ -141,9 +141,19 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return buffer.getLong();
   }
 
+  @Override
+  public Long deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    return buffer.getLong(offset);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return LONG_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return LONG_SIZE;
   }
 

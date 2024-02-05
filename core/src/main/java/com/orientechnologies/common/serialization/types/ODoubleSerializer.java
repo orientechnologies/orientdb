@@ -68,8 +68,7 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
     return DOUBLE_SIZE;
   }
 
-  public void serializeNative(
-      final double object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNative(final double object, final byte[] stream, final int startPosition) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putLong(
@@ -125,9 +124,19 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
     return Double.longBitsToDouble(buffer.getLong());
   }
 
+  @Override
+  public Double deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    return Double.longBitsToDouble(buffer.getLong(offset));
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return DOUBLE_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return DOUBLE_SIZE;
   }
 

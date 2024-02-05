@@ -37,19 +37,12 @@ import java.nio.ByteBuffer;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySerializer<T> {
 
-  private OType type;
   private OBinarySerializer binarySerializer;
 
   public static final byte ID = 15;
   public static final String NAME = "bsks";
 
   public OSimpleKeySerializer() {}
-
-  public OSimpleKeySerializer(final OType iType) {
-    type = iType;
-
-    binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(iType);
-  }
 
   public int getObjectSize(T key, Object... hints) {
     init(key, hints);
@@ -87,19 +80,27 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     if (binarySerializer == null) {
       final OType[] types;
 
-      if (hints != null && hints.length > 0) types = (OType[]) hints;
-      else types = OCommonConst.EMPTY_TYPES_ARRAY;
+      if (hints != null && hints.length > 0) {
+        types = (OType[]) hints;
+      } else {
+        types = OCommonConst.EMPTY_TYPES_ARRAY;
+      }
 
-      if (types.length > 0) type = types[0];
-      else type = OType.getTypeByClass(key.getClass());
+      OType type;
+      if (types.length > 0) {
+        type = types[0];
+      } else {
+        type = OType.getTypeByClass(key.getClass());
+      }
 
       binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(type);
     }
   }
 
   protected void init(byte serializerId) {
-    if (binarySerializer == null)
+    if (binarySerializer == null) {
       binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(serializerId);
+    }
   }
 
   public int getObjectSizeNative(byte[] stream, int startPosition) {
@@ -157,6 +158,15 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     return (T) binarySerializer.deserializeFromByteBufferObject(buffer);
   }
 
+  @Override
+  public T deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final byte typeId = buffer.get(offset);
+    offset++;
+
+    init(typeId);
+    return (T) binarySerializer.deserializeFromByteBufferObject(offset, buffer);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
@@ -164,6 +174,16 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     init(serializerId);
     return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
         + binarySerializer.getObjectSizeInByteBuffer(buffer);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
+    final byte serializerId = buffer.get(offset);
+    offset++;
+
+    init(serializerId);
+    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
+        + binarySerializer.getObjectSizeInByteBuffer(offset, buffer);
   }
 
   /** {@inheritDoc} */

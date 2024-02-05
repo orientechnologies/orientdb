@@ -121,12 +121,9 @@ public interface OBinarySerializer<T> {
    * Serializes binary presentation of object to {@link ByteBuffer}. Position of buffer should be
    * set before calling of given method. Serialization result is compatible with result of call of
    * {@link #serializeNativeObject(Object, byte[], int, Object...)} method. So if we call: <code>
-   * buffer.position(10);
-   * binarySerializer.serializeInByteBufferObject(object, buffer);
+   * buffer.position(10); binarySerializer.serializeInByteBufferObject(object, buffer);
    * </code> and then <code>
-   * byte[] stream = new byte[serializedSize + 10];
-   * buffer.position(10);
-   * buffer.get(stream);
+   * byte[] stream = new byte[serializedSize + 10]; buffer.position(10); buffer.get(stream);
    * </code> following assert should pass <code>
    * assert object.equals(binarySerializer.deserializeNativeObject(stream, 10))
    * </code> Final position of <code>ByteBuffer</code> will be changed and will be equal to sum of
@@ -141,14 +138,11 @@ public interface OBinarySerializer<T> {
   /**
    * Converts binary presentation of object to object instance. Position of buffer should be set
    * before call of this method. Binary format of method is expected to be the same as binary format
-   * of {@link #serializeNativeObject(Object, byte[], int, Object...)} So if we call <code>
-   * byte[] stream = new byte[serializedSize];
-   * binarySerializer.serializeNativeObject(object, stream, 0);
+   * of {@link #serializeNativeObject(Object, byte[], int, Object...)} So if we call <code> byte[]
+   * stream = new byte[serializedSize]; binarySerializer.serializeNativeObject(object, stream, 0);
    * </code> following assert should pass <code>
-   * byteBuffer.position(10);
-   * byteBuffer.put(stream);
-   * byteBuffer.position(10);
-   * assert object.equals(binarySerializer.deserializeFromByteBufferObject(buffer))
+   * byteBuffer.position(10); byteBuffer.put(stream); byteBuffer.position(10); assert
+   * object.equals(binarySerializer.deserializeFromByteBufferObject(buffer))
    * </code> Final position of <code>ByteBuffer</code> will be changed and will be equal to sum of
    * buffer start position and value returned by method {@link #getObjectSize(Object, Object...)}
    *
@@ -156,6 +150,23 @@ public interface OBinarySerializer<T> {
    * @return Instance of object serialized in buffer.
    */
   T deserializeFromByteBufferObject(ByteBuffer buffer);
+
+  /**
+   * Converts binary presentation of object to object instance. Binary format of method is expected
+   * to be the same as binary format of {@link #serializeNativeObject(Object, byte[], int,
+   * Object...)}. So if we call <code> byte[]
+   * stream = new byte[serializedSize]; binarySerializer.serializeNativeObject(object, stream, 0);
+   * </code> following assert should pass <code>
+   * byteBuffer.position(10); byteBuffer.put(stream); byteBuffer.position(10); assert
+   * object.equals(binarySerializer.deserializeFromByteBufferObject(buffer, 10))
+   * </code> Final position of <code>ByteBuffer</code> will NOT be changed during the call.
+   *
+   * @param offset offset inside the <code>ByteBuffer</code> from which deserialization should be
+   *     started.
+   * @param buffer Buffer which contains serialized presentation of object
+   * @return Instance of object serialized in buffer.
+   */
+  T deserializeFromByteBufferObject(int offset, ByteBuffer buffer);
 
   /**
    * Returns amount of bytes which is consumed by object which is already serialized in buffer.
@@ -168,17 +179,32 @@ public interface OBinarySerializer<T> {
   int getObjectSizeInByteBuffer(ByteBuffer buffer);
 
   /**
+   * Returns amount of bytes which is consumed by object which is already serialized in buffer.
+   * Result of call should be the same as result of call of {@link #getObjectSize(Object,
+   * Object...)} on deserialized object.
+   *
+   * <p>Position of <code>ByteBuffer</code> is not changed after result of the call.
+   *
+   * @param buffer Buffer which contains serialized version of object
+   * @param offset offset inside the buffer since which object is serialized.
+   * @return Size of serialized object.
+   */
+  int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer);
+
+  /**
    * Converts binary presentation of object to object instance taking in account changes which are
    * done inside of atomic operation {@link
    * com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation}.
    * Binary format of method is expected to be the same as binary format of method {@link
-   * #serializeNativeObject(Object, byte[], int, Object...)}. So if we call: <code>
-   * byte[] stream = new byte[serializedSize];
-   * binarySerializer.serializeNativeObject(object, stream, 0);
+   * #serializeNativeObject(Object, byte[], int, Object...)}. So if we call: <code> byte[]
+   * stream = new byte[serializedSize]; binarySerializer.serializeNativeObject(object, stream, 0);
    * walChanges.setBinaryValue(buffer, stream, 10);
    * </code> Then following assert should pass <code>
-   * assert object.equals(binarySerializer.deserializeFromByteBufferObject(buffer, walChanges, 10));
+   * assert object.equals(binarySerializer.deserializeFromByteBufferObject(buffer, walChanges,
+   * 10));
    * </code>
+   *
+   * <p><code>ByteBuffer</code> position should <b>NOT</b> be changed during call of this method.
    *
    * @param buffer Buffer which will contain serialized changes.
    * @param walChanges Changes are done during atomic operation.
@@ -194,6 +220,8 @@ public interface OBinarySerializer<T> {
    * com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation}.
    * Result of call should be the same as result of call of {@link #getObjectSize(Object,
    * Object...)} on deserialized object.
+   *
+   * <p><code>ByteBuffer</code> position should <b>NOT</b> be changed during call of this method.
    *
    * @param buffer Buffer which will contain serialized changes.
    * @param walChanges Changes are done during atomic operation.

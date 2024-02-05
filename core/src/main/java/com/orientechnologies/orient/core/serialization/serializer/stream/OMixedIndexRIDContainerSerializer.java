@@ -18,6 +18,7 @@ import java.util.Set;
 
 public class OMixedIndexRIDContainerSerializer
     implements OBinarySerializer<OMixedIndexRIDContainer> {
+
   public static final OMixedIndexRIDContainerSerializer INSTANCE =
       new OMixedIndexRIDContainerSerializer();
 
@@ -300,8 +301,55 @@ public class OMixedIndexRIDContainerSerializer
   }
 
   @Override
+  public OMixedIndexRIDContainer deserializeFromByteBufferObject(
+      final int bufferOffset, final ByteBuffer buffer) {
+    var currentPosition = bufferOffset + Integer.BYTES;
+    final long fileId = buffer.getLong(currentPosition);
+    currentPosition += Long.BYTES;
+
+    final int embeddedSize = buffer.getInt(currentPosition);
+    currentPosition += Integer.BYTES;
+
+    final Set<ORID> hashSet = new HashSet<>();
+    for (int i = 0; i < embeddedSize; i++) {
+      var delta =
+          OCompactedLinkSerializer.INSTANCE.getObjectSizeInByteBuffer(currentPosition, buffer);
+      final ORID orid =
+          OCompactedLinkSerializer.INSTANCE
+              .deserializeFromByteBufferObject(currentPosition, buffer)
+              .getIdentity();
+      currentPosition += delta;
+
+      hashSet.add(orid);
+    }
+
+    final long pageIndex = buffer.getLong(currentPosition);
+    currentPosition += Long.BYTES;
+
+    final int offset = buffer.getInt(currentPosition);
+    final OIndexRIDContainerSBTree tree;
+    if (pageIndex == -1) {
+      tree = null;
+    } else {
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+      tree =
+          new OIndexRIDContainerSBTree(
+              fileId,
+              new OBonsaiBucketPointer(pageIndex, offset),
+              (OAbstractPaginatedStorage) db.getStorage());
+    }
+
+    return new OMixedIndexRIDContainer(fileId, hashSet, tree);
+  }
+
+  @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.getInt();
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
+    return buffer.getInt(offset);
   }
 
   @Override

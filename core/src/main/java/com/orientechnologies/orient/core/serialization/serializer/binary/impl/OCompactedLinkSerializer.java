@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 import java.nio.ByteBuffer;
 
 public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable> {
+
   public static final byte ID = 22;
   public static final OCompactedLinkSerializer INSTANCE = new OCompactedLinkSerializer();
 
@@ -68,7 +69,7 @@ public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable
 
     long position = 0;
     for (int i = 0; i < numberSize; i++) {
-      position = position | ((0xFF & stream[startPosition + i]) << (i * 8));
+      position = position | ((long) (0xFF & stream[startPosition + i]) << (i * 8));
     }
 
     return new ORecordId(cluster, position);
@@ -121,7 +122,7 @@ public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable
 
     long position = 0;
     for (int i = 0; i < numberSize; i++) {
-      position = position | ((0xFF & stream[startPosition + i]) << (i * 8));
+      position = position | ((long) (0xFF & stream[startPosition + i]) << (i * 8));
     }
 
     return new ORecordId(cluster, position);
@@ -171,7 +172,26 @@ public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable
 
     long position = 0;
     for (int i = 0; i < numberSize; i++) {
-      position = position | ((0xFF & number[i]) << (i * 8));
+      position = position | ((long) (0xFF & number[i]) << (i * 8));
+    }
+
+    return new ORecordId(cluster, position);
+  }
+
+  @Override
+  public OIdentifiable deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final int cluster = buffer.getShort(offset);
+    offset += Short.BYTES;
+
+    final int numberSize = buffer.get(offset);
+    offset += Byte.BYTES;
+
+    final byte[] number = new byte[numberSize];
+    buffer.get(offset, number);
+
+    long position = 0;
+    for (int i = 0; i < numberSize; i++) {
+      position = position | ((long) (0xFF & number[i]) << (i * 8));
     }
 
     return new ORecordId(cluster, position);
@@ -180,6 +200,13 @@ public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.get(buffer.position() + OShortSerializer.SHORT_SIZE)
+        + OByteSerializer.BYTE_SIZE
+        + OShortSerializer.SHORT_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
+    return buffer.get(offset + OShortSerializer.SHORT_SIZE)
         + OByteSerializer.BYTE_SIZE
         + OShortSerializer.SHORT_SIZE;
   }
@@ -197,7 +224,7 @@ public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable
 
     long position = 0;
     for (int i = 0; i < numberSize; i++) {
-      position = position | ((0xFF & number[i]) << (i * 8));
+      position = position | ((long) (0xFF & number[i]) << (i * 8));
     }
 
     return new ORecordId(cluster, position);

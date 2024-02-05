@@ -2,7 +2,6 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public class OUTF8Serializer implements OBinarySerializer<String> {
@@ -91,7 +90,7 @@ public class OUTF8Serializer implements OBinarySerializer<String> {
 
   @Override
   public void serializeInByteBufferObject(String object, ByteBuffer buffer, Object... hints) {
-    final byte[] encoded = object.getBytes(Charset.forName("UTF-8"));
+    final byte[] encoded = object.getBytes(StandardCharsets.UTF_8);
     buffer.putShort((short) encoded.length);
 
     buffer.put(encoded);
@@ -107,8 +106,23 @@ public class OUTF8Serializer implements OBinarySerializer<String> {
   }
 
   @Override
+  public String deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final int encodedSize = buffer.getShort(offset) & INT_MASK;
+    offset += Short.BYTES;
+
+    final byte[] encoded = new byte[encodedSize];
+    buffer.get(offset, encoded);
+    return new String(encoded, StandardCharsets.UTF_8);
+  }
+
+  @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return (buffer.getShort() & INT_MASK) + OShortSerializer.SHORT_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
+    return (buffer.getShort(offset) & INT_MASK) + OShortSerializer.SHORT_SIZE;
   }
 
   @Override

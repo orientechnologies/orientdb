@@ -91,7 +91,18 @@ public class ONullSerializer implements OBinarySerializer<Object> {
 
   /** {@inheritDoc} */
   @Override
+  public Object deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return 0;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return 0;
   }
 

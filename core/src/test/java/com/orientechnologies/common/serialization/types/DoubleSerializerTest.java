@@ -17,7 +17,7 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import org.junit.Assert;
@@ -29,6 +29,7 @@ import org.junit.Test;
  * @since 18.01.12
  */
 public class DoubleSerializerTest {
+
   private static final int FIELD_SIZE = 8;
   private static final Double OBJECT = Math.PI;
   byte[] stream = new byte[FIELD_SIZE];
@@ -89,14 +90,37 @@ public class DoubleSerializerTest {
   }
 
   @Test
+  public void testSerializeInImmutableByteBufferPosition() {
+    final int serializationOffset = 5;
+    ByteBuffer buffer = ByteBuffer.allocate(FIELD_SIZE + serializationOffset);
+
+    buffer.position(5);
+    doubleSerializer.serializeInByteBufferObject(OBJECT, buffer);
+
+    final int binarySize = buffer.position() - serializationOffset;
+    Assert.assertEquals(binarySize, FIELD_SIZE);
+
+    buffer.position(0);
+    Assert.assertEquals(
+        doubleSerializer.getObjectSizeInByteBuffer(serializationOffset, buffer), FIELD_SIZE);
+    Assert.assertEquals(0, buffer.position());
+
+    Assert.assertEquals(
+        doubleSerializer.deserializeFromByteBufferObject(serializationOffset, buffer), OBJECT);
+    Assert.assertEquals(0, buffer.position());
+  }
+
+  @Test
   public void testSerializeWALChanges() {
     final int serializationOffset = 5;
     final ByteBuffer buffer =
-        ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+        ByteBuffer.allocateDirect(
+                FIELD_SIZE + serializationOffset + OWALPageChangesPortion.PORTION_BYTES)
+            .order(ByteOrder.nativeOrder());
     final byte[] data = new byte[FIELD_SIZE];
     doubleSerializer.serializeNativeObject(OBJECT, data, 0);
 
-    final OWALChanges walChanges = new OWALChangesTree();
+    final OWALChanges walChanges = new OWALPageChangesPortion();
     walChanges.setBinaryValue(buffer, data, serializationOffset);
 
     Assert.assertEquals(
@@ -105,5 +129,6 @@ public class DoubleSerializerTest {
     Assert.assertEquals(
         doubleSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
         OBJECT);
+    Assert.assertEquals(0, buffer.position());
   }
 }

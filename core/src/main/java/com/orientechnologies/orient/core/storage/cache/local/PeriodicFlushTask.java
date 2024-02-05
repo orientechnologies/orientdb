@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.storage.cache.local;
 
-final class PeriodicFlushTask implements Runnable {
-
-  /** */
-  private final OWOWCache owowCache;
+public final class PeriodicFlushTask implements Runnable {
 
   /**
-   * @param owowCache
+   *
    */
+  private final OWOWCache owowCache;
+
   public PeriodicFlushTask(OWOWCache owowCache) {
     this.owowCache = owowCache;
   }

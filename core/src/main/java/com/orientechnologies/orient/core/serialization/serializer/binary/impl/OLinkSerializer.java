@@ -133,9 +133,27 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
     return new ORecordId(clusterId, clusterPosition);
   }
 
+  @Override
+  public OIdentifiable deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final int clusterId = buffer.getShort(offset);
+    offset += Short.BYTES;
+
+    final byte[] stream = new byte[OLongSerializer.LONG_SIZE];
+    buffer.get(offset, stream);
+    // Wrong implementation but needed for binary compatibility
+    final long clusterPosition = OLongSerializer.INSTANCE.deserialize(stream, 0);
+
+    return new ORecordId(clusterId, clusterPosition);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return RID_SIZE;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
     return RID_SIZE;
   }
 
@@ -151,9 +169,6 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
             walChanges.getBinaryValue(
                 buffer, offset + OShortSerializer.SHORT_SIZE, OLongSerializer.LONG_SIZE),
             0);
-
-    // final long clusterPosition = OLongSerializer.INSTANCE
-    // .deserializeFromDirectMemory(pointer, offset + OShortSerializer.SHORT_SIZE);
 
     return new ORecordId(clusterId, clusterPosition);
   }

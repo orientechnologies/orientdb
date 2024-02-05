@@ -254,14 +254,14 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
         OBinarySerializer<Object> keySerializer = factory.getObjectSerializer(type);
         if (key instanceof Map
             && !(type == OType.EMBEDDEDMAP || type == OType.LINKMAP)
-            && ((Map) key).size() == 1
-            && ((Map) key)
+            && ((Map<?, ?>) key).size() == 1
+            && ((Map<?, ?>) key)
                 .keySet()
                 .iterator()
                 .next()
                 .getClass()
                 .isAssignableFrom(type.getDefaultJavaType())) {
-          key = ((Map) key).keySet().iterator().next();
+          key = ((Map<?, ?>) key).keySet().iterator().next();
         }
         compositeKey.addKey(keySerializer.preprocess(key));
       } else {
@@ -335,8 +335,40 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
 
   /** {@inheritDoc} */
   @Override
+  public OCompositeKey deserializeFromByteBufferObject(int offset, ByteBuffer buffer) {
+    final OCompositeKey compositeKey = new OCompositeKey();
+
+    offset += OIntegerSerializer.INT_SIZE;
+    final int keysSize = buffer.getInt(offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    final OBinarySerializerFactory factory = OBinarySerializerFactory.getInstance();
+    for (int i = 0; i < keysSize; i++) {
+      final byte serializerId = buffer.get(offset);
+      offset++;
+      @SuppressWarnings("unchecked")
+      OBinarySerializer<Object> binarySerializer =
+          (OBinarySerializer<Object>) factory.getObjectSerializer(serializerId);
+
+      var delta = binarySerializer.getObjectSizeInByteBuffer(offset, buffer);
+      final Object key = binarySerializer.deserializeFromByteBufferObject(offset, buffer);
+      offset += delta;
+
+      compositeKey.addKey(key);
+    }
+
+    return compositeKey;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.getInt();
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(int offset, ByteBuffer buffer) {
+    return buffer.getInt(offset);
   }
 
   /** {@inheritDoc} */

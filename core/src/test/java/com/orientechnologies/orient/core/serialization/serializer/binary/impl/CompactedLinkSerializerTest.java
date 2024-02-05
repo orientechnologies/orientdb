@@ -118,6 +118,27 @@ public class CompactedLinkSerializerTest {
   }
 
   @Test
+  public void testSerializeOneByteByteImmutableBufferPosition() {
+    final OCompactedLinkSerializer linkSerializer = new OCompactedLinkSerializer();
+
+    final ORecordId rid = new ORecordId(123, 230);
+    final int size = linkSerializer.getObjectSize(rid);
+
+    final ByteBuffer buffer = ByteBuffer.allocate(size + 1);
+    buffer.position(1);
+    linkSerializer.serializeInByteBufferObject(rid, buffer);
+
+    buffer.position(0);
+    Assert.assertEquals(size, linkSerializer.getObjectSizeInByteBuffer(1, buffer));
+    Assert.assertEquals(0, buffer.position());
+
+    final OIdentifiable restoredRid = linkSerializer.deserializeFromByteBufferObject(1, buffer);
+    Assert.assertEquals(0, buffer.position());
+
+    Assert.assertEquals(rid, restoredRid);
+  }
+
+  @Test
   public void testSerializeTwoBytesByteBuffer() {
     final OCompactedLinkSerializer linkSerializer = new OCompactedLinkSerializer();
 
@@ -137,6 +158,27 @@ public class CompactedLinkSerializerTest {
   }
 
   @Test
+  public void testSerializeTwoBytesByteImmutableBufferPosition() {
+    final OCompactedLinkSerializer linkSerializer = new OCompactedLinkSerializer();
+
+    final ORecordId rid = new ORecordId(123, 325);
+    final int size = linkSerializer.getObjectSize(rid);
+
+    ByteBuffer buffer = ByteBuffer.allocate(size + 1);
+    buffer.position(1);
+    linkSerializer.serializeInByteBufferObject(rid, buffer);
+
+    buffer.position(0);
+    Assert.assertEquals(size, linkSerializer.getObjectSizeInByteBuffer(1, buffer));
+    Assert.assertEquals(0, buffer.position());
+
+    final OIdentifiable restoredRid = linkSerializer.deserializeFromByteBufferObject(1, buffer);
+    Assert.assertEquals(0, buffer.position());
+
+    Assert.assertEquals(rid, restoredRid);
+  }
+
+  @Test
   public void testSerializeThreeBytesInByteBuffer() {
     final OCompactedLinkSerializer linkSerializer = new OCompactedLinkSerializer();
 
@@ -152,6 +194,27 @@ public class CompactedLinkSerializerTest {
 
     buffer.position(1);
     final OIdentifiable restoredRid = linkSerializer.deserializeFromByteBufferObject(buffer);
+    Assert.assertEquals(rid, restoredRid);
+  }
+
+  @Test
+  public void testSerializeThreeBytesInByteImmutableBufferPosition() {
+    final OCompactedLinkSerializer linkSerializer = new OCompactedLinkSerializer();
+
+    final ORecordId rid = new ORecordId(123, 65628);
+    final int size = linkSerializer.getObjectSize(rid);
+
+    ByteBuffer buffer = ByteBuffer.allocate(size + 1);
+    buffer.position(1);
+    linkSerializer.serializeInByteBufferObject(rid, buffer);
+
+    buffer.position(0);
+    Assert.assertEquals(size, linkSerializer.getObjectSizeInByteBuffer(1, buffer));
+    Assert.assertEquals(0, buffer.position());
+
+    final OIdentifiable restoredRid = linkSerializer.deserializeFromByteBufferObject(1, buffer);
+    Assert.assertEquals(0, buffer.position());
+
     Assert.assertEquals(rid, restoredRid);
   }
 }
