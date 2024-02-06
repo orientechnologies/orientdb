@@ -671,6 +671,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     List<OIdentifiable> listResult = new ArrayList<>();
     for (OIdentifiable identifiable : res.<ORidBag>getProperty("ridBag"))
       listResult.add(identifiable);
+    result.close();
 
     Assert.assertEquals(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity()), listResult);
   }
