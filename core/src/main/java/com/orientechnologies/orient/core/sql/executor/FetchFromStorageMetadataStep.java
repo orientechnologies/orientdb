@@ -7,7 +7,8 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResult;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutionStream;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.ArrayList;
@@ -21,51 +22,38 @@ import java.util.List;
  */
 public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-  private OResultSet resultSet = null;
-
   public FetchFromStorageMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    if (resultSet == null) {
-      getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-      resultSet = new OProduceOneResult(() -> produce(ctx), true);
-    }
-    return resultSet;
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
+    return new OProduceExecutionStream(this::produce).limit(1);
   }
 
   private OResult produce(OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      OResultInternal result = new OResultInternal();
+    OResultInternal result = new OResultInternal();
 
-      if (ctx.getDatabase() instanceof ODatabaseInternal) {
-        ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
-        OStorage storage = db.getStorage();
-        result.setProperty("clusters", toResult(storage.getClusterInstances()));
-        result.setProperty("defaultClusterId", storage.getDefaultClusterId());
-        result.setProperty("totalClusters", storage.getClusters());
-        result.setProperty("configuration", toResult(storage.getConfiguration()));
-        result.setProperty(
-            "conflictStrategy",
-            storage.getRecordConflictStrategy() == null
-                ? null
-                : storage.getRecordConflictStrategy().getName());
-        result.setProperty("name", storage.getName());
-        result.setProperty("size", storage.getSize());
-        result.setProperty("type", storage.getType());
-        result.setProperty("version", storage.getVersion());
-        result.setProperty("createdAtVersion", storage.getCreatedAtVersion());
-      }
-      return result;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+    if (ctx.getDatabase() instanceof ODatabaseInternal) {
+      ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+      OStorage storage = db.getStorage();
+      result.setProperty("clusters", toResult(storage.getClusterInstances()));
+      result.setProperty("defaultClusterId", storage.getDefaultClusterId());
+      result.setProperty("totalClusters", storage.getClusters());
+      result.setProperty("configuration", toResult(storage.getConfiguration()));
+      result.setProperty(
+          "conflictStrategy",
+          storage.getRecordConflictStrategy() == null
+              ? null
+              : storage.getRecordConflictStrategy().getName());
+      result.setProperty("name", storage.getName());
+      result.setProperty("size", storage.getSize());
+      result.setProperty("type", storage.getType());
+      result.setProperty("version", storage.getVersion());
+      result.setProperty("createdAtVersion", storage.getCreatedAtVersion());
     }
+    return result;
   }
 
   private Object toResult(OStorageConfiguration configuration) {
@@ -130,10 +118,5 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

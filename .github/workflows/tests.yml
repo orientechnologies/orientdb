@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java-version: ['11', '17']
+        java-version: ['19', '21']
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK ${{matrix.java-version}} PR
@@ -46,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java-version: ['8']
+        java-version: ['17']
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK ${{matrix.java-version}} PR

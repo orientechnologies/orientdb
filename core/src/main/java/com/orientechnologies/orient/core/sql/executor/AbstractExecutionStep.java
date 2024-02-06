@@ -1,6 +1,9 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OStepStats;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.text.DecimalFormat;
 import java.util.Optional;
 
@@ -12,8 +15,6 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
   protected final OCommandContext ctx;
   protected Optional<OExecutionStepInternal> prev = Optional.empty();
   protected Optional<OExecutionStepInternal> next = Optional.empty();
-  protected boolean timedOut = false;
-
   protected boolean profilingEnabled = false;
 
   public AbstractExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
@@ -45,11 +46,11 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
 
   @Override
   public void sendTimeout() {
-    this.timedOut = true;
     prev.ifPresent(p -> p.sendTimeout());
   }
 
   private boolean alreadyClosed = false;
+  private long baseCost = 0;
 
   @Override
   public void close() {
@@ -66,6 +67,31 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
 
   public void setProfilingEnabled(boolean profilingEnabled) {
     this.profilingEnabled = profilingEnabled;
+  }
+
+  public OExecutionStream start(OCommandContext ctx) throws OTimeoutException {
+    if (profilingEnabled) {
+      ctx.startProfiling(this);
+      try {
+        return internalStart(ctx).profile(this);
+      } finally {
+        ctx.endProfiling(this);
+      }
+    } else {
+      return internalStart(ctx);
+    }
+  };
+
+  protected abstract OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException;
+
+  @Override
+  public long getCost() {
+    OStepStats stats = this.ctx.getStats(this);
+    if (stats != null) {
+      return stats.getCost();
+    } else {
+      return OExecutionStepInternal.super.getCost();
+    }
   }
 
   protected String getCostFormatted() {

@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Collection;
 
 /**
@@ -21,12 +21,12 @@ public class UpdateEdgePointersStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(upstream, this::mapResult);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().start(ctx);
+    return upstream.map(this::mapResult);
   }
 
-  private OResult mapResult(OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     if (result instanceof OResultInternal) {
       handleUpdateEdge((ODocument) result.getElement().get().getRecord());
     }

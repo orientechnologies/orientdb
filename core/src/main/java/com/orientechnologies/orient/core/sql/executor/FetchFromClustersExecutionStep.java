@@ -4,13 +4,11 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsExecutionStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 21/07/16. */
 public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
@@ -18,9 +16,6 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
   private List<OExecutionStep> subSteps;
   private boolean orderByRidAsc = false;
   private boolean orderByRidDesc = false;
-
-  private OResultSet currentResultSet;
-  private int currentStep = 0;
 
   /**
    * iterates over a class and its subclasses
@@ -68,71 +63,10 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OLimitedResultSet(
-        new OResultSet() {
-
-          @Override
-          public boolean hasNext() {
-            while (true) {
-              if (currentResultSet == null || !currentResultSet.hasNext()) {
-                if (currentStep >= subSteps.size()) {
-                  return false;
-                }
-                currentResultSet =
-                    ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx, nRecords);
-                if (!currentResultSet.hasNext()) {
-                  currentResultSet =
-                      ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx, nRecords);
-                }
-              }
-              if (!currentResultSet.hasNext()) {
-                continue;
-              }
-              return true;
-            }
-          }
-
-          @Override
-          public OResult next() {
-            while (true) {
-              if (currentResultSet == null || !currentResultSet.hasNext()) {
-                if (currentStep >= subSteps.size()) {
-                  throw new IllegalStateException();
-                }
-                currentResultSet =
-                    ((AbstractExecutionStep) subSteps.get(currentStep)).syncPull(ctx, nRecords);
-                if (!currentResultSet.hasNext()) {
-                  currentResultSet =
-                      ((AbstractExecutionStep) subSteps.get(currentStep++)).syncPull(ctx, nRecords);
-                }
-              }
-              if (!currentResultSet.hasNext()) {
-                continue;
-              }
-              return currentResultSet.next();
-            }
-          }
-
-          @Override
-          public void close() {
-            for (OExecutionStep step : subSteps) {
-              ((AbstractExecutionStep) step).close();
-            }
-          }
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return new HashMap<>();
-          }
-        },
-        nRecords);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
+    return new OSubResultsExecutionStream(
+        this.subSteps.stream().map((step) -> ((AbstractExecutionStep) step).start(ctx)).iterator());
   }
 
   @Override
@@ -174,11 +108,6 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
   @Override
   public List<OExecutionStep> getSubSteps() {
     return subSteps;
-  }
-
-  @Override
-  public long getCost() {
-    return subSteps.stream().map(x -> x.getCost()).reduce((a, b) -> a + b).orElse(-1L);
   }
 
   @Override

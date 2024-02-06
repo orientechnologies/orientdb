@@ -576,45 +576,10 @@
                 </plugins>
             </build>
         </profile>
-
         <profile>
-            <id>travis</id>
-
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.7</version>
-                        <configuration>
-                            <destFile>${project.basedir}/../target/jacoco.exec</destFile>
-                            <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
-                            <excludes>
-                                <exclude>
-                                    **/*OrientSqlTokenManager*
-                                </exclude>
-                            </excludes>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>prepare-agent</goal>
-                                    <goal>report</goal>
-                                </goals>
-                                <configuration>
-                                    <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>java8</id>
+            <id>java17</id>
             <activation>
-                <jdk>[1.8,)</jdk>
+                <jdk>[17,)</jdk>
             </activation>
             <build>
                 <plugins>
@@ -627,36 +592,6 @@
                             <showDeprecation>true</showDeprecation>
                             <showWarnings>true</showWarnings>
                             <optimize>true</optimize>
-                            <compilerArgs>
-                            </compilerArgs>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-            <properties>
-                <additionalparam>-Xdoclint:none</additionalparam>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>java11</id>
-            <activation>
-                <jdk>[11,)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <source>${maven.compiler.source}</source>
-                            <target>${maven.compiler.target}</target>
-                            <showDeprecation>true</showDeprecation>
-                            <showWarnings>true</showWarnings>
-                            <optimize>true</optimize>
-                            <compilerArgs>
-                                <!--                                <arg>&#45;&#45;add-exports</arg><arg>java.base/sun.security.x509=ALL-UNNAMED</arg>-->
-                            </compilerArgs>
                         </configuration>
                     </plugin>
                 </plugins>

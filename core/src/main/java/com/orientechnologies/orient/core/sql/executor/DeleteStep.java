@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Optional;
 
 /**
@@ -12,31 +12,23 @@ import java.util.Optional;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class DeleteStep extends AbstractExecutionStep {
-  private long cost = 0;
 
   public DeleteStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(upstream, (result) -> this.mapResult(result, ctx));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().start(ctx);
+    return upstream.map(this::mapResult);
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      Optional<ORID> id = result.getIdentity();
-      if (id.isPresent()) {
-        ctx.getDatabase().delete(id.get());
-      }
-      return result;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+    Optional<ORID> id = result.getIdentity();
+    if (id.isPresent()) {
+      ctx.getDatabase().delete(id.get());
     }
+    return result;
   }
 
   @Override
@@ -49,11 +41,6 @@ public class DeleteStep extends AbstractExecutionStep {
       result.append(" (" + getCostFormatted() + ")");
     }
     return result.toString();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

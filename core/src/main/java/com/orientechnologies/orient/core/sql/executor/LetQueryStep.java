@@ -4,7 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -24,7 +24,7 @@ public class LetQueryStep extends AbstractExecutionStep {
     this.query = query;
   }
 
-  private void calculate(OResultInternal result, OCommandContext ctx) {
+  private OResultInternal calculate(OResultInternal result, OCommandContext ctx) {
     OBasicCommandContext subCtx = new OBasicCommandContext();
     subCtx.setDatabase(ctx.getDatabase());
     subCtx.setParentWithoutOverridingChild(ctx);
@@ -37,6 +37,7 @@ public class LetQueryStep extends AbstractExecutionStep {
       subExecutionPlan = query.createExecutionPlan(subCtx, profilingEnabled);
     }
     result.setMetadata(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
+    return result;
   }
 
   private List<OResult> toList(OLocalResultSet oLocalResultSet) {
@@ -49,20 +50,16 @@ public class LetQueryStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!getPrev().isPresent()) {
       throw new OCommandExecutionException(
           "Cannot execute a local LET on a query without a target");
     }
-    return new OResultSetMapper(
-        getPrev().get().syncPull(ctx, nRecords), (result) -> mapResult(ctx, result));
+    return getPrev().get().start(ctx).map(this::mapResult);
   }
 
-  private OResult mapResult(OCommandContext ctx, OResult result) {
-    if (result != null) {
-      calculate((OResultInternal) result, ctx);
-    }
-    return result;
+  private OResult mapResult(OResult result, OCommandContext ctx) {
+    return calculate((OResultInternal) result, ctx);
   }
 
   @Override

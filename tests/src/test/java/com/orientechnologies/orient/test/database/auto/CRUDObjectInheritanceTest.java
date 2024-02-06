@@ -39,9 +39,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@Test(
-    groups = {"crud", "object"},
-    sequential = true)
+@Test(groups = {"crud", "object"})
 public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
   protected static final int TOT_RECORDS = 10;
   protected long startRecordNumber;

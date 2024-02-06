@@ -7,10 +7,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,7 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     List<ORid> recs = new ArrayList<>();
     if (record != null) {
       recs.add(record);
@@ -45,7 +44,7 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
       recs.addAll(records);
     }
 
-    OInternalResultSet rs = new OInternalResultSet();
+    List<OResult> rs = new ArrayList<>();
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     for (ORid rec : recs) {
       try {
@@ -66,7 +65,7 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
       }
     }
 
-    return rs;
+    return OExecutionStream.resultIterator(rs.iterator());
   }
 
   @Override

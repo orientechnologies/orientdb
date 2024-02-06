@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /**
  * Counts the records from the previous steps. Returns a record with a single property, called
@@ -10,10 +11,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class CountStep extends AbstractExecutionStep {
-
-  private long cost = 0;
-
-  private boolean executed = false;
 
   /**
    * @param ctx the query context
@@ -24,34 +21,17 @@ public class CountStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    if (executed) {
-      return new OInternalResultSet();
-    }
-    OResultInternal resultRecord = new OResultInternal();
-    executed = true;
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream prevResult = getPrev().get().start(ctx);
     long count = 0;
-    while (true) {
-      OResultSet prevResult = getPrev().get().syncPull(ctx, nRecords);
-
-      if (!prevResult.hasNext()) {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          OInternalResultSet result = new OInternalResultSet();
-          resultRecord.setProperty("count", count);
-          result.add(resultRecord);
-          return result;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
-      }
-      while (prevResult.hasNext()) {
-        count++;
-        prevResult.next();
-      }
+    while (prevResult.hasNext(ctx)) {
+      count++;
+      prevResult.next(ctx);
     }
+    prevResult.close(ctx);
+    OResultInternal resultRecord = new OResultInternal();
+    resultRecord.setProperty("count", count);
+    return OExecutionStream.singleton(resultRecord);
   }
 
   @Override
@@ -64,11 +44,6 @@ public class CountStep extends AbstractExecutionStep {
       result.append(" (" + getCostFormatted() + ")");
     }
     return result.toString();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

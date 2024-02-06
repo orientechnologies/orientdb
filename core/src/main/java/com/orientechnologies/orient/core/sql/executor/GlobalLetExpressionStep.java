@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
@@ -20,10 +21,10 @@ public class GlobalLetExpressionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     calculate(ctx);
-    return new OInternalResultSet();
+    return OExecutionStream.empty();
   }
 
   private void calculate(OCommandContext ctx) {

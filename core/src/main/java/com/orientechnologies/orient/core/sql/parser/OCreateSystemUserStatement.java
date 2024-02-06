@@ -7,11 +7,13 @@ import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class OCreateSystemUserStatement extends OSimpleExecServerStatement {
 
@@ -41,7 +43,7 @@ public class OCreateSystemUserStatement extends OSimpleExecServerStatement {
   protected List<OIdentifier> roles = new ArrayList<>();
 
   @Override
-  public OResultSet executeSimple(OServerCommandContext ctx) {
+  public OExecutionStream executeSimple(OServerCommandContext ctx) {
 
     OSystemDatabase systemDb = ctx.getServer().getSystemDatabase();
 
@@ -112,7 +114,9 @@ public class OCreateSystemUserStatement extends OSimpleExecServerStatement {
             }
           }
           sb.append("])");
-          return db.command(sb.toString(), params.toArray());
+          Stream<OResult> stream = db.command(sb.toString(), params.toArray()).stream();
+          return OExecutionStream.resultIterator(stream.iterator())
+              .onClose((context) -> stream.close());
         });
   }
 

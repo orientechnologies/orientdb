@@ -2,158 +2,70 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
-import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 /** Created by luigidellaquila on 11/10/16. */
 public class CartesianProductStep extends AbstractExecutionStep {
 
   private List<OInternalExecutionPlan> subPlans = new ArrayList<>();
 
-  private boolean inited = false;
-  private List<Boolean> completedPrefetch = new ArrayList<>();
-  private List<OInternalResultSet> preFetches =
-      new ArrayList<>(); // consider using resultset.reset() instead of buffering
-
-  private List<OResultSet> resultSets = new ArrayList<>();
-  private List<OResult> currentTuple = new ArrayList<>();
-
-  private OResultInternal nextRecord;
-
-  private long cost = 0;
-
   public CartesianProductStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    init(ctx);
-    //    return new OInternalResultSet();
-    return new OLimitedResultSet(
-        new OResultSet() {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
+    Stream<OResult[]> stream = null;
+    OResult[] productTuple = new OResult[this.subPlans.size()];
 
-          @Override
-          public boolean hasNext() {
-            return nextRecord != null;
-          }
-
-          @Override
-          public OResult next() {
-            if (nextRecord == null) {
-              throw new IllegalStateException();
-            }
-            OResultInternal result = nextRecord;
-            fetchNextRecord();
-            return result;
-          }
-
-          @Override
-          public void close() {}
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
-    //    throw new UnsupportedOperationException("cartesian product is not yet implemented in MATCH
-    // statement");
-    // TODO
-  }
-
-  private void init(OCommandContext ctx) {
-    if (subPlans == null || subPlans.isEmpty()) {
-      return;
-    }
-    if (inited) {
-      return;
-    }
-
-    for (OInternalExecutionPlan plan : subPlans) {
-      resultSets.add(new OLocalResultSet(plan));
-      this.preFetches.add(new OInternalResultSet());
-    }
-    fetchFirstRecord();
-    inited = true;
-  }
-
-  private void fetchFirstRecord() {
-    int i = 0;
-    for (OResultSet rs : resultSets) {
-      if (!rs.hasNext()) {
-        nextRecord = null;
-        return;
-      }
-      OResult item = rs.next();
-      currentTuple.add(item);
-      completedPrefetch.add(false);
-    }
-    buildNextRecord();
-  }
-
-  private void fetchNextRecord() {
-    fetchNextRecord(resultSets.size() - 1);
-  }
-
-  private void fetchNextRecord(int level) {
-    OResultSet currentRs = resultSets.get(level);
-    if (!currentRs.hasNext()) {
-      if (level <= 0) {
-        nextRecord = null;
-        currentTuple = null;
-        return;
-      }
-      currentRs = preFetches.get(level);
-      currentRs.reset();
-      //noinspection resource
-      resultSets.set(level, currentRs);
-      currentTuple.set(level, currentRs.next());
-      fetchNextRecord(level - 1);
-    } else {
-      currentTuple.set(level, currentRs.next());
-    }
-    buildNextRecord();
-  }
-
-  private void buildNextRecord() {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (currentTuple == null) {
-        nextRecord = null;
-        return;
-      }
-      nextRecord = new OResultInternal();
-
-      for (int i = 0; i < this.currentTuple.size(); i++) {
-        OResult res = this.currentTuple.get(i);
-        for (String s : res.getPropertyNames()) {
-          nextRecord.setProperty(s, res.getProperty(s));
-        }
-        if (!completedPrefetch.get(i)) {
-          //noinspection resource
-          preFetches.get(i).add(res);
-          //noinspection resource
-          if (!resultSets.get(i).hasNext()) {
-            completedPrefetch.set(i, true);
-          }
-        }
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+    for (int i = 0; i < this.subPlans.size(); i++) {
+      OInternalExecutionPlan ep = this.subPlans.get(i);
+      final int pos = i;
+      if (stream == null) {
+        OExecutionStream es = ep.start();
+        stream =
+            es.stream(ctx)
+                .map(
+                    (value) -> {
+                      productTuple[pos] = value;
+                      return productTuple;
+                    })
+                .onClose(() -> es.close(ctx));
+      } else {
+        stream =
+            stream.flatMap(
+                (val) -> {
+                  OExecutionStream es = ep.start();
+                  return es.stream(ctx)
+                      .map(
+                          (value) -> {
+                            val[pos] = value;
+                            return val;
+                          })
+                      .onClose(() -> es.close(ctx));
+                });
       }
     }
+    Stream<OResult> finalStream = stream.map(this::produceResult);
+    return OExecutionStream.resultIterator(finalStream.iterator())
+        .onClose((context) -> finalStream.close());
+  }
+
+  private OResult produceResult(OResult[] path) {
+
+    OResultInternal nextRecord = new OResultInternal();
+
+    for (int i = 0; i < path.length; i++) {
+      OResult res = path[i];
+      for (String s : res.getPropertyNames()) {
+        nextRecord.setProperty(s, res.getProperty(s));
+      }
+    }
+    return nextRecord;
   }
 
   public void addSubPlan(OInternalExecutionPlan subPlan) {
@@ -269,10 +181,5 @@ public class CartesianProductStep extends AbstractExecutionStep {
 
   private String appendPipe(String p) {
     return "| " + p;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

@@ -1,8 +1,8 @@
+/** Created by luigidellaquila on 08/08/16. */
 package com.orientechnologies.orient.core.sql.executor;
 
-/** Created by luigidellaquila on 08/08/16. */
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,7 +17,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   private boolean executed = false;
   protected List<ScriptLineStep> steps = new ArrayList<>();
   private OExecutionStepInternal lastStep = null;
-  private OResultSet finalResult = null;
+  private OExecutionStream finalResult = null;
   private String statement;
   private String genericStatement;
 
@@ -32,31 +32,35 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
+  public OCommandContext getContext() {
+    return ctx;
+  }
+
+  @Override
   public void close() {
     lastStep.close();
   }
 
   @Override
-  public OResultSet fetchNext(int n) {
-    doExecute(n);
-    return new OLimitedResultSet(finalResult, n);
+  public OExecutionStream start() {
+    doExecute();
+    return finalResult;
   }
 
-  private void doExecute(int n) {
+  private void doExecute() {
     if (!executed) {
       executeUntilReturn();
       executed = true;
-      finalResult = new OInternalResultSet();
-      OResultSet partial = lastStep.syncPull(ctx, n);
-      while (partial.hasNext()) {
-        while (partial.hasNext()) {
-          ((OInternalResultSet) finalResult).add(partial.next());
-        }
-        partial = lastStep.syncPull(ctx, n);
+      List<OResult> collected = new ArrayList<>();
+      OExecutionStream results = lastStep.start(ctx);
+      while (results.hasNext(ctx)) {
+        collected.add(results.next(ctx));
       }
+      results.close(ctx);
       if (lastStep instanceof ScriptLineStep) {
-        ((OInternalResultSet) finalResult).setPlan(((ScriptLineStep) lastStep).plan);
+        // collected.setPlan(((ScriptLineStep) lastStep).plan);
       }
+      finalResult = OExecutionStream.resultIterator(collected.iterator());
     }
   }
 
@@ -149,14 +153,12 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
           return lastStep;
         }
       }
-      OResultSet lastResult = step.syncPull(ctx, 100);
+      OExecutionStream lastResult = step.start(ctx);
 
-      while (lastResult.hasNext()) {
-        while (lastResult.hasNext()) {
-          lastResult.next();
-        }
-        lastResult = step.syncPull(ctx, 100);
+      while (lastResult.hasNext(ctx)) {
+        lastResult.next(ctx);
       }
+      lastResult.close(ctx);
     }
     this.lastStep = steps.get(steps.size() - 1);
     return lastStep;
@@ -177,14 +179,12 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
           return returnStep;
         }
       }
-      OResultSet lastResult = step.syncPull(ctx, 100);
+      OExecutionStream lastResult = step.start(ctx);
 
-      while (lastResult.hasNext()) {
-        while (lastResult.hasNext()) {
-          lastResult.next();
-        }
-        lastResult = step.syncPull(ctx, 100);
+      while (lastResult.hasNext(ctx)) {
+        lastResult.next(ctx);
       }
+      lastResult.close(ctx);
     }
 
     return null;

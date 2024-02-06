@@ -9,10 +9,9 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -34,14 +33,13 @@ public class OAlterDatabaseStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
-    OInternalResultSet result = new OInternalResultSet();
+  public OExecutionStream executeDDL(OCommandContext ctx) {
     if (customPropertyName == null) {
-      result.add(executeSimpleAlter(settingName, settingValue, ctx));
+      return OExecutionStream.singleton(executeSimpleAlter(settingName, settingValue, ctx));
     } else {
-      result.add(executeCustomAlter(customPropertyName, customPropertyValue, ctx));
+      return OExecutionStream.singleton(
+          executeCustomAlter(customPropertyName, customPropertyValue, ctx));
     }
-    return result;
   }
 
   private OResult executeCustomAlter(

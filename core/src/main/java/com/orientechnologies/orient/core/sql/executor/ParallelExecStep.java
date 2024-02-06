@@ -2,10 +2,9 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsExecutionStream;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -13,9 +12,6 @@ import java.util.stream.Collectors;
  */
 public class ParallelExecStep extends AbstractExecutionStep {
   private final List<OInternalExecutionPlan> subExecutionPlans;
-
-  private int current = 0;
-  private OResultSet currentResultSet = null;
 
   public ParallelExecStep(
       List<OInternalExecutionPlan> subExecuitonPlans,
@@ -26,59 +22,10 @@ public class ParallelExecStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OLimitedResultSet(
-        new OResultSet() {
-          @Override
-          public boolean hasNext() {
-            while (currentResultSet == null || !currentResultSet.hasNext()) {
-              fetchNext(ctx, nRecords);
-              if (currentResultSet == null) {
-                return false;
-              }
-            }
-            return true;
-          }
-
-          @Override
-          public OResult next() {
-            while (currentResultSet == null || !currentResultSet.hasNext()) {
-              fetchNext(ctx, nRecords);
-              if (currentResultSet == null) {
-                throw new IllegalStateException();
-              }
-            }
-            return currentResultSet.next();
-          }
-
-          @Override
-          public void close() {}
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
-  }
-
-  void fetchNext(OCommandContext ctx, int nRecords) {
-    do {
-      if (current >= subExecutionPlans.size()) {
-        currentResultSet = null;
-        return;
-      }
-      currentResultSet = subExecutionPlans.get(current).fetchNext(nRecords);
-      if (!currentResultSet.hasNext()) {
-        current++;
-      }
-    } while (!currentResultSet.hasNext());
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
+    return new OSubResultsExecutionStream(
+        subExecutionPlans.stream().map((step) -> step.start()).iterator());
   }
 
   @Override

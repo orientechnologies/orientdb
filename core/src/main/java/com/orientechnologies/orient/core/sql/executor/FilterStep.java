@@ -4,18 +4,14 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExpireResultSet;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
 /** Created by luigidellaquila on 12/07/16. */
 public class FilterStep extends AbstractExecutionStep {
   private final long timeoutMillis;
   private OWhereClause whereClause;
-
-  private OResultSet prevResult = null;
-
-  private long cost;
 
   public FilterStep(
       OWhereClause whereClause, OCommandContext ctx, long timeoutMillis, boolean profilingEnabled) {
@@ -25,42 +21,24 @@ public class FilterStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
 
-    return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx, nRecords), (result) -> filterMap(ctx, result)),
-        nRecords);
+    OExecutionStream resultSet = prev.get().start(ctx);
+    resultSet = resultSet.filter(this::filterMap);
+    if (timeoutMillis > 0) {
+      resultSet = new OExpireResultSet(resultSet, timeoutMillis, this::sendTimeout);
+    }
+    return resultSet;
   }
 
-  private OResult filterMap(OCommandContext ctx, OResult result) {
-    long timeoutBegin = System.currentTimeMillis();
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (whereClause.matchesFilters(result, ctx)) {
-        return result;
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
-    if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
-      sendTimeout();
+  private OResult filterMap(OResult result, OCommandContext ctx) {
+    if (whereClause.matchesFilters(result, ctx)) {
+      return result;
     }
     return null;
-  }
-
-  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
-    OExecutionStepInternal prevStep = prev.get();
-    if (prevResult == null) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
-    } else if (!prevResult.hasNext()) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
-    }
-    return prevResult;
   }
 
   @Override
@@ -96,11 +74,6 @@ public class FilterStep extends AbstractExecutionStep {
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

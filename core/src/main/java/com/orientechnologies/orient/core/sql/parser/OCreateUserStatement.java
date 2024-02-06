@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +44,7 @@ public class OCreateUserStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
 
     List<Object> params = new ArrayList<>();
     // INSERT INTO OUser SET
@@ -111,7 +111,8 @@ public class OCreateUserStatement extends OSimpleExecStatement {
       }
     }
     sb.append("])");
-    return ctx.getDatabase().command(sb.toString(), params.toArray());
+    return OExecutionStream.resultIterator(
+        ctx.getDatabase().command(sb.toString(), params.toArray()).stream().iterator());
   }
 
   @Override

@@ -19,9 +19,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,16 +56,16 @@ public class OCreateIndexStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
+  public OExecutionStream executeDDL(OCommandContext ctx) {
     Object execResult = execute(ctx);
-    OInternalResultSet rs = new OInternalResultSet();
     if (execResult != null) {
       OResultInternal result = new OResultInternal();
       result.setProperty("operation", "create index");
       result.setProperty("name", name.getValue());
-      rs.add(result);
+      return OExecutionStream.singleton(result);
+    } else {
+      return OExecutionStream.empty();
     }
-    return rs;
   }
 
   Object execute(OCommandContext ctx) {

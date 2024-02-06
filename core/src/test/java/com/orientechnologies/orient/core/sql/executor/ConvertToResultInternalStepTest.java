@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -27,8 +28,8 @@ public class ConvertToResultInternalStepTest extends TestUtilsFixture {
           boolean done = false;
 
           @Override
-          public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-            OInternalResultSet result = new OInternalResultSet();
+          public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+            List<OResult> result = new ArrayList<>();
             if (!done) {
               for (int i = 0; i < 10; i++) {
                 ODocument document = new ODocument();
@@ -40,16 +41,16 @@ public class ConvertToResultInternalStepTest extends TestUtilsFixture {
               }
               done = true;
             }
-            return result;
+            return OExecutionStream.resultIterator(result.iterator());
           }
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context, 10);
+    OExecutionStream result = step.start(context);
 
     int counter = 0;
-    while (result.hasNext()) {
-      OResult currentItem = result.next();
+    while (result.hasNext(context)) {
+      OResult currentItem = result.next(context);
       if (!(currentItem.getClass().equals(OResultInternal.class))) {
         Assert.fail("There is an item in result set that is not an instance of OResultInternal");
       }

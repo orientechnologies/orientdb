@@ -3,14 +3,13 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OBatch;
 
 /** Created by luigidellaquila on 14/02/17. */
 public class BatchStep extends AbstractExecutionStep {
 
   private Integer batchSize;
-  private int count = 0;
 
   public BatchStep(OBatch batch, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -18,27 +17,24 @@ public class BatchStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OResultSet prevResult = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(prevResult, (result) -> mapResult(ctx, result));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream prevResult = getPrev().get().start(ctx);
+    return prevResult.map(this::mapResult);
   }
 
-  private OResult mapResult(OCommandContext ctx, OResult result) {
-    if (count % batchSize == 0) {
-      ODatabaseSession db = ctx.getDatabase();
-      if (db.getTransaction().isActive()) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
+    ODatabaseSession db = ctx.getDatabase();
+    if (db.getTransaction().isActive()) {
+      if (db.getTransaction().getEntryCount() % batchSize == 0) {
         db.commit();
         db.begin();
       }
     }
-    count++;
     return result;
   }
 
   @Override
-  public void reset() {
-    this.count = 0;
-  }
+  public void reset() {}
 
   @Override
   public String prettyPrint(int depth, int indent) {

@@ -2,14 +2,12 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OProjection;
 
 /** Created by luigidellaquila on 12/07/16. */
 public class ProjectionCalculationStep extends AbstractExecutionStep {
   protected final OProjection projection;
-
-  protected long cost = 0;
 
   public ProjectionCalculationStep(
       OProjection projection, OCommandContext ctx, boolean profilingEnabled) {
@@ -18,16 +16,16 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("Cannot calculate projections without a previous source");
     }
 
-    OResultSet parentRs = prev.get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(parentRs, (result) -> mapResult(ctx, result));
+    OExecutionStream parentRs = prev.get().start(ctx);
+    return parentRs.map(this::mapResult);
   }
 
-  private OResult mapResult(OCommandContext ctx, OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     Object oldCurrent = ctx.getVariable("$current");
     ctx.setVariable("$current", result);
     OResult newResult = calculateProjections(ctx, result);
@@ -36,14 +34,7 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
   }
 
   private OResult calculateProjections(OCommandContext ctx, OResult next) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      return this.projection.calculateSingle(ctx, next);
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
+    return this.projection.calculateSingle(ctx, next);
   }
 
   @Override
@@ -56,11 +47,6 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
     }
     result += ("\n" + spaces + "  " + projection.toString() + "");
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

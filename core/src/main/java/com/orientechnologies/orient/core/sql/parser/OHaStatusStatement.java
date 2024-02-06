@@ -7,9 +7,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class OHaStatusStatement extends OSimpleExecStatement {
@@ -87,21 +86,21 @@ public class OHaStatusStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     if (outputText) {
       OLogManager.instance().info(this, "HA STATUS with text output is deprecated");
     }
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
 
-    OInternalResultSet rs = new OInternalResultSet();
     try {
       Map<String, Object> res = database.getHaStatus(servers, this.db, latency, messages);
       if (res != null) {
         OResultInternal row = new OResultInternal();
         res.entrySet().forEach(x -> row.setProperty(x.getKey(), x.getValue()));
-        rs.add(row);
+        return OExecutionStream.singleton(row);
+      } else {
+        return OExecutionStream.empty();
       }
-      return rs;
     } catch (Exception x) {
       throw OException.wrapException(new OCommandExecutionException("Cannot execute HA STATUS"), x);
     }

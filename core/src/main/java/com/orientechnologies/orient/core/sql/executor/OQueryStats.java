@@ -41,7 +41,10 @@ public class OQueryStats {
     if (database != null && database instanceof ODatabaseDocumentInternal) {
       ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) database;
       OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
-      if (idx.isUnique() && (idx.getDefinition().getFields().size() == params) && !range) {
+      if (idx != null
+          && idx.isUnique()
+          && (idx.getDefinition().getFields().size() == params)
+          && !range) {
         return 1;
       }
     }

@@ -4,7 +4,8 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceOneResult;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
 
 /**
@@ -15,9 +16,6 @@ import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
 public class CountFromIndexStep extends AbstractExecutionStep {
   private final OIndexIdentifier target;
   private final String alias;
-
-  private long count = 0;
-  private OResultSet resultSet = null;
 
   /**
    * @param targetIndex the index name as it is parsed by the SQL parsed
@@ -33,36 +31,23 @@ public class CountFromIndexStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    if (resultSet == null) {
-      getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-      resultSet = new OProduceOneResult(() -> produce(ctx), true);
-    }
-    return resultSet;
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
+    return new OProduceExecutionStream(this::produce).limit(1);
   }
 
   private OResult produce(OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-      OIndexInternal idx =
-          database
-              .getMetadata()
-              .getIndexManagerInternal()
-              .getIndex(database, target.getIndexName())
-              .getInternal();
-      long size = idx.size();
-      OResultInternal result = new OResultInternal();
-      result.setProperty(alias, size);
-      return result;
-    } finally {
-      count += (System.nanoTime() - begin);
-    }
-  }
-
-  @Override
-  public void reset() {
-    this.resultSet = null;
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+    OIndexInternal idx =
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, target.getIndexName())
+            .getInternal();
+    long size = idx.size();
+    OResultInternal result = new OResultInternal();
+    result.setProperty(alias, size);
+    return result;
   }
 
   @Override

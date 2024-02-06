@@ -147,7 +147,7 @@ public class ODatabaseUserData extends SimpleNode {
       stm.roles.add(role.copy());
     }
 
-    stm.executeSimple(ctx).close();
+    stm.executeSimple(ctx).close(ctx);
   }
 }
 /* JavaCC - OriginalChecksum=15bf3e16120859f9ab9f311935570d5d (do not edit this line) */

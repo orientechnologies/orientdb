@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -15,8 +16,6 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
 
   private final OIdentifier varName;
   private final OInternalExecutionPlan subExecutionPlan;
-
-  private boolean executed = false;
 
   public GlobalLetQueryStep(
       OIdentifier varName,
@@ -43,18 +42,14 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     calculate(ctx);
-    return new OInternalResultSet();
+    return OExecutionStream.empty();
   }
 
   private void calculate(OCommandContext ctx) {
-    if (executed) {
-      return;
-    }
     ctx.setVariable(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
-    executed = true;
   }
 
   private List<OResult> toList(OLocalResultSet oLocalResultSet) {

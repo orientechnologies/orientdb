@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /** Created by luigidellaquila on 08/07/16. */
 public class EmptyStep extends AbstractExecutionStep {
@@ -10,10 +11,9 @@ public class EmptyStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    OInternalResultSet result = new OInternalResultSet();
-    return result;
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
+    return OExecutionStream.empty();
   }
 
   public OExecutionStep copy(OCommandContext ctx) {

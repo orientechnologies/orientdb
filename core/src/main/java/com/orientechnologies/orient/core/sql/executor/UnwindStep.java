@@ -5,14 +5,12 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OUnwind;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -25,10 +23,6 @@ public class UnwindStep extends AbstractExecutionStep {
   private final OUnwind unwind;
   private List<String> unwindFields;
 
-  private OResultSet lastResult = null;
-  private Iterator<OResult> nextSubsequence = null;
-  private OResult nextElement = null;
-
   public UnwindStep(OUnwind unwind, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.unwind = unwind;
@@ -37,75 +31,16 @@ public class UnwindStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
-    return new OLimitedResultSet(
-        new OResultSet() {
-
-          @Override
-          public boolean hasNext() {
-            if (nextElement == null) {
-              fetchNext(ctx, nRecords);
-            }
-            if (nextElement == null) {
-              return false;
-            }
-            return true;
-          }
-
-          @Override
-          public OResult next() {
-            if (nextElement == null) {
-              fetchNext(ctx, nRecords);
-            }
-            if (nextElement == null) {
-              throw new IllegalStateException();
-            }
-
-            OResult result = nextElement;
-            nextElement = null;
-            fetchNext(ctx, nRecords);
-            return result;
-          }
-
-          @Override
-          public void close() {}
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+    OExecutionStream resultSet = getPrev().get().start(ctx);
+    return resultSet.flatMap(this::fetchNextResults);
   }
 
-  private void fetchNext(OCommandContext ctx, int n) {
-    do {
-      if (nextSubsequence != null && nextSubsequence.hasNext()) {
-        nextElement = nextSubsequence.next();
-        break;
-      }
-
-      if (nextSubsequence == null || !nextSubsequence.hasNext()) {
-        if (lastResult == null || !lastResult.hasNext()) {
-          lastResult = getPrev().get().syncPull(ctx, n);
-        }
-        if (!lastResult.hasNext()) {
-          return;
-        }
-      }
-
-      OResult nextAggregateItem = lastResult.next();
-      nextSubsequence = unwind(nextAggregateItem, unwindFields, ctx).iterator();
-
-    } while (true);
+  private OExecutionStream fetchNextResults(OResult res, OCommandContext ctx) {
+    return OExecutionStream.resultIterator(unwind(res, unwindFields, ctx).iterator());
   }
 
   private Collection<OResult> unwind(

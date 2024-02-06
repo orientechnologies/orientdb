@@ -3,6 +3,9 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -23,8 +26,8 @@ public class CountStepTest {
           boolean done = false;
 
           @Override
-          public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-            OInternalResultSet result = new OInternalResultSet();
+          public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+            List<OResult> result = new ArrayList<>();
             if (!done) {
               for (int i = 0; i < 100; i++) {
                 OResultInternal item = new OResultInternal();
@@ -33,13 +36,13 @@ public class CountStepTest {
               }
               done = true;
             }
-            return result;
+            return OExecutionStream.resultIterator(result.iterator());
           }
         };
 
     step.setPrevious(previous);
-    OResultSet result = step.syncPull(context, 100);
-    Assert.assertEquals(100, (long) result.next().getProperty(COUNT_PROPERTY_NAME));
-    Assert.assertFalse(result.hasNext());
+    OExecutionStream result = step.start(context);
+    Assert.assertEquals(100, (long) result.next(context).getProperty(COUNT_PROPERTY_NAME));
+    Assert.assertFalse(result.hasNext(context));
   }
 }

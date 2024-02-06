@@ -2,13 +2,12 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OLimit;
 
 /** Created by luigidellaquila on 08/07/16. */
 public class LimitExecutionStep extends AbstractExecutionStep {
   private final OLimit limit;
-
-  private int loaded = 0;
 
   public LimitExecutionStep(OLimit limit, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -16,18 +15,13 @@ public class LimitExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     int limitVal = limit.getValue(ctx);
     if (limitVal == -1) {
-      return getPrev().get().syncPull(ctx, nRecords);
+      return getPrev().get().start(ctx);
     }
-    if (limitVal <= loaded) {
-      return new OInternalResultSet();
-    }
-    int nextBlockSize = Math.min(nRecords, limitVal - loaded);
-    OResultSet result = prev.get().syncPull(ctx, nextBlockSize);
-    loaded += nextBlockSize;
-    return result;
+    OExecutionStream result = prev.get().start(ctx);
+    return result.limit(limitVal);
   }
 
   @Override

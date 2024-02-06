@@ -1,8 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import java.util.ArrayList;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /** Created by luigidellaquila on 17/10/16. */
 public class OptionalMatchEdgeTraverser extends MatchEdgeTraverser {
@@ -15,23 +14,21 @@ public class OptionalMatchEdgeTraverser extends MatchEdgeTraverser {
   protected void init(OCommandContext ctx) {
     if (downstream == null) {
       super.init(ctx);
-      if (!downstream.hasNext()) {
-        List x = new ArrayList();
-        x.add(EMPTY_OPTIONAL);
-        downstream = x.iterator();
+      if (!downstream.hasNext(ctx)) {
+        downstream = OExecutionStream.singleton(EMPTY_OPTIONAL);
       }
     }
   }
 
   public OResult next(OCommandContext ctx) {
     init(ctx);
-    if (!downstream.hasNext()) {
+    if (!downstream.hasNext(ctx)) {
       throw new IllegalStateException();
     }
 
     String endPointAlias = getEndpointAlias();
     Object prevValue = sourceRecord.getProperty(endPointAlias);
-    OResultInternal next = downstream.next();
+    OResult next = downstream.next(ctx);
 
     if (isEmptyOptional(prevValue)) {
       return sourceRecord;

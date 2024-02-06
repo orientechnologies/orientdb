@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /**
  * This step is used just as a gate check for classes (eg. for CREATE VERTEX to make sure that the
@@ -22,10 +23,6 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
   private final String targetClass;
   private final String parentClass;
 
-  private long cost = 0;
-
-  private boolean found = false;
-
   /**
    * @param targetClass a class to be checked
    * @param parentClass a class that is supposed to be the same or a parent class of the target
@@ -41,48 +38,39 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (found) {
-        return new OInternalResultSet();
-      }
-      if (this.targetClass.equals(this.parentClass)) {
-        return new OInternalResultSet();
-      }
-      ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+  public OExecutionStream internalStart(OCommandContext context) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(context).close(ctx));
+    if (this.targetClass.equals(this.parentClass)) {
+      return OExecutionStream.empty();
+    }
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) context.getDatabase();
 
-      OSchema schema = db.getMetadata().getImmutableSchemaSnapshot();
-      OClass parentClazz = schema.getClass(this.parentClass);
-      if (parentClazz == null) {
-        throw new OCommandExecutionException("Class not found: " + this.parentClass);
-      }
-      OClass targetClazz = schema.getClass(this.targetClass);
-      if (targetClazz == null) {
-        throw new OCommandExecutionException("Class not found: " + this.targetClass);
-      }
+    OSchema schema = db.getMetadata().getImmutableSchemaSnapshot();
+    OClass parentClazz = schema.getClass(this.parentClass);
+    if (parentClazz == null) {
+      throw new OCommandExecutionException("Class not found: " + this.parentClass);
+    }
+    OClass targetClazz = schema.getClass(this.targetClass);
+    if (targetClazz == null) {
+      throw new OCommandExecutionException("Class not found: " + this.targetClass);
+    }
 
-      if (parentClazz.equals(targetClazz)) {
-        found = true;
-      } else {
-        for (OClass sublcass : parentClazz.getAllSubclasses()) {
-          if (sublcass.equals(targetClazz)) {
-            this.found = true;
-            break;
-          }
+    boolean found = false;
+    if (parentClazz.equals(targetClazz)) {
+      found = true;
+    } else {
+      for (OClass sublcass : parentClazz.getAllSubclasses()) {
+        if (sublcass.equals(targetClazz)) {
+          found = true;
+          break;
         }
       }
-      if (!found) {
-        throw new OCommandExecutionException(
-            "Class  " + this.targetClass + " is not a subclass of " + this.parentClass);
-      }
-      return new OInternalResultSet();
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
     }
+    if (!found) {
+      throw new OCommandExecutionException(
+          "Class  " + this.targetClass + " is not a subclass of " + this.parentClass);
+    }
+    return OExecutionStream.empty();
   }
 
   @Override
@@ -97,11 +85,6 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
     result.append("\n");
     result.append("  " + this.parentClass);
     return result.toString();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

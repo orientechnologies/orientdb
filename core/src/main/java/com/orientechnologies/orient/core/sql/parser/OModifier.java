@@ -38,6 +38,14 @@ public class OModifier extends SimpleNode {
     super(p, id);
   }
 
+  public boolean isArraySingleValue() {
+    if (this.arraySingleValues != null) {
+      return this.arraySingleValues.items.size() == 1;
+    } else {
+      return false;
+    }
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
 
     if (squareBrackets) {

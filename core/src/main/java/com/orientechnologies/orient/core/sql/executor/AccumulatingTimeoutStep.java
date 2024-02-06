@@ -2,79 +2,27 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OTimeoutResultSet;
 import com.orientechnologies.orient.core.sql.parser.OTimeout;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 
 /** Created by luigidellaquila on 08/08/16. */
 public class AccumulatingTimeoutStep extends AbstractExecutionStep {
-  private final OTimeout timeout;
-  private final long timeoutMillis;
 
-  private AtomicLong totalTime = new AtomicLong(0);
+  private final OTimeout timeout;
 
   public AccumulatingTimeoutStep(OTimeout timeout, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.timeout = timeout;
-    this.timeoutMillis = this.timeout.getVal().longValue();
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-
-    final OResultSet internal = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-
-      @Override
-      public boolean hasNext() {
-        if (timedOut) {
-          return false;
-        }
-        long begin = System.nanoTime();
-
-        try {
-          return internal.hasNext();
-        } finally {
-          totalTime.addAndGet(System.nanoTime() - begin);
-        }
-      }
-
-      @Override
-      public OResult next() {
-        if (totalTime.get() / 1_000_000 > timeoutMillis) {
-          fail();
-          if (timedOut) {
-            return new OResultInternal();
-          }
-        }
-        long begin = System.nanoTime();
-        try {
-          return internal.next();
-        } finally {
-          totalTime.addAndGet(System.nanoTime() - begin);
-        }
-      }
-
-      @Override
-      public void close() {
-        internal.close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return internal.getExecutionPlan();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return internal.getQueryStats();
-      }
-    };
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    final OExecutionStream internal = getPrev().get().start(ctx);
+    return new OTimeoutResultSet(internal, this.timeout.getVal().longValue(), this::fail);
   }
 
   private void fail() {
-    this.timedOut = true;
     if (OTimeout.RETURN.equals(this.timeout.getFailureStrategy())) {
       // do nothing
     } else {
@@ -94,9 +42,7 @@ public class AccumulatingTimeoutStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void reset() {
-    this.totalTime = new AtomicLong(0);
-  }
+  public void reset() {}
 
   @Override
   public String prettyPrint(int depth, int indent) {

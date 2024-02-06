@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OStorage;
+import java.util.Iterator;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a
@@ -264,6 +265,21 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
     currentRecord = readCurrentRecord(getRecord(), -1);
 
     return this;
+  }
+
+  public Iterator<REC> reversed() {
+    this.last();
+    return new Iterator<REC>() {
+      @Override
+      public boolean hasNext() {
+        return ORecordIteratorCluster.this.hasPrevious();
+      }
+
+      @Override
+      public REC next() {
+        return ORecordIteratorCluster.this.previous();
+      }
+    };
   }
 
   /**

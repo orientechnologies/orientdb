@@ -4,7 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
 /**
@@ -22,12 +22,12 @@ public class SetDocumentClassStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(upstream, this::mapResult);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().start(ctx);
+    return upstream.map(this::mapResult);
   }
 
-  private OResult mapResult(OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     if (result.isElement()) {
       OIdentifiable element = result.getElement().get().getRecord();
       if (element instanceof ODocument) {

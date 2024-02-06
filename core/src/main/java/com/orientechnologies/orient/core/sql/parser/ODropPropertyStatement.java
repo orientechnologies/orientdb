@@ -9,9 +9,9 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,8 +32,8 @@ public class ODropPropertyStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
-    OInternalResultSet rs = new OInternalResultSet();
+  public OExecutionStream executeDDL(OCommandContext ctx) {
+
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     final OClassImpl sourceClass =
         (OClassImpl) database.getMetadata().getSchema().getClass(className.getStringValue());
@@ -42,12 +42,13 @@ public class ODropPropertyStatement extends ODDLStatement {
 
     if (sourceClass.getProperty(propertyName.getStringValue()) == null) {
       if (ifExists) {
-        return rs;
+        return OExecutionStream.empty();
       }
       throw new OCommandExecutionException(
           "Property '" + propertyName + "' not found on class " + className);
     }
     final List<OIndex> indexes = relatedIndexes(propertyName.getStringValue(), database);
+    List<OResult> rs = new ArrayList<>();
     if (!indexes.isEmpty()) {
       if (force) {
         for (final OIndex index : indexes) {
@@ -86,7 +87,7 @@ public class ODropPropertyStatement extends ODDLStatement {
     result.setProperty("className", className.getStringValue());
     result.setProperty("propertyname", propertyName.getStringValue());
     rs.add(result);
-    return rs;
+    return OExecutionStream.resultIterator(rs.iterator());
   }
 
   private List<OIndex> relatedIndexes(final String fieldName, ODatabaseDocumentInternal database) {

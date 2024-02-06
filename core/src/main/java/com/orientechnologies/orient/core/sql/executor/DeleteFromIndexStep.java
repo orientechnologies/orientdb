@@ -8,7 +8,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
@@ -24,9 +25,7 @@ import com.orientechnologies.orient.core.sql.parser.OLtOperator;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -38,18 +37,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   private final OBooleanExpression ridCondition;
   private final boolean orderAsc;
 
-  private ORawPair<Object, ORID> nextEntry = null;
-
   private final OBooleanExpression condition;
-
-  private boolean inited = false;
-  private Stream<ORawPair<Object, ORID>> stream;
-  private Iterator<ORawPair<Object, ORID>> streamIterator;
-
-  private long cost = 0;
-
-  private final Set<Stream<ORawPair<Object, ORID>>> acquiredStreams =
-      Collections.newSetFromMap(new IdentityHashMap<>());
 
   public DeleteFromIndexStep(
       OIndex index,
@@ -78,149 +66,106 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    init();
-
-    return new OLimitedResultSet(
-        new OResultSet() {
-          @Override
-          public boolean hasNext() {
-            return nextEntry != null;
-          }
-
-          @Override
-          public OResult next() {
-            long begin = profilingEnabled ? System.nanoTime() : 0;
-            try {
-              if (!hasNext()) {
-                throw new IllegalStateException();
-              }
-              ORawPair<Object, ORID> entry = nextEntry;
-              OResultInternal result = new OResultInternal();
-              ORID value = entry.second;
-
-              index.remove(entry.first, value);
-              nextEntry = loadNextEntry(ctx);
-              return result;
-            } finally {
-              if (profilingEnabled) {
-                cost += (System.nanoTime() - begin);
-              }
-            }
-          }
-
-          @Override
-          public void close() {
-            closeStreams();
-          }
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
+    Set<Stream<ORawPair<Object, ORID>>> streams = init(condition);
+    Stream<OExecutionStream> resultStreams =
+        streams.stream()
+            .map(
+                (s) -> {
+                  return OExecutionStream.resultIterator(
+                      s.filter(
+                              (entry) -> {
+                                return filter(entry, ctx);
+                              })
+                          .map((nextEntry) -> readResult(ctx, nextEntry))
+                          .iterator());
+                });
+    return new OSubResultsExecutionStream(resultStreams.iterator());
   }
 
-  private void closeStreams() {
-    for (Stream<ORawPair<Object, ORID>> stream : acquiredStreams) {
-      stream.close();
+  private OResult readResult(OCommandContext ctx, ORawPair<Object, ORID> entry) {
+    OResultInternal result = new OResultInternal();
+    ORID value = entry.second;
+    index.remove(entry.first, value);
+    return result;
+  }
+
+  private boolean filter(ORawPair<Object, ORID> entry, OCommandContext ctx) {
+    if (ridCondition != null) {
+      OResultInternal res = new OResultInternal();
+      res.setProperty("rid", entry.second);
+      if (ridCondition.evaluate(res, ctx)) {
+        return true;
+      }
+      return false;
+    } else {
+      return true;
     }
-    acquiredStreams.clear();
   }
 
   @Override
   public void close() {
     super.close();
-
-    closeStreams();
   }
 
-  private synchronized void init() {
-    if (inited) {
-      return;
-    }
-    inited = true;
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      init(condition);
-      nextEntry = loadNextEntry(ctx);
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-    }
-  }
-
-  private ORawPair<Object, ORID> loadNextEntry(OCommandContext commandContext) {
-    while (streamIterator.hasNext()) {
-      final ORawPair<Object, ORID> entry = streamIterator.next();
-      if (ridCondition == null) {
-        return entry;
-      }
-      OResultInternal res = new OResultInternal();
-      res.setProperty("rid", entry.second);
-      if (ridCondition.evaluate(res, commandContext)) {
-        return entry;
-      }
-    }
-
-    return null;
-  }
-
-  private void init(OBooleanExpression condition) {
+  private Set<Stream<ORawPair<Object, ORID>>> init(OBooleanExpression condition) {
+    Set<Stream<ORawPair<Object, ORID>>> acquiredStreams =
+        Collections.newSetFromMap(new IdentityHashMap<>());
     if (index.getDefinition() == null) {
-      return;
+      return acquiredStreams;
     }
     if (condition == null) {
-      processFlatIteration();
+      processFlatIteration(acquiredStreams);
     } else if (condition instanceof OBinaryCondition) {
-      processBinaryCondition();
+      processBinaryCondition(acquiredStreams);
     } else if (condition instanceof OBetweenCondition) {
-      processBetweenCondition();
+      processBetweenCondition(acquiredStreams);
     } else if (condition instanceof OAndBlock) {
-      processAndBlock();
+      processAndBlock(acquiredStreams);
     } else {
       throw new OCommandExecutionException(
           "search for index for " + condition + " is not supported yet");
     }
+    return acquiredStreams;
   }
 
   /**
    * it's not key = [...] but a real condition on field names, already ordered (field names will be
    * ignored)
+   *
+   * @param acquiredStreams TODO
    */
-  private void processAndBlock() {
+  private void processAndBlock(Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
     OCollection fromKey = indexKeyFrom((OAndBlock) condition, additional);
     OCollection toKey = indexKeyTo((OAndBlock) condition, additional);
     boolean fromKeyIncluded = indexKeyFromIncluded((OAndBlock) condition, additional);
     boolean toKeyIncluded = indexKeyToIncluded((OAndBlock) condition, additional);
-    init(fromKey, fromKeyIncluded, toKey, toKeyIncluded);
+    init(acquiredStreams, fromKey, fromKeyIncluded, toKey, toKeyIncluded);
   }
 
-  private void processFlatIteration() {
-    stream = orderAsc ? index.stream() : index.descStream();
-    storeAcquiredStream(stream);
-    streamIterator = stream.iterator();
+  private void processFlatIteration(Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
+    Stream<ORawPair<Object, ORID>> stream = orderAsc ? index.stream() : index.descStream();
+    storeAcquiredStream(stream, acquiredStreams);
   }
 
-  private void storeAcquiredStream(Stream<ORawPair<Object, ORID>> stream) {
+  private void storeAcquiredStream(
+      Stream<ORawPair<Object, ORID>> stream, Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
     if (stream != null) {
       acquiredStreams.add(stream);
     }
   }
 
   private void init(
-      OCollection fromKey, boolean fromKeyIncluded, OCollection toKey, boolean toKeyIncluded) {
+      Set<Stream<ORawPair<Object, ORID>>> acquiredStreams,
+      OCollection fromKey,
+      boolean fromKeyIncluded,
+      OCollection toKey,
+      boolean toKeyIncluded) {
     Object secondValue = fromKey.execute((OResult) null, ctx);
     Object thirdValue = toKey.execute((OResult) null, ctx);
     OIndexDefinition indexDef = index.getDefinition();
+    Stream<ORawPair<Object, ORID>> stream;
     if (index.supportsOrderedIterations()) {
       stream =
           index.streamEntriesBetween(
@@ -229,16 +174,14 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
               toBetweenIndexKey(indexDef, thirdValue),
               toKeyIncluded,
               orderAsc);
-      storeAcquiredStream(stream);
+      storeAcquiredStream(stream, acquiredStreams);
     } else if (additional == null && allEqualities((OAndBlock) condition)) {
       stream = index.streamEntries(toIndexKey(indexDef, secondValue), orderAsc);
-      storeAcquiredStream(stream);
+      storeAcquiredStream(stream, acquiredStreams);
     } else {
       throw new UnsupportedOperationException(
           "Cannot evaluate " + this.condition + " on index " + index);
     }
-
-    streamIterator = stream.iterator();
   }
 
   private static boolean allEqualities(OAndBlock condition) {
@@ -257,7 +200,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     return true;
   }
 
-  private void processBetweenCondition() {
+  private void processBetweenCondition(Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
     OIndexDefinition definition = index.getDefinition();
     OExpression key = ((OBetweenCondition) condition).getFirst();
     if (!key.toString().equalsIgnoreCase("key")) {
@@ -269,18 +212,17 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
     Object secondValue = second.execute((OResult) null, ctx);
     Object thirdValue = third.execute((OResult) null, ctx);
-    stream =
+    Stream<ORawPair<Object, ORID>> stream =
         index.streamEntriesBetween(
             toBetweenIndexKey(definition, secondValue),
             true,
             toBetweenIndexKey(definition, thirdValue),
             true,
             orderAsc);
-    storeAcquiredStream(stream);
-    streamIterator = stream.iterator();
+    storeAcquiredStream(stream, acquiredStreams);
   }
 
-  private void processBinaryCondition() {
+  private void processBinaryCondition(Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
     OIndexDefinition definition = index.getDefinition();
     OBinaryCompareOperator operator = ((OBinaryCondition) condition).getOperator();
     OExpression left = ((OBinaryCondition) condition).getLeft();
@@ -289,9 +231,8 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
           "search for index for " + condition + " is not supported yet");
     }
     Object rightValue = ((OBinaryCondition) condition).getRight().execute((OResult) null, ctx);
-    stream = createStream(operator, definition, rightValue, ctx);
-    storeAcquiredStream(stream);
-    streamIterator = stream.iterator();
+    Stream<ORawPair<Object, ORID>> stream = createStream(operator, definition, rightValue, ctx);
+    storeAcquiredStream(stream, acquiredStreams);
   }
 
   private static Collection toIndexKey(OIndexDefinition definition, Object rightValue) {
@@ -464,10 +405,5 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
                         + additional))
             .orElse(""));
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

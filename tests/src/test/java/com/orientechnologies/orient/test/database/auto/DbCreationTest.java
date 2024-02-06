@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -29,8 +28,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
@@ -269,23 +266,6 @@ public class DbCreationTest extends ObjectDBBaseTest {
       ODatabaseHelper.dropDatabase(db, getStorageType());
       Assert.assertFalse(ODatabaseHelper.existsDatabase(db, getStorageType()));
     }
-  }
-
-  public void testZipCompression() {
-    if (database == null || !database.getURL().startsWith("plocal:")) return;
-
-    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("gzip");
-
-    final String buildDirectory = System.getProperty("buildDirectory", ".");
-    String dburl = "plocal:" + buildDirectory + "/test-db/" + this.getClass().getSimpleName();
-
-    final OrientGraphFactory factory = new OrientGraphFactory(dburl, "admin", "admin");
-    if (factory.exists()) factory.drop();
-    factory.close();
-    OrientGraphNoTx db = factory.getNoTx();
-    db.drop();
-    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue(
-        OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
   }
 
   public void testDbIsNotRemovedOnSecondTry() {

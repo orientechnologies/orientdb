@@ -30,33 +30,9 @@
     </organization>
     <profiles>
         <profile>
-            <id>java8</id>
+            <id>java17</id>
             <activation>
-                <jdk>1.8</jdk>
-            </activation>
-            <properties>
-                <argLine>
-                    -ea
-                    -Xmx${heapSize}
-                    -Dstorage.diskCache.bufferSize=4096
-                    -Dmemory.directMemory.trackMode=true
-                    -Dstorage.makeFullCheckpointAfterCreate=false
-                    -Dstorage.makeFullCheckpointAfterOpen=false
-                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
-                    -Dstorage.wal.syncOnPageFlush=false
-                    -Dstorage.configuration.syncOnUpdate=false
-                    -Ddb.makeFullCheckpointOnIndexChange=false
-                    -Ddb.makeFullCheckpointOnSchemaChange=false
-                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
-                    -Dstorage.diskCache.checksumMode=storeAndThrow
-                    -Dsecurity.warningDefaultUsers=false
-                </argLine>
-            </properties>
-        </profile>
-        <profile>
-            <id>java11</id>
-            <activation>
-                <jdk>[11,)</jdk>
+                <jdk>[17,)</jdk>
             </activation>
             <properties>
                 <argLine>

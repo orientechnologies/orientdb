@@ -6,9 +6,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.lang.reflect.Field;
@@ -71,8 +71,8 @@ public class OAlterClusterStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
-    OInternalResultSet result = new OInternalResultSet();
+  public OExecutionStream executeDDL(OCommandContext ctx) {
+    List<OResult> result = new ArrayList<>();
     List<Integer> clustersToUpdate = getClusters(ctx);
 
     Object finalValue = attributeValue.execute((OIdentifiable) null, ctx);
@@ -98,7 +98,7 @@ public class OAlterClusterStatement extends ODDLStatement {
       result.add(resultItem);
     }
 
-    return result;
+    return OExecutionStream.resultIterator(result.iterator());
   }
 
   private List<OCluster.ATTRIBUTES> noDeprecatedValues(final OCluster.ATTRIBUTES[] values) {

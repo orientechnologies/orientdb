@@ -17,9 +17,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,16 +50,14 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     execute(ctx);
-    OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create link");
     result.setProperty("name", name.getValue());
     result.setProperty("fromClass", sourceClass.getStringValue());
     result.setProperty("toClass", destClass.getStringValue());
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   /** Execute the CREATE LINK. */

@@ -5,8 +5,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Optional;
 
@@ -14,49 +13,32 @@ import java.util.Optional;
 public class FilterByClassStep extends AbstractExecutionStep {
 
   private OIdentifier identifier;
-  private OResultSet prevResult = null;
-  private long cost;
+  private String className;
 
   public FilterByClassStep(OIdentifier identifier, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.identifier = identifier;
+    this.className = identifier.getStringValue();
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
 
-    return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx, nRecords), this::filterMap), nRecords);
+    OExecutionStream resultSet = prev.get().start(ctx);
+    return resultSet.filter(this::filterMap);
   }
 
-  private OResult filterMap(OResult result) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (result.isElement()) {
-        Optional<OClass> clazz = result.getElement().get().getSchemaType();
-        if (clazz.isPresent() && clazz.get().isSubClassOf(identifier.getStringValue())) {
-          return result;
-        }
-      }
-      return null;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+  private OResult filterMap(OResult result, OCommandContext ctx) {
+    if (result.isElement()) {
+      Optional<OClass> clazz = result.getElement().get().getSchemaType();
+      if (clazz.isPresent() && clazz.get().isSubClassOf(className)) {
+        return result;
       }
     }
-  }
-
-  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
-    OExecutionStepInternal prevStep = prev.get();
-    if (prevResult == null) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
-    } else if (!prevResult.hasNext()) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
-    }
-    return prevResult;
+    return null;
   }
 
   @Override
@@ -90,11 +72,6 @@ public class FilterByClassStep extends AbstractExecutionStep {
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

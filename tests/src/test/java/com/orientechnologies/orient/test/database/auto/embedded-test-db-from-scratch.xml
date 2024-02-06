@@ -5,8 +5,6 @@
             <class name="com.orientechnologies.orient.test.database.auto.DbListenerTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DBMethodsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.AlterDatabaseTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.DatabaseConflictStategyTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.DatabaseConflictStrategyAutoMergeTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DbCopyTest"/>
         </classes>
     </test>
@@ -110,7 +108,6 @@
     <test name="Graph">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.GraphDatabaseTest"/>
-            <!--  <class name="com.orientechnologies.orient.test.database.auto.SQLCreateVertexAndEdgeTest"/> -->
         </classes>
     </test>
     <test name="GEO">

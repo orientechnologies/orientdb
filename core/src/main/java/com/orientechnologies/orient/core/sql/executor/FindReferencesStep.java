@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.ArrayList;
@@ -23,20 +24,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterators;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /** Created by luigidellaquila on 07/09/16. */
 public class FindReferencesStep extends AbstractExecutionStep {
   private final List<OIdentifier> classes;
   private final List<OCluster> clusters;
-
-  private boolean inited = false;
-  private Set<ORID> ridsToFind;
-  private ORecordIteratorCluster currentIterator;
-  private Iterator<ORecordIteratorCluster> clusterIterators;
-  private OResultInternal nextResult;
 
   public FindReferencesStep(
       List<OIdentifier> classes,
@@ -49,77 +46,37 @@ public class FindReferencesStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    if (!inited) {
-      init(ctx, nRecords);
-    }
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        return nextResult != null;
-      }
-
-      @Override
-      public OResult next() {
-        if (nextResult == null) {
-          throw new IllegalStateException();
-        }
-        OResultInternal result = nextResult;
-        fetchNext(ctx);
-        return result;
-      }
-
-      @Override
-      public void close() {}
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    Set<ORID> rids = fetchRidsToFind(ctx);
+    List<ORecordIteratorCluster<ORecord>> clustersIterators = initClusterIterators(ctx);
+    Stream<OResult> stream =
+        clustersIterators.stream()
+            .flatMap(
+                (iterator) -> {
+                  return StreamSupport.stream(
+                          Spliterators.spliteratorUnknownSize(iterator, 0), false)
+                      .flatMap((record) -> findMatching(rids, record));
+                });
+    return OExecutionStream.resultIterator(stream.iterator());
   }
 
-  private void init(OCommandContext ctx, int nRecords) {
-    fetchRidsToFind(ctx, nRecords);
-    initClusterIterators(ctx);
-    fetchNext(ctx);
-
-    this.inited = true;
-  }
-
-  private void fetchNext(OCommandContext ctx) {
-    this.nextResult = null;
-    while (true) {
-      while (currentIterator == null || !currentIterator.hasNext()) {
-        if (!clusterIterators.hasNext()) {
-          return;
-        }
-        currentIterator = clusterIterators.next();
-      }
-
-      ORecord rec = currentIterator.next();
-      if (rec instanceof ODocument) {
-        OResultInternal x = new OResultInternal(rec);
-        for (ORID rid : ridsToFind) {
-          List<String> resultForRecord = checkObject(Collections.singleton(rid), x, rec, "");
-          if (resultForRecord.size() > 0) {
-            nextResult = new OResultInternal();
-            nextResult.setProperty("rid", rid);
-            nextResult.setProperty("referredBy", rec);
-            nextResult.setProperty("fields", resultForRecord);
-            return;
-          }
-        }
+  private Stream<? extends OResult> findMatching(Set<ORID> rids, ORecord record) {
+    OResultInternal rec = new OResultInternal(record);
+    List<OResult> results = new ArrayList<>();
+    for (ORID rid : rids) {
+      List<String> resultForRecord = checkObject(Collections.singleton(rid), rec, record, "");
+      if (resultForRecord.size() > 0) {
+        OResultInternal nextResult = new OResultInternal();
+        nextResult.setProperty("rid", rid);
+        nextResult.setProperty("referredBy", rec);
+        nextResult.setProperty("fields", resultForRecord);
+        results.add(nextResult);
       }
     }
+    return results.stream();
   }
 
-  private void initClusterIterators(OCommandContext ctx) {
+  private List<ORecordIteratorCluster<ORecord>> initClusterIterators(OCommandContext ctx) {
     ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
     Collection<String> targetClusterNames = new HashSet<>();
 
@@ -153,30 +110,29 @@ public class FindReferencesStep extends AbstractExecutionStep {
       }
     }
 
-    List<ORecordIteratorCluster> iterators =
+    List<ORecordIteratorCluster<ORecord>> iterators =
         targetClusterNames.stream()
             .map(
                 clusterName ->
-                    new ORecordIteratorCluster(
+                    new ORecordIteratorCluster<ORecord>(
                         (ODatabaseDocumentInternal) db, db.getClusterIdByName(clusterName)))
             .collect(Collectors.toList());
-    this.clusterIterators = iterators.iterator();
+    return iterators;
   }
 
-  private void fetchRidsToFind(OCommandContext ctx, int nRecords) {
-    ridsToFind = new HashSet<>();
+  private Set<ORID> fetchRidsToFind(OCommandContext ctx) {
+    Set<ORID> ridsToFind = new HashSet<>();
 
     OExecutionStepInternal prevStep = getPrev().get();
-    OResultSet nextSlot = prevStep.syncPull(ctx, nRecords);
-    while (nextSlot.hasNext()) {
-      while (nextSlot.hasNext()) {
-        OResult nextRes = nextSlot.next();
-        if (nextRes.isElement()) {
-          ridsToFind.add(nextRes.getElement().get().getIdentity());
-        }
+    OExecutionStream nextSlot = prevStep.start(ctx);
+    while (nextSlot.hasNext(ctx)) {
+      OResult nextRes = nextSlot.next(ctx);
+      if (nextRes.isElement()) {
+        ridsToFind.add(nextRes.getElement().get().getIdentity());
       }
-      nextSlot = prevStep.syncPull(ctx, nRecords);
     }
+    nextSlot.close(ctx);
+    return ridsToFind;
   }
 
   private static List<String> checkObject(

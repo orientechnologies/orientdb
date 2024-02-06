@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
-import com.orientechnologies.orient.core.sql.executor.OIteratorResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
 import java.util.Iterator;
 
 /**

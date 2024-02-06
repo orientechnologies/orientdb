@@ -3,25 +3,17 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 06/08/16. */
 public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   private OBinaryCondition functionCondition;
   private OFromClause queryTarget;
-
-  private long cost = 0;
-  // runtime
-  private Iterator<OIdentifiable> fullResult = null;
 
   public FetchFromIndexedFunctionStep(
       OBinaryCondition functionCondition,
@@ -34,68 +26,14 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    init(ctx);
-
-    return new OLimitedResultSet(
-        new OResultSet() {
-
-          @Override
-          public boolean hasNext() {
-            if (!fullResult.hasNext()) {
-              return false;
-            }
-            return true;
-          }
-
-          @Override
-          public OResult next() {
-            if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
-              throw new OCommandInterruptedException("The command has been interrupted");
-            }
-            long begin = profilingEnabled ? System.nanoTime() : 0;
-            try {
-              if (!fullResult.hasNext()) {
-                throw new IllegalStateException();
-              }
-              OResultInternal result = new OResultInternal(fullResult.next());
-              ctx.setVariable("$current", result);
-              return result;
-            } finally {
-              if (profilingEnabled) {
-                cost += (System.nanoTime() - begin);
-              }
-            }
-          }
-
-          @Override
-          public void close() {}
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
+    Iterator<OIdentifiable> fullResult = init(ctx);
+    return OExecutionStream.loadIterator(fullResult).interruptable();
   }
 
-  private void init(OCommandContext ctx) {
-    if (fullResult == null) {
-      long begin = profilingEnabled ? System.nanoTime() : 0;
-      try {
-        fullResult = functionCondition.executeIndexedFunction(queryTarget, ctx).iterator();
-      } finally {
-        if (profilingEnabled) {
-          cost += (System.nanoTime() - begin);
-        }
-      }
-    }
+  private Iterator<OIdentifiable> init(OCommandContext ctx) {
+    return functionCondition.executeIndexedFunction(queryTarget, ctx).iterator();
   }
 
   @Override
@@ -111,14 +49,7 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void reset() {
-    this.fullResult = null;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
-  }
+  public void reset() {}
 
   @Override
   public OResult serialize() {

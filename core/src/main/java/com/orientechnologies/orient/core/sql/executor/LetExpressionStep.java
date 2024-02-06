@@ -4,7 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
@@ -22,19 +22,18 @@ public class LetExpressionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!getPrev().isPresent()) {
       throw new OCommandExecutionException(
           "Cannot execute a local LET on a query without a target");
     }
-    return new OResultSetMapper(
-        getPrev().get().syncPull(ctx, nRecords), (result) -> mapResult(ctx, result));
+    return getPrev().get().start(ctx).map(this::mapResult);
   }
 
-  private OResult mapResult(OCommandContext ctx, OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     Object value = expression.execute(result, ctx);
     ((OResultInternal) result)
-        .setMetadata(varname.getStringValue(), OProjectionItem.convert(value));
+        .setMetadata(varname.getStringValue(), OProjectionItem.convert(value, ctx));
     return result;
   }
 

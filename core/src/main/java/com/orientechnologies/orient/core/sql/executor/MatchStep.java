@@ -2,11 +2,10 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetEdgeTraverser;
 import com.orientechnologies.orient.core.sql.parser.OFieldMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.OMultiMatchPathItem;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * @author Luigi Dell'Aquila
@@ -14,100 +13,23 @@ import java.util.Optional;
 public class MatchStep extends AbstractExecutionStep {
   protected final EdgeTraversal edge;
 
-  private OResultSet upstream;
-  private OResult lastUpstreamRecord;
-  private MatchEdgeTraverser traverser;
-  private OResult nextResult;
-
   public MatchStep(OCommandContext context, EdgeTraversal edge, boolean profilingEnabled) {
     super(context, profilingEnabled);
     this.edge = edge;
   }
 
   @Override
-  public void reset() {
-    this.upstream = null;
-    this.lastUpstreamRecord = null;
-    this.traverser = null;
-    this.nextResult = null;
-  }
+  public void reset() {}
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    return new OLimitedResultSet(
-        new OResultSet() {
-          @Override
-          public boolean hasNext() {
-            if (nextResult == null) {
-              fetchNext(ctx, nRecords);
-            }
-            if (nextResult == null) {
-              return false;
-            }
-            return true;
-          }
-
-          @Override
-          public OResult next() {
-            if (nextResult == null) {
-              fetchNext(ctx, nRecords);
-            }
-            if (nextResult == null) {
-              throw new IllegalStateException();
-            }
-            OResult result = nextResult;
-            fetchNext(ctx, nRecords);
-            ctx.setVariable("$matched", result);
-            return result;
-          }
-
-          @Override
-          public void close() {}
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream resultSet = getPrev().get().start(ctx);
+    return resultSet.flatMap(this::createNextResultSet);
   }
 
-  private void fetchNext(OCommandContext ctx, int nRecords) {
-    nextResult = null;
-    while (true) {
-      if (traverser != null && traverser.hasNext(ctx)) {
-        nextResult = traverser.next(ctx);
-        break;
-      }
-
-      if (upstream == null || !upstream.hasNext()) {
-        upstream = getPrev().get().syncPull(ctx, nRecords);
-      }
-      if (!upstream.hasNext()) {
-        return;
-      }
-
-      lastUpstreamRecord = upstream.next();
-
-      traverser = createTraverser(lastUpstreamRecord);
-
-      boolean found = false;
-      while (traverser.hasNext(ctx)) {
-        nextResult = traverser.next(ctx);
-        if (nextResult != null) {
-          found = true;
-          break;
-        }
-      }
-      if (found) {
-        break;
-      }
-    }
+  public OExecutionStream createNextResultSet(OResult lastUpstreamRecord, OCommandContext ctx) {
+    MatchEdgeTraverser trav = createTraverser(lastUpstreamRecord);
+    return new OResultSetEdgeTraverser(trav);
   }
 
   protected MatchEdgeTraverser createTraverser(OResult lastUpstreamRecord) {

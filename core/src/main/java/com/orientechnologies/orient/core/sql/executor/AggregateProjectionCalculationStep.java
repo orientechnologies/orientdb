@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OGroupBy;
 import com.orientechnologies.orient.core.sql.parser.OProjection;
@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 12/07/16. */
 public class AggregateProjectionCalculationStep extends ProjectionCalculationStep {
@@ -20,13 +19,6 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   private final OGroupBy groupBy;
   private final long timeoutMillis;
   private final long limit;
-
-  // the key is the GROUP BY key, the value is the (partially) aggregated value
-  private Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
-  private List<OResultInternal> finalResults = null;
-
-  private int nextItem = 0;
-  private long cost = 0;
 
   public AggregateProjectionCalculationStep(
       OProjection projection,
@@ -42,69 +34,32 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    if (finalResults == null) {
-      executeAggregation(ctx, nRecords);
-    }
-
-    return new OLimitedResultSet(
-        new OResultSet() {
-
-          @Override
-          public boolean hasNext() {
-            if (nextItem >= finalResults.size()) {
-              return false;
-            }
-            return true;
-          }
-
-          @Override
-          public OResult next() {
-            if (nextItem >= finalResults.size()) {
-              throw new IllegalStateException();
-            }
-            OResult result = finalResults.get(nextItem);
-            nextItem++;
-            return result;
-          }
-
-          @Override
-          public void close() {}
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    List<OResult> finalResults = executeAggregation(ctx);
+    return OExecutionStream.resultIterator(finalResults.iterator());
   }
 
-  private void executeAggregation(OCommandContext ctx, int nRecords) {
+  private List<OResult> executeAggregation(OCommandContext ctx) {
     long timeoutBegin = System.currentTimeMillis();
     if (!prev.isPresent()) {
       throw new OCommandExecutionException(
           "Cannot execute an aggregation or a GROUP BY without a previous result");
     }
     OExecutionStepInternal prevStep = prev.get();
-    OResultSet lastRs = prevStep.syncPull(ctx, nRecords);
-    while (lastRs.hasNext()) {
+    OExecutionStream lastRs = prevStep.start(ctx);
+    Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
+    while (lastRs.hasNext(ctx)) {
       if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
         sendTimeout();
       }
-      aggregate(lastRs.next(), ctx);
-      if (!lastRs.hasNext()) {
-        lastRs = prevStep.syncPull(ctx, nRecords);
-      }
+      aggregate(lastRs.next(ctx), ctx, aggregateResults);
     }
-    finalResults = new ArrayList<>();
+    lastRs.close(ctx);
+    List<OResult> finalResults = new ArrayList<>();
     finalResults.addAll(aggregateResults.values());
     aggregateResults.clear();
-    for (OResultInternal item : finalResults) {
+    for (OResult ele : finalResults) {
+      OResultInternal item = (OResultInternal) ele;
       if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
         sendTimeout();
       }
@@ -115,48 +70,43 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
         }
       }
     }
+    return finalResults;
   }
 
-  private void aggregate(OResult next, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      List<Object> key = new ArrayList<>();
-      if (groupBy != null) {
-        for (OExpression item : groupBy.getItems()) {
-          Object val = item.execute(next, ctx);
-          key.add(val);
-        }
+  private void aggregate(
+      OResult next, OCommandContext ctx, Map<List, OResultInternal> aggregateResults) {
+    List<Object> key = new ArrayList<>();
+    if (groupBy != null) {
+      for (OExpression item : groupBy.getItems()) {
+        Object val = item.execute(next, ctx);
+        key.add(val);
       }
-      OResultInternal preAggr = aggregateResults.get(key);
-      if (preAggr == null) {
-        if (limit > 0 && aggregateResults.size() > limit) {
-          return;
-        }
-        preAggr = new OResultInternal();
-
-        for (OProjectionItem proj : this.projection.getItems()) {
-          String alias = proj.getProjectionAlias().getStringValue();
-          if (!proj.isAggregate()) {
-            preAggr.setProperty(alias, proj.execute(next, ctx));
-          }
-        }
-        aggregateResults.put(key, preAggr);
+    }
+    OResultInternal preAggr = aggregateResults.get(key);
+    if (preAggr == null) {
+      if (limit > 0 && aggregateResults.size() > limit) {
+        return;
       }
+      preAggr = new OResultInternal();
 
       for (OProjectionItem proj : this.projection.getItems()) {
         String alias = proj.getProjectionAlias().getStringValue();
-        if (proj.isAggregate()) {
-          AggregationContext aggrCtx = (AggregationContext) preAggr.getTemporaryProperty(alias);
-          if (aggrCtx == null) {
-            aggrCtx = proj.getAggregationContext(ctx);
-            preAggr.setTemporaryProperty(alias, aggrCtx);
-          }
-          aggrCtx.apply(next, ctx);
+        if (!proj.isAggregate()) {
+          preAggr.setProperty(alias, proj.execute(next, ctx));
         }
       }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+      aggregateResults.put(key, preAggr);
+    }
+
+    for (OProjectionItem proj : this.projection.getItems()) {
+      String alias = proj.getProjectionAlias().getStringValue();
+      if (proj.isAggregate()) {
+        AggregationContext aggrCtx = (AggregationContext) preAggr.getTemporaryProperty(alias);
+        if (aggrCtx == null) {
+          aggrCtx = proj.getAggregationContext(ctx);
+          preAggr.setTemporaryProperty(alias, aggrCtx);
+        }
+        aggrCtx.apply(next, ctx);
       }
     }
   }
@@ -187,10 +137,5 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
         ctx,
         timeoutMillis,
         profilingEnabled);
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

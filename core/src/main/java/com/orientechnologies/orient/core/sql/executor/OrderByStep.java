@@ -4,24 +4,17 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /** Created by luigidellaquila on 11/07/16. */
 public class OrderByStep extends AbstractExecutionStep {
   private final OOrderBy orderBy;
   private final long timeoutMillis;
   private Integer maxResults;
-
-  private long cost = 0;
-
-  private List<OResult> cachedResult = null;
-  private int nextElement = 0;
 
   public OrderByStep(
       OOrderBy orderBy, OCommandContext ctx, long timeoutMillis, boolean profilingEnabled) {
@@ -44,132 +37,60 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    if (cachedResult == null) {
-      cachedResult = new ArrayList<>();
-      prev.ifPresent(p -> init(p, ctx));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    List<OResult> results;
+    if (prev.isPresent()) {
+      results = init(prev.get(), ctx);
+    } else {
+      results = Collections.emptyList();
     }
-
-    return new OLimitedResultSet(
-        new OResultSet() {
-
-          @Override
-          public boolean hasNext() {
-            if (cachedResult.size() <= nextElement) {
-              return false;
-            }
-            return true;
-          }
-
-          @Override
-          public OResult next() {
-            long begin = profilingEnabled ? System.nanoTime() : 0;
-            try {
-              if (cachedResult.size() <= nextElement) {
-                throw new IllegalStateException();
-              }
-              OResult result = cachedResult.get(nextElement);
-              nextElement++;
-              return result;
-            } finally {
-              if (profilingEnabled) {
-                cost += (System.nanoTime() - begin);
-              }
-            }
-          }
-
-          @Override
-          public void close() {
-            prev.ifPresent(p -> p.close());
-          }
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return new HashMap<>();
-          }
-        },
-        nRecords);
+    return OExecutionStream.resultIterator(results.iterator());
   }
 
-  private void init(OExecutionStepInternal p, OCommandContext ctx) {
+  private List<OResult> init(OExecutionStepInternal p, OCommandContext ctx) {
     long timeoutBegin = System.currentTimeMillis();
+    List<OResult> cachedResult = new ArrayList<>();
     final long maxElementsAllowed =
         OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong();
     boolean sorted = true;
-    do {
-      OResultSet lastBatch = p.syncPull(ctx, 100);
-      if (!lastBatch.hasNext()) {
-        break;
+    OExecutionStream lastBatch = p.start(ctx);
+    while (lastBatch.hasNext(ctx)) {
+      if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
+        sendTimeout();
       }
-      while (lastBatch.hasNext()) {
-        if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
-          sendTimeout();
-        }
 
-        if (this.timedOut) {
-          break;
-        }
-        OResult item = lastBatch.next();
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          cachedResult.add(item);
-          if (maxElementsAllowed >= 0 && maxElementsAllowed < cachedResult.size()) {
-            this.cachedResult.clear();
-            throw new OCommandExecutionException(
-                "Limit of allowed elements for in-heap ORDER BY in a single query exceeded ("
-                    + maxElementsAllowed
-                    + ") . You can set "
-                    + OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getKey()
-                    + " to increase this limit");
-          }
-          sorted = false;
-          // compact, only at twice as the buffer, to avoid to do it at each add
-          if (this.maxResults != null) {
-            long compactThreshold = 2L * maxResults;
-            if (compactThreshold < cachedResult.size()) {
-              cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
-              cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
-              sorted = true;
-            }
-          }
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
+      OResult item = lastBatch.next(ctx);
+      cachedResult.add(item);
+      if (maxElementsAllowed >= 0 && maxElementsAllowed < cachedResult.size()) {
+        throw new OCommandExecutionException(
+            "Limit of allowed elements for in-heap ORDER BY in a single query exceeded ("
+                + maxElementsAllowed
+                + ") . You can set "
+                + OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getKey()
+                + " to increase this limit");
       }
-      if (timedOut) {
-        break;
-      }
-      long begin = profilingEnabled ? System.nanoTime() : 0;
-      try {
-        // compact at each batch, if needed
-        if (!sorted && this.maxResults != null && maxResults < cachedResult.size()) {
+      sorted = false;
+      // compact, only at twice as the buffer, to avoid to do it at each add
+      if (this.maxResults != null) {
+        long compactThreshold = 2L * maxResults;
+        if (compactThreshold < cachedResult.size()) {
           cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
           cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
           sorted = true;
         }
-      } finally {
-        if (profilingEnabled) {
-          cost += (System.nanoTime() - begin);
-        }
-      }
-    } while (true);
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (!sorted) {
-        cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
       }
     }
+    lastBatch.close(ctx);
+    // compact at each batch, if needed
+    if (!sorted && this.maxResults != null && maxResults < cachedResult.size()) {
+      cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+      cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
+      sorted = true;
+    }
+    if (!sorted) {
+      cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+    }
+    return cachedResult;
   }
 
   @Override
@@ -180,10 +101,5 @@ public class OrderByStep extends AbstractExecutionStep {
     }
     result += (maxResults != null ? "\n  (buffer size: " + maxResults + ")" : "");
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

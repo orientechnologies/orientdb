@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OInputParameter;
 import com.orientechnologies.orient.core.sql.parser.OJson;
 import java.util.HashMap;
@@ -34,12 +34,12 @@ public class UpdateContentStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(upstream, (result) -> mapResult(ctx, result));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = getPrev().get().start(ctx);
+    return upstream.map(this::mapResult);
   }
 
-  private OResult mapResult(OCommandContext ctx, OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     if (result instanceof OResultInternal) {
       if (!(result.getElement().get() instanceof OElement)) {
         ((OResultInternal) result).setElement(result.getElement().get().getRecord());

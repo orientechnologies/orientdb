@@ -8,9 +8,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.SequenceOrderType;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -39,7 +38,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     OSequence seq =
         ctx.getDatabase()
             .getMetadata()
@@ -47,7 +46,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
             .getSequence(this.name.getStringValue());
     if (seq != null) {
       if (ifNotExists) {
-        return new OInternalResultSet();
+        return OExecutionStream.empty();
       } else {
         throw new OCommandExecutionException(
             "Sequence " + name.getStringValue() + " already exists");
@@ -65,9 +64,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       throw new OCommandExecutionException(message);
     }
 
-    OInternalResultSet rs = new OInternalResultSet();
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   private void executeInternal(OCommandContext ctx, OResultInternal result)

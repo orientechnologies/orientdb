@@ -2,14 +2,13 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Collections;
 
 public class GuaranteeEmptyCountStep extends AbstractExecutionStep {
 
   private final OProjectionItem item;
-  private boolean executed = false;
 
   public GuaranteeEmptyCountStep(
       OProjectionItem oProjectionItem, OCommandContext ctx, boolean enableProfiling) {
@@ -18,54 +17,18 @@ public class GuaranteeEmptyCountStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OResultSet upstream = prev.get().syncPull(ctx, nRecords);
-    return new OResultSet() {
-      @Override
-      public boolean hasNext() {
-        if (!executed) {
-          return true;
-        }
-
-        return upstream.hasNext();
-      }
-
-      @Override
-      public OResult next() {
-        if (!hasNext()) {
-          throw new IllegalStateException();
-        }
-
-        try {
-          if (upstream.hasNext()) {
-            return upstream.next();
-          }
-          OResultInternal result = new OResultInternal();
-          result.setProperty(item.getProjectionAliasAsString(), 0L);
-          return result;
-        } finally {
-          executed = true;
-        }
-      }
-
-      @Override
-      public void close() {
-        prev.get().close();
-      }
-
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+    OExecutionStream upstream = prev.get().start(ctx);
+    if (upstream.hasNext(ctx)) {
+      return upstream.limit(1);
+    } else {
+      OResultInternal result = new OResultInternal();
+      result.setProperty(item.getProjectionAliasAsString(), 0L);
+      return OExecutionStream.resultIterator(Collections.singleton((OResult) result).iterator());
+    }
   }
 
   @Override

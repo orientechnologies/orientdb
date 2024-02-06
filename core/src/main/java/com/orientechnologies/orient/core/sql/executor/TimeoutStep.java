@@ -2,13 +2,13 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExpireResultSet;
 import com.orientechnologies.orient.core.sql.parser.OTimeout;
 
 /** Created by luigidellaquila on 08/08/16. */
 public class TimeoutStep extends AbstractExecutionStep {
   private final OTimeout timeout;
-
-  private Long expiryTime;
 
   public TimeoutStep(OTimeout timeout, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -16,21 +16,15 @@ public class TimeoutStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    if (this.expiryTime == null) {
-      this.expiryTime = System.currentTimeMillis() + timeout.getVal().longValue();
-    }
-    if (System.currentTimeMillis() > expiryTime) {
-      return fail();
-    }
-    return getPrev().get().syncPull(ctx, nRecords); // TODO do it more granular
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    return new OExpireResultSet(
+        getPrev().get().start(ctx), timeout.getVal().longValue(), this::fail);
   }
 
-  private OResultSet fail() {
-    this.timedOut = true;
+  private void fail() {
     sendTimeout();
     if (OTimeout.RETURN.equals(this.timeout.getFailureStrategy())) {
-      return new OInternalResultSet();
+      return;
     } else {
       throw new OTimeoutException("Timeout expired");
     }
@@ -45,9 +39,7 @@ public class TimeoutStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void reset() {
-    expiryTime = null;
-  }
+  public void reset() {}
 
   @Override
   public boolean canBeCached() {

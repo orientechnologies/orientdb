@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /** Created by luigidellaquila on 06/07/16. */
 public interface OInternalExecutionPlan extends OExecutionPlan {
@@ -14,12 +15,13 @@ public interface OInternalExecutionPlan extends OExecutionPlan {
    * execution contains less than N elements, then the result will contain them all, next result(s)
    * will contain zero elements
    *
-   * @param n
    * @return
    */
-  OResultSet fetchNext(int n);
+  OExecutionStream start();
 
   void reset(OCommandContext ctx);
+
+  OCommandContext getContext();
 
   long getCost();
 

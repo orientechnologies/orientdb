@@ -6,6 +6,8 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OSingleOpServerExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,7 +27,7 @@ public abstract class OSimpleExecServerStatement extends OServerStatement {
     super(p, id);
   }
 
-  public abstract OResultSet executeSimple(OServerCommandContext ctx);
+  public abstract OExecutionStream executeSimple(OServerCommandContext ctx);
 
   public OResultSet execute(
       OrientDBInternal db,
@@ -46,7 +48,7 @@ public abstract class OSimpleExecServerStatement extends OServerStatement {
     ctx.setInputParameters(params);
     OSingleOpServerExecutionPlan executionPlan =
         (OSingleOpServerExecutionPlan) createExecutionPlan(ctx, false);
-    return executionPlan.executeInternal(ctx);
+    return new OExecutionResultSet(executionPlan.executeInternal(ctx), ctx, executionPlan);
   }
 
   public OResultSet execute(
@@ -59,7 +61,7 @@ public abstract class OSimpleExecServerStatement extends OServerStatement {
     ctx.setInputParameters(params);
     OSingleOpServerExecutionPlan executionPlan =
         (OSingleOpServerExecutionPlan) createExecutionPlan(ctx, false);
-    return executionPlan.executeInternal(ctx);
+    return new OExecutionResultSet(executionPlan.executeInternal(ctx), ctx, executionPlan);
   }
 
   public OInternalExecutionPlan createExecutionPlan(

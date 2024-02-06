@@ -2,21 +2,13 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
-import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import java.util.List;
 
 /** Created by luigidellaquila on 20/09/16. */
 public class MatchFirstStep extends AbstractExecutionStep {
   private final PatternNode node;
   private OInternalExecutionPlan executionPlan;
-
-  private Iterator<OResult> iterator;
-  private OResultSet subResultSet;
 
   public MatchFirstStep(OCommandContext context, PatternNode node, boolean profilingEnabled) {
     this(context, node, null, profilingEnabled);
@@ -34,86 +26,31 @@ public class MatchFirstStep extends AbstractExecutionStep {
 
   @Override
   public void reset() {
-    this.iterator = null;
-    this.subResultSet = null;
     if (executionPlan != null) {
       executionPlan.reset(this.getContext());
     }
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    init(ctx);
-    return new OLimitedResultSet(
-        new OResultSet() {
-
-          @Override
-          public boolean hasNext() {
-            if (iterator != null) {
-              return iterator.hasNext();
-            } else {
-              return subResultSet.hasNext();
-            }
-          }
-
-          @Override
-          public OResult next() {
-            OResultInternal result = new OResultInternal();
-            if (iterator != null) {
-              result.setProperty(getAlias(), iterator.next());
-            } else {
-              result.setProperty(getAlias(), subResultSet.next());
-            }
-            ctx.setVariable("$matched", result);
-            return result;
-          }
-
-          @Override
-          public void close() {}
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
-  }
-
-  private Object toResult(OIdentifiable nextElement) {
-    return new OResultInternal(nextElement);
-  }
-
-  private void init(OCommandContext ctx) {
-    if (iterator == null && subResultSet == null) {
-      String alias = getAlias();
-      Object matchedNodes =
-          ctx.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
-      if (matchedNodes != null) {
-        initFromPrefetch(matchedNodes);
-      } else {
-        initFromExecutionPlan(ctx);
-      }
-    }
-  }
-
-  private void initFromExecutionPlan(OCommandContext ctx) {
-    this.subResultSet = new OLocalResultSet(executionPlan);
-  }
-
-  private void initFromPrefetch(Object matchedNodes) {
-    Iterable possibleResults;
-    if (matchedNodes instanceof Iterable) {
-      possibleResults = (Iterable) matchedNodes;
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
+    OExecutionStream data;
+    String alias = getAlias();
+    List<OResult> matchedNodes =
+        (List<OResult>) ctx.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
+    if (matchedNodes != null) {
+      data = OExecutionStream.resultIterator(matchedNodes.iterator());
     } else {
-      possibleResults = Collections.singleton(matchedNodes);
+      data = executionPlan.start();
     }
-    iterator = possibleResults.iterator();
+
+    return data.map(
+        (result, context) -> {
+          OResultInternal newResult = new OResultInternal();
+          newResult.setProperty(getAlias(), result);
+          context.setVariable("$matched", newResult);
+          return newResult;
+        });
   }
 
   @Override

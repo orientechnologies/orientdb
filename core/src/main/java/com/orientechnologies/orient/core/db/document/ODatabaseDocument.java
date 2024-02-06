@@ -348,6 +348,10 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
 
   OElement newEmbeddedElement(final String className);
 
+  default OElement reload(OElement element) {
+    return (OElement) reload(element, null, true);
+  }
+
   /**
    * Creates a new Edge of type E
    *

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -25,7 +24,7 @@ public class OUpdatableResult extends OResultInternal {
     if (content != null && content.containsKey(name)) {
       result = (T) content.get(name);
     } else if (isElement()) {
-      result = (T) ODocumentInternal.rawPropertyRead((OElement) element, name);
+      result = (T) ((OElement) element).getProperty(name);
     }
     if (result instanceof OIdentifiable && ((OIdentifiable) result).getIdentity().isPersistent()) {
       result = (T) ((OIdentifiable) result).getIdentity();

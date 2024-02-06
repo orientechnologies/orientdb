@@ -8,9 +8,8 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityPolicyImpl;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
@@ -40,7 +39,7 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     ODatabaseSession db = (ODatabaseSession) ctx.getDatabase();
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     OSecurityPolicyImpl policy = security.getSecurityPolicy(db, name.getStringValue());
@@ -90,9 +89,7 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "alter security policy");
     result.setProperty("name", name.getStringValue());
-    OInternalResultSet rs = new OInternalResultSet();
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   @Override

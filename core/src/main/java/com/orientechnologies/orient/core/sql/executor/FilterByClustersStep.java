@@ -5,48 +5,38 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Created by luigidellaquila on 01/03/17. */
 public class FilterByClustersStep extends AbstractExecutionStep {
   private Set<String> clusters;
-  private Set<Integer> clusterIds;
-
-  private OResultSet prevResult = null;
 
   public FilterByClustersStep(
       Set<String> filterClusters, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.clusters = filterClusters;
-    ODatabaseSession db = ctx.getDatabase();
-    init(db);
   }
 
-  private void init(ODatabaseSession db) {
-    if (this.clusterIds == null) {
-      this.clusterIds =
-          clusters.stream()
-              .map(x -> db.getClusterIdByName(x))
-              .filter(x -> x != null)
-              .collect(Collectors.toSet());
-    }
+  private Set<Integer> init(ODatabaseSession db) {
+    return clusters.stream()
+        .map(x -> db.getClusterIdByName(x))
+        .filter(x -> x != null)
+        .collect(Collectors.toSet());
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    init(ctx.getDatabase());
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    Set<Integer> ids = init(ctx.getDatabase());
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-
-    return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx, nRecords), this::filterMap), nRecords);
+    OExecutionStream resultSet = prev.get().start(ctx);
+    return resultSet.filter((value, context) -> this.filterMap(value, ids));
   }
 
-  private OResult filterMap(OResult result) {
+  private OResult filterMap(OResult result, Set<Integer> clusterIds) {
     if (result.isElement()) {
       int clusterId = result.getIdentity().get().getClusterId();
       if (clusterId < 0) {
@@ -58,16 +48,6 @@ public class FilterByClustersStep extends AbstractExecutionStep {
       }
     }
     return null;
-  }
-
-  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
-    OExecutionStepInternal prevStep = prev.get();
-    if (prevResult == null) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
-    } else if (!prevResult.hasNext()) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
-    }
-    return prevResult;
   }
 
   @Override

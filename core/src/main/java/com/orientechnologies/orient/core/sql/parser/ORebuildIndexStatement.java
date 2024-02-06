@@ -6,9 +6,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class ORebuildIndexStatement extends OSimpleExecStatement {
@@ -25,7 +24,7 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
+  public OExecutionStream executeSimple(OCommandContext ctx) {
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "rebuild index");
 
@@ -51,9 +50,7 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
       long val = idx.rebuild();
       result.setProperty("totalIndexed", val);
     }
-    OInternalResultSet rs = new OInternalResultSet();
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   @Override

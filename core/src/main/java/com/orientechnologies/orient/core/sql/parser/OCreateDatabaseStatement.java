@@ -7,9 +7,8 @@ import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -41,7 +40,7 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OServerCommandContext ctx) {
+  public OExecutionStream executeSimple(OServerCommandContext ctx) {
     OrientDBInternal server = ctx.getServer();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create database");
@@ -96,9 +95,7 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
       }
     }
 
-    OInternalResultSet rs = new OInternalResultSet();
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   private OrientDBConfigBuilder mapOrientDBConfig(

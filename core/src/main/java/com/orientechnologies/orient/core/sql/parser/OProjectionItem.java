@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -132,10 +133,10 @@ public class OProjectionItem extends SimpleNode {
     if (nestedProjection != null) {
       result = nestedProjection.apply(expression, result, ctx);
     }
-    return convert(result);
+    return convert(result, ctx);
   }
 
-  public static Object convert(Object value) {
+  public static Object convert(Object value, OCommandContext context) {
     if (value instanceof ORidBag) {
       List result = new ArrayList();
       ((ORidBag) value).rawIterator().forEachRemaining(x -> result.add(x));
@@ -157,6 +158,9 @@ public class OProjectionItem extends SimpleNode {
     if (value instanceof OInternalResultSet) {
       ((OInternalResultSet) value).reset();
       value = ((OInternalResultSet) value).stream().collect(Collectors.toList());
+    }
+    if (value instanceof OExecutionStream) {
+      value = ((OExecutionStream) value).stream(context).collect(Collectors.toList());
     }
     if (value instanceof Iterator && !(value instanceof OIdentifiable)) {
       Iterator iter = (Iterator) value;
@@ -182,7 +186,7 @@ public class OProjectionItem extends SimpleNode {
       }
       result = nestedProjection.apply(expression, result, ctx);
     }
-    return convert(result);
+    return convert(result, ctx);
   }
 
   /**

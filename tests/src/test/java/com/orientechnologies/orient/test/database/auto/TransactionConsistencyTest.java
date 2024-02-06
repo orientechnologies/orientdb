@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -46,6 +45,7 @@ import org.testng.annotations.Test;
 
 @Test
 public class TransactionConsistencyTest extends DocumentDBBaseTest {
+
   protected ODatabaseDocument database1;
   protected ODatabaseDocument database2;
 
@@ -515,95 +515,93 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
 
   @Test
   public void testConsistencyOnDelete() {
-    final OrientGraph graph = new OrientGraph(url);
-
-    if (graph.getVertexType("Foo") == null) graph.createVertexType("Foo");
+    database = new ODatabaseDocumentTx(url).open("admin", "admin");
 
     try {
+      if (database.getMetadata().getSchema().getClass("Foo") == null) {
+        database.createVertexClass("Foo");
+      }
+
+      database.begin();
       // Step 1
       // Create several foo's
-      graph.addVertex("class:Foo", "address", "test1");
-      graph.addVertex("class:Foo", "address", "test2");
-      graph.addVertex("class:Foo", "address", "test3");
-      graph.commit();
+      var v = database.newVertex("Foo");
+      v.setProperty("address", "test1");
+      v.save();
 
-      // just show what is there
-      List<ODocument> result =
-          graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select * from Foo"));
+      v = database.newVertex("Foo");
+      v.setProperty("address", "test2");
+      v.save();
 
-      // for (ODocument d : result) {
-      // System.out.println("Vertex: " + d);
-      // }
+      v = database.newVertex("Foo");
+      v.setProperty("address", "test3");
+      v.save();
+      database.commit();
 
       // remove those foos in a transaction
       // Step 3a
-      result =
-          graph
-              .getRawGraph()
-              .query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test1'"));
+      var result =
+          database.query("select * from Foo where address = 'test1'").elementStream().toList();
       Assert.assertEquals(result.size(), 1);
       // Step 4a
-      graph.removeVertex(graph.getVertex(result.get(0)));
+      database.delete(result.get(0));
 
       // Step 3b
-      result =
-          graph
-              .getRawGraph()
-              .query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test2'"));
+      result = database.query("select * from Foo where address = 'test2'").elementStream().toList();
       Assert.assertEquals(result.size(), 1);
       // Step 4b
-      graph.removeVertex(graph.getVertex(result.get(0)));
+      database.delete(result.get(0));
 
       // Step 3c
-      result =
-          graph
-              .getRawGraph()
-              .query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test3'"));
+      result = database.query("select * from Foo where address = 'test3'").elementStream().toList();
       Assert.assertEquals(result.size(), 1);
       // Step 4c
-      graph.removeVertex(graph.getVertex(result.get(0)));
+      database.delete(result.get(0));
 
       // Step 6
-      graph.commit();
-
-      // just show what is there
-      result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select * from Foo"));
-
-      // for (ODocument d : result) {
-      // System.out.println("Vertex: " + d);
-      // }
-
+      database.commit();
     } finally {
-      graph.shutdown();
+      database.close();
     }
   }
 
   @Test
   public void deletesWithinTransactionArentWorking() throws IOException {
-    OrientGraph graph = new OrientGraph(url);
-    graph.setUseLightweightEdges(false);
+    database = new ODatabaseDocumentTx(url).open("admin", "admin");
     try {
-      if (graph.getVertexType("Foo") == null) graph.createVertexType("Foo");
-      if (graph.getVertexType("Bar") == null) graph.createVertexType("Bar");
-      if (graph.getVertexType("Sees") == null) graph.createEdgeType("Sees");
+      if (database.getClass("Foo") == null) {
+        database.createVertexClass("Foo");
+      }
+      if (database.getClass("Bar") == null) {
+        database.createVertexClass("Bar");
+      }
+      if (database.getClass("Sees") == null) {
+        database.createEdgeClass("Sees");
+      }
 
       // Commenting out the transaction will result in the test succeeding.
-      ODocument foo = graph.addVertex("class:Foo", "prop", "test1").getRecord();
+      var foo = database.newVertex("Foo");
+      foo.setProperty("prop", "test1");
+      foo.save();
 
       // Comment out these two lines and the test will succeed. The issue appears to be related to
       // an edge
       // connecting a deleted vertex during a transaction
-      ODocument bar = graph.addVertex("class:Bar", "prop", "test1").getRecord();
-      ODocument sees =
-          graph.addEdge(null, graph.getVertex(foo), graph.getVertex(bar), "Sees").getRecord();
-      graph.commit();
+      var bar = database.newVertex("Bar");
+      bar.setProperty("prop", "test1");
+      bar.save();
 
-      List<ODocument> foos = graph.getRawGraph().query(new OSQLSynchQuery("select * from Foo"));
+      var sees = database.newEdge(foo, bar, "Sees");
+      sees.save();
+
+      database.commit();
+
+      var foos = database.query("select * from Foo").stream().toList();
       Assert.assertEquals(foos.size(), 1);
 
-      graph.removeVertex(graph.getVertex(foos.get(0)));
+      database.delete(foos.get(0).toElement());
     } finally {
-      graph.shutdown();
+      database.close();
     }
   }
 
@@ -656,9 +654,6 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
         database.command(new OCommandSQL("select from TRPerson")).execute();
     Assert.assertNotNull(result1);
     Assert.assertEquals(result1.size(), cnt);
-    // System.out.println("Before transaction commit");
-    // for (ODocument d : result1)
-    // System.out.println(d);
 
     try {
       database.begin();
@@ -704,41 +699,36 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     final List<ODocument> result2 =
         database.command(new OCommandSQL("select from TRPerson")).execute();
     Assert.assertNotNull(result2);
-    // System.out.println("After transaction commit failure/rollback");
-    // for (ODocument d : result2)
-    // System.out.println(d);
     Assert.assertEquals(result2.size(), cnt);
-
-    // System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
   }
 
   @Test
   public void testQueryIsolation() {
-    OrientGraph graph = new OrientGraph(url);
+    database = new ODatabaseDocumentTx(url).open("admin", "admin");
     try {
-      graph.addVertex(null, "purpose", "testQueryIsolation");
+      database.begin();
+      var v = database.newVertex();
 
-      if (!url.startsWith("remote")) {
-        List<OIdentifiable> result =
-            graph
-                .getRawGraph()
-                .query(
-                    new OSQLSynchQuery<Object>(
-                        "select from V where purpose = 'testQueryIsolation'"));
-        Assert.assertEquals(result.size(), 1);
-      }
+      v.setProperty("purpose", "testQueryIsolation");
+      v.save();
 
-      graph.commit();
-
-      List<OIdentifiable> result =
-          graph
-              .getRawGraph()
-              .query(
-                  new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
+      var result =
+          database
+              .query("select from V where purpose = 'testQueryIsolation'")
+              .elementStream()
+              .toList();
       Assert.assertEquals(result.size(), 1);
 
+      database.commit();
+
+      result =
+          database
+              .query("select from V where purpose = 'testQueryIsolation'")
+              .elementStream()
+              .toList();
+      Assert.assertEquals(result.size(), 1);
     } finally {
-      graph.shutdown();
+      database.close();
     }
   }
 
@@ -802,8 +792,9 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
 
       int bookCount = 0;
       for (Address b : database.browseClass(Address.class)) {
-        if (b.getStreet().equals("Mulholland drive") || b.getStreet().equals("Via Veneto"))
+        if (b.getStreet().equals("Mulholland drive") || b.getStreet().equals("Via Veneto")) {
           bookCount++;
+        }
       }
       Assert.assertEquals(bookCount, 2); // this fails, only 1 entry in the datastore :(
     } finally {

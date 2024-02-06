@@ -3,14 +3,12 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -20,12 +18,6 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
   protected final OWhereClause whileClause;
   protected final List<OTraverseProjectionItem> projections;
   protected final OInteger maxDepth;
-
-  protected List<OResult> entryPoints = null;
-  protected List<OResult> results = new ArrayList<>();
-  private long cost = 0;
-
-  protected Set<ORID> traversed = new ORidSet();
 
   public AbstractTraverseStep(
       List<OTraverseProjectionItem> projections,
@@ -43,89 +35,72 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    return new OLimitedResultSet(
-        new OResultSet() {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream resultSet = getPrev().get().start(ctx);
+    return new OExecutionStream() {
+      private List<OResult> entryPoints = new ArrayList<>();
+      private List<OResult> results = new ArrayList<>();
+      private Set<ORID> traversed = new ORidSet();
 
-          @Override
-          public boolean hasNext() {
-            if (results.isEmpty()) {
-              fetchNextBlock(ctx, nRecords);
-            }
-            if (results.isEmpty()) {
-              return false;
-            }
-            return true;
-          }
+      @Override
+      public boolean hasNext(OCommandContext ctx) {
+        if (results.isEmpty()) {
+          fetchNextBlock(ctx, this.entryPoints, this.results, this.traversed, resultSet);
+        }
+        if (results.isEmpty()) {
+          return false;
+        }
+        return true;
+      }
 
-          @Override
-          public OResult next() {
-            if (results.isEmpty()) {
-              fetchNextBlock(ctx, nRecords);
-              if (results.isEmpty()) {
-                throw new IllegalStateException();
-              }
-            }
-            OResult result = results.remove(0);
-            if (result.isElement()) {
-              traversed.add(result.getElement().get().getIdentity());
-            }
-            return result;
-          }
+      @Override
+      public OResult next(OCommandContext ctx) {
+        if (!hasNext(ctx)) {
+          throw new IllegalStateException();
+        }
+        OResult result = results.remove(0);
+        if (result.isElement()) {
+          this.traversed.add(result.getElement().get().getIdentity());
+        }
+        return result;
+      }
 
-          @Override
-          public void close() {}
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+      @Override
+      public void close(OCommandContext ctx) {}
+    };
   }
 
-  private void fetchNextBlock(OCommandContext ctx, int nRecords) {
-    if (this.entryPoints == null) {
-      this.entryPoints = new ArrayList<OResult>();
-    }
-    if (!this.results.isEmpty()) {
+  private void fetchNextBlock(
+      OCommandContext ctx,
+      List<OResult> entryPoints,
+      List<OResult> results,
+      Set<ORID> traversed,
+      OExecutionStream resultSet) {
+    if (!results.isEmpty()) {
       return;
     }
-    while (this.results.isEmpty()) {
-      if (this.entryPoints.isEmpty()) {
-        fetchNextEntryPoints(ctx, nRecords);
+    while (results.isEmpty()) {
+      if (entryPoints.isEmpty()) {
+        fetchNextEntryPoints(resultSet, ctx, entryPoints, traversed);
       }
-      if (this.entryPoints.isEmpty()) {
+      if (entryPoints.isEmpty()) {
         return;
       }
-      long begin = profilingEnabled ? System.nanoTime() : 0;
-      fetchNextResults(ctx, nRecords);
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
-      if (!this.results.isEmpty()) {
+      fetchNextResults(ctx, results, entryPoints, traversed);
+      if (!results.isEmpty()) {
         return;
       }
     }
   }
 
-  protected abstract void fetchNextEntryPoints(OCommandContext ctx, int nRecords);
+  protected abstract void fetchNextEntryPoints(
+      OExecutionStream toFetch,
+      OCommandContext ctx,
+      List<OResult> entryPoints,
+      Set<ORID> traversed);
 
-  protected abstract void fetchNextResults(OCommandContext ctx, int nRecords);
-
-  protected boolean isFinished() {
-    return entryPoints != null && entryPoints.isEmpty() && results.isEmpty();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
-  }
+  protected abstract void fetchNextResults(
+      OCommandContext ctx, List<OResult> results, List<OResult> entryPoints, Set<ORID> traversed);
 
   @Override
   public String toString() {

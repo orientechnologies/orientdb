@@ -6,8 +6,8 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-import java.util.Iterator;
 import java.util.List;
 
 /** Created by luigidellaquila on 19/09/16. */
@@ -16,9 +16,6 @@ public class RetryStep extends AbstractExecutionStep {
   public List<OStatement> elseBody;
   public boolean elseFail;
   private final int retries;
-
-  private Iterator iterator;
-  private OExecutionStepInternal finalResult = null;
 
   public RetryStep(
       List<OStatement> statements,
@@ -35,11 +32,8 @@ public class RetryStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    if (finalResult != null) {
-      return finalResult.syncPull(ctx, nRecords);
-    }
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     for (int i = 0; i < retries; i++) {
       try {
 
@@ -49,8 +43,7 @@ public class RetryStep extends AbstractExecutionStep {
         OScriptExecutionPlan plan = initPlan(body, ctx);
         OExecutionStepInternal result = plan.executeFull();
         if (result != null) {
-          this.finalResult = result;
-          return result.syncPull(ctx, nRecords);
+          return result.start(ctx);
         }
         break;
       } catch (ONeedRetryException ex) {
@@ -64,21 +57,19 @@ public class RetryStep extends AbstractExecutionStep {
             OScriptExecutionPlan plan = initPlan(elseBody, ctx);
             OExecutionStepInternal result = plan.executeFull();
             if (result != null) {
-              this.finalResult = result;
-              return result.syncPull(ctx, nRecords);
+              return result.start(ctx);
             }
           }
           if (elseFail) {
             throw ex;
           } else {
-            return new OInternalResultSet();
+            return OExecutionStream.empty();
           }
         }
       }
     }
 
-    finalResult = new EmptyStep(ctx, false);
-    return finalResult.syncPull(ctx, nRecords);
+    return new EmptyStep(ctx, false).start(ctx);
   }
 
   public OScriptExecutionPlan initPlan(List<OStatement> body, OCommandContext ctx) {

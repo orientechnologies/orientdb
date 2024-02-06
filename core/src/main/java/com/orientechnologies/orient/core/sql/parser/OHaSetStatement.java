@@ -7,9 +7,11 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.enterprise.OEnterpriseEndpoint;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class OHaSetStatement extends OSimpleExecStatement {
@@ -26,8 +28,8 @@ public class OHaSetStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
-    OInternalResultSet result = new OInternalResultSet();
+  public OExecutionStream executeSimple(OCommandContext ctx) {
+    List<OResult> result = new ArrayList<>();
 
     String operation = this.operation.getStringValue();
     Object key = this.key.execute(new OResultInternal(), ctx);
@@ -87,7 +89,7 @@ public class OHaSetStatement extends OSimpleExecStatement {
       result.add(item);
     }
 
-    return result;
+    return OExecutionStream.resultIterator(result.iterator());
   }
 
   @Override

@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /** Created by luigidellaquila on 22/07/16. */
 public class SubQueryStep extends AbstractExecutionStep {
@@ -30,13 +30,13 @@ public class SubQueryStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    OResultSet parentRs = subExecuitonPlan.fetchNext(nRecords);
-    return new OResultSetMapper(parentRs, (result) -> mapResult(ctx, result));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
+    OExecutionStream parentRs = subExecuitonPlan.start();
+    return parentRs.map(this::mapResult);
   }
 
-  private OResult mapResult(OCommandContext ctx, OResult result) {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
     ctx.setVariable("$current", result);
     return result;
   }

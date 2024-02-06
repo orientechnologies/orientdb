@@ -2,17 +2,12 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.List;
 
 public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
   private List<AbstractExecutionStep> subSteps;
-
-  private OResultSet prevResult = null;
-
-  private long cost;
 
   public FilterNotMatchPatternStep(
       List<AbstractExecutionStep> steps, OCommandContext ctx, boolean enableProfiling) {
@@ -21,43 +16,28 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx, nRecords), (result) -> filterMap(ctx, result)),
-        nRecords);
+    OExecutionStream resultSet = prev.get().start(ctx);
+    return resultSet.filter(this::filterMap);
   }
 
-  private OResult filterMap(OCommandContext ctx, OResult result) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (!matchesPattern(result, ctx)) {
-        return result;
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+  private OResult filterMap(OResult result, OCommandContext ctx) {
+    if (!matchesPattern(result, ctx)) {
+      return result;
     }
     return null;
   }
 
-  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
-    OExecutionStepInternal prevStep = prev.get();
-    if (prevResult == null) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
-    } else if (!prevResult.hasNext()) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
-    }
-    return prevResult;
-  }
-
   private boolean matchesPattern(OResult nextItem, OCommandContext ctx) {
     OSelectExecutionPlan plan = createExecutionPlan(nextItem, ctx);
-    try (OResultSet rs = plan.fetchNext(1)) {
-      return rs.hasNext();
+    OExecutionStream rs = plan.start();
+    try {
+      return rs.hasNext(ctx);
+    } finally {
+      rs.close(ctx);
     }
   }
 
@@ -65,16 +45,10 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
     OSelectExecutionPlan plan = new OSelectExecutionPlan(ctx);
     plan.chain(
         new AbstractExecutionStep(ctx, profilingEnabled) {
-          private boolean executed = false;
 
           @Override
-          public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-            OInternalResultSet result = new OInternalResultSet();
-            if (!executed) {
-              result.add(copy(nextItem));
-              executed = true;
-            }
-            return result;
+          public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+            return OExecutionStream.singleton(copy(nextItem));
           }
 
           private OResult copy(OResult nextItem) {

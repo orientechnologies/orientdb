@@ -25,8 +25,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.executor.OExecutionStep;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -63,6 +66,8 @@ public class OBasicCommandContext implements OCommandContext {
       timeoutStrategy;
   protected AtomicLong resultsProcessed = new AtomicLong(0);
   protected Set<Object> uniqueResult = new HashSet<Object>();
+  private Map<OExecutionStep, OStepStats> stepStats = new IdentityHashMap<>();
+  private LinkedList<OStepStats> currentStepStats = new LinkedList<>();
 
   public OBasicCommandContext() {}
 
@@ -410,5 +415,32 @@ public class OBasicCommandContext implements OCommandContext {
     return declaredScriptVariables.contains(varName)
         || declaredScriptVariables.contains(dollarVar)
         || (parent != null && parent.isScriptVariableDeclared(varName));
+  }
+
+  public void startProfiling(OExecutionStep step) {
+    OStepStats stats = stepStats.get(step);
+    if (stats == null) {
+      stats = new OStepStats();
+      stepStats.put(step, stats);
+    }
+    if (!this.currentStepStats.isEmpty()) {
+      this.currentStepStats.getLast().pause();
+    }
+    stats.start();
+    this.currentStepStats.push(stats);
+  }
+
+  public void endProfiling(OExecutionStep step) {
+    if (!this.currentStepStats.isEmpty()) {
+      this.currentStepStats.pop().end();
+      if (!this.currentStepStats.isEmpty()) {
+        this.currentStepStats.getLast().resume();
+      }
+    }
+  }
+
+  @Override
+  public OStepStats getStats(OExecutionStep step) {
+    return stepStats.get(step);
   }
 }

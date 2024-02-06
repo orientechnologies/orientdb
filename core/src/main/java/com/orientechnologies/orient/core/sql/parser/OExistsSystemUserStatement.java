@@ -4,9 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +26,7 @@ public class OExistsSystemUserStatement extends OSimpleExecServerStatement {
   }
 
   @Override
-  public OResultSet executeSimple(OServerCommandContext ctx) {
+  public OExecutionStream executeSimple(OServerCommandContext ctx) {
 
     OSystemDatabase systemDb = ctx.getServer().getSystemDatabase();
 
@@ -60,9 +60,7 @@ public class OExistsSystemUserStatement extends OSimpleExecServerStatement {
           return null;
         });
 
-    OInternalResultSet rs = new OInternalResultSet();
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   @Override

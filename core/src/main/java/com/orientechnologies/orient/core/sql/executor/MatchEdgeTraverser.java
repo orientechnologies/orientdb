@@ -4,13 +4,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,7 +18,7 @@ public class MatchEdgeTraverser {
   protected OResult sourceRecord;
   protected EdgeTraversal edge;
   protected OMatchPathItem item;
-  protected Iterator<OResultInternal> downstream;
+  protected OExecutionStream downstream;
 
   public MatchEdgeTraverser(OResult lastUpstreamRecord, EdgeTraversal edge) {
     this.sourceRecord = lastUpstreamRecord;
@@ -34,16 +33,16 @@ public class MatchEdgeTraverser {
 
   public boolean hasNext(OCommandContext ctx) {
     init(ctx);
-    return downstream.hasNext();
+    return downstream.hasNext(ctx);
   }
 
   public OResult next(OCommandContext ctx) {
     init(ctx);
-    if (!downstream.hasNext()) {
+    if (!downstream.hasNext(ctx)) {
       throw new IllegalStateException();
     }
     String endPointAlias = getEndpointAlias();
-    OResultInternal nextR = downstream.next();
+    OResult nextR = downstream.next(ctx);
     OIdentifiable nextElement = nextR.getElement().get();
     Object prevValue = sourceRecord.getProperty(endPointAlias);
     if (prevValue != null && !equals(prevValue, nextElement)) {
@@ -95,12 +94,11 @@ public class MatchEdgeTraverser {
       if (startingElem instanceof OResult) {
         startingElem = ((OResult) startingElem).getElement().orElse(null);
       }
-      downstream =
-          executeTraversal(ctx, this.item, (OIdentifiable) startingElem, 0, null).iterator();
+      downstream = executeTraversal(ctx, this.item, (OIdentifiable) startingElem, 0, null);
     }
   }
 
-  protected Iterable<OResultInternal> executeTraversal(
+  protected OExecutionStream executeTraversal(
       OCommandContext iCommandContext,
       OMatchPathItem item,
       OIdentifiable startingPoint,
@@ -125,74 +123,23 @@ public class MatchEdgeTraverser {
       targetRid = targetRid(item, iCommandContext);
     }
 
-    Iterable<OResultInternal> result;
-
     if (whileCondition == null
         && maxDepth
             == null) { // in this case starting point is not returned and only one level depth is
       // evaluated
 
-      Iterable<OResultInternal> queryResult = traversePatternEdge(startingPoint, iCommandContext);
+      OExecutionStream queryResult = traversePatternEdge(startingPoint, iCommandContext);
       final OWhereClause theFilter = filter;
       final String theClassName = className;
       final Integer theClusterId = clusterId;
       final ORid theTargetRid = targetRid;
-      result =
-          () -> {
-            Iterator<OResultInternal> iter = queryResult.iterator();
-
-            return new Iterator() {
-
-              private OResultInternal nextElement = null;
-
-              @Override
-              public boolean hasNext() {
-                if (nextElement == null) {
-                  fetchNext();
-                }
-                return nextElement != null;
-              }
-
-              @Override
-              public Object next() {
-                if (nextElement == null) {
-                  fetchNext();
-                }
-                if (nextElement == null) {
-                  throw new IllegalStateException();
-                }
-                OResultInternal res = nextElement;
-                nextElement = null;
-                return res;
-              }
-
-              public void fetchNext() {
-                Object previousMatch = iCommandContext.getVariable("$currentMatch");
-                OResultInternal matched = (OResultInternal) iCommandContext.getVariable("matched");
-                if (matched != null) {
-                  matched.setProperty(
-                      getStartingPointAlias(), sourceRecord.getProperty(getStartingPointAlias()));
-                }
-                while (iter.hasNext()) {
-                  OResultInternal next = iter.next();
-                  OElement elem = next.toElement();
-                  iCommandContext.setVariable("$currentMatch", elem);
-                  if (matchesFilters(iCommandContext, theFilter, elem)
-                      && matchesClass(iCommandContext, theClassName, elem)
-                      && matchesCluster(iCommandContext, theClusterId, elem)
-                      && matchesRid(iCommandContext, theTargetRid, elem)) {
-                    nextElement = next;
-                    break;
-                  }
-                }
-                iCommandContext.setVariable("$currentMatch", previousMatch);
-              }
-            };
-          };
-
+      return queryResult.filter(
+          (next, ctx) ->
+              filter(
+                  iCommandContext, theFilter, theClassName, theClusterId, theTargetRid, next, ctx));
     } else { // in this case also zero level (starting point) is considered and traversal depth is
       // given by the while condition
-      result = new ArrayList<>();
+      List<OResult> result = new ArrayList<>();
       iCommandContext.setVariable("$depth", depth);
       Object previousMatch = iCommandContext.getVariable("$currentMatch");
       iCommandContext.setVariable("$currentMatch", startingPoint);
@@ -207,16 +154,17 @@ public class MatchEdgeTraverser {
         // set traversal path in the metadata
         rs.setMetadata("$matchPath", pathToHere == null ? Collections.EMPTY_LIST : pathToHere);
         // add the result to the list
-        ((List) result).add(rs);
+        result.add(rs);
       }
 
       if ((maxDepth == null || depth < maxDepth)
           && (whileCondition == null
               || whileCondition.matchesFilters(startingPoint, iCommandContext))) {
 
-        Iterable<OResultInternal> queryResult = traversePatternEdge(startingPoint, iCommandContext);
+        OExecutionStream queryResult = traversePatternEdge(startingPoint, iCommandContext);
 
-        for (OResultInternal origin : queryResult) {
+        while (queryResult.hasNext(iCommandContext)) {
+          OResult origin = queryResult.next(iCommandContext);
           //          if(origin.equals(startingPoint)){
           //            continue;
           //          }
@@ -230,20 +178,45 @@ public class MatchEdgeTraverser {
           OElement elem = origin.toElement();
           newPath.add(elem.getIdentity());
 
-          Iterable<OResultInternal> subResult =
+          OExecutionStream subResult =
               executeTraversal(iCommandContext, item, elem, depth + 1, newPath);
-          if (subResult instanceof Collection) {
-            ((List) result).addAll((Collection<? extends OResultInternal>) subResult);
-          } else {
-            for (OResultInternal i : subResult) {
-              ((List) result).add(i);
-            }
+          while (subResult.hasNext(iCommandContext)) {
+            OResult sub = subResult.next(iCommandContext);
+            result.add(sub);
           }
         }
       }
       iCommandContext.setVariable("$currentMatch", previousMatch);
+      return OExecutionStream.resultIterator(result.iterator());
     }
-    return result;
+  }
+
+  private OResult filter(
+      OCommandContext iCommandContext,
+      final OWhereClause theFilter,
+      final String theClassName,
+      final Integer theClusterId,
+      final ORid theTargetRid,
+      OResult next,
+      OCommandContext ctx) {
+    Object previousMatch = ctx.getVariable("$currentMatch");
+    OResultInternal matched = (OResultInternal) ctx.getVariable("matched");
+    if (matched != null) {
+      matched.setProperty(
+          getStartingPointAlias(), sourceRecord.getProperty(getStartingPointAlias()));
+    }
+    OElement elem = next.toElement();
+    iCommandContext.setVariable("$currentMatch", elem);
+    if (matchesFilters(iCommandContext, theFilter, elem)
+        && matchesClass(iCommandContext, theClassName, elem)
+        && matchesCluster(iCommandContext, theClusterId, elem)
+        && matchesRid(iCommandContext, theTargetRid, elem)) {
+      ctx.setVariable("$currentMatch", previousMatch);
+      return next;
+    } else {
+      ctx.setVariable("$currentMatch", previousMatch);
+      return null;
+    }
   }
 
   protected OWhereClause getTargetFilter(OMatchPathItem item) {
@@ -322,86 +295,27 @@ public class MatchEdgeTraverser {
 
   // TODO refactor this method to receive the item.
 
-  protected Iterable<OResultInternal> traversePatternEdge(
+  protected OExecutionStream traversePatternEdge(
       OIdentifiable startingPoint, OCommandContext iCommandContext) {
-
-    Iterable possibleResults = null;
-    if (this.item.getFilter() != null) {
-      String alias = getEndpointAlias();
-      Object matchedNodes =
-          iCommandContext.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
-      if (matchedNodes != null) {
-        if (matchedNodes instanceof Iterable) {
-          possibleResults = (Iterable) matchedNodes;
-        } else {
-          possibleResults = Collections.singleton(matchedNodes);
-        }
-      }
-    }
 
     Object prevCurrent = iCommandContext.getVariable("$current");
     iCommandContext.setVariable("$current", startingPoint);
     Object qR;
     try {
-      qR = this.item.getMethod().execute(startingPoint, possibleResults, iCommandContext);
+      qR = this.item.getMethod().execute(startingPoint, iCommandContext);
     } finally {
       iCommandContext.setVariable("$current", prevCurrent);
     }
 
     if (qR == null) {
-      return Collections.EMPTY_LIST;
+      return OExecutionStream.empty();
     }
     if (qR instanceof OIdentifiable) {
-      return Collections.singleton(new OResultInternal((OIdentifiable) qR));
+      return OExecutionStream.singleton(new OResultInternal((OIdentifiable) qR));
     }
     if (qR instanceof Iterable) {
-      final Iterator<Object> iter = ((Iterable) qR).iterator();
-      Iterable<OResultInternal> result =
-          () ->
-              new Iterator<OResultInternal>() {
-                private OResultInternal nextElement;
-
-                @Override
-                public boolean hasNext() {
-                  if (nextElement == null) {
-                    fetchNext();
-                  }
-                  return nextElement != null;
-                }
-
-                @Override
-                public OResultInternal next() {
-                  if (nextElement == null) {
-                    fetchNext();
-                  }
-                  if (nextElement == null) {
-                    throw new IllegalStateException();
-                  }
-                  OResultInternal res = nextElement;
-                  nextElement = null;
-                  return res;
-                }
-
-                public void fetchNext() {
-                  while (iter.hasNext()) {
-                    Object o = iter.next();
-                    if (o instanceof OIdentifiable) {
-                      nextElement = new OResultInternal((OIdentifiable) o);
-                      break;
-                    } else if (o instanceof OResultInternal) {
-                      nextElement = (OResultInternal) o;
-                      break;
-                    } else if (o == null) {
-                      continue;
-                    } else {
-                      throw new UnsupportedOperationException();
-                    }
-                  }
-                }
-              };
-
-      return result;
+      return OExecutionStream.iterator(((Iterable) qR).iterator());
     }
-    return Collections.EMPTY_LIST;
+    return OExecutionStream.empty();
   }
 }

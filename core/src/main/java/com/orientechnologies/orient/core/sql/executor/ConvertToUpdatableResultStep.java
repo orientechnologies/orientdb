@@ -4,8 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /**
  * takes a normal result set and transforms it in another result set made of OUpdatableRecord
@@ -17,50 +16,31 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSe
  */
 public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-
-  private OResultSet prevResult = null;
-
   public ConvertToUpdatableResultStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx, nRecords), this::filterMap), nRecords);
+    OExecutionStream resultSet = prev.get().start(ctx);
+    return resultSet.filter(this::filterMap);
   }
 
-  private OResult filterMap(OResult result) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (result instanceof OUpdatableResult) {
-        return result;
-      }
-      if (result.isElement()) {
-        ORecord element = result.getElement().get().getRecord();
-        if (element != null && element instanceof ODocument) {
-          return new OUpdatableResult((ODocument) element);
-        }
-        return result;
-      }
-      return null;
-    } finally {
-      cost = (System.nanoTime() - begin);
+  private OResult filterMap(OResult result, OCommandContext ctx) {
+    if (result instanceof OUpdatableResult) {
+      return result;
     }
-  }
-
-  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
-    OExecutionStepInternal prevStep = prev.get();
-    if (prevResult == null) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
-    } else if (!prevResult.hasNext()) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
+    if (result.isElement()) {
+      ORecord element = result.getElement().get().getRecord();
+      if (element != null && element instanceof ODocument) {
+        return new OUpdatableResult((ODocument) element);
+      }
+      return result;
     }
-    return prevResult;
+    return null;
   }
 
   @Override
@@ -70,10 +50,5 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

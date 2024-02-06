@@ -5,11 +5,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
-import java.util.Collections;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Expands a result-set. The pre-requisite is that the input element contains only one field (no
@@ -17,136 +14,49 @@ import java.util.Optional;
  */
 public class ExpandStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-
-  private OResultSet lastResult = null;
-  private Iterator nextSubsequence = null;
-  private OResult nextElement = null;
-
   public ExpandStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
-    return new OLimitedResultSet(
-        new OResultSet() {
-          @Override
-          public boolean hasNext() {
-            if (nextElement == null) {
-              fetchNext(ctx, nRecords);
-            }
-            if (nextElement == null) {
-              return false;
-            }
-            return true;
-          }
-
-          @Override
-          public OResult next() {
-            if (nextElement == null) {
-              fetchNext(ctx, nRecords);
-            }
-            if (nextElement == null) {
-              throw new IllegalStateException();
-            }
-
-            OResult result = nextElement;
-            nextElement = null;
-            fetchNext(ctx, nRecords);
-            return result;
-          }
-
-          @Override
-          public void close() {}
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
+    OExecutionStream resultSet = getPrev().get().start(ctx);
+    return resultSet.flatMap(this::nextResults);
   }
 
-  private void fetchNext(OCommandContext ctx, int n) {
-    do {
-      if (nextSubsequence != null && nextSubsequence.hasNext()) {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          Object nextElementObj = nextSubsequence.next();
-          if (nextElementObj instanceof OResult) {
-            nextElement = (OResult) nextElementObj;
-          } else if (nextElementObj instanceof OIdentifiable) {
-            ORecord record = ((OIdentifiable) nextElementObj).getRecord();
-            if (record == null) {
-              continue;
-            }
-            nextElement = new OResultInternal(record);
-          } else {
-            nextElement = new OResultInternal();
-            ((OResultInternal) nextElement).setProperty("value", nextElementObj);
-          }
-          break;
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
-        }
+  private OExecutionStream nextResults(OResult nextAggregateItem, OCommandContext ctx) {
+    if (nextAggregateItem.getPropertyNames().size() == 0) {
+      return OExecutionStream.empty();
+    }
+    if (nextAggregateItem.getPropertyNames().size() > 1) {
+      throw new IllegalStateException("Invalid EXPAND on record " + nextAggregateItem);
+    }
+
+    String propName = nextAggregateItem.getPropertyNames().iterator().next();
+    Object projValue = nextAggregateItem.getProperty(propName);
+    if (projValue == null) {
+      return OExecutionStream.empty();
+    }
+    if (projValue instanceof OIdentifiable) {
+      ORecord rec = ((OIdentifiable) projValue).getRecord();
+      if (rec == null) {
+        return OExecutionStream.empty();
       }
+      OResultInternal res = new OResultInternal(rec);
 
-      if (nextSubsequence == null || !nextSubsequence.hasNext()) {
-        if (lastResult == null || !lastResult.hasNext()) {
-          lastResult = getPrev().get().syncPull(ctx, n);
-        }
-        if (!lastResult.hasNext()) {
-          return;
-        }
-      }
-
-      OResult nextAggregateItem = lastResult.next();
-      long begin = profilingEnabled ? System.nanoTime() : 0;
-      try {
-        if (nextAggregateItem.getPropertyNames().size() == 0) {
-          continue;
-        }
-        if (nextAggregateItem.getPropertyNames().size() > 1) {
-          throw new IllegalStateException("Invalid EXPAND on record " + nextAggregateItem);
-        }
-
-        String propName = nextAggregateItem.getPropertyNames().iterator().next();
-        Object projValue = nextAggregateItem.getProperty(propName);
-        if (projValue == null) {
-          continue;
-        }
-        if (projValue instanceof OIdentifiable) {
-          ORecord rec = ((OIdentifiable) projValue).getRecord();
-          if (rec == null) {
-            continue;
-          }
-          OResultInternal res = new OResultInternal(rec);
-
-          nextSubsequence = Collections.singleton(res).iterator();
-        } else if (projValue instanceof OResult) {
-          nextSubsequence = Collections.singleton((OResult) projValue).iterator();
-        } else if (projValue instanceof Iterator) {
-          nextSubsequence = (Iterator) projValue;
-        } else if (projValue instanceof Iterable) {
-          nextSubsequence = ((Iterable) projValue).iterator();
-        }
-      } finally {
-        if (profilingEnabled) {
-          cost += (System.nanoTime() - begin);
-        }
-      }
-    } while (true);
+      return OExecutionStream.singleton((OResult) res);
+    } else if (projValue instanceof OResult) {
+      return OExecutionStream.singleton((OResult) projValue);
+    } else if (projValue instanceof Iterator) {
+      return OExecutionStream.iterator((Iterator) projValue);
+    } else if (projValue instanceof Iterable) {
+      return OExecutionStream.iterator(((Iterable) projValue).iterator());
+    } else {
+      return OExecutionStream.empty();
+    }
   }
 
   @Override
@@ -157,10 +67,5 @@ public class ExpandStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

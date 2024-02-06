@@ -6,9 +6,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
 public class ODropClusterStatement extends ODDLStatement {
@@ -25,7 +24,7 @@ public class ODropClusterStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
+  public OExecutionStream executeDDL(OCommandContext ctx) {
     ODatabaseInternal database = (ODatabaseInternal) ctx.getDatabase();
     // CHECK IF ANY CLASS IS USING IT
     final int clusterId;
@@ -35,7 +34,7 @@ public class ODropClusterStatement extends ODDLStatement {
       clusterId = database.getStorage().getClusterIdByName(name.getStringValue());
       if (clusterId < 0) {
         if (ifExists) {
-          return new OInternalResultSet();
+          return OExecutionStream.empty();
         } else {
           throw new OCommandExecutionException("Cluster not found: " + name);
         }
@@ -58,7 +57,7 @@ public class ODropClusterStatement extends ODDLStatement {
     String clusterName = database.getClusterNameById(clusterId);
     if (clusterName == null) {
       if (ifExists) {
-        return new OInternalResultSet();
+        return OExecutionStream.empty();
       } else {
         throw new OCommandExecutionException("Cluster not found: " + clusterId);
       }
@@ -66,13 +65,11 @@ public class ODropClusterStatement extends ODDLStatement {
 
     database.dropCluster(clusterId);
 
-    OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "drop cluster");
     result.setProperty("clusterName", name == null ? null : name.getStringValue());
     result.setProperty("clusterId", id == null ? null : id.getValue());
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
 
 /**
@@ -21,8 +22,6 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
   private OCluster cluster;
   private String clusterName;
   private String targetClass;
-  private long cost = 0;
-  private boolean found = false;
 
   public CheckClusterTypeStep(
       String targetClusterName, String clazz, OCommandContext ctx, boolean profilingEnabled) {
@@ -39,51 +38,42 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (found) {
-        return new OInternalResultSet();
-      }
-      ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+  public OExecutionStream internalStart(OCommandContext context) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(context).close(ctx));
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) context.getDatabase();
 
-      int clusterId;
-      if (clusterName != null) {
-        clusterId = db.getClusterIdByName(clusterName);
-      } else if (cluster.getClusterName() != null) {
-        clusterId = db.getClusterIdByName(cluster.getClusterName());
-      } else {
-        clusterId = cluster.getClusterNumber();
-        if (db.getClusterNameById(clusterId) == null) {
-          throw new OCommandExecutionException("Cluster not found: " + clusterId);
-        }
-      }
-      if (clusterId < 0) {
-        throw new OCommandExecutionException("Cluster not found: " + clusterName);
-      }
-
-      OClass clazz = db.getMetadata().getImmutableSchemaSnapshot().getClass(targetClass);
-      if (clazz == null) {
-        throw new OCommandExecutionException("Class not found: " + targetClass);
-      }
-
-      for (int clust : clazz.getPolymorphicClusterIds()) {
-        if (clust == clusterId) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        throw new OCommandExecutionException(
-            "Cluster " + clusterId + " does not belong to class " + targetClass);
-      }
-      return new OInternalResultSet();
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+    int clusterId;
+    if (clusterName != null) {
+      clusterId = db.getClusterIdByName(clusterName);
+    } else if (cluster.getClusterName() != null) {
+      clusterId = db.getClusterIdByName(cluster.getClusterName());
+    } else {
+      clusterId = cluster.getClusterNumber();
+      if (db.getClusterNameById(clusterId) == null) {
+        throw new OCommandExecutionException("Cluster not found: " + clusterId);
       }
     }
+    if (clusterId < 0) {
+      throw new OCommandExecutionException("Cluster not found: " + clusterName);
+    }
+
+    OClass clazz = db.getMetadata().getImmutableSchemaSnapshot().getClass(targetClass);
+    if (clazz == null) {
+      throw new OCommandExecutionException("Class not found: " + targetClass);
+    }
+
+    boolean found = false;
+    for (int clust : clazz.getPolymorphicClusterIds()) {
+      if (clust == clusterId) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      throw new OCommandExecutionException(
+          "Cluster " + clusterId + " does not belong to class " + targetClass);
+    }
+    return OExecutionStream.empty();
   }
 
   @Override
@@ -99,10 +89,5 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
     result.append(spaces);
     result.append("  " + this.targetClass);
     return result.toString();
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

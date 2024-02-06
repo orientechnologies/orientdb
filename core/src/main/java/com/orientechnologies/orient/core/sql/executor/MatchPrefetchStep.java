@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,8 +13,6 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
 
   private final String alias;
   private final OInternalExecutionPlan prefetchExecutionPlan;
-
-  private boolean executed = false;
 
   public MatchPrefetchStep(
       OCommandContext ctx,
@@ -27,28 +26,22 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
 
   @Override
   public void reset() {
-    executed = false;
     prefetchExecutionPlan.reset(ctx);
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    if (!executed) {
-      getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
 
-      OResultSet nextBlock = prefetchExecutionPlan.fetchNext(nRecords);
-      List<OResult> prefetched = new ArrayList<>();
-      while (nextBlock.hasNext()) {
-        while (nextBlock.hasNext()) {
-          prefetched.add(nextBlock.next());
-        }
-        nextBlock = prefetchExecutionPlan.fetchNext(nRecords);
-      }
-      prefetchExecutionPlan.close();
-      ctx.setVariable(PREFETCHED_MATCH_ALIAS_PREFIX + alias, prefetched);
-      executed = true;
+    OExecutionStream nextBlock = prefetchExecutionPlan.start();
+    List<OResult> prefetched = new ArrayList<>();
+    while (nextBlock.hasNext(ctx)) {
+      prefetched.add(nextBlock.next(ctx));
     }
-    return new OInternalResultSet();
+    nextBlock.close(ctx);
+    prefetchExecutionPlan.close();
+    ctx.setVariable(PREFETCHED_MATCH_ALIAS_PREFIX + alias, prefetched);
+    return OExecutionStream.empty();
   }
 
   @Override

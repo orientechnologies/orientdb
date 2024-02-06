@@ -4,8 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -13,12 +12,6 @@ import java.util.stream.Collectors;
 public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
 
   private final int[] filterClusterIds;
-
-  // runtime
-
-  private long cost = 0;
-
-  private OResultSet prevResult = null;
 
   /**
    * @param ctx the execution context
@@ -33,58 +26,40 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
 
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-
-    return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx, nRecords), this::filterMap), nRecords);
+    OExecutionStream resultSet = prev.get().start(ctx);
+    return resultSet.filter(this::filterMap);
   }
 
-  private OResult filterMap(OResult result) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      Object finalVal = result.getProperty("rid");
-      if (filterClusterIds != null) {
-        if (!(finalVal instanceof OIdentifiable)) {
-          return null;
-        }
-        ORID rid = ((OIdentifiable) finalVal).getIdentity();
-        boolean found = false;
-        for (int filterClusterId : filterClusterIds) {
-          if (rid.getClusterId() < 0 || filterClusterId == rid.getClusterId()) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          return null;
+  private OResult filterMap(OResult result, OCommandContext ctx) {
+    Object finalVal = result.getProperty("rid");
+    if (filterClusterIds != null) {
+      if (!(finalVal instanceof OIdentifiable)) {
+        return null;
+      }
+      ORID rid = ((OIdentifiable) finalVal).getIdentity();
+      boolean found = false;
+      for (int filterClusterId : filterClusterIds) {
+        if (rid.getClusterId() < 0 || filterClusterId == rid.getClusterId()) {
+          found = true;
+          break;
         }
       }
-      if (finalVal instanceof OIdentifiable) {
-        return new OResultInternal((OIdentifiable) finalVal);
-
-      } else if (finalVal instanceof OResult) {
-        return (OResult) finalVal;
-      }
-      return null;
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
+      if (!found) {
+        return null;
       }
     }
-  }
+    if (finalVal instanceof OIdentifiable) {
+      return new OResultInternal((OIdentifiable) finalVal);
 
-  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
-    OExecutionStepInternal prevStep = prev.get();
-    if (prevResult == null) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
-    } else if (!prevResult.hasNext()) {
-      prevResult = prevStep.syncPull(ctx, nRecords);
+    } else if (finalVal instanceof OResult) {
+      return (OResult) finalVal;
     }
-    return prevResult;
+    return null;
   }
 
   @Override
@@ -103,11 +78,6 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
       result += "]";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 
   @Override

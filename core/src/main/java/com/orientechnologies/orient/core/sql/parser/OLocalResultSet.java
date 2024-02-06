@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -15,27 +16,25 @@ import java.util.Optional;
 /** Created by luigidellaquila on 07/07/16. */
 public class OLocalResultSet implements OResultSet {
 
-  private OResultSet lastFetch = null;
+  private OExecutionStream stream = null;
   private final OInternalExecutionPlan executionPlan;
-  private boolean finished = false;
 
   long totalExecutionTime = 0;
   long startTime = 0;
 
   public OLocalResultSet(OInternalExecutionPlan executionPlan) {
     this.executionPlan = executionPlan;
-    fetchNext();
+    start();
   }
 
-  private boolean fetchNext() {
+  private boolean start() {
     long begin = System.currentTimeMillis();
     try {
-      if (lastFetch == null) {
+      if (stream == null) {
         startTime = begin;
       }
-      lastFetch = executionPlan.fetchNext(100);
-      if (!lastFetch.hasNext()) {
-        finished = true;
+      stream = executionPlan.start();
+      if (!stream.hasNext(executionPlan.getContext())) {
         logProfiling();
         return false;
       }
@@ -47,27 +46,19 @@ public class OLocalResultSet implements OResultSet {
 
   @Override
   public boolean hasNext() {
-    if (finished) {
-      return false;
+    boolean next = stream.hasNext(executionPlan.getContext());
+    if (!next) {
+      logProfiling();
     }
-    if (lastFetch.hasNext()) {
-      return true;
-    } else {
-      return fetchNext();
-    }
+    return next;
   }
 
   @Override
   public OResult next() {
-    if (finished) {
+    if (!hasNext()) {
       throw new IllegalStateException();
     }
-    if (!lastFetch.hasNext()) {
-      if (!fetchNext()) {
-        throw new IllegalStateException();
-      }
-    }
-    return lastFetch.next();
+    return stream.next(executionPlan.getContext());
   }
 
   private void logProfiling() {
@@ -102,6 +93,7 @@ public class OLocalResultSet implements OResultSet {
 
   @Override
   public void close() {
+    stream.close(executionPlan.getContext());
     executionPlan.close();
   }
 

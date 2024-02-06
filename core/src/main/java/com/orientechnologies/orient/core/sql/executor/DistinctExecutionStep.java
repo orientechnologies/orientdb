@@ -6,23 +6,14 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.sql.executor.resultset.OFilterResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.HashSet;
 import java.util.Set;
 
 /** Created by luigidellaquila on 08/07/16. */
 public class DistinctExecutionStep extends AbstractExecutionStep {
 
-  private Set<OResult> pastItems = new HashSet<>();
-  private ORidSet pastRids = new ORidSet();
-
-  private OResultSet lastResult = null;
-  private OResult nextValue;
-
-  long maxElementsAllowed;
-
-  private long cost = 0;
+  private long maxElementsAllowed;
 
   public DistinctExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -36,39 +27,25 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx, nRecords), (result) -> filterMap(ctx, result)),
-        nRecords);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream resultSet = prev.get().start(ctx);
+    Set<OResult> pastItems = new HashSet<>();
+    ORidSet pastRids = new ORidSet();
+
+    return resultSet.filter((result, context) -> filterMap(context, result, pastRids, pastItems));
   }
 
-  private OResultSet fetchNext(OCommandContext ctx, int nRecords) {
-    OExecutionStepInternal prevStep = prev.get();
-    if (lastResult == null) {
-      lastResult = prevStep.syncPull(ctx, nRecords);
-    } else if (!lastResult.hasNext()) {
-      lastResult = prevStep.syncPull(ctx, nRecords);
-    }
-    return lastResult;
-  }
-
-  private OResult filterMap(OCommandContext ctx, OResult result) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (alreadyVisited(result)) {
-        return null;
-      } else {
-        markAsVisited(result);
-        return result;
-      }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+  private OResult filterMap(
+      OCommandContext ctx, OResult result, Set<ORID> pastRids, Set<OResult> pastItems) {
+    if (alreadyVisited(result, pastRids, pastItems)) {
+      return null;
+    } else {
+      markAsVisited(result, pastRids, pastItems);
+      return result;
     }
   }
 
-  private void markAsVisited(OResult nextValue) {
+  private void markAsVisited(OResult nextValue, Set<ORID> pastRids, Set<OResult> pastItems) {
     if (nextValue.isElement()) {
       ORID identity = nextValue.getElement().get().getIdentity();
       int cluster = identity.getClusterId();
@@ -80,7 +57,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
     }
     pastItems.add(nextValue);
     if (maxElementsAllowed > 0 && maxElementsAllowed < pastItems.size()) {
-      this.pastItems.clear();
+      pastItems.clear();
       throw new OCommandExecutionException(
           "Limit of allowed elements for in-heap DISTINCT in a single query exceeded ("
               + maxElementsAllowed
@@ -90,7 +67,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
     }
   }
 
-  private boolean alreadyVisited(OResult nextValue) {
+  private boolean alreadyVisited(OResult nextValue, Set<ORID> pastRids, Set<OResult> pastItems) {
     if (nextValue.isElement()) {
       ORID identity = nextValue.getElement().get().getIdentity();
       int cluster = identity.getClusterId();
@@ -117,10 +94,5 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

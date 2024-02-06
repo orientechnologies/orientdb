@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 
 /**
  * for UPDATE, unwraps the current result set to return the previous value
@@ -12,36 +12,26 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OResultSetMapper
  */
 public class UnwrapPreviousValueStep extends AbstractExecutionStep {
 
-  private long cost = 0;
-
   public UnwrapPreviousValueStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OResultSet upstream = prev.get().syncPull(ctx, nRecords);
-    return new OResultSetMapper(upstream, this::mapResult);
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    OExecutionStream upstream = prev.get().start(ctx);
+    return upstream.map(this::mapResult);
   }
 
-  private OResult mapResult(OResult result) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      if (result instanceof OUpdatableResult) {
-        result = ((OUpdatableResult) result).previousValue;
-        if (result == null) {
-          throw new OCommandExecutionException(
-              "Invalid status of record: no previous value available");
-        }
-        return result;
-      } else {
+  private OResult mapResult(OResult result, OCommandContext ctx) {
+    if (result instanceof OUpdatableResult) {
+      result = ((OUpdatableResult) result).previousValue;
+      if (result == null) {
         throw new OCommandExecutionException(
             "Invalid status of record: no previous value available");
       }
-    } finally {
-      if (profilingEnabled) {
-        cost += (System.nanoTime() - begin);
-      }
+      return result;
+    } else {
+      throw new OCommandExecutionException("Invalid status of record: no previous value available");
     }
   }
 
@@ -52,10 +42,5 @@ public class UnwrapPreviousValueStep extends AbstractExecutionStep {
       result += " (" + getCostFormatted() + ")";
     }
     return result;
-  }
-
-  @Override
-  public long getCost() {
-    return cost;
   }
 }

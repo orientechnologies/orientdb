@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
@@ -11,6 +13,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Created by luigidellaquila on 26/10/16. */
 public class DepthFirstTraverseStep extends AbstractTraverseStep {
@@ -25,10 +28,11 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
   }
 
   @Override
-  protected void fetchNextEntryPoints(OCommandContext ctx, int nRecords) {
-    OResultSet nextN = getPrev().get().syncPull(ctx, nRecords);
-    while (nextN.hasNext()) {
-      OResult item = toTraverseResult(nextN.next());
+  protected void fetchNextEntryPoints(
+      OExecutionStream nextN, OCommandContext ctx, List<OResult> entryPoints, Set<ORID> traversed) {
+    // Doing max batch of 100 entry points for now
+    while (nextN.hasNext(ctx) && entryPoints.size() < 100) {
+      OResult item = toTraverseResult(nextN.next(ctx));
       if (item == null) {
         continue;
       }
@@ -47,11 +51,11 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       ((OResultInternal) item).setMetadata("$path", path);
 
       if (item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
-        tryAddEntryPointAtTheEnd(item, ctx);
+        tryAddEntryPointAtTheEnd(item, ctx, entryPoints, traversed);
         traversed.add(item.getElement().get().getIdentity());
       } else if (item.getProperty("@rid") != null
           && item.getProperty("@rid") instanceof OIdentifiable) {
-        tryAddEntryPointAtTheEnd(item, ctx);
+        tryAddEntryPointAtTheEnd(item, ctx, entryPoints, traversed);
         traversed.add(((OIdentifiable) item.getProperty("@rid")).getIdentity());
       }
     }
@@ -94,10 +98,11 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
   }
 
   @Override
-  protected void fetchNextResults(OCommandContext ctx, int nRecords) {
-    if (!this.entryPoints.isEmpty()) {
-      OTraverseResult item = (OTraverseResult) this.entryPoints.remove(0);
-      this.results.add(item);
+  protected void fetchNextResults(
+      OCommandContext ctx, List<OResult> results, List<OResult> entryPoints, Set<ORID> traversed) {
+    if (!entryPoints.isEmpty()) {
+      OTraverseResult item = (OTraverseResult) entryPoints.remove(0);
+      results.add(item);
       for (OTraverseProjectionItem proj : projections) {
         Object nextStep = proj.execute(item, ctx);
         Integer depth = item.depth != null ? item.depth : (Integer) item.getMetadata("$depth");
@@ -107,7 +112,9 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
               depth + 1,
               (List) item.getMetadata("$path"),
               (List) item.getMetadata("$stack"),
-              ctx);
+              ctx,
+              entryPoints,
+              traversed);
         }
       }
     }
@@ -118,15 +125,20 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       int depth,
       List<OIdentifiable> path,
       List<OIdentifiable> stack,
-      OCommandContext ctx) {
+      OCommandContext ctx,
+      List<OResult> entryPoints,
+      Set<ORID> traversed) {
     if (nextStep instanceof OIdentifiable) {
-      addNextEntryPoint(((OIdentifiable) nextStep), depth, path, stack, ctx);
+      addNextEntryPoint(
+          ((OIdentifiable) nextStep), depth, path, stack, ctx, entryPoints, traversed);
     } else if (nextStep instanceof Iterable) {
-      addNextEntryPoints(((Iterable) nextStep).iterator(), depth, path, stack, ctx);
+      addNextEntryPoints(
+          ((Iterable) nextStep).iterator(), depth, path, stack, ctx, entryPoints, traversed);
     } else if (nextStep instanceof Map) {
-      addNextEntryPoints(((Map) nextStep).values().iterator(), depth, path, stack, ctx);
+      addNextEntryPoints(
+          ((Map) nextStep).values().iterator(), depth, path, stack, ctx, entryPoints, traversed);
     } else if (nextStep instanceof OResult) {
-      addNextEntryPoint(((OResult) nextStep), depth, path, stack, ctx);
+      addNextEntryPoint(((OResult) nextStep), depth, path, stack, ctx, entryPoints, traversed);
     }
   }
 
@@ -135,9 +147,11 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       int depth,
       List<OIdentifiable> path,
       List<OIdentifiable> stack,
-      OCommandContext ctx) {
+      OCommandContext ctx,
+      List<OResult> entryPoints,
+      Set<ORID> traversed) {
     while (nextStep.hasNext()) {
-      addNextEntryPoints(nextStep.next(), depth, path, stack, ctx);
+      addNextEntryPoints(nextStep.next(), depth, path, stack, ctx, entryPoints, traversed);
     }
   }
 
@@ -146,8 +160,10 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       int depth,
       List<OIdentifiable> path,
       List<OIdentifiable> stack,
-      OCommandContext ctx) {
-    if (this.traversed.contains(nextStep.getIdentity())) {
+      OCommandContext ctx,
+      List<OResult> entryPoints,
+      Set<ORID> traversed) {
+    if (traversed.contains(nextStep.getIdentity())) {
       return;
     }
     OTraverseResult res = new OTraverseResult(nextStep);
@@ -166,7 +182,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     //    }
     res.setMetadata("$stack", newStack);
 
-    tryAddEntryPoint(res, ctx);
+    tryAddEntryPoint(res, ctx, entryPoints, traversed);
   }
 
   private void addNextEntryPoint(
@@ -174,11 +190,13 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       int depth,
       List<OIdentifiable> path,
       List<OIdentifiable> stack,
-      OCommandContext ctx) {
+      OCommandContext ctx,
+      List<OResult> entryPoints,
+      Set<ORID> traversed) {
     if (!nextStep.isElement()) {
       return;
     }
-    if (this.traversed.contains(nextStep.getElement().get().getIdentity())) {
+    if (traversed.contains(nextStep.getElement().get().getIdentity())) {
       return;
     }
     if (nextStep instanceof OTraverseResult) {
@@ -196,7 +214,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       newStack.addAll(reverseStack);
       ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
 
-      tryAddEntryPoint(nextStep, ctx);
+      tryAddEntryPoint(nextStep, ctx, entryPoints, traversed);
     } else {
       OTraverseResult res = new OTraverseResult(nextStep.getElement().get());
       res.depth = depth;
@@ -213,13 +231,14 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       newStack.addAll(reverseStack);
       ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
 
-      tryAddEntryPoint(res, ctx);
+      tryAddEntryPoint(res, ctx, entryPoints, traversed);
     }
   }
 
-  private void tryAddEntryPoint(OResult res, OCommandContext ctx) {
+  private void tryAddEntryPoint(
+      OResult res, OCommandContext ctx, List<OResult> entryPoints, Set<ORID> traversed) {
     if (whileClause == null || whileClause.matchesFilters(res, ctx)) {
-      this.entryPoints.add(0, res);
+      entryPoints.add(0, res);
     }
 
     if (res.isElement()) {
@@ -230,9 +249,10 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     }
   }
 
-  private void tryAddEntryPointAtTheEnd(OResult res, OCommandContext ctx) {
+  private void tryAddEntryPointAtTheEnd(
+      OResult res, OCommandContext ctx, List<OResult> entryPoints, Set<ORID> traversed) {
     if (whileClause == null || whileClause.matchesFilters(res, ctx)) {
-      this.entryPoints.add(res);
+      entryPoints.add(res);
     }
 
     if (res.isElement()) {

@@ -5,18 +5,13 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import java.util.Collections;
 
 /** Created by luigidellaquila on 22/07/16. */
 public class FetchFromVariableStep extends AbstractExecutionStep {
 
   private String variableName;
-  private OResultSet source;
-  private OResult nextResult = null;
-  private boolean inited = false;
 
   public FetchFromVariableStep(String variableName, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -27,91 +22,28 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
   public void reset() {}
 
   @Override
-  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    init();
-    return new OLimitedResultSet(
-        new OResultSet() {
-          private void fetchNext() {
-            if (nextResult != null) {
-              return;
-            }
-            if (source.hasNext()) {
-              nextResult = source.next();
-            }
-          }
-
-          @Override
-          public boolean hasNext() {
-            if (nextResult == null) {
-              fetchNext();
-            }
-            return nextResult != null;
-          }
-
-          @Override
-          public OResult next() {
-            if (!hasNext()) {
-              throw new IllegalStateException();
-            }
-            OResult result = nextResult;
-            nextResult = null;
-            return result;
-          }
-
-          @Override
-          public void close() {}
-
-          @Override
-          public Optional<OExecutionPlan> getExecutionPlan() {
-            return Optional.empty();
-          }
-
-          @Override
-          public Map<String, Long> getQueryStats() {
-            return null;
-          }
-        },
-        nRecords);
-  }
-
-  private void init() {
-    if (inited) {
-      return;
-    }
-    inited = true;
+  public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     Object src = ctx.getVariable(variableName);
-    if (src instanceof OInternalResultSet) {
-      source = ((OInternalResultSet) src).copy();
+    OExecutionStream source;
+    if (src instanceof OExecutionStream) {
+      source = (OExecutionStream) src;
     } else if (src instanceof OResultSet) {
-      source = (OResultSet) src;
-      source.reset();
+      source =
+          OExecutionStream.resultIterator(((OResultSet) src).stream().iterator())
+              .onClose((context) -> ((OResultSet) src).close());
     } else if (src instanceof OElement) {
-      source = new OInternalResultSet();
-      ((OInternalResultSet) source).add(new OResultInternal((OElement) src));
+      source =
+          OExecutionStream.resultIterator(
+              Collections.singleton((OResult) new OResultInternal((OElement) src)).iterator());
     } else if (src instanceof OResult) {
-      source = new OInternalResultSet();
-      ((OInternalResultSet) source).add((OResult) src);
+      source = OExecutionStream.resultIterator(Collections.singleton((OResult) src).iterator());
     } else if (src instanceof Iterable) {
-      source = new OInternalResultSet();
-
-      Iterator iter = ((Iterable) src).iterator();
-      while (iter.hasNext()) {
-        Object next = iter.next();
-        if (next instanceof OElement) {
-          ((OInternalResultSet) source).add(new OResultInternal((OElement) next));
-        } else if (next instanceof OResult) {
-          ((OInternalResultSet) source).add((OResult) next);
-        } else {
-          OResultInternal item = new OResultInternal();
-          item.setProperty("value", next);
-          ((OInternalResultSet) source).add(item);
-        }
-      }
+      source = OExecutionStream.iterator(((Iterable) src).iterator());
     } else {
       throw new OCommandExecutionException("Cannot use variable as query target: " + variableName);
     }
-    nextResult = null;
+    return source;
   }
 
   @Override

@@ -2,7 +2,15 @@ package com.orientechnologies.orient.server.security;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.*;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
@@ -19,8 +27,9 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
  * @since 24/02/2021
  *     <p>Class developed to generate self-signed certificate
  */
-public class OSelfSignedCertificate {
+public class OSelfSignedCertificate<tmpLocalHost> {
 
+  public static final String DEFAULT_CERTIFICATE_TYPE = "X.509";
   public static final String DEFAULT_CERTIFICATE_ALGORITHM = "RSA";
   public static final int DEFAULT_CERTIFICATE_KEY_SIZE = 2048;
   public static final int DEFAULT_CERTIFICATE_VALIDITY = 365;
@@ -36,6 +45,7 @@ public class OSelfSignedCertificate {
   private X509Certificate certificate = null;
 
   private String certificateName;
+  private char[] certificate_pwd;
   private BigInteger certificateSN;
   private String ownerFDN;
 
@@ -49,11 +59,9 @@ public class OSelfSignedCertificate {
   }
 
   public void setAlgorithm(String algorithm) {
-    if ((algorithm == null) || (algorithm.isEmpty())) {
+    if ((algorithm == null) || (algorithm.isEmpty()))
       this.algorithm = DEFAULT_CERTIFICATE_ALGORITHM;
-    } else {
-      this.algorithm = algorithm;
-    }
+    else this.algorithm = algorithm;
   }
 
   public int getKey_size() {
@@ -68,6 +76,10 @@ public class OSelfSignedCertificate {
     }
   }
 
+  public int getValidity() {
+    return validity;
+  }
+
   public void setValidity(int validity) {
     this.validity = validity;
   }
@@ -80,6 +92,18 @@ public class OSelfSignedCertificate {
     this.certificateName = certificateName;
   }
 
+  public char[] getCertificatePwd() {
+    return certificate_pwd;
+  }
+
+  public void setCertificatePwd(char[] certificatePwd) {
+    this.certificate_pwd = certificatePwd;
+  }
+
+  public BigInteger getCertificateSN() {
+    return certificateSN;
+  }
+
   public void setCertificateSN(long certificateSN) throws SwitchToDefaultParamsException {
     if (certificateSN <= 11) {
       BigInteger sn = computeRandomSerialNumber();
@@ -89,9 +113,7 @@ public class OSelfSignedCertificate {
               + certificateSN
               + " culd not be used as a Certificate Serial Nuber, the value will be set to:"
               + sn);
-    } else {
-      this.certificateSN = BigInteger.valueOf(certificateSN);
-    }
+    } else this.certificateSN = BigInteger.valueOf(certificateSN);
   }
 
   public static BigInteger computeRandomSerialNumber() {
@@ -99,8 +121,16 @@ public class OSelfSignedCertificate {
     return BigInteger.valueOf(sr.nextLong());
   }
 
+  public String getOwnerFDN() {
+    return ownerFDN;
+  }
+
   public void setOwnerFDN(String ownerFDN) {
     this.ownerFDN = ownerFDN;
+  }
+
+  public void setOwner_FDN(String CN, String OU, String O, String L, String C) {
+    this.ownerFDN = "CN=" + CN + ", OU=" + OU + ", O=" + O + ", L=" + L + ", C=" + C;
   }
 
   /**
@@ -112,17 +142,18 @@ public class OSelfSignedCertificate {
    *
    * <p>This method will computes and returns a new key pair every time it is called.
    *
-   * @return a new key pair
    * @throws NoSuchAlgorithmException if the algorithm String not match with the supported key
    *     generation schemes.
+   * @return a new key pair
    */
   public static KeyPair computeKeyPair(String algorithm, int keySize)
       throws NoSuchAlgorithmException {
 
     KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
     keyPairGenerator.initialize(keySize, new SecureRandom());
+    KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-    return keyPairGenerator.generateKeyPair();
+    return keyPair;
   }
 
   /**
@@ -209,21 +240,15 @@ public class OSelfSignedCertificate {
   }
 
   public static void checkCertificate(X509Certificate cert, PublicKey publicKey, Date date)
-      throws NoSuchProviderException,
-          CertificateException,
-          NoSuchAlgorithmException,
-          InvalidKeyException,
-          SignatureException {
+      throws NoSuchProviderException, CertificateException, NoSuchAlgorithmException,
+          InvalidKeyException, SignatureException {
     cert.checkValidity(date);
     cert.verify(publicKey);
   }
 
   public void checkThisCertificate()
-      throws NoSuchAlgorithmException,
-          CertificateException,
-          NoSuchProviderException,
-          InvalidKeyException,
-          SignatureException {
+      throws NoSuchAlgorithmException, CertificateException, NoSuchProviderException,
+          InvalidKeyException, SignatureException {
     checkCertificate(
         this.certificate, this.keyPair.getPublic(), new Date(System.currentTimeMillis()));
   }

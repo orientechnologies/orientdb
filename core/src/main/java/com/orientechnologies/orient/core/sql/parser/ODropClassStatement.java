@@ -6,9 +6,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 import java.util.Objects;
 
@@ -28,7 +27,7 @@ public class ODropClassStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
+  public OExecutionStream executeDDL(OCommandContext ctx) {
     OSchema schema = ctx.getDatabase().getMetadata().getSchema();
     String className;
     if (name != null) {
@@ -39,7 +38,7 @@ public class ODropClassStatement extends ODDLStatement {
     OClass clazz = schema.getClass(className);
     if (clazz == null) {
       if (ifExists) {
-        return new OInternalResultSet();
+        return OExecutionStream.empty();
       }
       throw new OCommandExecutionException("Class " + className + " does not exist");
     }
@@ -62,12 +61,10 @@ public class ODropClassStatement extends ODDLStatement {
 
     schema.dropClass(className);
 
-    OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "drop class");
     result.setProperty("className", className);
-    rs.add(result);
-    return rs;
+    return OExecutionStream.singleton(result);
   }
 
   @Override

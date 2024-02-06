@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.List;
  */
 public interface OExecutionStepInternal extends OExecutionStep {
 
-  OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException;
+  OExecutionStream start(OCommandContext ctx) throws OTimeoutException;
 
   void sendTimeout();
 

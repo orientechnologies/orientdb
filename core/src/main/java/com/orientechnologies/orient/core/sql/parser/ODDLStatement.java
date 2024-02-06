@@ -6,6 +6,8 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.sql.executor.ODDLExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +22,7 @@ public abstract class ODDLStatement extends OStatement {
     super(p, id);
   }
 
-  public abstract OResultSet executeDDL(OCommandContext ctx);
+  public abstract OExecutionStream executeDDL(OCommandContext ctx);
 
   public OResultSet execute(
       ODatabaseSession db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
@@ -37,7 +39,7 @@ public abstract class ODDLStatement extends OStatement {
     }
     ctx.setInputParameters(params);
     ODDLExecutionPlan executionPlan = (ODDLExecutionPlan) createExecutionPlan(ctx, false);
-    return executionPlan.executeInternal(ctx);
+    return new OExecutionResultSet(executionPlan.executeInternal(ctx), ctx, executionPlan);
   }
 
   public OResultSet execute(
@@ -49,7 +51,7 @@ public abstract class ODDLStatement extends OStatement {
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
     ODDLExecutionPlan executionPlan = (ODDLExecutionPlan) createExecutionPlan(ctx, false);
-    return executionPlan.executeInternal(ctx);
+    return new OExecutionResultSet(executionPlan.executeInternal(ctx), ctx, executionPlan);
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {

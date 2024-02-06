@@ -10,9 +10,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.SequenceOrderType;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 import java.util.Objects;
 
@@ -35,7 +34,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
+  public OExecutionStream executeDDL(OCommandContext ctx) {
 
     String sequenceName = name.getStringValue();
 
@@ -100,7 +99,6 @@ public class OAlterSequenceStatement extends ODDLStatement {
     }
     sequence.save(database);
 
-    OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();
     item.setProperty("operation", "alter sequence");
     item.setProperty("sequenceName", sequenceName);
@@ -125,8 +123,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
     if (params.getTurnLimitOff() != null && params.getTurnLimitOff()) {
       item.setProperty("turnLimitOff", params.getTurnLimitOff());
     }
-    result.add(item);
-    return result;
+    return OExecutionStream.singleton(item);
   }
 
   @Override

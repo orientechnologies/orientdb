@@ -1,6 +1,10 @@
-package com.orientechnologies.orient.core.sql.executor;
+package com.orientechnologies.orient.core.sql.executor.resultset;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;

@@ -7,9 +7,11 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class ODropIndexStatement extends ODDLStatement {
@@ -27,8 +29,8 @@ public class ODropIndexStatement extends ODDLStatement {
   }
 
   @Override
-  public OResultSet executeDDL(OCommandContext ctx) {
-    OInternalResultSet rs = new OInternalResultSet();
+  public OExecutionStream executeDDL(OCommandContext ctx) {
+    List<OResult> rs = new ArrayList<>();
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     OIndexManagerAbstract idxMgr = db.getMetadata().getIndexManagerInternal();
     if (all) {
@@ -51,7 +53,7 @@ public class ODropIndexStatement extends ODDLStatement {
       rs.add(result);
     }
 
-    return rs;
+    return OExecutionStream.resultIterator(rs.iterator());
   }
 
   @Override
