@@ -376,14 +376,13 @@ public class WOWCacheTestIT {
       final OCachePointer cachePointer =
           wowCache.load(fileId, pageIndex, new OModifiableBoolean(), false);
       cachePointer.acquireExclusiveLock();
-      ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      ByteBuffer buffer = cachePointer.getBuffer();
       assert buffer != null;
 
       Assert.assertEquals(
           new OLogSequenceNumber(0, 0), ODurablePage.getLogSequenceNumberFromPage(buffer));
 
-      buffer.position(ODurablePage.NEXT_FREE_POSITION);
-      buffer.put(data);
+      buffer.put(ODurablePage.NEXT_FREE_POSITION, data);
       cachePointer.releaseExclusiveLock();
 
       wowCache.store(fileId, pageIndex, cachePointer);
@@ -396,11 +395,9 @@ public class WOWCacheTestIT {
 
       OCachePointer cachePointer = wowCache.load(fileId, pageIndex, new OModifiableBoolean(), true);
       byte[] dataTwo = new byte[8];
-      ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      ByteBuffer buffer = cachePointer.getBuffer();
       assert buffer != null;
-
-      buffer.position(ODurablePage.NEXT_FREE_POSITION);
-      buffer.get(dataTwo);
+      buffer.get(ODurablePage.NEXT_FREE_POSITION, dataTwo);
 
       cachePointer.decrementReadersReferrer();
       Assert.assertArrayEquals(dataTwo, dataOne);
@@ -420,11 +417,10 @@ public class WOWCacheTestIT {
           wowCache.load(fileId, pageIndex, new OModifiableBoolean(), true);
 
       cachePointer.acquireExclusiveLock();
-      ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      ByteBuffer buffer = cachePointer.getBuffer();
       assert buffer != null;
 
-      buffer.position(ODurablePage.NEXT_FREE_POSITION);
-      buffer.put(data);
+      buffer.put(ODurablePage.NEXT_FREE_POSITION, data);
       cachePointer.releaseExclusiveLock();
 
       wowCache.store(fileId, pageIndex, cachePointer);
@@ -436,11 +432,10 @@ public class WOWCacheTestIT {
       byte[] dataOne = entry.getValue();
       OCachePointer cachePointer = wowCache.load(fileId, pageIndex, new OModifiableBoolean(), true);
       byte[] dataTwo = new byte[8];
-      ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      ByteBuffer buffer = cachePointer.getBuffer();
       assert buffer != null;
 
-      buffer.position(ODurablePage.NEXT_FREE_POSITION);
-      buffer.get(dataTwo);
+      buffer.get(ODurablePage.NEXT_FREE_POSITION, dataTwo);
       cachePointer.decrementReadersReferrer();
 
       Assert.assertArrayEquals(dataTwo, dataOne);
@@ -529,17 +524,16 @@ public class WOWCacheTestIT {
 
       final OCachePointer cachePointer =
           wowCache.load(fileId, pageIndex, new OModifiableBoolean(), verifyChecksums);
-      ByteBuffer bufferDuplicate = cachePointer.getBufferDuplicate();
+      ByteBuffer bufferDuplicate = cachePointer.getBuffer();
       assert bufferDuplicate != null;
 
       Assert.assertEquals(
           new OLogSequenceNumber(0, 0), ODurablePage.getLogSequenceNumberFromPage(bufferDuplicate));
 
       cachePointer.acquireExclusiveLock();
-      ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      ByteBuffer buffer = cachePointer.getBuffer();
 
-      buffer.position(ODurablePage.NEXT_FREE_POSITION);
-      buffer.put(data);
+      buffer.put(ODurablePage.NEXT_FREE_POSITION, data);
 
       cachePointer.releaseExclusiveLock();
 
@@ -553,11 +547,10 @@ public class WOWCacheTestIT {
 
       OCachePointer cachePointer = wowCache.load(fileId, pageIndex, new OModifiableBoolean(), true);
       byte[] dataTwo = new byte[8];
-      ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      ByteBuffer buffer = cachePointer.getBuffer();
       assert buffer != null;
 
-      buffer.position(ODurablePage.NEXT_FREE_POSITION);
-      buffer.get(dataTwo);
+      buffer.get(ODurablePage.NEXT_FREE_POSITION, dataTwo);
 
       cachePointer.decrementReadersReferrer();
       Assert.assertArrayEquals(dataTwo, dataOne);
@@ -577,11 +570,10 @@ public class WOWCacheTestIT {
           wowCache.load(fileId, pageIndex, new OModifiableBoolean(), true);
 
       cachePointer.acquireExclusiveLock();
-      ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      ByteBuffer buffer = cachePointer.getBuffer();
       assert buffer != null;
 
-      buffer.position(ODurablePage.NEXT_FREE_POSITION);
-      buffer.put(data);
+      buffer.put(ODurablePage.NEXT_FREE_POSITION, data);
 
       cachePointer.releaseExclusiveLock();
 
@@ -594,11 +586,10 @@ public class WOWCacheTestIT {
       byte[] dataOne = entry.getValue();
       OCachePointer cachePointer = wowCache.load(fileId, pageIndex, new OModifiableBoolean(), true);
       byte[] dataTwo = new byte[8];
-      ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      ByteBuffer buffer = cachePointer.getBuffer();
       assert buffer != null;
 
-      buffer.position(ODurablePage.NEXT_FREE_POSITION);
-      buffer.get(dataTwo);
+      buffer.get(ODurablePage.NEXT_FREE_POSITION, dataTwo);
       cachePointer.decrementReadersReferrer();
 
       Assert.assertArrayEquals(dataTwo, dataOne);
@@ -685,11 +676,10 @@ public class WOWCacheTestIT {
     final OCachePointer cachePointer = wowCache.load(fileId, 0, new OModifiableBoolean(), false);
 
     cachePointer.acquireExclusiveLock();
-    final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.position(ODurablePage.NEXT_FREE_POSITION);
-    buffer.put(new byte[buffer.remaining()]);
+    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
@@ -725,11 +715,10 @@ public class WOWCacheTestIT {
     final OCachePointer cachePointer = wowCache.load(fileId, 0, new OModifiableBoolean(), false);
 
     cachePointer.acquireExclusiveLock();
-    final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.position(ODurablePage.NEXT_FREE_POSITION);
-    buffer.put(new byte[buffer.remaining()]);
+    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
@@ -763,11 +752,10 @@ public class WOWCacheTestIT {
     final OCachePointer cachePointer = wowCache.load(fileId, 0, new OModifiableBoolean(), false);
 
     cachePointer.acquireExclusiveLock();
-    final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.position(ODurablePage.NEXT_FREE_POSITION);
-    buffer.put(new byte[buffer.remaining()]);
+    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
@@ -798,11 +786,10 @@ public class WOWCacheTestIT {
     final OCachePointer cachePointer = wowCache.load(fileId, 0, new OModifiableBoolean(), true);
 
     cachePointer.acquireExclusiveLock();
-    final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.position(ODurablePage.NEXT_FREE_POSITION);
-    buffer.put(new byte[buffer.remaining()]);
+    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
@@ -833,11 +820,10 @@ public class WOWCacheTestIT {
     final OCachePointer cachePointer = wowCache.load(fileId, 0, new OModifiableBoolean(), true);
 
     cachePointer.acquireExclusiveLock();
-    final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.position(ODurablePage.NEXT_FREE_POSITION);
-    buffer.put(new byte[buffer.remaining()]);
+    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
@@ -868,11 +854,10 @@ public class WOWCacheTestIT {
     final OCachePointer cachePointer = wowCache.load(fileId, 0, new OModifiableBoolean(), true);
 
     cachePointer.acquireExclusiveLock();
-    final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.position(ODurablePage.NEXT_FREE_POSITION);
-    buffer.put(new byte[buffer.remaining()]);
+    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
