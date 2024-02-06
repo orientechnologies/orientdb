@@ -23,7 +23,6 @@ import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -44,7 +43,7 @@ public final class OCachePointer {
   }
 
   private static final int WRITERS_OFFSET = 32;
-  private static final int READERS_MASK = 0xFFFFFFFF;
+  private static final long READERS_MASK = 0xFFFFFFFFL;
 
   private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
@@ -230,16 +229,6 @@ public final class OCachePointer {
 
   public OPointer getPointer() {
     return pointer;
-  }
-
-  public ByteBuffer getBufferDuplicate() {
-    if (pointer == null) {
-      return null;
-    }
-    final ByteBuffer duplicate =
-        pointer.getNativeByteBuffer().duplicate().order(ByteOrder.nativeOrder());
-    duplicate.rewind();
-    return duplicate;
   }
 
   public void acquireExclusiveLock() {
