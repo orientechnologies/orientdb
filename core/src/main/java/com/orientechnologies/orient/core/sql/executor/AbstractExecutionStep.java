@@ -80,7 +80,8 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
     } else {
       return internalStart(ctx);
     }
-  };
+  }
+  ;
 
   protected abstract OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException;
 
