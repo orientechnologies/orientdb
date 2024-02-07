@@ -420,79 +420,6 @@
                         </goals>
                     </execution>
                 </executions>
-<<<<<<< HEAD
-=======
-                <configuration>
-                    <doCheck>false</doCheck>
-                    <doUpdate>false</doUpdate>
-                    <!-- Use committed revision so it does not change every
-                        time svn update is run -->
-                    <useLastCommittedRevision>true</useLastCommittedRevision>
-                    <!-- default revision number if unavailable -->
-                    <revisionOnScmFailure>??????</revisionOnScmFailure>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>io.github.zlika</groupId>
-                <artifactId>reproducible-build-maven-plugin</artifactId>
-                <version>0.5</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>strip-jar</goal>
-                            <goal>strip-jaxb</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>3.0.1</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.codehaus.plexus</groupId>
-                        <artifactId>plexus-archiver</artifactId>
-                        <version>4.8.0</version>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <!-- | dummy entry to stop bundle plugin from picking 
-                        up jar config and reporting | WARNING: Duplicate name in Manifest | See http://markmail.org/message/mpkl24wk3jrjhhjg -->
-                    <archive>
-                        <forced>true</forced>
-                    </archive>
-                    <excludeDependencies>true</excludeDependencies>
-                    <manifestLocation>${project.build.directory}/osgi</manifestLocation>
-                    <instructions>
-                        <!-- | stops the "uses" clauses being added to "Export-Package" 
-                            manifest entry -->
-                        <_nouses>true</_nouses>
-                        <!-- | Stop the JAVA_1_n_HOME variables from being 
-                            treated as headers by Bnd -->
-                        <_removeheaders>JAVA_1_3_HOME,JAVA_1_4_HOME,JAVA_1_5_HOME,JAVA_1_6_HOME,JAVA_1_7_HOME,
-                            Bnd-LastModified,Built-By,Private-Package,Tool,Created-By,Build-Jdk,Include-Resource,
-                            Ignore-Package,Private-Package,Bundle-DocURL
-                        </_removeheaders>
-                        <Fragment-Host>${osgi.fragment.host}</Fragment-Host>
-                        <Export-Package>${osgi.export}</Export-Package>
-                        <Private-Package>${osgi.private}</Private-Package>
-                        <Import-Package>${project.groupId}.*;provide:=true,${osgi.import}</Import-Package>
-                        <DynamicImport-Package>${osgi.dynamicImport}</DynamicImport-Package>
-                        <Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
-                    </instructions>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>bundle-manifest</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>manifest</goal>
-                        </goals>
-                    </execution>
-                </executions>
->>>>>>> d795008d96 (reproducible build: added plugin for strip off of dates inside jars)
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -546,9 +473,22 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>com.coveo</groupId>
-                <artifactId>fmt-maven-plugin</artifactId>
-                <version>2.9.1</version>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.42.0</version>
+                <configuration>
+                    <java>
+                        <googleJavaFormat>
+                            <version>1.19.2</version>
+                            <style>GOOGLE</style>
+                            <reflowLongStrings>true</reflowLongStrings>
+                            <formatJavadoc>false</formatJavadoc>
+                        </googleJavaFormat>
+
+                        <removeUnusedImports/>
+                        <importOrder/>
+                    </java>
+                </configuration>
                 <executions>
                     <execution>
                         <phase>compile</phase>
