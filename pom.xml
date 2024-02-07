@@ -105,7 +105,6 @@
         <module>jdbc</module>
         <module>etl</module>
         <module>distribution</module>
-        <module>distribution-tp2</module>
     </modules>
 
     <scm>
