@@ -42,7 +42,8 @@ public class MultipleObjectDbInstancesTest {
   public void testTwiceCreateDBSchemaRegistered() throws IOException {
     OrientDB orientDB = new OrientDB("memory:", OrientDBConfig.defaultConfig());
     orientDB.execute(
-        "create database MultipleDbInstancesTest_first memory users(admin identified by 'adminpwd' role admin)");
+        "create database MultipleDbInstancesTest_first memory users(admin identified by 'adminpwd'"
+            + " role admin)");
     ODatabaseDocumentInternal db =
         (ODatabaseDocumentInternal)
             orientDB.open("MultipleDbInstancesTest_first", "admin", "adminpwd");
@@ -56,7 +57,8 @@ public class MultipleObjectDbInstancesTest {
     objectDb.close();
 
     orientDB.execute(
-        "create database MultipleDbInstancesTest_second memory users(admin identified by 'adminpwd' role admin)");
+        "create database MultipleDbInstancesTest_second memory users(admin identified by 'adminpwd'"
+            + " role admin)");
     ODatabaseDocumentInternal db1 =
         (ODatabaseDocumentInternal)
             orientDB.open("MultipleDbInstancesTest_second", "admin", "adminpwd");

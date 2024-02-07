@@ -20,7 +20,8 @@ public class ODemoDbFromDocumentationServicesIT extends OIntegrationTestTemplate
 
     OResultSet resultSet =
         db.query(
-            "MATCH {class: Customers, as: customer, where: (OrderedId=1)}--{Class: Services, as: service}\n"
+            "MATCH {class: Customers, as: customer, where: (OrderedId=1)}--{Class: Services, as:"
+                + " service}\n"
                 + "RETURN $pathelements");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());

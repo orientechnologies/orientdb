@@ -67,7 +67,8 @@ public class HttpGephiTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(
         post("command/" + getDatabaseName() + "/sql/")
             .payload(
-                "{\"command\":\"create edge from (select from v where name = 'Jay') to (select from v where name = 'Amiga')\"}",
+                "{\"command\":\"create edge from (select from v where name = 'Jay') to (select from"
+                    + " v where name = 'Amiga')\"}",
                 CONTENT.TEXT)
             .setUserName("admin")
             .setUserPassword("admin")

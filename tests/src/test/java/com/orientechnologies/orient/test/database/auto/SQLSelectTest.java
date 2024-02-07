@@ -120,7 +120,8 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void queryParentesisAsRight() {
     List<ODocument> result =
         executeQuery(
-            "  select from Profile where ( name = 'Giuseppe' and ( name <> 'Napoleone' and nick is not null ))  ",
+            "  select from Profile where ( name = 'Giuseppe' and ( name <> 'Napoleone' and nick is"
+                + " not null ))  ",
             database);
 
     Assert.assertTrue(result.size() != 0);
@@ -146,7 +147,8 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void queryTwoParentesisConditions() {
     List<ODocument> result =
         executeQuery(
-            "select from Profile  where ( name = 'Giuseppe' and nick is not null ) or ( name = 'Napoleone' and nick is not null ) ",
+            "select from Profile  where ( name = 'Giuseppe' and nick is not null ) or ( name ="
+                + " 'Napoleone' and nick is not null ) ",
             database);
 
     Assert.assertTrue(result.size() != 0);
@@ -339,7 +341,8 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     resultset =
         executeQuery(
-            "select customReferences['second', 'first'] from Profile where customReferences.size() = 2",
+            "select customReferences['second', 'first'] from Profile where customReferences.size()"
+                + " = 2",
             database);
     Assert.assertEquals(resultset.size(), 1);
 
@@ -359,13 +362,15 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     resultset =
         executeQuery(
-            "select customReferences[second]['name'] from Profile where customReferences[second]['name'] is not null",
+            "select customReferences[second]['name'] from Profile where"
+                + " customReferences[second]['name'] is not null",
             database);
     Assert.assertEquals(resultset.size(), 1);
 
     resultset =
         executeQuery(
-            "select customReferences[second]['name'] as value from Profile where customReferences[second]['name'] is not null",
+            "select customReferences[second]['name'] as value from Profile where"
+                + " customReferences[second]['name'] is not null",
             database);
     Assert.assertEquals(resultset.size(), 1);
 
@@ -405,7 +410,8 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void queryCollectionContainsLowerCaseSubStringIgnoreCase() {
     List<ODocument> result =
         executeQuery(
-            "select * from cluster:profile where races contains (name.toLowerCase(Locale.ENGLISH).subString(0,1) = 'e')",
+            "select * from cluster:profile where races contains"
+                + " (name.toLowerCase(Locale.ENGLISH).subString(0,1) = 'e')",
             database);
 
     for (int i = 0; i < result.size(); ++i) {
@@ -1342,7 +1348,8 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testSquareBracketsOnCondition() {
     List<ODocument> result =
         executeQuery(
-            "select from Account where addresses[@class='Address'][city.country.name] = 'Washington'",
+            "select from Account where addresses[@class='Address'][city.country.name] ="
+                + " 'Washington'",
             database);
     Assert.assertFalse(result.isEmpty());
     for (ODocument d : result) {
@@ -1395,7 +1402,8 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void subQuery() {
     List<ODocument> result =
         executeQuery(
-            "select from Account where name in ( select name from Account where name is not null limit 1 )",
+            "select from Account where name in ( select name from Account where name is not null"
+                + " limit 1 )",
             database);
 
     Assert.assertTrue(result.size() != 0);
@@ -1405,7 +1413,8 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void subQueryNoFrom() {
     List<ODocument> result2 =
         executeQuery(
-            "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )",
+            "select $names let $names = (select EXPAND( addresses.city ) as city from Account where"
+                + " addresses.size() > 0 )",
             database);
 
     Assert.assertTrue(result2.size() != 0);
@@ -1609,7 +1618,8 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void queryAsynch() {
     final String sqlOne = "select * from company where id between 4 and 7";
     final String sqlTwo =
-        "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )";
+        "select $names let $names = (select EXPAND( addresses.city ) as city from Account where"
+            + " addresses.size() > 0 )";
 
     final List<ODocument> synchResultOne =
         database.command(new OSQLSynchQuery<ODocument>(sqlOne)).execute();
@@ -1687,7 +1697,8 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void queryAsynchHalfForheFirstQuery() {
     final String sqlOne = "select * from company where id between 4 and 7";
     final String sqlTwo =
-        "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )";
+        "select $names let $names = (select EXPAND( addresses.city ) as city from Account where"
+            + " addresses.size() > 0 )";
 
     final List<ODocument> synchResultOne =
         database.command(new OSQLSynchQuery<ODocument>(sqlOne)).execute();
@@ -1791,12 +1802,14 @@ public class SQLSelectTest extends AbstractSelectTest {
             (List<ODocument>)
                 database.query(
                     new OSQLSynchQuery<ODocument>(
-                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name"
+                            + " is not null)")));
 
     final List<ODocument> indexValuesResult =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select from indexvalues:selectFromIndexValues where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+                "select from indexvalues:selectFromIndexValues where ((nick like 'J%') or (nick"
+                    + " like 'N%')) and (name is not null)"));
 
     Assert.assertEquals(indexValuesResult.size(), classResult.size());
 
@@ -1822,12 +1835,14 @@ public class SQLSelectTest extends AbstractSelectTest {
             (List<ODocument>)
                 database.query(
                     new OSQLSynchQuery<ODocument>(
-                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name"
+                            + " is not null)")));
 
     final List<ODocument> indexValuesResult =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select from indexvaluesasc:selectFromIndexValuesAsc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+                "select from indexvaluesasc:selectFromIndexValuesAsc where ((nick like 'J%') or"
+                    + " (nick like 'N%')) and (name is not null)"));
 
     Assert.assertEquals(indexValuesResult.size(), classResult.size());
 
@@ -1853,12 +1868,14 @@ public class SQLSelectTest extends AbstractSelectTest {
             (List<ODocument>)
                 database.query(
                     new OSQLSynchQuery<ODocument>(
-                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name"
+                            + " is not null)")));
 
     final List<ODocument> indexValuesResult =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select from indexvaluesdesc:selectFromIndexValuesDesc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+                "select from indexvaluesdesc:selectFromIndexValuesDesc where ((nick like 'J%') or"
+                    + " (nick like 'N%')) and (name is not null)"));
 
     Assert.assertEquals(indexValuesResult.size(), classResult.size());
 
@@ -1887,7 +1904,8 @@ public class SQLSelectTest extends AbstractSelectTest {
     final List<OIdentifiable> result =
         database.query(
             new OSQLSynchQuery<OIdentifiable>(
-                "select name, $counter as counter from OUser let $counter = eval(\"$counter + 1\")"));
+                "select name, $counter as counter from OUser let $counter = eval(\"$counter +"
+                    + " 1\")"));
 
     Assert.assertFalse(result.isEmpty());
     int i = 1;
@@ -1944,13 +1962,16 @@ public class SQLSelectTest extends AbstractSelectTest {
     database.command("insert into TestOutFilterInclude content { \"name\": \"two\" }").close();
     database
         .command(
-            "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name = 'one') to (select from TestOutFilterInclude where name = 'two')")
+            "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name"
+                + " = 'one') to (select from TestOutFilterInclude where name = 'two')")
         .close();
 
     final List<OIdentifiable> result =
         database.query(
             new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out('linkedToOutFilterInclude')[@class='TestOutFilterInclude'].include('@rid')) from TestOutFilterInclude where name = 'one'"));
+                "select"
+                    + " expand(out('linkedToOutFilterInclude')[@class='TestOutFilterInclude'].include('@rid'))"
+                    + " from TestOutFilterInclude where name = 'one'"));
 
     Assert.assertEquals(result.size(), 1);
 
@@ -2006,7 +2027,8 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     database
         .command(
-            "CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')")
+            "CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM"
+                + " TestExpandSkip WHERE name <> '1')")
         .close();
 
     OResultSet result = database.query("select expand(out()) from TestExpandSkip where name = '1'");
@@ -2050,21 +2072,25 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     database
         .command(
-            "CREATE EDGE TestPolymorphicEdges_E1 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '2')")
+            "CREATE EDGE TestPolymorphicEdges_E1 FROM (SELECT FROM TestPolymorphicEdges_V WHERE"
+                + " name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '2')")
         .close();
     database
         .command(
-            "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')")
+            "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE"
+                + " name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')")
         .close();
 
     OResultSet result =
         database.query(
-            "select expand(out('TestPolymorphicEdges_E1')) from TestPolymorphicEdges_V where name = '1'");
+            "select expand(out('TestPolymorphicEdges_E1')) from TestPolymorphicEdges_V where name ="
+                + " '1'");
     Assert.assertEquals(result.stream().count(), 2);
 
     result =
         database.query(
-            "select expand(out('TestPolymorphicEdges_E2')) from TestPolymorphicEdges_V where name = '1' ");
+            "select expand(out('TestPolymorphicEdges_E2')) from TestPolymorphicEdges_V where name ="
+                + " '1' ");
     Assert.assertEquals(result.stream().count(), 1);
   }
 
@@ -2078,12 +2104,14 @@ public class SQLSelectTest extends AbstractSelectTest {
     database.command("CREATE VERTEX TestSizeOfLink set name = '3'").close();
     database
         .command(
-            "CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM TestSizeOfLink WHERE name <> '1')")
+            "CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM"
+                + " TestSizeOfLink WHERE name <> '1')")
         .close();
 
     OResultSet result =
         database.query(
-            " select from (select from TestSizeOfLink where name = '1') where out()[name=2].size() > 0");
+            " select from (select from TestSizeOfLink where name = '1') where out()[name=2].size()"
+                + " > 0");
     Assert.assertEquals(result.stream().count(), 1);
   }
 
@@ -2095,17 +2123,20 @@ public class SQLSelectTest extends AbstractSelectTest {
     database.command("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'").close();
     database
         .command(
-            "CREATE VERTEX EmbeddedMapAndDotNotation set data = {\"bar\": \"baz\", \"quux\": 1}, name = 'bar'")
+            "CREATE VERTEX EmbeddedMapAndDotNotation set data = {\"bar\": \"baz\", \"quux\": 1},"
+                + " name = 'bar'")
         .close();
     database
         .command(
-            "CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')")
+            "CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to"
+                + " (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')")
         .close();
 
     List<OIdentifiable> result =
         database.query(
             new OSQLSynchQuery<OIdentifiable>(
-                " select out().data as result from (select from EmbeddedMapAndDotNotation where name = 'foo')"));
+                " select out().data as result from (select from EmbeddedMapAndDotNotation where"
+                    + " name = 'foo')"));
     Assert.assertEquals(result.size(), 1);
     ODocument doc = result.get(0).getRecord();
     Assert.assertNotNull(doc);
@@ -2125,7 +2156,8 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     OResultSet result =
         database.query(
-            " select expand($a) let $a = (select from LetWithQuotedValue where name = \"\\\"foo\\\"\")");
+            " select expand($a) let $a = (select from LetWithQuotedValue where name ="
+                + " \"\\\"foo\\\"\")");
     Assert.assertEquals(result.stream().count(), 1);
   }
 
@@ -2141,7 +2173,8 @@ public class SQLSelectTest extends AbstractSelectTest {
     database.command("insert into testNamedParams set login = 20").close();
     database
         .command(
-            "CREATE EDGE testNamedParams_HasPermission from (select from testNamedParams) to (select from testNamedParams_permission)")
+            "CREATE EDGE testNamedParams_HasPermission from (select from testNamedParams) to"
+                + " (select from testNamedParams_permission)")
         .close();
 
     Map<String, Object> params = new HashMap<String, Object>();
@@ -2151,7 +2184,10 @@ public class SQLSelectTest extends AbstractSelectTest {
     List<ODocument> results =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "SELECT *, out('testNamedParams_HasPermission').type as permissions FROM testNamedParams WHERE login >= :key AND out('testNamedParams_HasPermission').type IN :permissions ORDER BY login ASC LIMIT :limit"),
+                "SELECT *, out('testNamedParams_HasPermission').type as permissions FROM"
+                    + " testNamedParams WHERE login >= :key AND"
+                    + " out('testNamedParams_HasPermission').type IN :permissions ORDER BY login"
+                    + " ASC LIMIT :limit"),
             params);
     Assert.assertEquals(results.size(), 1);
   }

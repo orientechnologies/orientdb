@@ -155,7 +155,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
       OLogManager.instance()
           .info(
               this,
-              "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s",
+              "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s,"
+                  + " targetDirectory=%s",
               delay,
               firstTime,
               targetDirectory);

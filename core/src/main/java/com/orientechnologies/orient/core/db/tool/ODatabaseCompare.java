@@ -128,7 +128,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       ODocumentHelper.RIDMapper ridMapper = null;
       if (autoDetectExportImportMap) {
         listener.onMessage(
-            "\nAuto discovery of mapping between RIDs of exported and imported records is switched on, try to discover mapping data on disk.");
+            "\n"
+                + "Auto discovery of mapping between RIDs of exported and imported records is"
+                + " switched on, try to discover mapping data on disk.");
         if (databaseTwo.getMetadata().getSchema().getClass(ODatabaseImport.EXPORT_IMPORT_CLASS_NAME)
             != null) {
           listener.onMessage("\nMapping data were found and will be loaded.");

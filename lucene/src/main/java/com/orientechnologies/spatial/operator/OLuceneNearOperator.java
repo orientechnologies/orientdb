@@ -166,7 +166,8 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
 
   @Override
   public String getSyntax() {
-    return "<left> NEAR[(<begin-deep-level> [,<maximum-deep-level> [,<fields>]] )] ( <conditions> )";
+    return "<left> NEAR[(<begin-deep-level> [,<maximum-deep-level> [,<fields>]] )] ( <conditions>"
+        + " )";
   }
 
   @Override

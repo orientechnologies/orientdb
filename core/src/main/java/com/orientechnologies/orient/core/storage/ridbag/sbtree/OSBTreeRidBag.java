@@ -434,7 +434,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       throw new IllegalStateException(
           "This data structure is owned by document "
               + owner
-              + " if you want to use it in other document create new rid bag instance and copy content of current one.");
+              + " if you want to use it in other document create new rid bag instance and copy"
+              + " content of current one.");
     }
     if (this.owner != null) {
       for (OIdentifiable entry : newEntries.keySet()) {

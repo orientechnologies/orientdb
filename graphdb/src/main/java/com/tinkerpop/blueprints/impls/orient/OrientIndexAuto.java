@@ -101,7 +101,8 @@ public class OrientIndexAuto<T extends OrientElement> implements OrientIndex<T> 
         throw new IllegalArgumentException(
             "Index class '"
                 + className
-                + "' is not registered. Supported ones: Vertex, Edge and custom class that extends them",
+                + "' is not registered. Supported ones: Vertex, Edge and custom class that extends"
+                + " them",
             e);
       }
     }

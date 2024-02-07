@@ -1630,7 +1630,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         OLogManager.instance()
             .error(
                 this,
-                "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit() `%08X`",
+                "Cannot commit the transaction: caught exception on execution of"
+                    + " %s.onBeforeTxCommit() `%08X`",
                 e,
                 listener.getClass().getName(),
                 System.identityHashCode(e));
@@ -1649,7 +1650,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         listener.onAfterTxCommit(this);
       } catch (Exception e) {
         final String message =
-            "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of "
+            "Error after the transaction has been committed. The transaction remains valid. The"
+                + " exception caught was on execution of "
                 + listener.getClass()
                 + ".onAfterTxCommit() `%08X`";
 
@@ -1978,7 +1980,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       msg.append("This database instance has ");
       msg.append(activeQueries.size());
       msg.append(
-          " open command/query result sets, please make sure you close them with OResultSet.close()");
+          " open command/query result sets, please make sure you close them with"
+              + " OResultSet.close()");
       OLogManager.instance().warn(this, msg.toString(), null);
       if (OLogManager.instance().isDebugEnabled()) {
         activeQueries.values().stream()

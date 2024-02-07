@@ -40,17 +40,20 @@ public class ODeleteEdgeStatementTest {
     checkRightSyntax("DELETE EDGE E to #12:0");
     checkRightSyntax("DELETE EDGE E from #12:0 to #12:1");
     checkRightSyntax(
-        "DELETE EDGE E from (select from V where name = 'foo') to (select from V where name = 'bar')");
+        "DELETE EDGE E from (select from V where name = 'foo') to (select from V where name ="
+            + " 'bar')");
 
     checkRightSyntax(
-        "DELETE EDGE E from (select from V where name = 'foo') to (select from V where name = 'bar') BATCH 14");
+        "DELETE EDGE E from (select from V where name = 'foo') to (select from V where name ="
+            + " 'bar') BATCH 14");
 
     checkRightSyntax("DELETE EDGE E where age = 50");
     checkRightSyntax("DELETE EDGE E from #12:0 where age = 50");
     checkRightSyntax("DELETE EDGE E to #12:0 where age = 50");
     checkRightSyntax("DELETE EDGE E from #12:0 to #12:1 where age = 50");
     checkRightSyntax(
-        "DELETE EDGE E from (select from V where name = 'foo') to (select from V where name = 'bar') where age = 50");
+        "DELETE EDGE E from (select from V where name = 'foo') to (select from V where name ="
+            + " 'bar') where age = 50");
     checkRightSyntax("DELETE EDGE E from (select foo()) to (select bar())");
     checkRightSyntax("DELETE EDGE E from ? to ?");
     checkRightSyntax("DELETE EDGE E from :foo to :bar");
@@ -66,14 +69,16 @@ public class ODeleteEdgeStatementTest {
     checkRightSyntax("DELETE EDGE to (select foo())");
     checkRightSyntax("DELETE EDGE from #12:0 to #12:1");
     checkRightSyntax(
-        "DELETE EDGE from (select from V where name = 'foo') to (select from V where name = 'bar')");
+        "DELETE EDGE from (select from V where name = 'foo') to (select from V where name ="
+            + " 'bar')");
 
     checkRightSyntax("DELETE EDGE where age = 50");
     checkRightSyntax("DELETE EDGE from #12:0 where age = 50");
     checkRightSyntax("DELETE EDGE to #12:0 where age = 50");
     checkRightSyntax("DELETE EDGE from #12:0 to #12:1 where age = 50");
     checkRightSyntax(
-        "DELETE EDGE from (select from V where name = 'foo') to (select from V where name = 'bar') where age = 50");
+        "DELETE EDGE from (select from V where name = 'foo') to (select from V where name = 'bar')"
+            + " where age = 50");
 
     checkRightSyntax("DELETE EDGE from [#12:0, #12:1] to [#13:0, #13:1] where age = 50");
     checkRightSyntax("DELETE EDGE from [#13:0, #13:1] where age = 50");

@@ -170,7 +170,8 @@ public class OClusterHealthChecker implements Runnable {
             manager.getLocalNodeName(),
             null,
             ODistributedServerLog.DIRECTION.NONE,
-            "Server '%s' was not found in the list of registered servers. Reloading configuration from cluster...",
+            "Server '%s' was not found in the list of registered servers. Reloading configuration"
+                + " from cluster...",
             server);
 
         ((ODistributedPlugin) manager).reloadRegisteredNodes();
@@ -193,7 +194,8 @@ public class OClusterHealthChecker implements Runnable {
                 manager.getLocalNodeName(),
                 null,
                 ODistributedServerLog.DIRECTION.NONE,
-                "Server '%s' was not found in the list of registered servers after the update, restarting the server...",
+                "Server '%s' was not found in the list of registered servers after the update,"
+                    + " restarting the server...",
                 server);
 
             try {
@@ -243,7 +245,8 @@ public class OClusterHealthChecker implements Runnable {
             manager.getLocalNodeName(),
             null,
             ODistributedServerLog.DIRECTION.NONE,
-            "No server are ONLINE for database '%s'. Considering local copy of database as the good one. Setting status=ONLINE...",
+            "No server are ONLINE for database '%s'. Considering local copy of database as the good"
+                + " one. Setting status=ONLINE...",
             dbName);
 
         context.distributedSetOnline(dbName);
@@ -415,7 +418,8 @@ public class OClusterHealthChecker implements Runnable {
           manager.getLocalNodeName(),
           server,
           ODistributedServerLog.DIRECTION.OUT,
-          "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms). Setting the database as NOT_AVAILABLE",
+          "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms). Setting the"
+              + " database as NOT_AVAILABLE",
           server,
           dbName,
           OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
@@ -429,7 +433,8 @@ public class OClusterHealthChecker implements Runnable {
           manager.getLocalNodeName(),
           server,
           ODistributedServerLog.DIRECTION.OUT,
-          "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms), but cannot be set OFFLINE by configuration",
+          "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms), but cannot be"
+              + " set OFFLINE by configuration",
           server,
           dbName,
           OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());

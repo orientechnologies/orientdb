@@ -94,7 +94,8 @@ public class OLuceneInsertDeleteTest extends OLuceneBaseTest {
     //noinspection EmptyTryBlock
     try (OResultSet resultSet =
         db.command(
-            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {'closeAfterInterval':1000 , 'firstFlushAfter':1000 }")) {}
+            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata"
+                + " {'closeAfterInterval':1000 , 'firstFlushAfter':1000 }")) {}
 
     try (OResultSet docs = db.query("select from Song where title lucene 'mountain'")) {
 

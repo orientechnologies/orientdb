@@ -42,7 +42,8 @@ public class InsertUnionValueTest {
                   + "  let $b = {\"anotherKey\":\"anotherValue\"};\n"
                   + "  let $u = unionAll($a, $b); \n"
                   + "\n"
-                  + "  /* both of the following throw the exception and require to restart the server*/\n"
+                  + "  /* both of the following throw the exception and require to restart the"
+                  + " server*/\n"
                   + "  update $example set metadata[\"something\"] = $u;\n"
                   + "  update $example set metadata.something = $u;")
           .close();

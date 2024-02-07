@@ -17,7 +17,13 @@ package com.orientechnologies.orient.test.java.lang;
 
 public class StringBrowsingSpeedTest {
   private static final String S =
-      "OrientDB is an Open Source NoSQL DBMS with both the features of Document and Graph DBMSs. It's written in Java and it's amazing fast: can store up to 150,000 records per second on common hardware. Even if it's Document based database the relationships are managed as in Graph Databases with direct connections among records. You can traverse entire or part of trees and graphs of records in few milliseconds. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user and roles and support the SQL between";
+      "OrientDB is an Open Source NoSQL DBMS with both the features of Document and Graph DBMSs."
+          + " It's written in Java and it's amazing fast: can store up to 150,000 records per"
+          + " second on common hardware. Even if it's Document based database the relationships are"
+          + " managed as in Graph Databases with direct connections among records. You can traverse"
+          + " entire or part of trees and graphs of records in few milliseconds. Supports"
+          + " schema-less, schema-full and schema-mixed modes. Has a strong security profiling"
+          + " system based on user and roles and support the SQL between";
   private static final int MAX = 1000000000;
 
   public static final void main(String[] args) {

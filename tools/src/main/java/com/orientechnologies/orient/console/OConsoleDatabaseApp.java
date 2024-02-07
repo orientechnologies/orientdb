@@ -211,7 +211,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
         && WARNING_DEFAULT_USERS.getValueAsBoolean()) {
       message(
           String.format(
-              "IMPORTANT! Using default password is unsafe, please change password for user '%s' on database '%s'",
+              "IMPORTANT! Using default password is unsafe, please change password for user '%s' on"
+                  + " database '%s'",
               user, database));
     }
   }
@@ -224,7 +225,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       @ConsoleParameter(
               name = "url",
               description =
-                  "The url of the remote server or the database to connect to in the format '<mode>:<path>'")
+                  "The url of the remote server or the database to connect to in the format"
+                      + " '<mode>:<path>'")
           String iURL,
       @ConsoleParameter(name = "user", description = "User name") String iUserName,
       @ConsoleParameter(name = "password", description = "User password", optional = true)
@@ -294,7 +296,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
 
   @ConsoleCommand(
       description =
-          "Create a new database. For encrypted database or portion of database, set the variable 'storage.encryptionKey' with the key to use",
+          "Create a new database. For encrypted database or portion of database, set the variable"
+              + " 'storage.encryptionKey' with the key to use",
       onlineHelp = "Console-Command-Create-Database")
   public void createDatabase(
       @ConsoleParameter(
@@ -312,13 +315,15 @@ public class OConsoleDatabaseApp extends OConsoleApplication
               name = "storage-type",
               optional = true,
               description =
-                  "The type of the storage: 'plocal' for disk-based databases and 'memory' for in-memory database")
+                  "The type of the storage: 'plocal' for disk-based databases and 'memory' for"
+                      + " in-memory database")
           String storageType,
       @ConsoleParameter(
               name = "db-type",
               optional = true,
               description =
-                  "The type of the database used between 'document' and 'graph'. By default is graph.")
+                  "The type of the database used between 'document' and 'graph'. By default is"
+                      + " graph.")
           String databaseType,
       @ConsoleParameter(
               name = "[options]",
@@ -432,7 +437,9 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       }
     } else {
       message(
-          "\nNot connected to the Server instance. You've to connect to the Server using server's credentials (look at orientdb-*server-config.xml file)");
+          "\n"
+              + "Not connected to the Server instance. You've to connect to the Server using"
+              + " server's credentials (look at orientdb-*server-config.xml file)");
     }
     out.println();
   }
@@ -570,7 +577,15 @@ public class OConsoleDatabaseApp extends OConsoleApplication
 
     if (currentDatabase.isRemote()) {
       message(
-          "\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
+          "\n"
+              + "WARNING - Transactions are not supported from console in remote, please use an sql"
+              + " script: \n"
+              + "eg.\n\n"
+              + "script sql\n"
+              + "begin;\n"
+              + "<your commands here>\n"
+              + "commit;\n"
+              + "end\n\n");
       return;
     }
 
@@ -651,7 +666,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       @ConsoleParameter(
               name = "record-id",
               description =
-                  "The unique Record Id of the record to load. If you do not have the Record Id, execute a query first")
+                  "The unique Record Id of the record to load. If you do not have the Record Id,"
+                      + " execute a query first")
           String iRecordId,
       @ConsoleParameter(name = "fetch-plan", description = "The fetch plan to load the record with")
           String iFetchPlan) {
@@ -663,7 +679,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       @ConsoleParameter(
               name = "record-id",
               description =
-                  "The unique Record Id of the record to load. If you do not have the Record Id, execute a query first")
+                  "The unique Record Id of the record to load. If you do not have the Record Id,"
+                      + " execute a query first")
           String iRecordId) {
     loadRecordInternal(iRecordId, null);
   }
@@ -673,7 +690,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       @ConsoleParameter(
               name = "record-id",
               description =
-                  "The unique Record Id of the record to load. If you do not have the Record Id, execute a query first")
+                  "The unique Record Id of the record to load. If you do not have the Record Id,"
+                      + " execute a query first")
           String iRecordId,
       @ConsoleParameter(name = "fetch-plan", description = "The fetch plan to load the record with")
           String iFetchPlan) {
@@ -687,7 +705,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       @ConsoleParameter(
               name = "record-id",
               description =
-                  "The unique Record Id of the record to load. If you do not have the Record Id, execute a query first")
+                  "The unique Record Id of the record to load. If you do not have the Record Id,"
+                      + " execute a query first")
           String iRecordId) {
     reloadRecordInternal(iRecordId, null);
   }
@@ -1311,7 +1330,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       @ConsoleParameter(
               name = "text",
               description =
-                  "The javascript to execute. Use 'db' to reference to a document database, 'gdb' for a graph database")
+                  "The javascript to execute. Use 'db' to reference to a document database, 'gdb'"
+                      + " for a graph database")
           final String iText) {
     if (iText == null) return;
 
@@ -1352,7 +1372,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       @ConsoleParameter(
               name = "text",
               description =
-                  "The javascript to execute. Use 'db' to reference to a document database, 'gdb' for a graph database")
+                  "The javascript to execute. Use 'db' to reference to a document database, 'gdb'"
+                      + " for a graph database")
           final String iText) {
     checkForRemoteServer();
 
@@ -1362,7 +1383,9 @@ public class OConsoleDatabaseApp extends OConsoleApplication
   @SuppressWarnings("unchecked")
   @ConsoleCommand(
       description =
-          "Set a server user. If the user already exists, the password and permissions are updated. For more information look at http://orientdb.com/docs/last/Security.html#orientdb-server-security",
+          "Set a server user. If the user already exists, the password and permissions are updated."
+              + " For more information look at"
+              + " http://orientdb.com/docs/last/Security.html#orientdb-server-security",
       onlineHelp = "Console-Command-Set-Server-User")
   public void setServerUser(
       @ConsoleParameter(name = "user-name", description = "User name") String iServerUserName,
@@ -1371,7 +1394,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       @ConsoleParameter(
               name = "user-permissions",
               description =
-                  "Permissions, look at http://orientdb.com/docs/last/Security.html#servers-resources")
+                  "Permissions, look at"
+                      + " http://orientdb.com/docs/last/Security.html#servers-resources")
           String iPermissions) {
 
     if (iServerUserName == null || iServerUserName.length() == 0)
@@ -1405,7 +1429,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
   @SuppressWarnings("unchecked")
   @ConsoleCommand(
       description =
-          "Drop a server user. For more information look at http://orientdb.com/docs/last/Security.html#orientdb-server-security",
+          "Drop a server user. For more information look at"
+              + " http://orientdb.com/docs/last/Security.html#orientdb-server-security",
       onlineHelp = "Console-Command-Drop-Server-User")
   public void dropServerUser(
       @ConsoleParameter(name = "user-name", description = "User name") String iServerUserName) {
@@ -1438,7 +1463,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
   @SuppressWarnings("unchecked")
   @ConsoleCommand(
       description =
-          "Display all the server user names. For more information look at http://orientdb.com/docs/last/Security.html#orientdb-server-security",
+          "Display all the server user names. For more information look at"
+              + " http://orientdb.com/docs/last/Security.html#orientdb-server-security",
       onlineHelp = "Console-Command-List-Server-User")
   public void listServerUsers() {
 
@@ -2338,7 +2364,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
 
   @ConsoleCommand(
       description =
-          "Insert or modify an entry in the database dictionary. The entry is comprised of key=String, value=record-id",
+          "Insert or modify an entry in the database dictionary. The entry is comprised of"
+              + " key=String, value=record-id",
       onlineHelp = "Console-Command-Dictionary-Put")
   public void dictionaryPut(
       @ConsoleParameter(name = "key", description = "The key to bind") final String iKey,
@@ -2418,7 +2445,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       @ConsoleParameter(
               name = "options",
               description =
-                  "Options: [--fix-graph] [--force-embedded-ridbags] [--fix-links] [-v]] [--fix-ridbags] [--fix-bonsai]",
+                  "Options: [--fix-graph] [--force-embedded-ridbags] [--fix-links] [-v]]"
+                      + " [--fix-ridbags] [--fix-bonsai]",
               optional = true)
           String iOptions)
       throws IOException {
@@ -3164,7 +3192,8 @@ public class OConsoleDatabaseApp extends OConsoleApplication
   protected void checkForRemoteServer() {
     if (orientDB == null || OrientDBInternal.extract(orientDB).isEmbedded())
       throw new OSystemException(
-          "Remote server is not connected. Use 'connect remote:<host>[:<port>][/<database-name>]' to connect");
+          "Remote server is not connected. Use 'connect remote:<host>[:<port>][/<database-name>]'"
+              + " to connect");
   }
 
   /** Should be used only by console commands */
@@ -3510,11 +3539,13 @@ public class OConsoleDatabaseApp extends OConsoleApplication
     } else if (currentRecord instanceof OBlob) {
       OBlob rec = (OBlob) currentRecord;
       message(
-          "\n+-------------------------------------------------------------------------------------------------+");
+          "\n"
+              + "+-------------------------------------------------------------------------------------------------+");
       message(
           "\n| Bytes    - @rid: %s @version: %d", rec.getIdentity().toString(), rec.getVersion());
       message(
-          "\n+-------------------------------------------------------------------------------------------------+");
+          "\n"
+              + "+-------------------------------------------------------------------------------------------------+");
 
       final byte[] value = rec.toStream();
       final int max =
@@ -3525,18 +3556,21 @@ public class OConsoleDatabaseApp extends OConsoleApplication
         message("%03d", Array.getByte(value, i));
       }
       message(
-          "\n+-------------------------------------------------------------------------------------------------+");
+          "\n"
+              + "+-------------------------------------------------------------------------------------------------+");
 
     } else {
       message(
-          "\n+-------------------------------------------------------------------------------------------------+");
+          "\n"
+              + "+-------------------------------------------------------------------------------------------------+");
       message(
           "\n| %s - record id: %s   v.%d",
           currentRecord.getClass().getSimpleName(),
           currentRecord.getIdentity().toString(),
           currentRecord.getVersion());
       message(
-          "\n+-------------------------------------------------------------------------------------------------+");
+          "\n"
+              + "+-------------------------------------------------------------------------------------------------+");
     }
     out.println();
   }

@@ -44,24 +44,28 @@ public class LuceneMixIndexTest extends BaseLuceneTest {
 
     OResultSet docs =
         db.query(
-            "select * from Song where  author = 'Hornsby' and [title,lyrics]  LUCENE \"(title:mountain)\" ");
+            "select * from Song where  author = 'Hornsby' and [title,lyrics]  LUCENE"
+                + " \"(title:mountain)\" ");
 
     Assert.assertEquals(1, docs.stream().count());
 
     docs =
         db.query(
-            "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:mountain)\" ");
+            "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE"
+                + " \"(title:mountain)\" ");
 
     Assert.assertEquals(1, docs.stream().count());
 
     docs =
         db.query(
-            "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:ballad)\" ");
+            "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE"
+                + " \"(title:ballad)\" ");
     Assert.assertEquals(0, docs.stream().count());
 
     docs =
         db.query(
-            "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:ballad)\" ");
+            "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE"
+                + " \"(title:ballad)\" ");
     Assert.assertEquals(0, docs.stream().count());
   }
 
@@ -71,13 +75,15 @@ public class LuceneMixIndexTest extends BaseLuceneTest {
 
     OResultSet docs =
         db.query(
-            "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"title:mountain\" ");
+            "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE"
+                + " \"title:mountain\" ");
 
     Assert.assertEquals(1, docs.stream().count());
 
     docs =
         db.query(
-            "select * from Song where author = 'Hornsby' and [title,lyrics] LUCENE \"lyrics:happy\" ");
+            "select * from Song where author = 'Hornsby' and [title,lyrics] LUCENE \"lyrics:happy\""
+                + " ");
 
     Assert.assertEquals(1, docs.stream().count());
 

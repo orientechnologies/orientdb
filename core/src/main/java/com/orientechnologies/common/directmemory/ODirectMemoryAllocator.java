@@ -325,7 +325,8 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
         OLogManager.instance()
             .warnNoDb(
                 this,
-                "DIRECT-TRACK: memory consumption is not zero (%d bytes), it may indicate presence of memory leaks",
+                "DIRECT-TRACK: memory consumption is not zero (%d bytes), it may indicate presence"
+                    + " of memory leaks",
                 memCons);
 
         assert false;

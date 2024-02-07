@@ -78,7 +78,8 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     record.field("id", 23723);
     record.field(
         "text",
-        "clfdkkjsd hfsdkjhf fjdkghjkfdhgjdfh gfdgjfdkhgfd skdjaksdjf skdjf sdkjfsd jfkldjfkjsdf kljdk fsdjf kldjgjdhjg khfdjgk hfjdg hjdfhgjkfhdgj kfhdjghrjg");
+        "clfdkkjsd hfsdkjhf fjdkghjkfdhgjdfh gfdgjfdkhgfd skdjaksdjf skdjf sdkjfsd jfkldjfkjsdf"
+            + " kljdk fsdjf kldjgjdhjg khfdjgk hfjdg hjdfhgjkfhdgj kfhdjghrjg");
     record.save();
   }
 
@@ -135,7 +136,8 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     database.command("ALTER PROPERTY MyTestClass.stringField NOTNULL false").close();
     database
         .command(
-            "INSERT INTO MyTestClass (keyField,dateTimeField,stringField) VALUES (\"K1\",null,null)")
+            "INSERT INTO MyTestClass (keyField,dateTimeField,stringField) VALUES"
+                + " (\"K1\",null,null)")
         .close();
     database.reload();
     database.getMetadata().reload();

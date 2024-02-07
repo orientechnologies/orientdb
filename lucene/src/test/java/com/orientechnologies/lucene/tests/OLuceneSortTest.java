@@ -132,9 +132,9 @@ public class OLuceneSortTest extends OLuceneBaseTest {
 
     OResultSet resultSet =
         db.query(
-            "SELECT score, name from Author where SEARCH_CLASS('*:* ', {"
-                + "sort: [ { 'field': 'score', reverse:true, type:'INT' },{field: 'name', type:'STRING' , reverse:true}] "
-                + "} ) = true ");
+            "SELECT score, name from Author where SEARCH_CLASS('*:* ', {sort: [ { 'field': 'score',"
+                + " reverse:true, type:'INT' },{field: 'name', type:'STRING' , reverse:true}] } ) ="
+                + " true ");
 
     List<String> names =
         resultSet.stream()

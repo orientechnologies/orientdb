@@ -1127,7 +1127,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
     if (txActive) {
       if (tx.getEntryCount() > 0) {
         throw new IllegalStateException(
-            "executeWithRetry() cannot be used within a pending (dirty) transaction. Please commit or rollback before invoking it");
+            "executeWithRetry() cannot be used within a pending (dirty) transaction. Please commit"
+                + " or rollback before invoking it");
       }
     }
     if (!txActive) {

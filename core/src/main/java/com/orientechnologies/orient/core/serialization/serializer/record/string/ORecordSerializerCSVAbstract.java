@@ -335,7 +335,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         {
           if (!(iValue instanceof OIdentifiable))
             throw new OSerializationException(
-                "Found an unexpected type during marshalling of a LINK where a OIdentifiable (ORID or any Record) was expected. The string representation of the object is: "
+                "Found an unexpected type during marshalling of a LINK where a OIdentifiable (ORID"
+                    + " or any Record) was expected. The string representation of the object is: "
                     + iValue);
 
           if (!((OIdentifiable) iValue).getIdentity().isValid()
@@ -690,7 +691,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
           if (linkedType == null)
             throw new IllegalArgumentException(
-                "Linked type cannot be null. Probably the serialized type has not stored the type along with data");
+                "Linked type cannot be null. Probably the serialized type has not stored the type"
+                    + " along with data");
         }
 
         if (iLinkedType == OType.CUSTOM) item = item.substring(1, item.length() - 1);

@@ -26,7 +26,8 @@ public class RemoteGraphTXTest extends BaseServerMemoryDatabase {
     db.command("create vertex SecondV set id = '2'").close();
     try (OResultSet resultSet =
         db.command(
-            "create edge TestEdge  from ( select from FirstV where id = '1') to ( select from SecondV where id = '2')")) {
+            "create edge TestEdge  from ( select from FirstV where id = '1') to ( select from"
+                + " SecondV where id = '2')")) {
       OResult result = resultSet.stream().iterator().next();
 
       Assert.assertEquals(true, result.isEdge());
@@ -36,7 +37,8 @@ public class RemoteGraphTXTest extends BaseServerMemoryDatabase {
 
     db
         .command(
-            "delete edge TestEdge from (select from FirstV where id = :param1) to (select from SecondV where id = :param2)",
+            "delete edge TestEdge from (select from FirstV where id = :param1) to (select from"
+                + " SecondV where id = :param2)",
             new HashMap() {
               {
                 put("param1", "1");

@@ -116,7 +116,8 @@ public class OUser extends OIdentity implements OSecurityUser {
           OLogManager.instance()
               .warn(
                   this,
-                  "User '%s' is declared to have a role that does not exist in the database.  Ignoring it.",
+                  "User '%s' is declared to have a role that does not exist in the database. "
+                      + " Ignoring it.",
                   getName());
       }
   }
@@ -183,7 +184,8 @@ public class OUser extends OIdentity implements OSecurityUser {
         OLogManager.instance()
             .warn(
                 this,
-                "User '%s' has a null role, ignoring it. Consider fixing this user's roles before continuing",
+                "User '%s' has a null role, ignoring it. Consider fixing this user's roles before"
+                    + " continuing",
                 getName());
       else if (r.allow(resourceGeneric, resourceSpecific, iOperation)) return r;
     }
@@ -242,7 +244,8 @@ public class OUser extends OIdentity implements OSecurityUser {
         OLogManager.instance()
             .warn(
                 this,
-                "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue",
+                "User '%s' has a null role, bypass it. Consider to fix this user roles before to"
+                    + " continue",
                 getName());
       else if (r.hasRule(resourceGeneric, resourceSpecific)) return true;
 

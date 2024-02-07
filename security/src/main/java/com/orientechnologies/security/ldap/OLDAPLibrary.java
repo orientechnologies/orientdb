@@ -23,7 +23,7 @@ import java.util.Hashtable;
 import java.util.List;
 import javax.naming.*;
 import javax.naming.NamingEnumeration;
-import javax.naming.directory.*; // Attribute, Attributes, DirContext
+import javax.naming.directory.*;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.security.auth.Subject;

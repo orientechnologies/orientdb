@@ -238,7 +238,8 @@ public class OInsertStatementExecutionTest extends BaseMemoryDatabase {
         db.command(
             "insert into "
                 + className
-                + " content {'name':'name1', 'surname':'surname1'},{'name':'name1', 'surname':'surname1'}");
+                + " content {'name':'name1', 'surname':'surname1'},{'name':'name1',"
+                + " 'surname':'surname1'}");
     printExecutionPlan(result);
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());

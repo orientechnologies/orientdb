@@ -303,9 +303,9 @@
                 </plugin>
 
                 <plugin>
-                    <groupId>com.spotify.fmt</groupId>
-                    <artifactId>fmt-maven-plugin</artifactId>
-                    <version>2.22.1</version>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>2.42.0</version>
                 </plugin>
 
                 <plugin>
@@ -473,11 +473,23 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>com.spotify.fmt</groupId>
-                <artifactId>fmt-maven-plugin</artifactId>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <configuration>
+                    <java>
+                        <googleJavaFormat>
+                            <version>1.19.2</version>
+                            <style>GOOGLE</style>
+                            <reflowLongStrings>true</reflowLongStrings>
+                            <formatJavadoc>false</formatJavadoc>
+                        </googleJavaFormat>
+
+                        <removeUnusedImports/>
+                        <importOrder/>
+                    </java>
+                </configuration>
                 <executions>
                     <execution>
-                        <phase>compile</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>

@@ -125,10 +125,12 @@ public class OTruncateClassStatementExecutionTest extends BaseMemoryInternalData
     db.command("create class TestTruncateVertexClassSuperclassWithIndex");
     db.command("create property TestTruncateVertexClassSuperclassWithIndex.name STRING");
     db.command(
-        "create index TestTruncateVertexClassSuperclassWithIndex_index on TestTruncateVertexClassSuperclassWithIndex (name) NOTUNIQUE");
+        "create index TestTruncateVertexClassSuperclassWithIndex_index on"
+            + " TestTruncateVertexClassSuperclassWithIndex (name) NOTUNIQUE");
 
     db.command(
-        "create class TestTruncateVertexClassSubclassWithIndex extends TestTruncateVertexClassSuperclassWithIndex");
+        "create class TestTruncateVertexClassSubclassWithIndex extends"
+            + " TestTruncateVertexClassSuperclassWithIndex");
 
     db.command("insert into TestTruncateVertexClassSuperclassWithIndex set name = 'foo'");
     db.command("insert into TestTruncateVertexClassSubclassWithIndex set name = 'bar'");

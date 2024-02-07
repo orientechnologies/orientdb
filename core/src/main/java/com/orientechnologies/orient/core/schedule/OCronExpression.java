@@ -496,7 +496,8 @@ public final class OCronExpression implements Serializable, Cloneable {
       if (!dayOfMSpec || dayOfWSpec) {
         if (!dayOfWSpec || dayOfMSpec) {
           throw new ParseException(
-              "Support for specifying both a day-of-week AND a day-of-month parameter is not implemented",
+              "Support for specifying both a day-of-week AND a day-of-month parameter is not"
+                  + " implemented",
               0);
         }
       }
@@ -728,7 +729,8 @@ public final class OCronExpression implements Serializable, Cloneable {
       }
       if (val > 31)
         throw new ParseException(
-            "The 'W' option does not make sense with values larger than 31 (max number of days in a month)",
+            "The 'W' option does not make sense with values larger than 31 (max number of days in a"
+                + " month)",
             i);
       TreeSet<Integer> set = getSet(type);
       set.add(val);
@@ -1477,7 +1479,8 @@ public final class OCronExpression implements Serializable, Cloneable {
         }
       } else { // dayOfWSpec && !dayOfMSpec
         throw new UnsupportedOperationException(
-            "Support for specifying both a day-of-week AND a day-of-month parameter is not implemented.");
+            "Support for specifying both a day-of-week AND a day-of-month parameter is not"
+                + " implemented.");
       }
       cl.set(Calendar.DAY_OF_MONTH, day);
 

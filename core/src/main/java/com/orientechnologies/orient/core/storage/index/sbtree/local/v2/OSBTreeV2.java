@@ -1309,7 +1309,8 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
     while (true) {
       if (path.size() > MAX_PATH_LENGTH) {
         throw new OSBTreeException(
-            "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.",
+            "We reached max level of depth of SBTree but still found nothing, seems like tree is in"
+                + " corrupted state. You should rebuild index related to given query.",
             this);
       }
 

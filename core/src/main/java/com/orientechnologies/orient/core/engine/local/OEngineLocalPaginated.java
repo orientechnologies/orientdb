@@ -80,8 +80,9 @@ public class OEngineLocalPaginated extends OEngineAbstract {
       OLogManager.instance()
           .warnNoDb(
               this,
-              "You are running under the \"root\" user privileges that introduces security risks. "
-                  + "Please consider to run under a user dedicated to be used to run current server instance.");
+              "You are running under the \"root\" user privileges that introduces security risks."
+                  + " Please consider to run under a user dedicated to be used to run current"
+                  + " server instance.");
     }
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();

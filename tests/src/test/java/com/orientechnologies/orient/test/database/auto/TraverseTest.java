@@ -357,7 +357,8 @@ public class TraverseTest extends DocumentDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select from ( traverse any() from Movie while $depth < 2 and ( true = true ) ) where true"))
+                    "select from ( traverse any() from Movie while $depth < 2 and ( true = true ) )"
+                        + " where true"))
             .execute();
 
     Assert.assertEquals(result1, result2);

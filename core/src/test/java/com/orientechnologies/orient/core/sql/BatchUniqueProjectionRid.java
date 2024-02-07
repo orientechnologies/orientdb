@@ -15,7 +15,8 @@ public class BatchUniqueProjectionRid extends BaseMemoryDatabase {
     List<List<ODocument>> res =
         db.command(
                 new OCommandScript(
-                    "begin;let $a = select \"a\" as a ; let $b = select \"a\" as b; return [$a,$b] "))
+                    "begin;let $a = select \"a\" as a ; let $b = select \"a\" as b; return"
+                        + " [$a,$b] "))
             .execute();
 
     assertFalse(

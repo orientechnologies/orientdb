@@ -179,7 +179,9 @@ public class SQLCreateVertexAndEdgeTest extends BaseMemoryDatabase {
     db.command("create vertex V set name = 'testSqlScriptThatDeletesEdge1'").close();
     db.command("create vertex V set name = 'testSqlScriptThatDeletesEdge2'").close();
     db.command(
-            "create edge E from (select from V where name = 'testSqlScriptThatDeletesEdge1') to (select from V where name = 'testSqlScriptThatDeletesEdge2') set name = 'testSqlScriptThatDeletesEdge'")
+            "create edge E from (select from V where name = 'testSqlScriptThatDeletesEdge1') to"
+                + " (select from V where name = 'testSqlScriptThatDeletesEdge2') set name ="
+                + " 'testSqlScriptThatDeletesEdge'")
         .close();
 
     try {

@@ -42,7 +42,8 @@ public class OLuceneFacetTest extends OLuceneBaseTest {
     oClass.createProperty("category", OType.STRING);
 
     db.command(
-            "create index Item.name_category on Item (name,category) FULLTEXT ENGINE LUCENE METADATA { 'facetFields' : ['category']}")
+            "create index Item.name_category on Item (name,category) FULLTEXT ENGINE LUCENE"
+                + " METADATA { 'facetFields' : ['category']}")
         .close();
 
     ODocument doc = new ODocument("Item");
@@ -104,7 +105,8 @@ public class OLuceneFacetTest extends OLuceneBaseTest {
     result =
         db
             .command(
-                "select *,$facet from Item where name lucene { 'q' : 'H*', 'drillDown' : 'category:Electronic' }  limit 1 ")
+                "select *,$facet from Item where name lucene { 'q' : 'H*', 'drillDown' :"
+                    + " 'category:Electronic' }  limit 1 ")
             .stream()
             .map((o) -> o.toElement())
             .collect(Collectors.toList());

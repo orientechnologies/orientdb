@@ -18,7 +18,8 @@ public class ODemoDbFromDocumentationFriendshipIT extends OIntegrationTestTempla
 
     OResultSet resultSet =
         db.query(
-            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend} \n"
+            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND"
+                + " Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend} \n"
                 + "RETURN $pathelements");
 
     Assert.assertEquals(resultSet.stream().count(), 20);
@@ -45,7 +46,9 @@ public class ODemoDbFromDocumentationFriendshipIT extends OIntegrationTestTempla
 
     OResultSet resultSet =
         db.query(
-            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer}\n"
+            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND"
+                + " Surname='OrientDB')}-HasFriend-{Class: Profiles, as:"
+                + " friend}<-HasProfile-{class: Customers, as: customer}\n"
                 + "RETURN $pathelements");
 
     Assert.assertEquals(resultSet.stream().count(), 15);
@@ -58,7 +61,10 @@ public class ODemoDbFromDocumentationFriendshipIT extends OIntegrationTestTempla
 
     OResultSet resultSet =
         db.query(
-            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer}-IsFromCountry->{Class: Countries, as: country}\n"
+            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND"
+                + " Surname='OrientDB')}-HasFriend-{Class: Profiles, as:"
+                + " friend}<-HasProfile-{class: Customers, as: customer}-IsFromCountry->{Class:"
+                + " Countries, as: country}\n"
                 + "RETURN $pathelements");
 
     Assert.assertEquals(resultSet.stream().count(), 20);
@@ -71,7 +77,10 @@ public class ODemoDbFromDocumentationFriendshipIT extends OIntegrationTestTempla
 
     OResultSet resultSet =
         db.query(
-            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer}<-HasCustomer-{Class: Orders, as: order} \n"
+            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND"
+                + " Surname='OrientDB')}-HasFriend-{Class: Profiles, as:"
+                + " friend}<-HasProfile-{class: Customers, as: customer}<-HasCustomer-{Class:"
+                + " Orders, as: order} \n"
                 + "RETURN $pathelements");
 
     Assert.assertEquals(resultSet.stream().count(), 40);
@@ -92,7 +101,9 @@ public class ODemoDbFromDocumentationFriendshipIT extends OIntegrationTestTempla
                 + "FROM (\n"
                 + "  SELECT expand(customer) \n"
                 + "  FROM (\n"
-                + "    MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer} \n"
+                + "    MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND"
+                + " Surname='OrientDB')}-HasFriend-{Class: Profiles, as:"
+                + " friend}<-HasProfile-{class: Customers, as: customer} \n"
                 + "    RETURN customer\n"
                 + "  )\n"
                 + ") \n"
@@ -123,7 +134,9 @@ public class ODemoDbFromDocumentationFriendshipIT extends OIntegrationTestTempla
                 + "FROM (\n"
                 + "  SELECT expand(customer) \n"
                 + "  FROM (\n"
-                + "    MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer} \n"
+                + "    MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND"
+                + " Surname='OrientDB')}-HasFriend-{Class: Profiles, as:"
+                + " friend}<-HasProfile-{class: Customers, as: customer} \n"
                 + "    RETURN customer\n"
                 + "  )\n"
                 + ") \n"
@@ -153,7 +166,9 @@ public class ODemoDbFromDocumentationFriendshipIT extends OIntegrationTestTempla
                 + "FROM (\n"
                 + "  SELECT expand(customerFriend) \n"
                 + "  FROM (\n"
-                + "    MATCH {Class:Customers, as: customer, where:(OrderedId=1)}-HasProfile-{Class:Profiles, as: profile}-HasFriend-{Class:Profiles, as: customerFriend} RETURN customerFriend\n"
+                + "    MATCH {Class:Customers, as: customer,"
+                + " where:(OrderedId=1)}-HasProfile-{Class:Profiles, as:"
+                + " profile}-HasFriend-{Class:Profiles, as: customerFriend} RETURN customerFriend\n"
                 + "  )\n"
                 + ") \n"
                 + "WHERE in('HasProfile').size()=0\n"

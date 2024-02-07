@@ -72,7 +72,8 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
     if (iValue != null) {
       if (!(iValue instanceof OSerializableStream))
         throw new OSerializationException(
-            "Cannot serialize the object since it's not implements the OSerializableStream interface");
+            "Cannot serialize the object since it's not implements the OSerializableStream"
+                + " interface");
 
       OSerializableStream stream = (OSerializableStream) iValue;
       iOutput.append(iValue.getClass().getName());

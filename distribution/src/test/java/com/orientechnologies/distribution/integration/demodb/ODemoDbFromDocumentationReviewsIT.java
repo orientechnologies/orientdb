@@ -58,7 +58,8 @@ public class ODemoDbFromDocumentationReviewsIT extends OIntegrationTestTemplate 
 
     OResultSet resultSet =
         db.query(
-            "MATCH {class: Services, as: s}-HasReview->{class: Reviews, as: r}<-MadeReview-{class: Customers, as: c} \n"
+            "MATCH {class: Services, as: s}-HasReview->{class: Reviews, as: r}<-MadeReview-{class:"
+                + " Customers, as: c} \n"
                 + "RETURN $pathelements");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());

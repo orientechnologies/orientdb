@@ -55,7 +55,8 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
   @Test
   public void testOneObject() {
     configure(
-        "{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }");
+        "{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {}"
+            + " }, loader: { test: {} } }");
     proc.execute();
 
     assertEquals(1, getResult().size());

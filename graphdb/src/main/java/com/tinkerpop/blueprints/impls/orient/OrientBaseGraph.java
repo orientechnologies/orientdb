@@ -1865,7 +1865,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
         OLogManager.instance()
             .warn(
                 this,
-                "Requested command '%s' must be executed outside active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction",
+                "Requested command '%s' must be executed outside active transaction: the"
+                    + " transaction will be committed and reopen right after it. To avoid this"
+                    + " behavior execute it outside a transaction",
                 msg.toString());
       }
       committed = raw.getTransaction().amountOfNestedTxs();
@@ -1916,7 +1918,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
             }
           } else {
             throw new IllegalArgumentException(
-                "Cannot build a composite key from the input. The size of the parameters is major than the number indexed fields");
+                "Cannot build a composite key from the input. The size of the parameters is major"
+                    + " than the number indexed fields");
           }
           iValue = new OCompositeKey(keys);
         }

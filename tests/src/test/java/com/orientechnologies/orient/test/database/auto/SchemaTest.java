@@ -540,7 +540,8 @@ public class SchemaTest extends DocumentDBBaseTest {
           database
               .command(
                   new OCommandSQL(
-                      "insert into TestOffline set name = 'offline', password = 'offline', status = 'ACTIVE'"))
+                      "insert into TestOffline set name = 'offline', password = 'offline', status ="
+                          + " 'ACTIVE'"))
               .execute();
       Assert.assertTrue(false);
     } catch (OException e) {

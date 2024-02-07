@@ -39,12 +39,14 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
     db.execute("sql", getScriptFromStream(stream)).close();
 
     db.command(
-            "create index Song.title on Song (title) fulltext ENGINE LUCENE METADATA {\"analyzer\":\""
+            "create index Song.title on Song (title) fulltext ENGINE LUCENE METADATA"
+                + " {\"analyzer\":\""
                 + StandardAnalyzer.class.getName()
                 + "\"}")
         .close();
     db.command(
-            "create index Song.author on Song (author) FULLTEXT ENGINE lucene METADATA {\"analyzer\":\""
+            "create index Song.author on Song (author) FULLTEXT ENGINE lucene METADATA"
+                + " {\"analyzer\":\""
                 + StandardAnalyzer.class.getName()
                 + "\"}")
         .close();
@@ -76,7 +78,8 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
     assertThat(docs).hasSize(87);
     docs.close();
     String query =
-        "select * from Song where search_fields(['title'],'mountain')=true AND search_fields(['author'],'Fabbio')=true";
+        "select * from Song where search_fields(['title'],'mountain')=true AND"
+            + " search_fields(['author'],'Fabbio')=true";
     docs = db.query(query);
     assertThat(docs).hasSize(1);
     docs.close();

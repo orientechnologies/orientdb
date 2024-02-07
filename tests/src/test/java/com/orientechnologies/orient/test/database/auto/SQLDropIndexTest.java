@@ -105,7 +105,8 @@ public class SQLDropIndexTest {
   public void testDropCompositeIndex() throws Exception {
     database
         .command(
-            "CREATE INDEX SQLDropIndexCompositeIndex ON SQLDropIndexTestClass (prop1, prop2) UNIQUE")
+            "CREATE INDEX SQLDropIndexCompositeIndex ON SQLDropIndexTestClass (prop1, prop2)"
+                + " UNIQUE")
         .close();
     ((OMetadataDefault) database.getMetadata()).getIndexManagerInternal().reload();
 

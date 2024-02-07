@@ -61,11 +61,13 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
 
     database
         .command(
-            "create edge FollowTest from (select from PersonTest where name = 'A') to (select from PersonTest where name = 'B')")
+            "create edge FollowTest from (select from PersonTest where name = 'A') to (select from"
+                + " PersonTest where name = 'B')")
         .close();
     database
         .command(
-            "create edge FollowTest from (select from PersonTest where name = 'B') to (select from PersonTest where name = 'C')")
+            "create edge FollowTest from (select from PersonTest where name = 'B') to (select from"
+                + " PersonTest where name = 'C')")
         .close();
   }
 
@@ -74,7 +76,8 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
     final List<ODocument> result =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select @this.toJSON('fetchPlan:*:2') as json from (select from PersonTest where name='A')"));
+                "select @this.toJSON('fetchPlan:*:2') as json from (select from PersonTest where"
+                    + " name='A')"));
 
     Assert.assertEquals(result.size(), 1);
     String json = result.get(0).rawField("json");
@@ -91,7 +94,8 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
     final List<ODocument> result =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select @this.toJSON('fetchPlan:out_*:2') as json from (select from PersonTest where name='A')"));
+                "select @this.toJSON('fetchPlan:out_*:2') as json from (select from PersonTest"
+                    + " where name='A')"));
 
     Assert.assertEquals(result.size(), 1);
     String json = result.get(0).rawField("json");
@@ -108,7 +112,8 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
     final List<ODocument> result =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select @this.toJSON('fetchPlan:[0]out_*:0') as json from (select from PersonTest where name='A')"));
+                "select @this.toJSON('fetchPlan:[0]out_*:0') as json from (select from PersonTest"
+                    + " where name='A')"));
 
     Assert.assertEquals(result.size(), 1);
     String json = result.get(0).field("json");
@@ -126,7 +131,8 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
     final List<ODocument> result =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select @this.toJSON('fetchPlan:[0]out_*:2') as json from (select from PersonTest where name='A')"));
+                "select @this.toJSON('fetchPlan:[0]out_*:2') as json from (select from PersonTest"
+                    + " where name='A')"));
 
     Assert.assertEquals(result.size(), 1);
     String json = result.get(0).field("json");
@@ -142,7 +148,8 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
     final List<ODocument> result =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select @this.toJSON('fetchPlan:[2]out_*:2') as json from (select from PersonTest where name='A')"));
+                "select @this.toJSON('fetchPlan:[2]out_*:2') as json from (select from PersonTest"
+                    + " where name='A')"));
 
     Assert.assertEquals(result.size(), 1);
     String json = result.get(0).field("json");

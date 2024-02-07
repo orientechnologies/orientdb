@@ -39,7 +39,8 @@ public class ORemoteScriptSecurityTest {
     OrientDB orientDB =
         new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     orientDB.execute(
-        "create database ORemoteScriptSecurityTest memory users (admin identified by 'admin' role admin)");
+        "create database ORemoteScriptSecurityTest memory users (admin identified by 'admin' role"
+            + " admin)");
 
     orientDB.close();
   }

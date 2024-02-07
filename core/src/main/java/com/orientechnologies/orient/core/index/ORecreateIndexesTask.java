@@ -107,7 +107,8 @@ public class ORecreateIndexesTask implements Runnable {
         OLogManager.instance()
             .info(
                 this,
-                "Index '%s' is a durable automatic index and will be added as is without rebuilding",
+                "Index '%s' is a durable automatic index and will be added as is without"
+                    + " rebuilding",
                 indexMetadata.getName());
         addIndexAsIs(indexDocument, index, db);
       } else {
@@ -123,14 +124,16 @@ public class ORecreateIndexesTask implements Runnable {
         OLogManager.instance()
             .info(
                 this,
-                "Index '%s' is a durable non-automatic index and will be added as is without rebuilding",
+                "Index '%s' is a durable non-automatic index and will be added as is without"
+                    + " rebuilding",
                 indexMetadata.getName());
         addIndexAsIs(indexDocument, index, db);
       } else {
         OLogManager.instance()
             .info(
                 this,
-                "Index '%s' is a non-durable non-automatic index and will be added as is without rebuilding",
+                "Index '%s' is a non-durable non-automatic index and will be added as is without"
+                    + " rebuilding",
                 indexMetadata.getName());
         addIndexAsIs(indexDocument, index, db);
       }

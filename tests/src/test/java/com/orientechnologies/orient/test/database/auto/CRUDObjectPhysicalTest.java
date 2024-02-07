@@ -2114,7 +2114,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
                 .getBytes(),
             out.toByteArray());
         Assert.assertEquals(
-            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+            "this is a bytearray test. if you read this Object database has stored it"
+                + " correctlyVERSION2",
             new String(out.toByteArray()));
       } finally {
         out.close();
@@ -2140,7 +2141,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
                 .getBytes(),
             out.toByteArray());
         Assert.assertEquals(
-            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+            "this is a bytearray test. if you read this Object database has stored it"
+                + " correctlyVERSION2",
             new String(out.toByteArray()));
       } finally {
         out.close();
@@ -2170,7 +2172,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
                 .getBytes(),
             out.toByteArray());
         Assert.assertEquals(
-            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+            "this is a bytearray test. if you read this Object database has stored it"
+                + " correctlyVERSION2",
             new String(out.toByteArray()));
       } finally {
         out.close();
@@ -2196,7 +2199,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
                 .getBytes(),
             out.toByteArray());
         Assert.assertEquals(
-            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+            "this is a bytearray test. if you read this Object database has stored it"
+                + " correctlyVERSION2",
             new String(out.toByteArray()));
       } finally {
         out.close();

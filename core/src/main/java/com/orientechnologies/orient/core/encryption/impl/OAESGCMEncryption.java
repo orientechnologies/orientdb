@@ -50,20 +50,23 @@ public class OAESGCMEncryption implements OEncryption {
 
   private static final String NO_SUCH_CIPHER = "AES/GCM/NoPadding not supported.";
   private static final String MISSING_KEY_ERROR =
-      "AESGCMEncryption encryption has been selected, "
-          + "but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '%s'";
+      "AESGCMEncryption encryption has been selected, but no key was found. Please configure it by"
+          + " passing the key as property at database create/open. The property key is: '%s'";
   private static final String INVALID_KEY_ERROR =
-      "Failed to initialize AESGCMEncryption. Assure the key is a 128, 192 or 256 bits long BASE64 value";
+      "Failed to initialize AESGCMEncryption. Assure the key is a 128, 192 or 256 bits long BASE64"
+          + " value";
   private static final String ENCRYPTION_NOT_INITIALIZED_ERROR =
       "OAESGCMEncryption not properly initialized";
   private static final String AUTHENTICATION_ERROR =
-      "Authentication of encrypted data failed. The encrypted data may have been altered or the used key is incorrect";
+      "Authentication of encrypted data failed. The encrypted data may have been altered or the"
+          + " used key is incorrect";
   private static final String INVALID_CIPHERTEXT_SIZE_ERROR =
       "Invalid ciphertext size: minimum: %d, actual: %d";
   private static final String INVALID_RANGE_ERROR =
       "Invalid range: array size: %d, offset: %d, length: %d";
   private static final String BLOCKING_SECURE_RANDOM_ERROR =
-      "SecureRandom blocked while retrieving randomness. This maybe caused by a misconfigured or absent random source on your operating system.";
+      "SecureRandom blocked while retrieving randomness. This maybe caused by a misconfigured or"
+          + " absent random source on your operating system.";
 
   private boolean initialized;
   private SecretKey key;

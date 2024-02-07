@@ -46,7 +46,8 @@ public class InsertValuesStep extends AbstractExecutionStep {
             List<OExpression> currentValues = values.get(nextValueSet++);
             if (currentValues.size() != identifiers.size()) {
               throw new OCommandExecutionException(
-                  "Cannot execute INSERT, the number of fields is different from the number of expressions: "
+                  "Cannot execute INSERT, the number of fields is different from the number of"
+                      + " expressions: "
                       + identifiers
                       + " "
                       + currentValues);

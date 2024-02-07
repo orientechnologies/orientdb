@@ -29,7 +29,8 @@ public class GraphCreateEdgeWithoutClassTest {
       graph.createEdgeType("FooBar");
       graph
           .sqlCommand(
-              "create edge FooBar from (select from V where name='foo') to (select from V where name = 'bar')")
+              "create edge FooBar from (select from V where name='foo') to (select from V where"
+                  + " name = 'bar')")
           .close();
       graph.commit();
 
@@ -37,7 +38,8 @@ public class GraphCreateEdgeWithoutClassTest {
           graph
               .command(
                   new OSQLSynchQuery(
-                      "select out as f1, out_ as f2, out_edgetestedge as f3, out_FooBar as f4, outE() as f5 from v where name = 'foo'"))
+                      "select out as f1, out_ as f2, out_edgetestedge as f3, out_FooBar as f4,"
+                          + " outE() as f5 from v where name = 'foo'"))
               .execute();
 
       boolean found = false;

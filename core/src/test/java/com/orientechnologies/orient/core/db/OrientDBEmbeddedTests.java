@@ -716,10 +716,12 @@ public class OrientDBEmbeddedTests {
                 .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
                 .build());
     orientDB.execute(
-        "create database test memory if not exists users(admin identified by 'adminpwd' role admin)");
+        "create database test memory if not exists users(admin identified by 'adminpwd' role"
+            + " admin)");
 
     orientDB.execute(
-        "create database test memory if not exists users(admin identified by 'adminpwd' role admin)");
+        "create database test memory if not exists users(admin identified by 'adminpwd' role"
+            + " admin)");
 
     try (ODatabaseSession session = orientDB.open("test", "admin", "adminpwd")) {}
 

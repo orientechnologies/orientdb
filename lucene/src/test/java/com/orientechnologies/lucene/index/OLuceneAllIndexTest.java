@@ -31,19 +31,22 @@ public class OLuceneAllIndexTest extends BaseLuceneTest {
 
     // three separate indeexs, one result
     db.command(
-            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
+            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA"
+                + " {\"index_analyzer\":\""
                 + StandardAnalyzer.class.getName()
                 + "\"}")
         .close();
 
     db.command(
-            "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
+            "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA"
+                + " {\"index_analyzer\":\""
                 + StandardAnalyzer.class.getName()
                 + "\"}")
         .close();
 
     db.command(
-            "create index Song.lyrics on Song (lyrics) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
+            "create index Song.lyrics on Song (lyrics) FULLTEXT ENGINE LUCENE METADATA"
+                + " {\"index_analyzer\":\""
                 + EnglishAnalyzer.class.getName()
                 + "\"}")
         .close();

@@ -425,7 +425,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
           OLogManager.instance()
               .warn(
                   this,
-                  "Information about storage locale is undefined (language is undefined) default locale "
+                  "Information about storage locale is undefined (language is undefined) default"
+                      + " locale "
                       + locale
                       + " will be used");
 
@@ -433,7 +434,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
           OLogManager.instance()
               .warn(
                   this,
-                  "Information about storage locale is undefined (country is undefined) default locale "
+                  "Information about storage locale is undefined (country is undefined) default"
+                      + " locale "
                       + locale
                       + " will be used");
       }

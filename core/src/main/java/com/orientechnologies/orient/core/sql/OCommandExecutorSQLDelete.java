@@ -334,11 +334,13 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
             if (cls.isSubClassOf("V"))
               // FOUND VERTEX
               throw new OCommandExecutionException(
-                  "'DELETE' command cannot delete vertices. Use 'DELETE VERTEX' command instead, or apply the 'UNSAFE' keyword to force it");
+                  "'DELETE' command cannot delete vertices. Use 'DELETE VERTEX' command instead, or"
+                      + " apply the 'UNSAFE' keyword to force it");
             else if (cls.isSubClassOf("E"))
               // FOUND EDGE
               throw new OCommandExecutionException(
-                  "'DELETE' command cannot delete edges. Use 'DELETE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
+                  "'DELETE' command cannot delete edges. Use 'DELETE EDGE' command instead, or"
+                      + " apply the 'UNSAFE' keyword to force it");
           }
         }
 
@@ -356,7 +358,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
   }
 
   public String getSyntax() {
-    return "DELETE FROM <Class>|RID|cluster:<cluster> [UNSAFE] [LOCK <NONE|RECORD>] [RETURN <COUNT|BEFORE>] [WHERE <condition>*]";
+    return "DELETE FROM <Class>|RID|cluster:<cluster> [UNSAFE] [LOCK <NONE|RECORD>] [RETURN"
+        + " <COUNT|BEFORE>] [WHERE <condition>*]";
   }
 
   @Override

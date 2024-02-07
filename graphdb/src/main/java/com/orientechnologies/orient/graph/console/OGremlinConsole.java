@@ -307,7 +307,8 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       @ConsoleParameter(
               name = "options",
               description =
-                  "Options: [--fix-graph] [--force-embedded-ridbags] [--fix-links] [-v]] [--fix-ridbags] [--fix-bonsai]",
+                  "Options: [--fix-graph] [--force-embedded-ridbags] [--fix-links] [-v]]"
+                      + " [--fix-ridbags] [--fix-bonsai]",
               optional = true)
           String iOptions)
       throws IOException {

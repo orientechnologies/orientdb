@@ -45,13 +45,15 @@ public class OLuceneMixIndexTest extends OLuceneBaseTest {
 
     OResultSet docs =
         db.query(
-            "select * from Song where  author = 'Hornsby' and search_index('Song.composite','title:mountain')=true ");
+            "select * from Song where  author = 'Hornsby' and"
+                + " search_index('Song.composite','title:mountain')=true ");
 
     assertThat(docs).hasSize(1);
     docs.close();
     docs =
         db.query(
-            "select * from Song where  author = 'Hornsby' and search_index('Song.composite','title:ballad')=true");
+            "select * from Song where  author = 'Hornsby' and"
+                + " search_index('Song.composite','title:ballad')=true");
     assertThat(docs).hasSize(0);
     docs.close();
   }
@@ -61,12 +63,14 @@ public class OLuceneMixIndexTest extends OLuceneBaseTest {
 
     OResultSet docs =
         db.query(
-            "select * from Song where  author = 'Hornsby' and search_index('Song.composite','title:mountain')=true ");
+            "select * from Song where  author = 'Hornsby' and"
+                + " search_index('Song.composite','title:mountain')=true ");
     assertThat(docs).hasSize(1);
     docs.close();
     docs =
         db.query(
-            "select * from Song where author = 'Hornsby' and search_index('Song.composite','lyrics:happy')=true ");
+            "select * from Song where author = 'Hornsby' and"
+                + " search_index('Song.composite','lyrics:happy')=true ");
 
     assertThat(docs).hasSize(1);
     docs.close();

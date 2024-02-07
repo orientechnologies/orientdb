@@ -34,10 +34,10 @@ public class OETLMergeTransformer extends OETLAbstractLookupTransformer {
         .fromJSON(
             "{parameters:["
                 + getCommonConfigurationParameters()
-                + ","
-                + "{joinFieldName:{optional:false,description:'field name containing the value to join'}},"
-                + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
-                + "{unresolvedLinkAction:{optional:true,description:'action when a unresolved link is found',values:"
+                + ",{joinFieldName:{optional:false,description:'field name containing the value to"
+                + " join'}},{lookup:{optional:false,description:'<Class>.<property> or Query to"
+                + " execute'}},{unresolvedLinkAction:{optional:true,description:'action when a"
+                + " unresolved link is found',values:"
                 + stringArray2Json(ACTION.values())
                 + "}}],"
                 + "input:['ODocument'],output:'ODocument'}");

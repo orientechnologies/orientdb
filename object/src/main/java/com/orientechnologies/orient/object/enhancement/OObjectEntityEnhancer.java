@@ -93,7 +93,8 @@ public class OObjectEntityEnhancer {
       throw new OSerializationException(
           "Type '"
               + doc.getClassName()
-              + "' cannot be serialized because is not part of registered entities. To fix this error register this class");
+              + "' cannot be serialized because is not part of registered entities. To fix this"
+              + " error register this class");
     }
     final Class<T> c;
     boolean isInnerClass = OObjectEntitySerializer.getEnclosingClass(iClass) != null;

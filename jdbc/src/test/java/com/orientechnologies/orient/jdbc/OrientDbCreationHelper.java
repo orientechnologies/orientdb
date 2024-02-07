@@ -66,13 +66,18 @@ public class OrientDbCreationHelper {
     doc.field("stringKey", itemKey);
     doc.field("intKey", id);
     String contents =
-        "OrientDB is a deeply scalable Document-Graph DBMS with the flexibility of the Document databases and the power to manage links of the Graph databases. "
-            + "It can work in schema-less mode, schema-full or a mix of both. Supports advanced features such as ACID Transactions, Fast Indexes, Native and SQL queries."
-            + " It imports and exports documents in JSON."
-            + " Graphs of hundreads of linked documents can be retrieved all in memory in few milliseconds without executing costly JOIN such as the Relational DBMSs do. "
-            + "OrientDB uses a new indexing algorithm called MVRB-Tree, derived from the Red-Black Tree and from the B+Tree with benefits of both: fast insertion and ultra fast lookup. "
-            + "The transactional engine can run in distributed systems supporting up to 9.223.372.036 Billions of records for the maximum capacity of 19.807.040.628.566.084 Terabytes of data distributed on multiple disks in multiple nodes. "
-            + "OrientDB is FREE for any use. Open Source License Apache 2.0. ";
+        "OrientDB is a deeply scalable Document-Graph DBMS with the flexibility of the Document"
+            + " databases and the power to manage links of the Graph databases. It can work in"
+            + " schema-less mode, schema-full or a mix of both. Supports advanced features such as"
+            + " ACID Transactions, Fast Indexes, Native and SQL queries. It imports and exports"
+            + " documents in JSON. Graphs of hundreads of linked documents can be retrieved all in"
+            + " memory in few milliseconds without executing costly JOIN such as the Relational"
+            + " DBMSs do. OrientDB uses a new indexing algorithm called MVRB-Tree, derived from the"
+            + " Red-Black Tree and from the B+Tree with benefits of both: fast insertion and ultra"
+            + " fast lookup. The transactional engine can run in distributed systems supporting up"
+            + " to 9.223.372.036 Billions of records for the maximum capacity of"
+            + " 19.807.040.628.566.084 Terabytes of data distributed on multiple disks in multiple"
+            + " nodes. OrientDB is FREE for any use. Open Source License Apache 2.0. ";
     doc.field("text", contents);
     doc.field("title", "orientDB");
     doc.field("score", BigDecimal.valueOf(contents.length() / id));

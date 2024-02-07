@@ -125,7 +125,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
         if (!unsafe && cls.isSubClassOf("E"))
           // FOUND EDGE
           throw new OCommandExecutionException(
-              "'INSERT' command cannot create Edges. Use 'CREATE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
+              "'INSERT' command cannot create Edges. Use 'CREATE EDGE' command instead, or apply"
+                  + " the 'UNSAFE' keyword to force it");
 
         className = cls.getName();
         clazz = database.getMetadata().getSchema().getClass(className);
@@ -288,9 +289,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
 
   @Override
   public String getSyntax() {
-    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> "
-        + "[(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]|CONTENT {<JSON>} "
-        + "[RETURN <expression>] [FROM select-query]";
+    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES"
+        + " (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]|CONTENT"
+        + " {<JSON>} [RETURN <expression>] [FROM select-query]";
   }
 
   @Override

@@ -69,25 +69,33 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
   @Override
   public ODatabaseDocumentTxPooled open(final String iUserName, final String iUserPassword) {
     throw new UnsupportedOperationException(
-        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseDocumentTx instance if you want to manually open the connection");
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use"
+            + " directly a ODatabaseDocumentTx instance if you want to manually open the"
+            + " connection");
   }
 
   @Override
   public ODatabaseDocumentTxPooled open(final OToken iToken) {
     throw new UnsupportedOperationException(
-        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseDocumentTx instance if you want to manually open the connection");
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use"
+            + " directly a ODatabaseDocumentTx instance if you want to manually open the"
+            + " connection");
   }
 
   @Override
   public ODatabaseDocumentTxPooled create() {
     throw new UnsupportedOperationException(
-        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseDocumentTx instance if you want to manually open the connection");
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use"
+            + " directly a ODatabaseDocumentTx instance if you want to manually open the"
+            + " connection");
   }
 
   @Override
   public <DB extends ODatabase> DB create(String incrementalBackupPath) {
     throw new UnsupportedOperationException(
-        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseDocumentTx instance if you want to manually open the connection");
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use"
+            + " directly a ODatabaseDocumentTx instance if you want to manually open the"
+            + " connection");
   }
 
   public boolean isUnderlyingOpen() {
@@ -151,7 +159,8 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
   protected void checkOpenness() {
     if (ownerPool == null)
       throw new ODatabaseException(
-          "Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
+          "Database instance has been released to the pool. Get another database instance from the"
+              + " pool with the right username and password");
 
     //    super.checkOpenness();
   }

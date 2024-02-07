@@ -47,7 +47,8 @@ public class ODemoDbFromDocumentationCustomersIT extends OIntegrationTestTemplat
 
     OResultSet resultSet =
         db.query(
-            "MATCH {class: Customers, as: c, where: (OrderedId=1)}--{class: Locations, as: loc}-HasReview->{class: Reviews, as: r, optional: true} \n"
+            "MATCH {class: Customers, as: c, where: (OrderedId=1)}--{class: Locations, as:"
+                + " loc}-HasReview->{class: Reviews, as: r, optional: true} \n"
                 + "RETURN $pathelements");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
@@ -61,7 +62,8 @@ public class ODemoDbFromDocumentationCustomersIT extends OIntegrationTestTemplat
 
     OResultSet resultSet =
         db.query(
-            "MATCH {class: Customers, as: customer, where: (OrderedId=1)}--{class: Locations, as: loc}--{class: Customers, as: otherCustomers, where: (OrderedId<>1)} \n"
+            "MATCH {class: Customers, as: customer, where: (OrderedId=1)}--{class: Locations, as:"
+                + " loc}--{class: Customers, as: otherCustomers, where: (OrderedId<>1)} \n"
                 + "RETURN $pathelements");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
@@ -126,7 +128,8 @@ public class ODemoDbFromDocumentationCustomersIT extends OIntegrationTestTemplat
 
     OResultSet resultSet =
         db.query(
-            "MATCH {class: Customers, as: c, where: (OrderedId=1)}<-HasCustomer-{class: Orders, as: o} \n"
+            "MATCH {class: Customers, as: c, where: (OrderedId=1)}<-HasCustomer-{class: Orders, as:"
+                + " o} \n"
                 + "RETURN $pathelements");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());

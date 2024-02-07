@@ -223,7 +223,8 @@ public class OServerNetworkListener extends Thread {
               OLogManager.instance()
                   .warn(
                       this,
-                      "Reached maximum number of concurrent connections (max=%d, current=%d), reject incoming connection from %s",
+                      "Reached maximum number of concurrent connections (max=%d, current=%d),"
+                          + " reject incoming connection from %s",
                       max,
                       conns,
                       socket.getRemoteSocketAddress());

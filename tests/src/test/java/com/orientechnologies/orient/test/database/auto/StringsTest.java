@@ -65,7 +65,8 @@ public class StringsTest {
         "test \\string\\ 'number' \\2\\ \\\\ '''' test String number 2 test string number 2");
     Assert.assertEquals(
         OStringParser.replaceAll(test2, "\\\\", "replacement"),
-        "test \\string\\ \"number\" \\2\\ replacement \"\"\"\" test String number 2 test string number 2");
+        "test \\string\\ \"number\" \\2\\ replacement \"\"\"\" test String number 2 test string"
+            + " number 2");
     String subsequentReplaceTest = OStringParser.replaceAll(test2, "\\", "");
     subsequentReplaceTest = OStringParser.replaceAll(subsequentReplaceTest, "\"", "");
     subsequentReplaceTest =

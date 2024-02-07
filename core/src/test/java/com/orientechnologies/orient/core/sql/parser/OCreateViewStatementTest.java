@@ -11,13 +11,17 @@ public class OCreateViewStatementTest extends OParserTestAbstract {
     checkRightSyntax("create view Foo from (MATCH {class:V} RETURN $elements)");
 
     checkRightSyntax(
-        "CREATE VIEW Foo FROM (select from v where name ='foo') METADATA {updatable:true, originRidField:'origin'}");
+        "CREATE VIEW Foo FROM (select from v where name ='foo') METADATA {updatable:true,"
+            + " originRidField:'origin'}");
 
     checkWrongSyntax("create view Foo");
     checkRightSyntax(
-        "CREATE VIEW Foo FROM (select from v where name ='foo') METADATA {indexes:[{type:'UNIQUE', properties:{name:'STRING'}}]}");
+        "CREATE VIEW Foo FROM (select from v where name ='foo') METADATA {indexes:[{type:'UNIQUE',"
+            + " properties:{name:'STRING'}}]}");
     checkRightSyntax(
-        "CREATE VIEW Foo FROM (select from v where name ='foo') METADATA {indexes:[{\"type\":\"unique\", \"properties\":{\"ids\":{\"type\":\"EMBEDDEDEDSET\",\"linkedType\":\"STRING\"}}}]}");
+        "CREATE VIEW Foo FROM (select from v where name ='foo') METADATA"
+            + " {indexes:[{\"type\":\"unique\","
+            + " \"properties\":{\"ids\":{\"type\":\"EMBEDDEDEDSET\",\"linkedType\":\"STRING\"}}}]}");
   }
 
   @Test

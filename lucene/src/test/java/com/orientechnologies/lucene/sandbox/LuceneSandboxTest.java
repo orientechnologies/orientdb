@@ -19,9 +19,11 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
     db.command("CREATE CLASS CDR");
     db.command("CREATE PROPERTY  CDR.filename STRING");
     db.command(
-        "INSERT into cdr(filename) values('MDCA10MCR201612291808.276388.eno.RRC.20161229183002.PROD_R4.eno.data') ");
+        "INSERT into cdr(filename)"
+            + " values('MDCA10MCR201612291808.276388.eno.RRC.20161229183002.PROD_R4.eno.data') ");
     db.command(
-        "INSERT into cdr(filename) values('MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data') ");
+        "INSERT into cdr(filename)"
+            + " values('MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data') ");
   }
 
   @Test
@@ -36,7 +38,8 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
     // exact match
     res =
         db.query(
-            "select from cdr WHERE filename LUCENE ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" '");
+            "select from cdr WHERE filename LUCENE '"
+                + " \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" '");
 
     Assertions.assertThat(res).hasSize(1);
     res.close();
@@ -51,7 +54,8 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
   public void shouldFetchOneDocumentWithExactMatchOnLuceneIndexKeyWordAnalyzer() throws Exception {
 
     db.command(
-        "CREATE INDEX cdr.filename ON cdr(filename) FULLTEXT ENGINE LUCENE metadata { 'allowLeadingWildcard': true}");
+        "CREATE INDEX cdr.filename ON cdr(filename) FULLTEXT ENGINE LUCENE metadata {"
+            + " 'allowLeadingWildcard': true}");
 
     // partial match
     OResultSet res =
@@ -63,7 +67,9 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
     // exact match
     res =
         db.query(
-            "select from cdr WHERE SEARCH_CLASS( ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" ') = true");
+            "select from cdr WHERE SEARCH_CLASS( '"
+                + " \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" ') ="
+                + " true");
 
     Assertions.assertThat(res).hasSize(1);
     res.close();

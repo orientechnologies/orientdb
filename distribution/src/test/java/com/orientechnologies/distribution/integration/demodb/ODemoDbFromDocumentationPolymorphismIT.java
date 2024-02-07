@@ -17,7 +17,8 @@ public class ODemoDbFromDocumentationPolymorphismIT extends OIntegrationTestTemp
 
     OResultSet resultSet =
         db.query(
-            "MATCH {class: Customers, as: customer, where: (OrderedId=1)}--{Class: Locations, as: location}  RETURN $pathelements");
+            "MATCH {class: Customers, as: customer, where: (OrderedId=1)}--{Class: Locations, as:"
+                + " location}  RETURN $pathelements");
 
     assertThat(resultSet).hasSize(16);
 

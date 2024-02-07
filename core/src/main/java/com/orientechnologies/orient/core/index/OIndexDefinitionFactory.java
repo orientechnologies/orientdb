@@ -203,8 +203,8 @@ public class OIndexDefinitionFactory {
           indexType = linkedType;
           if (indexType == null)
             throw new OIndexException(
-                "Linked type was not provided."
-                    + " You should provide linked type for embedded collections that are going to be indexed.");
+                "Linked type was not provided. You should provide linked type for embedded"
+                    + " collections that are going to be indexed.");
         }
       }
       indexDefinition = new OPropertyMapIndexDefinition(className, fieldName, indexType, indexBy);
@@ -219,8 +219,8 @@ public class OIndexDefinitionFactory {
         indexType = linkedType;
         if (indexType == null)
           throw new OIndexException(
-              "Linked type was not provided."
-                  + " You should provide linked type for embedded collections that are going to be indexed.");
+              "Linked type was not provided. You should provide linked type for embedded"
+                  + " collections that are going to be indexed.");
       }
       indexDefinition = new OPropertyListIndexDefinition(className, fieldName, indexType);
     } else if (type.equals(OType.LINKBAG)) {

@@ -90,7 +90,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
   public void testCreateCompositeIndex() throws Exception {
     database
         .command(
-            "CREATE INDEX sqlCreateIndexCompositeIndex ON sqlCreateIndexTestClass (prop1, prop2) UNIQUE")
+            "CREATE INDEX sqlCreateIndexCompositeIndex ON sqlCreateIndexTestClass (prop1, prop2)"
+                + " UNIQUE")
         .close();
     database.getMetadata().getIndexManagerInternal().reload();
 
@@ -170,7 +171,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
     try {
       database
           .command(
-              "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE")
+              "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass"
+                  + " (prop3 by ttt) UNIQUE")
           .close();
       Assert.fail();
     } catch (OCommandSQLParsingException e) {
@@ -190,7 +192,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
     try {
       database
           .command(
-              "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE")
+              "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass"
+                  + " (prop3 b value) UNIQUE")
           .close();
       Assert.fail();
     } catch (OCommandSQLParsingException e) {
@@ -211,7 +214,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
     try {
       database
           .command(
-              "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE")
+              "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass"
+                  + " (prop3 by value t) UNIQUE")
           .close();
       Assert.fail();
     } catch (OCommandSQLParsingException e) {
@@ -231,7 +235,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
   public void testCreateEmbeddedMapByKeyIndex() throws Exception {
     database
         .command(
-            "CREATE INDEX sqlCreateIndexEmbeddedMapByKeyIndex ON sqlCreateIndexTestClass (prop3 by key) UNIQUE")
+            "CREATE INDEX sqlCreateIndexEmbeddedMapByKeyIndex ON sqlCreateIndexTestClass (prop3 by"
+                + " key) UNIQUE")
         .close();
     database.getMetadata().getIndexManagerInternal().reload();
 
@@ -259,7 +264,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
   public void testCreateEmbeddedMapByValueIndex() throws Exception {
     database
         .command(
-            "CREATE INDEX sqlCreateIndexEmbeddedMapByValueIndex ON sqlCreateIndexTestClass (prop3 by value) UNIQUE")
+            "CREATE INDEX sqlCreateIndexEmbeddedMapByValueIndex ON sqlCreateIndexTestClass (prop3"
+                + " by value) UNIQUE")
         .close();
     database.getMetadata().getIndexManagerInternal().reload();
 
@@ -287,7 +293,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
   public void testCreateEmbeddedListIndex() throws Exception {
     database
         .command(
-            "CREATE INDEX sqlCreateIndexEmbeddedListIndex ON sqlCreateIndexTestClass (prop5) NOTUNIQUE")
+            "CREATE INDEX sqlCreateIndexEmbeddedListIndex ON sqlCreateIndexTestClass (prop5)"
+                + " NOTUNIQUE")
         .close();
     database.getMetadata().getIndexManagerInternal().reload();
 
@@ -379,15 +386,16 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
     try {
       database
           .command(
-              "CREATE INDEX sqlCreateIndexEmbeddedListWithoutLinkedTypeIndex ON sqlCreateIndexTestClass (prop6) UNIQUE")
+              "CREATE INDEX sqlCreateIndexEmbeddedListWithoutLinkedTypeIndex ON"
+                  + " sqlCreateIndexTestClass (prop6) UNIQUE")
           .close();
       Assert.fail();
     } catch (OIndexException e) {
       Assert.assertTrue(
           e.getMessage()
               .contains(
-                  "Linked type was not provided. "
-                      + "You should provide linked type for embedded collections that are going to be indexed."));
+                  "Linked type was not provided. You should provide linked type for embedded"
+                      + " collections that are going to be indexed."));
     }
     final OIndex index =
         database
@@ -404,15 +412,16 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
     try {
       database
           .command(
-              "CREATE INDEX sqlCreateIndexEmbeddedMapWithoutLinkedTypeIndex ON sqlCreateIndexTestClass (prop7 by value) UNIQUE")
+              "CREATE INDEX sqlCreateIndexEmbeddedMapWithoutLinkedTypeIndex ON"
+                  + " sqlCreateIndexTestClass (prop7 by value) UNIQUE")
           .close();
       Assert.fail();
     } catch (OIndexException e) {
       Assert.assertTrue(
           e.getMessage()
               .contains(
-                  "Linked type was not provided. "
-                      + "You should provide linked type for embedded collections that are going to be indexed."));
+                  "Linked type was not provided. You should provide linked type for embedded"
+                      + " collections that are going to be indexed."));
     }
     final OIndex index =
         database
@@ -428,7 +437,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
   public void testCreateCompositeIndexWithTypes() throws Exception {
     final String query =
         new StringBuilder(
-                "CREATE INDEX sqlCreateIndexCompositeIndex2 ON sqlCreateIndexTestClass (prop1, prop2) UNIQUE ")
+                "CREATE INDEX sqlCreateIndexCompositeIndex2 ON sqlCreateIndexTestClass (prop1,"
+                    + " prop2) UNIQUE ")
             .append(EXPECTED_PROP1_TYPE)
             .append(", ")
             .append(EXPECTED_PROP2_TYPE)
@@ -459,7 +469,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
   public void testCreateCompositeIndexWithWrongTypes() throws Exception {
     final String query =
         new StringBuilder(
-                "CREATE INDEX sqlCreateIndexCompositeIndex3 ON sqlCreateIndexTestClass (prop1, prop2) UNIQUE ")
+                "CREATE INDEX sqlCreateIndexCompositeIndex3 ON sqlCreateIndexTestClass (prop1,"
+                    + " prop2) UNIQUE ")
             .append(EXPECTED_PROP1_TYPE)
             .append(", ")
             .append(EXPECTED_PROP1_TYPE)
@@ -472,7 +483,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
       Assert.assertTrue(
           e.getMessage()
               .contains(
-                  "Error on execution of command: sql.CREATE INDEX sqlCreateIndexCompositeIndex3 ON"));
+                  "Error on execution of command: sql.CREATE INDEX sqlCreateIndexCompositeIndex3"
+                      + " ON"));
 
       Throwable cause = e;
       while (cause.getCause() != null) cause = cause.getCause();
@@ -492,8 +504,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
   public void testCompositeIndexWithMetadata() {
     database
         .command(
-            "CREATE INDEX sqlCreateIndexCompositeIndexWithMetadata ON sqlCreateIndexTestClass (prop1, prop2) UNIQUE"
-                + " metadata {v1:23, v2:\"val2\"}")
+            "CREATE INDEX sqlCreateIndexCompositeIndexWithMetadata ON sqlCreateIndexTestClass"
+                + " (prop1, prop2) UNIQUE metadata {v1:23, v2:\"val2\"}")
         .close();
     database.getMetadata().getIndexManagerInternal().reload();
 
@@ -552,7 +564,8 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
   public void testCreateCompositeIndexWithTypesAndMetadata() throws Exception {
     final String query =
         new StringBuilder(
-                "CREATE INDEX sqlCreateIndexCompositeIndex2WithConfig ON sqlCreateIndexTestClass (prop1, prop2) UNIQUE ")
+                "CREATE INDEX sqlCreateIndexCompositeIndex2WithConfig ON sqlCreateIndexTestClass"
+                    + " (prop1, prop2) UNIQUE ")
             .append(EXPECTED_PROP1_TYPE)
             .append(", ")
             .append(EXPECTED_PROP2_TYPE)

@@ -681,7 +681,8 @@ public class OHazelcastClusterMetadataManager
                 ODistributedServerLog.DIRECTION.IN,
                 "Found a new node (%s) with the same name as current: '"
                     + joinedNodeName
-                    + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file",
+                    + "'. The node has been excluded. Change the name in its"
+                    + " config/orientdb-dserver-config.xml file",
                 iEvent.getMember());
 
             throw new ODistributedException(
@@ -689,7 +690,8 @@ public class OHazelcastClusterMetadataManager
                     + iEvent.getMember().toString()
                     + ") with the same name as current: '"
                     + joinedNodeName
-                    + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
+                    + "'. The node has been excluded. Change the name in its"
+                    + " config/orientdb-dserver-config.xml file");
           }
 
           registerNode(iEvent.getMember(), joinedNodeName);
@@ -1113,7 +1115,8 @@ public class OHazelcastClusterMetadataManager
             nodeName,
             null,
             ODistributedServerLog.DIRECTION.NONE,
-            "Cannot remove server '%s' because it is enlisted in data center '%s' configuration for database '%s'",
+            "Cannot remove server '%s' because it is enlisted in data center '%s' configuration for"
+                + " database '%s'",
             nodeLeftName,
             dc,
             databaseName);
@@ -1128,7 +1131,8 @@ public class OHazelcastClusterMetadataManager
             nodeName,
             null,
             ODistributedServerLog.DIRECTION.NONE,
-            "Cannot remove server '%s' because it is enlisted in 'servers' of the distributed configuration for database '%s'",
+            "Cannot remove server '%s' because it is enlisted in 'servers' of the distributed"
+                + " configuration for database '%s'",
             nodeLeftName,
             databaseName);
         return false;
@@ -1232,7 +1236,8 @@ public class OHazelcastClusterMetadataManager
           nodeName,
           null,
           ODistributedServerLog.DIRECTION.NONE,
-          "Removed node id=%s name=%s has not being recognized. Remove the node manually (registeredNodes=%s)",
+          "Removed node id=%s name=%s has not being recognized. Remove the node manually"
+              + " (registeredNodes=%s)",
           member,
           nodeLeftName,
           registeredNodes);

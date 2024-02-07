@@ -85,7 +85,8 @@ public class TraverseStrategiesTest extends DocumentDBBaseTest {
   public void getAllRevresedBreadthFirst() {
     OResultSet result1 =
         database.query(
-            "traverse in(\"te\") from (select rids from (select @rid as rids, out(\"te\") as outEdge from tc unwind outEdge) where outEdge is null) strategy BREADTH_FIRST");
+            "traverse in(\"te\") from (select rids from (select @rid as rids, out(\"te\") as"
+                + " outEdge from tc unwind outEdge) where outEdge is null) strategy BREADTH_FIRST");
 
     for (int i = 0; i < totalElements; i++) {
       Assert.assertTrue(result1.hasNext());

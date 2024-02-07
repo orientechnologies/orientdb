@@ -84,6 +84,7 @@ public class OSQLFunctionCoalesce extends OSQLFunctionAbstract {
 
   @Override
   public String getSyntax() {
-    return "Returns the first not-null parameter or null if all parameters are null. Syntax: coalesce(<field|value> [,<field|value>]*)";
+    return "Returns the first not-null parameter or null if all parameters are null. Syntax:"
+        + " coalesce(<field|value> [,<field|value>]*)";
   }
 }

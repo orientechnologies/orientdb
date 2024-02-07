@@ -24,7 +24,8 @@ public class LuceneCreateIndexIntegrationTest {
     remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
 
     remote.execute(
-        "create database LuceneCreateIndexIntegrationTest plocal users(admin identified by 'admin' role admin) ");
+        "create database LuceneCreateIndexIntegrationTest plocal users(admin identified by 'admin'"
+            + " role admin) ");
     final ODatabaseSession session =
         remote.open("LuceneCreateIndexIntegrationTest", "admin", "admin");
 

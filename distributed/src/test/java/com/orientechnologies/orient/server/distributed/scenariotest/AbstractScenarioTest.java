@@ -432,7 +432,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
               OLogManager.instance()
                   .info(
                       this,
-                      "Waiting for updated document propagation on record %s. Found %s=%s, expected %s",
+                      "Waiting for updated document propagation on record %s. Found %s=%s, expected"
+                          + " %s",
                       recordId,
                       fieldName,
                       storedValue,

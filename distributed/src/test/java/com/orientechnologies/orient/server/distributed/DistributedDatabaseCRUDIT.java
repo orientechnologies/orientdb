@@ -266,11 +266,11 @@ public final class DistributedDatabaseCRUDIT {
                   String sql =
                       "Update TestNode set prop5='"
                           + String.valueOf(System.currentTimeMillis())
-                          + "'"
-                          + ", prop-7='value7-1', prop-8='value8-1', prop-9='value9-1',prop-10='value10-1', prop11='value11-1'"
-                          + ", prop-07='value07-1', prop-08='value08-1', prop-09='value09-1',prop-010='value010-1', prop011='value011-1'"
-                          + ", prop12='vaue12-1', prop13='value13-1'"
-                          + ", updateTime='"
+                          + "', prop-7='value7-1', prop-8='value8-1',"
+                          + " prop-9='value9-1',prop-10='value10-1', prop11='value11-1',"
+                          + " prop-07='value07-1', prop-08='value08-1',"
+                          + " prop-09='value09-1',prop-010='value010-1', prop011='value011-1',"
+                          + " prop12='vaue12-1', prop13='value13-1', updateTime='"
                           + new Date().toString()
                           + "' where property4='"
                           + propertyValue

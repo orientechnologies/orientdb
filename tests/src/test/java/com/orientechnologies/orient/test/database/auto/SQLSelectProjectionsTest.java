@@ -47,7 +47,8 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    " select nick, followings, followers from Profile where nick is defined and followings is defined and followers is defined"))
+                    " select nick, followings, followers from Profile where nick is defined and"
+                        + " followings is defined and followers is defined"))
             .execute();
 
     Assert.assertTrue(result.size() != 0);
@@ -91,7 +92,8 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select name.toUpperCase(Locale.ENGLISH), address.city.country.name from Profile"))
+                    "select name.toUpperCase(Locale.ENGLISH), address.city.country.name from"
+                        + " Profile"))
             .execute();
 
     Assert.assertTrue(result.size() != 0);
@@ -113,7 +115,8 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select name, name.toUpperCase(Locale.ENGLISH) from Profile where name is not null"))
+                    "select name, name.toUpperCase(Locale.ENGLISH) from Profile where name is not"
+                        + " null"))
             .execute();
 
     Assert.assertTrue(result.size() != 0);
@@ -134,7 +137,8 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select location.city.country.name, address.city.country.name from Profile where location.city.country.name is not null"))
+                    "select location.city.country.name, address.city.country.name from Profile"
+                        + " where location.city.country.name is not null"))
             .execute();
 
     Assert.assertTrue(result.size() != 0);
@@ -155,7 +159,8 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select *, name.prefix('Mr. ').append(' ').append(surname).append('!') as test from Profile where name is not null"))
+                    "select *, name.prefix('Mr. ').append(' ').append(surname).append('!') as test"
+                        + " from Profile where name is not null"))
             .execute();
 
     Assert.assertTrue(result.size() != 0);
@@ -174,7 +179,8 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select name.append('.').prefix('Mr. ') as name from Profile where name is not null"))
+                    "select name.append('.').prefix('Mr. ') as name from Profile where name is not"
+                        + " null"))
             .execute();
 
     Assert.assertTrue(result.size() != 0);

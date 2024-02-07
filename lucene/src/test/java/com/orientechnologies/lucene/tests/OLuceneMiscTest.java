@@ -48,25 +48,29 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
 
     OResultSet results =
         db.query(
-            "select from Test where search_index('Test.attr1',\"foo*\") =true OR search_index('Test.attr2', \"foo*\")=true  ");
+            "select from Test where search_index('Test.attr1',\"foo*\") =true OR"
+                + " search_index('Test.attr2', \"foo*\")=true  ");
     assertThat(results).hasSize(2);
     results.close();
 
     results =
         db.query(
-            "select from Test where SEARCH_FIELDS( ['attr1'], 'bar') = true OR SEARCH_FIELDS(['attr2'], 'bar*' )= true ");
+            "select from Test where SEARCH_FIELDS( ['attr1'], 'bar') = true OR"
+                + " SEARCH_FIELDS(['attr2'], 'bar*' )= true ");
     assertThat(results).hasSize(2);
     results.close();
 
     results =
         db.query(
-            "select from Test where SEARCH_FIELDS( ['attr1'], 'foo*') = true AND SEARCH_FIELDS(['attr2'], 'bar*') = true");
+            "select from Test where SEARCH_FIELDS( ['attr1'], 'foo*') = true AND"
+                + " SEARCH_FIELDS(['attr2'], 'bar*') = true");
     assertThat(results).hasSize(1);
     results.close();
 
     results =
         db.query(
-            "select from Test where SEARCH_FIELDS( ['attr1'], 'bar*') = true AND SEARCH_FIELDS(['attr2'], 'foo*')= true");
+            "select from Test where SEARCH_FIELDS( ['attr1'], 'bar*') = true AND"
+                + " SEARCH_FIELDS(['attr2'], 'foo*')= true");
     assertThat(results).hasSize(1);
     results.close();
   }
@@ -83,7 +87,8 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
     db.command("insert into Person set name='Enrico', age=18");
 
     String query =
-        "select  from (select from Person where age = 18) where search_fields(['name'],'Enrico') = true";
+        "select  from (select from Person where age = 18) where search_fields(['name'],'Enrico') ="
+            + " true";
     OResultSet results = db.query(query);
 
     assertThat(results).hasSize(1);
@@ -92,7 +97,8 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
     // WITH PROJECTION it works using index directly
 
     query =
-        "select  from (select name from Person where age = 18) where search_index('Person.name','Enrico') = true";
+        "select  from (select name from Person where age = 18) where"
+            + " search_index('Person.name','Enrico') = true";
     results = db.query(query);
     assertThat(results).hasSize(1);
     results.close();

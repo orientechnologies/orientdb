@@ -114,7 +114,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
     final String fullTextIndexStrings[] = {
       "Alice : What is the use of a book, without pictures or conversations?",
       "Rabbit : Oh my ears and whiskers, how late it's getting!",
-      "Alice : If it had grown up, it would have made a dreadfully ugly child; but it makes rather a handsome pig, I think",
+      "Alice : If it had grown up, it would have made a dreadfully ugly child; but it makes rather"
+          + " a handsome pig, I think",
       "The Cat : We're all mad here.",
       "The Hatter : Why is a raven like a writing desk?",
       "The Hatter : Twinkle, twinkle, little bat! How I wonder what you're at.",
@@ -218,7 +219,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop1.asInteger() = 1 and prop2 = 2"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop1.asInteger() = 1 and"
+                        + " prop2 = 2"))
             .execute();
 
     Assert.assertEquals(result.size(), 1);
@@ -301,7 +303,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedMapTwo containsKey 'key11'"))
+                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedMapTwo"
+                        + " containsKey 'key11'"))
             .execute();
 
     Assert.assertEquals(result.size(), 10);
@@ -417,7 +420,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedMapTwo containsValue 22"))
+                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedMapTwo"
+                        + " containsValue 22"))
             .execute();
 
     final Map<String, Integer> embeddedMap = new HashMap<String, Integer>();
@@ -617,7 +621,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedListTwo contains 4"))
+                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedListTwo contains"
+                        + " 4"))
             .execute();
 
     Assert.assertEquals(result.size(), 10);
@@ -974,7 +979,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 >= 2"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 >="
+                        + " 2"))
             .execute();
 
     Assert.assertEquals(result.size(), 8);
@@ -1062,7 +1068,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = ? and prop2 >= ?"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = ? and prop2 >="
+                        + " ?"))
             .execute(1, 2);
 
     Assert.assertEquals(result.size(), 8);
@@ -1150,7 +1157,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 <= 2"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 <="
+                        + " 2"))
             .execute();
 
     Assert.assertEquals(result.size(), 3);
@@ -1238,7 +1246,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = ? and prop2 <= ?"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = ? and prop2 <="
+                        + " ?"))
             .execute(1, 2);
 
     Assert.assertEquals(result.size(), 3);
@@ -1502,7 +1511,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 between 1 and 3"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2"
+                        + " between 1 and 3"))
             .execute();
 
     Assert.assertEquals(result.size(), 3);
@@ -1590,7 +1600,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 between ? and ?"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2"
+                        + " between ? and ?"))
             .execute(1, 3);
 
     Assert.assertEquals(result.size(), 3);
@@ -2031,7 +2042,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where (prop1 = 1 and prop2 = 1) and prop3 = 11"))
+                    "select * from sqlSelectHashIndexReuseTestClass where (prop1 = 1 and prop2 = 1)"
+                        + " and prop3 = 11"))
             .execute();
 
     Assert.assertEquals(result.size(), 1);
@@ -2058,7 +2070,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 = 1 and prop4 = 1"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 = 1"
+                        + " and prop4 = 1"))
             .execute();
 
     Assert.assertEquals(result.size(), 1);
@@ -2085,7 +2098,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where (prop1 = 1 and prop2 = 1) and prop5 >= 1"))
+                    "select * from sqlSelectHashIndexReuseTestClass where (prop1 = 1 and prop2 = 1)"
+                        + " and prop5 >= 1"))
             .execute();
 
     Assert.assertEquals(result.size(), 1);
@@ -2112,7 +2126,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop4 >= 1"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop4 >="
+                        + " 1"))
             .execute();
 
     Assert.assertEquals(result.size(), 10);
@@ -2190,7 +2205,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop6 <= 1 and prop4 < 1"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop6 <= 1 and prop4 <"
+                        + " 1"))
             .execute();
 
     Assert.assertEquals(result.size(), 2);
@@ -2228,7 +2244,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 + 1 = 3"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1 and prop2 + 1 ="
+                        + " 3"))
             .execute();
 
     Assert.assertEquals(result.size(), 1);
@@ -2253,7 +2270,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedMap containskey 'key12'"))
+                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedMap containskey"
+                        + " 'key12'"))
             .execute();
 
     Assert.assertEquals(result.size(), 10);
@@ -2288,7 +2306,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where ( fEmbeddedMap containskey 'key12' ) and ( fEmbeddedMap['key12'] = 12 )"))
+                    "select * from sqlSelectHashIndexReuseTestClass where ( fEmbeddedMap"
+                        + " containskey 'key12' ) and ( fEmbeddedMap['key12'] = 12 )"))
             .execute();
 
     Assert.assertEquals(result.size(), 10);
@@ -2323,7 +2342,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedMap containsvalue 11"))
+                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedMap"
+                        + " containsvalue 11"))
             .execute();
 
     Assert.assertEquals(result.size(), 10);
@@ -2358,7 +2378,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedList contains 7"))
+                    "select * from sqlSelectHashIndexReuseTestClass where fEmbeddedList contains"
+                        + " 7"))
             .execute();
 
     final List<Integer> embeddedList = new ArrayList<Integer>(3);
@@ -2388,7 +2409,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where (prop1 = 1 and prop2  = 2) and (prop4 = 3 or prop4 = 1)"))
+                    "select * from sqlSelectHashIndexReuseTestClass where (prop1 = 1 and prop2  ="
+                        + " 2) and (prop4 = 3 or prop4 = 1)"))
             .execute();
 
     Assert.assertEquals(result.size(), 1);
@@ -2413,7 +2435,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where ( prop1 = 1 and prop2 = 2 ) or ( prop4  = 1 and prop6 = 2 )"))
+                    "select * from sqlSelectHashIndexReuseTestClass where ( prop1 = 1 and prop2 = 2"
+                        + " ) or ( prop4  = 1 and prop6 = 2 )"))
             .execute();
 
     Assert.assertEquals(result.size(), 1);
@@ -2437,7 +2460,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1777 and prop2  = 2777"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop1 = 1777 and prop2  ="
+                        + " 2777"))
             .execute();
 
     Assert.assertEquals(result.size(), 0);
@@ -2481,7 +2505,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestChildClass where prop0 = 0 and prop1 = 1"))
+                    "select * from sqlSelectHashIndexReuseTestChildClass where prop0 = 0 and prop1"
+                        + " = 1"))
             .execute();
 
     Assert.assertEquals(result.size(), 1);
@@ -2517,7 +2542,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
             database
                 .query(
                     new OSQLSynchQuery<ODocument>(
-                        "select count(*) from CountFunctionWithNotUniqueHashIndex where a = 'a' and b = 'b'"))
+                        "select count(*) from CountFunctionWithNotUniqueHashIndex where a = 'a' and"
+                            + " b = 'b'"))
                 .get(0);
 
     Assert.assertEquals(result.<Object>field("count", Long.class), 1L);
@@ -2574,7 +2600,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop4 = 1 and prop1 = 1 and prop3 in [13, 113]"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop4 = 1 and prop1 = 1"
+                        + " and prop3 in [13, 113]"))
             .execute();
 
     Assert.assertEquals(result.size(), 1);
@@ -2604,7 +2631,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop4 = 1 and prop1 in [1, 2] and prop3 = 13"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop4 = 1 and prop1 in"
+                        + " [1, 2] and prop3 = 13"))
             .execute();
 
     Assert.assertEquals(result.size(), 1);
@@ -2636,7 +2664,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop4 = 1 and prop1 in [1, 2] and prop3 in [13, 15]"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop4 = 1 and prop1 in"
+                        + " [1, 2] and prop3 in [13, 15]"))
             .execute();
 
     Assert.assertEquals(result.size(), 2);
@@ -2669,7 +2698,8 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select * from sqlSelectHashIndexReuseTestClass where prop4 in [1, 2] and prop1 = 1 and prop3 = 13"))
+                    "select * from sqlSelectHashIndexReuseTestClass where prop4 in [1, 2] and prop1"
+                        + " = 1 and prop3 = 13"))
             .execute();
 
     Assert.assertEquals(result.size(), 1);

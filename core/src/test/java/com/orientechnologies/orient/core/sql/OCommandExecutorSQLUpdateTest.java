@@ -69,7 +69,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     assertEquals(((Set) r.getProperty("employees")).size(), 4);
 
     db.command(
-            "UPDATE company REMOVE employees = (SELECT FROM employee WHERE name = 'Linn') WHERE name = 'MyCompany'")
+            "UPDATE company REMOVE employees = (SELECT FROM employee WHERE name = 'Linn') WHERE"
+                + " name = 'MyCompany'")
         .close();
 
     r.reload();
@@ -116,7 +117,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     assertEquals(result.stream().count(), 1);
 
     db.command(
-            "UPDATE i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"ccc\", \"bbb\"]} WHERE id = 'the_id'")
+            "UPDATE i_have_a_list CONTENT {\"id\": \"the_id\", \"types\": [\"ccc\", \"bbb\"]} WHERE"
+                + " id = 'the_id'")
         .close();
 
     result = db.query("SELECT * FROM i_have_a_list WHERE types = 'ccc'");
@@ -145,18 +147,18 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.command(
             "update "
                 + className
-                + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
-                + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
-                + "UPSERT WHERE full_name = :full_name",
+                + " SET name = :name, full_name = :full_name, html_url = :html_url, description ="
+                + " :description, git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url,"
+                + " svn_url = :svn_urlUPSERT WHERE full_name = :full_name",
             params)
         .close();
 
     db.command(
             "update "
                 + className
-                + " SET name = :name, html_url = :html_url, description = :description, "
-                + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
-                + "UPSERT WHERE full_name = :full_name",
+                + " SET name = :name, html_url = :html_url, description = :description, git_url ="
+                + " :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_urlUPSERT"
+                + " WHERE full_name = :full_name",
             params)
         .close();
   }
@@ -219,7 +221,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     params.put("booleanList", booleanList);
 
     db.command(
-            "UPDATE test SET boolean = :boolean, booleanList = :booleanList, integerList = :integerList WHERE id = 1",
+            "UPDATE test SET boolean = :boolean, booleanList = :booleanList, integerList ="
+                + " :integerList WHERE id = 1",
             params)
         .close();
 
@@ -491,7 +494,8 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     ((ODatabaseDocumentInternal) db).getLocalCache().clear();
 
     db.command(
-            "Update TestSource set flag = true , linked.flag = true return after *, linked:{*} as infoLinked  where name = \"foo\"")
+            "Update TestSource set flag = true , linked.flag = true return after *, linked:{*} as"
+                + " infoLinked  where name = \"foo\"")
         .close();
     ((ODatabaseDocumentInternal) db).getLocalCache().clear();
 

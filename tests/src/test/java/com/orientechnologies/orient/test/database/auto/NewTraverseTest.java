@@ -315,7 +315,8 @@ public class NewTraverseTest extends DocumentDBBaseTest {
     result3.close();
     OResultSet result4 =
         database.query(
-            "select from ( traverse * from Movie while $depth < 2 and ( true = true ) ) where true");
+            "select from ( traverse * from Movie while $depth < 2 and ( true = true ) ) where"
+                + " true");
 
     List<OResult> list4 = new ArrayList<>();
     while (result4.hasNext()) {

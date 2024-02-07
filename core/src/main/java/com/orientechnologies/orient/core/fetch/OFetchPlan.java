@@ -74,7 +74,8 @@ public class OFetchPlan {
 
             if (key.indexOf(".") > -1)
               throw new IllegalArgumentException(
-                  "Nested levels (fields separated by dot) are not allowed on fetch plan when dynamic depth level is specified (square brackets): "
+                  "Nested levels (fields separated by dot) are not allowed on fetch plan when"
+                      + " dynamic depth level is specified (square brackets): "
                       + key);
 
             final List<String> indexRanges = OStringSerializerHelper.smartSplit(range, '-', ' ');

@@ -12,7 +12,8 @@ public class OMoveVertexStatementTest extends OParserTestAbstract {
     checkRightSyntax(
         "move vertex (select from V) to class:newposition set name = 'a', surname = 'b'");
     checkRightSyntax(
-        "move vertex (select from V) to class:newposition set name = 'a', surname = 'b' batch 1000");
+        "move vertex (select from V) to class:newposition set name = 'a', surname = 'b' batch"
+            + " 1000");
 
     checkWrongSyntax("move vertex (select from V) to newposition");
   }

@@ -113,7 +113,8 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
 
   @Override
   public String getSyntax() {
-    return "CREATE SEQUENCE <sequence> [TYPE <CACHED|ORDERED>] [START <value>] [INCREMENT <value>] [CACHE <value>]";
+    return "CREATE SEQUENCE <sequence> [TYPE <CACHED|ORDERED>] [START <value>] [INCREMENT <value>]"
+        + " [CACHE <value>]";
   }
 
   @Override

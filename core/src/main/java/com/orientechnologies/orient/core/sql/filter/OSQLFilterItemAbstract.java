@@ -117,7 +117,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
               // ERROR: METHOD/FUNCTION NOT FOUND OR MISPELLED
               throw new OQueryParsingException(
                   iQueryToParse.parserText,
-                  "Syntax error: function or field operator not recognized between the supported ones: "
+                  "Syntax error: function or field operator not recognized between the supported"
+                      + " ones: "
                       + OSQLEngine.getMethodNames(),
                   0);
 

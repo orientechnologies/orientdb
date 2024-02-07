@@ -59,12 +59,14 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInt
     if (db == null) {
       if (Orient.instance().getDatabaseThreadFactory() == null) {
         throw new ODatabaseException(
-            "The database instance is not set in the current thread. Be sure to set it with: ODatabaseRecordThreadLocal.instance().set(db);");
+            "The database instance is not set in the current thread. Be sure to set it with:"
+                + " ODatabaseRecordThreadLocal.instance().set(db);");
       } else {
         db = Orient.instance().getDatabaseThreadFactory().getThreadDatabase();
         if (db == null) {
           throw new ODatabaseException(
-              "The database instance is not set in the current thread. Be sure to set it with: ODatabaseRecordThreadLocal.instance().set(db);");
+              "The database instance is not set in the current thread. Be sure to set it with:"
+                  + " ODatabaseRecordThreadLocal.instance().set(db);");
         } else {
           set(db);
         }

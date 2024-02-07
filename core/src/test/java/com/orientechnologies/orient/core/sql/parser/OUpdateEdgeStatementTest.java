@@ -89,14 +89,17 @@ public class OUpdateEdgeStatementTest {
   @Test
   public void testQuotedJson() {
     checkRightSyntax(
-        "update edge E SET key = \"test\", value = {\"f12\":\"test\\\\\"} UPSERT WHERE key = \"test\"");
+        "update edge E SET key = \"test\", value = {\"f12\":\"test\\\\\"} UPSERT WHERE key ="
+            + " \"test\"");
   }
 
   @Test
   public void testTargetQuery() {
     // issue #4415
     checkRightSyntax(
-        "update edge (select from (traverse References from ( select from Node WHERE Email = 'julia@local'  ) ) WHERE @class = 'Node' and $depth <= 1 and Active = true ) set Points = 0 RETURN BEFORE $current.Points");
+        "update edge (select from (traverse References from ( select from Node WHERE Email ="
+            + " 'julia@local'  ) ) WHERE @class = 'Node' and $depth <= 1 and Active = true ) set"
+            + " Points = 0 RETURN BEFORE $current.Points");
   }
 
   @Test

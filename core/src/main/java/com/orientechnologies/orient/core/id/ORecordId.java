@@ -254,7 +254,8 @@ public class ORecordId implements ORID {
       throw new IllegalArgumentException(
           "Argument '"
               + iRecordId
-              + "' is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
+              + "' is not a RecordId in form of string. Format must be:"
+              + " <cluster-id>:<cluster-position>");
 
     final List<String> parts = OStringSerializerHelper.split(iRecordId, SEPARATOR, PREFIX);
 
@@ -262,7 +263,8 @@ public class ORecordId implements ORID {
       throw new IllegalArgumentException(
           "Argument received '"
               + iRecordId
-              + "' is not a RecordId in form of string. Format must be: #<cluster-id>:<cluster-position>. Example: #3:12");
+              + "' is not a RecordId in form of string. Format must be:"
+              + " #<cluster-id>:<cluster-position>. Example: #3:12");
 
     clusterId = Integer.parseInt(parts.get(0));
     checkClusterLimits();
@@ -323,7 +325,9 @@ public class ORecordId implements ORID {
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (db == null)
       throw new ODatabaseException(
-          "No database found in current thread local space. If you manually control databases over threads assure to set the current database before to use it by calling: ODatabaseRecordThreadLocal.instance().set(db);");
+          "No database found in current thread local space. If you manually control databases over"
+              + " threads assure to set the current database before to use it by calling:"
+              + " ODatabaseRecordThreadLocal.instance().set(db);");
 
     return (T) db.load(this);
   }

@@ -39,7 +39,8 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
 
     OResultSet execute =
         db.query(
-            "SELECT ST_Equals(ST_GeomFromText('LINESTRING(0 0, 10 10)'), ST_GeomFromText('LINESTRING(0 0, 5 5, 10 10)')) as ST_Equals");
+            "SELECT ST_Equals(ST_GeomFromText('LINESTRING(0 0, 10 10)'),"
+                + " ST_GeomFromText('LINESTRING(0 0, 5 5, 10 10)')) as ST_Equals");
     OResult next = execute.next();
     Assert.assertEquals(next.getProperty("ST_Equals"), true);
     execute.close();
@@ -50,7 +51,8 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
 
     OResultSet execute =
         db.query(
-            "select ST_Equals(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)')) as ST_Equals");
+            "select ST_Equals(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT"
+                + " (55.78639 37.58378)')) as ST_Equals");
     OResult next = execute.next();
     Assert.assertEquals(next.getProperty("ST_Equals"), true);
     execute.close();
@@ -61,7 +63,8 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
 
     OResultSet execute =
         db.query(
-            "select ST_Within(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)')) as ST_Within");
+            "select ST_Within(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT"
+                + " (55.78639 37.58378)')) as ST_Within");
     OResult next = execute.next();
     Assert.assertEquals(next.getProperty("ST_Within"), true);
     execute.close();
@@ -72,7 +75,8 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
 
     OResultSet execute =
         db.query(
-            "select ST_Contains(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)')) as ST_Contains");
+            "select ST_Contains(ST_GeomFromText('POINT (55.78639 37.58378)'),"
+                + " ST_GeomFromText('POINT (55.78639 37.58378)')) as ST_Contains");
     OResult next = execute.next();
     Assert.assertEquals(next.getProperty("ST_Contains"), true);
     execute.close();
@@ -161,7 +165,8 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
 
     execute =
         db.query(
-            "SELECT ST_Buffer(ST_GeomFromText('LINESTRING(0 0,75 75,75 0)'), 10, { 'endCap' : 'square' }) as buffer;");
+            "SELECT ST_Buffer(ST_GeomFromText('LINESTRING(0 0,75 75,75 0)'), 10, { 'endCap' :"
+                + " 'square' }) as buffer;");
     next = execute.next();
     execute.close();
     //    Assert.assertEquals(next.field("ST_AsText"),
@@ -499,7 +504,9 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
 
     OResultSet execute =
         db.query(
-            "SELECT ST_Distance(ST_GeomFromText('POINT(-72.1235 42.3521)'),ST_GeomFromText('LINESTRING(-72.1260 42.45, -72.123 42.1546)')) as ST_Distance");
+            "SELECT ST_Distance(ST_GeomFromText('POINT(-72.1235"
+                + " 42.3521)'),ST_GeomFromText('LINESTRING(-72.1260 42.45, -72.123 42.1546)')) as"
+                + " ST_Distance");
     OResult next = execute.next();
     execute.close();
     //      Assert.assertEquals(next.field("ST_Distance"), 0.0015056772638228177);
@@ -507,7 +514,8 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
 
     execute =
         db.query(
-            "SELECT  ST_Distance( ST_GeomFromText('LINESTRING(13.45 52.47,13.46 52.48)'), ST_GeomFromText('LINESTRING(13.00 52.00,13.1 52.2)')) as ST_Distance");
+            "SELECT  ST_Distance( ST_GeomFromText('LINESTRING(13.45 52.47,13.46 52.48)'),"
+                + " ST_GeomFromText('LINESTRING(13.00 52.00,13.1 52.2)')) as ST_Distance");
     next = execute.next();
     execute.close();
 

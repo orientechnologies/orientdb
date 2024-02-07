@@ -667,7 +667,8 @@ public final class OWOWCache extends OAbstractWriteCache
                 this,
                 "File '"
                     + fileName
-                    + "' is not registered in 'file name - id' map, but exists in file system. Registering it");
+                    + "' is not registered in 'file name - id' map, but exists in file system."
+                    + " Registering it");
 
         openFile(fileClassic);
 

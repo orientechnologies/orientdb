@@ -462,7 +462,8 @@ public class OSQLFunctionAstarTest {
                         + v1.getId()
                         + ", "
                         + v4.getId()
-                        + ", 'weight', {'direction':'out', 'parallel':true, 'edgeTypeNames':'has_path'}))"))
+                        + ", 'weight', {'direction':'out', 'parallel':true,"
+                        + " 'edgeTypeNames':'has_path'}))"))
             .execute();
 
     List result = new ArrayList();

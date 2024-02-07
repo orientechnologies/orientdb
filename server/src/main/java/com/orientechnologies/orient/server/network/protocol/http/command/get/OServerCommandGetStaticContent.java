@@ -253,7 +253,8 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
         OLogManager.instance()
             .warn(
                 this,
-                "No path configured. Specify the 'root.path', 'file.path' or the global 'orientdb.www.path' variable",
+                "No path configured. Specify the 'root.path', 'file.path' or the global"
+                    + " 'orientdb.www.path' variable",
                 rootPath);
         return;
       }

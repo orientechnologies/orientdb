@@ -62,7 +62,8 @@ public class FulltextIndexFunctionBenchmark {
     db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE ");
     db.command("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE ");
     db.command(
-        "create index Song.lyrics_description on Song (lyrics,description) FULLTEXT ENGINE LUCENE ");
+        "create index Song.lyrics_description on Song (lyrics,description) FULLTEXT ENGINE LUCENE"
+            + " ");
   }
 
   private void setupDatabase() {
@@ -114,7 +115,8 @@ public class FulltextIndexFunctionBenchmark {
   public void searhOnTwoFieldsInOR() {
     final OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_FIELDS(['title'], 'BELIEVE') = true OR SEARCH_FIELDS(['author'], 'Bob') = true ");
+            "SELECT from Song where SEARCH_FIELDS(['title'], 'BELIEVE') = true OR"
+                + " SEARCH_FIELDS(['author'], 'Bob') = true ");
     resultSet.close();
   }
 
@@ -122,7 +124,8 @@ public class FulltextIndexFunctionBenchmark {
   public void searhOnTwoFieldsInAND() throws Exception {
     final OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_FIELDS(['title'], 'tambourine') = true AND SEARCH_FIELDS(['author'], 'Bob') = true ");
+            "SELECT from Song where SEARCH_FIELDS(['title'], 'tambourine') = true AND"
+                + " SEARCH_FIELDS(['author'], 'Bob') = true ");
     resultSet.close();
   }
 }

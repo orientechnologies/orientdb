@@ -593,7 +593,8 @@ public class ODocument extends ORecordAbstract
       if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
         throw new ODatabaseException(
             String.format(
-                "OType CUSTOM used by serializable types, for value  '%s' is not enabled, set `db.custom.support` to true for enable it",
+                "OType CUSTOM used by serializable types, for value  '%s' is not enabled, set"
+                    + " `db.custom.support` to true for enable it",
                 iPropertyValue));
       }
     }
@@ -758,7 +759,8 @@ public class ODocument extends ORecordAbstract
             throw new OValidationException(
                 "The field '"
                     + p.getFullName()
-                    + "' has been declared as EMBEDDEDLIST but an incompatible type is used. Value: "
+                    + "' has been declared as EMBEDDEDLIST but an incompatible type is used. Value:"
+                    + " "
                     + fieldValue);
           if (p.getLinkedClass() != null) {
             for (Object item : ((List<?>) fieldValue)) validateEmbedded(p, item);
@@ -1620,7 +1622,8 @@ public class ODocument extends ORecordAbstract
                   throw new IllegalArgumentException(
                       "Property '"
                           + iFieldName
-                          + "' points to linked collection of items. You can only change embedded documents in this way");
+                          + "' points to linked collection of items. You can only change embedded"
+                          + " documents in this way");
                 ((ODocument) subObjectItem).field(subFieldName, iPropertyValue);
               } else if (subObjectItem instanceof Map<?, ?>) {
                 // KEY/VALUE
@@ -1634,7 +1637,8 @@ public class ODocument extends ORecordAbstract
         throw new IllegalArgumentException(
             "Property '"
                 + iFieldName.substring(0, lastSep)
-                + "' is null, is possible to set a value with dotted notation only on not null property");
+                + "' is null, is possible to set a value with dotted notation only on not null"
+                + " property");
       return null;
     }
 
@@ -1740,7 +1744,8 @@ public class ODocument extends ORecordAbstract
       if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
         throw new ODatabaseException(
             String.format(
-                "OType CUSTOM used by serializable types, for value  '%s' is not enabled, set `db.custom.support` to true for enable it",
+                "OType CUSTOM used by serializable types, for value  '%s' is not enabled, set"
+                    + " `db.custom.support` to true for enable it",
                 iPropertyValue));
       }
     }
@@ -2391,7 +2396,8 @@ public class ODocument extends ORecordAbstract
         if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
           throw new ODatabaseException(
               String.format(
-                  "OType CUSTOM used by serializable types is not enabled, set `db.custom.support` to true for enable it"));
+                  "OType CUSTOM used by serializable types is not enabled, set `db.custom.support`"
+                      + " to true for enable it"));
         }
       }
       // SET THE FORCED TYPE
@@ -2878,7 +2884,8 @@ public class ODocument extends ORecordAbstract
       ODatabaseDocument db = getDatabase();
       if (db == null || db.isClosed())
         throw new ODatabaseException(
-            "Cannot unmarshall the document because no database is active, use detach for use the document outside the database session scope");
+            "Cannot unmarshall the document because no database is active, use detach for use the"
+                + " document outside the database session scope");
       OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
       if (metadata.getImmutableSchemaSnapshot() != null) metadata.clearThreadLocalSchemaSnapshot();
       metadata.reload();

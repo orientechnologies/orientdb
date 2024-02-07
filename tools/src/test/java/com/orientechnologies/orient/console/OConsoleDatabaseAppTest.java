@@ -56,7 +56,8 @@ public class OConsoleDatabaseAppTest {
 
     builder.append("connect env embedded:./target/ root root;\n");
     builder.append(
-        "create database OConsoleDatabaseAppTest2 memory users (admin identified by 'admin' role admin);\n");
+        "create database OConsoleDatabaseAppTest2 memory users (admin identified by 'admin' role"
+            + " admin);\n");
     builder.append("open OConsoleDatabaseAppTest2 admin admin;\n");
 
     builder.append("create class foo;\n");
@@ -120,7 +121,8 @@ public class OConsoleDatabaseAppTest {
       c.console().executeServerCommand("connect env embedded:./target/ root root");
       c.console()
           .executeServerCommand(
-              "create database OConsoleDatabaseAppTestDumpRecordDetails memory users (admin identified by 'admin' role admin)");
+              "create database OConsoleDatabaseAppTestDumpRecordDetails memory users (admin"
+                  + " identified by 'admin' role admin)");
       c.console().open("OConsoleDatabaseAppTestDumpRecordDetails", "admin", "admin");
 
       c.console().createClass("class foo");
@@ -188,7 +190,8 @@ public class OConsoleDatabaseAppTest {
       c.console().executeServerCommand("connect env embedded:./target/ root root");
       c.console()
           .executeServerCommand(
-              "create database OConsoleDatabaseAppTestDeclareIntent memory users (admin identified by 'admin' role admin)");
+              "create database OConsoleDatabaseAppTestDeclareIntent memory users (admin identified"
+                  + " by 'admin' role admin)");
       c.console().open("OConsoleDatabaseAppTestDeclareIntent", "admin", "admin");
 
       c.resetOutput();
@@ -261,7 +264,8 @@ public class OConsoleDatabaseAppTest {
     builder.append("traverse out() from V;\n");
 
     builder.append(
-        "create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
+        "create edge from (select from V where name = 'foo') to (select from V where name ="
+            + " 'bar');\n");
 
     builder.append("traverse out() from V;\n");
 

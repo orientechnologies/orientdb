@@ -152,8 +152,9 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph
       OLogManager.instance()
           .warn(
               this,
-              "Auto Transaction for graphs setting has been turned off, but a transaction was already started."
-                  + " Commit it manually or consider disabling auto transactions while creating the graph.");
+              "Auto Transaction for graphs setting has been turned off, but a transaction was"
+                  + " already started. Commit it manually or consider disabling auto transactions"
+                  + " while creating the graph.");
   }
 
   /**

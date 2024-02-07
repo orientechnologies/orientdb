@@ -632,7 +632,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
                 + connection.getServerUser().getName()
                 + "' cannot access to the resource ["
                 + iResource
-                + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
+                + "]. Use another server user or change permission in the file"
+                + " config/orientdb-server-config.xml");
     } else {
       if (!connection.getData().serverUser)
         throw new OSecurityAccessException("Server user not authenticated");
@@ -643,7 +644,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
                 + connection.getData().serverUsername
                 + "' cannot access to the resource ["
                 + iResource
-                + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
+                + "]. Use another server user or change permission in the file"
+                + " config/orientdb-server-config.xml");
     }
   }
 

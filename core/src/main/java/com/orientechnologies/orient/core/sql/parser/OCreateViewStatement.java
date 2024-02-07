@@ -114,12 +114,14 @@ public class OCreateViewStatement extends ODDLStatement {
         case "watchClasses":
           if (!(value instanceof Collection)) {
             throw new OCommandSQLParsingException(
-                "Invalid value for view metadata: watchClasses should be a list of class names as strings, it is "
+                "Invalid value for view metadata: watchClasses should be a list of class names as"
+                    + " strings, it is "
                     + value);
           }
           if (((Collection) value).stream().anyMatch(x -> !(x instanceof String))) {
             throw new OCommandSQLParsingException(
-                "Invalid value for view metadata: watchClasses should be a list of class names as strings, one value is null");
+                "Invalid value for view metadata: watchClasses should be a list of class names as"
+                    + " strings, one value is null");
           }
           break;
         case "originRidField":
@@ -132,24 +134,30 @@ public class OCreateViewStatement extends ODDLStatement {
         case "nodes":
           if (!(value instanceof Collection)) {
             throw new OCommandSQLParsingException(
-                "Invalid value for view metadata: nodes should be a list of class names as strings, it is "
+                "Invalid value for view metadata: nodes should be a list of class names as strings,"
+                    + " it is "
                     + value);
           }
           if (((Collection) value).stream().anyMatch(x -> !(x instanceof String))) {
             throw new OCommandSQLParsingException(
-                "Invalid value for view metadata: nodes should be a list of class names as strings, one value is null");
+                "Invalid value for view metadata: nodes should be a list of class names as strings,"
+                    + " one value is null");
           }
           break;
         case "indexes":
           if (!(value instanceof Collection)) {
             throw new OCommandSQLParsingException(
-                "Invalid value for view metadata: indexes should be a list of class names as strings, it is "
+                "Invalid value for view metadata: indexes should be a list of class names as"
+                    + " strings, it is "
                     + value);
           }
           for (Object o : (Collection) value) {
             if (!(o instanceof Map)) {
               throw new OCommandSQLParsingException(
-                  "Invalid value for view metadata: index configuration should be as follows: {type:'<index_type>', engine:'<engine_name>', properties:{propName1:'<type>', propNameN:'<type'>}}. Engine is optional");
+                  "Invalid value for view metadata: index configuration should be as follows:"
+                      + " {type:'<index_type>', engine:'<engine_name>',"
+                      + " properties:{propName1:'<type>', propNameN:'<type'>}}. Engine is"
+                      + " optional");
             }
             Map<String, Object> valueMap = (Map<String, Object>) o;
             for (String idxKey : valueMap.keySet()) {

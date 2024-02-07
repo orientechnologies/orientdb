@@ -49,13 +49,15 @@ public class ODropClassStatement extends ODDLStatement {
         throw new OCommandExecutionException(
             "'DROP CLASS' command cannot drop class '"
                 + className
-                + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid broken edges in a database, or apply the 'UNSAFE' keyword to force it");
+                + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid"
+                + " broken edges in a database, or apply the 'UNSAFE' keyword to force it");
       } else if (clazz.isEdgeType()) {
         // FOUND EDGE CLASS
         throw new OCommandExecutionException(
             "'DROP CLASS' command cannot drop class '"
                 + className
-                + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken vertices in a database, or apply the 'UNSAFE' keyword to force it");
+                + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken"
+                + " vertices in a database, or apply the 'UNSAFE' keyword to force it");
       }
     }
 

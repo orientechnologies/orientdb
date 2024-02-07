@@ -48,8 +48,8 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
 
     //noinspection deprecation
     db.command(
-            "create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE METADATA {"
-                + "\"title_index\":\""
+            "create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE METADATA"
+                + " {\"title_index\":\""
                 + EnglishAnalyzer.class.getName()
                 + "\" , "
                 + "\"title_query\":\""
@@ -72,7 +72,8 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
 
     OResultSet docs =
         db.query(
-            "select * from Song where [title,author] LUCENE \"(title:mountain AND author:Fabbio)\"");
+            "select * from Song where [title,author] LUCENE \"(title:mountain AND"
+                + " author:Fabbio)\"");
     assertThat(docs).hasSize(1);
   }
 
@@ -80,7 +81,8 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   public void testSelectSingleDocumentWithAndOperatorNEwExec() {
     try (OResultSet docs =
         db.query(
-            "select * from Song where [title,author] LUCENE \"(title:mountain AND author:Fabbio)\"")) {
+            "select * from Song where [title,author] LUCENE \"(title:mountain AND"
+                + " author:Fabbio)\"")) {
 
       assertThat(docs.hasNext()).isTrue();
       docs.next();
@@ -127,7 +129,8 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
             + "create property Item.Title string;\n"
             + "create property Item.Summary string;\n"
             + "create property Item.Content string;\n"
-            + "create index Item.i_lucene on Item(Title, Summary, Content) fulltext engine lucene METADATA {ignoreNullValues:false};\n"
+            + "create index Item.i_lucene on Item(Title, Summary, Content) fulltext engine lucene"
+            + " METADATA {ignoreNullValues:false};\n"
             + "insert into Item set Title = 'wrong', content = 'not me please';\n"
             + "insert into Item set Title = 'test', content = 'this is a test';\n";
     db.execute("sql", script).close();

@@ -27,7 +27,8 @@ public class TestSqlEmbeddedResult extends BaseMemoryDatabase {
     List<ODocument> res =
         db.query(
             new OSQLSynchQuery<Object>(
-                "select $Pics[0] as el FROM Test LET $Pics = (select expand( rel.include('format')) from $current)"));
+                "select $Pics[0] as el FROM Test LET $Pics = (select expand( rel.include('format'))"
+                    + " from $current)"));
     Assert.assertEquals(res.size(), 1);
     ODocument ele = res.get(0);
     Assert.assertNotNull(ele.field("el"));
@@ -40,7 +41,8 @@ public class TestSqlEmbeddedResult extends BaseMemoryDatabase {
     res =
         db.query(
             new OSQLSynchQuery<Object>(
-                "select $Pics as el FROM Test LET $Pics = (select expand( rel.include('format')) from $current)"));
+                "select $Pics as el FROM Test LET $Pics = (select expand( rel.include('format'))"
+                    + " from $current)"));
 
     Assert.assertEquals(res.size(), 1);
     ele = res.get(0);

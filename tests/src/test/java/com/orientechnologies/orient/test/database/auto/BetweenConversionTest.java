@@ -325,7 +325,8 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
 
   public void testBetweenRightLeftIncludedDeepQuery() {
     final String query =
-        "select from BetweenConversionTest where (vl = 'v1' and (vl <> 'v3' and (vl <> 'v2' and ((a >= 1 and a <= 7) and vl = 'v1'))) and vl <> 'v4')";
+        "select from BetweenConversionTest where (vl = 'v1' and (vl <> 'v3' and (vl <> 'v2' and ((a"
+            + " >= 1 and a <= 7) and vl = 'v1'))) and vl <> 'v4')";
     final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(result.size(), 4);
@@ -344,7 +345,8 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
 
   public void testBetweenRightLeftIncludedDeepQueryIndex() {
     final String query =
-        "select from BetweenConversionTest where (vl = 'v1' and (vl <> 'v3' and (vl <> 'v2' and ((ai >= 1 and ai <= 7) and vl = 'v1'))) and vl <> 'v4')";
+        "select from BetweenConversionTest where (vl = 'v1' and (vl <> 'v3' and (vl <> 'v2' and"
+            + " ((ai >= 1 and ai <= 7) and vl = 'v1'))) and vl <> 'v4')";
     final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(result.size(), 4);

@@ -72,7 +72,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command("CREATE index foo_comp_osite on foo (comp, osite) NOTUNIQUE").close();
 
     db.command(
-            "insert into foo (name, bar, address) values ('a', 1, {'street':'1st street', 'city':'NY', '@type':'d'})")
+            "insert into foo (name, bar, address) values ('a', 1, {'street':'1st street',"
+                + " 'city':'NY', '@type':'d'})")
         .close();
     db.command("insert into foo (name, bar) values ('b', 2)").close();
     db.command("insert into foo (name, bar) values ('c', 3)").close();
@@ -177,7 +178,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
     db.command("create class OCommandExecutorSQLSelectTest_aggregations").close();
     db.command(
-            "insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0}, {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]")
+            "insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0},"
+                + " {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]")
         .close();
   }
 
@@ -207,7 +209,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n6', value = -1").close();
     db.command("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n7', value = null").close();
     db.command(
-            "INSERT INTO ComplexFilterInSquareBrackets2 SET collection = (select from ComplexFilterInSquareBrackets1)")
+            "INSERT INTO ComplexFilterInSquareBrackets2 SET collection = (select from"
+                + " ComplexFilterInSquareBrackets1)")
         .close();
   }
 
@@ -252,17 +255,21 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command("insert into LinkListSequence set name = '1.2.1'").close();
     db.command("insert into LinkListSequence set name = '1.2.2'").close();
     db.command(
-            "insert into LinkListSequence set name = '1.1', children = (select from LinkListSequence where name like '1.1.%')")
+            "insert into LinkListSequence set name = '1.1', children = (select from"
+                + " LinkListSequence where name like '1.1.%')")
         .close();
     db.command(
-            "insert into LinkListSequence set name = '1.2', children = (select from LinkListSequence where name like '1.2.%')")
+            "insert into LinkListSequence set name = '1.2', children = (select from"
+                + " LinkListSequence where name like '1.2.%')")
         .close();
     db.command(
-            "insert into LinkListSequence set name = '1', children = (select from LinkListSequence where name in ['1.1', '1.2'])")
+            "insert into LinkListSequence set name = '1', children = (select from LinkListSequence"
+                + " where name in ['1.1', '1.2'])")
         .close();
     db.command("insert into LinkListSequence set name = '2'").close();
     db.command(
-            "insert into LinkListSequence set name = 'root', children = (select from LinkListSequence where name in ['1', '1'])")
+            "insert into LinkListSequence set name = 'root', children = (select from"
+                + " LinkListSequence where name in ['1', '1'])")
         .close();
   }
 
@@ -293,7 +300,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit", 1, null);
     db.declareIntent(new OIntentMassiveInsert());
     String fieldValue =
-        "laskdf lkajsd flaksjdf laksjd flakjsd flkasjd flkajsd flkajsd flkajsd flkajsd flkajsd flkjas;lkj a;ldskjf laksdj asdklasdjf lskdaj fladsd";
+        "laskdf lkajsd flaksjdf laksjd flakjsd flkasjd flkajsd flkajsd flkajsd flkajsd flkajsd"
+            + " flkjas;lkj a;ldskjf laksdj asdklasdjf lskdaj fladsd";
     for (int i = 0; i < ORDER_SKIP_LIMIT_ITEMS; i++) {
       ODocument doc = new ODocument("MassiveOrderSkipLimit");
       doc.field("nnum", i);
@@ -458,35 +466,42 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     List<OResult> qResult =
         db
             .command(
-                "select * from bar where name ='a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 ")
+                "select * from bar where name ='a' and foo = 1 or name='b' or name='c' and foo = 3"
+                    + " and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 ")
             .stream()
             .collect(Collectors.toList());
 
     List<OResult> qResult2 =
         db
             .command(
-                "select * from bar where (name ='a' and foo = 1) or name='b' or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)")
+                "select * from bar where (name ='a' and foo = 1) or name='b' or (name='c' and foo ="
+                    + " 3 and other = 4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)")
             .stream()
             .collect(Collectors.toList());
 
     List<OResult> qResult3 =
         db
             .command(
-                "select * from bar where (name ='a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other = 4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)")
+                "select * from bar where (name ='a' and foo = 1) or (name='b') or (name='c' and foo"
+                    + " = 3 and other = 4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)")
             .stream()
             .collect(Collectors.toList());
 
     List<OResult> qResult4 =
         db
             .command(
-                "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4)) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)")
+                "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and"
+                    + " foo = 3 and other = 4)) or (name = 'e' and foo = 5) or (name = 'm' and foo"
+                    + " > 2)")
             .stream()
             .collect(Collectors.toList());
 
     List<OResult> qResult5 =
         db
             .command(
-                "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)")
+                "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and"
+                    + " foo = 3 and other = 4) or (name = 'e' and foo = 5)) or (name = 'm' and foo"
+                    + " > 2)")
             .stream()
             .collect(Collectors.toList());
 
@@ -501,35 +516,44 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     List<OResult> qResult =
         db
             .command(
-                "select * from bar where name <> 'a' and foo = 1 or name='b' or name='c' and foo = 3 and other <> 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 ")
+                "select * from bar where name <> 'a' and foo = 1 or name='b' or name='c' and foo ="
+                    + " 3 and other <> 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 ")
             .stream()
             .collect(Collectors.toList());
 
     List<OResult> qResult2 =
         db
             .command(
-                "select * from bar where (name <> 'a' and foo = 1) or name='b' or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)")
+                "select * from bar where (name <> 'a' and foo = 1) or name='b' or (name='c' and foo"
+                    + " = 3 and other <>  4) or (name = 'e' and foo = 5) or (name = 'm' and foo >"
+                    + " 2)")
             .stream()
             .collect(Collectors.toList());
 
     List<OResult> qResult3 =
         db
             .command(
-                "select * from bar where ( name <> 'a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other <>  4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)")
+                "select * from bar where ( name <> 'a' and foo = 1) or (name='b') or (name='c' and"
+                    + " foo = 3 and other <>  4) or (name ='e' and foo = 5) or (name = 'm' and foo"
+                    + " > 2)")
             .stream()
             .collect(Collectors.toList());
 
     List<OResult> qResult4 =
         db
             .command(
-                "select * from bar where (name <> 'a' and foo = 1) or ( (name='b') or (name='c' and foo = 3 and other <>  4)) or  (name = 'e' and foo = 5) or (name = 'm' and foo > 2)")
+                "select * from bar where (name <> 'a' and foo = 1) or ( (name='b') or (name='c' and"
+                    + " foo = 3 and other <>  4)) or  (name = 'e' and foo = 5) or (name = 'm' and"
+                    + " foo > 2)")
             .stream()
             .collect(Collectors.toList());
 
     List<OResult> qResult5 =
         db
             .command(
-                "select * from bar where (name <> 'a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)")
+                "select * from bar where (name <> 'a' and foo = 1) or ((name='b') or (name='c' and"
+                    + " foo = 3 and other <>  4) or (name = 'e' and foo = 5)) or (name = 'm' and"
+                    + " foo > 2)")
             .stream()
             .collect(Collectors.toList());
 
@@ -603,7 +627,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     params.put("name", "foo");
     OResultSet qResult =
         db.command(
-            "select from TestParams let $foo = (select name from TestParams where surname = :name) where surname in $foo.name ",
+            "select from TestParams let $foo = (select name from TestParams where surname = :name)"
+                + " where surname in $foo.name ",
             params);
     assertEquals(qResult.stream().count(), 1);
   }
@@ -780,7 +805,9 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     List<?> result =
         db.query(
             new OSQLSynchQuery<Object>(
-                "select from foo where name matches '(?i)(^\\\\Qa\\\\E$)|(^\\\\Qname2\\\\E$)|(^\\\\Qname3\\\\E$)' and bar = 1"));
+                "select from foo where name matches"
+                    + " '(?i)(^\\\\Qa\\\\E$)|(^\\\\Qname2\\\\E$)|(^\\\\Qname3\\\\E$)' and bar ="
+                    + " 1"));
     assertEquals(result.size(), 1);
   }
 
@@ -847,7 +874,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
     qResult =
         db.query(
-            "select from TestParams where name like '%' + :param1 + '%' and surname like '%' + :param1 + '%'",
+            "select from TestParams where name like '%' + :param1 + '%' and surname like '%' +"
+                + " :param1 + '%'",
             params);
     assertEquals(qResult.stream().count(), 1);
 
@@ -915,7 +943,10 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testAggregations() {
     OSQLSynchQuery sql =
         new OSQLSynchQuery(
-            "select data.size as collection_content, data.size() as collection_size, min(data.size) as collection_min, max(data.size) as collection_max, sum(data.size) as collection_sum, avg(data.size) as collection_avg from OCommandExecutorSQLSelectTest_aggregations");
+            "select data.size as collection_content, data.size() as collection_size, min(data.size)"
+                + " as collection_min, max(data.size) as collection_max, sum(data.size) as"
+                + " collection_sum, avg(data.size) as collection_avg from"
+                + " OCommandExecutorSQLSelectTest_aggregations");
     List<ODocument> results = db.query(sql);
     assertEquals(1, results.size());
     ODocument doc = results.get(0);
@@ -956,7 +987,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     try {
       List<ODocument> results = db.query(sql);
       fail(
-          "Invalid query, usage of LET, aggregate functions and GROUP BY together is not supported");
+          "Invalid query, usage of LET, aggregate functions and GROUP BY together is not"
+              + " supported");
     } catch (OCommandSQLParsingException x) {
 
     }
@@ -989,7 +1021,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #4985
     OResultSet results =
         db.query(
-            "SELECT expand(linked) from ExpandSkipLimit where parent = true order by nnum skip 1 limit 1");
+            "SELECT expand(linked) from ExpandSkipLimit where parent = true order by nnum skip 1"
+                + " limit 1");
     OResult doc = results.next();
     assertThat(doc.<Integer>getProperty("nnum")).isEqualTo(1);
   }
@@ -1121,7 +1154,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #5229
     OResultSet results =
         db.query(
-            "SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and not ( name matches '(.*)foo(.*)' ) )");
+            "SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and not ( name matches"
+                + " '(.*)foo(.*)' ) )");
     assertEquals(results.stream().count(), 1);
   }
 
@@ -1131,7 +1165,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #5229
     OResultSet results =
         db.query(
-            "SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and  ( name matches '\\\\Qadmin\\\\E.*' ) )");
+            "SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and  ( name matches"
+                + " '\\\\Qadmin\\\\E.*' ) )");
     assertEquals(results.stream().count(), 1);
   }
 
@@ -1199,7 +1234,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     initLinkListSequence(db);
     OSQLSynchQuery sql =
         new OSQLSynchQuery(
-            "select expand(children[0].children.children) from LinkListSequence where name = 'root'");
+            "select expand(children[0].children.children) from LinkListSequence where name ="
+                + " 'root'");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 4);
     for (ODocument result : results) {
@@ -1286,7 +1322,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     }
 
     sql =
-        "SELECT expand(collection[name = 'n1' and not value = 1]) FROM ComplexFilterInSquareBrackets2";
+        "SELECT expand(collection[name = 'n1' and not value = 1]) FROM"
+            + " ComplexFilterInSquareBrackets2";
     results = db.query(sql).stream().collect(Collectors.toList());
     assertEquals(results.size(), 0);
 
@@ -1306,29 +1343,36 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // issue #4851
     db.command("create class OCommandExecutorSqlSelectTest_collateOnCollections").close();
     db.command(
-            "create property OCommandExecutorSqlSelectTest_collateOnCollections.categories EMBEDDEDLIST string")
+            "create property OCommandExecutorSqlSelectTest_collateOnCollections.categories"
+                + " EMBEDDEDLIST string")
         .close();
     db.command(
-            "insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b']")
+            "insert into OCommandExecutorSqlSelectTest_collateOnCollections set"
+                + " categories=['a','b']")
         .close();
     db.command(
-            "alter property OCommandExecutorSqlSelectTest_collateOnCollections.categories COLLATE ci")
+            "alter property OCommandExecutorSqlSelectTest_collateOnCollections.categories COLLATE"
+                + " ci")
         .close();
     db.command(
-            "insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['Math','English']")
+            "insert into OCommandExecutorSqlSelectTest_collateOnCollections set"
+                + " categories=['Math','English']")
         .close();
     db.command(
-            "insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b','c']")
+            "insert into OCommandExecutorSqlSelectTest_collateOnCollections set"
+                + " categories=['a','b','c']")
         .close();
     List<ODocument> results =
         db.query(
             new OSQLSynchQuery<ODocument>(
-                "select from OCommandExecutorSqlSelectTest_collateOnCollections where 'Math' in categories"));
+                "select from OCommandExecutorSqlSelectTest_collateOnCollections where 'Math' in"
+                    + " categories"));
     assertEquals(results.size(), 1);
     results =
         db.query(
             new OSQLSynchQuery<ODocument>(
-                "select from OCommandExecutorSqlSelectTest_collateOnCollections where 'math' in categories"));
+                "select from OCommandExecutorSqlSelectTest_collateOnCollections where 'math' in"
+                    + " categories"));
     assertEquals(results.size(), 1);
   }
 
@@ -1339,13 +1383,15 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command("create property OCommandExecutorSqlSelectTest_testCountUniqueIndex.AAA String")
         .close();
     db.command(
-            "create index OCommandExecutorSqlSelectTest_testCountUniqueIndex.AAA on OCommandExecutorSqlSelectTest_testCountUniqueIndex(AAA) unique")
+            "create index OCommandExecutorSqlSelectTest_testCountUniqueIndex.AAA on"
+                + " OCommandExecutorSqlSelectTest_testCountUniqueIndex(AAA) unique")
         .close();
 
     List<OResult> results =
         db
             .query(
-                "select count(*) as count from OCommandExecutorSqlSelectTest_testCountUniqueIndex where AAA='missing'")
+                "select count(*) as count from OCommandExecutorSqlSelectTest_testCountUniqueIndex"
+                    + " where AAA='missing'")
             .stream()
             .collect(Collectors.toList());
     assertEquals(results.size(), 1);
@@ -1394,7 +1440,9 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command("create property CompositeIndexWithoutNullValues.one String").close();
     db.command("create property CompositeIndexWithoutNullValues.two String").close();
     db.command(
-            "create index CompositeIndexWithoutNullValues.one_two on CompositeIndexWithoutNullValues (one, two) NOTUNIQUE METADATA {ignoreNullValues: true}")
+            "create index CompositeIndexWithoutNullValues.one_two on"
+                + " CompositeIndexWithoutNullValues (one, two) NOTUNIQUE METADATA"
+                + " {ignoreNullValues: true}")
         .close();
 
     db.command("insert into CompositeIndexWithoutNullValues set one = 'foo'").close();
@@ -1417,7 +1465,9 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command("create property CompositeIndexWithoutNullValues2.one String").close();
     db.command("create property CompositeIndexWithoutNullValues2.two String").close();
     db.command(
-            "create index CompositeIndexWithoutNullValues2.one_two on CompositeIndexWithoutNullValues2 (one, two) NOTUNIQUE METADATA {ignoreNullValues: false}")
+            "create index CompositeIndexWithoutNullValues2.one_two on"
+                + " CompositeIndexWithoutNullValues2 (one, two) NOTUNIQUE METADATA"
+                + " {ignoreNullValues: false}")
         .close();
 
     db.command("insert into CompositeIndexWithoutNullValues2 set one = 'foo'").close();
@@ -1553,21 +1603,26 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command("create class testCountOnSubclassIndexes_superclass").close();
     db.command("create property testCountOnSubclassIndexes_superclass.foo boolean").close();
     db.command(
-            "create index testCountOnSubclassIndexes_superclass.foo on testCountOnSubclassIndexes_superclass (foo) notunique")
+            "create index testCountOnSubclassIndexes_superclass.foo on"
+                + " testCountOnSubclassIndexes_superclass (foo) notunique")
         .close();
 
     db.command(
-            "create class testCountOnSubclassIndexes_sub1 extends testCountOnSubclassIndexes_superclass")
+            "create class testCountOnSubclassIndexes_sub1 extends"
+                + " testCountOnSubclassIndexes_superclass")
         .close();
     db.command(
-            "create index testCountOnSubclassIndexes_sub1.foo on testCountOnSubclassIndexes_sub1 (foo) notunique")
+            "create index testCountOnSubclassIndexes_sub1.foo on testCountOnSubclassIndexes_sub1"
+                + " (foo) notunique")
         .close();
 
     db.command(
-            "create class testCountOnSubclassIndexes_sub2 extends testCountOnSubclassIndexes_superclass")
+            "create class testCountOnSubclassIndexes_sub2 extends"
+                + " testCountOnSubclassIndexes_superclass")
         .close();
     db.command(
-            "create index testCountOnSubclassIndexes_sub2.foo on testCountOnSubclassIndexes_sub2 (foo) notunique")
+            "create index testCountOnSubclassIndexes_sub2.foo on testCountOnSubclassIndexes_sub2"
+                + " (foo) notunique")
         .close();
 
     db.command("insert into testCountOnSubclassIndexes_sub1 set name = 'a', foo = true").close();
@@ -1595,7 +1650,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     results =
         db
             .query(
-                "SELECT count(*) as count from testCountOnSubclassIndexes_superclass where foo = true")
+                "SELECT count(*) as count from testCountOnSubclassIndexes_superclass where foo ="
+                    + " true")
             .stream()
             .collect(Collectors.toList());
     assertEquals(results.size(), 1);
@@ -1694,12 +1750,14 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command(
             "INSERT INTO "
                 + className
-                + " SET id = 0, embedded_map = {\"key_2\" : {\"name\" : \"key_2\", \"id\" : \"0\"}}")
+                + " SET id = 0, embedded_map = {\"key_2\" : {\"name\" : \"key_2\", \"id\" :"
+                + " \"0\"}}")
         .close();
     db.command(
             "INSERT INTO "
                 + className
-                + " SET id = 1, embedded_map = {\"key_1\" : {\"name\" : \"key_1\", \"id\" : \"1\" }}")
+                + " SET id = 1, embedded_map = {\"key_1\" : {\"name\" : \"key_1\", \"id\" : \"1\""
+                + " }}")
         .close();
 
     OResultSet results =

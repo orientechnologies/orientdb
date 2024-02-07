@@ -57,7 +57,8 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
         .close();
     database
         .command(
-            "create index IndexInSubclassesTestChild1.name on IndexInSubclassesTestChild1 (name) notunique")
+            "create index IndexInSubclassesTestChild1.name on IndexInSubclassesTestChild1 (name)"
+                + " notunique")
         .close();
 
     database
@@ -65,7 +66,8 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
         .close();
     database
         .command(
-            "create index IndexInSubclassesTestChild2.name on IndexInSubclassesTestChild2 (name) notunique")
+            "create index IndexInSubclassesTestChild2.name on IndexInSubclassesTestChild2 (name)"
+                + " notunique")
         .close();
 
     database.command("create class IndexInSubclassesTestBaseFail").close();
@@ -86,7 +88,8 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
         .close();
     database
         .command(
-            "create index IndexInSubclassesTestChild2Fail.name on IndexInSubclassesTestChild2Fail (name) notunique")
+            "create index IndexInSubclassesTestChild2Fail.name on IndexInSubclassesTestChild2Fail"
+                + " (name) notunique")
         .close();
 
     database.command("create class GenericCrash").close();
@@ -145,7 +148,8 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
     List<ODocument> result =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select from IndexInSubclassesTestBase where name > 'name9995' and name < 'name9999' order by name ASC"));
+                "select from IndexInSubclassesTestBase where name > 'name9995' and name <"
+                    + " 'name9999' order by name ASC"));
     Assert.assertEquals(result.size(), 6);
     String lastName = result.get(0).field("name");
 
@@ -163,7 +167,8 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
     result =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select from IndexInSubclassesTestBase where name > 'name9995' and name < 'name9999' order by name DESC"));
+                "select from IndexInSubclassesTestBase where name > 'name9995' and name <"
+                    + " 'name9999' order by name DESC"));
     Assert.assertEquals(result.size(), 6);
     lastName = result.get(0).field("name");
     for (int i = 1; i < result.size(); i++) {
@@ -214,7 +219,8 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
     List<ODocument> result =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select from IndexInSubclassesTestBase where name > 'name9995' and name < 'name9999' order by name ASC"));
+                "select from IndexInSubclassesTestBase where name > 'name9995' and name <"
+                    + " 'name9999' order by name ASC"));
     Assert.assertTrue(result.size() == 9);
     String lastName = result.get(0).field("name");
     for (int i = 1; i < result.size(); i++) {
@@ -232,7 +238,8 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
     result =
         database.query(
             new OSQLSynchQuery<ODocument>(
-                "select from IndexInSubclassesTestBase where name > 'name9995' and name < 'name9999' order by name DESC"));
+                "select from IndexInSubclassesTestBase where name > 'name9995' and name <"
+                    + " 'name9999' order by name DESC"));
     Assert.assertTrue(result.size() == 9);
     lastName = result.get(0).field("name");
     for (int i = 1; i < result.size(); i++) {
@@ -279,7 +286,8 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
 
     OResultSet result =
         database.query(
-            "select from IndexInSubclassesTestBaseFail where name > 'name9995' and name < 'name9999' order by name ASC");
+            "select from IndexInSubclassesTestBaseFail where name > 'name9995' and name <"
+                + " 'name9999' order by name ASC");
     Assert.assertTrue(result.stream().count() == 6);
 
     long lastIndexUsage = profiler.getCounter("db.demo.query.indexUsed");

@@ -1102,7 +1102,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     OLogManager.instance()
         .error(
             this,
-            "Only local paginated storage supports freeze. If you are using remote client please use OrientDB instance instead",
+            "Only local paginated storage supports freeze. If you are using remote client please"
+                + " use OrientDB instance instead",
             null);
 
     return;
@@ -1121,7 +1122,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     OLogManager.instance()
         .error(
             this,
-            "Only local paginated storage supports release. If you are using remote client please use OrientDB instance instead",
+            "Only local paginated storage supports release. If you are using remote client please"
+                + " use OrientDB instance instead",
             null);
     return;
   }

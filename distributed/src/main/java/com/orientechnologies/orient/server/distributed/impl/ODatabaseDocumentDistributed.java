@@ -569,7 +569,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLogManager.instance()
               .debug(
                   this,
-                  "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request",
+                  "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue"
+                      + " request",
                   ex.getExpectedRid(),
                   ex.getActualRid());
           txContext.releasePromises();
@@ -587,7 +588,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLogManager.instance()
               .info(
                   this,
-                  "Persistent version not match, record:%s expected:%s actual:%s waiting for re-enqueue request",
+                  "Persistent version not match, record:%s expected:%s actual:%s waiting for"
+                      + " re-enqueue request",
                   ex.getRid(),
                   ex.getEnhancedRecordVersion(),
                   ex.getEnhancedDatabaseVersion());
@@ -679,7 +681,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           // This should not happen!
           throw new ODistributedException(
               String.format(
-                  "Locks for tx '%s' are no longer valid in the second phase despite successful first phase",
+                  "Locks for tx '%s' are no longer valid in the second phase despite successful"
+                      + " first phase",
                   transactionId));
         }
         try {
@@ -911,7 +914,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             if (!oldValueRemoved) {
               throw new ORecordDuplicatedException(
                   String.format(
-                      "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                      "Cannot index record %s: found duplicated key '%s' in index '%s' previously"
+                          + " assigned to the record %s",
                       newValue, null, getName(), old.getIdentity()),
                   getName(),
                   old.getIdentity(),
@@ -956,7 +960,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               if (!oldValueRemoved) {
                 throw new ORecordDuplicatedException(
                     String.format(
-                        "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                        "Cannot index record %s: found duplicated key '%s' in index '%s' previously"
+                            + " assigned to the record %s",
                         newValue, changesPerKey.key, getName(), old.getIdentity()),
                     getName(),
                     old.getIdentity(),

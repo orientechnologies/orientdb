@@ -121,7 +121,8 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
                     + protocolVersion
                     + ", server="
                     + srvProtocolVersion
-                    + ". You could not use the full features of the newer version. Assure to have the same versions on both");
+                    + ". You could not use the full features of the newer version. Assure to have"
+                    + " the same versions on both");
       }
 
     } catch (RuntimeException e) {
@@ -297,7 +298,8 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
       OLogManager.instance()
           .error(
               this,
-              "Error during exception serialization, serialized exception is not Throwable, exception type is "
+              "Error during exception serialization, serialized exception is not Throwable,"
+                  + " exception type is "
                   + exceptionType,
               null);
     }

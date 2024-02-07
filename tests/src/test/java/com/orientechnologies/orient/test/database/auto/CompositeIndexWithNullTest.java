@@ -67,7 +67,8 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
             .contains("compositeIndexNullPointQueryIndex"));
 
     query =
-        "select from compositeIndexNullPointQueryClass where prop1 = 1 and prop2 = 2 and prop3 is null";
+        "select from compositeIndexNullPointQueryClass where prop1 = 1 and prop2 = 2 and prop3 is"
+            + " null";
     result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 2);
@@ -129,7 +130,8 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
             .contains("compositeIndexNullPointQueryInTxIndex"));
 
     query =
-        "select from compositeIndexNullPointQueryInTxClass where prop1 = 1 and prop2 = 2 and prop3 is null";
+        "select from compositeIndexNullPointQueryInTxClass where prop1 = 1 and prop2 = 2 and prop3"
+            + " is null";
     result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 2);
@@ -192,7 +194,8 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
             .contains("compositeIndexNullPointQueryInMiddleTxIndex"));
 
     query =
-        "select from compositeIndexNullPointQueryInMiddleTxClass where prop1 = 1 and prop2 = 2 and prop3 is null";
+        "select from compositeIndexNullPointQueryInMiddleTxClass where prop1 = 1 and prop2 = 2 and"
+            + " prop3 is null";
     result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 2);
@@ -368,7 +371,8 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
             .contains("compositeIndexNullPointQueryNullInTheMiddleIndex"));
 
     query =
-        "select from compositeIndexNullPointQueryNullInTheMiddleClass where prop1 = 1 and prop2 is null";
+        "select from compositeIndexNullPointQueryNullInTheMiddleClass where prop1 = 1 and prop2 is"
+            + " null";
     result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 5);
@@ -384,7 +388,8 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
             .contains("compositeIndexNullPointQueryNullInTheMiddleIndex"));
 
     query =
-        "select from compositeIndexNullPointQueryNullInTheMiddleClass where prop1 = 1 and prop2 is null and prop3 = 13";
+        "select from compositeIndexNullPointQueryNullInTheMiddleClass where prop1 = 1 and prop2 is"
+            + " null and prop3 = 13";
     result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 1);
@@ -447,7 +452,8 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
             .contains("compositeIndexNullPointQueryNullInTheMiddleInMiddleTxIndex"));
 
     query =
-        "select from compositeIndexNullPointQueryNullInTheMiddleInMiddleTxClass where prop1 = 1 and prop2 is null";
+        "select from compositeIndexNullPointQueryNullInTheMiddleInMiddleTxClass where prop1 = 1 and"
+            + " prop2 is null";
     result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 5);
@@ -463,7 +469,8 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
             .contains("compositeIndexNullPointQueryNullInTheMiddleInMiddleTxIndex"));
 
     query =
-        "select from compositeIndexNullPointQueryNullInTheMiddleInMiddleTxClass where prop1 = 1 and prop2 is null and prop3 = 13";
+        "select from compositeIndexNullPointQueryNullInTheMiddleInMiddleTxClass where prop1 = 1 and"
+            + " prop2 is null and prop3 = 13";
     result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 1);

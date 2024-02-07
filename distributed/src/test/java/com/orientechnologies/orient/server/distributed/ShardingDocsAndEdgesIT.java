@@ -120,7 +120,8 @@ public class ShardingDocsAndEdgesIT extends AbstractServerClusterTest {
     // LINE A
     execute(
         USA,
-        "create edge Follows from (select from `Client-Type` where name = 'mike') to (select from `Client-Type` where name = 'phoebe')");
+        "create edge Follows from (select from `Client-Type` where name = 'mike') to (select from"
+            + " `Client-Type` where name = 'phoebe')");
     USA.close();
     EUR.close();
   }

@@ -885,7 +885,8 @@ public class OObjectEntitySerializer {
                     + iFieldValue.getClass()
                     + ":"
                     + iFieldValue
-                    + "] cannot be serialized because is not part of registered entities. To fix this error register this class");
+                    + "] cannot be serialized because is not part of registered entities. To fix"
+                    + " this error register this class");
 
           iFieldValue = result;
         }
@@ -1235,7 +1236,8 @@ public class OObjectEntitySerializer {
           OLogManager.instance()
               .warn(
                   OObjectSerializerHelper.class,
-                  "@Id field has been declared as %s while the supported are: ORID, Number, String, Object",
+                  "@Id field has been declared as %s while the supported are: ORID, Number, String,"
+                      + " Object",
                   id.getClass());
       }
       if (iRecord.getIdentity().isValid() && iRecord.getIdentity().isPersistent()) iRecord.reload();
@@ -1269,7 +1271,8 @@ public class OObjectEntitySerializer {
       throw new OTransactionException(
           "Cannot involve an object of class '"
               + pojoClass
-              + "' in an Optimistic Transaction commit because it does not define @Version or @OVersion and therefore cannot handle MVCC");
+              + "' in an Optimistic Transaction commit because it does not define @Version or"
+              + " @OVersion and therefore cannot handle MVCC");
 
     String fieldName;
     Object fieldValue;

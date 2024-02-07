@@ -183,7 +183,8 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
         graph
             .command(
                 new OCommandSQL(
-                    "MOVE VERTEX (select from Customer where workedOn = 'Amiga') TO CLUSTER:Customer_genius"))
+                    "MOVE VERTEX (select from Customer where workedOn = 'Amiga') TO"
+                        + " CLUSTER:Customer_genius"))
             .execute();
 
     // CHECK RESULT
@@ -294,7 +295,8 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
         graph
             .command(
                 new OCommandSQL(
-                    "MOVE VERTEX (select from Customer where testMoveBatch = true) TO CLASS:Provider BATCH 10"))
+                    "MOVE VERTEX (select from Customer where testMoveBatch = true) TO"
+                        + " CLASS:Provider BATCH 10"))
             .execute();
 
     // CHECK RESULT

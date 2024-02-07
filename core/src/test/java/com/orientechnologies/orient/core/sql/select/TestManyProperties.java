@@ -49,7 +49,19 @@ public class TestManyProperties {
 
         try (OResultSet set =
             session.query(
-                "SELECT FROM test WHERE (((property1 is null) or (property1 = #107:150)) and ((property2 is null) or (property2 = #107:150)) and ((property3 is null) or (property3 = #107:150)) and ((property4 is null) or (property4 = #107:150)) and ((property5 is null) or (property5 = #107:150)) and ((property6 is null) or (property6 = #107:150)) and ((property7 is null) or (property7 = #107:150)) and ((property8 is null) or (property8 = #107:150)) and ((property9 is null) or (property9 = #107:150)) and ((property10 is null) or (property10 = #107:150)) and ((property11 is null) or (property11 = #107:150)) and ((property12 is null) or (property12 = #107:150)) and ((property13 is null) or (property13 = #107:150)) and ((property14 is null) or (property14 = #107:150)) and ((property15 is null) or (property15 = #107:150)) and ((property16 is null) or (property16 = #107:150)) and ((property17 is null) or (property17 = #107:150)))")) {
+                "SELECT FROM test WHERE (((property1 is null) or (property1 = #107:150)) and"
+                    + " ((property2 is null) or (property2 = #107:150)) and ((property3 is null) or"
+                    + " (property3 = #107:150)) and ((property4 is null) or (property4 = #107:150))"
+                    + " and ((property5 is null) or (property5 = #107:150)) and ((property6 is"
+                    + " null) or (property6 = #107:150)) and ((property7 is null) or (property7 ="
+                    + " #107:150)) and ((property8 is null) or (property8 = #107:150)) and"
+                    + " ((property9 is null) or (property9 = #107:150)) and ((property10 is null)"
+                    + " or (property10 = #107:150)) and ((property11 is null) or (property11 ="
+                    + " #107:150)) and ((property12 is null) or (property12 = #107:150)) and"
+                    + " ((property13 is null) or (property13 = #107:150)) and ((property14 is null)"
+                    + " or (property14 = #107:150)) and ((property15 is null) or (property15 ="
+                    + " #107:150)) and ((property16 is null) or (property16 = #107:150)) and"
+                    + " ((property17 is null) or (property17 = #107:150)))")) {
           assertEquals(set.stream().count(), 0);
         }
       }

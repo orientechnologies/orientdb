@@ -104,7 +104,8 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
         OLogManager.instance()
             .debug(
                 this,
-                "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of numbers");
+                "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of"
+                    + " numbers");
         throw new OInvalidPasswordException("Password requires a minimum count of numbers");
       }
 
@@ -112,7 +113,8 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
         OLogManager.instance()
             .debug(
                 this,
-                "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of special characters");
+                "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of"
+                    + " special characters");
         throw new OInvalidPasswordException(
             "Password requires a minimum count of special characters");
       }
@@ -121,7 +123,8 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
         OLogManager.instance()
             .debug(
                 this,
-                "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of uppercase characters");
+                "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of"
+                    + " uppercase characters");
         throw new OInvalidPasswordException(
             "Password requires a minimum count of uppercase characters");
       }

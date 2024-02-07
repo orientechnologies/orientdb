@@ -89,7 +89,8 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
     }
 
     db.command(
-            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {'closeAfterInterval':1000 , 'firstFlushAfter':1000 }")
+            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata"
+                + " {'closeAfterInterval':1000 , 'firstFlushAfter':1000 }")
         .close();
 
     OResultSet docs = db.query("select from Song where title lucene 'mountain'");

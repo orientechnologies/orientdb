@@ -39,7 +39,10 @@ public class OServerCommandOptions extends OServerCommandAbstract {
         OHttpUtils.STATUS_OK_DESCRIPTION,
         OHttpUtils.CONTENT_TEXT_PLAIN,
         null,
-        "Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS\r\nAccess-Control-Max-Age: 1728000\r\nAccess-Control-Allow-Headers: if-modified-since, content-type, authorization, x-requested-with");
+        "Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS\r\n"
+            + "Access-Control-Max-Age: 1728000\r\n"
+            + "Access-Control-Allow-Headers: if-modified-since, content-type, authorization,"
+            + " x-requested-with");
     return false;
   }
 

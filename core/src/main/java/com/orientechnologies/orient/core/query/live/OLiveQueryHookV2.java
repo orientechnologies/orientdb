@@ -125,7 +125,8 @@ public class OLiveQueryHookV2 {
       OLogManager.instance()
           .warn(
               db,
-              "Live query support is disabled impossible to subscribe a listener, set '%s' to true for enable the live query support",
+              "Live query support is disabled impossible to subscribe a listener, set '%s' to true"
+                  + " for enable the live query support",
               QUERY_LIVE_SUPPORT.getKey());
       return -1;
     }
@@ -145,7 +146,8 @@ public class OLiveQueryHookV2 {
       OLogManager.instance()
           .warn(
               db,
-              "Live query support is disabled impossible to unsubscribe a listener, set '%s' to true for enable the live query support",
+              "Live query support is disabled impossible to unsubscribe a listener, set '%s' to"
+                  + " true for enable the live query support",
               QUERY_LIVE_SUPPORT.getKey());
       return;
     }

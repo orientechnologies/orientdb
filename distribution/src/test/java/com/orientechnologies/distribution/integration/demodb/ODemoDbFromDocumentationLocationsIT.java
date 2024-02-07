@@ -20,7 +20,9 @@ public class ODemoDbFromDocumentationLocationsIT extends OIntegrationTestTemplat
 
     OResultSet resultSet =
         db.query(
-            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}<-HasProfile-{Class: Customers, as: customer}-HasVisited->{class: Locations, as: location} \n"
+            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND"
+                + " Surname='OrientDB')}<-HasProfile-{Class: Customers, as:"
+                + " customer}-HasVisited->{class: Locations, as: location} \n"
                 + "RETURN $pathelements");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
@@ -37,7 +39,8 @@ public class ODemoDbFromDocumentationLocationsIT extends OIntegrationTestTemplat
 
     OResultSet resultSet =
         db.query(
-            "MATCH {Class: Locations, as: location}<-HasVisited-{class: Customers, as: customer, where: (OrderedId=2)}\n"
+            "MATCH {Class: Locations, as: location}<-HasVisited-{class: Customers, as: customer,"
+                + " where: (OrderedId=2)}\n"
                 + "RETURN $pathelements");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
@@ -52,7 +55,10 @@ public class ODemoDbFromDocumentationLocationsIT extends OIntegrationTestTemplat
 
     OResultSet resultSet =
         db.query(
-            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' and Surname='OrientDB')}-HasFriend->{Class: Profiles, as: friend}<-HasProfile-{Class: Customers, as: customer}-HasVisited->{Class: Locations, as: location} \n"
+            "MATCH {Class: Profiles, as: profile, where: (Name='Santo' and"
+                + " Surname='OrientDB')}-HasFriend->{Class: Profiles, as:"
+                + " friend}<-HasProfile-{Class: Customers, as: customer}-HasVisited->{Class:"
+                + " Locations, as: location} \n"
                 + "RETURN $pathelements");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());

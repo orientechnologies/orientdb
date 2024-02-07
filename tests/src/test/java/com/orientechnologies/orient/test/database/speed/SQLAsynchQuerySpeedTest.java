@@ -46,7 +46,8 @@ public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread {
             database
                 .command(
                     new OSQLAsynchQuery<ODocument>(
-                        "select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7",
+                        "select * from animal where column(0) < 5 or column(0) >= 3 and column(5) <"
+                            + " 7",
                         new OCommandResultListener() {
                           @Override
                           public boolean result(Object iRecord) {

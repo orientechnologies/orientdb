@@ -721,7 +721,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
                 this.nodeName,
                 node,
                 DIRECTION.OUT,
-                "Error on sending distributed request %s. The target node is not available. Active nodes: %s",
+                "Error on sending distributed request %s. The target node is not available. Active"
+                    + " nodes: %s",
                 e,
                 iRequest,
                 getAvailableNodeNames(databaseName));
@@ -794,7 +795,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
             this.nodeName,
             null,
             DIRECTION.IN,
-            "Timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=(%s)",
+            "Timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s"
+                + " request=(%s)",
             elapsed,
             currentResponseMgr.getExpectedNodes(),
             currentResponseMgr.getRespondingNodes(),
@@ -1334,7 +1336,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
           nodeName,
           null,
           DIRECTION.OUT,
-          "Current copy of database '%s' is newer than the copy present in the cluster. Use the local copy and force other nodes to download this",
+          "Current copy of database '%s' is newer than the copy present in the cluster. Use the"
+              + " local copy and force other nodes to download this",
           databaseName);
 
       databaseInstalled = true;
@@ -1552,7 +1555,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
           nodeName,
           null,
           DIRECTION.NONE,
-          "Cannot request full deploy of database '%s' because there are no nodes available with such database",
+          "Cannot request full deploy of database '%s' because there are no nodes available with"
+              + " such database",
           databaseName);
       return false;
     }
@@ -1622,7 +1626,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
             nodeName,
             selectedNodes.toString(),
             DIRECTION.IN,
-            "Timeout waiting the sync database please set the `distributed.deployDbTaskTimeout` to appropriate value");
+            "Timeout waiting the sync database please set the `distributed.deployDbTaskTimeout` to"
+                + " appropriate value");
         setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
         return false;
       }
@@ -1730,7 +1735,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
           nodeName,
           null,
           DIRECTION.NONE,
-          "Moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote node...",
+          "Moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote"
+              + " node...",
           iDatabaseName,
           dbpath,
           backupPath);
@@ -2336,7 +2342,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
     final Collection<Map<String, Object>> listeners = cfg.field("listeners");
     if (listeners == null)
       throw new ODatabaseException(
-          "Cannot connect to a remote node because bad distributed configuration: missing 'listeners' array field");
+          "Cannot connect to a remote node because bad distributed configuration: missing"
+              + " 'listeners' array field");
     String listenUrl = null;
     for (Map<String, Object> listener : listeners) {
       if ((listener.get("protocol")).equals("ONetworkProtocolBinary")) {
@@ -2655,7 +2662,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
               nodeName,
               null,
               DIRECTION.NONE,
-              "Cannot re-balance the cluster for database '%s' because the Lock Manager is not available (err=%s)",
+              "Cannot re-balance the cluster for database '%s' because the Lock Manager is not"
+                  + " available (err=%s)",
               databaseName,
               e.getMessage());
         }

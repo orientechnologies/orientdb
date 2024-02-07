@@ -297,7 +297,8 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     params.put("name", "foo1");
     OResultSet result =
         database.query(
-            "select from (select from PreparedStatementTest1 where name = :name) where name = :name",
+            "select from (select from PreparedStatementTest1 where name = :name) where name ="
+                + " :name",
             params);
 
     boolean found = false;

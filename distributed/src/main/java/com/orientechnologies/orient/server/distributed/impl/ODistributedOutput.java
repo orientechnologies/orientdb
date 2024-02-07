@@ -238,7 +238,9 @@ public class ODistributedOutput {
 
     final StringBuilder buffer = new StringBuilder();
     buffer.append(
-        "\nREPLICATION MESSAGE COUNTERS (servers: source on the row and destination on the column)");
+        "\n"
+            + "REPLICATION MESSAGE COUNTERS (servers: source on the row and destination on the"
+            + " column)");
     final OTableFormatter table =
         new OTableFormatter(
             new OTableFormatter.OTableOutput() {

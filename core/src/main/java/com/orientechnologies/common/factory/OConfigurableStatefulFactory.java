@@ -50,7 +50,8 @@ public class OConfigurableStatefulFactory<K, V> {
         final OSystemException exception =
             new OSystemException(
                 String.format(
-                    "Error on creating new instance of class '%s' registered in factory with key '%s'",
+                    "Error on creating new instance of class '%s' registered in factory with key"
+                        + " '%s'",
                     cls, iKey));
         throw OException.wrapException(exception, e);
       }

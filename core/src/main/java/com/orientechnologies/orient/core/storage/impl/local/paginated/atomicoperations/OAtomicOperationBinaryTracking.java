@@ -450,8 +450,9 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
           OLogManager.instance()
               .warn(
                   this,
-                  "You performing truncate operation which is considered unsafe because can not be rolled back, "
-                      + "as result data can be incorrectly restored after crash, this operation is not recommended to be used");
+                  "You performing truncate operation which is considered unsafe because can not be"
+                      + " rolled back, as result data can be incorrectly restored after crash, this"
+                      + " operation is not recommended to be used");
         }
 
         final Iterator<Map.Entry<Long, OCacheEntryChanges>> filePageChangesIterator =
@@ -503,8 +504,9 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
           OLogManager.instance()
               .warn(
                   this,
-                  "You performing truncate operation which is considered unsafe because can not be rolled back, "
-                      + "as result data can be incorrectly restored after crash, this operation is not recommended to be used");
+                  "You performing truncate operation which is considered unsafe because can not be"
+                      + " rolled back, as result data can be incorrectly restored after crash, this"
+                      + " operation is not recommended to be used");
           readCache.truncateFile(fileId, writeCache);
         }
 

@@ -39,7 +39,8 @@ public class LuceneIssuesTest extends BaseLuceneTest {
     db.query("SELECT from Song where title = 'BELIEVE IT OR NOT' ").close();
 
     db.command(
-            "EXPLAIN SELECT from Song where author = 'Traditional'  OR [title,author] LUCENE '(title:believe'")
+            "EXPLAIN SELECT from Song where author = 'Traditional'  OR [title,author] LUCENE"
+                + " '(title:believe'")
         .close();
   }
 

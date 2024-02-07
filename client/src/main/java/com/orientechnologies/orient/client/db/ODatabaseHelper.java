@@ -223,7 +223,8 @@ public class ODatabaseHelper {
                   "${" + Orient.ORIENTDB_HOME + "}/config/orientdb-server-config.xml"));
     if (!file.exists())
       throw new OConfigurationException(
-          "Cannot load file orientdb-server-config.xml to execute remote tests. Current directory is "
+          "Cannot load file orientdb-server-config.xml to execute remote tests. Current directory"
+              + " is "
               + new File(".").getAbsolutePath());
     return file;
   }

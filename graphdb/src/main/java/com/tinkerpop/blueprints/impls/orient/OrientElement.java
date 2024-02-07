@@ -615,7 +615,8 @@ public abstract class OrientElement
             className,
             "' as subclass of '",
             getBaseClassName(),
-            "'. The transaction will be reopen right after that. To avoid this behavior create the classes outside the transaction");
+            "'. The transaction will be reopen right after that. To avoid this behavior create the"
+                + " classes outside the transaction");
 
       } catch (OSchemaException e) {
         if (!schema.existsClass(className)) throw e;
@@ -647,7 +648,8 @@ public abstract class OrientElement
     final OrientBaseGraph graph = getGraph();
     if (graph == null)
       throw new IllegalStateException(
-          "There is no active graph instance for current element. Please either open connection to your storage, or use detach/attach methods instead.");
+          "There is no active graph instance for current element. Please either open connection to"
+              + " your storage, or use detach/attach methods instead.");
     return graph;
   }
 
@@ -688,7 +690,8 @@ public abstract class OrientElement
           for (Object o : (Collection) f) {
             if (!(o instanceof OPair))
               throw new IllegalArgumentException(
-                  "Invalid fields: expecting a pairs of fields as String,Object, but found the item: "
+                  "Invalid fields: expecting a pairs of fields as String,Object, but found the"
+                      + " item: "
                       + o);
 
             final OPair entry = (OPair) o;
@@ -701,12 +704,14 @@ public abstract class OrientElement
 
         } else
           throw new IllegalArgumentException(
-              "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: "
+              "Invalid fields: expecting a pairs of fields as String,Object or a single"
+                  + " Map<String,Object>, but found: "
                   + f);
       } else {
         if (fields.length % 2 != 0)
           throw new IllegalArgumentException(
-              "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: "
+              "Invalid fields: expecting a pairs of fields as String,Object or a single"
+                  + " Map<String,Object>, but found: "
                   + Arrays.toString(fields));
 
         // SET THE FIELDS

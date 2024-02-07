@@ -360,9 +360,9 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     diploma1.field("name", "diploma1");
     diploma1.field(
         "thesis",
-        "Researching and visiting universities before making a final decision is very "
-            + "beneficial because you student be able to experience the campus, meet the professors, and truly "
-            + "understand the traditions of the university.");
+        "Researching and visiting universities before making a final decision is very beneficial"
+            + " because you student be able to experience the campus, meet the professors, and"
+            + " truly understand the traditions of the university.");
 
     final ODocument transcript = database.newInstance("lpirtTranscript");
     transcript.field("id", "1");
@@ -392,9 +392,9 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     diploma2.field("name", "diploma2");
     diploma2.field(
         "thesis",
-        "While both Northerners and Southerners believed they fought against tyranny and "
-            + "oppression, Northerners focused on the oppression of slaves while Southerners defended their own "
-            + "right to self-government.");
+        "While both Northerners and Southerners believed they fought against tyranny and"
+            + " oppression, Northerners focused on the oppression of slaves while Southerners"
+            + " defended their own right to self-government.");
 
     final ODocument student2 = database.newInstance("lpirtStudent");
     student2.field("name", "Jane Smith");

@@ -288,9 +288,11 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
   }
 
   public String getSyntax() {
-    return "astar(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<options>]) \n "
-        + "// options  : {direction:\"OUT\",edgeTypeNames:[] , vertexAxisNames:[] , parallel : false , "
-        + "tieBreaker:true,maxDepth:99999,dFactor:1.0,customHeuristicFormula:'custom_Function_Name_here'  }";
+    return "astar(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<options>]) \n"
+               + " // options  : {direction:\"OUT\",edgeTypeNames:[] , vertexAxisNames:[] ,"
+               + " parallel : false ,"
+               + " tieBreaker:true,maxDepth:99999,dFactor:1.0,customHeuristicFormula:'custom_Function_Name_here'"
+               + "  }";
   }
 
   @Override

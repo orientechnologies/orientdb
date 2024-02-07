@@ -75,7 +75,8 @@ public class OCreateVertexStatementTest {
   @Test
   public void testInsertIntoCluster() {
     checkRightSyntax(
-        "create vertex cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+        "create vertex cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom',"
+            + " 'top','left','right'] )");
   }
 
   private void printTree(String s) {

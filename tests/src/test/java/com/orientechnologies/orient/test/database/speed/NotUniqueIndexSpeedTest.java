@@ -49,7 +49,8 @@ public class NotUniqueIndexSpeedTest extends OrientMonoThreadTest {
     counter++;
 
     database.command(
-        "insert into test (x,    y,    z,    j,    k ,   l,    m,    indexdate), values (?, ?, ?, ?, ?, ?, ?, ?)",
+        "insert into test (x,    y,    z,    j,    k ,   l,    m,    indexdate), values (?, ?, ?,"
+            + " ?, ?, ?, ?, ?)",
         fVal,
         fVal,
         fVal,

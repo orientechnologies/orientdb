@@ -431,7 +431,8 @@ public class OAlterClassStatement extends ODDLStatement {
       throw new OCommandExecutionException(
           "Cannot rename class '"
               + oClass.getName()
-              + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at your won risk)");
+              + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at your"
+              + " won risk)");
     }
   }
 
@@ -440,7 +441,8 @@ public class OAlterClassStatement extends ODDLStatement {
       throw new OCommandExecutionException(
           "Cannot alter class '"
               + oClass
-              + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
+              + "' because is an Edge class and could break vertices. Use UNSAFE if you want to"
+              + " force it");
     }
   }
 

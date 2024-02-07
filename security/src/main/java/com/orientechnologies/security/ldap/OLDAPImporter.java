@@ -162,7 +162,8 @@ public class OLDAPImporter implements OSecurityComponent {
                         OLogManager.instance()
                             .error(
                                 this,
-                                "Import LDAP Invalid server URL for database: %s, domain: %s, URL: %s",
+                                "Import LDAP Invalid server URL for database: %s, domain: %s, URL:"
+                                    + " %s",
                                 null,
                                 dbName,
                                 domain,
@@ -202,14 +203,16 @@ public class OLDAPImporter implements OSecurityComponent {
                             OLogManager.instance()
                                 .error(
                                     this,
-                                    "Import LDAP The User's \"roles\" property is missing for database %s",
+                                    "Import LDAP The User's \"roles\" property is missing for"
+                                        + " database %s",
                                     null);
                           }
                         } else {
                           OLogManager.instance()
                               .error(
                                   this,
-                                  "Import LDAP The User's \"baseDN\" or \"filter\" property is missing for database %s",
+                                  "Import LDAP The User's \"baseDN\" or \"filter\" property is"
+                                      + " missing for database %s",
                                   null);
                         }
                       }
@@ -223,14 +226,16 @@ public class OLDAPImporter implements OSecurityComponent {
                     OLogManager.instance()
                         .error(
                             this,
-                            "Import LDAP database %s \"domain\" is missing its \"servers\" property",
+                            "Import LDAP database %s \"domain\" is missing its \"servers\""
+                                + " property",
                             null);
                   }
                 } else {
                   OLogManager.instance()
                       .error(
                           this,
-                          "Import LDAP database %s \"domain\" object is missing its \"domain\" property",
+                          "Import LDAP database %s \"domain\" object is missing its \"domain\""
+                              + " property",
                           null);
                 }
               }
@@ -492,7 +497,8 @@ public class OLDAPImporter implements OSecurityComponent {
                       OLogManager.instance()
                           .info(
                               this,
-                              "OLDAPImporter.importLDAP() Calling retrieveUsers for Database: %s, Filter: %s",
+                              "OLDAPImporter.importLDAP() Calling retrieveUsers for Database: %s,"
+                                  + " Filter: %s",
                               db.getName(),
                               user.getFilter());
 
@@ -527,7 +533,8 @@ public class OLDAPImporter implements OSecurityComponent {
                         OLogManager.instance()
                             .info(
                                 this,
-                                "OLDAPImporter.importLDAP() No users found at BaseDN: %s, Filter: %s, for Database: %s",
+                                "OLDAPImporter.importLDAP() No users found at BaseDN: %s, Filter:"
+                                    + " %s, for Database: %s",
                                 user.getBaseDN(),
                                 user.getFilter(),
                                 db.getName());
@@ -540,7 +547,8 @@ public class OLDAPImporter implements OSecurityComponent {
                   OLogManager.instance()
                       .error(
                           this,
-                          "OLDAPImporter.importLDAP() Could not obtain an LDAP DirContext for Database %s",
+                          "OLDAPImporter.importLDAP() Could not obtain an LDAP DirContext for"
+                              + " Database %s",
                           null,
                           db.getName());
                 }
@@ -548,7 +556,8 @@ public class OLDAPImporter implements OSecurityComponent {
                 OLogManager.instance()
                     .error(
                         this,
-                        "OLDAPImporter.importLDAP() Could not obtain an LDAP Subject for Database %s",
+                        "OLDAPImporter.importLDAP() Could not obtain an LDAP Subject for Database"
+                            + " %s",
                         null,
                         db.getName());
               }
@@ -602,7 +611,8 @@ public class OLDAPImporter implements OSecurityComponent {
           OLogManager.instance()
               .error(
                   this,
-                  "OLDAPImporter.retrieveLDAPUsers() Roles is missing for entry Database: %s, Domain: %s",
+                  "OLDAPImporter.retrieveLDAPUsers() Roles is missing for entry Database: %s,"
+                      + " Domain: %s",
                   null,
                   odb.getName(),
                   domain);
@@ -710,7 +720,8 @@ public class OLDAPImporter implements OSecurityComponent {
 
       StringBuilder sb = new StringBuilder();
       sb.append(
-          "UPDATE OUser SET name = ?, password = ?, status = \"ACTIVE\", _externalUser = true, roles = (SELECT FROM ORole WHERE name in [");
+          "UPDATE OUser SET name = ?, password = ?, status = \"ACTIVE\", _externalUser = true,"
+              + " roles = (SELECT FROM ORole WHERE name in [");
 
       String[] roleParams = new String[roles.size()];
 

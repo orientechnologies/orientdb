@@ -875,7 +875,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     if (rid == null)
       throw new ODatabaseException(
-          "Cannot delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
+          "Cannot delete record because it has no identity. Probably was created from scratch or"
+              + " contains projections of fields rather than a full record");
 
     if (!rid.isValid()) return;
 
@@ -1836,7 +1837,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       OLogManager.instance()
           .error(
               this,
-              "Only local paginated storage supports freeze. If you are using remote client please use OServerAdmin instead",
+              "Only local paginated storage supports freeze. If you are using remote client please"
+                  + " use OServerAdmin instead",
               null);
 
       return;
@@ -1869,7 +1871,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       OLogManager.instance()
           .error(
               this,
-              "Only local paginated storage supports release. If you are using remote client please use OServerAdmin instead",
+              "Only local paginated storage supports release. If you are using remote client please"
+                  + " use OServerAdmin instead",
               null);
       return;
     }

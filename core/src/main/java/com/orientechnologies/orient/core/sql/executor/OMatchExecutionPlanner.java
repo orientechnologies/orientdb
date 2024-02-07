@@ -156,7 +156,8 @@ public class OMatchExecutionPlanner {
       }
       if (groupBy != null) {
         throw new OCommandExecutionException(
-            "Cannot execute GROUP BY in MATCH query with RETURN $elements, $pathElements, $patterns or $paths");
+            "Cannot execute GROUP BY in MATCH query with RETURN $elements, $pathElements, $patterns"
+                + " or $paths");
       }
 
       if (this.orderBy != null) {

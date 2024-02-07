@@ -89,10 +89,12 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
               "CREATE INDEX index_dictionary     ON DistributedIndexTest (dictionary) DICTIONARY")
           .close();
       db.command(
-              "CREATE INDEX index_unique_hash    ON DistributedIndexTest (unique_hash) UNIQUE_HASH_INDEX")
+              "CREATE INDEX index_unique_hash    ON DistributedIndexTest (unique_hash)"
+                  + " UNIQUE_HASH_INDEX")
           .close();
       db.command(
-              "CREATE INDEX index_notunique_hash ON DistributedIndexTest (notunique_hash) NOTUNIQUE_HASH_INDEX")
+              "CREATE INDEX index_notunique_hash ON DistributedIndexTest (notunique_hash)"
+                  + " NOTUNIQUE_HASH_INDEX")
           .close();
 
       final ODocument test1 = new ODocument("DistributedIndexTest");

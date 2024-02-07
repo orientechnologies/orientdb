@@ -21,7 +21,8 @@ final class WaitingListNode {
     } catch (InterruptedException e) {
       throw OException.wrapException(
           new OInterruptedException(
-              "Thread was interrupted while was waiting for completion of 'waiting linked list' operation"),
+              "Thread was interrupted while was waiting for completion of 'waiting linked list'"
+                  + " operation"),
           e);
     }
   }

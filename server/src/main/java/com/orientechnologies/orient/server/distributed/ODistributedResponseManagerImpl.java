@@ -749,7 +749,9 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
             dManager.getLocalNodeName(),
             null,
             DIRECTION.NONE,
-            "Detected possible split brain network where 2 groups of servers A%s and B%s have different contents. Cannot decide who is the winner even if the quorum (%d) has been reached. Request (%s) responses:%s",
+            "Detected possible split brain network where 2 groups of servers A%s and B%s have"
+                + " different contents. Cannot decide who is the winner even if the quorum (%d) has"
+                + " been reached. Request (%s) responses:%s",
             a,
             b,
             quorum,

@@ -1565,7 +1565,8 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
             OLogManager.instance()
                 .warn(
                     this,
-                    "Page in file %s with index %d was placed in wrong free list, this error will be fixed automatically",
+                    "Page in file %s with index %d was placed in wrong free list, this error will"
+                        + " be fixed automatically",
                     getFullName(),
                     pageIndex);
 

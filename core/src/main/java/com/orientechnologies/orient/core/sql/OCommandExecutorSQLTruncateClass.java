@@ -118,10 +118,12 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
     if (recs > 0 && !unsafe) {
       if (schemaClass.isSubClassOf("V")) {
         throw new OCommandExecutionException(
-            "'TRUNCATE CLASS' command cannot be used on not empty vertex classes. Apply the 'UNSAFE' keyword to force it (at your own risk)");
+            "'TRUNCATE CLASS' command cannot be used on not empty vertex classes. Apply the"
+                + " 'UNSAFE' keyword to force it (at your own risk)");
       } else if (schemaClass.isSubClassOf("E")) {
         throw new OCommandExecutionException(
-            "'TRUNCATE CLASS' command cannot be used on not empty edge classes. Apply the 'UNSAFE' keyword to force it (at your own risk)");
+            "'TRUNCATE CLASS' command cannot be used on not empty edge classes. Apply the 'UNSAFE'"
+                + " keyword to force it (at your own risk)");
       }
     }
 

@@ -100,7 +100,8 @@ public class OrientDBRemoteTest {
   public void testCachedPool() {
     if (!factory.exists("testdb"))
       factory.execute(
-          "create database testdb memory users (admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+          "create database testdb memory users (admin identified by 'admin' role admin, reader"
+              + " identified by 'reader' role reader, writer identified by 'writer' role writer)");
 
     ODatabasePool poolAdmin1 = factory.cachedPool("testdb", "admin", "admin");
     ODatabasePool poolAdmin2 = factory.cachedPool("testdb", "admin", "admin");
@@ -153,7 +154,8 @@ public class OrientDBRemoteTest {
   public void testMultiThread() {
     if (!factory.exists("test"))
       factory.execute(
-          "create database test memory users (admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+          "create database test memory users (admin identified by 'admin' role admin, reader"
+              + " identified by 'reader' role reader, writer identified by 'writer' role writer)");
 
     ODatabasePool pool = new ODatabasePool(factory, "test", "admin", "admin");
 

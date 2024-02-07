@@ -128,7 +128,8 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
       throw new IllegalStateException(
           "This data structure is owned by document "
               + owner
-              + " if you want to use it in other document create new rid bag instance and copy content of current one.");
+              + " if you want to use it in other document create new rid bag instance and copy"
+              + " content of current one.");
     }
     this.owner = owner;
     if (this.owner != null && tracker.getTimeLine() != null) {

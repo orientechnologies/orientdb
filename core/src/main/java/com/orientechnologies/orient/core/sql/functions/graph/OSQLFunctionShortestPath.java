@@ -301,7 +301,8 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   }
 
   public String getSyntax() {
-    return "shortestPath(<sourceVertex>, <destinationVertex>, [<direction>, [ <edgeTypeAsString> ]])";
+    return "shortestPath(<sourceVertex>, <destinationVertex>, [<direction>, [ <edgeTypeAsString>"
+        + " ]])";
   }
 
   protected List<ORID> walkLeft(final OSQLFunctionShortestPath.OShortestPathContext ctx) {

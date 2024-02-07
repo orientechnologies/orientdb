@@ -29,7 +29,8 @@ public class ORemoteSecurityTests {
     server = OServer.startFromClasspathConfig("abstract-orientdb-server-config.xml");
     orient = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     orient.execute(
-        "create database ? memory users (admin identified by 'admin' role admin, writer identified by 'writer' role writer, reader identified by 'reader' role reader)",
+        "create database ? memory users (admin identified by 'admin' role admin, writer identified"
+            + " by 'writer' role writer, reader identified by 'reader' role reader)",
         DB_NAME);
     this.db = orient.open(DB_NAME, "admin", "admin");
     OClass person = db.createClass("Person");

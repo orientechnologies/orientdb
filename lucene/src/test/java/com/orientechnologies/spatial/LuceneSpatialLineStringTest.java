@@ -34,7 +34,8 @@ import org.junit.Test;
 public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
 
   public static String LINEWKT =
-      "LINESTRING(-149.8871332 61.1484656,-149.8871655 61.1489556,-149.8871569 61.15043,-149.8870366 61.1517722)";
+      "LINESTRING(-149.8871332 61.1484656,-149.8871655 61.1489556,-149.8871569"
+          + " 61.15043,-149.8870366 61.1517722)";
 
   @Before
   public void initMore() {
@@ -100,7 +101,8 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
 
   protected void queryLineString() {
     String query =
-        "select * from Place where location && { 'shape' : { 'type' : 'OLineString' , 'coordinates' : [[1,2],[4,6]]} } ";
+        "select * from Place where location && { 'shape' : { 'type' : 'OLineString' , 'coordinates'"
+            + " : [[1,2],[4,6]]} } ";
     List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(docs.size(), 1);
@@ -116,7 +118,10 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(docs.size(), 1);
 
     query =
-        "select * from Place where location && 'POLYGON((-150.205078125 61.40723633876356,-149.2657470703125 61.40723633876356,-149.2657470703125 61.05562700886678,-150.205078125 61.05562700886678,-150.205078125 61.40723633876356))' ";
+        "select * from Place where location && 'POLYGON((-150.205078125"
+            + " 61.40723633876356,-149.2657470703125 61.40723633876356,-149.2657470703125"
+            + " 61.05562700886678,-150.205078125 61.05562700886678,-150.205078125"
+            + " 61.40723633876356))' ";
     docs = db.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(docs.size(), 1);

@@ -42,10 +42,12 @@ public class OTruncateClassStatement extends ODDLStatement {
     if (recs > 0 && !unsafe) {
       if (clazz.isSubClassOf("V")) {
         throw new OCommandExecutionException(
-            "'TRUNCATE CLASS' command cannot be used on not empty vertex classes. Apply the 'UNSAFE' keyword to force it (at your own risk)");
+            "'TRUNCATE CLASS' command cannot be used on not empty vertex classes. Apply the"
+                + " 'UNSAFE' keyword to force it (at your own risk)");
       } else if (clazz.isSubClassOf("E")) {
         throw new OCommandExecutionException(
-            "'TRUNCATE CLASS' command cannot be used on not empty edge classes. Apply the 'UNSAFE' keyword to force it (at your own risk)");
+            "'TRUNCATE CLASS' command cannot be used on not empty edge classes. Apply the 'UNSAFE'"
+                + " keyword to force it (at your own risk)");
       }
     }
 

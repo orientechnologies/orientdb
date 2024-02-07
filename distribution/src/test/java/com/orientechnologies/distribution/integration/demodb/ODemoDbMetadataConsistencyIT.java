@@ -190,21 +190,24 @@ public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
     // all customers have a country
     OResultSet resultSet =
         db.query(
-            "MATCH {class: Customers, as: customer}-IsFromCountry->{class: Countries, as: country} RETURN  customer");
+            "MATCH {class: Customers, as: customer}-IsFromCountry->{class: Countries, as: country}"
+                + " RETURN  customer");
     assertThat(resultSet).hasSize(customersCount);
     resultSet.close();
 
     // all customers have a profile
     resultSet =
         db.query(
-            "MATCH {class: Customers, as: customer}-HasProfile->{class: Profiles, as: profile} RETURN customer");
+            "MATCH {class: Customers, as: customer}-HasProfile->{class: Profiles, as: profile}"
+                + " RETURN customer");
     assertThat(resultSet).hasSize(customersCount);
     resultSet.close();
 
     // all customers have at least 1 order
     resultSet =
         db.query(
-            "MATCH {class: Orders, as: order}-HasCustomer->{class: Customers, as:customer} RETURN order");
+            "MATCH {class: Orders, as: order}-HasCustomer->{class: Customers, as:customer} RETURN"
+                + " order");
     assertThat(resultSet.stream().count()).isGreaterThan(customersCount);
     resultSet.close();
   }
@@ -214,9 +217,12 @@ public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
     OResultSet resultSet =
         db.query(
             "MATCH \n"
-                + "{class:Profiles, as:profileA} <-HasProfile- {as:customerA} -MadeReview-> {as:reviewA} <-HasReview- {as:restaurant},\n"
-                + "{as:profileB, where:($matched.profileA != $currentMatch)} <-HasProfile- {as:customerB} -MadeReview-> {as:reviewB} <-HasReview- {as:restaurant}\n"
-                + "return  profileA.Id as idA, profileA.Name, profileA.Surname, profileB.Id as idA, profileB.Name, profileB.Surname\n"
+                + "{class:Profiles, as:profileA} <-HasProfile- {as:customerA} -MadeReview->"
+                + " {as:reviewA} <-HasReview- {as:restaurant},\n"
+                + "{as:profileB, where:($matched.profileA != $currentMatch)} <-HasProfile-"
+                + " {as:customerB} -MadeReview-> {as:reviewB} <-HasReview- {as:restaurant}\n"
+                + "return  profileA.Id as idA, profileA.Name, profileA.Surname, profileB.Id as idA,"
+                + " profileB.Name, profileB.Surname\n"
                 + "limit 10\n");
 
     int size = 0;

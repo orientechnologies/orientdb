@@ -220,7 +220,8 @@ public class OGraphBatchInsertTest extends TestCase {
     Iterable<Vertex> result =
         g.command(
                 new OSQLSynchQuery<Vertex>(
-                    "select expand(out().in().out().out().in().out().out().in().out()) from V where uid = ?"))
+                    "select expand(out().in().out().out().in().out().out().in().out()) from V where"
+                        + " uid = ?"))
             .execute(0L);
 
     boolean found = false;

@@ -18,16 +18,19 @@ public class GeometryCollectionTest extends BaseSpatialLuceneTest {
 
     db.command(
             new OCommandSQL(
-                "insert into TestInsert content {'name': 'loc1', 'geometry': {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[0,10],[10,10],[10,0],[0,0]]]}]}}"))
+                "insert into TestInsert content {'name': 'loc1', 'geometry':"
+                    + " {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[0,10],[10,10],[10,0],[0,0]]]}]}}"))
         .execute();
     db.command(
             new OCommandSQL(
-                "insert into TestInsert content {'name': 'loc2', 'geometry': {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[0,20],[20,20],[20,0],[0,0]]]}]}}"))
+                "insert into TestInsert content {'name': 'loc2', 'geometry':"
+                    + " {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[0,20],[20,20],[20,0],[0,0]]]}]}}"))
         .execute();
 
     OResultSet qResult =
         db.command(
-            "select * from TestInsert where ST_WITHIN(geometry,'POLYGON ((0 0, 15 0, 15 15, 0 15, 0 0))') = true");
+            "select * from TestInsert where ST_WITHIN(geometry,'POLYGON ((0 0, 15 0, 15 15, 0 15, 0"
+                + " 0))') = true");
     Assert.assertEquals(1, qResult.stream().count());
 
     db.command("DELETE VERTEX TestInsert").close();

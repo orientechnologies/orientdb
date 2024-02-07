@@ -143,7 +143,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
           OLogManager.instance()
               .warn(
                   this,
-                  "Session %s is trying to access to the database '%s', but has been authenticated against the database '%s'",
+                  "Session %s is trying to access to the database '%s', but has been authenticated"
+                      + " against the database '%s'",
                   iRequest.getSessionId(),
                   iRequest.getDatabaseName(),
                   currentSession.getDatabaseName());
@@ -158,7 +159,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
           OLogManager.instance()
               .warn(
                   this,
-                  "Session %s is trying to access to the database '%s' with user '%s', but has been authenticated with user '%s'",
+                  "Session %s is trying to access to the database '%s' with user '%s', but has been"
+                      + " authenticated with user '%s'",
                   iRequest.getSessionId(),
                   iRequest.getDatabaseName(),
                   authenticationParts.get(0),

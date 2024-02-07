@@ -42,14 +42,14 @@ public class OETLFieldTransformer extends OETLAbstractTransformer {
         .fromJSON(
             "{parameters:["
                 + getCommonConfigurationParameters()
-                + ","
-                + "{fieldName:{optional:true,description:'field name to apply the result'}},"
-                + "{fieldNames:{optional:true,description:'field names to apply the result'}},"
-                + "{expression:{optional:true,description:'expression to evaluate. Mandatory with operation=set (default)'}}"
-                + "{value:{optional:true,description:'value to set'}}"
-                + "{operation:{optional:false,description:'operation to execute against the field: set, remove. Default is set'}}"
-                + "{save:{optional:true,description:'save the vertex/edge/document right after the setting of the field'}}"
-                + "],"
+                + ",{fieldName:{optional:true,description:'field name to apply the"
+                + " result'}},{fieldNames:{optional:true,description:'field names to apply the"
+                + " result'}},{expression:{optional:true,description:'expression to evaluate."
+                + " Mandatory with operation=set"
+                + " (default)'}}{value:{optional:true,description:'value to"
+                + " set'}}{operation:{optional:false,description:'operation to execute against the"
+                + " field: set, remove. Default is set'}}{save:{optional:true,description:'save the"
+                + " vertex/edge/document right after the setting of the field'}}],"
                 + "input:['ODocument'],output:'ODocument'}");
   }
 

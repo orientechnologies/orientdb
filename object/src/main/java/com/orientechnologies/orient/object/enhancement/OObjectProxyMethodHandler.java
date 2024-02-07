@@ -1001,7 +1001,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       OLogManager.instance()
           .warn(
               this,
-              "Setting property '%s' in proxied class '%s' with an anonymous class '%s'. The document won't have this property.",
+              "Setting property '%s' in proxied class '%s' with an anonymous class '%s'. The"
+                  + " document won't have this property.",
               fieldName,
               self.getClass().getName(),
               valueToSet.getClass().getName());

@@ -29,7 +29,8 @@ public class LuceneSpatialDWithinTest extends BaseSpatialLuceneTest {
 
     OResultSet execute =
         db.query(
-            "SELECT ST_DWithin(ST_GeomFromText('POLYGON((0 0, 10 0, 10 5, 0 5, 0 0))'), ST_GeomFromText('POLYGON((12 0, 14 0, 14 6, 12 6, 12 0))'), 2.0d) as distance");
+            "SELECT ST_DWithin(ST_GeomFromText('POLYGON((0 0, 10 0, 10 5, 0 5, 0 0))'),"
+                + " ST_GeomFromText('POLYGON((12 0, 14 0, 14 6, 12 6, 12 0))'), 2.0d) as distance");
 
     OResult next = execute.next();
 
@@ -46,20 +47,23 @@ public class LuceneSpatialDWithinTest extends BaseSpatialLuceneTest {
     db.command("create property Polygon.geometry EMBEDDED OPolygon").close();
 
     db.command(
-            "insert into Polygon set geometry = ST_GeomFromText('POLYGON((0 0, 10 0, 10 5, 0 5, 0 0))')")
+            "insert into Polygon set geometry = ST_GeomFromText('POLYGON((0 0, 10 0, 10 5, 0 5, 0"
+                + " 0))')")
         .close();
 
     db.command("create index Polygon.g on Polygon (geometry) SPATIAL engine lucene").close();
 
     OResultSet execute =
         db.query(
-            "SELECT from Polygon where ST_DWithin(geometry, ST_GeomFromText('POLYGON((12 0, 14 0, 14 6, 12 6, 12 0))'), 2.0) = true");
+            "SELECT from Polygon where ST_DWithin(geometry, ST_GeomFromText('POLYGON((12 0, 14 0,"
+                + " 14 6, 12 6, 12 0))'), 2.0) = true");
 
     Assert.assertEquals(1, execute.stream().count());
 
     OResultSet resultSet =
         db.query(
-            "SELECT from Polygon where ST_DWithin(geometry, ST_GeomFromText('POLYGON((12 0, 14 0, 14 6, 12 6, 12 0))'), 2.0) = true");
+            "SELECT from Polygon where ST_DWithin(geometry, ST_GeomFromText('POLYGON((12 0, 14 0,"
+                + " 14 6, 12 6, 12 0))'), 2.0) = true");
 
     //    Assert.assertEquals(1, resultSet.estimateSize());
 

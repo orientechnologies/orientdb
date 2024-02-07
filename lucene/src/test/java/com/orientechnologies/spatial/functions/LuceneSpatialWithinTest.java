@@ -31,8 +31,10 @@ public class LuceneSpatialWithinTest extends BaseSpatialLuceneTest {
 
     OResultSet execute =
         db.query(
-            "select ST_Within(smallc,smallc) as smallinsmall,ST_Within(smallc, bigc) As smallinbig, ST_Within(bigc,smallc) As biginsmall "
-                + "from (SELECT ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20) As smallc,ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40) As bigc)");
+            "select ST_Within(smallc,smallc) as smallinsmall,ST_Within(smallc, bigc) As smallinbig,"
+                + " ST_Within(bigc,smallc) As biginsmall from (SELECT"
+                + " ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20) As"
+                + " smallc,ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40) As bigc)");
     OResult next = execute.next();
 
     Assert.assertEquals(next.getProperty("smallinsmall"), true);
@@ -54,13 +56,15 @@ public class LuceneSpatialWithinTest extends BaseSpatialLuceneTest {
     db.command("create index Polygon.g on Polygon (geometry) SPATIAL engine lucene").close();
     OResultSet execute =
         db.query(
-            "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50 50)'), 50)) = true");
+            "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50"
+                + " 50)'), 50)) = true");
 
     Assert.assertEquals(execute.stream().count(), 2);
 
     execute =
         db.query(
-            "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50 50)'), 30)) = true");
+            "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50"
+                + " 50)'), 30)) = true");
 
     Assert.assertEquals(execute.stream().count(), 1);
   }
@@ -76,13 +80,15 @@ public class LuceneSpatialWithinTest extends BaseSpatialLuceneTest {
     db.command("create index Polygon.g on Polygon(geometry) SPATIAL ENGINE LUCENE");
     OResultSet execute =
         db.query(
-            "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50 50)'), 50)) = true");
+            "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50"
+                + " 50)'), 50)) = true");
 
     assertThat(execute).hasSize(2);
 
     execute =
         db.query(
-            "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50 50)'), 30)) = true");
+            "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50"
+                + " 50)'), 30)) = true");
 
     assertThat(execute).hasSize(1);
   }

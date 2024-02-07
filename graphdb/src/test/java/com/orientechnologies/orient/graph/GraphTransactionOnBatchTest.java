@@ -43,7 +43,12 @@ public class GraphTransactionOnBatchTest {
     try {
       db.execute(
               "sql",
-              "BEGIN \n; LET a = create vertex Test SET id = \"12345678\" \n; LET b = create vertex Test SET id = \"4kkrPhGe\" \n; LET c =create vertex Test SET id = \"4kkrPhGe\" \n; COMMIT \n; RETURN $b ;")
+              "BEGIN \n"
+                  + "; LET a = create vertex Test SET id = \"12345678\" \n"
+                  + "; LET b = create vertex Test SET id = \"4kkrPhGe\" \n"
+                  + "; LET c =create vertex Test SET id = \"4kkrPhGe\" \n"
+                  + "; COMMIT \n"
+                  + "; RETURN $b ;")
           .close();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
@@ -52,7 +57,12 @@ public class GraphTransactionOnBatchTest {
     try {
       db.execute(
               "sql",
-              "BEGIN \n; LET a = create vertex Test content {\"id\": \"12345678\"} \n; LET b = create vertex Test content {\"id\": \"4kkrPhGe\"} \n; LET c =create vertex Test content { \"id\": \"4kkrPhGe\"} \n; COMMIT \n; RETURN $b ;")
+              "BEGIN \n"
+                  + "; LET a = create vertex Test content {\"id\": \"12345678\"} \n"
+                  + "; LET b = create vertex Test content {\"id\": \"4kkrPhGe\"} \n"
+                  + "; LET c =create vertex Test content { \"id\": \"4kkrPhGe\"} \n"
+                  + "; COMMIT \n"
+                  + "; RETURN $b ;")
           .close();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
@@ -91,7 +101,12 @@ public class GraphTransactionOnBatchTest {
     try {
       db.execute(
               "sql",
-              "BEGIN; \n; LET a = create vertex V \n; LET b = create vertex V ;\n LET c =create edge Test from $a to $b SET aKey = \"12345\" ;\n LET d =create edge Test from $a to $b SET aKey = \"12345\"  ;\n COMMIT ;\n"
+              "BEGIN; \n"
+                  + "; LET a = create vertex V \n"
+                  + "; LET b = create vertex V ;\n"
+                  + " LET c =create edge Test from $a to $b SET aKey = \"12345\" ;\n"
+                  + " LET d =create edge Test from $a to $b SET aKey = \"12345\"  ;\n"
+                  + " COMMIT ;\n"
                   + " RETURN $c")
           .close();
       Assert.fail("expected record duplicate exception");
@@ -112,8 +127,13 @@ public class GraphTransactionOnBatchTest {
     try {
       db.execute(
               "sql",
-              "BEGIN \n; LET a = create vertex V \n; LET b = create vertex V \n; LET c =create edge Test from $a to $b  \n; LET d =create edge Test from $a to $b  \n; COMMIT \n;"
-                  + " RETURN $c")
+              "BEGIN \n"
+                  + "; LET a = create vertex V \n"
+                  + "; LET b = create vertex V \n"
+                  + "; LET c =create edge Test from $a to $b  \n"
+                  + "; LET d =create edge Test from $a to $b  \n"
+                  + "; COMMIT \n"
+                  + "; RETURN $c")
           .close();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
@@ -133,14 +153,22 @@ public class GraphTransactionOnBatchTest {
     try {
       db.execute(
               "sql",
-              "BEGIN \n; LET a = create vertex V set name='a' \n; LET b = create vertex V  set name='b' \n; LET c =create edge Test from $a to $b  \n; LET d =create edge Test from $a to $b \n; COMMIT \n;"
-                  + " RETURN $c")
+              "BEGIN \n"
+                  + "; LET a = create vertex V set name='a' \n"
+                  + "; LET b = create vertex V  set name='b' \n"
+                  + "; LET c =create edge Test from $a to $b  \n"
+                  + "; LET d =create edge Test from $a to $b \n"
+                  + "; COMMIT \n"
+                  + "; RETURN $c")
           .close();
 
       db.execute(
               "sql",
-              "BEGIN \n; LET c =create edge Test from (select from V  where name='a') to (select from V where name='b')  \n; COMMIT \n;"
-                  + " RETURN $c")
+              "BEGIN \n"
+                  + "; LET c =create edge Test from (select from V  where name='a') to (select from"
+                  + " V where name='b')  \n"
+                  + "; COMMIT \n"
+                  + "; RETURN $c")
           .close();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
@@ -157,14 +185,22 @@ public class GraphTransactionOnBatchTest {
     clazz.createProperty("aKey", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
     db.execute(
             "sql",
-            "BEGIN \n; LET a = create vertex V \n; LET b = create vertex V \n; LET c =create edge Test from $a to $b SET aKey = \"12345\"  \n; commit  \n;"
-                + " RETURN $c")
+            "BEGIN \n"
+                + "; LET a = create vertex V \n"
+                + "; LET b = create vertex V \n"
+                + "; LET c =create edge Test from $a to $b SET aKey = \"12345\"  \n"
+                + "; commit  \n"
+                + "; RETURN $c")
         .close();
     try {
       db.execute(
               "sql",
-              "BEGIN \n; LET a = create vertex V \n; LET b = create vertex V \n; LET c =create edge Test from $a to $b SET aKey = \"12345\"\n; COMMIT \n;"
-                  + " RETURN $c")
+              "BEGIN \n"
+                  + "; LET a = create vertex V \n"
+                  + "; LET b = create vertex V \n"
+                  + "; LET c =create edge Test from $a to $b SET aKey = \"12345\"\n"
+                  + "; COMMIT \n"
+                  + "; RETURN $c")
           .close();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
@@ -180,9 +216,13 @@ public class GraphTransactionOnBatchTest {
       db.command("create vertex V set Mid = '1' ").close();
       db.execute(
               "sql",
-              "begin \n; LET t0 = select from V where Mid='1' \n;"
-                  + "LET t1 = delete vertex V where Mid = '1' \n; LET t2 = create vertex V set Mid = '2' \n;"
-                  + "LET t4 = create edge E from $t2 to $t0 \n; commit \n; return [$t4] ")
+              "begin \n"
+                  + "; LET t0 = select from V where Mid='1' \n"
+                  + ";LET t1 = delete vertex V where Mid = '1' \n"
+                  + "; LET t2 = create vertex V set Mid = '2' \n"
+                  + ";LET t4 = create edge E from $t2 to $t0 \n"
+                  + "; commit \n"
+                  + "; return [$t4] ")
           .close();
       Assert.fail("it should go in exception because referring to a in transaction delete vertex");
     } catch (Exception ex) {
@@ -198,9 +238,13 @@ public class GraphTransactionOnBatchTest {
     try {
       db.execute(
               "sql",
-              "begin \n; LET t0 = create vertex V set Mid = '1' \n;"
-                  + "LET t1 = delete vertex V where Mid = '1' \n; LET t2 = create vertex V set Mid = '2' \n;"
-                  + "LET t4 = create edge E from $t2 to $t0 \n; commit \n; return [$t4] ")
+              "begin \n"
+                  + "; LET t0 = create vertex V set Mid = '1' \n"
+                  + ";LET t1 = delete vertex V where Mid = '1' \n"
+                  + "; LET t2 = create vertex V set Mid = '2' \n"
+                  + ";LET t4 = create edge E from $t2 to $t0 \n"
+                  + "; commit \n"
+                  + "; return [$t4] ")
           .close();
       Assert.fail("it should go in exception because referring to a in transaction delete vertex");
     } catch (Exception ex) {
@@ -220,9 +264,14 @@ public class GraphTransactionOnBatchTest {
       db.command(
               new OCommandScript(
                   "sql",
-                  "begin \n \n LET t2 = create vertex V set Mid = \"2\" \n"
-                      + "LET t5 = select from V where Mid = '123456789' \n LET t3 = create edge E from $t5 to $t2 \n"
-                      + "\n commit \n return [$t3] "))
+                  "begin \n"
+                      + " \n"
+                      + " LET t2 = create vertex V set Mid = \"2\" \n"
+                      + "LET t5 = select from V where Mid = '123456789' \n"
+                      + " LET t3 = create edge E from $t5 to $t2 \n"
+                      + "\n"
+                      + " commit \n"
+                      + " return [$t3] "))
           .execute();
       Assert.fail();
     } catch (OCommandExecutionException e) {
@@ -243,7 +292,11 @@ public class GraphTransactionOnBatchTest {
       db.command(
               new OCommandScript(
                   "sql",
-                  "begin \n Let t0 = delete vertex V where Mid='2' \n LET t1 = create edge E from $t2 to $t3 \n commit \n return $t1 "))
+                  "begin \n"
+                      + " Let t0 = delete vertex V where Mid='2' \n"
+                      + " LET t1 = create edge E from $t2 to $t3 \n"
+                      + " commit \n"
+                      + " return $t1 "))
           .execute();
       Assert.fail("it should go in exception because referring to not existing variable");
     } catch (Exception ex) {

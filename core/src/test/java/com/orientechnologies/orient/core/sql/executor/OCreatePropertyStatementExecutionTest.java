@@ -61,7 +61,8 @@ public class OCreatePropertyStatementExecutionTest extends BaseMemoryDatabase {
     db.command("CREATE class testCreatePropertyWithLinkedClass_1").close();
     db.command("CREATE class testCreatePropertyWithLinkedClass_2").close();
     db.command(
-            "CREATE property testCreatePropertyWithLinkedClass_2.division LINK testCreatePropertyWithLinkedClass_1")
+            "CREATE property testCreatePropertyWithLinkedClass_2.division LINK"
+                + " testCreatePropertyWithLinkedClass_1")
         .close();
 
     OClass companyClass =
@@ -159,7 +160,8 @@ public class OCreatePropertyStatementExecutionTest extends BaseMemoryDatabase {
   public void testCreateMandatoryPropertyWithEmbeddedType() throws Exception {
     db.command("CREATE Class testCreateMandatoryPropertyWithEmbeddedType").close();
     db.command(
-            "CREATE Property testCreateMandatoryPropertyWithEmbeddedType.officers EMBEDDEDLIST STRING (MANDATORY)")
+            "CREATE Property testCreateMandatoryPropertyWithEmbeddedType.officers EMBEDDEDLIST"
+                + " STRING (MANDATORY)")
         .close();
 
     OClass companyClass =
@@ -180,7 +182,8 @@ public class OCreatePropertyStatementExecutionTest extends BaseMemoryDatabase {
   public void testCreateUnsafePropertyWithEmbeddedType() throws Exception {
     db.command("CREATE Class testCreateUnsafePropertyWithEmbeddedType").close();
     db.command(
-            "CREATE Property testCreateUnsafePropertyWithEmbeddedType.officers EMBEDDEDLIST STRING UNSAFE")
+            "CREATE Property testCreateUnsafePropertyWithEmbeddedType.officers EMBEDDEDLIST STRING"
+                + " UNSAFE")
         .close();
 
     OClass companyClass =
@@ -197,7 +200,8 @@ public class OCreatePropertyStatementExecutionTest extends BaseMemoryDatabase {
   public void testComplexCreateProperty() throws Exception {
     db.command("CREATE Class testComplexCreateProperty").close();
     db.command(
-            "CREATE Property testComplexCreateProperty.officers EMBEDDEDLIST STRING (MANDATORY, READONLY, NOTNULL) UNSAFE")
+            "CREATE Property testComplexCreateProperty.officers EMBEDDEDLIST STRING (MANDATORY,"
+                + " READONLY, NOTNULL) UNSAFE")
         .close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testComplexCreateProperty");
@@ -216,7 +220,8 @@ public class OCreatePropertyStatementExecutionTest extends BaseMemoryDatabase {
   public void testLinkedTypeDefaultAndMinMaxUnsafeProperty() throws Exception {
     db.command("CREATE CLASS testLinkedTypeDefaultAndMinMaxUnsafeProperty").close();
     db.command(
-            "CREATE PROPERTY testLinkedTypeDefaultAndMinMaxUnsafeProperty.id EMBEDDEDLIST Integer (DEFAULT 5, MIN 1, MAX 10) UNSAFE")
+            "CREATE PROPERTY testLinkedTypeDefaultAndMinMaxUnsafeProperty.id EMBEDDEDLIST Integer"
+                + " (DEFAULT 5, MIN 1, MAX 10) UNSAFE")
         .close();
 
     OClass companyClass =
@@ -239,7 +244,8 @@ public class OCreatePropertyStatementExecutionTest extends BaseMemoryDatabase {
   public void testDefaultAndMinMaxUnsafeProperty() throws Exception {
     db.command("CREATE CLASS testDefaultAndMinMaxUnsafeProperty").close();
     db.command(
-            "CREATE PROPERTY testDefaultAndMinMaxUnsafeProperty.id INTEGER (DEFAULT 5, MIN 1, MAX 10) UNSAFE")
+            "CREATE PROPERTY testDefaultAndMinMaxUnsafeProperty.id INTEGER (DEFAULT 5, MIN 1, MAX"
+                + " 10) UNSAFE")
         .close();
 
     OClass companyClass =
@@ -279,7 +285,8 @@ public class OCreatePropertyStatementExecutionTest extends BaseMemoryDatabase {
   public void testInvalidAttributeName() throws Exception {
     db.command("CREATE CLASS OCommandExecutionException").close();
     db.command(
-            "CREATE PROPERTY OCommandExecutionException.id INTEGER (MANDATORY, INVALID, NOTNULL)  UNSAFE")
+            "CREATE PROPERTY OCommandExecutionException.id INTEGER (MANDATORY, INVALID, NOTNULL) "
+                + " UNSAFE")
         .close();
   }
 
@@ -294,7 +301,8 @@ public class OCreatePropertyStatementExecutionTest extends BaseMemoryDatabase {
     db.command("CREATE CLASS testMandatoryAsLinkedName").close();
     db.command("CREATE CLASS testMandatoryAsLinkedName_2").close();
     db.command(
-            "CREATE PROPERTY testMandatoryAsLinkedName.id EMBEDDEDLIST testMandatoryAsLinkedName_2 UNSAFE")
+            "CREATE PROPERTY testMandatoryAsLinkedName.id EMBEDDEDLIST testMandatoryAsLinkedName_2"
+                + " UNSAFE")
         .close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testMandatoryAsLinkedName");

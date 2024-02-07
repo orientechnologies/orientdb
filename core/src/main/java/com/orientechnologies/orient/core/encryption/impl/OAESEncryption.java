@@ -43,7 +43,8 @@ public class OAESEncryption extends OAbstractEncryption {
 
     if (iOptions == null)
       throw new OSecurityException(
-          "AES encryption has been selected, but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '"
+          "AES encryption has been selected, but no key was found. Please configure it by passing"
+              + " the key as property at database create/open. The property key is: '"
               + OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey()
               + "'");
 
@@ -55,7 +56,8 @@ public class OAESEncryption extends OAbstractEncryption {
     } catch (Exception e) {
       throw OException.wrapException(
           new OInvalidStorageEncryptionKeyException(
-              "Cannot initialize AES encryption with current key. Assure the key is a BASE64 - 128 oe 256 bits long"),
+              "Cannot initialize AES encryption with current key. Assure the key is a BASE64 - 128"
+                  + " oe 256 bits long"),
           e);
     }
 

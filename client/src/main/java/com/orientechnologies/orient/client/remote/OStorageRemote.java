@@ -460,7 +460,8 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
     OStorageRemoteSession session = getCurrentSession();
     if (session.commandExecuting)
       throw new ODatabaseException(
-          "Cannot execute the request because an asynchronous operation is in progress. Please use a different connection");
+          "Cannot execute the request because an asynchronous operation is in progress. Please use"
+              + " a different connection");
 
     String serverUrl = null;
     do {
@@ -654,12 +655,14 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
 
   public void create(OContextConfiguration contextConfiguration) {
     throw new UnsupportedOperationException(
-        "Cannot create a database in a remote server. Please use the console or the OServerAdmin class.");
+        "Cannot create a database in a remote server. Please use the console or the OServerAdmin"
+            + " class.");
   }
 
   public boolean exists() {
     throw new UnsupportedOperationException(
-        "Cannot check the existence of a database in a remote server. Please use the console or the OServerAdmin class.");
+        "Cannot check the existence of a database in a remote server. Please use the console or the"
+            + " OServerAdmin class.");
   }
 
   public void close(final boolean iForce) {
@@ -752,7 +755,8 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
 
   public void delete() {
     throw new UnsupportedOperationException(
-        "Cannot delete a database in a remote server. Please use the console or the OServerAdmin class.");
+        "Cannot delete a database in a remote server. Please use the console or the OServerAdmin"
+            + " class.");
   }
 
   public Set<String> getClusterNames() {
@@ -976,7 +980,8 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       int bufferSize)
       throws IOException {
     throw new UnsupportedOperationException(
-        "backup is not supported against remote storage. Open the database with plocal or use the incremental backup in the Enterprise Edition");
+        "backup is not supported against remote storage. Open the database with plocal or use the"
+            + " incremental backup in the Enterprise Edition");
   }
 
   public void restore(
@@ -986,7 +991,8 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       final OCommandOutputListener iListener)
       throws IOException {
     throw new UnsupportedOperationException(
-        "restore is not supported against remote storage. Open the database with plocal or use Enterprise Edition");
+        "restore is not supported against remote storage. Open the database with plocal or use"
+            + " Enterprise Edition");
   }
 
   public OContextConfiguration getClientConfiguration() {
@@ -2333,7 +2339,8 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       OLogManager.instance()
           .warn(
               this,
-              "Cannot find a valid session for subscribe for event to host '%s' forward the subscribe for the next session open ",
+              "Cannot find a valid session for subscribe for event to host '%s' forward the"
+                  + " subscribe for the next session open ",
               host);
       OStorageRemotePushThread old;
       stateLock.writeLock().lock();

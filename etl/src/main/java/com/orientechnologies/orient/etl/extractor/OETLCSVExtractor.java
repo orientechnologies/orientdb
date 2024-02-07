@@ -61,19 +61,25 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
         .fromJSON(
             "{parameters:["
                 + getCommonConfigurationParameters()
-                + ",{separator:{optional:true,description:'Column separator'}},"
-                + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
-                + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
-                + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
-                + "{dateFormat:{optional:true,description:'Date format used to parde dates. Default is yyyy-MM-dd'}},"
-                + "{dateTimeFormat:{optional:true,description:'DateTime format used to parde dates. Default is yyyy-mm-dd HH:MM'}},"
-                + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
-                + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
-                + "{ignoreMissingColumns:{optional:true,description:'Ignore empty columns',type:'boolean'}},"
-                + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
-                + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}},"
-                + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): Default, Excel, MySQL, RFC4180, TDF',type:'String'}}"
-                + "],input:['String'],output:'ODocument'}");
+                + ",{separator:{optional:true,description:'Column"
+                + " separator'}},{columnsOnFirstLine:{optional:true,description:'Columns are"
+                + " described in the first line'}},{columns:{optional:true,description:'Columns"
+                + " array containing names, and optionally type after : (e.g.: name:String,"
+                + " age:int'}},{nullValue:{optional:true,description:'Value to consider as"
+                + " NULL_STRING. Default is NULL'}},{dateFormat:{optional:true,description:'Date"
+                + " format used to parde dates. Default is"
+                + " yyyy-MM-dd'}},{dateTimeFormat:{optional:true,description:'DateTime format used"
+                + " to parde dates. Default is yyyy-mm-dd"
+                + " HH:MM'}},{quote:{optional:true,description:'String character delimiter. Use"
+                + " \"\" to do not use any"
+                + " delimitator'}},{ignoreEmptyLines:{optional:true,description:'Ignore empty"
+                + " lines',type:'boolean'}},{ignoreMissingColumns:{optional:true,description:'Ignore"
+                + " empty columns',type:'boolean'}},{skipFrom:{optional:true,description:'Line"
+                + " number where start to"
+                + " skip',type:'int'}},{skipTo:{optional:true,description:'Line number where skip"
+                + " ends',type:'int'}},{predefinedFormat:{optional:true,description:'Name of"
+                + " standard csv format (from Apache commons-csv): Default, Excel, MySQL, RFC4180,"
+                + " TDF',type:'String'}}],input:['String'],output:'ODocument'}");
   }
 
   @Override

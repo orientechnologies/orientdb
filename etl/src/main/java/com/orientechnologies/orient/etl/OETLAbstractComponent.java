@@ -77,9 +77,12 @@ public abstract class OETLAbstractComponent implements OETLComponent {
   }
 
   protected String getCommonConfigurationParameters() {
-    return "{log:{optional:true,description:'Can be any of [NONE, ERROR, INFO, DEBUG]. Default is INFO'}},"
-        + "{if:{optional:true,description:'Conditional expression. If true, the block is executed, otherwise is skipped'}},"
-        + "{output:{optional:true,description:'Variable name to store the transformer output. If null, the output will be passed to the pipeline as input for the next component.'}}";
+    return "{log:{optional:true,description:'Can be any of [NONE, ERROR, INFO, DEBUG]. Default is"
+        + " INFO'}},{if:{optional:true,description:'Conditional expression. If true, the"
+        + " block is executed, otherwise is"
+        + " skipped'}},{output:{optional:true,description:'Variable name to store the"
+        + " transformer output. If null, the output will be passed to the pipeline as input"
+        + " for the next component.'}}";
   }
 
   @Override

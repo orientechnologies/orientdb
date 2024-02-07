@@ -44,9 +44,8 @@ public class ODemoDbFromDocumentationProfileIT extends OIntegrationTestTemplate 
 
     OResultSet resultSet =
         db.query(
-            "SELECT  @rid as Profile_RID, Name, Surname, (both('HasFriend').size()) AS FriendsNumber "
-                + "FROM `Profiles` "
-                + "ORDER BY FriendsNumber DESC LIMIT 3");
+            "SELECT  @rid as Profile_RID, Name, Surname, (both('HasFriend').size()) AS"
+                + " FriendsNumber FROM `Profiles` ORDER BY FriendsNumber DESC LIMIT 3");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
     assertThat(results).hasSize(3);

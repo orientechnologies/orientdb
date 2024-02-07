@@ -260,7 +260,8 @@ public class OSequenceTest {
     db.command("CREATE CLASS Person EXTENDS V");
     db.command("CREATE SEQUENCE personIdSequence TYPE ORDERED;");
     db.command(
-        "CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");");
+        "CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default"
+            + " \"sequence('personIdSequence').next()\");");
     db.command("CREATE INDEX Person.id ON Person (id) UNIQUE");
 
     for (int i = 0; i < 10; i++) {
@@ -278,7 +279,8 @@ public class OSequenceTest {
     db.command("CREATE CLASS Person EXTENDS V");
     db.command("CREATE SEQUENCE personIdSequence TYPE ORDERED;");
     db.command(
-        "CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");");
+        "CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default"
+            + " \"sequence('personIdSequence').next()\");");
     db.command("CREATE INDEX Person.id ON Person (id) UNIQUE");
 
     db.begin();

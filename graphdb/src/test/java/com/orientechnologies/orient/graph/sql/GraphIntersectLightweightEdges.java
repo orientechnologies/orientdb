@@ -106,7 +106,8 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
         graph
             .command(
                 new OCommandSQL(
-                    "select expand($c) let $a=(select from V limit 20), $b=(select from V skip 10 limit 10), $c=intersect( $a, $b )"))
+                    "select expand($c) let $a=(select from V limit 20), $b=(select from V skip 10"
+                        + " limit 10), $c=intersect( $a, $b )"))
             .execute();
 
     Assert.assertTrue(result.iterator().hasNext());

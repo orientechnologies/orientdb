@@ -262,7 +262,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       throw new IllegalArgumentException(
           "Cluster "
               + request.getClusterId()
-              + " does not exist anymore. Refresh the db structure or just reconnect to the database");
+              + " does not exist anymore. Refresh the db structure or just reconnect to the"
+              + " database");
 
     boolean result = connection.getDatabase().dropCluster(clusterName);
     return new ODropClusterResponse(result);
@@ -1006,7 +1007,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OBinaryProtocolHelper.checkProtocolVersion(this, request.getProtocolVersion());
     if (request.getProtocolVersion() > 36)
       throw new OConfigurationException(
-          "You can use connect as first operation only for protocol  < 37 please use handshake for protocol >= 37");
+          "You can use connect as first operation only for protocol  < 37 please use handshake for"
+              + " protocol >= 37");
     connection.getData().driverName = request.getDriverName();
     connection.getData().driverVersion = request.getDriverVersion();
     connection.getData().protocolVersion = request.getProtocolVersion();
@@ -1022,9 +1024,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       OLogManager.instance()
           .warn(
               this,
-              "Session open with token flag false is not supported anymore please use token based sessions");
+              "Session open with token flag false is not supported anymore please use token based"
+                  + " sessions");
       throw new OConfigurationException(
-          "Session open with token flag false is not supported anymore please use token based sessions");
+          "Session open with token flag false is not supported anymore please use token based"
+              + " sessions");
     }
 
     connection.setServerUser(
@@ -1082,7 +1086,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OBinaryProtocolHelper.checkProtocolVersion(this, request.getProtocolVersion());
     if (request.getProtocolVersion() > 36)
       throw new OConfigurationException(
-          "You can use open as first operation only for protocol  < 37 please use handshake for protocol >= 37");
+          "You can use open as first operation only for protocol  < 37 please use handshake for"
+              + " protocol >= 37");
     connection.getData().driverName = request.getDriverName();
     connection.getData().driverVersion = request.getDriverVersion();
     connection.getData().protocolVersion = request.getProtocolVersion();
@@ -1093,9 +1098,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       OLogManager.instance()
           .warn(
               this,
-              "Session open with token flag false is not supported anymore please use token based sessions");
+              "Session open with token flag false is not supported anymore please use token based"
+                  + " sessions");
       throw new OConfigurationException(
-          "Session open with token flag false is not supported anymore please use token based sessions");
+          "Session open with token flag false is not supported anymore please use token based"
+              + " sessions");
     }
     connection.setTokenBased(request.isUseToken());
     connection.getData().supportsLegacyPushMessages = request.isSupportsPush();

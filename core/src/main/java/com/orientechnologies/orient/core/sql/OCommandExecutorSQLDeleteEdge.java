@@ -381,7 +381,8 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
 
   @Override
   public String getSyntax() {
-    return "DELETE EDGE <rid>|FROM <rid>|TO <rid>|<[<class>] [WHERE <conditions>]> [BATCH <batch-size>]";
+    return "DELETE EDGE <rid>|FROM <rid>|TO <rid>|<[<class>] [WHERE <conditions>]> [BATCH"
+        + " <batch-size>]";
   }
 
   @Override

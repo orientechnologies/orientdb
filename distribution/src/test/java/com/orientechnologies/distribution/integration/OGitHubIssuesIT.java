@@ -73,37 +73,43 @@ public class OGitHubIssuesIT extends OSingleOrientDBServerWithDatabasePerTestMet
 
     results =
         db.query(
-            "SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND `Group` = '1' AND Name='abc'");
+            "SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND `Group` = '1' AND"
+                + " Name='abc'");
     assertThat(results).hasSize(1);
     results.close();
 
     results =
         db.query(
-            "SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = '1'");
+            "SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` ="
+                + " '1'");
     assertThat(results).hasSize(1);
     results.close();
 
     results =
         db.query(
-            "SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = '1' AND Name='abc' AND Version='1'");
+            "SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = '1' AND Name='abc' AND"
+                + " Version='1'");
     assertThat(results).hasSize(1);
     results.close();
 
     results =
         db.query(
-            "SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = '1' AND Version='1' AND Name='abc'");
+            "SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = '1' AND Version='1' AND"
+                + " Name='abc'");
     assertThat(results).hasSize(1);
     results.close();
 
     results =
         db.query(
-            "SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = '1'");
+            "SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` ="
+                + " '1'");
     assertThat(results).hasSize(1);
     results.close();
 
     results =
         db.query(
-            "SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND `Group` = '1' AND Version='1'");
+            "SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND `Group` = '1' AND"
+                + " Version='1'");
     assertThat(results).hasSize(1);
     results.close();
 
@@ -138,45 +144,52 @@ public class OGitHubIssuesIT extends OSingleOrientDBServerWithDatabasePerTestMet
 
     results =
         db.query(
-            "SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND `Group` = '1' AND Name='abc'");
+            "SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND `Group` = '1' AND"
+                + " Name='abc'");
     assertThat(results).hasSize(8);
     results.close();
 
     results =
         db.query(
-            "SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = '1'");
+            "SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group`"
+                + " = '1'");
     assertThat(results).hasSize(8);
     results.close();
 
     results =
         db.query(
-            "SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = '1' AND Name='abc' AND Version='1'");
+            "SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = '1' AND Name='abc' AND"
+                + " Version='1'");
 
     assertThat(results).hasSize(8);
     results.close();
 
     results =
         db.query(
-            "SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = '1' AND Version='1' AND Name='abc'");
+            "SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = '1' AND Version='1' AND"
+                + " Name='abc'");
     assertThat(results).hasSize(8);
     results.close();
 
     results =
         db.query(
-            "SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = '1'");
+            "SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group`"
+                + " = '1'");
     assertThat(results).hasSize(8);
     results.close();
 
     results =
         db.query(
-            "SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND `Group` = '1' AND Version='1'");
+            "SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND `Group` = '1' AND"
+                + " Version='1'");
     assertThat(results).hasSize(8);
     results.close();
 
     // test that Group = 1 (integer) is correctly converted to String
     results =
         db.query(
-            "SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND `Group` = 1 AND Version='1'");
+            "SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND `Group` = 1 AND"
+                + " Version='1'");
     assertThat(results).hasSize(8);
     results.close();
   }
@@ -195,17 +208,22 @@ public class OGitHubIssuesIT extends OSingleOrientDBServerWithDatabasePerTestMet
     db.command("INSERT INTO t7249Profiles SET Name = 'Enrico';");
 
     db.command(
-        "CREATE EDGE t7249HasFriend FROM (SELECT FROM t7249Profiles WHERE Name='Santo') TO (SELECT FROM t7249Profiles WHERE Name='Luca');");
+        "CREATE EDGE t7249HasFriend FROM (SELECT FROM t7249Profiles WHERE Name='Santo') TO (SELECT"
+            + " FROM t7249Profiles WHERE Name='Luca');");
     db.command(
-        "CREATE EDGE t7249HasFriend FROM (SELECT FROM t7249Profiles WHERE Name='Santo') TO (SELECT FROM t7249Profiles WHERE Name='Luigi');");
+        "CREATE EDGE t7249HasFriend FROM (SELECT FROM t7249Profiles WHERE Name='Santo') TO (SELECT"
+            + " FROM t7249Profiles WHERE Name='Luigi');");
     db.command(
-        "CREATE EDGE t7249HasFriend FROM (SELECT FROM t7249Profiles WHERE Name='Santo') TO (SELECT FROM t7249Profiles WHERE Name='Colin');");
+        "CREATE EDGE t7249HasFriend FROM (SELECT FROM t7249Profiles WHERE Name='Santo') TO (SELECT"
+            + " FROM t7249Profiles WHERE Name='Colin');");
     db.command(
-        "CREATE EDGE t7249HasFriend FROM (SELECT FROM t7249Profiles WHERE Name='Enrico') TO (SELECT FROM t7249Profiles WHERE Name='Santo');");
+        "CREATE EDGE t7249HasFriend FROM (SELECT FROM t7249Profiles WHERE Name='Enrico') TO (SELECT"
+            + " FROM t7249Profiles WHERE Name='Santo');");
 
     OResultSet rs =
         db.query(
-            "SELECT in('t7249HasFriend').size() as InFriendsNumber FROM t7249Profiles WHERE Name='Santo'");
+            "SELECT in('t7249HasFriend').size() as InFriendsNumber FROM t7249Profiles WHERE"
+                + " Name='Santo'");
     List<OResult> results = rs.stream().collect(Collectors.toList());
     rs.close();
 
@@ -214,7 +232,8 @@ public class OGitHubIssuesIT extends OSingleOrientDBServerWithDatabasePerTestMet
 
     rs =
         db.query(
-            "SELECT out('t7249HasFriend').size() as OutFriendsNumber FROM t7249Profiles WHERE Name='Santo'");
+            "SELECT out('t7249HasFriend').size() as OutFriendsNumber FROM t7249Profiles WHERE"
+                + " Name='Santo'");
     results = rs.stream().collect(Collectors.toList());
     rs.close();
 
@@ -223,7 +242,8 @@ public class OGitHubIssuesIT extends OSingleOrientDBServerWithDatabasePerTestMet
 
     rs =
         db.query(
-            "SELECT both('t7249HasFriend').size() as TotalFriendsNumber FROM t7249Profiles WHERE Name='Santo'");
+            "SELECT both('t7249HasFriend').size() as TotalFriendsNumber FROM t7249Profiles WHERE"
+                + " Name='Santo'");
     results = rs.stream().collect(Collectors.toList());
     rs.close();
 
@@ -250,19 +270,24 @@ public class OGitHubIssuesIT extends OSingleOrientDBServerWithDatabasePerTestMet
     db.command("INSERT INTO t7265Customers SET OrderedId = 1, Phone = '+1400844724';");
     db.command("INSERT INTO t7265Hotels SET Id = 1, Name = 'Best Western Ascott', Type = 'hotel';");
     db.command(
-        "INSERT INTO t7265Restaurants SET Id = 1, Name = 'La Brasserie de Milan', Type = 'restaurant';");
+        "INSERT INTO t7265Restaurants SET Id = 1, Name = 'La Brasserie de Milan', Type ="
+            + " 'restaurant';");
     db.command("INSERT INTO t7265Countries SET Id = 1, Code = 'AD', Name = 'Andorra';");
 
     db.command(
-        "CREATE EDGE t7265HasEaten FROM (SELECT FROM t7265Customers WHERE OrderedId=1) TO (SELECT FROM t7265Restaurants WHERE Id=1);");
+        "CREATE EDGE t7265HasEaten FROM (SELECT FROM t7265Customers WHERE OrderedId=1) TO (SELECT"
+            + " FROM t7265Restaurants WHERE Id=1);");
     db.command(
-        "CREATE EDGE t7265HasStayed FROM (SELECT FROM t7265Customers WHERE OrderedId=1) TO (SELECT FROM t7265Hotels WHERE Id=1);");
+        "CREATE EDGE t7265HasStayed FROM (SELECT FROM t7265Customers WHERE OrderedId=1) TO (SELECT"
+            + " FROM t7265Hotels WHERE Id=1);");
     db.command(
-        "CREATE EDGE t7265IsFromCountry FROM (SELECT FROM t7265Customers WHERE OrderedId=1) TO (SELECT FROM t7265Countries WHERE Id=1);");
+        "CREATE EDGE t7265IsFromCountry FROM (SELECT FROM t7265Customers WHERE OrderedId=1) TO"
+            + " (SELECT FROM t7265Countries WHERE Id=1);");
 
     OResultSet results =
         db.query(
-            "MATCH {class: t7265Customers, as: customer, where: (OrderedId=1)}--{Class: t7265Services, as: service} RETURN service.Name");
+            "MATCH {class: t7265Customers, as: customer, where: (OrderedId=1)}--{Class:"
+                + " t7265Services, as: service} RETURN service.Name");
 
     assertThat(results).hasSize(2);
     results.close();

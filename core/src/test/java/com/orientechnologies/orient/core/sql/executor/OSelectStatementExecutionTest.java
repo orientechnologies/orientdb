@@ -73,7 +73,8 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
 
     final OResultSet result =
         db.query(
-            "select address, count(*) as occurrencies from InputTx where address is not null group by address limit 10");
+            "select address, count(*) as occurrencies from InputTx where address is not null group"
+                + " by address limit 10");
     while (result.hasNext()) {
       final OResult row = result.next();
       Assert.assertNotNull(row.getProperty("address")); // <== FALSE!
@@ -1312,7 +1313,8 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
         db.query(
             "select from "
                 + className
-                + " where foo < 100 and ((name = 'name2' and foo < 20) or surname = 'surname3') and ( 4<5 and foo < 50)");
+                + " where foo < 100 and ((name = 'name2' and foo < 20) or surname = 'surname3') and"
+                + " ( 4<5 and foo < 50)");
     printExecutionPlan(result);
 
     Assert.assertTrue(result.hasNext());
@@ -1618,7 +1620,8 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
         db.query(
             "select from "
                 + className
-                + " where name > 'name6' and name = 'name3' and surname > 'surname2' and surname < 'surname5' ");
+                + " where name > 'name6' and name = 'name3' and surname > 'surname2' and surname <"
+                + " 'surname5' ");
     printExecutionPlan(result);
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
@@ -4449,12 +4452,14 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     db.command(
             "insert into "
                 + classNamePrefix
-                + "Report content {format:\"PDF\", id:\"rep1\", label:\"Report 1\", source:\"Report1.src\"};")
+                + "Report content {format:\"PDF\", id:\"rep1\", label:\"Report 1\","
+                + " source:\"Report1.src\"};")
         .close();
     db.command(
             "insert into "
                 + classNamePrefix
-                + "Report content {format:\"CSV\", id:\"rep2\", label:\"Report 2\", source:\"Report2.src\"};")
+                + "Report content {format:\"CSV\", id:\"rep2\", label:\"Report 2\","
+                + " source:\"Report2.src\"};")
         .close();
     db.command(
             "create edge "

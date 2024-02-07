@@ -674,7 +674,8 @@ public class AsyncReadCacheTestIT {
             eta = (1 - Math.pow(2.0 / items, 1 - theta)) / (1 - zeta2theta / zetan);
           } else if ((itemcount < countforzeta) && (allowitemcountdecrease)) {
             System.err.println(
-                "WARNING: Recomputing Zipfian distribtion. This is slow and should be avoided. (itemcount="
+                "WARNING: Recomputing Zipfian distribtion. This is slow and should be avoided."
+                    + " (itemcount="
                     + itemcount
                     + " countforzeta="
                     + countforzeta

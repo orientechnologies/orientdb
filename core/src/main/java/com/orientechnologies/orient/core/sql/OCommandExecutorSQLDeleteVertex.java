@@ -247,7 +247,8 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
   @Override
   public String getSyntax() {
-    return "DELETE VERTEX <rid>|<class>|FROM <query> [WHERE <conditions>] [LIMIT <max-records>] [RETURN <COUNT|BEFORE>]> [BATCH <batch-size>]";
+    return "DELETE VERTEX <rid>|<class>|FROM <query> [WHERE <conditions>] [LIMIT <max-records>]"
+        + " [RETURN <COUNT|BEFORE>]> [BATCH <batch-size>]";
   }
 
   @Override

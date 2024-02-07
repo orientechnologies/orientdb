@@ -192,7 +192,8 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware
 
   @Override
   public String getSyntax() {
-    return "MOVE VERTEX <source> TO <destination> [SET [<field>=<value>]* [,]] [MERGE <JSON>] [BATCH <batch-size>]";
+    return "MOVE VERTEX <source> TO <destination> [SET [<field>=<value>]* [,]] [MERGE <JSON>]"
+        + " [BATCH <batch-size>]";
   }
 
   private OVertex toVertex(OIdentifiable item) {

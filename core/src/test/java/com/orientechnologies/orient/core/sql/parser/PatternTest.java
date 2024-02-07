@@ -59,7 +59,8 @@ public class PatternTest extends OParserTestAbstract {
   @Test
   public void testComplexCartesianProduct() {
     String query =
-        "MATCH {as:a, class:Person}-->{as:b}, {as:c, class:Person}-->{as:d}-->{as:e}, {as:d, class:Foo}-->{as:f} return a, b";
+        "MATCH {as:a, class:Person}-->{as:b}, {as:c, class:Person}-->{as:d}-->{as:e}, {as:d,"
+            + " class:Foo}-->{as:f} return a, b";
     OrientSql parser = getParserFor(query);
     try {
       OMatchStatement stm = (OMatchStatement) parser.parse();

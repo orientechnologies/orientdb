@@ -70,7 +70,8 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
     db.command("create vertex User set name = 'foo1'").close();
     db.command("create vertex User set name = 'foo2'").close();
     db.command(
-            "create edge E from (select from user where name = 'foo1') to (select from user where name = 'foo2')")
+            "create edge E from (select from user where name = 'foo1') to (select from user where"
+                + " name = 'foo2')")
         .close();
     try (OResultSet edges = db.query("select from e limit 1")) {
       db.command("delete vertex [" + edges.next().getIdentity().get() + "]").close();

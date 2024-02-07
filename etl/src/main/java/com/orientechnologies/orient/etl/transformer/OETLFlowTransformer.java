@@ -33,9 +33,8 @@ public class OETLFlowTransformer extends OETLAbstractTransformer {
         .fromJSON(
             "{parameters:["
                 + getCommonConfigurationParameters()
-                + ","
-                + "{operation:{optional:false,description:'Flow operation between: skip and halt'}}],"
-                + "input:['Object'],output:'Object'}");
+                + ",{operation:{optional:false,description:'Flow operation between: skip and"
+                + " halt'}}],input:['Object'],output:'Object'}");
   }
 
   @Override

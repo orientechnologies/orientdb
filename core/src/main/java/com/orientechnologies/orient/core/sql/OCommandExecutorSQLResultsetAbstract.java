@@ -348,7 +348,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     if (limit == 0)
       throwParsingException(
-          "Invalid LIMIT value setted to ZERO. Use -1 to ignore the limit or use a positive number. Example: LIMIT 10");
+          "Invalid LIMIT value setted to ZERO. Use -1 to ignore the limit or use a positive number."
+              + " Example: LIMIT 10");
 
     return limit;
   }
