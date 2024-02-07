@@ -18,7 +18,9 @@ package com.orientechnologies.orient.core.iterator.object;
 
 import java.util.Iterator;
 
-/** @author Luca Molino (molino.luca--at--gmail.com) */
+/**
+ * @author Luca Molino (molino.luca--at--gmail.com)
+ */
 public interface OObjectIteratorClassInterface<T> extends Iterator<T>, Iterable<T> {
   OObjectIteratorClassInterface<T> setFetchPlan(String fetchPlan);
 }

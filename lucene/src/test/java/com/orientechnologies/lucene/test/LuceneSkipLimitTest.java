@@ -41,7 +41,8 @@ public class LuceneSkipLimitTest extends BaseLuceneTest {
 
     ORID doc = docs.get(9);
     docs =
-        db.query("select * from Song where [title] LUCENE \"(title:man)\" skip 10 limit 10")
+        db
+            .query("select * from Song where [title] LUCENE \"(title:man)\" skip 10 limit 10")
             .stream()
             .map((r) -> r.getIdentity().get())
             .collect(Collectors.toList());
@@ -51,7 +52,8 @@ public class LuceneSkipLimitTest extends BaseLuceneTest {
     Assert.assertEquals(docs.contains(doc), false);
 
     docs =
-        db.query("select * from Song where [title] LUCENE \"(title:man)\" skip 14 limit 10")
+        db
+            .query("select * from Song where [title] LUCENE \"(title:man)\" skip 14 limit 10")
             .stream()
             .map((r) -> r.getIdentity().get())
             .collect(Collectors.toList());

@@ -428,8 +428,10 @@ public class JSONTest extends DocumentDBBaseTest {
           .registerEntityClasses("com.orientechnologies.orient.test.domain.base");
 
       List<ODocument> result =
-          database.getUnderlying()
-              .command("select * from Profile where name = 'Barack' and surname = 'Obama'").stream()
+          database
+              .getUnderlying()
+              .command("select * from Profile where name = 'Barack' and surname = 'Obama'")
+              .stream()
               .map((e) -> (ODocument) e.toElement())
               .collect(Collectors.toList());
 
@@ -448,7 +450,8 @@ public class JSONTest extends DocumentDBBaseTest {
   @Test
   public void testToJSONWithNoLazyLoadAndClosedDatabase() {
     List<ODocument> result =
-        database.command("select * from Profile where name = 'Barack' and surname = 'Obama'")
+        database
+            .command("select * from Profile where name = 'Barack' and surname = 'Obama'")
             .stream()
             .map((e) -> (ODocument) e.toElement())
             .collect(Collectors.toList());
