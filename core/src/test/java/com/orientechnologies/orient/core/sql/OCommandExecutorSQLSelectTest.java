@@ -439,7 +439,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
             .collect(Collectors.toList());
 
     List<OResult> qResult8 =
-        db.command("select * from foo where (((name ='a' and bar = 1000)) or (name = 'b'))")
+        db
+            .command("select * from foo where (((name ='a' and bar = 1000)) or (name = 'b'))")
             .stream()
             .collect(Collectors.toList());
 
@@ -1576,14 +1577,16 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command("insert into testCountOnSubclassIndexes_sub2 set name = 'e', foo = false").close();
 
     List<OResult> results =
-        db.query("SELECT count(*) as count from testCountOnSubclassIndexes_sub1 where foo = true")
+        db
+            .query("SELECT count(*) as count from testCountOnSubclassIndexes_sub1 where foo = true")
             .stream()
             .collect(Collectors.toList());
     assertEquals(results.size(), 1);
     assertEquals(results.get(0).getProperty("count"), (Object) 1L);
 
     results =
-        db.query("SELECT count(*) as count from testCountOnSubclassIndexes_sub2 where foo = true")
+        db
+            .query("SELECT count(*) as count from testCountOnSubclassIndexes_sub2 where foo = true")
             .stream()
             .collect(Collectors.toList());
     assertEquals(results.size(), 1);

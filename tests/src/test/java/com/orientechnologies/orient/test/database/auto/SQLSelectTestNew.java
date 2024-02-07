@@ -1982,7 +1982,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     Assert.assertEquals(result.size(), 0);
 
     result =
-        database.query("select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1")
+        database
+            .query("select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1")
             .stream()
             .map((e) -> e.toElement())
             .collect(Collectors.toList());

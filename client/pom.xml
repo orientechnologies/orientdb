@@ -38,6 +38,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.rootdir>${project.basedir}/../</project.rootdir>
+        <!--This property is updated automatically and is needed to make build reproducible-->
+        <project.build.outputTimestamp>2023-01-01T00:00:00Z</project.build.outputTimestamp>
     </properties>
 
     <dependencies>

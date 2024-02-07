@@ -36,6 +36,8 @@
         <lucene.version>7.7.3</lucene.version> <!-- latest version 8.5.1+ -->
         <!--<geotools.version>13.2</geotools.version>-->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!--This property is updated automatically and is needed to make build reproducible-->
+        <project.build.outputTimestamp>2023-01-01T00:00:00Z</project.build.outputTimestamp>
     </properties>
 
     <dependencies>

@@ -548,7 +548,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     database.command("create edge from " + vOneId + " to " + vTwoId).close();
 
     List<OResult> result =
-        database.query("select sum(outE().size(), inE().size()) as sum from UpdateVertexContent")
+        database
+            .query("select sum(outE().size(), inE().size()) as sum from UpdateVertexContent")
             .stream()
             .collect(Collectors.toList());
 
@@ -566,7 +567,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
         .close();
 
     result =
-        database.query("select sum(outE().size(), inE().size()) as sum from UpdateVertexContent")
+        database
+            .query("select sum(outE().size(), inE().size()) as sum from UpdateVertexContent")
             .stream()
             .collect(Collectors.toList());
 

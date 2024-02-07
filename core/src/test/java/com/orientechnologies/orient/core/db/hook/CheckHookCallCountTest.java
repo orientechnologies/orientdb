@@ -34,7 +34,8 @@ public class CheckHookCallCountTest extends BaseMemoryDatabase {
     first.field(FIELD_STATUS, STATUS);
     db.save(first);
 
-    db.query("SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_STATUS + " = '" + STATUS + "'")
+    db
+        .query("SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_STATUS + " = '" + STATUS + "'")
         .stream()
         .count();
     //      assertEquals(hook.readCount, 1); //TODO
