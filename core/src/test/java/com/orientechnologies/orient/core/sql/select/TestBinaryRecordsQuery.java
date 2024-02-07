@@ -7,9 +7,7 @@ import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,28 +24,26 @@ public class TestBinaryRecordsQuery extends BaseMemoryDatabase {
   public void testSelectBinary() {
     db.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
 
-    List<ORecord> res = db.query(new OSQLSynchQuery<Object>("select from cluster:BlobCluster"));
+    OResultSet res = db.query("select from cluster:BlobCluster");
 
-    assertEquals(1, res.size());
+    assertEquals(1, res.stream().count());
   }
 
   @Test
   public void testSelectRidBinary() {
     ORecord rec = db.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
 
-    List<ORecord> res =
-        db.query(new OSQLSynchQuery<Object>("select @rid from cluster:BlobCluster"));
-    assertEquals(1, res.size());
+    OResultSet res = db.query("select @rid from cluster:BlobCluster");
+    assertEquals(1, res.stream().count());
   }
 
   @Test
   public void testDeleteBinary() {
     ORecord rec = db.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
 
-    Integer res =
-        db.command(new OCommandSQL("delete from (select from cluster:BlobCluster)")).execute();
+    OResultSet res = db.command("delete from (select from cluster:BlobCluster)");
     db.getLocalCache().clear();
-    assertEquals(1, res.intValue());
+    assertEquals(1, (long) res.next().getProperty("count"));
     rec = db.load(rec.getIdentity());
     assertNull(rec);
   }
@@ -61,13 +57,10 @@ public class TestBinaryRecordsQuery extends BaseMemoryDatabase {
     doc.field("ref", rec);
     db.save(doc);
 
-    Integer res =
-        db.command(
-                new OCommandSQL(
-                    "delete from cluster:BlobCluster where @rid in (select ref from RecordPointer)"))
-            .execute();
+    OResultSet res =
+        db.command("delete from cluster:BlobCluster where @rid in (select ref from RecordPointer)");
     db.getLocalCache().clear();
-    assertEquals(1, res.intValue());
+    assertEquals(1, (long) res.next().getProperty("count"));
     rec = db.load(rec.getIdentity());
     assertNull(rec);
   }
@@ -86,11 +79,9 @@ public class TestBinaryRecordsQuery extends BaseMemoryDatabase {
     doc1.field("ref", rec1);
     db.save(doc1);
 
-    Integer res =
-        db.command(new OCommandSQL("delete from (select expand(ref) from RecordPointer)"))
-            .execute();
+    OResultSet res = db.command("delete from (select expand(ref) from RecordPointer)");
     db.getLocalCache().clear();
-    assertEquals(2, res.intValue());
+    assertEquals(2, (long) res.next().getProperty("count"));
     rec = db.load(rec.getIdentity());
     assertNull(rec);
     rec = db.load(rec1.getIdentity());

@@ -17,12 +17,14 @@ package com.orientechnologies.security.auditing;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.List;
 
 public class OSystemDBImporter extends Thread {
@@ -88,7 +90,7 @@ public class OSystemDBImporter extends Thread {
 
   private void importDB(final String dbName) {
     ODatabaseDocument db = null;
-    ODatabaseInternal sysdb = null;
+    ODatabaseDocumentInternal sysdb = null;
 
     try {
       db = context.openNoAuthorization(dbName);
@@ -114,44 +116,46 @@ public class OSystemDBImporter extends Thread {
       while (isRunning) {
         db.activateOnCurrentThread();
         // Retrieve the auditing log records from the local database.
-        List<ODocument> result = db.command(new OCommandSQL(sql)).execute(limit);
-
-        if (result.size() == 0) break;
+        OResultSet result = db.query(sql, limit);
 
         int count = 0;
 
         String lastRID = null;
 
-        for (ODocument doc : result) {
+        while (result.hasNext()) {
+          OResult doc = result.next();
           try {
-            ODocument copy = new ODocument();
+            OElement copy = new ODocument();
 
-            if (doc.containsField("date")) copy.field("date", doc.field("date"), OType.DATETIME);
+            if (doc.hasProperty("date"))
+              copy.setProperty("date", doc.getProperty("date"), OType.DATETIME);
 
-            if (doc.containsField("operation"))
-              copy.field("operation", doc.field("operation"), OType.BYTE);
+            if (doc.hasProperty("operation"))
+              copy.setProperty("operation", doc.getProperty("operation"), OType.BYTE);
 
-            if (doc.containsField("record")) copy.field("record", doc.field("record"), OType.LINK);
+            if (doc.hasProperty("record"))
+              copy.setProperty("record", doc.getProperty("record"), OType.LINK);
 
-            if (doc.containsField("changes"))
-              copy.field("changes", doc.field("changes"), OType.EMBEDDED);
+            if (doc.hasProperty("changes"))
+              copy.setProperty("changes", doc.getProperty("changes"), OType.EMBEDDED);
 
-            if (doc.containsField("note")) copy.field("note", doc.field("note"), OType.STRING);
+            if (doc.hasProperty("note"))
+              copy.setProperty("note", doc.getProperty("note"), OType.STRING);
 
             try {
               // Convert user RID to username.
-              if (doc.containsField("user")) {
+              if (doc.hasProperty("user")) {
                 // doc.field("user") will throw an exception if the user's ORID is not found.
-                ODocument userDoc = doc.field("user");
+                ODocument userDoc = doc.getProperty("user");
                 final String username = userDoc.field("name");
 
-                if (username != null) copy.field("user", username);
+                if (username != null) copy.setProperty("user", username);
               }
             } catch (Exception userEx) {
             }
 
             // Add the database name as part of the log stored in the system db.
-            copy.field("database", dbName);
+            copy.setProperty("database", dbName);
 
             sysdb.activateOnCurrentThread();
             sysdb.save(copy, ODefaultAuditing.getClusterName(dbName));
@@ -161,7 +165,7 @@ public class OSystemDBImporter extends Thread {
             count++;
 
             db.activateOnCurrentThread();
-            db.delete(doc);
+            db.delete(doc.getIdentity().get());
           } catch (Exception ex) {
             OLogManager.instance().error(this, "importDB()", ex);
           }

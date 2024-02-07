@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -70,9 +69,8 @@ public class SQLDropClassIndexTest {
   public void testIndexDeletion() throws Exception {
     database
         .command(
-            new OCommandSQL(
-                "CREATE INDEX SQLDropClassCompositeIndex ON SQLDropClassTestClass (prop1, prop2) UNIQUE"))
-        .execute();
+            "CREATE INDEX SQLDropClassCompositeIndex ON SQLDropClassTestClass (prop1, prop2) UNIQUE")
+        .close();
     database.getMetadata().getIndexManagerInternal().reload();
 
     Assert.assertNotNull(
@@ -81,7 +79,7 @@ public class SQLDropClassIndexTest {
             .getIndexManagerInternal()
             .getIndex(database, "SQLDropClassCompositeIndex"));
 
-    database.command(new OCommandSQL("DROP CLASS SQLDropClassTestClass")).execute();
+    database.command("DROP CLASS SQLDropClassTestClass").close();
     database.getMetadata().getIndexManagerInternal().reload();
     database.getMetadata().getSchema().reload();
 

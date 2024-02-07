@@ -1,16 +1,15 @@
 package com.orientechnologies.orient.core.sql.functions;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryDatabase;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 import org.junit.Test;
 
 /**
@@ -21,105 +20,61 @@ public class OSQLFunctionConvertTest extends BaseMemoryDatabase {
   @Test
   public void testSQLConversions() {
 
-    db.command(new OCommandSQL("create class TestConversion")).execute();
+    db.command("create class TestConversion").close();
 
-    db.command(
-            new OCommandSQL(
-                "insert into TestConversion set string = 'Jay', date = sysdate(), number = 33"))
-        .execute();
+    db.command("insert into TestConversion set string = 'Jay', date = sysdate(), number = 33")
+        .close();
 
-    ODocument doc =
-        (ODocument)
-            db.query(new OSQLSynchQuery<ODocument>("select from TestConversion limit 1")).get(0);
+    ORID doc = db.query("select from TestConversion limit 1").next().getIdentity().get();
 
-    db.command(
-            new OCommandSQL("update TestConversion set selfrid = 'foo" + doc.getIdentity() + "'"))
-        .execute();
+    db.command("update TestConversion set selfrid = 'foo" + doc.getIdentity() + "'").close();
 
-    List<ODocument> results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select string.asString() as convert from TestConversion"));
+    OResultSet results = db.query("select string.asString() as convert from TestConversion");
+
+    assertTrue(results.next().getProperty("convert") instanceof String);
+    assertFalse(results.hasNext());
+
+    results = db.query("select number.asDate() as convert from TestConversion");
+    assertTrue(results.next().getProperty("convert") instanceof Date);
+    assertFalse(results.hasNext());
+
+    results = db.query("select number.asDateTime() as convert from TestConversion");
+    assertTrue(results.next().getProperty("convert") instanceof Date);
+    assertFalse(results.hasNext());
+
+    results = db.query("select number.asInteger() as convert from TestConversion");
+    assertTrue(results.next().getProperty("convert") instanceof Integer);
+    assertFalse(results.hasNext());
+
+    results = db.query("select number.asLong() as convert from TestConversion");
+    assertTrue(results.next().getProperty("convert") instanceof Long);
+    assertFalse(results.hasNext());
+
+    results = db.query("select number.asFloat() as convert from TestConversion");
+    assertTrue(results.next().getProperty("convert") instanceof Float);
+    assertFalse(results.hasNext());
+
+    results = db.query("select number.asDecimal() as convert from TestConversion");
+    assertTrue(results.next().getProperty("convert") instanceof BigDecimal);
+    assertFalse(results.hasNext());
+
+    results = db.query("select number.convert('LONG') as convert from TestConversion");
+    assertTrue(results.next().getProperty("convert") instanceof Long);
+    assertFalse(results.hasNext());
+
+    results = db.query("select number.convert('SHORT') as convert from TestConversion");
+    assertTrue(results.next().getProperty("convert") instanceof Short);
+    assertFalse(results.hasNext());
+
+    results = db.query("select number.convert('DOUBLE') as convert from TestConversion");
     assertNotNull(results);
-    assertEquals(results.size(), 1);
-    assertTrue(results.get(0).field("convert") instanceof String);
+    assertTrue(results.next().getProperty("convert") instanceof Double);
+    assertFalse(results.hasNext());
 
     results =
         db.query(
-            new OSQLSynchQuery<ODocument>("select number.asDate() as convert from TestConversion"));
-    assertNotNull(results);
-    assertEquals(results.size(), 1);
-    assertTrue(results.get(0).field("convert") instanceof Date);
-
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select number.asDateTime() as convert from TestConversion"));
-    assertNotNull(results);
-    assertEquals(results.size(), 1);
-    assertTrue(results.get(0).field("convert") instanceof Date);
-
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select number.asInteger() as convert from TestConversion"));
-    assertNotNull(results);
-    assertEquals(results.size(), 1);
-    assertTrue(results.get(0).field("convert") instanceof Integer);
-
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>("select number.asLong() as convert from TestConversion"));
-    assertNotNull(results);
-    assertEquals(results.size(), 1);
-    assertTrue(results.get(0).field("convert") instanceof Long);
-
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select number.asFloat() as convert from TestConversion"));
-    assertNotNull(results);
-    assertEquals(results.size(), 1);
-    assertTrue(results.get(0).field("convert") instanceof Float);
-
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select number.asDecimal() as convert from TestConversion"));
-    assertNotNull(results);
-    assertEquals(results.size(), 1);
-    assertTrue(results.get(0).field("convert") instanceof BigDecimal);
-
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select number.convert('LONG') as convert from TestConversion"));
-    assertNotNull(results);
-    assertEquals(results.size(), 1);
-    assertTrue(results.get(0).field("convert") instanceof Long);
-
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select number.convert('SHORT') as convert from TestConversion"));
-    assertNotNull(results);
-    assertEquals(results.size(), 1);
-    assertTrue(results.get(0).field("convert") instanceof Short);
-
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select number.convert('DOUBLE') as convert from TestConversion"));
-    assertNotNull(results);
-    assertEquals(results.size(), 1);
-    assertTrue(results.get(0).field("convert") instanceof Double);
-
-    results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select selfrid.substring(3).convert('LINK').string as convert from TestConversion"));
-    assertNotNull(results);
-    assertEquals(results.size(), 1);
-    assertEquals(results.get(0).field("convert"), "Jay");
+            "select selfrid.substring(3).convert('LINK').string as convert from TestConversion");
+    assertEquals(results.next().getProperty("convert"), "Jay");
+    assertFalse(results.hasNext());
   }
 }

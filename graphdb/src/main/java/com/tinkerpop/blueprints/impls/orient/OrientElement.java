@@ -23,6 +23,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -591,7 +592,10 @@ public abstract class OrientElement
     OrientBaseGraph graph = getGraph();
     if (graph == null) return className;
 
-    final OSchema schema = graph.getRawGraph().getMetadata().getImmutableSchemaSnapshot();
+    final OSchema schema =
+        ((ODatabaseDocumentInternal) graph.getRawGraph())
+            .getMetadata()
+            .getImmutableSchemaSnapshot();
 
     if (!schema.existsClass(className)) {
       // CREATE A NEW CLASS AT THE FLY

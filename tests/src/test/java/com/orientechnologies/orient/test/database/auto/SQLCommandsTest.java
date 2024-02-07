@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
@@ -45,7 +44,7 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
     OSchema schema = database.getMetadata().getSchema();
     if (!schema.existsClass("account")) schema.createClass("account");
 
-    database.command(new OCommandSQL("create property account.timesheet string")).execute();
+    database.command("create property account.timesheet string").close();
 
     Assert.assertEquals(
         database.getMetadata().getSchema().getClass("account").getProperty("timesheet").getType(),
@@ -54,9 +53,7 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "createProperty")
   public void createLinkedClassProperty() {
-    database
-        .command(new OCommandSQL("create property account.knows embeddedmap account"))
-        .execute();
+    database.command("create property account.knows embeddedmap account").close();
 
     Assert.assertEquals(
         database.getMetadata().getSchema().getClass("account").getProperty("knows").getType(),
@@ -73,7 +70,7 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "createLinkedClassProperty")
   public void createLinkedTypeProperty() {
-    database.command(new OCommandSQL("create property account.tags embeddedlist string")).execute();
+    database.command("create property account.tags embeddedlist string").close();
 
     Assert.assertEquals(
         database.getMetadata().getSchema().getClass("account").getProperty("tags").getType(),
@@ -85,8 +82,8 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "createLinkedTypeProperty")
   public void removeProperty() {
-    database.command(new OCommandSQL("drop property account.timesheet")).execute();
-    database.command(new OCommandSQL("drop property account.tags")).execute();
+    database.command("drop property account.timesheet").close();
+    database.command("drop property account.tags").close();
 
     Assert.assertFalse(
         database.getMetadata().getSchema().getClass("account").existsProperty("timesheet"));
@@ -117,14 +114,12 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
     Collection<String> names = database.getClusterNames();
     Assert.assertFalse(names.contains("testClusterRename".toLowerCase(Locale.ENGLISH)));
 
-    database.command(new OCommandSQL("create cluster testClusterRename")).execute();
+    database.command("create cluster testClusterRename").close();
 
     names = database.getClusterNames();
     Assert.assertTrue(names.contains("testClusterRename".toLowerCase(Locale.ENGLISH)));
 
-    database
-        .command(new OCommandSQL("alter cluster testClusterRename name testClusterRename42"))
-        .execute();
+    database.command("alter cluster testClusterRename name testClusterRename42").close();
     names = database.getClusterNames();
 
     Assert.assertTrue(names.contains("testClusterRename42".toLowerCase(Locale.ENGLISH)));

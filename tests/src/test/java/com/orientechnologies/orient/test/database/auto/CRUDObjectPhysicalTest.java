@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
@@ -27,6 +28,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -36,7 +38,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.test.domain.base.Agenda;
 import com.orientechnologies.orient.test.domain.base.EmbeddedChild;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
@@ -2098,7 +2099,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     byte[] thumbnailImageBytes =
         "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2"
             .getBytes();
-    OBlob oRecordBytes = new ORecordBytes(database.getUnderlying(), thumbnailImageBytes);
+    OBlob oRecordBytes =
+        new ORecordBytes((ODatabaseDocumentInternal) database.getUnderlying(), thumbnailImageBytes);
     oRecordBytes.save();
     p.setByteArray(oRecordBytes);
     p = database.save(p);
@@ -2153,7 +2155,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     thumbnailImageBytes =
         "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2"
             .getBytes();
-    oRecordBytes = new ORecordBytes(database.getUnderlying(), thumbnailImageBytes);
+    oRecordBytes =
+        new ORecordBytes((ODatabaseDocumentInternal) database.getUnderlying(), thumbnailImageBytes);
     oRecordBytes.save();
     p.setByteArray(oRecordBytes);
     p = database.save(p);
@@ -2207,7 +2210,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "oidentifableFieldsTest")
   public void oRecordBytesFieldsTest() {
     try {
-      OObjectIteratorClass<JavaComplexTestClass> browseClass =
+      OObjectIteratorClassInterface<JavaComplexTestClass> browseClass =
           database.browseClass(JavaComplexTestClass.class);
       for (JavaComplexTestClass ebookPropertyItem : browseClass) {
         OBlob coverThumbnail =
@@ -2288,7 +2291,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void testUpdate() {
     int i = 0;
     Account a;
-    for (OObjectIteratorClass<Account> iterator = database.browseClass("Account");
+    for (OObjectIteratorClassInterface<Account> iterator = database.browseClass("Account");
         iterator.hasNext(); ) {
       iterator.setFetchPlan("*:1");
       a = iterator.next();

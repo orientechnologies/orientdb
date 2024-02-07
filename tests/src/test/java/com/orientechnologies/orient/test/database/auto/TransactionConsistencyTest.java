@@ -26,8 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.business.Account;
@@ -372,10 +371,9 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     database.close();
 
     database.open("admin", "admin");
-    List<ODocument> result =
-        database.command(new OSQLSynchQuery<ODocument>("select from MyProfile ")).execute();
+    OResultSet result = database.command("select from MyProfile ");
 
-    Assert.assertTrue(result.size() != 0);
+    Assert.assertTrue(result.stream().count() != 0);
 
     database.close();
   }
@@ -650,10 +648,11 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     }
     database.commit();
 
-    final List<ODocument> result1 =
-        database.command(new OCommandSQL("select from TRPerson")).execute();
-    Assert.assertNotNull(result1);
-    Assert.assertEquals(result1.size(), cnt);
+    final OResultSet result1 = database.command("select from TRPerson");
+    Assert.assertEquals(result1.stream().count(), cnt);
+    // System.out.println("Before transaction commit");
+    // for (ODocument d : result1)
+    // System.out.println(d);
 
     try {
       database.begin();
@@ -696,10 +695,14 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       database.rollback();
     }
 
-    final List<ODocument> result2 =
-        database.command(new OCommandSQL("select from TRPerson")).execute();
+    final OResultSet result2 = database.command("select from TRPerson");
     Assert.assertNotNull(result2);
-    Assert.assertEquals(result2.size(), cnt);
+    // System.out.println("After transaction commit failure/rollback");
+    // for (ODocument d : result2)
+    // System.out.println(d);
+    Assert.assertEquals(result2.stream().count(), cnt);
+
+    // System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
   }
 
   @Test

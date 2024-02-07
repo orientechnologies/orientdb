@@ -1,13 +1,15 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,61 +33,46 @@ public class OCommandExecutorSQLDeleteEdgeTest extends BaseMemoryDatabase {
     schema.createClass("CanAccess", schema.getClass("E"));
 
     userId1 = new ODocument("User").field("username", "gongolo").save().getIdentity();
-    ORID userId2 = new ODocument("User").field("username", "user2").save().getIdentity();
+    new ODocument("User").field("username", "user2").save().getIdentity();
     folderId1 = new ODocument("Folder").field("keyId", "01234567893").save().getIdentity();
-    ORID folderId2 = new ODocument("Folder").field("keyId", "01234567894").save().getIdentity();
+    new ODocument("Folder").field("keyId", "01234567894").save().getIdentity();
 
     edges =
-        db.command(new OCommandSQL("create edge CanAccess from " + userId1 + " to " + folderId1))
-            .execute();
+        db.command("create edge CanAccess from " + userId1 + " to " + folderId1).stream()
+            .map((x) -> x.getIdentity().get())
+            .collect(Collectors.toList());
   }
 
   @Test
   public void testFromSelect() throws Exception {
-    final int res =
-        (Integer)
-            db.command(
-                    new OCommandSQL(
-                        "delete edge CanAccess from (select from User where username = 'gongolo') to "
-                            + folderId1))
-                .execute();
-    Assert.assertEquals(res, 1);
-    Assert.assertTrue(
-        db.query(new OSQLSynchQuery<Object>("select flatten(out(CanAccess)) from " + userId1))
-            .isEmpty());
+    OResultSet res =
+        db.command(
+            "delete edge CanAccess from (select from User where username = 'gongolo') to "
+                + folderId1);
+    Assert.assertEquals((long) res.next().getProperty("count"), 1);
+    Assert.assertFalse(db.query("select expand(out(CanAccess)) from " + userId1).hasNext());
   }
 
   @Test
   public void testFromSelectToSelect() throws Exception {
-    final int res =
-        (Integer)
-            db.command(
-                    new OCommandSQL(
-                        "delete edge CanAccess from ( select from User where username = 'gongolo' ) to ( select from Folder where keyId = '01234567893' )"))
-                .execute();
-    Assert.assertEquals(res, 1);
-    Assert.assertTrue(
-        db.query(new OSQLSynchQuery<Object>("select flatten(out(CanAccess)) from " + userId1))
-            .isEmpty());
+    OResultSet res =
+        db.command(
+            "delete edge CanAccess from ( select from User where username = 'gongolo' ) to ( select from Folder where keyId = '01234567893' )");
+    assertEquals((long) res.next().getProperty("count"), 1);
+    assertFalse(db.query("select expand(out(CanAccess)) from " + userId1).hasNext());
   }
 
   @Test
   public void testDeleteByRID() throws Exception {
-    final int res =
-        (Integer)
-            db.command(new OCommandSQL("delete edge [" + edges.get(0).getIdentity() + "]"))
-                .execute();
-    Assert.assertEquals(res, 1);
+    OResultSet result = db.command("delete edge [" + edges.get(0).getIdentity() + "]");
+    assertEquals((long) result.next().getProperty("count"), 1L);
   }
 
   @Test
   public void testDeleteEdgeWithVertexRid() throws Exception {
-    List<ODocument> vertexes = db.command(new OCommandSQL("select from v limit 1")).execute();
+    OResultSet vertexes = db.command("select from v limit 1");
     try {
-      final int res =
-          (Integer)
-              db.command(new OCommandSQL("delete edge [" + vertexes.get(0).getIdentity() + "]"))
-                  .execute();
+      db.command("delete edge [" + vertexes.next().getIdentity().get() + "]").close();
       Assert.fail("Error on deleting an edge with a rid of a vertex");
     } catch (Exception e) {
       // OK
@@ -97,21 +84,18 @@ public class OCommandExecutorSQLDeleteEdgeTest extends BaseMemoryDatabase {
     // for issue #4622
 
     for (int i = 0; i < 100; i++) {
-      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+      db.command("create vertex User set name = 'foo" + i + "'").close();
       db.command(
-              new OCommandSQL(
-                  "create edge CanAccess from (select from User where name = 'foo"
-                      + i
-                      + "') to "
-                      + folderId1))
-          .execute();
+              "create edge CanAccess from (select from User where name = 'foo"
+                  + i
+                  + "') to "
+                  + folderId1)
+          .close();
     }
 
-    final int res =
-        (Integer) db.command(new OCommandSQL("delete edge CanAccess batch 5")).execute();
+    db.command("delete edge CanAccess batch 5").close();
 
-    List<?> result =
-        db.query(new OSQLSynchQuery("select expand( in('CanAccess') ) from " + folderId1));
-    Assert.assertEquals(result.size(), 0);
+    OResultSet result = db.query("select expand( in('CanAccess') ) from " + folderId1);
+    assertEquals(result.stream().count(), 0);
   }
 }

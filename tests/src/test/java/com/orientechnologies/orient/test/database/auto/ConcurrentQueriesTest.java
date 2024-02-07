@@ -19,7 +19,6 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
 import com.orientechnologies.orient.test.TestFactory;
 import java.util.concurrent.Callable;
@@ -59,7 +58,7 @@ public class ConcurrentQueriesTest extends DocumentDBBaseTest {
         try {
           for (int retry = 0; retry < MAX_RETRIES; ++retry) {
             try {
-              db.command(new OCommandSQL("select from Concurrent")).execute();
+              db.command("select from Concurrent").close();
 
               counter.incrementAndGet();
               totalRetries.addAndGet(retry);

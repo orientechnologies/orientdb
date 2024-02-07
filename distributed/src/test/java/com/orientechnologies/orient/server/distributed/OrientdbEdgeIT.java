@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import java.io.File;
@@ -91,13 +90,13 @@ public class OrientdbEdgeIT {
     ODatabaseDocument t = orientDB.open("test", "root", "root");
     t.begin();
     try {
-      t.command(new OCommandSQL("alter database custom useLightweightEdges=false")).execute();
+      t.command("alter database custom useLightweightEdges=false").close();
       t.commit();
       t.begin();
-      t.command(new OCommandSQL("ALTER CLASS V CLUSTERSELECTION balanced")).execute();
+      t.command("ALTER CLASS V CLUSTERSELECTION balanced").close();
       t.commit();
       t.begin();
-      t.command(new OCommandSQL("ALTER CLASS E CLUSTERSELECTION balanced")).execute();
+      t.command("ALTER CLASS E CLUSTERSELECTION balanced").close();
       t.commit();
     } finally {
       t.close();
@@ -186,14 +185,14 @@ public class OrientdbEdgeIT {
         g.createEdgeClass("some-label");
       } catch (OSchemaException ex) {
         if (!ex.getMessage().contains("exists")) throw (ex);
-        g.command(new OCommandSQL("delete edge `some-label`")).execute();
+        g.command("delete edge `some-label`").close();
       }
 
       try {
         g.createVertexClass("some-v-label");
       } catch (OSchemaException ex) {
         if (!ex.getMessage().contains("exists")) throw (ex);
-        g.command(new OCommandSQL("delete vertex `some-v-label`")).execute();
+        g.command("delete vertex `some-v-label`").close();
       }
     } finally {
       g.close();

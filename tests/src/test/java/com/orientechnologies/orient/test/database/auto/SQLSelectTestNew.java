@@ -51,6 +51,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -81,7 +82,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   @BeforeClass
   public void init() {
     if (!database.getMetadata().getSchema().existsClass("Profile")) {
-      database.getMetadata().getSchema().createClass("Profile", 1, null);
+      database.getMetadata().getSchema().createClass("Profile", 1);
 
       for (int i = 0; i < 1000; ++i) {
         database.<ODocument>newInstance("Profile").field("test", i).field("name", "N" + i).save();
@@ -89,7 +90,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     }
 
     if (!database.getMetadata().getSchema().existsClass("company")) {
-      database.getMetadata().getSchema().createClass("company", 1, null);
+      database.getMetadata().getSchema().createClass("company", 1);
       for (int i = 0; i < 20; ++i) new ODocument("company").field("id", i).save();
     }
 
@@ -162,9 +163,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   public void testQueryCount() {
     database.getMetadata().reload();
     final long vertexesCount = database.countClass("V");
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
-    Assert.assertEquals(result.get(0).<Object>field("count"), vertexesCount);
+    List<OResult> result =
+        database.query("select count(*) as count from V").stream().collect(Collectors.toList());
+    Assert.assertEquals(result.get(0).<Object>getProperty("count"), vertexesCount);
   }
 
   @Test
@@ -1131,10 +1132,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryParenthesisInStrings() {
-    Assert.assertNotNull(
-        database
-            .command(new OCommandSQL("INSERT INTO account (name) VALUES ('test (demo)')"))
-            .execute());
+
+    database.command("INSERT INTO account (name) VALUES ('test (demo)')").close();
 
     List<ODocument> result =
         executeQuery("select * from account where name = 'test (demo)'", database);
@@ -1444,7 +1443,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void testSelectFromListParameter() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1);
     placeClass.createProperty("id", OType.STRING);
     placeClass.createProperty("descr", OType.STRING);
     placeClass.createIndex("place_id_index", INDEX_TYPE.UNIQUE, "id");
@@ -1473,7 +1472,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void testSelectRidFromListParameter() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1);
     placeClass.createProperty("id", OType.STRING);
     placeClass.createProperty("descr", OType.STRING);
     placeClass.createIndex("place_id_index", INDEX_TYPE.UNIQUE, "id");
@@ -1504,7 +1503,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void testSelectRidInList() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1);
     database.getMetadata().getSchema().createClass("FamousPlace", 1, placeClass);
 
     ODocument firstPlace = new ODocument("Place");
@@ -1720,9 +1719,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void testSelectFromIndexValues() {
-    database
-        .command(new OCommandSQL("create index selectFromIndexValues on Profile (name) notunique"))
-        .execute();
+    database.command("create index selectFromIndexValues on Profile (name) notunique").close();
 
     final List<ODocument> classResult =
         new ArrayList<ODocument>(
@@ -1753,10 +1750,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   }
 
   public void testSelectFromIndexValuesAsc() {
-    database
-        .command(
-            new OCommandSQL("create index selectFromIndexValuesAsc on Profile (name) notunique"))
-        .execute();
+    database.command("create index selectFromIndexValuesAsc on Profile (name) notunique").close();
 
     final List<ODocument> classResult =
         new ArrayList<ODocument>(
@@ -1787,10 +1781,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   }
 
   public void testSelectFromIndexValuesDesc() {
-    database
-        .command(
-            new OCommandSQL("create index selectFromIndexValuesDesc on Profile (name) notunique"))
-        .execute();
+    database.command("create index selectFromIndexValuesDesc on Profile (name) notunique").close();
 
     final List<ODocument> classResult =
         new ArrayList<ODocument>(
@@ -1823,7 +1814,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   public void testQueryParameterNotPersistent() {
     ODocument doc = new ODocument();
     doc.field("test", "test");
-    database.query(new OSQLSynchQuery<Object>("select from OUser where @rid = ?"), doc);
+    database.query("select from OUser where @rid = ?", doc).close();
     Assert.assertTrue(doc.isDirty());
   }
 
@@ -1883,18 +1874,13 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   public void testOutFilterInclude() {
     OSchema schema = database.getMetadata().getSchema();
     schema.createClass("TestOutFilterInclude", schema.getClass("V"));
-    database.command(new OCommandSQL("create class linkedToOutFilterInclude extends E")).execute();
-    database
-        .command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"one\" }"))
-        .execute();
-    database
-        .command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"two\" }"))
-        .execute();
+    database.command("create class linkedToOutFilterInclude extends E").close();
+    database.command("insert into TestOutFilterInclude content { \"name\": \"one\" }").close();
+    database.command("insert into TestOutFilterInclude content { \"name\": \"two\" }").close();
     database
         .command(
-            new OCommandSQL(
-                "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name = 'one') to (select from TestOutFilterInclude where name = 'two')"))
-        .execute();
+            "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name = 'one') to (select from TestOutFilterInclude where name = 'two')")
+        .close();
 
     final List<OIdentifiable> result =
         database.query(
@@ -1925,7 +1911,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void testBinaryClusterSelect() {
-    database.command(new OCommandSQL("create blob cluster binarycluster")).execute();
+    database.command("create blob cluster binarycluster").close();
     database.reload();
     OBlob bytes = new ORecordBytes(new byte[] {1, 2, 3});
     database.save(bytes, "binarycluster");
@@ -1935,7 +1921,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     Assert.assertEquals(result.size(), 1);
 
-    database.command(new OCommandSQL("delete from cluster:binarycluster")).execute();
+    database.command("delete from cluster:binarycluster").close();
 
     result = database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
 
@@ -1949,54 +1935,57 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     final OClass cls = schema.createClass("TestExpandSkip", v);
     cls.createProperty("name", OType.STRING);
     cls.createIndex("TestExpandSkip.name", INDEX_TYPE.UNIQUE, "name");
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '1'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '2'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '3'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '4'")).execute();
+    database.command("CREATE VERTEX TestExpandSkip set name = '1'").close();
+    database.command("CREATE VERTEX TestExpandSkip set name = '2'").close();
+    database.command("CREATE VERTEX TestExpandSkip set name = '3'").close();
+    database.command("CREATE VERTEX TestExpandSkip set name = '4'").close();
 
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')")
+        .close();
 
     List<OIdentifiable> result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1'"));
+        database.query("select expand(out()) from TestExpandSkip where name = '1'").stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 3);
 
     Map<Object, Object> params = new HashMap<Object, Object>();
     params.put("values", Arrays.asList(new String[] {"2", "3", "antani"}));
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()[name in :values]) from TestExpandSkip where name = '1'"),
-            params);
+        database
+            .query(
+                "select expand(out()[name in :values]) from TestExpandSkip where name = '1'",
+                params)
+            .stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 2);
 
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 1"));
+        database.query("select expand(out()) from TestExpandSkip where name = '1' skip 1").stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 2);
 
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 2"));
+        database.query("select expand(out()) from TestExpandSkip where name = '1' skip 2").stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 1);
 
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 3"));
+        database.query("select expand(out()) from TestExpandSkip where name = '1' skip 3").stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 0);
 
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1"));
+        database.query("select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1")
+            .stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -2009,37 +1998,35 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     final OClass e1 = schema.createClass("TestPolymorphicEdges_E1", e);
     final OClass e2 = schema.createClass("TestPolymorphicEdges_E2", e1);
 
-    database
-        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '1'"))
-        .execute();
-    database
-        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '2'"))
-        .execute();
-    database
-        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '3'"))
-        .execute();
+    database.command("CREATE VERTEX TestPolymorphicEdges_V set name = '1'").close();
+    database.command("CREATE VERTEX TestPolymorphicEdges_V set name = '2'").close();
+    database.command("CREATE VERTEX TestPolymorphicEdges_V set name = '3'").close();
 
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE TestPolymorphicEdges_E1 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '2')"))
-        .execute();
+            "CREATE EDGE TestPolymorphicEdges_E1 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '2')")
+        .close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')"))
-        .execute();
+            "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')")
+        .close();
 
     List<OIdentifiable> result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out('TestPolymorphicEdges_E1')) from TestPolymorphicEdges_V where name = '1'"));
+        database
+            .query(
+                "select expand(out('TestPolymorphicEdges_E1')) from TestPolymorphicEdges_V where name = '1'")
+            .stream()
+            .map((r) -> r.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 2);
 
     result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                "select expand(out('TestPolymorphicEdges_E2')) from TestPolymorphicEdges_V where name = '1' "));
+        database
+            .query(
+                "select expand(out('TestPolymorphicEdges_E2')) from TestPolymorphicEdges_V where name = '1' ")
+            .stream()
+            .map((r) -> r.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -2048,19 +2035,21 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("TestSizeOfLink", v);
-    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '1'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '2'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '3'")).execute();
+    database.command("CREATE VERTEX TestSizeOfLink set name = '1'").close();
+    database.command("CREATE VERTEX TestSizeOfLink set name = '2'").close();
+    database.command("CREATE VERTEX TestSizeOfLink set name = '3'").close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM TestSizeOfLink WHERE name <> '1')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM TestSizeOfLink WHERE name <> '1')")
+        .close();
 
     List<OIdentifiable> result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                " select from (select from TestSizeOfLink where name = '1') where out()[name=2].size() > 0"));
+        database
+            .query(
+                " select from (select from TestSizeOfLink where name = '1') where out()[name=2].size() > 0")
+            .stream()
+            .map((e) -> e.toElement())
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -2069,9 +2058,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("EmbeddedMapAndDotNotation", v);
-    database
-        .command(new OCommandSQL("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'"))
-        .execute();
+    database.command("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'").close();
     database
         .command(
             new OCommandSQL(
@@ -2079,9 +2066,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
         .execute();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')"))
-        .execute();
+            "CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')")
+        .close();
 
     List<OIdentifiable> result =
         database.query(
@@ -2102,9 +2088,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("LetWithQuotedValue", v);
-    database
-        .command(new OCommandSQL("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\""))
-        .execute();
+    database.command("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\"").close();
 
     List<OIdentifiable> result =
         database.query(

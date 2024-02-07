@@ -31,11 +31,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.zip.GZIPInputStream;
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,8 +49,7 @@ public class LuceneExportImportTest extends BaseLuceneTest {
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE").close();
 
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
@@ -64,10 +61,9 @@ public class LuceneExportImportTest extends BaseLuceneTest {
 
     String file = "./target/exportTest.json";
 
-    List<?> query =
-        db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
+    OResultSet query = db.query("select from City where name lucene 'Rome'");
 
-    Assert.assertEquals(query.size(), 1);
+    Assert.assertEquals(query.stream().count(), 1);
 
     try {
 
@@ -108,7 +104,7 @@ public class LuceneExportImportTest extends BaseLuceneTest {
     assertThat(index.getAlgorithm()).isEqualTo(OLuceneIndexFactory.LUCENE_ALGORITHM);
 
     // redo the query
-    query = db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
+    query = db.query("select from City where name lucene 'Rome'");
 
     assertThat(query).hasSize(1);
   }

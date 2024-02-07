@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Mapper;
 import java.util.HashMap;
@@ -62,8 +61,8 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
   @AfterMethod
   public void afterMethod() throws Exception {
-    database.command(new OCommandSQL("delete from Mapper")).execute();
-    database.command(new OCommandSQL("delete from MapIndexTestMovie")).execute();
+    database.command("delete from Mapper").close();
+    database.command("delete from MapIndexTestMovie").close();
     super.afterMethod();
   }
 
@@ -329,9 +328,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(map);
     mapper = database.save(mapper);
 
-    database
-        .command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key3', 30"))
-        .execute();
+    database.command("UPDATE " + mapper.getId() + " set intMap['key3'] = 30").close();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getInternal().size(), 3);
@@ -481,9 +478,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(map);
     mapper = database.save(mapper);
 
-    database
-        .command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key2', 40"))
-        .execute();
+    database.command("UPDATE " + mapper.getId() + " set intMap['key2'] = 40").close();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getInternal().size(), 2);
@@ -633,9 +628,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(map);
     mapper = database.save(mapper);
 
-    database
-        .command(new OCommandSQL("UPDATE " + mapper.getId() + " remove intMap = 'key2'"))
-        .execute();
+    database.command("UPDATE " + mapper.getId() + " remove intMap = 'key2'").close();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getInternal().size(), 2);

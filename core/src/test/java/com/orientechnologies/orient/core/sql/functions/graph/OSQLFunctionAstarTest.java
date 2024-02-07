@@ -25,12 +25,12 @@ import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -479,29 +479,26 @@ public class OSQLFunctionAstarTest {
 
   @Test
   public void testSql() {
-    Iterable r =
-        graph
-            .command(
-                new OSQLSynchQuery(
-                    "select expand(astar("
-                        + v1.getIdentity()
-                        + ", "
-                        + v4.getIdentity()
-                        + ", 'weight', {'direction':'out', 'parallel':true, 'edgeTypeNames':'has_path'}))"))
-            .execute();
+    OResultSet r =
+        graph.query(
+            "select expand(astar("
+                + v1.getIdentity()
+                + ", "
+                + v4.getIdentity()
+                + ", 'weight', {'direction':'out', 'parallel':true, 'edgeTypeNames':'has_path'}))");
 
-    List result = new ArrayList();
-    for (Object x : r) {
-      result.add(x);
+    List<ORID> result = new ArrayList<>();
+    while (r.hasNext()) {
+      result.add(r.next().getIdentity().get());
     }
     try (OResultSet rs = graph.query("select count(*) as count from has_path")) {
       assertEquals((Object) 16L, rs.next().getProperty("count"));
     }
 
     assertEquals(4, result.size());
-    assertEquals(v1, result.get(0));
-    assertEquals(v2, result.get(1));
-    assertEquals(v3, result.get(2));
-    assertEquals(v4, result.get(3));
+    assertEquals(v1.getIdentity(), result.get(0));
+    assertEquals(v2.getIdentity(), result.get(1));
+    assertEquals(v3.getIdentity(), result.get(2));
+    assertEquals(v4.getIdentity(), result.get(3));
   }
 }

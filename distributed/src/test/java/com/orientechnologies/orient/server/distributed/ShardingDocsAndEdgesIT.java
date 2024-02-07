@@ -1,12 +1,9 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -40,13 +37,13 @@ public class ShardingDocsAndEdgesIT extends AbstractServerClusterTest {
 
   @Override
   protected void onAfterDatabaseCreation(ODatabaseDocument db) {
-    db.command(new OCommandSQL("ALTER DATABASE CUSTOM useLightweightEdges = true")).execute();
-    db.command(new OCommandSQL("ALTER DATABASE MINIMUMCLUSTERS 2")).execute();
-    db.command(new OCommandSQL("create class `Client-Type` extends V")).execute();
-    db.command(new OCommandSQL("create property `Client-Type`.name string")).execute();
-    db.command(new OCommandSQL("alter cluster `Client-Type`   name `client-type_usa`")).execute();
-    db.command(new OCommandSQL("alter cluster `client-type_1` name `client-type_eur`")).execute();
-    db.command(new OCommandSQL("create class Follows extends E")).execute();
+    db.command("ALTER DATABASE CUSTOM useLightweightEdges = true").close();
+    db.command("ALTER DATABASE MINIMUMCLUSTERS 2").close();
+    db.command("create class `Client-Type` extends V").close();
+    db.command("create property `Client-Type`.name string").close();
+    db.command("alter cluster `Client-Type`   name 'client-type_usa'").close();
+    db.command("alter cluster `client-type_1` name 'client-type_eur'").close();
+    db.command("create class Follows extends E").close();
   }
 
   @Override
@@ -136,14 +133,9 @@ public class ShardingDocsAndEdgesIT extends AbstractServerClusterTest {
 
     db.activateOnCurrentThread();
 
-    Object o = db.command(new OCommandSQL(command)).execute();
-    if (o instanceof List) {
-      List<ODocument> resultList = (List) o;
-      for (OIdentifiable d : resultList) {
-        if (d.getRecord() instanceof ODocument) {
-          resultSet.add((String) ((ODocument) d.getRecord()).field("name"));
-        }
-      }
+    OResultSet o = db.command(command);
+    while (o.hasNext()) {
+      resultSet.add(o.next().getProperty("name"));
     }
 
     return resultSet;

@@ -20,17 +20,19 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.concurrent.atomic.AtomicLong;
-import junit.framework.Assert;
 import org.junit.Test;
 
 /** Tests the behavior of hooks in distributed configuration. */
@@ -133,15 +135,16 @@ public class DistributedHookIT extends AbstractServerClusterTest {
       try {
         // CREATE (VIA COMMAND)
         OIdentifiable inserted =
-            g.command(
-                    new OCommandSQL(
+            (ORID)
+                g.command(
                         "insert into OUser (name, password, status) values ('novo"
                             + s
-                            + "','teste','ACTIVE') RETURN @rid"))
-                .execute();
-        Assert.assertNotNull(inserted);
-        Assert.assertEquals(beforeCreate.get(), s);
-        Assert.assertEquals(afterCreate.get(), s);
+                            + "','teste','ACTIVE') RETURN @rid")
+                    .next()
+                    .getProperty("@rid");
+        assertNotNull(inserted);
+        assertEquals(beforeCreate.get(), s);
+        assertEquals(afterCreate.get(), s);
 
         ODocument loadedDoc = inserted.getIdentity().copy().getRecord();
 
@@ -149,14 +152,14 @@ public class DistributedHookIT extends AbstractServerClusterTest {
         loadedDoc.field("additionalProperty", "test");
         loadedDoc.save();
 
-        Assert.assertEquals(beforeUpdate.get(), s);
-        Assert.assertEquals(afterUpdate.get(), s);
+        assertEquals(beforeUpdate.get(), s);
+        assertEquals(afterUpdate.get(), s);
 
         // DELETE
         loadedDoc.delete();
 
-        Assert.assertEquals(beforeDelete.get(), s);
-        Assert.assertEquals(afterDelete.get(), s);
+        assertEquals(beforeDelete.get(), s);
+        assertEquals(afterDelete.get(), s);
 
       } finally {
         g.close();

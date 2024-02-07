@@ -16,7 +16,6 @@
 package com.orientechnologies.spatial;
 
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,24 +25,20 @@ public class LuceneGeoUpdateTest extends BaseSpatialLuceneTest {
   @Test
   public void testUpdate() {
 
-    db.command(new OCommandSQL("create class City extends V")).execute();
+    db.command("create class City extends V").close();
 
-    db.command(new OCommandSQL("create property City.location embedded OPoint")).execute();
+    db.command("create property City.location embedded OPoint").close();
 
+    db.command("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE").close();
     db.command(
-            new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into City set name = 'TestInsert' , location = ST_GeomFromText('POINT(-160.2075374 21.9029803)')"))
-        .execute();
+            "insert into City set name = 'TestInsert' , location = ST_GeomFromText('POINT(-160.2075374 21.9029803)')")
+        .close();
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
 
     db.command(
-            new OCommandSQL(
-                "update City set name = 'TestInsert' , location = ST_GeomFromText('POINT(12.5 41.9)')"))
-        .execute();
+            "update City set name = 'TestInsert' , location = ST_GeomFromText('POINT(12.5 41.9)')")
+        .close();
 
     Assert.assertEquals(1, index.getInternal().size());
   }

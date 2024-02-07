@@ -5,8 +5,11 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OParenthesisBlock extends OBooleanExpression {
@@ -116,6 +119,10 @@ public class OParenthesisBlock extends OBooleanExpression {
   @Override
   public boolean isCacheable() {
     return subElement.isCacheable();
+  }
+
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    return subElement.findIndex(info, ctx);
   }
 
   @Override

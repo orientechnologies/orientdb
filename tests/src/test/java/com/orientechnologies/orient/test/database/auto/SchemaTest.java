@@ -209,7 +209,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertNotNull(dropTestClass);
     Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
     Assert.assertNotNull(database.getClusterNameById(clusterId));
-    database.command(new OCommandSQL("drop class " + testClassName)).execute();
+    database.command("drop class " + testClassName).close();
     database.reload();
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNull(dropTestClass);
@@ -349,10 +349,8 @@ public class SchemaTest extends DocumentDBBaseTest {
     }
 
     database
-        .command(
-            new OCommandSQL(
-                "alter class " + company.getName() + " superclass " + superClass.getName()))
-        .execute();
+        .command("alter class " + company.getName() + " superclass " + superClass.getName())
+        .close();
 
     database.getMetadata().getSchema().reload();
     company = database.getMetadata().getSchema().getClass("Company");
@@ -416,16 +414,15 @@ public class SchemaTest extends DocumentDBBaseTest {
     document.setClassName("RenameClassTest");
     document.save();
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest"));
-    Assert.assertEquals(result.size(), 2);
+    OResultSet result = database.query("select from RenameClassTest");
+    Assert.assertEquals(result.stream().count(), 2);
 
     oClass.set(OClass.ATTRIBUTES.NAME, "RenameClassTest2");
 
     database.getLocalCache().clear();
 
-    result = database.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest2"));
-    Assert.assertEquals(result.size(), 2);
+    result = database.query("select from RenameClassTest2");
+    Assert.assertEquals(result.stream().count(), 2);
   }
 
   public void testMinimumClustersAndClusterSelection() {
@@ -433,7 +430,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("alter database minimumclusters 3")).execute();
 
     try {
-      database.command(new OCommandSQL("create class multipleclusters")).execute();
+      database.command("create class multipleclusters").close();
 
       database.reload();
 
@@ -496,8 +493,8 @@ public class SchemaTest extends DocumentDBBaseTest {
   }
 
   public void testOfflineCluster() {
-    database.command(new OCommandSQL("create class TestOffline")).execute();
-    database.command(new OCommandSQL("insert into TestOffline set status = 'offline'")).execute();
+    database.command("create class TestOffline").close();
+    database.command("insert into TestOffline set status = 'offline'").close();
 
     List<OIdentifiable> result =
         database.command(new OCommandSQL("select from TestOffline")).execute();
@@ -611,7 +608,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   public void testWrongClassNameWithAt() {
     //    try {
-    database.command(new OCommandSQL("create class `Ant@ni`")).execute();
+    database.command("create class `Ant@ni`").close();
     //      Assert.fail();
     // why...? it can be allowed now with backtick quoting...
     // TODO review this
@@ -788,31 +785,24 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   private void swapClusters(ODatabaseDocumentInternal databaseDocumentTx, int i) {
     databaseDocumentTx
-        .command(
-            new OCommandSQL(
-                "CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal clusters 2"))
-        .execute();
+        .command("CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal clusters 2")
+        .close();
 
     databaseDocumentTx
-        .command(new OCommandSQL("INSERT INTO TestRenameClusterNew (iteration) VALUES(" + i + ")"))
-        .execute();
+        .command("INSERT INTO TestRenameClusterNew (iteration) VALUES(" + i + ")")
+        .close();
 
     databaseDocumentTx
-        .command(
-            new OCommandSQL(
-                "ALTER CLASS TestRenameClusterOriginal removecluster TestRenameClusterOriginal"))
-        .execute();
+        .command("ALTER CLASS TestRenameClusterOriginal removecluster TestRenameClusterOriginal")
+        .close();
     databaseDocumentTx
-        .command(
-            new OCommandSQL("ALTER CLASS TestRenameClusterNew removecluster TestRenameClusterNew"))
-        .execute();
-    databaseDocumentTx.command(new OCommandSQL("DROP CLASS TestRenameClusterNew")).execute();
+        .command("ALTER CLASS TestRenameClusterNew removecluster TestRenameClusterNew")
+        .close();
+    databaseDocumentTx.command("DROP CLASS TestRenameClusterNew").close();
     databaseDocumentTx
-        .command(
-            new OCommandSQL(
-                "ALTER CLASS TestRenameClusterOriginal addcluster TestRenameClusterNew"))
-        .execute();
-    databaseDocumentTx.command(new OCommandSQL("DROP CLUSTER TestRenameClusterOriginal")).execute();
+        .command("ALTER CLASS TestRenameClusterOriginal addcluster TestRenameClusterNew")
+        .close();
+    databaseDocumentTx.command("DROP CLUSTER TestRenameClusterOriginal").close();
     databaseDocumentTx
         .command(
             new OCommandSQL("ALTER CLUSTER TestRenameClusterNew name TestRenameClusterOriginal"))

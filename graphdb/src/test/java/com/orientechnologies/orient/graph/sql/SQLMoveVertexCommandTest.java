@@ -45,7 +45,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
   public void setUp() throws Exception {
     customer = graph.getVertexType("Customer");
     if (customer != null) {
-      graph.command(new OCommandSQL("delete vertex Customer")).execute();
+      graph.sqlCommand("delete vertex Customer").close();
       graph.dropVertexType("Customer");
     }
 
@@ -69,7 +69,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
   private OrientVertexType reinitVertexType(String className) {
     OrientVertexType clazz = graph.getVertexType(className);
     if (clazz != null) {
-      graph.command(new OCommandSQL("delete vertex " + className)).execute();
+      graph.sqlCommand("delete vertex " + className).close();
       graph.dropVertexType(className);
     }
     clazz = graph.createVertexType(className);
@@ -79,7 +79,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
   private OrientEdgeType reinitEdgeType(String className) {
     OrientEdgeType clazz = graph.getEdgeType(className);
     if (clazz != null) {
-      graph.command(new OCommandSQL("delete edge " + className)).execute();
+      graph.sqlCommand("delete edge " + className).close();
       graph.dropVertexType(className);
     }
     clazz = graph.createEdgeType(className);
@@ -354,18 +354,15 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
     graph.commit();
 
     graph
-        .command(
-            new OCommandSQL(
-                "create edge testMoveSupernode_Edge from "
-                    + first.getIdentity()
-                    + " to (select from testMoveSupernode_From)"))
-        .execute();
+        .sqlCommand(
+            "create edge testMoveSupernode_Edge from "
+                + first.getIdentity()
+                + " to (select from testMoveSupernode_From)")
+        .close();
 
     graph
-        .command(
-            new OCommandSQL(
-                "MOVE VERTEX " + first.getIdentity() + " to class:testMoveSupernode_To"))
-        .execute();
+        .sqlCommand("MOVE VERTEX " + first.getIdentity() + " to class:testMoveSupernode_To")
+        .close();
 
     Iterable<OrientVertex> result =
         graph.command(new OCommandSQL("select expand(out()) from testMoveSupernode_To")).execute();

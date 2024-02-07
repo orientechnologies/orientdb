@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import junit.framework.Assert;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Test;
 
 /*
@@ -61,49 +63,37 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
 
   @Override
   protected void onAfterDatabaseCreation(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE CLASS Person extends V")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY Person.name STRING")).execute();
-    db.command(
-            new OCommandSQL(
-                "CREATE INDEX Person.name NOTUNIQUE METADATA { ignoreNullValues: false }"))
-        .execute();
+    db.command("CREATE CLASS Person extends V").close();
+    db.command("CREATE PROPERTY Person.name STRING").close();
+    db.command("CREATE INDEX Person.name NOTUNIQUE METADATA { ignoreNullValues: false }").close();
   }
 
   private void testIndexAcceptsNulls(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE VERTEX Person SET name = 'Tobie'")).execute();
-    db.command(new OCommandSQL("CREATE VERTEX Person SET temp = true")).execute();
+    db.command("CREATE VERTEX Person SET name = 'Tobie'").close();
+    db.command("CREATE VERTEX Person SET temp = true").close();
   }
 
   private void testIndexUsage(ODatabaseDocument db) {
-    db.command(new OCommandSQL("create class DistributedIndexTest")).execute();
-    db.command(new OCommandSQL("create property DistributedIndexTest.unique STRING")).execute();
-    db.command(new OCommandSQL("create property DistributedIndexTest.notunique STRING")).execute();
-    db.command(new OCommandSQL("create property DistributedIndexTest.dictionary STRING")).execute();
-    db.command(new OCommandSQL("create property DistributedIndexTest.unique_hash STRING"))
-        .execute();
-    db.command(new OCommandSQL("create property DistributedIndexTest.notunique_hash STRING"))
-        .execute();
+    db.command("create class DistributedIndexTest").close();
+    db.command("create property DistributedIndexTest.unique STRING").close();
+    db.command("create property DistributedIndexTest.notunique STRING").close();
+    db.command("create property DistributedIndexTest.dictionary STRING").close();
+    db.command("create property DistributedIndexTest.unique_hash STRING").close();
+    db.command("create property DistributedIndexTest.notunique_hash STRING").close();
     try {
+      db.command("CREATE INDEX index_unique         ON DistributedIndexTest (unique) UNIQUE")
+          .close();
+      db.command("CREATE INDEX index_notunique      ON DistributedIndexTest (notunique) NOTUNIQUE")
+          .close();
       db.command(
-              new OCommandSQL(
-                  "CREATE INDEX index_unique         ON DistributedIndexTest (unique) UNIQUE"))
-          .execute();
+              "CREATE INDEX index_dictionary     ON DistributedIndexTest (dictionary) DICTIONARY")
+          .close();
       db.command(
-              new OCommandSQL(
-                  "CREATE INDEX index_notunique      ON DistributedIndexTest (notunique) NOTUNIQUE"))
-          .execute();
+              "CREATE INDEX index_unique_hash    ON DistributedIndexTest (unique_hash) UNIQUE_HASH_INDEX")
+          .close();
       db.command(
-              new OCommandSQL(
-                  "CREATE INDEX index_dictionary     ON DistributedIndexTest (dictionary) DICTIONARY"))
-          .execute();
-      db.command(
-              new OCommandSQL(
-                  "CREATE INDEX index_unique_hash    ON DistributedIndexTest (unique_hash) UNIQUE_HASH_INDEX"))
-          .execute();
-      db.command(
-              new OCommandSQL(
-                  "CREATE INDEX index_notunique_hash ON DistributedIndexTest (notunique_hash) NOTUNIQUE_HASH_INDEX"))
-          .execute();
+              "CREATE INDEX index_notunique_hash ON DistributedIndexTest (notunique_hash) NOTUNIQUE_HASH_INDEX")
+          .close();
 
       final ODocument test1 = new ODocument("DistributedIndexTest");
       test1.field("unique", "test1");
@@ -129,12 +119,12 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
       test3.field("notunique_hash", "test3");
       try {
         test3.save();
-        Assert.fail();
+        fail();
       } catch (Exception e) {
         // CHECK DB COHERENCY
-        final Iterable<ODocument> result =
-            db.command(new OCommandSQL("select count(*) from DistributedIndexTest")).execute();
-        Assert.assertEquals(result.iterator().next().<Object>field("count"), 2l);
+        try (OResultSet result = db.query("select count(*) as count from DistributedIndexTest")) {
+          assertEquals((long) result.next().getProperty("count"), 2l);
+        }
       }
 
       final ODocument test4 = new ODocument("DistributedIndexTest");
@@ -145,16 +135,16 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
       test4.field("notunique_hash", "test4");
       try {
         test4.save();
-        Assert.fail();
+        fail();
       } catch (Exception e) {
         // CHECK DB COHERENCY
-        final Iterable<ODocument> result =
-            db.command(new OCommandSQL("select count(*) from DistributedIndexTest")).execute();
-        Assert.assertEquals(result.iterator().next().<Object>field("count"), 2l);
+        try (OResultSet result = db.command("select count(*) as count from DistributedIndexTest")) {
+          assertEquals((long) result.next().getProperty("count"), 2l);
+        }
       }
     } catch (Exception e) {
       e.printStackTrace();
-      Assert.fail(e.toString());
+      fail(e.toString());
     }
   }
 }

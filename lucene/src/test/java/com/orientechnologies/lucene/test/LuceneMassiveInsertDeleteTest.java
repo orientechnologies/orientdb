@@ -24,9 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,11 +39,10 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
     OSchema schema = db.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     OClass song = schema.createClass("City");
-    song.setSuperClass(v);
+    song.addSuperClass(v);
     song.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE").close();
   }
 
   @Test
@@ -58,24 +55,24 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
       db.save(city);
     }
     String query = "select * from City where name LUCENE 'name:Rome'";
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
-    Assert.assertEquals(docs.size(), size);
+    OResultSet docs = db.query(query);
+    Assert.assertEquals(docs.stream().count(), size);
 
     db.close();
     db = (ODatabaseDocumentInternal) openDatabase();
 
-    docs = db.query(new OSQLSynchQuery<ODocument>(query));
-    Assert.assertEquals(docs.size(), size);
+    docs = db.query(query);
+    Assert.assertEquals(docs.stream().count(), size);
 
-    db.command(new OCommandSQL("delete vertex City")).execute();
+    db.command("delete vertex City").close();
 
-    docs = db.query(new OSQLSynchQuery<ODocument>(query));
-    Assert.assertEquals(docs.size(), 0);
+    docs = db.query(query);
+    Assert.assertEquals(docs.stream().count(), 0);
 
     db.close();
     db = (ODatabaseDocumentInternal) openDatabase();
-    docs = db.query(new OSQLSynchQuery<ODocument>(query));
-    Assert.assertEquals(docs.size(), 0);
+    docs = db.query(query);
+    Assert.assertEquals(docs.stream().count(), 0);
 
     db.getMetadata().reload();
     OIndex idx = db.getMetadata().getSchema().getClass("City").getClassIndex("City.name");

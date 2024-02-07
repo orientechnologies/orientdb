@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.Collection;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -57,8 +56,8 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
   public void afterClass() {
     if (database.isClosed()) database.open("admin", "admin");
 
-    database.command(new OCommandSQL("delete from PropertyIndexTestClass")).execute();
-    database.command(new OCommandSQL("drop class PropertyIndexTestClass")).execute();
+    database.command("delete from PropertyIndexTestClass");
+    database.command("drop class PropertyIndexTestClass");
     database.reload();
     database.close();
   }

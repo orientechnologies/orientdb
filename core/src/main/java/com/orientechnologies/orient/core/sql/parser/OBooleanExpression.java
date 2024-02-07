@@ -9,6 +9,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -300,6 +302,10 @@ public abstract class OBooleanExpression extends SimpleNode {
 
   public boolean isIndexAware(OIndexSearchInfo info) {
     return false;
+  }
+
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    return Optional.empty();
   }
 
   public boolean createRangeWith(OBooleanExpression match) {

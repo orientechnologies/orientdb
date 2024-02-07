@@ -7,9 +7,13 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
+import com.orientechnologies.orient.core.sql.executor.metadata.OMultipleIndexCanditate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OAndBlock extends OBooleanExpression {
@@ -273,6 +277,28 @@ public class OAndBlock extends OBooleanExpression {
       return this;
     }
     return this;
+  }
+
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    Optional<OIndexCandidate> result = Optional.empty();
+    for (OBooleanExpression exp : subBlocks) {
+      Optional<OIndexCandidate> singleResult = exp.findIndex(info, ctx);
+      if (singleResult.isPresent()) {
+        if (result.isPresent()) {
+          if (result.get() instanceof OMultipleIndexCanditate) {
+            ((OMultipleIndexCanditate) result.get()).addCanditate(singleResult.get());
+          } else {
+            OMultipleIndexCanditate mult = new OMultipleIndexCanditate();
+            mult.addCanditate(result.get());
+            mult.addCanditate(singleResult.get());
+            result = Optional.of(mult);
+          }
+        } else {
+          result = singleResult;
+        }
+      }
+    }
+    return result;
   }
 
   @Override

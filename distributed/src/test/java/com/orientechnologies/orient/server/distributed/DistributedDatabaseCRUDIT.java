@@ -13,7 +13,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -68,10 +68,11 @@ public final class DistributedDatabaseCRUDIT {
 
     boolean addTestData = true;
     String query = "select count(*) as dataCount from TestNode";
-    Iterable<OVertex> vtxs = graph.command(new OCommandSQL(query)).execute();
-    for (OVertex vtx : vtxs) {
-      long count = vtx.getProperty("dataCount");
-      addTestData = (count == 0);
+    try (OResultSet vtxs = graph.query(query)) {
+      while (vtxs.hasNext()) {
+        long count = vtxs.next().getProperty("dataCount");
+        addTestData = (count == 0);
+      }
     }
 
     if (addTestData) {
@@ -141,7 +142,7 @@ public final class DistributedDatabaseCRUDIT {
         if (edgeCounter > mainNodeDataCount) {
           edgeCounter = 1;
         }
-        graph.command(new OCommandSQL(edgeSQL)).execute();
+        graph.command(edgeSQL).close();
       }
       System.out.println();
     }
@@ -277,7 +278,7 @@ public final class DistributedDatabaseCRUDIT {
                   int k = 1;
                   for (; k <= 100 && update; k++) {
                     try {
-                      graph.command(new OCommandSQL(sql)).execute();
+                      graph.command(sql).close();
                       if (isException) {
                         // log("********** [" + id + "][" + k + "] Update success after distributed
                         // lock Exception");
@@ -398,9 +399,10 @@ public final class DistributedDatabaseCRUDIT {
                 }
                 ODatabaseDocument graph = graphFactory.acquire();
                 try {
-                  Iterable<OElement> vtxs = graph.command(new OCommandSQL(query)).execute();
+                  OResultSet vtxs = graph.query(query);
                   boolean retry = true;
-                  for (OElement vtx : vtxs) {
+                  while (vtxs.hasNext()) {
+                    OElement vtx = vtxs.next().getElement().get();
                     if (retry) {
                       retry = true;
                       boolean isException = false;
@@ -546,7 +548,7 @@ public final class DistributedDatabaseCRUDIT {
 
       ODatabaseDocument orientGraph = getGraphFactory().acquire();
 
-      orientGraph.command(new OCommandSQL("ALTER DATABASE custom strictSQL=false")).execute();
+      orientGraph.command("ALTER DATABASE custom strictSQL=false").close();
       orientGraph.close();
     } catch (Exception ex) {
       log("Failed to create database", ex);

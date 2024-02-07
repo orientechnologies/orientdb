@@ -6,8 +6,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryInternalDatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
@@ -26,7 +26,7 @@ public class TestMultiSuperClasses extends BaseMemoryInternalDatabase {
     testClassCreationBranch(aClass, bClass, cClass);
     oSchema.reload();
     testClassCreationBranch(aClass, bClass, cClass);
-    oSchema = db.getMetadata().getImmutableSchemaSnapshot();
+    oSchema = ((ODatabaseDocumentInternal) db).getMetadata().getImmutableSchemaSnapshot();
     aClass = oSchema.getClass("javaA");
     bClass = oSchema.getClass("javaB");
     cClass = oSchema.getClass("javaC");
@@ -67,19 +67,19 @@ public class TestMultiSuperClasses extends BaseMemoryInternalDatabase {
     OClass aClass = oSchema.createAbstractClass("sqlA");
     OClass bClass = oSchema.createAbstractClass("sqlB");
     OClass cClass = oSchema.createClass("sqlC");
-    db.command(new OCommandSQL("alter class sqlC superclasses sqlA, sqlB")).execute();
+    db.command("alter class sqlC superclasses sqlA, sqlB").close();
     oSchema.reload();
     assertTrue(cClass.isSubClassOf(aClass));
     assertTrue(cClass.isSubClassOf(bClass));
-    db.command(new OCommandSQL("alter class sqlC superclass sqlA")).execute();
+    db.command("alter class sqlC superclass sqlA").close();
     oSchema.reload();
     assertTrue(cClass.isSubClassOf(aClass));
     assertFalse(cClass.isSubClassOf(bClass));
-    db.command(new OCommandSQL("alter class sqlC superclass +sqlB")).execute();
+    db.command("alter class sqlC superclass +sqlB").close();
     oSchema.reload();
     assertTrue(cClass.isSubClassOf(aClass));
     assertTrue(cClass.isSubClassOf(bClass));
-    db.command(new OCommandSQL("alter class sqlC superclass -sqlA")).execute();
+    db.command("alter class sqlC superclass -sqlA").close();
     oSchema.reload();
     assertFalse(cClass.isSubClassOf(aClass));
     assertTrue(cClass.isSubClassOf(bClass));
@@ -89,9 +89,9 @@ public class TestMultiSuperClasses extends BaseMemoryInternalDatabase {
   public void testCreationBySql() {
     final OSchema oSchema = db.getMetadata().getSchema();
 
-    db.command(new OCommandSQL("create class sql2A abstract")).execute();
-    db.command(new OCommandSQL("create class sql2B abstract")).execute();
-    db.command(new OCommandSQL("create class sql2C extends sql2A, sql2B abstract")).execute();
+    db.command("create class sql2A abstract").close();
+    db.command("create class sql2B abstract").close();
+    db.command("create class sql2C extends sql2A, sql2B abstract").close();
     oSchema.reload();
     OClass aClass = oSchema.getClass("sql2A");
     OClass bClass = oSchema.getClass("sql2B");

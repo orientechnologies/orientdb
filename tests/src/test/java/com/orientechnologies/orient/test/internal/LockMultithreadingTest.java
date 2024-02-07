@@ -5,9 +5,8 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -77,21 +76,18 @@ public class LockMultithreadingTest {
         }
 
         ODatabaseRecordThreadLocal.instance().set(db);
-        List<ODocument> execute;
+        OResultSet execute;
         System.out.println(
             Thread.currentThread() + " : before search cycle(update)" + updateCounter);
         do {
           execute =
-              db.command(
-                      new OSQLSynchQuery<Object>(
-                          "select * from " + STUDENT_CLASS_NAME + " where counter = ?"))
-                  .execute(updateCounter);
+              db.query("select * from " + STUDENT_CLASS_NAME + " where counter = ?", updateCounter);
 
-        } while (!deleted.contains(updateCounter) && (execute == null || execute.isEmpty()));
+        } while (!deleted.contains(updateCounter) && (execute == null || !execute.hasNext()));
         if (!deleted.contains(updateCounter)) {
           System.out.println(
               Thread.currentThread() + " : after search cycle(update) " + updateCounter);
-          ODocument document = execute.get(0);
+          ODocument document = (ODocument) execute.next().getElement().get();
           document.field("counter2", document.<Object>field("counter"));
           try {
             document.save();
@@ -132,18 +128,15 @@ public class LockMultithreadingTest {
         try {
           ODatabaseRecordThreadLocal.instance().set(db);
 
-          List<ODocument> execute;
+          OResultSet execute;
           System.out.println(Thread.currentThread() + " : before search cycle (delete) " + number);
           do {
             execute =
-                db.command(
-                        new OSQLSynchQuery<Object>(
-                            "select * from " + STUDENT_CLASS_NAME + " where counter2 = ?"))
-                    .execute(number);
+                db.query("select * from " + STUDENT_CLASS_NAME + " where counter2 = ?", number);
 
-          } while (execute == null || execute.isEmpty());
+          } while (execute == null || !execute.hasNext());
           System.out.println(Thread.currentThread() + " : after search cycle (delete)" + number);
-          ODocument document = execute.get(0);
+          ODocument document = (ODocument) execute.next().getElement().get();
           document.delete();
           deleted.add(number);
           System.out.println(Thread.currentThread() + " : document deleted " + number);

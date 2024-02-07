@@ -15,10 +15,9 @@
  */
 package com.orientechnologies.spatial.functions;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.spatial.BaseSpatialLuceneTest;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,84 +27,62 @@ public class LuceneSpatialContainsTest extends BaseSpatialLuceneTest {
   @Test
   public void testContainsNoIndex() {
 
-    List<ODocument> execute =
+    OResultSet execute =
         db.command(
-                new OCommandSQL(
-                    "select ST_Contains(smallc,smallc) as smallinsmall,ST_Contains(smallc, bigc) As smallinbig, ST_Contains(bigc,smallc) As biginsmall from (SELECT ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20) As smallc,ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40) As bigc)"))
-            .execute();
-    ODocument next = execute.iterator().next();
+            "select ST_Contains(smallc,smallc) as smallinsmall,ST_Contains(smallc, bigc) As smallinbig, ST_Contains(bigc,smallc) As biginsmall from (SELECT ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20) As smallc,ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40) As bigc)");
+    OResult next = execute.next();
 
-    Assert.assertTrue(next.field("smallinsmall"));
-    Assert.assertFalse(next.field("smallinbig"));
-    Assert.assertTrue(next.field("biginsmall"));
+    Assert.assertTrue(next.getProperty("smallinsmall"));
+    Assert.assertFalse(next.getProperty("smallinbig"));
+    Assert.assertTrue(next.getProperty("biginsmall"));
   }
 
   @Test
   public void testContainsIndex() {
 
-    db.command(new OCommandSQL("create class Polygon extends v")).execute();
-    db.command(new OCommandSQL("create property Polygon.geometry EMBEDDED OPolygon")).execute();
+    db.command("create class Polygon extends v").close();
+    db.command("create property Polygon.geometry EMBEDDED OPolygon").close();
 
-    db.command(
-            new OCommandSQL(
-                "insert into Polygon set geometry = ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20)"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "insert into Polygon set geometry = ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40)"))
-        .execute();
+    db.command("insert into Polygon set geometry = ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20)")
+        .close();
+    db.command("insert into Polygon set geometry = ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40)")
+        .close();
 
-    db.command(
-            new OCommandSQL("create index Polygon.g on Polygon (geometry) SPATIAL engine lucene"))
-        .execute();
-    List<ODocument> execute =
-        db.command(
-                new OCommandSQL(
-                    "SELECT from Polygon where ST_Contains(geometry, 'POINT(50 50)') = true"))
-            .execute();
+    db.command("create index Polygon.g on Polygon (geometry) SPATIAL engine lucene").close();
+    OResultSet execute =
+        db.command("SELECT from Polygon where ST_Contains(geometry, 'POINT(50 50)') = true");
 
-    Assert.assertEquals(2, execute.size());
+    Assert.assertEquals(2, execute.stream().count());
 
     execute =
         db.command(
-                new OCommandSQL(
-                    "SELECT from Polygon where ST_Contains(geometry, ST_Buffer(ST_GeomFromText('POINT(50 50)'), 30)) = true"))
-            .execute();
+            "SELECT from Polygon where ST_Contains(geometry, ST_Buffer(ST_GeomFromText('POINT(50 50)'), 30)) = true");
 
-    Assert.assertEquals(1, execute.size());
+    Assert.assertEquals(1, execute.stream().count());
   }
 
   @Test
   public void testContainsIndex_GeometryCollection() {
 
-    db.command(new OCommandSQL("create class TestInsert extends v")).execute();
-    db.command(new OCommandSQL("create property TestInsert.geometry EMBEDDED OGeometryCollection"))
-        .execute();
+    db.command("create class TestInsert extends v").close();
+    db.command("create property TestInsert.geometry EMBEDDED OGeometryCollection").close();
 
     db.command(
-            new OCommandSQL(
-                "insert into TestInsert set geometry = {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[10,0],[10,10],[0,10],[0,0]]]}]}"))
-        .execute();
+            "insert into TestInsert set geometry = {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[10,0],[10,10],[0,10],[0,0]]]}]}")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into TestInsert set geometry = {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[11,11],[21,11],[21,21],[11,21],[11,11]]]}]}"))
-        .execute();
+            "insert into TestInsert set geometry = {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[11,11],[21,11],[21,21],[11,21],[11,11]]]}]}")
+        .close();
 
-    db.command(
-            new OCommandSQL(
-                "create index TestInsert.geometry on TestInsert (geometry) SPATIAL engine lucene"))
-        .execute();
+    db.command("create index TestInsert.geometry on TestInsert (geometry) SPATIAL engine lucene")
+        .close();
 
     String testGeometry =
         "{'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[1,1],[2,1],[2,2],[1,2],[1,1]]]}]}";
-    List<ODocument> execute =
+    OResultSet execute =
         db.command(
-                new OCommandSQL(
-                    "SELECT from TestInsert where ST_Contains(geometry, "
-                        + testGeometry
-                        + ") = true"))
-            .execute();
+            "SELECT from TestInsert where ST_Contains(geometry, " + testGeometry + ") = true");
 
-    Assert.assertEquals(1, execute.size());
+    Assert.assertEquals(1, execute.stream().count());
   }
 }

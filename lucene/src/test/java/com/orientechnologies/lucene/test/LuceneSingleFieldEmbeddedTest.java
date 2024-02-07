@@ -18,12 +18,8 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,39 +30,31 @@ public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
   @Test
   public void loadAndTest() {
 
-    List<ODocument> docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title] LUCENE \"(title:mountain)\""));
+    OResultSet docs = db.query("select * from Song where [title] LUCENE \"(title:mountain)\"");
 
-    Assert.assertEquals(docs.size(), 4);
+    Assert.assertEquals(docs.stream().count(), 4);
 
-    docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from Song where [author] LUCENE \"(author:Fabbio)\""));
+    docs = db.query("select * from Song where [author] LUCENE \"(author:Fabbio)\"");
 
-    Assert.assertEquals(docs.size(), 87);
+    Assert.assertEquals(docs.stream().count(), 87);
 
     // not WORK BECAUSE IT USES only the first index
     // String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and [author]
     // LUCENE \"(author:Fabbio)\""
     String query =
         "select * from Song where [title] LUCENE \"(title:mountain)\"  and author = 'Fabbio'";
-    docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    docs = db.query(query);
 
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(docs.stream().count(), 1);
   }
 
   @Before
   public void init() {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    db.execute("sql", getScriptFromStream(stream)).close();
 
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE"))
-        .execute();
-    db.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE").close();
+    db.command("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE").close();
   }
 }

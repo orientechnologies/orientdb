@@ -1,14 +1,13 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.index.OIndex;
 
 /** Created by luigidellaquila on 02/08/16. */
 public class FetchFromIndexValuesStep extends FetchFromIndexStep {
 
   public FetchFromIndexValuesStep(
-      OIndex index, boolean asc, OCommandContext ctx, boolean profilingEnabled) {
-    super(index, null, null, asc, ctx, profilingEnabled);
+      IndexSearchDescriptor desc, boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
+    super(desc, orderAsc, ctx, profilingEnabled);
   }
 
   @Override
@@ -16,11 +15,11 @@ public class FetchFromIndexValuesStep extends FetchFromIndexStep {
     if (isOrderAsc()) {
       return OExecutionStepInternal.getIndent(depth, indent)
           + "+ FETCH FROM INDEX VAUES ASC "
-          + index.getName();
+          + desc.getIndex().getName();
     } else {
       return OExecutionStepInternal.getIndent(depth, indent)
           + "+ FETCH FROM INDEX VAUES DESC "
-          + index.getName();
+          + desc.getIndex().getName();
     }
   }
 

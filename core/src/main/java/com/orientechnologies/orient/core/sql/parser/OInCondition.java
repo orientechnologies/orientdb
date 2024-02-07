@@ -9,10 +9,14 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
+import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -404,6 +408,18 @@ public class OInCondition extends OBooleanExpression {
       }
     }
     return false;
+  }
+
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    Optional<OPath> path = left.getPath();
+    if (path.isPresent()) {
+      if (rightMathExpression != null && rightMathExpression.isEarlyCalculated(ctx)) {
+        Object value = rightMathExpression.execute((OResult) null, ctx);
+        return info.findExactIndex(path.get(), value, ctx);
+      }
+    }
+
+    return Optional.empty();
   }
 
   @Override

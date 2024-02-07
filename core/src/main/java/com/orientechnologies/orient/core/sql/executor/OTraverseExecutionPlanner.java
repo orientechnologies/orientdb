@@ -220,7 +220,8 @@ public class OTraverseExecutionPlanner {
               "Index " + indexName + " does not allow iteration without a condition");
         }
 
-        result.chain(new FetchFromIndexStep(index, null, null, ctx, profilingEnabled));
+        result.chain(
+            new FetchFromIndexStep(new IndexSearchDescriptor(index), true, ctx, profilingEnabled));
         result.chain(new GetValueFromIndexEntryStep(ctx, null, profilingEnabled));
         break;
       case VALUES:
@@ -229,7 +230,9 @@ public class OTraverseExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(index, true, ctx, profilingEnabled));
+        result.chain(
+            new FetchFromIndexValuesStep(
+                new IndexSearchDescriptor(index), true, ctx, profilingEnabled));
         result.chain(new GetValueFromIndexEntryStep(ctx, null, profilingEnabled));
         break;
       case VALUESDESC:
@@ -237,7 +240,9 @@ public class OTraverseExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(index, false, ctx, profilingEnabled));
+        result.chain(
+            new FetchFromIndexValuesStep(
+                new IndexSearchDescriptor(index), false, ctx, profilingEnabled));
         result.chain(new GetValueFromIndexEntryStep(ctx, null, profilingEnabled));
         break;
     }

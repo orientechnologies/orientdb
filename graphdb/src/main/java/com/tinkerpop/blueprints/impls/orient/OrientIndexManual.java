@@ -184,7 +184,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
 
     if (iKeyType == null) iKeyType = OType.STRING;
 
-    final ODatabaseDocumentInternal db = graph.getRawGraph();
+    final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) graph.getRawGraph();
 
     this.recordKeyValueIndex =
         db.getMetadata()
@@ -253,7 +253,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
             e);
       }
 
-    final ODatabaseDocumentInternal database = graph.getRawGraph();
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) graph.getRawGraph();
     if (recordKeyValueMap == null) recordKeyValueIndex = buildKeyValueIndex(metadata);
     else {
       final OIndex index =
@@ -263,7 +263,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
   }
 
   private OIndex buildKeyValueIndex(final ODocument metadata) {
-    final ODatabaseDocumentInternal database = graph.getRawGraph();
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) graph.getRawGraph();
     final OIndex index =
         database
             .getMetadata()

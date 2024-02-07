@@ -86,7 +86,6 @@ public class FreezeMultiThreadingTestNonTX {
       ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
-        ODatabaseRecordThreadLocal.instance().set(database);
         countDownLatch.await();
 
         long value = createCounter.getAndIncrement();
@@ -123,7 +122,6 @@ public class FreezeMultiThreadingTestNonTX {
       ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
-        ODatabaseRecordThreadLocal.instance().set(database);
         countDownLatch.await();
 
         long value = transactionalCreateCounter.getAndIncrement();
@@ -166,7 +164,6 @@ public class FreezeMultiThreadingTestNonTX {
       ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
-        ODatabaseRecordThreadLocal.instance().set(database);
 
         countDownLatch.await();
 
@@ -259,7 +256,6 @@ public class FreezeMultiThreadingTestNonTX {
       ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
-        ODatabaseRecordThreadLocal.instance().set(database);
 
         countDownLatch.await();
 
@@ -358,7 +354,6 @@ public class FreezeMultiThreadingTestNonTX {
       ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
-        ODatabaseRecordThreadLocal.instance().set(database);
 
         countDownLatch.await();
 
@@ -424,7 +419,6 @@ public class FreezeMultiThreadingTestNonTX {
       ODatabaseDocumentInternal database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
       try {
-        ODatabaseRecordThreadLocal.instance().set(database);
 
         countDownLatch.await();
 

@@ -21,12 +21,13 @@
     </parent>
 
     <artifactId>orientdb-community</artifactId>
+    <packaging>pom</packaging>
 
     <name>OrientDB Community Distribution</name>
 
     <properties>
         <VERSION>${project.version}</VERSION>
-        <BUILD>${implementation.build}; ${maven.build.timestamp}</BUILD>
+        <BUILD>${implementation.build}</BUILD>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -105,21 +106,7 @@
     </dependencies>
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                    </archive>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+	<!--
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -154,7 +141,7 @@
                     </execution>
                 </executions>
             </plugin>
-
+-->
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -182,7 +169,6 @@
             </plugin>
         </plugins>
     </build>
-
     <profiles>
         <profile>
             <id>java8</id>

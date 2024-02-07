@@ -23,8 +23,7 @@ import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -62,9 +61,7 @@ public class ShardingIT extends AbstractServerClusterTest {
     final OProperty prop = clientType.createProperty("name-property", OType.STRING);
     prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    graphNoTx
-        .command(new OCommandSQL("alter cluster `Client-Type` name `Client-Type_europe`"))
-        .execute();
+    graphNoTx.command("alter cluster `Client-Type` name 'Client-Type_europe'").close();
 
     clientType.addCluster("client-type_usa");
     clientType.addCluster("client-type_asia");
@@ -188,19 +185,16 @@ public class ShardingIT extends AbstractServerClusterTest {
         try {
 
           // CREATE A REGULAR EDGE
-          Iterable<OEdge> result =
-              graph
-                  .command(
-                      new OCommandSQL(
-                          "create edge `Loves-Type` from "
-                              + vertices[i].getIdentity()
-                              + " to "
-                              + fishing.getIdentity()
-                              + " set real = true"))
-                  .execute();
+          OResultSet result =
+              graph.command(
+                  "create edge `Loves-Type` from "
+                      + vertices[i].getIdentity()
+                      + " to "
+                      + fishing.getIdentity()
+                      + " set real = true");
 
-          Assert.assertTrue(result.iterator().hasNext());
-          OEdge e = result.iterator().next();
+          Assert.assertTrue(result.hasNext());
+          OEdge e = result.next().getEdge().get();
           Assert.assertEquals(e.getProperty("real"), true);
 
           Assert.assertEquals(1, e.getRecord().getVersion());
@@ -211,19 +205,10 @@ public class ShardingIT extends AbstractServerClusterTest {
           Assert.assertEquals(
               fishing.getRecord().getVersion() + i + 1, e.getTo().getRecord().getVersion());
 
-          final Iterable<OElement> explain =
-              graph.command(new OCommandSQL("explain select from " + e.getIdentity())).execute();
+          result = graph.command("select from " + e.getIdentity());
 
-          System.out.println(
-              "explain select from "
-                  + e.getIdentity()
-                  + " -> "
-                  + ((ODocument) explain.iterator().next().getRecord()).field("servers"));
-
-          result = graph.command(new OCommandSQL("select from " + e.getIdentity())).execute();
-
-          Assert.assertTrue(result.iterator().hasNext());
-          OElement e2 = result.iterator().next();
+          Assert.assertTrue(result.hasNext());
+          OElement e2 = result.next().getEdge().get();
           Assert.assertEquals(e2.getProperty("real"), true);
 
         } finally {
@@ -255,15 +240,12 @@ public class ShardingIT extends AbstractServerClusterTest {
 
             String query = "select from `cluster:" + clusterName + "`";
 
-            final Object explain = g.command(new OCommandSQL("explain " + query)).execute();
-            System.out.println("explain " + query + " -> " + explain);
-
-            Iterable<OVertex> result = g.command(new OCommandSQL(query)).execute();
+            OResultSet result = g.command(query);
             Assert.assertTrue(
                 "Error on query against '" + clusterName + "' on server '" + server + "': " + query,
-                result.iterator().hasNext());
+                result.hasNext());
 
-            OElement v = result.iterator().next();
+            OElement v = result.next().getElement().get();
 
             Assert.assertEquals(
                 "Returned vertices name property is != shard_" + i + " on server " + server,
@@ -296,14 +278,12 @@ public class ShardingIT extends AbstractServerClusterTest {
                 .openDatabase(getDatabaseName(), "admin", "admin");
         try {
           // MISC QUERIES
-          Iterable<OElement> result =
-              g.command(
-                      new OCommandSQL(
-                          "select sum(amount), set(amount) from ( select from `Client-type` )"))
-                  .execute();
+          OResultSet result =
+              g.command("select sum(amount), set(amount) from ( select from `Client-type` )");
 
           int count = 0;
-          for (OElement v : result) {
+          while (result.hasNext()) {
+            OElement v = result.next().getElement().get();
             System.out.println(
                 "select sum(amount), set(amount) from ( select from `Client-Type` ) -> "
                     + v.getRecord());
@@ -335,10 +315,10 @@ public class ShardingIT extends AbstractServerClusterTest {
                 .openDatabase(getDatabaseName(), "admin", "admin");
         try {
 
-          Iterable<OElement> result =
-              g.command(new OCommandSQL("select from `Client-Type`")).execute();
+          OResultSet result = g.command("select from `Client-Type`");
           int count = 0;
-          for (OElement v : result) {
+          while (result.hasNext()) {
+            OElement v = result.next().getElement().get();
             count++;
 
             final Iterable<OVertex> knows =
@@ -368,14 +348,12 @@ public class ShardingIT extends AbstractServerClusterTest {
                 .openDatabase(getDatabaseName(), "admin", "admin");
         try {
 
-          Iterable<OElement> result =
-              g.command(
-                      new OCommandSQL(
-                          "select max(amount), avg(amount), sum(amount) from `Client-Type`"))
-                  .execute();
+          OResultSet result =
+              g.command("select max(amount), avg(amount), sum(amount) from `Client-Type`");
 
           int count = 0;
-          for (OElement v : result) {
+          while (result.hasNext()) {
+            OElement v = result.next().getElement().get();
             System.out.println(
                 "select max(amount), avg(amount), sum(amount) from Client-Type -> "
                     + v.getRecord());
@@ -398,14 +376,14 @@ public class ShardingIT extends AbstractServerClusterTest {
                 .openDatabase(getDatabaseName(), "admin", "admin");
         try {
 
-          Iterable<OElement> result =
+          OResultSet result =
               g.command(
-                      new OCommandSQL(
-                          "select name-property, count(*) from `Client-Type` group by `name-property`"))
-                  .execute();
+                  "select name-property, count(*) from `Client-Type` group by `name-property`");
 
           int count = 0;
-          for (OElement v : result) {
+          while (result.hasNext()) {
+            OElement v = result.next().getElement().get();
+
             System.out.println(
                 "select `name-property`, count(*) from Client-Type group by `name-property` -> "
                     + v.getRecord());
@@ -431,12 +409,11 @@ public class ShardingIT extends AbstractServerClusterTest {
                 .openDatabase(getDatabaseName(), "admin", "admin");
         try {
 
-          Iterable<OElement> result =
-              g.command(new OCommandSQL("select `name-property`, count(*) from `Client-Type`"))
-                  .execute();
+          OResultSet result = g.command("select `name-property`, count(*) from `Client-Type`");
 
           int count = 0;
-          for (OElement v : result) {
+          while (result.hasNext()) {
+            OElement v = result.next().getElement().get();
             System.out.println(
                 "select `name-property`, count(*) from Client-Type -> " + v.getRecord());
 
@@ -460,17 +437,16 @@ public class ShardingIT extends AbstractServerClusterTest {
               .getServerInstance()
               .openDatabase(getDatabaseName(), "admin", "admin");
       try {
-        Iterable<OElement> countResultBeforeDelete =
-            g.command(new OCommandSQL("select from `Client-Type`")).execute();
-        long totalBeforeDelete = 0;
-        for (OElement v : countResultBeforeDelete) totalBeforeDelete++;
+        OResultSet countResultBeforeDelete = g.command("select from `Client-Type`");
+        long totalBeforeDelete = countResultBeforeDelete.stream().count();
 
-        Iterable<OElement> result =
-            g.command(new OCommandSQL("select from `Client-Type`")).execute();
+        OResultSet result = g.command("select from `Client-Type`");
 
         int count = 0;
 
-        for (OElement v : result) {
+        while (result.hasNext()) {
+          OElement v = result.next().getElement().get();
+
           if (count % 2 == 0) {
             // DELETE ONLY EVEN INSTANCES
             v.delete();
@@ -478,24 +454,17 @@ public class ShardingIT extends AbstractServerClusterTest {
           }
         }
 
-        Iterable<OElement> countResultAfterDelete =
-            g.command(new OCommandSQL("select from `Client-type`")).execute();
-        long totalAfterDelete = 0;
-        for (OElement v : countResultAfterDelete) totalAfterDelete++;
+        OResultSet countResultAfterDelete = g.command("select from `Client-type`");
+        long totalAfterDelete = countResultAfterDelete.stream().count();
 
         Assert.assertEquals(totalBeforeDelete - count, totalAfterDelete);
 
-        g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp1'"))
-            .execute();
-        g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp2'"))
-            .execute();
-        g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp3'"))
-            .execute();
+        g.command("create vertex `Client-Type` set `name-property` = 'temp1'").close();
+        g.command("create vertex `Client-Type` set `name-property` = 'temp2'").close();
+        g.command("create vertex `Client-Type` set `name-property` = 'temp3'").close();
 
-        Iterable<OElement> countResultAfterFullDelete =
-            g.command(new OCommandSQL("select from `Client-Type`")).execute();
-        long totalAfterFullDelete = 0;
-        for (OElement v : countResultAfterFullDelete) totalAfterFullDelete++;
+        OResultSet countResultAfterFullDelete = g.command("select from `Client-Type`");
+        long totalAfterFullDelete = countResultAfterFullDelete.stream().count();
 
         Assert.assertEquals(0, totalAfterFullDelete);
 
@@ -545,10 +514,8 @@ public class ShardingIT extends AbstractServerClusterTest {
               .openDatabase(getDatabaseName(), "admin", "admin");
       gTx.begin();
       try {
-        Iterable<OElement> countResultAfterFullDelete =
-            gTx.command(new OCommandSQL("select from `Client-Type`")).execute();
-        long totalAfterFullDelete = 0;
-        for (OElement v : countResultAfterFullDelete) totalAfterFullDelete++;
+        OResultSet countResultAfterFullDelete = gTx.command("select from `Client-Type`");
+        long totalAfterFullDelete = countResultAfterFullDelete.stream().count();
 
         Assert.assertEquals(0, totalAfterFullDelete);
         gTx.commit();
@@ -575,16 +542,12 @@ public class ShardingIT extends AbstractServerClusterTest {
               .openDatabase(getDatabaseName(), "admin", "admin");
       try {
 
-        Iterable<OElement> result =
-            g.command(
-                    new OCommandSQL(
-                        "select * from `Client-Type` where `name-property` = 'shard_"
-                            + server
-                            + "'"))
-                .execute();
+        OResultSet result =
+            g.command("select * from `Client-Type` where `name-property` = 'shard_" + server + "'");
 
         int count = 0;
-        for (OElement v : result) {
+        while (result.hasNext()) {
+          OElement v = result.next().getElement().get();
           System.out.println(
               "select * from `Client-Type` where `name-property` = 'shard_"
                   + server

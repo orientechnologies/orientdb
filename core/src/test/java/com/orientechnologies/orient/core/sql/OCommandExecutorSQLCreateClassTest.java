@@ -40,7 +40,7 @@ public class OCommandExecutorSQLCreateClassTest extends BaseMemoryDatabase {
   @Test
   public void testCreateWithSuperclasses() throws Exception {
 
-    db.command(new OCommandSQL("create class `UserVertex` extends `V` , `User`")).execute();
+    db.command("create class `UserVertex` extends `V` , `User`").close();
 
     OClass userVertex = db.getMetadata().getSchema().getClass("UserVertex");
 

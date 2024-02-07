@@ -25,14 +25,12 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.junit.Assert;
@@ -54,10 +52,8 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
     oClass.createProperty("longitude", OType.DOUBLE);
     oClass.createProperty("name", OType.STRING);
 
-    db.command(
-            new OCommandSQL(
-                "CREATE INDEX Place.l_lon ON Place(latitude,longitude) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("CREATE INDEX Place.l_lon ON Place(latitude,longitude) SPATIAL ENGINE LUCENE")
+        .close();
 
     try {
       ZipFile zipFile =
@@ -141,15 +137,16 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
 
     String query =
         "select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]";
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    OResultSet docs = db.query(query);
 
-    Assert.assertEquals(1, docs.size());
+    Assert.assertTrue(docs.hasNext());
 
     // WHY ? 0.2749329729746763
     // Assert.assertEquals(0.27504313167833594, docs.get(0).field("$distance"));
     //    Assert.assertEquals(, docs.get(0).field("$distance"));
 
-    assertThat(docs.get(0).<Float>field("$distance")).isEqualTo(0.2749329729746763);
+    assertThat(docs.next().<Float>getProperty("$distance")).isEqualTo(0.2749329729746763);
+    Assert.assertFalse(docs.hasNext());
   }
 
   @Test
@@ -157,7 +154,7 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
   public void testWithinQuery() {
     String query =
         "select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]";
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
-    Assert.assertEquals(238, docs.size());
+    OResultSet docs = db.query(query);
+    Assert.assertEquals(238, docs.stream().count());
   }
 }

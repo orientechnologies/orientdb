@@ -55,7 +55,7 @@ public class ONonBlockingQueryTest {
     db.getMetadata().getSchema().createClass("test");
     MyResultListener listener = new MyResultListener(new CountDownLatch(1));
     try {
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar'")).execute();
+      db.command("insert into test set name = 'foo', surname = 'bar'").close();
 
       db.query(new OSQLNonBlockingQuery<Object>("select from test bla blu", listener));
       try {

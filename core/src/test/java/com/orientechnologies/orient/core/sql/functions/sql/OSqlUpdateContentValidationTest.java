@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -17,15 +17,11 @@ public class OSqlUpdateContentValidationTest extends BaseMemoryDatabase {
     clazz.createProperty("testNormal", OType.STRING);
     clazz.createProperty("test", OType.STRING).setReadonly(true);
 
-    OIdentifiable res =
-        db.command(
-                new OCommandSQL(
-                    "insert into Test content {\"testNormal\":\"hello\",\"test\":\"only read\"} "))
-            .execute();
+    OResultSet res =
+        db.command("insert into Test content {\"testNormal\":\"hello\",\"test\":\"only read\"} ");
+    OIdentifiable id = res.next().getProperty("@rid");
     try {
-      db.command(
-              new OCommandSQL("update " + res.getIdentity() + " CONTENT {\"testNormal\":\"by\"}"))
-          .execute();
+      db.command("update " + id + " CONTENT {\"testNormal\":\"by\"}").close();
       Assert.fail("Error on update of a record removing a readonly property");
     } catch (OValidationException val) {
 

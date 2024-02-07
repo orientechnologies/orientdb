@@ -5,8 +5,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -93,7 +92,7 @@ public class OLiveIndexRebuildTest {
             final ODatabaseDocumentTx database = pool.acquire();
             try {
               long start = System.nanoTime();
-              database.command(new OCommandSQL("rebuild index " + indexName)).execute();
+              database.command("rebuild index " + indexName).close();
               long end = System.nanoTime();
               rebuildInterval += (end - start);
               rebuildCount++;
@@ -130,16 +129,15 @@ public class OLiveIndexRebuildTest {
           try {
             long start = System.nanoTime();
 
-            final List<ODocument> result =
+            final OResultSet result =
                 database.query(
-                    new OSQLSynchQuery<ODocument>(
-                        "select from "
-                            + className
-                            + " where "
-                            + propertyName
-                            + " >= 100 and "
-                            + propertyName
-                            + "< 200"));
+                    "select from "
+                        + className
+                        + " where "
+                        + propertyName
+                        + " >= 100 and "
+                        + propertyName
+                        + "< 200");
 
             long end = System.nanoTime();
             long interval = end - start;
@@ -148,7 +146,7 @@ public class OLiveIndexRebuildTest {
 
             if (interval < minInterval) minInterval = interval;
 
-            Assert.assertEquals(result.size(), 100);
+            Assert.assertEquals(result.stream().count(), 100);
           } finally {
             database.close();
           }

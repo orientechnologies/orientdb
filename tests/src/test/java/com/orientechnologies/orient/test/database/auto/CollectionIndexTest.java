@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Collector;
 import java.util.ArrayList;
@@ -57,7 +56,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
   @AfterMethod
   public void afterMethod() throws Exception {
-    database.command(new OCommandSQL("delete from Collector")).execute();
+    database.command("delete from Collector").close();
 
     super.afterMethod();
   }
@@ -208,8 +207,8 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
     database
         .command(
-            new OCommandSQL("UPDATE " + collector.getId() + " add stringCollection = 'cookies'"))
-        .execute();
+            "UPDATE " + collector.getId() + " set stringCollection = stringCollection || 'cookies'")
+        .close();
 
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getInternal().size(), 3);
@@ -361,10 +360,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
 
-    database
-        .command(
-            new OCommandSQL("UPDATE " + collector.getId() + " remove stringCollection = 'spam'"))
-        .execute();
+    database.command("UPDATE " + collector.getId() + " remove stringCollection = 'spam'").close();
 
     final OIndex index = getIndex("Collector.stringCollection");
 

@@ -7,8 +7,11 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class ONotBlock extends OBooleanExpression {
@@ -176,6 +179,14 @@ public class ONotBlock extends OBooleanExpression {
       sub = sub.rewriteIndexChainsAsSubqueries(ctx, clazz);
     }
     return this;
+  }
+
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    Optional<OIndexCandidate> found = sub.findIndex(info, ctx);
+    if (negate && found.isPresent()) {
+      found = found.get().invert();
+    }
+    return found;
   }
 
   @Override

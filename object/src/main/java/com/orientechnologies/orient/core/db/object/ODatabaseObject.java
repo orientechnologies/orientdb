@@ -23,7 +23,9 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.entity.OEntityManager;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClusterInterface;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -71,6 +73,11 @@ public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHa
    */
   <RET> OObjectIteratorClassInterface<RET> browseClass(Class<RET> iClusterClass);
 
+  public <RET> OObjectIteratorClassInterface<RET> browseClass(final String iClassName);
+
+  public <RET> OObjectIteratorClassInterface<RET> browseClass(
+      final String iClassName, final boolean iPolymorphic);
+
   /**
    * Creates a new entity instance. Each database implementation will return the right type.
    *
@@ -94,6 +101,8 @@ public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHa
    * @return Total entities
    */
   long countClass(String iClassName, final boolean iPolymorphic);
+
+  long countClass(final Class<?> iClass);
 
   /**
    * Creates a new entity of the specified class.
@@ -171,6 +180,18 @@ public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHa
 
   void setLazyLoading(final boolean lazyLoading);
 
+  void setAutomaticSchemaGeneration(boolean automaticSchemaGeneration);
+
+  ORID getIdentity(final Object iPojo);
+
+  <RET> RET reload(final Object iPojo);
+
+  <RET> RET reload(final Object iPojo, final boolean iIgnoreCache);
+
+  <RET> RET reload(Object iPojo, final String iFetchPlan, final boolean iIgnoreCache);
+
+  <RET> RET reload(Object iObject, String iFetchPlan, boolean iIgnoreCache, boolean force);
+
   @Override
   OMetadataObject getMetadata();
 
@@ -182,6 +203,8 @@ public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHa
 
   <RET extends List<?>> RET objectCommand(String iCommand, Map<String, Object> iArgs);
 
+  <T> T newInstance(final Class<T> iType, Object... iArgs);
+
   @Override
   default <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
       throws IllegalStateException,
@@ -191,4 +214,12 @@ public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHa
     throw new UnsupportedOperationException();
     // TODO test it before enabling it!
   }
+
+  ODatabaseDocument getUnderlying();
+
+  ODocument getRecordByUserObject(final Object iPojo, final boolean iCreateIfNotAvailable);
+
+  void attach(final Object iPojo);
+
+  <RET> RET attachAndSave(final Object iPojo);
 }

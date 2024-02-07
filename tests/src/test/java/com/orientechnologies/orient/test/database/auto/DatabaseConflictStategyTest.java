@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -48,7 +47,7 @@ public final class DatabaseConflictStategyTest {
   public void runTest() {
     OrientBaseGraph orientGraph = new OrientGraphNoTx(getDBURL());
     log("Set database CONFLICTSTRATEGY to automerge");
-    orientGraph.command(new OCommandSQL("ALTER database CONFLICTSTRATEGY 'automerge'")).execute();
+    orientGraph.getRawGraph().command("ALTER database CONFLICTSTRATEGY 'automerge'").close();
     createVertexType(orientGraph, "Test");
     orientGraph.shutdown();
 
@@ -133,10 +132,5 @@ public final class DatabaseConflictStategyTest {
 
   private void log(String message) {
     //    System.out.println(message);
-  }
-
-  private void log(String message, Throwable th) {
-    System.out.println(th.getMessage());
-    th.printStackTrace();
   }
 }

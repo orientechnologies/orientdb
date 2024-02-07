@@ -25,15 +25,14 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -108,7 +107,8 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(
         nickProperty.getIndexes().iterator().next().getType(), OClass.INDEX_TYPE.UNIQUE.toString());
 
-    final boolean localStorage = !(database.getUnderlying().isRemote());
+    final boolean localStorage =
+        !(((ODatabaseDocumentInternal) database.getUnderlying()).isRemote());
 
     boolean oldRecording = true;
     long indexQueries = 0L;
@@ -185,7 +185,7 @@ public class IndexTest extends ObjectDBBaseTest {
         database
             .getMetadata()
             .getIndexManagerInternal()
-            .getIndex(database.getUnderlying(), "Profile.nick");
+            .getIndex((ODatabaseDocumentInternal) database.getUnderlying(), "Profile.nick");
 
     Assert.assertEquals(idx.getInternal().size(), result.size());
   }
@@ -206,7 +206,7 @@ public class IndexTest extends ObjectDBBaseTest {
         database
             .getMetadata()
             .getIndexManagerInternal()
-            .getIndex(database.getUnderlying(), "Profile.nick")
+            .getIndex((ODatabaseDocumentInternal) database.getUnderlying(), "Profile.nick")
             .getInternal()
             .size(),
         profileSize);
@@ -218,7 +218,7 @@ public class IndexTest extends ObjectDBBaseTest {
           database
               .getMetadata()
               .getIndexManagerInternal()
-              .getIndex(database.getUnderlying(), "Profile.nick")
+              .getIndex((ODatabaseDocumentInternal) database.getUnderlying(), "Profile.nick")
               .getInternal()
               .getRids("Yay-" + i)) {
         Assert.assertTrue(stream.findAny().isPresent());
@@ -261,7 +261,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMajorSelect() {
-    if (database.getUnderlying().isRemote()) {
+    if (((ODatabaseDocumentInternal) database.getUnderlying()).isRemote()) {
       return;
     }
 
@@ -301,7 +301,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMajorEqualsSelect() {
-    if (database.getUnderlying().isRemote()) {
+    if (((ODatabaseDocumentInternal) database.getUnderlying()).isRemote()) {
       return;
     }
 
@@ -342,7 +342,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMinorSelect() {
-    if (database.getUnderlying().isRemote()) {
+    if (((ODatabaseDocumentInternal) database.getUnderlying()).isRemote()) {
       return;
     }
 
@@ -379,7 +379,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMinorEqualsSelect() {
-    if (database.getUnderlying().isRemote()) {
+    if (((ODatabaseDocumentInternal) database.getUnderlying()).isRemote()) {
       return;
     }
 
@@ -416,7 +416,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexBetweenSelect() {
-    if (database.getUnderlying().isRemote()) {
+    if (((ODatabaseDocumentInternal) database.getUnderlying()).isRemote()) {
       return;
     }
 
@@ -455,7 +455,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInComplexSelectOne() {
-    if (database.getUnderlying().isRemote()) {
+    if (((ODatabaseDocumentInternal) database.getUnderlying()).isRemote()) {
       return;
     }
 
@@ -496,7 +496,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInComplexSelectTwo() {
-    if (database.getUnderlying().isRemote()) {
+    if (((ODatabaseDocumentInternal) database.getUnderlying()).isRemote()) {
       return;
     }
 
@@ -602,7 +602,8 @@ public class IndexTest extends ObjectDBBaseTest {
         nickProperty.getIndexes().iterator().next().getType(),
         OClass.INDEX_TYPE.NOTUNIQUE.toString());
 
-    final boolean localStorage = !(database.getUnderlying().isRemote());
+    final boolean localStorage =
+        !(((ODatabaseDocumentInternal) database.getUnderlying()).isRemote());
 
     boolean oldRecording = true;
     long indexQueries = 0L;
@@ -664,7 +665,7 @@ public class IndexTest extends ObjectDBBaseTest {
         database
             .getMetadata()
             .getIndexManagerInternal()
-            .getIndex(database.getUnderlying(), "Whiz.account");
+            .getIndex((ODatabaseDocumentInternal) database.getUnderlying(), "Whiz.account");
 
     for (int i = 0; i < 5; i++) {
       final ODocument whiz = new ODocument("Whiz");
@@ -1146,25 +1147,21 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "createInheritanceIndex")
   public void testIndexReturnOnlySpecifiedClass() {
-    List<ODocument> result;
 
     ODatabaseDocument db = database.getUnderlying();
 
-    result =
-        db.command(new OSQLSynchQuery("select * from ChildTestClass where testParentProperty = 10"))
-            .execute();
-    Assert.assertNotNull(result);
-    Assert.assertEquals(1, result.size());
-    Assert.assertEquals(10L, result.get(0).<Object>field("testParentProperty"));
+    try (OResultSet result =
+        db.command("select * from ChildTestClass where testParentProperty = 10")) {
 
-    result =
-        db.command(
-                new OCommandSQL(
-                    "select * from AnotherChildTestClass where testParentProperty = 11"))
-            .execute();
-    Assert.assertNotNull(result);
-    Assert.assertEquals(1, result.size());
-    Assert.assertEquals(11L, result.get(0).<Object>field("testParentProperty"));
+      Assert.assertEquals(10L, result.next().<Object>getProperty("testParentProperty"));
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result =
+        db.command("select * from AnotherChildTestClass where testParentProperty = 11")) {
+      Assert.assertEquals(11L, result.next().<Object>getProperty("testParentProperty"));
+      Assert.assertFalse(result.hasNext());
+    }
   }
 
   public void testNotUniqueIndexKeySize() {
@@ -1178,7 +1175,9 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
 
     final OIndex idx =
-        idxManager.getIndex(database.getUnderlying(), "IndexNotUniqueIndexKeySizeIndex");
+        idxManager.getIndex(
+            (ODatabaseDocumentInternal) database.getUnderlying(),
+            "IndexNotUniqueIndexKeySizeIndex");
 
     final Set<Integer> keys = new HashSet<>();
     for (int i = 1; i < 100; i++) {
@@ -1205,7 +1204,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
     final OIndex idx =
-        idxManager.getIndex(database.getUnderlying(), "IndexNotUniqueIndexSizeIndex");
+        idxManager.getIndex(
+            (ODatabaseDocumentInternal) database.getUnderlying(), "IndexNotUniqueIndexSizeIndex");
 
     for (int i = 1; i < 100; i++) {
       final Integer key = (int) Math.log(i);
@@ -1231,7 +1231,8 @@ public class IndexTest extends ObjectDBBaseTest {
     profile = database.save(profile);
 
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
-    OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
+    OIndex nickIndex =
+        idxManager.getIndex((ODatabaseDocumentInternal) database.getUnderlying(), "Profile.nick");
 
     try (Stream<ORID> stream = nickIndex.getInternal().getRids("NonProxiedObjectToDelete")) {
       Assert.assertTrue(stream.findAny().isPresent());
@@ -1258,7 +1259,8 @@ public class IndexTest extends ObjectDBBaseTest {
     profile = database.save(profile);
 
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
-    OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
+    OIndex nickIndex =
+        idxManager.getIndex((ODatabaseDocumentInternal) database.getUnderlying(), "Profile.nick");
 
     try (Stream<ORID> stream = nickIndex.getInternal().getRids("NonProxiedObjectToDelete")) {
       Assert.assertTrue(stream.findAny().isPresent());
@@ -1277,9 +1279,8 @@ public class IndexTest extends ObjectDBBaseTest {
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
     database
         .command(
-            new OCommandSQL(
-                "CREATE INDEX Profile.nick on Profile (nick) UNIQUE METADATA {ignoreNullValues: true}"))
-        .execute();
+            "CREATE INDEX Profile.nick on Profile (nick) UNIQUE METADATA {ignoreNullValues: true}")
+        .close();
     database.getMetadata().reload();
   }
 
@@ -1323,9 +1324,10 @@ public class IndexTest extends ObjectDBBaseTest {
     indexWithLimitAndOffset.createProperty("val", OType.INTEGER);
     indexWithLimitAndOffset.createProperty("index", OType.INTEGER);
 
-    databaseDocumentTx.command(
-        new OCommandSQL(
-            "create index IndexWithLimitAndOffset on IndexWithLimitAndOffsetClass (val) notunique"));
+    databaseDocumentTx
+        .command(
+            "create index IndexWithLimitAndOffset on IndexWithLimitAndOffsetClass (val) notunique")
+        .close();
 
     for (int i = 0; i < 30; i++) {
       final ODocument document = new ODocument("IndexWithLimitAndOffsetClass");
@@ -1623,9 +1625,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "create index ValuesContainerIsRemovedIfIndexIsRemovedIndex on ValuesContainerIsRemovedIfIndexIsRemovedClass (val) notunique"))
-        .execute();
+            "create index ValuesContainerIsRemovedIfIndexIsRemovedIndex on ValuesContainerIsRemovedIfIndexIsRemovedClass (val) notunique")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       for (int j = 0; j < 100; j++) {
@@ -1636,20 +1637,19 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final OAbstractPaginatedStorage storageLocalAbstract =
-        (OAbstractPaginatedStorage) database.getStorage();
+        (OAbstractPaginatedStorage)
+            ((ODatabaseDocumentInternal) database.getUnderlying()).getStorage();
 
     final OWriteCache writeCache = storageLocalAbstract.getWriteCache();
     Assert.assertTrue(writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
-    database
-        .command(new OCommandSQL("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex"))
-        .execute();
+    database.command("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex").close();
     Assert.assertFalse(writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
   }
 
   public void testPreservingIdentityInIndexTx() {
     checkEmbeddedDB();
 
-    OrientGraph graph = new OrientGraph(database.getUnderlying(), true);
+    OrientGraph graph = new OrientGraph((ODatabaseDocumentInternal) database.getUnderlying(), true);
     graph.setAutoScaleEdgeType(true);
 
     OrientVertexType fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
@@ -1745,8 +1745,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testNullIteration() {
-    ODatabaseDocumentInternal database = this.database.getUnderlying();
-    OrientGraph graph = new OrientGraph(database, false);
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) this.database.getUnderlying();
 
     OClass v = database.getMetadata().getSchema().getClass("V");
     OClass testNullIteration =
@@ -1755,18 +1754,12 @@ public class IndexTest extends ObjectDBBaseTest {
     testNullIteration.createProperty("birth", OType.DATETIME);
 
     database
-        .command(
-            new OCommandSQL(
-                "CREATE VERTEX NullIterationTest SET name = 'Andrew', birth = sysdate()"))
-        .execute();
+        .command("CREATE VERTEX NullIterationTest SET name = 'Andrew', birth = sysdate()")
+        .close();
     database
-        .command(
-            new OCommandSQL(
-                "CREATE VERTEX NullIterationTest SET name = 'Marcel', birth = sysdate()"))
-        .execute();
-    database
-        .command(new OCommandSQL("CREATE VERTEX NullIterationTest SET name = 'Olivier'"))
-        .execute();
+        .command("CREATE VERTEX NullIterationTest SET name = 'Marcel', birth = sysdate()")
+        .close();
+    database.command("CREATE VERTEX NullIterationTest SET name = 'Olivier'").close();
 
     ODocument metadata = new ODocument();
     metadata.field("ignoreNullValues", false);
@@ -1778,33 +1771,14 @@ public class IndexTest extends ObjectDBBaseTest {
         metadata,
         new String[] {"birth"});
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("SELECT FROM NullIterationTest ORDER BY birth ASC"));
-    Assert.assertEquals(result.size(), 3);
+    OResultSet result = database.query("SELECT FROM NullIterationTest ORDER BY birth ASC");
+    Assert.assertEquals(result.stream().count(), 3);
 
-    result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("SELECT FROM NullIterationTest ORDER BY birth DESC"));
-    Assert.assertEquals(result.size(), 3);
+    result = database.query("SELECT FROM NullIterationTest ORDER BY birth DESC");
+    Assert.assertEquals(result.stream().count(), 3);
 
-    result = database.query(new OSQLSynchQuery<ODocument>("SELECT FROM NullIterationTest"));
-    Assert.assertEquals(result.size(), 3);
-  }
-
-  private List<Long> getValidPositions(int clusterId) {
-    final List<Long> positions = new ArrayList<>();
-
-    final ORecordIteratorCluster<?> iteratorCluster =
-        database.getUnderlying().browseCluster(database.getClusterNameById(clusterId));
-
-    for (int i = 0; i < 7; i++) {
-      if (!iteratorCluster.hasNext()) break;
-
-      ORecord doc = iteratorCluster.next();
-      positions.add(doc.getIdentity().getClusterPosition());
-    }
-    return positions;
+    result = database.query("SELECT FROM NullIterationTest");
+    Assert.assertEquals(result.stream().count(), 3);
   }
 
   public void testMultikeyWithoutFieldAndNullSupport() {
@@ -1825,7 +1799,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final ORID rid3 = doc3.getIdentity();
     final ORID rid4 = doc4.getIdentity();
 
-    ODatabaseDocumentInternal database = this.database.getUnderlying();
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) this.database.getUnderlying();
 
     final OSchema schema = database.getMetadata().getSchema();
     OClass clazz = schema.createClass("TestMultikeyWithoutField");
@@ -2012,7 +1986,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final ORID rid3 = doc3.getIdentity();
     final ORID rid4 = doc4.getIdentity();
 
-    ODatabaseDocumentInternal database = this.database.getUnderlying();
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) this.database.getUnderlying();
 
     final OSchema schema = database.getMetadata().getSchema();
     OClass clazz = schema.createClass("TestMultikeyWithoutFieldNoNullSupport");
@@ -2169,7 +2143,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountSBTreeUnique() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentInternal db = database.getUnderlying();
+    final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) database.getUnderlying();
 
     OClass nullSBTreeClass =
         db.getMetadata().getSchema().createClass("NullValuesCountSBTreeUnique");
@@ -2198,7 +2172,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountSBTreeNotUniqueOne() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentInternal db = database.getUnderlying();
+    final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) database.getUnderlying();
 
     OClass nullSBTreeClass =
         db.getMetadata().getSchema().createClass("NullValuesCountSBTreeNotUniqueOne");
@@ -2230,7 +2204,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountSBTreeNotUniqueTwo() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentInternal db = database.getUnderlying();
+    final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) database.getUnderlying();
 
     OClass nullSBTreeClass =
         db.getMetadata().getSchema().createClass("NullValuesCountSBTreeNotUniqueTwo");
@@ -2264,7 +2238,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountHashUnique() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentInternal db = database.getUnderlying();
+    final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) database.getUnderlying();
 
     OClass nullSBTreeClass = db.getMetadata().getSchema().createClass("NullValuesCountHashUnique");
     nullSBTreeClass.createProperty("field", OType.INTEGER);
@@ -2293,7 +2267,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountHashNotUniqueOne() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentInternal db = database.getUnderlying();
+    final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) database.getUnderlying();
 
     OClass nullSBTreeClass =
         db.getMetadata().getSchema().createClass("NullValuesCountHashNotUniqueOne");
@@ -2325,7 +2299,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testNullValuesCountHashNotUniqueTwo() {
     checkEmbeddedDB();
 
-    final ODatabaseDocumentInternal db = database.getUnderlying();
+    final ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) database.getUnderlying();
 
     OClass nullSBTreeClass =
         db.getMetadata().getSchema().createClass("NullValuesCountHashNotUniqueTwo");
@@ -2361,25 +2335,17 @@ public class IndexTest extends ObjectDBBaseTest {
 
     OrientBaseGraph graph =
         new OrientGraphNoTx("memory:IndexTest_testParamsOrder", "admin", "admin");
+    ODatabaseDocument database = graph.getRawGraph();
 
-    graph.command(new OCommandSQL("CREATE CLASS Task extends V")).execute();
-    graph
-        .command(
-            new OCommandSQL(
-                "CREATE PROPERTY Task.projectId STRING (MANDATORY TRUE, NOTNULL, MAX 20)"))
-        .execute();
-    graph
-        .command(
-            new OCommandSQL("CREATE PROPERTY Task.seq SHORT ( MANDATORY TRUE, NOTNULL, MIN 0)"))
-        .execute();
-    graph.command(new OCommandSQL("CREATE INDEX TaskPK ON Task (projectId, seq) UNIQUE")).execute();
+    database.command("CREATE CLASS Task extends V").close();
+    database
+        .command("CREATE PROPERTY Task.projectId STRING (MANDATORY TRUE, NOTNULL, MAX 20)")
+        .close();
+    database.command("CREATE PROPERTY Task.seq SHORT ( MANDATORY TRUE, NOTNULL, MIN 0)").close();
+    database.command("CREATE INDEX TaskPK ON Task (projectId, seq) UNIQUE").close();
 
-    graph
-        .command(new OCommandSQL("INSERT INTO Task (projectId, seq) values ( 'foo', 2)"))
-        .execute();
-    graph
-        .command(new OCommandSQL("INSERT INTO Task (projectId, seq) values ( 'bar', 3)"))
-        .execute();
+    database.command("INSERT INTO Task (projectId, seq) values ( 'foo', 2)").close();
+    database.command("INSERT INTO Task (projectId, seq) values ( 'bar', 3)").close();
     Iterable<Vertex> x =
         graph.getVertices(
             "Task", new String[] {"seq", "projectId"}, new Object[] {(short) 2, "foo"});

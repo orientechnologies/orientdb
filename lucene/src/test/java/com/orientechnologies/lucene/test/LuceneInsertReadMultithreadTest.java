@@ -25,8 +25,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,8 +46,7 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE").close();
   }
 
   @Test
@@ -133,9 +130,7 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
 
       for (int i = 0; i < cycle; i++) {
 
-        databaseDocumentTx
-            .command(new OSQLSynchQuery<ODocument>("select from city where name LUCENE 'Rome'"))
-            .execute();
+        databaseDocumentTx.query("select from city where name LUCENE 'Rome'");
       }
     }
   }

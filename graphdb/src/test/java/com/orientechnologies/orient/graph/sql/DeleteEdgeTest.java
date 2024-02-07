@@ -53,7 +53,7 @@ public class DeleteEdgeTest {
 
       graph.commit();
 
-      graph.command(new OCommandSQL("delete edge TestEdge where based_on = '0001'")).execute();
+      graph.sqlCommand("delete edge TestEdge where based_on = '0001'").close();
 
       Iterable<OrientVertex> edges =
           graph
@@ -80,7 +80,7 @@ public class DeleteEdgeTest {
     edgeType.createProperty("mand", OType.STRING).setMandatory(true);
     graph.getRawGraph().begin();
 
-    graph.command(new OCommandSQL("delete edge TestEdge where based_on = '0001'")).execute();
+    graph.sqlCommand("delete edge TestEdge where based_on = '0001'").close();
 
     Iterable<OrientVertex> edges =
         graph

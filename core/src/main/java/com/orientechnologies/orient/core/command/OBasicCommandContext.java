@@ -71,6 +71,10 @@ public class OBasicCommandContext implements OCommandContext {
 
   public OBasicCommandContext() {}
 
+  public OBasicCommandContext(ODatabaseSession session) {
+    this.database = session;
+  }
+
   public Object getVariable(String iName) {
     return getVariable(iName, null);
   }

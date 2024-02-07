@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.IOException;
@@ -390,36 +389,28 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
   @Test()
   public void testSelectExcludeFunction() throws IOException {
     try {
-      database.command(new OCommandSQL("create class A extends V")).execute();
-      database.command(new OCommandSQL("create class B extends E")).execute();
+      database.command("create class A extends V").close();
+      database.command("create class B extends E").close();
       OIdentifiable id =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+          database.command("insert into A (a,b) values ('a','b')").next().getIdentity().get();
       OIdentifiable id2 =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+          database.command("insert into A (a,b) values ('a','b')").next().getIdentity().get();
       OIdentifiable id3 =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+          database.command("insert into A (a,b) values ('a','b')").next().getIdentity().get();
       OIdentifiable id4 =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+          database.command("insert into A (a,b) values ('a','b')").next().getIdentity().get();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge B from " + id.getIdentity() + " to " + id2.getIdentity()))
-          .execute();
+          .command("create edge B from " + id.getIdentity() + " to " + id2.getIdentity())
+          .close();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge B from " + id.getIdentity() + " to " + id3.getIdentity()))
-          .execute();
+          .command("create edge B from " + id.getIdentity() + " to " + id3.getIdentity())
+          .close();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge B from " + id.getIdentity() + " to " + id4.getIdentity()))
-          .execute();
+          .command("create edge B from " + id.getIdentity() + " to " + id4.getIdentity())
+          .close();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge B from " + id4.getIdentity() + " to " + id.getIdentity()))
-          .execute();
+          .command("create edge B from " + id4.getIdentity() + " to " + id.getIdentity())
+          .close();
 
       List<ODocument> res =
           database.query(
@@ -443,33 +434,29 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertNotNull(((ODocument) res.get(0).field("out")).field("a"));
       Assert.assertNull(((ODocument) res.get(0).field("out")).field("in_B"));
     } finally {
-      database.command(new OCommandSQL("drop class A unsafe ")).execute();
-      database.command(new OCommandSQL("drop class B unsafe ")).execute();
+      database.command("drop class A unsafe ").close();
+      database.command("drop class B unsafe ").close();
     }
   }
 
   @Test
   public void testSimpleExpandExclude() {
     try {
-      database.command(new OCommandSQL("create class A extends V")).execute();
-      database.command(new OCommandSQL("create class B extends E")).execute();
-      database.command(new OCommandSQL("create class C extends E")).execute();
+      database.command("create class A extends V").close();
+      database.command("create class B extends E").close();
+      database.command("create class C extends E").close();
       OIdentifiable id =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a1','b1')")).execute();
+          database.command("insert into A (a,b) values ('a1','b1')").next().getIdentity().get();
       OIdentifiable id2 =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a2','b2')")).execute();
+          database.command("insert into A (a,b) values ('a2','b2')").next().getIdentity().get();
       OIdentifiable id3 =
-          database.command(new OCommandSQL("insert into A (a,b) values ('a3','b3')")).execute();
+          database.command("insert into A (a,b) values ('a3','b3')").next().getIdentity().get();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge B from " + id.getIdentity() + " to " + id2.getIdentity()))
-          .execute();
+          .command("create edge B from " + id.getIdentity() + " to " + id2.getIdentity())
+          .close();
       database
-          .command(
-              new OCommandSQL(
-                  "create edge C from " + id2.getIdentity() + " to " + id3.getIdentity()))
-          .execute();
+          .command("create edge C from " + id2.getIdentity() + " to " + id3.getIdentity())
+          .close();
 
       List<ODocument> res =
           database.query(
@@ -484,9 +471,9 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertNull(((ODocument) ele.field("out")).field("in_B"));
 
     } finally {
-      database.command(new OCommandSQL("drop class A unsafe ")).execute();
-      database.command(new OCommandSQL("drop class B unsafe ")).execute();
-      database.command(new OCommandSQL("drop class C unsafe ")).execute();
+      database.command("drop class A unsafe ").close();
+      database.command("drop class B unsafe ").close();
+      database.command("drop class C unsafe ").close();
     }
   }
 

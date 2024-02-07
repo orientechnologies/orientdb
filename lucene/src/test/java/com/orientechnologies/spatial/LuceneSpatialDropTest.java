@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.File;
 import java.util.List;
@@ -35,12 +35,8 @@ public class LuceneSpatialDropTest {
     test.createProperty("name", OType.STRING);
     test.createProperty("latitude", OType.DOUBLE).setMandatory(false);
     test.createProperty("longitude", OType.DOUBLE).setMandatory(false);
-    db.command(new OCommandSQL("create index test.name on test (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
-    db.command(
-            new OCommandSQL(
-                "create index test.ll on test (latitude,longitude) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("create index test.name on test (name) FULLTEXT ENGINE LUCENE").close();
+    db.command("create index test.ll on test (latitude,longitude) SPATIAL ENGINE LUCENE").close();
     db.close();
   }
 
@@ -79,8 +75,7 @@ public class LuceneSpatialDropTest {
       doc.field("longitude", 8.0 + (i * 0.000001));
       db.save(doc);
     }
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select * from test");
-    List<ODocument> result = db.command(query).execute();
-    Assert.assertEquals(count, result.size());
+    OResultSet result = db.query("select * from test");
+    Assert.assertEquals(count, result.stream().count());
   }
 }

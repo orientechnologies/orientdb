@@ -85,8 +85,6 @@ public class OETLCommandTransformerTest extends OETLBaseTest {
   @Ignore
   public void shouldReturnSameObjectAsInput() throws Exception {
 
-    //    db.command(new OCommandSQL("CREATE Class Person EXTENDS V")).execute();
-
     OETLCommandTransformer tr = new OETLCommandTransformer();
 
     ODocument cnf =

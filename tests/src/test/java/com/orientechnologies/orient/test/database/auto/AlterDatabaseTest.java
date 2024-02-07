@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.io.IOException;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -33,7 +32,7 @@ public class AlterDatabaseTest extends DocumentDBBaseTest {
   }
 
   public void alterDateFormatOk() throws IOException {
-    database.command(new OCommandSQL("alter database dateformat 'yyyy-MM-dd';")).execute();
-    database.command(new OCommandSQL("alter database dateformat 'yyyy-MM-dd'")).execute();
+    database.command("alter database dateformat 'yyyy-MM-dd';").close();
+    database.command("alter database dateformat 'yyyy-MM-dd'").close();
   }
 }

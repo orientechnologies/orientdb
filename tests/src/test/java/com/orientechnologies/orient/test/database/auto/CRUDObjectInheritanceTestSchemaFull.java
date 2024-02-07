@@ -24,15 +24,14 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
-import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
 import com.orientechnologies.orient.test.domain.base.Musician;
@@ -141,15 +140,15 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
     }
     database.open("admin", "admin");
     if (database.getMetadata().getSchema().existsClass("Company"))
-      database.command(new OCommandSQL("delete from Company")).execute();
+      database.command("delete from Company").close();
     if (database.getMetadata().getSchema().existsClass("Account"))
-      database.command(new OCommandSQL("delete from Account")).execute();
+      database.command("delete from Account").close();
     if (database.getMetadata().getSchema().existsClass("JavaComplexTestClass"))
-      database.command(new OCommandSQL("delete from JavaComplexTestClass")).execute();
+      database.command("delete from JavaComplexTestClass").close();
     if (database.getMetadata().getSchema().existsClass("Profile"))
-      database.command(new OCommandSQL("delete from Profile")).execute();
+      database.command("delete from Profile").close();
     if (database.getMetadata().getSchema().existsClass("IdentityChild"))
-      database.command(new OCommandSQL("delete from IdentityChild")).execute();
+      database.command("delete from IdentityChild").close();
     database.close();
   }
 
@@ -236,7 +235,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
     startRecordNumber = database.countClass("Company");
 
     // DELETE ALL THE RECORD IN THE CLUSTER
-    OObjectIteratorClass<Company> companyClusterIterator = database.browseClass("Company");
+    OObjectIteratorClassInterface<Company> companyClusterIterator = database.browseClass("Company");
     for (Company obj : companyClusterIterator) {
       if (obj.getId() == 1) {
         database.delete(obj);
@@ -291,8 +290,8 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testIdFieldInheritance")
   public void testIdFieldInheritanceFirstSubClass() {
     database.setAutomaticSchemaGeneration(true);
-    database.command(new OCommandSQL("delete from InheritanceTestBaseClass")).execute();
-    database.command(new OCommandSQL("delete from InheritanceTestClass")).execute();
+    database.command("delete from InheritanceTestBaseClass").close();
+    database.command("delete from InheritanceTestClass").close();
 
     database.getEntityManager().registerEntityClass(InheritanceTestClass.class);
     database.getEntityManager().registerEntityClass(InheritanceTestBaseClass.class);

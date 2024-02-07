@@ -17,9 +17,8 @@ package com.orientechnologies.spatial.functions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.spatial.BaseSpatialLuceneTest;
 import com.orientechnologies.spatial.shape.OShapeFactory;
 import java.text.ParseException;
@@ -38,49 +37,45 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
   @Test
   public void testStEquals() {
 
-    List<ODocument> execute =
-        db.command(
-                new OCommandSQL(
-                    "SELECT ST_Equals(ST_GeomFromText('LINESTRING(0 0, 10 10)'), ST_GeomFromText('LINESTRING(0 0, 5 5, 10 10)'))"))
-            .execute();
-    ODocument next = execute.iterator().next();
-    Assert.assertEquals(next.field("ST_Equals"), true);
+    OResultSet execute =
+        db.query(
+            "SELECT ST_Equals(ST_GeomFromText('LINESTRING(0 0, 10 10)'), ST_GeomFromText('LINESTRING(0 0, 5 5, 10 10)')) as ST_Equals");
+    OResult next = execute.next();
+    Assert.assertEquals(next.getProperty("ST_Equals"), true);
+    execute.close();
   }
 
   @Test
   public void testStEqualsPoint() {
 
-    List<ODocument> execute =
-        db.command(
-                new OCommandSQL(
-                    "select ST_Equals(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)'))"))
-            .execute();
-    ODocument next = execute.iterator().next();
-    Assert.assertEquals(next.field("ST_Equals"), true);
+    OResultSet execute =
+        db.query(
+            "select ST_Equals(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)')) as ST_Equals");
+    OResult next = execute.next();
+    Assert.assertEquals(next.getProperty("ST_Equals"), true);
+    execute.close();
   }
 
   @Test
   public void testStWithinPoint() {
 
-    List<ODocument> execute =
-        db.command(
-                new OCommandSQL(
-                    "select ST_Within(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)'))"))
-            .execute();
-    ODocument next = execute.iterator().next();
-    Assert.assertEquals(true, next.field("ST_Within"));
+    OResultSet execute =
+        db.query(
+            "select ST_Within(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)')) as ST_Within");
+    OResult next = execute.next();
+    Assert.assertEquals(next.getProperty("ST_Within"), true);
+    execute.close();
   }
 
   @Test
   public void testStContainsPoint() {
 
-    List<ODocument> execute =
-        db.command(
-                new OCommandSQL(
-                    "select ST_Contains(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)'))"))
-            .execute();
-    ODocument next = execute.iterator().next();
-    Assert.assertEquals(true, next.field("ST_Contains"));
+    OResultSet execute =
+        db.query(
+            "select ST_Contains(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)')) as ST_Contains");
+    OResult next = execute.next();
+    Assert.assertEquals(next.getProperty("ST_Contains"), true);
+    execute.close();
   }
 
   // TODO reanable and check byte[]
@@ -88,34 +83,30 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
   @Ignore
   public void testAsBinary() {
 
-    List<ODocument> execute =
-        db.command(new OCommandSQL("SELECT ST_AsBinary(ST_GeomFromText('LINESTRING(0 0, 10 10)'))"))
-            .execute();
-    ODocument next = execute.iterator().next();
-    // TODO CHANGE
-    Assert.assertNull(next.field("ST_AsBinary"));
+    OResultSet execute =
+        db.command("SELECT ST_AsBinary(ST_GeomFromText('LINESTRING(0 0, 10 10)')) as ST_AsBinary");
+    OResult next = execute.next();
+    Assert.assertNull(next.getProperty("ST_AsBinary"));
+    execute.close();
   }
 
   @Test
   public void testEnvelope() {
-
-    List<ODocument> execute =
-        db.command(new OCommandSQL("SELECT ST_AsText(ST_Envelope('LINESTRING(0 0, 1 3)'))"))
-            .execute();
-    ODocument next = execute.iterator().next();
-    Assert.assertEquals(next.field("ST_AsText"), "POLYGON ((0 0, 0 3, 1 3, 1 0, 0 0))");
+    OResultSet execute =
+        db.query("SELECT ST_AsText(ST_Envelope('LINESTRING(0 0, 1 3)')) as ST_AsText");
+    OResult next = execute.next();
+    Assert.assertEquals(next.getProperty("ST_AsText"), "POLYGON ((0 0, 0 3, 1 3, 1 0, 0 0))");
+    execute.close();
   }
 
   @Test
   public void testBuffer() {
 
-    List<ODocument> execute =
-        db.command(
-                new OCommandSQL("SELECT ST_Buffer(ST_GeomFromText('POINT(100 90)'),50) as buffer;"))
-            .execute();
-    ODocument next = execute.iterator().next();
-
-    OElement buffer = next.getProperty("buffer");
+    OResultSet execute =
+        db.query("SELECT ST_Buffer(ST_GeomFromText('POINT(100 90)'),50) as buffer;");
+    OResult next = execute.next();
+    execute.close();
+    OResult buffer = next.getProperty("buffer");
     List coordinates = buffer.getProperty("coordinates");
     Assert.assertNotNull(coordinates);
     Assert.assertEquals(1, coordinates.size());
@@ -146,11 +137,10 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
     // 109.13417161825431, 149.03926402016157 99.75451610080621, 150 90))");
 
     execute =
-        db.command(
-                new OCommandSQL(
-                    "SELECT ST_Buffer(ST_GeomFromText('POINT(100 90)'), 50, { quadSegs : 2 }) as buffer;"))
-            .execute();
-    next = execute.iterator().next();
+        db.query(
+            "SELECT ST_Buffer(ST_GeomFromText('POINT(100 90)'), 50, { quadSegs : 2 }) as buffer;");
+    next = execute.next();
+    execute.close();
 
     //    Assert.assertEquals(next.field("ST_AsText"),
     //        "POLYGON ((150 90, 135.35533905932738 54.64466094067263, 100 40, 64.64466094067262
@@ -170,11 +160,10 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
     }
 
     execute =
-        db.command(
-                new OCommandSQL(
-                    "SELECT ST_Buffer(ST_GeomFromText('LINESTRING(0 0,75 75,75 0)'), 10, { 'endCap' : 'square' }) as buffer;"))
-            .execute();
-    next = execute.iterator().next();
+        db.query(
+            "SELECT ST_Buffer(ST_GeomFromText('LINESTRING(0 0,75 75,75 0)'), 10, { 'endCap' : 'square' }) as buffer;");
+    next = execute.next();
+    execute.close();
     //    Assert.assertEquals(next.field("ST_AsText"),
     //        "POLYGON ((67.92893218813452 82.07106781186548, 69.44429766980397 83.31469612302546,
     // 71.1731656763491 84.23879532511287, 73.04909677983872 84.80785280403231, 75 85,
@@ -508,44 +497,41 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
   @Test
   public void testDistance() {
 
-    List<ODocument> execute =
-        db.command(
-                new OCommandSQL(
-                    "SELECT ST_Distance(ST_GeomFromText('POINT(-72.1235 42.3521)'),ST_GeomFromText('LINESTRING(-72.1260 42.45, -72.123 42.1546)'))"))
-            .execute();
-    ODocument next = execute.iterator().next();
-
+    OResultSet execute =
+        db.query(
+            "SELECT ST_Distance(ST_GeomFromText('POINT(-72.1235 42.3521)'),ST_GeomFromText('LINESTRING(-72.1260 42.45, -72.123 42.1546)')) as ST_Distance");
+    OResult next = execute.next();
+    execute.close();
     //      Assert.assertEquals(next.field("ST_Distance"), 0.0015056772638228177);
-    assertThat(next.<Double>field("ST_Distance")).isEqualTo(0.0015056772638228177);
+    assertThat(next.<Double>getProperty("ST_Distance")).isEqualTo(0.0015056772638228177);
 
     execute =
-        db.command(
-                new OCommandSQL(
-                    "SELECT  ST_Distance( ST_GeomFromText('LINESTRING(13.45 52.47,13.46 52.48)'), ST_GeomFromText('LINESTRING(13.00 52.00,13.1 52.2)'))"))
-            .execute();
-    next = execute.iterator().next();
+        db.query(
+            "SELECT  ST_Distance( ST_GeomFromText('LINESTRING(13.45 52.47,13.46 52.48)'), ST_GeomFromText('LINESTRING(13.00 52.00,13.1 52.2)')) as ST_Distance");
+    next = execute.next();
+    execute.close();
 
     //      Assert.assertEquals(next.field("ST_Distance"), 0.44204072210600415);
 
-    assertThat(next.<Double>field("ST_Distance")).isEqualTo(0.44204072210600415);
+    assertThat(next.<Double>getProperty("ST_Distance")).isEqualTo(0.44204072210600415);
   }
 
   @Test
   public void testDisjoint() {
 
-    List<ODocument> execute =
-        db.command(new OCommandSQL("SELECT ST_Disjoint('POINT(0 0)', 'LINESTRING ( 2 0, 0 2 )');"))
-            .execute();
-    ODocument next = execute.iterator().next();
+    OResultSet execute =
+        db.query("SELECT ST_Disjoint('POINT(0 0)', 'LINESTRING ( 2 0, 0 2 )') as ST_Disjoint;");
+    OResult next = execute.next();
+    execute.close();
 
-    Assert.assertEquals(next.field("ST_Disjoint"), true);
+    Assert.assertEquals(next.getProperty("ST_Disjoint"), true);
 
     execute =
-        db.command(new OCommandSQL("SELECT ST_Disjoint('POINT(0 0)', 'LINESTRING ( 0 0, 0 2 )');"))
-            .execute();
-    next = execute.iterator().next();
+        db.query("SELECT ST_Disjoint('POINT(0 0)', 'LINESTRING ( 0 0, 0 2 )') as ST_Disjoint;");
+    next = execute.next();
+    execute.close();
 
-    Assert.assertEquals(next.field("ST_Disjoint"), false);
+    Assert.assertEquals(next.getProperty("ST_Disjoint"), false);
   }
 
   @Test

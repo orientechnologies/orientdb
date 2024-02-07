@@ -6,7 +6,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -53,63 +53,26 @@ import java.util.stream.Stream;
 
 /** Created by luigidellaquila on 23/07/16. */
 public class FetchFromIndexStep extends AbstractExecutionStep {
-  protected OIndexInternal index;
-  protected OBooleanExpression condition;
-  private OBinaryCondition additionalRangeCondition;
+  protected IndexSearchDescriptor desc;
 
   private boolean orderAsc;
-
-  protected String indexName;
 
   private long count = 0;
 
   public FetchFromIndexStep(
-      OIndex index,
-      OBooleanExpression condition,
-      OBinaryCondition additionalRangeCondition,
-      OCommandContext ctx,
-      boolean profilingEnabled) {
-    this(index, condition, additionalRangeCondition, true, ctx, profilingEnabled);
-  }
-
-  public FetchFromIndexStep(
-      OIndex index,
-      OBooleanExpression condition,
-      OBinaryCondition additionalRangeCondition,
-      boolean orderAsc,
-      OCommandContext ctx,
-      boolean profilingEnabled) {
+      IndexSearchDescriptor desc, boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
-    this.index = index.getInternal();
-    this.indexName = index.getName();
-    this.condition = condition;
-    this.additionalRangeCondition = additionalRangeCondition;
+    this.desc = desc;
     this.orderAsc = orderAsc;
 
     ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    database.queryStartUsingViewIndex(indexName);
-  }
-
-  private FetchFromIndexStep(
-      String indexName,
-      OBooleanExpression condition,
-      OBinaryCondition additionalRangeCondition,
-      boolean orderAsc,
-      OCommandContext ctx,
-      boolean profilingEnabled) {
-    super(ctx, profilingEnabled);
-    this.indexName = indexName;
-    this.condition = condition;
-    this.additionalRangeCondition = additionalRangeCondition;
-    this.orderAsc = orderAsc;
-    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    database.queryStartUsingViewIndex(indexName);
+    database.queryStartUsingViewIndex(desc.getIndex().getName());
   }
 
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    Set<Stream<ORawPair<Object, ORID>>> streams = init(ctx.getDatabase());
+    Set<Stream<ORawPair<Object, ORID>>> streams = init(desc, isOrderAsc(), ctx);
     Stream<OExecutionStream> resultStreams =
         streams.stream()
             .map(
@@ -151,6 +114,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private void updateIndexStats() {
     // stats
     OQueryStats stats = OQueryStats.get((ODatabaseDocumentInternal) ctx.getDatabase());
+    OIndex index = desc.getIndex();
+    OBooleanExpression condition = desc.getKeyCondition();
+    OBinaryCondition additionalRangeCondition = desc.getAdditionalRangeCondition();
     if (index == null) {
       return; // this could happen, if not inited yet
     }
@@ -179,39 +145,37 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     stats.pushIndexStats(indexName, size, range, additionalRangeCondition != null, count);
   }
 
-  private synchronized Set<Stream<ORawPair<Object, ORID>>> init(ODatabaseSession db) {
-    return init(condition, (ODatabaseDocumentInternal) db);
-  }
+  private static Set<Stream<ORawPair<Object, ORID>>> init(
+      IndexSearchDescriptor desc, boolean isOrderAsc, OCommandContext ctx) {
 
-  private Set<Stream<ORawPair<Object, ORID>>> init(
-      OBooleanExpression condition, ODatabaseDocumentInternal db) {
-    Set<Stream<ORawPair<Object, ORID>>> acquiredStreams =
-        Collections.newSetFromMap(new IdentityHashMap<>());
-    if (index == null) {
-      index = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName).getInternal();
-    }
+    OIndexInternal index = desc.getIndex().getInternal();
+    OBooleanExpression condition = desc.getKeyCondition();
+    OBinaryCondition additionalRangeCondition = desc.getAdditionalRangeCondition();
+
     if (index.getDefinition() == null) {
-      return acquiredStreams;
+      return Collections.emptySet();
     }
     if (condition == null) {
-      processFlatIteration(acquiredStreams);
+      return processFlatIteration(index, condition, isOrderAsc);
     } else if (condition instanceof OBinaryCondition) {
-      processBinaryCondition(acquiredStreams);
+      return processBinaryCondition(index, condition, isOrderAsc, ctx);
     } else if (condition instanceof OBetweenCondition) {
-      processBetweenCondition(acquiredStreams);
+      return processBetweenCondition(index, condition, isOrderAsc, ctx);
     } else if (condition instanceof OAndBlock) {
-      processAndBlock(acquiredStreams);
+      return processAndBlock(index, condition, additionalRangeCondition, isOrderAsc, ctx);
     } else if (condition instanceof OInCondition) {
-      processInCondition(acquiredStreams);
+      return processInCondition(index, condition, ctx, isOrderAsc);
     } else {
       // TODO process containsAny
       throw new OCommandExecutionException(
           "search for index for " + condition + " is not supported yet");
     }
-    return acquiredStreams;
   }
 
-  private void processInCondition(Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
+  private static Set<Stream<ORawPair<Object, ORID>>> processInCondition(
+      OIndexInternal index, OBooleanExpression condition, OCommandContext ctx, boolean orderAsc) {
+    Set<Stream<ORawPair<Object, ORID>>> acquiredStreams =
+        Collections.newSetFromMap(new IdentityHashMap<>());
     OIndexDefinition definition = index.getDefinition();
     OInCondition inCondition = (OInCondition) condition;
 
@@ -233,54 +197,85 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           }
         }
 
-        Stream<ORawPair<Object, ORID>> localCursor = createCursor(equals, definition, item, ctx);
+        Stream<ORawPair<Object, ORID>> localCursor =
+            createCursor(index, equals, definition, item, ctx, orderAsc, condition);
 
         acquiredStreams.add(localCursor);
       }
     } else {
-      Stream<ORawPair<Object, ORID>> stream = createCursor(equals, definition, rightValue, ctx);
+      Stream<ORawPair<Object, ORID>> stream =
+          createCursor(index, equals, definition, rightValue, ctx, orderAsc, condition);
       acquiredStreams.add(stream);
     }
+    return acquiredStreams;
   }
 
   /**
    * it's not key = [...] but a real condition on field names, already ordered (field names will be
    * ignored)
    *
+   * @param index
+   * @param condition
    * @param acquiredStreams TODO
    */
-  private void processAndBlock(Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
+  private static Set<Stream<ORawPair<Object, ORID>>> processAndBlock(
+      OIndexInternal index,
+      OBooleanExpression condition,
+      OBinaryCondition additionalRangeCondition,
+      boolean isOrderAsc,
+      OCommandContext ctx) {
     OCollection fromKey = indexKeyFrom((OAndBlock) condition, additionalRangeCondition);
     OCollection toKey = indexKeyTo((OAndBlock) condition, additionalRangeCondition);
     boolean fromKeyIncluded = indexKeyFromIncluded((OAndBlock) condition, additionalRangeCondition);
     boolean toKeyIncluded = indexKeyToIncluded((OAndBlock) condition, additionalRangeCondition);
-    init(acquiredStreams, fromKey, fromKeyIncluded, toKey, toKeyIncluded);
+    return multipleRange(
+        index,
+        fromKey,
+        fromKeyIncluded,
+        toKey,
+        toKeyIncluded,
+        condition,
+        isOrderAsc,
+        additionalRangeCondition,
+        ctx);
   }
 
-  private void processFlatIteration(Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
-    Stream<ORawPair<Object, ORID>> stream = isOrderAsc() ? index.stream() : index.descStream();
+  private static Set<Stream<ORawPair<Object, ORID>>> processFlatIteration(
+      OIndexInternal index, OBooleanExpression condition, boolean isOrderAsc) {
+    Set<Stream<ORawPair<Object, ORID>>> acquiredStreams =
+        Collections.newSetFromMap(new IdentityHashMap<>());
+    Stream<ORawPair<Object, ORID>> stream = isOrderAsc ? index.stream() : index.descStream();
     acquiredStreams.add(stream);
 
-    fetchNullKeys(acquiredStreams);
+    stream = fetchNullKeys(index);
+    if (stream != null) {
+      acquiredStreams.add(stream);
+    }
+    return acquiredStreams;
   }
 
-  private void fetchNullKeys(Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
+  private static Stream<ORawPair<Object, ORID>> fetchNullKeys(OIndexInternal index) {
     if (index.getDefinition().isNullValuesIgnored()) {
-      return;
+      return null;
     }
 
-    final Stream<ORID> stream = index.getRids(null);
-    acquiredStreams.add(stream.map((val) -> new ORawPair<Object, ORID>(null, val)));
+    return getStreamForNullKey(index);
   }
 
-  private void init(
-      Set<Stream<ORawPair<Object, ORID>>> acquiredStreams,
+  private static Set<Stream<ORawPair<Object, ORID>>> multipleRange(
+      OIndexInternal index,
       OCollection fromKey,
       boolean fromKeyIncluded,
       OCollection toKey,
-      boolean toKeyIncluded) {
-    List<OCollection> secondValueCombinations = cartesianProduct(fromKey);
-    List<OCollection> thirdValueCombinations = cartesianProduct(toKey);
+      boolean toKeyIncluded,
+      OBooleanExpression condition,
+      boolean isOrderAsc,
+      OBinaryCondition additionalRangeCondition,
+      OCommandContext ctx) {
+    Set<Stream<ORawPair<Object, ORID>>> acquiredStreams =
+        Collections.newSetFromMap(new IdentityHashMap<>());
+    List<OCollection> secondValueCombinations = cartesianProduct(fromKey, ctx);
+    List<OCollection> thirdValueCombinations = cartesianProduct(toKey, ctx);
 
     OIndexDefinition indexDef = index.getDefinition();
 
@@ -305,8 +300,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       thirdValue = unboxOResult(thirdValue);
 
       try {
-        secondValue = convertToIndexDefinitionTypes(secondValue, indexDef.getTypes());
-        thirdValue = convertToIndexDefinitionTypes(thirdValue, indexDef.getTypes());
+        secondValue = convertToIndexDefinitionTypes(condition, secondValue, indexDef.getTypes());
+        thirdValue = convertToIndexDefinitionTypes(condition, thirdValue, indexDef.getTypes());
       } catch (Exception e) {
         // manage subquery that returns a single collection
         if (secondValue instanceof Collection && secondValue.equals(thirdValue)) {
@@ -314,7 +309,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
               .forEach(
                   item -> {
                     Stream<ORawPair<Object, ORID>> stream;
-                    Object itemVal = convertToIndexDefinitionTypes(item, indexDef.getTypes());
+                    Object itemVal =
+                        convertToIndexDefinitionTypes(condition, item, indexDef.getTypes());
                     if (index.supportsOrderedIterations()) {
 
                       Object from = toBetweenIndexKey(indexDef, itemVal);
@@ -323,25 +319,25 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
                         // manage null value explicitly, as the index API does not seem to work
                         // correctly in this
                         // case
-                        stream = getStreamForNullKey();
+                        stream = getStreamForNullKey(index);
                         acquiredStreams.add(stream);
                       } else {
                         stream =
                             index.streamEntriesBetween(
-                                from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc());
+                                from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc);
                         acquiredStreams.add(stream);
                       }
 
                     } else if (additionalRangeCondition == null
                         && allEqualities((OAndBlock) condition)) {
-                      stream = index.streamEntries(toIndexKey(indexDef, itemVal), isOrderAsc());
+                      stream = index.streamEntries(toIndexKey(indexDef, itemVal), isOrderAsc);
                       acquiredStreams.add(stream);
                     } else if (isFullTextIndex(index)) {
-                      stream = index.streamEntries(toIndexKey(indexDef, itemVal), isOrderAsc());
+                      stream = index.streamEntries(toIndexKey(indexDef, itemVal), isOrderAsc);
                       acquiredStreams.add(stream);
                     } else {
                       throw new UnsupportedOperationException(
-                          "Cannot evaluate " + this.condition + " on index " + index);
+                          "Cannot evaluate " + condition + " on index " + index);
                     }
                   });
         }
@@ -358,25 +354,25 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         if (from == null && to == null) {
           // manage null value explicitly, as the index API does not seem to work correctly in this
           // case
-          stream = getStreamForNullKey();
+          stream = getStreamForNullKey(index);
           acquiredStreams.add(stream);
         } else {
-          stream =
-              index.streamEntriesBetween(from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc());
+          stream = index.streamEntriesBetween(from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc);
           acquiredStreams.add(stream);
         }
 
       } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
-        stream = index.streamEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+        stream = index.streamEntries(toIndexKey(indexDef, secondValue), isOrderAsc);
         acquiredStreams.add(stream);
       } else if (isFullTextIndex(index)) {
-        stream = index.streamEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+        stream = index.streamEntries(toIndexKey(indexDef, secondValue), isOrderAsc);
         acquiredStreams.add(stream);
       } else {
         throw new UnsupportedOperationException(
-            "Cannot evaluate " + this.condition + " on index " + index);
+            "Cannot evaluate " + condition + " on index " + index);
       }
     }
+    return acquiredStreams;
   }
 
   private static boolean isFullTextIndex(OIndex index) {
@@ -384,7 +380,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         && !index.getAlgorithm().equalsIgnoreCase("LUCENE");
   }
 
-  private Stream<ORawPair<Object, ORID>> getStreamForNullKey() {
+  private static Stream<ORawPair<Object, ORID>> getStreamForNullKey(OIndexInternal index) {
     final Stream<ORID> stream = index.getRids(null);
     return stream.map((rid) -> new ORawPair<>(null, rid));
   }
@@ -416,11 +412,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return value;
   }
 
-  private List<OCollection> cartesianProduct(OCollection key) {
-    return cartesianProduct(new OCollection(-1), key); // TODO
+  private static List<OCollection> cartesianProduct(OCollection key, OCommandContext ctx) {
+    return cartesianProduct(new OCollection(-1), key, ctx); // TODO
   }
 
-  private List<OCollection> cartesianProduct(OCollection head, OCollection key) {
+  private static List<OCollection> cartesianProduct(
+      OCollection head, OCollection key, OCommandContext ctx) {
     if (key.getExpressions().size() == 0) {
       return Collections.singletonList(head);
     }
@@ -436,7 +433,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         newHead.add(toExpression(elemInKey, ctx));
         OCollection tail = key.copy();
         tail.getExpressions().remove(0);
-        result.addAll(cartesianProduct(newHead, tail));
+        result.addAll(cartesianProduct(newHead, tail, ctx));
       }
       return result;
     } else {
@@ -447,7 +444,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       newHead.add(nextElementInKey);
       OCollection tail = key.copy();
       tail.getExpressions().remove(0);
-      return cartesianProduct(newHead, tail);
+      return cartesianProduct(newHead, tail, ctx);
     }
   }
 
@@ -455,7 +452,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return new OValueExpression(value);
   }
 
-  private Object convertToIndexDefinitionTypes(Object val, OType[] types) {
+  private static Object convertToIndexDefinitionTypes(
+      OBooleanExpression condition, Object val, OType[] types) {
     if (val == null) {
       return null;
     }
@@ -510,7 +508,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return true;
   }
 
-  private void processBetweenCondition(Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
+  private static Set<Stream<ORawPair<Object, ORID>>> processBetweenCondition(
+      OIndexInternal index, OBooleanExpression condition, boolean isOrderAsc, OCommandContext ctx) {
+    Set<Stream<ORawPair<Object, ORID>>> acquiredStreams =
+        Collections.newSetFromMap(new IdentityHashMap<>());
     OIndexDefinition definition = index.getDefinition();
     OExpression key = ((OBetweenCondition) condition).getFirst();
     if (!key.toString().equalsIgnoreCase("key")) {
@@ -530,11 +531,15 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
             true,
             toBetweenIndexKey(definition, thirdValue),
             true,
-            isOrderAsc());
+            isOrderAsc);
     acquiredStreams.add(stream);
+    return acquiredStreams;
   }
 
-  private void processBinaryCondition(Set<Stream<ORawPair<Object, ORID>>> acquiredStreams) {
+  private static Set<Stream<ORawPair<Object, ORID>>> processBinaryCondition(
+      OIndexInternal index, OBooleanExpression condition, boolean isOrderAsc, OCommandContext ctx) {
+    Set<Stream<ORawPair<Object, ORID>>> acquiredStreams =
+        Collections.newSetFromMap(new IdentityHashMap<>());
     OIndexDefinition definition = index.getDefinition();
     OBinaryCompareOperator operator = ((OBinaryCondition) condition).getOperator();
     OExpression left = ((OBinaryCondition) condition).getLeft();
@@ -543,8 +548,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           "search for index for " + condition + " is not supported yet");
     }
     Object rightValue = ((OBinaryCondition) condition).getRight().execute((OResult) null, ctx);
-    Stream<ORawPair<Object, ORID>> stream = createCursor(operator, definition, rightValue, ctx);
+    Stream<ORawPair<Object, ORID>> stream =
+        createCursor(index, operator, definition, rightValue, ctx, isOrderAsc, condition);
     acquiredStreams.add(stream);
+    return acquiredStreams;
   }
 
   private static Collection toIndexKey(OIndexDefinition definition, Object rightValue) {
@@ -580,12 +587,14 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return rightValue;
   }
 
-  private Stream<ORawPair<Object, ORID>> createCursor(
+  private static Stream<ORawPair<Object, ORID>> createCursor(
+      OIndexInternal index,
       OBinaryCompareOperator operator,
       OIndexDefinition definition,
       Object value,
-      OCommandContext ctx) {
-    boolean orderAsc = isOrderAsc();
+      OCommandContext ctx,
+      boolean orderAsc,
+      OBooleanExpression condition) {
     if (operator instanceof OEqualsCompareOperator
         || operator instanceof OContainsKeyOperator
         || operator instanceof OContainsValueOperator) {
@@ -712,17 +721,23 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   @Override
   public String prettyPrint(int depth, int indent) {
     String result =
-        OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX " + indexName;
+        OExecutionStepInternal.getIndent(depth, indent)
+            + "+ FETCH FROM INDEX "
+            + desc.getIndex().getName();
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }
-    if (condition != null) {
+    if (desc.getKeyCondition() != null) {
       String additional =
-          Optional.ofNullable(additionalRangeCondition)
+          Optional.ofNullable(desc.getAdditionalRangeCondition())
               .map(rangeCondition -> " and " + rangeCondition)
               .orElse("");
       result +=
-          ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + additional);
+          ("\n"
+              + OExecutionStepInternal.getIndent(depth, indent)
+              + "  "
+              + desc.getKeyCondition()
+              + additional);
     }
 
     return result;
@@ -731,12 +746,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   @Override
   public OResult serialize() {
     OResultInternal result = OExecutionStepInternal.basicSerialize(this);
-    result.setProperty("indexName", index.getName());
-    if (condition != null) {
-      result.setProperty("condition", condition.serialize());
+    result.setProperty("indexName", desc.getIndex().getName());
+    if (desc.getKeyCondition() != null) {
+      result.setProperty("condition", desc.getKeyCondition().serialize());
     }
-    if (additionalRangeCondition != null) {
-      result.setProperty("additionalRangeCondition", additionalRangeCondition.serialize());
+    if (desc.getAdditionalRangeCondition() != null) {
+      result.setProperty(
+          "additionalRangeCondition", desc.getAdditionalRangeCondition().serialize());
     }
     result.setProperty("orderAsc", orderAsc);
     return result;
@@ -746,14 +762,19 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   public void deserialize(OResult fromResult) {
     try {
       OExecutionStepInternal.basicDeserialize(fromResult, this);
-      indexName = fromResult.getProperty("indexName");
+      String indexName = fromResult.getProperty("indexName");
+      OBooleanExpression condition = null;
       if (fromResult.getProperty("condition") != null) {
         condition = OBooleanExpression.deserializeFromOResult(fromResult.getProperty("condition"));
       }
+      OBinaryCondition additionalRangeCondition = null;
       if (fromResult.getProperty("additionalRangeCondition") != null) {
         additionalRangeCondition = new OBinaryCondition(-1);
         additionalRangeCondition.deserialize(fromResult.getProperty("additionalRangeCondition"));
       }
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+      OIndex index = db.getMetadata().getIndexManager().getIndex(indexName);
+      desc = new IndexSearchDescriptor(index, condition, additionalRangeCondition, null);
       orderAsc = fromResult.getProperty("orderAsc");
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
@@ -762,11 +783,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public void reset() {
-    index = null;
-    condition = Optional.ofNullable(condition).map(OBooleanExpression::copy).orElse(null);
-    additionalRangeCondition =
-        Optional.ofNullable(additionalRangeCondition).map(OBinaryCondition::copy).orElse(null);
-
+    desc = null;
     count = 0;
   }
 
@@ -777,13 +794,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStep copy(OCommandContext ctx) {
-    return new FetchFromIndexStep(
-        indexName,
-        Optional.ofNullable(this.condition).map(OBooleanExpression::copy).orElse(null),
-        Optional.ofNullable(this.additionalRangeCondition).map(OBinaryCondition::copy).orElse(null),
-        this.orderAsc,
-        ctx,
-        this.profilingEnabled);
+    return new FetchFromIndexStep(desc, this.orderAsc, ctx, this.profilingEnabled);
   }
 
   @Override
@@ -792,6 +803,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   public String getIndexName() {
-    return indexName;
+    return desc.getIndex().getName();
   }
 }

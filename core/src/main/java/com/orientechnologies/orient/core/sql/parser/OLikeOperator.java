@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.query.OQueryHelper;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.Map;
 
 public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator {
@@ -48,6 +49,11 @@ public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator 
   @Override
   public OLikeOperator copy() {
     return this;
+  }
+
+  @Override
+  public Operation getOperation() {
+    return Operation.FuzzyEq;
   }
 
   @Override

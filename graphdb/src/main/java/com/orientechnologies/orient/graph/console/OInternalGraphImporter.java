@@ -6,7 +6,6 @@ import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import java.io.FileNotFoundException;
@@ -39,7 +38,7 @@ public class OInternalGraphImporter {
 
     OConsoleDatabaseApp console =
         new OGremlinConsole(new String[] {"import database " + inputFile})
-            .setCurrentDatabase(g.getRawGraph());
+            .setCurrentDatabase((ODatabaseDocumentInternal) g.getRawGraph());
     console.run();
 
     System.out.println(
@@ -48,9 +47,9 @@ public class OInternalGraphImporter {
             + "ms. Vertexes: "
             + g.countVertices());
 
-    g.command(new OCommandSQL("alter database TIMEZONE 'GMT'")).execute();
-    g.command(new OCommandSQL("alter database LOCALECOUNTRY 'UK'")).execute();
-    g.command(new OCommandSQL("alter database LOCALELANGUAGE 'EN'")).execute();
+    g.sqlCommand("alter database TIMEZONE 'GMT'").close();
+    g.sqlCommand("alter database LOCALECOUNTRY 'UK'").close();
+    g.sqlCommand("alter database LOCALELANGUAGE 'EN'").close();
     g.shutdown();
   }
 }

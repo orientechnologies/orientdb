@@ -21,10 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Test;
 
 /**
@@ -58,9 +55,8 @@ public class DBCreationAndUpdateOneNodeScenarioIT extends AbstractScenarioTest {
     ODatabaseDocument dbServer2 = getDatabase(1);
     try {
       assertNotNull(dbServer2);
-      List<ODocument> result =
-          dbServer2.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
-      assertEquals(0, result.size());
+      OResultSet result = dbServer2.query("select from Person");
+      assertEquals(0, result.stream().count());
     } catch (Exception e) {
       e.printStackTrace();
       fail();
@@ -71,9 +67,8 @@ public class DBCreationAndUpdateOneNodeScenarioIT extends AbstractScenarioTest {
     ODatabaseDocument dbServer3 = getDatabase(2);
     try {
       assertNotNull(dbServer3);
-      List<ODocument> result =
-          dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
-      assertEquals(0, result.size());
+      OResultSet result = dbServer3.query("select from Person");
+      assertEquals(0, result.stream().count());
     } catch (Exception e) {
       e.printStackTrace();
       fail();

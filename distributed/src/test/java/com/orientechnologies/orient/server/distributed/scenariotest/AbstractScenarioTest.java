@@ -23,10 +23,9 @@ import static org.junit.Assert.fail;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterInsertTest;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorageEventListener;
 import com.orientechnologies.orient.setup.ServerRun;
@@ -66,16 +65,17 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   protected ODocument loadRecord(ODatabaseDocument database, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
     database.activateOnCurrentThread();
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from Person where name = 'Billy" + uniqueId + "'"));
-    if (result.size() == 0)
-      assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
-    else if (result.size() > 1)
-      assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
-    //    ODatabaseRecordThreadLocal.instance().set(null);
-    return result.get(0);
+    try (OResultSet result =
+        database.query("select from Person where name = 'Billy" + uniqueId + "'")) {
+
+      if (!result.hasNext())
+        assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
+      ODocument doc = (ODocument) result.next().getElement().get();
+      if (result.hasNext())
+        assertTrue("multiple records found with name = 'Billy" + uniqueId + "'!", false);
+      //    ODatabaseRecordThreadLocal.instance().set(null);
+      return doc;
+    }
   }
 
   protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType)
@@ -109,10 +109,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       database = getDatabase(checkOnServers.get(0));
     }
 
-    try {
-      List<ODocument> result =
-          database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-      baseCount = ((Number) result.get(0).field("count")).intValue();
+    try (OResultSet result = database.query("select count(*) as count from Person")) {
+      baseCount = ((Number) result.next().getProperty("count")).intValue();
     } finally {
       if (database != null) database.close();
     }
@@ -462,20 +460,19 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     dbServer.getMetadata().getSchema().reload();
 
-    try {
-      List<ODocument> result =
-          dbServer.query(
-              new OSQLSynchQuery<ODocument>("select from Person where id = '" + uniqueId + "'"));
-      if (result.size() == 0) {
+    try (OResultSet result = dbServer.query("select from Person where id = '" + uniqueId + "'")) {
+
+      if (!result.hasNext()) {
         if (returnsMissingDocument) {
           return MISSING_DOCUMENT;
         }
         assertTrue("No record found with id = '" + uniqueId + "'!", false);
-      } else if (result.size() > 1) {
-        fail(result.size() + " records found with id = '" + uniqueId + "'!");
       }
 
-      ODocument doc = (ODocument) result.get(0);
+      ODocument doc = (ODocument) result.next().getElement().get();
+      if (result.hasNext()) {
+        fail("multiple records found with id = '" + uniqueId + "'!");
+      }
       // try {
       // doc.reload();
       // } catch (ORecordNotFoundException e) {
@@ -495,10 +492,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     ODatabaseDocument dbServer = getDatabase(serverRun);
     //    ODatabaseRecordThreadLocal.instance().set(dbServer);
     long numberOfRecords = 0L;
-    try {
-      List<ODocument> result =
-          dbServer.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from " + className));
-      numberOfRecords = ((Number) result.get(0).field("count")).longValue();
+    try (OResultSet result = dbServer.query("select count(*) as count from " + className)) {
+
+      numberOfRecords = ((Number) result.next().getProperty("count")).longValue();
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
@@ -576,10 +572,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   private void printStats(final ServerRun serverRun) {
     final ODatabaseDocument database = getDatabase(serverRun);
-    try {
-      // database.reload();
-      List<ODocument> result =
-          database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+    try (OResultSet result = database.query("select count(*) as count from Person")) {
 
       final String name = database.getURL();
 
@@ -587,7 +580,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
           "\nReader "
               + name
               + "  sql count: "
-              + result.get(0)
+              + result.next().toJSON()
               + " counting class: "
               + database.countClass("Person")
               + " counting cluster: "

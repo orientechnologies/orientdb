@@ -22,12 +22,13 @@ import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -66,8 +67,8 @@ public class RestrictedTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testCreateRestrictedClass")
   public void testFilteredQuery() throws IOException {
     database.open("writer", "writer");
-    List<?> result = database.query(new OSQLSynchQuery<Object>("select from CMSDocument"));
-    Assert.assertTrue(result.isEmpty());
+    OResultSet result = database.query("select from CMSDocument");
+    Assert.assertEquals(result.stream().count(), 0);
   }
 
   @Test(dependsOnMethods = "testFilteredQuery")
@@ -80,25 +81,22 @@ public class RestrictedTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testCreateAsWriter")
   public void testFilteredQueryAsReader() throws IOException {
     database.open("reader", "reader");
-    List<OIdentifiable> result =
-        database.query(new OSQLSynchQuery<Object>("select from CMSDocument"));
-    Assert.assertEquals(result.size(), 0);
+    OResultSet result = database.query("select from CMSDocument");
+    Assert.assertEquals(result.stream().count(), 0);
   }
 
   @Test(dependsOnMethods = "testFilteredQueryAsReader")
   public void testFilteredQueryAsAdmin() throws IOException {
     database.open("admin", "admin");
-    List<OIdentifiable> result =
-        database.query(new OSQLSynchQuery<Object>("select from CMSDocument where user = 'writer'"));
-    Assert.assertEquals(result.size(), 1);
+    OResultSet result = database.query("select from CMSDocument where user = 'writer'");
+    Assert.assertEquals(result.stream().count(), 1);
   }
 
   @Test(dependsOnMethods = "testFilteredQueryAsAdmin")
   public void testFilteredQueryAsWriter() throws IOException {
     database.open("writer", "writer");
-    List<OIdentifiable> result =
-        database.query(new OSQLSynchQuery<Object>("select from CMSDocument"));
-    Assert.assertEquals(result.size(), 1);
+    OResultSet result = database.query("select from CMSDocument");
+    Assert.assertEquals(result.stream().count(), 1);
   }
 
   @Test(dependsOnMethods = "testFilteredQueryAsWriter")
@@ -273,7 +271,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
   public void testTruncateClass() {
     database.open("admin", "admin");
     try {
-      database.command(new OCommandSQL("truncate class CMSDocument")).execute();
+      database.command("truncate class CMSDocument").close();
       Assert.fail();
     } catch (OSecurityException e) {
       Assert.assertTrue(true);
@@ -284,7 +282,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
   public void testTruncateUnderlyingCluster() {
     database.open("admin", "admin");
     try {
-      database.command(new OCommandSQL("truncate cluster CMSDocument")).execute();
+      database.command("truncate cluster CMSDocument").close();
     } catch (OSecurityException e) {
 
     }
@@ -303,9 +301,8 @@ public class RestrictedTest extends DocumentDBBaseTest {
     database.close();
 
     database.open("writer", "writer");
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<Object>("select from TestUpdateRestricted"));
-    Assert.assertTrue(result.isEmpty());
+    OResultSet result = database.query("select from TestUpdateRestricted");
+    Assert.assertEquals(result.stream().count(), 0);
 
     database.close();
 
@@ -313,19 +310,19 @@ public class RestrictedTest extends DocumentDBBaseTest {
     database
         .command(new OCommandSQL("update TestUpdateRestricted content {\"data\":\"My Test\"}"))
         .execute();
-    result = database.query(new OSQLSynchQuery<ODocument>("select from TestUpdateRestricted"));
+    result = database.query("select from TestUpdateRestricted");
+    OResult res = result.next();
+    Assert.assertFalse(result.hasNext());
 
-    Assert.assertEquals(result.size(), 1);
-
-    final ODocument doc = result.get(0);
-    Assert.assertEquals(doc.field("data"), "My Test");
-    doc.field("user", "admin");
-    doc.save();
+    final OElement doc = res.getElement().get();
+    Assert.assertEquals(doc.getProperty("data"), "My Test");
+    doc.setProperty("user", "admin");
+    database.save(doc);
     database.close();
 
     database.open("writer", "writer");
-    result = database.query(new OSQLSynchQuery<Object>("select from TestUpdateRestricted"));
-    Assert.assertTrue(result.isEmpty());
+    result = database.query("select from TestUpdateRestricted");
+    Assert.assertEquals(result.stream().count(), 0);
   }
 
   @BeforeMethod

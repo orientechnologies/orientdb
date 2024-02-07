@@ -6,19 +6,18 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Test;
 
 /** Created by luigidellaquila on 14/09/17. */
 public class OCheckIndexToolTest extends BaseMemoryInternalDatabase {
+
   @Test
   public void test() {
-    db.command(new OCommandSQL("create class Foo")).execute();
-    db.command(new OCommandSQL("create property Foo.name STRING")).execute();
-    db.command(new OCommandSQL("create index Foo.name on Foo (name) NOTUNIQUE")).execute();
+    db.command("create class Foo").close();
+    db.command("create property Foo.name STRING").close();
+    db.command("create index Foo.name on Foo (name) NOTUNIQUE").close();
 
     ODocument doc = db.newInstance("Foo");
     doc.field("name", "a");
@@ -37,8 +36,8 @@ public class OCheckIndexToolTest extends BaseMemoryInternalDatabase {
     Object key = idx.getDefinition().createValue("a");
     boolean a = idx.remove(key, rid);
 
-    List result = db.query(new OSQLSynchQuery<Object>("SELECT FROM Foo"));
-    Assert.assertEquals(N_RECORDS + 1, result.size());
+    OResultSet result = db.query("SELECT FROM Foo");
+    Assert.assertEquals(N_RECORDS + 1, result.stream().count());
 
     OCheckIndexTool tool = new OCheckIndexTool();
     tool.setDatabase(db);

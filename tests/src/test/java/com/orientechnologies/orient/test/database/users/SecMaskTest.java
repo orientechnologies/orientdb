@@ -6,9 +6,9 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-import java.util.List;
 import org.testng.annotations.Test;
 
 public class SecMaskTest {
@@ -84,15 +84,15 @@ public class SecMaskTest {
 
     long start = System.currentTimeMillis();
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("SELECT FROM Account WHERE id = " + 100999));
+    OResultSet result = database.query("SELECT FROM Account WHERE id = " + 100999);
 
     System.out.println("Elapsed: " + (System.currentTimeMillis() - start));
 
     System.out.println("Query done");
 
-    for (ODocument o : result) {
-      System.out.println("id=" + o.field("id") + "\tname=" + o.field("name"));
+    while (result.hasNext()) {
+      OResult o = result.next();
+      System.out.println("id=" + o.getProperty("id") + "\tname=" + o.getProperty("name"));
     }
   }
 

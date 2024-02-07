@@ -2,7 +2,6 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,12 +11,11 @@ public class LuceneNullTest extends BaseLuceneTest {
   @Test
   public void testNullChangeToNotNullWithLists() {
 
-    db.command(new OCommandSQL("create class Test extends V")).execute();
+    db.command("create class Test extends V").close();
 
-    db.command(new OCommandSQL("create property Test.names EMBEDDEDLIST STRING")).execute();
+    db.command("create property Test.names EMBEDDEDLIST STRING").close();
 
-    db.command(new OCommandSQL("create index Test.names on Test (names) fulltext engine lucene"))
-        .execute();
+    db.command("create index Test.names on Test (names) fulltext engine lucene").close();
 
     db.begin();
     ODocument doc = new ODocument("Test");
@@ -37,10 +35,9 @@ public class LuceneNullTest extends BaseLuceneTest {
   @Test
   public void testNotNullChangeToNullWithLists() {
 
-    db.command(new OCommandSQL("create class Test extends V")).execute();
-    db.command(new OCommandSQL("create property Test.names EMBEDDEDLIST STRING")).execute();
-    db.command(new OCommandSQL("create index Test.names on Test (names) fulltext engine lucene"))
-        .execute();
+    db.command("create class Test extends V").close();
+    db.command("create property Test.names EMBEDDEDLIST STRING").close();
+    db.command("create index Test.names on Test (names) fulltext engine lucene").close();
 
     ODocument doc = new ODocument("Test");
 

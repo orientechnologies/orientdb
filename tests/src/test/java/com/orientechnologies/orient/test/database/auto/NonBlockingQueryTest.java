@@ -3,7 +3,6 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLNonBlockingQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
@@ -27,14 +26,14 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
   @Override
   public void beforeClass() throws Exception {
     super.beforeClass();
-    database.command(new OCommandSQL("create class Foo")).execute();
+    database.command("create class Foo").close();
   }
 
   @BeforeMethod
   @Override
   public void beforeMethod() throws Exception {
     super.beforeMethod();
-    database.command(new OCommandSQL("delete from Foo")).execute();
+    database.command("delete from Foo").close();
   }
 
   @Test
@@ -43,7 +42,7 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
     ODatabaseDocumentInternal db = database;
 
     db.begin();
-    db.command(new OCommandSQL("insert into Foo (a) values ('bar')")).execute();
+    db.command("insert into Foo (a) values ('bar')").close();
     db.commit();
     ODatabaseDocumentInternal newDb = db.copy();
 
@@ -58,7 +57,7 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
     ODatabaseDocumentInternal db = database;
     final AtomicInteger counter = new AtomicInteger(0); // db.begin();
     for (int i = 0; i < 1000; i++) {
-      db.command(new OCommandSQL("insert into Foo (a) values ('bar')")).execute();
+      db.command("insert into Foo (a) values ('bar')").close();
     }
     Future future =
         db.query(
@@ -94,17 +93,14 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
 
   @Test
   public void testNonBlockingQueryWithCompositeIndex() {
-    database.command(new OCommandSQL("create property Foo.x integer")).execute();
-    database.command(new OCommandSQL("create property Foo.y integer")).execute();
-    database
-        .command(new OCommandSQL("create index Foo_xy_index on Foo (x, y) notunique"))
-        .execute();
+    database.command("create property Foo.x integer").close();
+    database.command("create property Foo.y integer").close();
+    database.command("create index Foo_xy_index on Foo (x, y) notunique").close();
 
     ODatabaseDocumentInternal db = database;
     final AtomicInteger counter = new AtomicInteger(0); // db.begin();
     for (int i = 0; i < 1000; i++) {
-      db.command(new OCommandSQL("insert into Foo (a, x, y) values ('bar', ?, ?)"))
-          .execute(i, 1000 - i);
+      db.command("insert into Foo (a, x, y) values ('bar', ?, ?)", i, 1000 - i).close();
     }
     Future future =
         db.query(

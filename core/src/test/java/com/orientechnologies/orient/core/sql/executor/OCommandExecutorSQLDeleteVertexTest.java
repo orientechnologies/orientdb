@@ -20,11 +20,8 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.BaseMemoryDatabase;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -44,13 +41,13 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
     // for issue #4148
 
     for (int i = 0; i < 10; i++) {
-      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+      db.command("create vertex User set name = 'foo" + i + "'").close();
     }
 
-    final int res = (Integer) db.command(new OCommandSQL("delete vertex User limit 4")).execute();
+    db.command("delete vertex User limit 4").close();
 
-    List<?> result = db.query(new OSQLSynchQuery("select from User"));
-    Assert.assertEquals(result.size(), 6);
+    OResultSet result = db.query("select from User");
+    Assert.assertEquals(result.stream().count(), 6);
   }
 
   @Test
@@ -58,26 +55,26 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
     // for issue #4622
 
     for (int i = 0; i < 100; i++) {
-      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+      db.command("create vertex User set name = 'foo" + i + "'").close();
     }
 
-    final int res = (Integer) db.command(new OCommandSQL("delete vertex User batch 5")).execute();
+    db.command("delete vertex User batch 5").close();
 
-    List<?> result = db.query(new OSQLSynchQuery("select from User"));
-    Assert.assertEquals(result.size(), 0);
+    OResultSet result = db.query("select from User");
+    Assert.assertEquals(result.stream().count(), 0);
   }
 
-  @Test
+  @Test(expected = OCommandExecutionException.class)
   public void testDeleteVertexWithEdgeRid() throws Exception {
-    List<ODocument> edges = db.command(new OCommandSQL("select from e limit 1")).execute();
-    try {
-      final int res =
-          (Integer)
-              db.command(new OCommandSQL("delete vertex [" + edges.get(0).getIdentity() + "]"))
-                  .execute();
+
+    db.command("create vertex User set name = 'foo1'").close();
+    db.command("create vertex User set name = 'foo2'").close();
+    db.command(
+            "create edge E from (select from user where name = 'foo1') to (select from user where name = 'foo2')")
+        .close();
+    try (OResultSet edges = db.query("select from e limit 1")) {
+      db.command("delete vertex [" + edges.next().getIdentity().get() + "]").close();
       Assert.fail("Error on deleting a vertex with a rid of an edge");
-    } catch (Exception e) {
-      // OK
     }
   }
 
@@ -86,13 +83,12 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
     // for issue #4523
 
     for (int i = 0; i < 100; i++) {
-      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+      db.command("create vertex User set name = 'foo" + i + "'").close();
     }
 
-    final int res =
-        (Integer) db.command(new OCommandSQL("delete vertex from (select from User)")).execute();
-    List<?> result = db.query(new OSQLSynchQuery("select from User"));
-    Assert.assertEquals(result.size(), 0);
+    db.command("delete vertex from (select from User)").close();
+    OResultSet result = db.query("select from User");
+    Assert.assertEquals(result.stream().count(), 0);
   }
 
   @Test
@@ -100,16 +96,12 @@ public class OCommandExecutorSQLDeleteVertexTest extends BaseMemoryDatabase {
     // for issue #4523
 
     for (int i = 0; i < 100; i++) {
-      db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
+      db.command("create vertex User set name = 'foo" + i + "'").close();
     }
 
-    final int res =
-        (Integer)
-            db.command(
-                    new OCommandSQL("delete vertex from (select from User where name = 'foo10')"))
-                .execute();
+    db.command("delete vertex from (select from User where name = 'foo10')").close();
 
-    List<?> result = db.query(new OSQLSynchQuery("select from User"));
-    Assert.assertEquals(result.size(), 99);
+    OResultSet result = db.query("select from User");
+    Assert.assertEquals(result.stream().count(), 99);
   }
 }

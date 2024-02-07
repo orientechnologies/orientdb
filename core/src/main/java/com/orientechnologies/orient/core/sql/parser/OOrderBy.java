@@ -135,5 +135,29 @@ public class OOrderBy extends SimpleNode {
       }
     }
   }
+
+  public boolean ordersWithCollate() {
+    return getItems().stream().anyMatch(x -> x.getCollate() != null);
+  }
+
+  public boolean ordersSameDirection() {
+    String order = null;
+    for (OOrderByItem item : getItems()) {
+      if (order == null) {
+        order = item.getType();
+      } else if (!order.equals(item.getType())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public List<String> getProperties() {
+    List<String> orderItems = new ArrayList<>();
+    for (OOrderByItem item : getItems()) {
+      orderItems.add(item.getAlias() != null ? item.getAlias() : item.getRecordAttr());
+    }
+    return orderItems;
+  }
 }
 /* JavaCC - OriginalChecksum=d5529400217169f15e556e5dc6fe4f5b (do not edit this line) */

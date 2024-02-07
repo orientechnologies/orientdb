@@ -7,10 +7,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.setup.ServerRun;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -90,10 +88,10 @@ public class HaSyncClusterIT extends AbstractServerClusterTest {
       Future<Long> future = invokeSyncCluster(localNodeName, serverInstance.get(1));
       Long result1 = future.get();
 
-      List<ODocument> query = db.query(new OSQLSynchQuery("select count(*) from Person"));
-      Long result0 = query.iterator().next().field("count");
-
-      Assert.assertEquals(result1, result0);
+      try (OResultSet query = db.query("select count(*) as count from Person")) {
+        Long result0 = query.next().getProperty("count");
+        Assert.assertEquals(result1, result0);
+      }
 
     } finally {
       db.close();
@@ -137,8 +135,7 @@ public class HaSyncClusterIT extends AbstractServerClusterTest {
 
                   Assert.assertNotNull(clusterName);
 
-                  db.command(new OCommandSQL(String.format("HA sync cluster %s", clusterName)))
-                      .execute();
+                  db.command(String.format("HA sync cluster %s", clusterName)).close();
 
                   final ODistributedMessageService messageService = manager.getMessageService();
 
@@ -177,10 +174,10 @@ public class HaSyncClusterIT extends AbstractServerClusterTest {
                       },
                       String.format("Number for processed request should be [%s]", NUM_RECORDS));
 
-                  List<ODocument> query =
-                      db.query(new OSQLSynchQuery("select count(*) from Person"));
+                  try (OResultSet query = db.query("select count(*) as count from Person")) {
 
-                  countRecors = query.iterator().next().field("count");
+                    countRecors = query.next().getProperty("count");
+                  }
 
                 } finally {
                   db.close();
@@ -194,7 +191,7 @@ public class HaSyncClusterIT extends AbstractServerClusterTest {
 
   @Override
   protected void onAfterDatabaseCreation(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE CLASS Person extends V")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY Person.name STRING")).execute();
+    db.command("CREATE CLASS Person extends V").close();
+    db.command("CREATE PROPERTY Person.name STRING").close();
   }
 }

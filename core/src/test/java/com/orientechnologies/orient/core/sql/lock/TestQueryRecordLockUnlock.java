@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -26,7 +27,7 @@ public class TestQueryRecordLockUnlock {
   @Test
   public void testLockReleaseAfterIncrement() throws InterruptedException {
     final ORID id;
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
     try {
 
       db = new ODatabaseDocumentTx("memory:" + TestQueryRecordLockUnlock.class.getSimpleName());
@@ -93,7 +94,7 @@ public class TestQueryRecordLockUnlock {
   @Ignore
   public void testLockWithSubqueryRecord() throws InterruptedException {
     final ORID id;
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
     try {
 
       db = new ODatabaseDocumentTx("memory:" + TestQueryRecordLockUnlock.class.getSimpleName());
@@ -115,7 +116,7 @@ public class TestQueryRecordLockUnlock {
 
             @Override
             public void run() {
-              ODatabaseDocumentTx db = null;
+              ODatabaseDocument db = null;
               try {
                 db =
                     new ODatabaseDocumentTx(
@@ -158,7 +159,7 @@ public class TestQueryRecordLockUnlock {
   @Test
   public void testLockReleaseAfterIncrementOpenClose() throws InterruptedException {
     final ORID id;
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
     try {
 
       db = new ODatabaseDocumentTx("memory:" + TestQueryRecordLockUnlock.class.getSimpleName());
@@ -180,7 +181,7 @@ public class TestQueryRecordLockUnlock {
 
             @Override
             public void run() {
-              ODatabaseDocumentTx db = null;
+              ODatabaseDocument db = null;
               for (int j = 0; j < 10; j++) {
                 try {
                   db =

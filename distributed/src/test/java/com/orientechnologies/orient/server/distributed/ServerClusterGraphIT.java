@@ -20,13 +20,14 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import junit.framework.Assert;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Test;
 
 /** Check vertex and edge creation are propagated across all the nodes. */
@@ -63,8 +64,7 @@ public class ServerClusterGraphIT extends AbstractServerClusterTest {
 
         g.newVertex("User").save();
 
-        g.command(new OCommandSQL("insert into Post (content, timestamp) values('test', 1)"))
-            .execute();
+        g.command("insert into Post (content, timestamp) values('test', 1)").close();
       } finally {
         g.close();
       }
@@ -78,11 +78,10 @@ public class ServerClusterGraphIT extends AbstractServerClusterTest {
               .getServerInstance()
               .openDatabase(getDatabaseName(), "admin", "admin");
 
-      try {
+      try (OResultSet result = g2.command("select from Post")) {
 
-        Iterable<OElement> result = g2.command(new OCommandSQL("select from Post")).execute();
-        Assert.assertTrue(result.iterator().hasNext());
-        Assert.assertNotNull(result.iterator().next());
+        assertTrue(result.hasNext());
+        assertNotNull(result.next());
 
       } finally {
         g2.close();
@@ -96,8 +95,7 @@ public class ServerClusterGraphIT extends AbstractServerClusterTest {
               .getServerInstance()
               .openDatabase(getDatabaseName(), "admin", "admin");
       try {
-        g.command(new OCommandSQL("create edge Own from (select from User) to (select from Post)"))
-            .execute();
+        g.command("create edge Own from (select from User) to (select from Post)").close();
       } finally {
         g.close();
       }
@@ -113,29 +111,29 @@ public class ServerClusterGraphIT extends AbstractServerClusterTest {
 
       try {
 
-        Iterable<OElement> result = g2.command(new OCommandSQL("select from Own")).execute();
-        Assert.assertTrue(result.iterator().hasNext());
-        Assert.assertNotNull(result.iterator().next());
+        OResultSet result = g2.query("select from Own");
+        assertTrue(result.hasNext());
+        assertNotNull(result.next());
 
-        result = g2.command(new OCommandSQL("select from Post")).execute();
-        Assert.assertTrue(result.iterator().hasNext());
+        result = g2.query("select from Post");
+        assertTrue(result.hasNext());
 
-        final OVertex v = result.iterator().next().asVertex().get();
-        Assert.assertNotNull(v);
+        final OVertex v = result.next().getVertex().get();
+        assertNotNull(v);
 
         final Iterable<OEdge> inEdges = v.getEdges(ODirection.IN);
-        Assert.assertTrue(inEdges.iterator().hasNext());
-        Assert.assertNotNull(inEdges.iterator().next());
+        assertTrue(inEdges.iterator().hasNext());
+        assertNotNull(inEdges.iterator().next());
 
-        result = g2.command(new OCommandSQL("select from User")).execute();
-        Assert.assertTrue(result.iterator().hasNext());
+        result = g2.query("select from User");
+        assertTrue(result.hasNext());
 
-        final OVertex v2 = result.iterator().next().asVertex().get();
-        Assert.assertNotNull(v2);
+        final OVertex v2 = result.next().getVertex().get();
+        assertNotNull(v2);
 
         final Iterable<OEdge> outEdges = v2.getEdges(ODirection.OUT);
-        Assert.assertTrue(outEdges.iterator().hasNext());
-        Assert.assertNotNull(outEdges.iterator().next());
+        assertTrue(outEdges.iterator().hasNext());
+        assertNotNull(outEdges.iterator().next());
 
       } finally {
         g2.close();

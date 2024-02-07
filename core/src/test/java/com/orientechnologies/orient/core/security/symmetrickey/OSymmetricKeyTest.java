@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.security.symmetrickey;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Test;
 
 /**
@@ -12,7 +11,7 @@ import org.junit.Test;
 public class OSymmetricKeyTest {
 
   private void command(ODatabaseDocument db, String sql, Object... params) {
-    db.command(new OCommandSQL(sql)).execute(params);
+    db.command(sql, params).close();
   }
 
   @Test

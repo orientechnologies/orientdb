@@ -26,11 +26,8 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.setup.ServerRun;
@@ -46,6 +43,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 
 /**
@@ -63,17 +61,12 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
     try {
       final String uniqueId = shardName + "-s" + serverId + "-t" + threadId + "-v" + i;
-      Iterable<OElement> it =
-          graph
-              .command(new OCommandSQL("select from Client where name = '" + uniqueId + "'"))
-              .execute();
-      result = new LinkedList<OVertex>();
-
-      for (OElement v : it) {
-        if (v.isVertex()) {
-          result.add(v.asVertex().get());
-        }
-      }
+      OResultSet it = graph.query("select from Client where name = '" + uniqueId + "'");
+      result =
+          it.stream()
+              .filter((v) -> v.isVertex())
+              .map((v) -> v.getVertex().get())
+              .collect(Collectors.toList());
 
       if (result.size() == 0) fail("No record found with name = '" + uniqueId + "'!");
       else if (result.size() > 1)
@@ -151,13 +144,13 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
 
     try {
-      OLegacyResultSet<ODocument> clients = new OCommandSQL("select from Client").execute();
-      int total = clients.size();
-      assertEquals(expected, total);
+      OResultSet clients = graph.query("select from Client");
+      assertEquals(expected, clients.stream().count());
 
-      List<ODocument> result = new OCommandSQL("select count(*) from Client").execute();
-      total = ((Number) result.get(0).field("count")).intValue();
-      // assertEquals(expected, total);
+      try (OResultSet result = graph.query("select count(*) as count from Client")) {
+        int total = ((Number) result.next().getProperty("count")).intValue();
+        assertEquals(expected, total);
+      }
     } finally {
       graph.close();
     }
@@ -176,16 +169,17 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
           String sqlCommand =
               "select from cluster:client_"
                   + server.getServerInstance().getDistributedManager().getLocalNodeName();
-          List<ODocument> result = new OCommandSQL(sqlCommand).execute();
-          int total = result.size();
-          // assertEquals(count * writerCount, total);
+          OResultSet result = graph.query(sqlCommand);
+          assertEquals(count * writerCount, result.stream().count());
 
           sqlCommand =
-              "select count(*) from cluster:client_"
+              "select count(*) as count from cluster:client_"
                   + server.getServerInstance().getDistributedManager().getLocalNodeName();
-          result = new OCommandSQL(sqlCommand).execute();
-          total = ((Number) result.get(0).field("count")).intValue();
-          // assertEquals(count * writerCount, total);
+
+          try (OResultSet res = graph.query(sqlCommand)) {
+            int total = ((Number) res.next().getProperty("count")).intValue();
+            assertEquals(count * writerCount, total);
+          }
         } catch (Exception e) {
           e.printStackTrace();
         } finally {

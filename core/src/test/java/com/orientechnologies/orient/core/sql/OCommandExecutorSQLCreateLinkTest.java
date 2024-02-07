@@ -20,8 +20,8 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.BaseMemoryDatabase;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,62 +30,51 @@ public class OCommandExecutorSQLCreateLinkTest extends BaseMemoryDatabase {
 
   @Test
   public void testBasic() throws Exception {
-    db.command(new OCommandSQL("create class Basic1")).execute();
-    db.command(new OCommandSQL("create class Basic2")).execute();
+    db.command("create class Basic1").close();
+    db.command("create class Basic2").close();
 
-    db.command(new OCommandSQL("insert into Basic1 set pk = 'pkb1_1', fk = 'pkb2_1'")).execute();
-    db.command(new OCommandSQL("insert into Basic1 set pk = 'pkb1_2', fk = 'pkb2_2'")).execute();
+    db.command("insert into Basic1 set pk = 'pkb1_1', fk = 'pkb2_1'").close();
+    db.command("insert into Basic1 set pk = 'pkb1_2', fk = 'pkb2_2'").close();
 
-    db.command(new OCommandSQL("insert into Basic2 set pk = 'pkb2_1'")).execute();
-    db.command(new OCommandSQL("insert into Basic2 set pk = 'pkb2_2'")).execute();
+    db.command("insert into Basic2 set pk = 'pkb2_1'").close();
+    db.command("insert into Basic2 set pk = 'pkb2_2'").close();
 
-    db.command(new OCommandSQL("CREATE LINK theLink type link FROM Basic1.fk TO Basic2.pk "))
-        .execute();
+    db.command("CREATE LINK theLink type link FROM Basic1.fk TO Basic2.pk ").close();
 
-    List<ODocument> result =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select pk, theLink.pk as other from Basic1 order by pk"));
-    Assert.assertEquals(result.size(), 2);
+    OResultSet result = db.query("select pk, theLink.pk as other from Basic1 order by pk");
 
-    Object otherKey = result.get(0).field("other");
+    Object otherKey = result.next().getProperty("other");
     Assert.assertNotNull(otherKey);
 
     Assert.assertEquals(otherKey, "pkb2_1");
 
-    otherKey = result.get(1).field("other");
+    otherKey = result.next().getProperty("other");
     Assert.assertEquals(otherKey, "pkb2_2");
   }
 
   @Test
   public void testInverse() throws Exception {
-    db.command(new OCommandSQL("create class Inverse1")).execute();
-    db.command(new OCommandSQL("create class Inverse2")).execute();
+    db.command("create class Inverse1").close();
+    db.command("create class Inverse2").close();
 
-    db.command(new OCommandSQL("insert into Inverse1 set pk = 'pkb1_1', fk = 'pkb2_1'")).execute();
-    db.command(new OCommandSQL("insert into Inverse1 set pk = 'pkb1_2', fk = 'pkb2_2'")).execute();
-    db.command(new OCommandSQL("insert into Inverse1 set pk = 'pkb1_3', fk = 'pkb2_2'")).execute();
+    db.command("insert into Inverse1 set pk = 'pkb1_1', fk = 'pkb2_1'").close();
+    db.command("insert into Inverse1 set pk = 'pkb1_2', fk = 'pkb2_2'").close();
+    db.command("insert into Inverse1 set pk = 'pkb1_3', fk = 'pkb2_2'").close();
 
-    db.command(new OCommandSQL("insert into Inverse2 set pk = 'pkb2_1'")).execute();
-    db.command(new OCommandSQL("insert into Inverse2 set pk = 'pkb2_2'")).execute();
+    db.command("insert into Inverse2 set pk = 'pkb2_1'").close();
+    db.command("insert into Inverse2 set pk = 'pkb2_2'").close();
 
-    db.command(
-            new OCommandSQL(
-                "CREATE LINK theLink TYPE LINKSET FROM Inverse1.fk TO Inverse2.pk INVERSE"))
-        .execute();
+    db.command("CREATE LINK theLink TYPE LINKSET FROM Inverse1.fk TO Inverse2.pk INVERSE").close();
 
-    List<ODocument> result =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select pk, theLink.pk as other from Inverse2 order by pk"));
-    Assert.assertEquals(result.size(), 2);
-
-    Object otherKeys = result.get(0).field("other");
+    OResultSet result = db.query("select pk, theLink.pk as other from Inverse2 order by pk");
+    OResult first = result.next();
+    Object otherKeys = first.getProperty("other");
     Assert.assertNotNull(otherKeys);
     Assert.assertTrue(otherKeys instanceof List);
     Assert.assertEquals(((List) otherKeys).get(0), "pkb1_1");
 
-    otherKeys = result.get(1).field("other");
+    OResult second = result.next();
+    otherKeys = second.getProperty("other");
     Assert.assertNotNull(otherKeys);
     Assert.assertTrue(otherKeys instanceof List);
     Assert.assertEquals(((List) otherKeys).size(), 2);

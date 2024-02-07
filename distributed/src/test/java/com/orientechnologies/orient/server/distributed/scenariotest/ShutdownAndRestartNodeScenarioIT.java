@@ -25,10 +25,8 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
@@ -119,7 +117,6 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
     @Override
     public Void call() throws Exception {
 
-      List<ODocument> result = null;
       OrientDB orientDB =
           new OrientDB(
               "remote:" + serverInstances.get(2).getBinaryProtocolAddress() + "/",
@@ -144,10 +141,9 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
           dbServer3.activateOnCurrentThread();
           new ODocument("Person").fields("name", "Joe", "surname", "Black").save();
           this.initialCount++;
-          result =
-              dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-          assertEquals(1, result.size());
-          assertEquals(1, ((Number) result.get(0).field("count")).intValue());
+          try (OResultSet result = dbServer3.query("select count(*) as count from Person")) {
+            assertEquals(1, ((Number) result.next().getProperty("count")).intValue());
+          }
         } catch (Exception e) {
           e.printStackTrace();
           fail(e.getMessage());
@@ -168,9 +164,9 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
         // check consistency
         dbServer3.activateOnCurrentThread();
         dbServer3.getMetadata().getSchema().reload();
-        result = dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-        assertEquals(1, result.size());
-        assertEquals(1001, ((Number) result.get(0).field("count")).intValue());
+        try (OResultSet result = dbServer3.query("select count(*) as count from Person")) {
+          assertEquals(1001, ((Number) result.next().getProperty("count")).intValue());
+        }
         checkWritesAboveCluster(serverInstance, executeWritesOnServers);
 
       } catch (Exception e) {
@@ -209,7 +205,6 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
     @Override
     public Void call() throws Exception {
 
-      List<ODocument> result = null;
       OrientDB orientDB = serverInstances.get(0).getServerInstance().getContext();
       final ODatabaseDocument dbServer1 = orientDB.open(getDatabaseName(), "admin", "admin");
 
@@ -222,10 +217,10 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
         banner("Test with quorum = 3");
 
         // deleting all
-        OCommandSQL sqlCommand = new OCommandSQL("delete from Person");
-        dbServer1.command(sqlCommand).execute();
-        result = dbServer1.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
-        assertEquals(0, result.size());
+        dbServer1.command("delete from Person").close();
+        try (OResultSet result = dbServer1.query("select from Person")) {
+          assertEquals(0, result.stream().count());
+        }
         this.initialCount = 0;
 
         // changing configuration
@@ -264,17 +259,15 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
 
         System.out.print(
             "Checking the last record wasn't inserted in the db because the quorum was not reached...");
-        result =
-            dbServer1.query(
-                new OSQLSynchQuery<OIdentifiable>("select from Person where id='L-001'"));
-        assertEquals(0, result.size());
+        try (OResultSet result = dbServer1.query("select from Person where id='L-001'")) {
+          assertEquals(0, result.stream().count());
+        }
         OrientDB orientDB1 = serverInstances.get(1).getServerInstance().getContext();
         final ODatabaseDocument dbServer2 = orientDB1.open(getDatabaseName(), "admin", "admin");
         dbServer2.activateOnCurrentThread();
-        result =
-            dbServer2.query(
-                new OSQLSynchQuery<OIdentifiable>("select from Person where id='L-001'"));
-        assertEquals(0, result.size());
+        try (OResultSet result = dbServer2.query("select from Person where id='L-001'")) {
+          assertEquals(0, result.stream().count());
+        }
 
         System.out.println("Done.\n");
         ODatabaseRecordThreadLocal.instance().set(null);
@@ -292,8 +285,9 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
         // check consistency
         dbServer1.activateOnCurrentThread();
         dbServer1.getMetadata().getSchema().reload();
-        result = dbServer1.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
-        assertEquals(1500, result.size());
+        try (OResultSet result = dbServer1.query("select from Person")) {
+          assertEquals(1500, result.stream().count());
+        }
         checkWritesAboveCluster(serverInstance, executeWritesOnServers);
         ODatabaseRecordThreadLocal.instance().set(null);
 

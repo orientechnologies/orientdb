@@ -24,9 +24,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduledEventBuilder;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.List;
@@ -104,9 +103,9 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
 
       // CREATE NEW EVENT
       db.command(
-              new OCommandSQL(
-                  "insert into oschedule set name = 'test', function = ?, rule = \"0/1 * * * * ?\""))
-          .execute(func.getId());
+              "insert into oschedule set name = 'test', function = ?, rule = \"0/1 * * * * ?\"",
+              func.getId())
+          .close();
 
       Thread.sleep(5000);
 
@@ -119,9 +118,7 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
       OLogManager.instance().info(this, "UPDATING EVENT FROM 1 TO 2 SECONDS...");
 
       // UPDATE
-      db.command(
-              new OCommandSQL("update oschedule set rule = \"0/2 * * * * ?\" where name = 'test'"))
-          .execute(func.getId());
+      db.command("update oschedule set rule = \"0/2 * * * * ?\" where name = 'test'").close();
 
       Thread.sleep(4000);
 
@@ -132,8 +129,7 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
           newCount - count > 1 && newCount - count <= 2);
 
       // DELETE
-      db.command(new OCommandSQL("delete from oschedule where name = 'test'"))
-          .execute(func.getId());
+      db.command("delete from oschedule where name = 'test'").close();
 
       Thread.sleep(3000);
 
@@ -177,9 +173,9 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
 
   private Long getLogCounter(final ODatabaseDocument db) {
     db.activateOnCurrentThread();
-    List<ODocument> result =
-        (List<ODocument>)
-            db.command(new OCommandSQL("select count(*) from scheduler_log")).execute();
-    return result.get(0).field("count");
+    try (OResultSet result = db.query("select count(*) as count from scheduler_log")) {
+
+      return result.next().getProperty("count");
+    }
   }
 }

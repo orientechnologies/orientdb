@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
+import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 
 /**
  * For internal use. It is used to keep info about an index range search, where the main condition
@@ -9,10 +9,10 @@ import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
  */
 class IndexCondPair {
 
-  protected OAndBlock mainCondition;
+  protected OBooleanExpression mainCondition;
   protected OBinaryCondition additionalRange;
 
-  public IndexCondPair(OAndBlock keyCondition, OBinaryCondition additionalRangeCondition) {
+  public IndexCondPair(OBooleanExpression keyCondition, OBinaryCondition additionalRangeCondition) {
     this.mainCondition = keyCondition;
     this.additionalRange = additionalRangeCondition;
   }

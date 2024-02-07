@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Vertex;
@@ -15,7 +16,11 @@ public class OrientClassVertexIterator implements Iterator<Vertex> {
   public OrientClassVertexIterator(OrientBaseGraph graph, Iterator<Vertex> iterator, String klass) {
     this.iterator = iterator;
     this.graph = graph;
-    this.klass = graph.getRawGraph().getMetadata().getImmutableSchemaSnapshot().getClass(klass);
+    this.klass =
+        ((ODatabaseDocumentInternal) graph.getRawGraph())
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getClass(klass);
   }
 
   @Override

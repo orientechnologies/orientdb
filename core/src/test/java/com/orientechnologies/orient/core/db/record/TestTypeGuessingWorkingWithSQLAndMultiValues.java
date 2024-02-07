@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.BaseMemoryDatabase;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,52 +17,48 @@ public class TestTypeGuessingWorkingWithSQLAndMultiValues extends BaseMemoryData
   public void beforeTest() {
     super.beforeTest();
 
-    db.command(
-            new OCommandScript(
-                "sql",
-                "create class Address\n"
-                    + "create property Address.street String\n"
-                    + "create property Address.city String\n"
-                    + "\n"
-                    + "create class Client\n"
-                    + "create property Client.name String\n"
-                    + "create property Client.phones embeddedSet String\n"
-                    + "create property Client.addresses embeddedList Address\n"))
-        .execute();
+    db.execute(
+            "sql",
+            "create class Address\n ;"
+                + "create property Address.street String\n;"
+                + "create property Address.city String\n;"
+                + "\n"
+                + "create class Client\n;"
+                + "create property Client.name String\n;"
+                + "create property Client.phones embeddedSet String\n;"
+                + "create property Client.addresses embeddedList Address\n;")
+        .close();
   }
 
   @Test
   public void testLinkedValue() {
 
-    Iterable<ODocument> result =
+    try (OResultSet result =
+        db.execute(
+            "sql",
+            "insert into client set name = 'James Bond', phones = ['1234', '34567'], addresses = [{'@class':'Address','city':'Shanghai', 'zip':'3999'}, {'@class':'Address','city':'New York', 'street':'57th Ave'}]\n;"
+                + "update client set addresses = addresses || [{'@type':'d','@class':'Address','city':'London', 'zip':'67373'}] return after;")) {
+
+      Assert.assertTrue(result.hasNext());
+
+      OResult doc = result.next();
+
+      Collection<OResult> addresses = ((Collection<OResult>) doc.getProperty("addresses"));
+      Assert.assertEquals(addresses.size(), 3);
+      for (OResult a : addresses) Assert.assertTrue(a.getProperty("@class").equals("Address"));
+    }
+
+    try (OResultSet result =
         db.command(
-                new OCommandScript(
-                    "sql",
-                    "insert into client set name = 'James Bond', phones = ['1234', '34567'], addresses = [{'city':'Shanghai', 'zip':'3999'}, {'city':'New York', 'street':'57th Ave'}]\n"
-                        + "update client add addresses = [{'@type':'d','@class':'Address','city':'London', 'zip':'67373'}] return after"))
-            .execute();
+            "update client set addresses = addresses || [{'city':'London', 'zip':'67373'}] return after")) {
+      Assert.assertTrue(result.hasNext());
 
-    Assert.assertTrue(result.iterator().hasNext());
+      OResult doc = result.next();
 
-    ODocument doc = result.iterator().next();
+      Collection<OResult> addresses = ((Collection<OResult>) doc.getProperty("addresses"));
+      Assert.assertEquals(addresses.size(), 4);
 
-    Collection<ODocument> addresses = ((Collection<ODocument>) doc.field("addresses"));
-    Assert.assertEquals(addresses.size(), 3);
-
-    for (ODocument a : addresses) Assert.assertTrue(a.getClassName().equals("Address"));
-
-    result =
-        db.command(
-                new OCommandSQL(
-                    "update client add addresses = [{'city':'London', 'zip':'67373'}] return after"))
-            .execute();
-    Assert.assertTrue(result.iterator().hasNext());
-
-    doc = result.iterator().next();
-
-    addresses = ((Collection<ODocument>) doc.field("addresses"));
-    Assert.assertEquals(addresses.size(), 4);
-
-    for (ODocument a : addresses) Assert.assertTrue(a.getClassName().equals("Address"));
+      for (OResult a : addresses) Assert.assertTrue(a.getProperty("@class").equals("Address"));
+    }
   }
 }

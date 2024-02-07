@@ -17,7 +17,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.File;
 import java.util.ArrayList;
@@ -152,7 +153,7 @@ public class StorageBackupMTStateTest {
     databaseDocumentTx.open("admin", "admin");
     databaseDocumentTx.incrementalBackup(backupDir.getAbsolutePath());
 
-    OStorage storage = databaseDocumentTx.getStorage();
+    OStorage storage = ((ODatabaseDocumentInternal) databaseDocumentTx).getStorage();
     databaseDocumentTx.close();
 
     storage.shutdown();
@@ -162,7 +163,7 @@ public class StorageBackupMTStateTest {
         new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
     backedUpDb.create(backupDir.getAbsolutePath());
 
-    final OStorage backupStorage = backedUpDb.getStorage();
+    final OStorage backupStorage = ((ODatabaseDocumentInternal) backedUpDb).getStorage();
     backedUpDb.close();
 
     backupStorage.shutdown();
@@ -326,15 +327,14 @@ public class StorageBackupMTStateTest {
       long tCount = 0;
 
       while (linkedDocuments.size() < 5 && linkedDocuments.size() < linkedClassCount) {
-        List<ODocument> docs =
+        OResultSet docs =
             db.query(
-                new OSQLSynchQuery<ODocument>(
-                    "select * from "
-                        + linkedClassName
-                        + " where id="
-                        + random.nextInt(linkedClassCounter.get())));
+                "select * from "
+                    + linkedClassName
+                    + " where id="
+                    + random.nextInt(linkedClassCounter.get()));
 
-        if (docs.size() > 0) linkedDocuments.add(docs.get(0));
+        if (docs.hasNext()) linkedDocuments.add(docs.next().getIdentity().get());
 
         tCount++;
 
@@ -421,17 +421,16 @@ public class StorageBackupMTStateTest {
 
               boolean deleted = false;
               do {
-                List<ODocument> docs =
+                OResultSet docs =
                     databaseDocumentTx.query(
-                        new OSQLSynchQuery<ODocument>(
-                            "select * from "
-                                + className
-                                + " where id="
-                                + random.nextInt(classCounter.get())));
+                        "select * from "
+                            + className
+                            + " where id="
+                            + random.nextInt(classCounter.get()));
 
-                if (docs.size() > 0) {
-                  final ODocument document = docs.get(0);
-                  document.delete();
+                if (docs.hasNext()) {
+                  OResult document = docs.next();
+                  databaseDocumentTx.delete(document.getIdentity().get());
                   deleted = true;
                 }
               } while (!deleted);

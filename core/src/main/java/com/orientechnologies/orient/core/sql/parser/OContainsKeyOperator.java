@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.Map;
 
 public class OContainsKeyOperator extends SimpleNode implements OBinaryCompareOperator {
@@ -47,6 +48,11 @@ public class OContainsKeyOperator extends SimpleNode implements OBinaryCompareOp
 
   public OContainsKeyOperator copy() {
     return this;
+  }
+
+  @Override
+  public Operation getOperation() {
+    return Operation.Eq;
   }
 
   @Override

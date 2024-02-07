@@ -6,9 +6,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -73,9 +72,7 @@ public class UniqueIndexTest extends BaseMemoryDatabase {
     } catch (ORecordDuplicatedException ex) {
     }
 
-    final List<ODocument> result =
-        db.query(
-            new OSQLSynchQuery<ODocument>("select from User where MailAddress = 'john@doe.com'"));
-    Assert.assertEquals(result.size(), 1);
+    final OResultSet result = db.query("select from User where MailAddress = 'john@doe.com'");
+    Assert.assertEquals(result.stream().count(), 1);
   }
 }

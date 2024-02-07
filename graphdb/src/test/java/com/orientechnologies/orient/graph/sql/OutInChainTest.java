@@ -19,18 +19,18 @@ public class OutInChainTest {
     // generate schema
     OrientGraphNoTx graph =
         new OrientGraphNoTx("memory:" + OutInChainTest.class.getSimpleName(), "admin", "admin");
-    graph.command(new OCommandSQL("create class User extends V")).execute();
-    graph.command(new OCommandSQL("create class Car extends V")).execute();
-    graph.command(new OCommandSQL("create class Owns extends E")).execute();
+    graph.sqlCommand("create class User extends V").close();
+    graph.sqlCommand("create class Car extends V").close();
+    graph.sqlCommand("create class Owns extends E").close();
 
     initTestMultipleLabels(graph);
     graph.shutdown();
   }
 
   private static void initTestMultipleLabels(OrientGraphNoTx graph) {
-    graph.command(new OCommandSQL("create class V1 extends V")).execute();
-    graph.command(new OCommandSQL("create class E1 extends E")).execute();
-    graph.command(new OCommandSQL("create class E2 extends E")).execute();
+    graph.sqlCommand("create class V1 extends V").close();
+    graph.sqlCommand("create class E1 extends E").close();
+    graph.sqlCommand("create class E2 extends E").close();
   }
 
   @Test
@@ -71,20 +71,18 @@ public class OutInChainTest {
     OrientGraph graph =
         new OrientGraph("memory:" + OutInChainTest.class.getSimpleName(), "admin", "admin");
 
-    graph.command(new OCommandSQL("create vertex V1 set name = '1'")).execute();
-    graph.command(new OCommandSQL("create vertex V1 set name = '2'")).execute();
-    graph.command(new OCommandSQL("create vertex V1 set name = '3'")).execute();
+    graph.sqlCommand("create vertex V1 set name = '1'").close();
+    graph.sqlCommand("create vertex V1 set name = '2'").close();
+    graph.sqlCommand("create vertex V1 set name = '3'").close();
 
     graph
-        .command(
-            new OCommandSQL(
-                "create edge E1 from (select from V1 where name = '1') to (select from V1 where name = '2')"))
-        .execute();
+        .sqlCommand(
+            "create edge E1 from (select from V1 where name = '1') to (select from V1 where name = '2')")
+        .close();
     graph
-        .command(
-            new OCommandSQL(
-                "create edge E2 from (select from V1 where name = '1') to (select from V1 where name = '3')"))
-        .execute();
+        .sqlCommand(
+            "create edge E2 from (select from V1 where name = '1') to (select from V1 where name = '3')")
+        .close();
 
     Iterable result =
         graph

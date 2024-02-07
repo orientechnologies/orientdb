@@ -69,7 +69,7 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
 
     db.commit();
 
-    OResultSet results = db.command("select from City where name lucene 'Berlin'");
+    OResultSet results = db.query("select from City where name lucene 'Berlin'");
 
     Assert.assertEquals(results.stream().count(), 1);
   }

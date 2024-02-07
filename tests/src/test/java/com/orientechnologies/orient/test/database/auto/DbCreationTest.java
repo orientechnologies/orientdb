@@ -24,9 +24,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.File;
 import java.io.IOException;
@@ -118,12 +115,8 @@ public class DbCreationTest extends ObjectDBBaseTest {
   public void testChangeLocale() throws IOException {
     database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
-    database
-        .command(new OCommandSQL(" ALTER DATABASE LOCALELANGUAGE  ?"))
-        .execute(Locale.GERMANY.getLanguage());
-    database
-        .command(new OCommandSQL(" ALTER DATABASE LOCALECOUNTRY  ?"))
-        .execute(Locale.GERMANY.getCountry());
+    database.command(" ALTER DATABASE LOCALELANGUAGE  ?", Locale.GERMANY.getLanguage()).close();
+    database.command(" ALTER DATABASE LOCALECOUNTRY  ?", Locale.GERMANY.getCountry()).close();
     database.reload();
     Assert.assertEquals(
         database.get(ODatabase.ATTRIBUTES.LOCALELANGUAGE), Locale.GERMANY.getLanguage());
@@ -142,7 +135,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
   public void testRoles() throws IOException {
     database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
-    database.query(new OSQLSynchQuery<ORole>("select from ORole where name = 'admin'"));
+    database.query("select from ORole where name = 'admin'").close();
     database.close();
   }
 

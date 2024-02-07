@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.util.ArrayList;
@@ -36,6 +36,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -427,12 +428,10 @@ public class JSONTest extends DocumentDBBaseTest {
           .registerEntityClasses("com.orientechnologies.orient.test.domain.base");
 
       List<ODocument> result =
-          database
-              .getUnderlying()
-              .command(
-                  new OSQLSynchQuery<ODocument>(
-                      "select * from Profile where name = 'Barack' and surname = 'Obama'"))
-              .execute();
+          database.getUnderlying()
+              .command("select * from Profile where name = 'Barack' and surname = 'Obama'").stream()
+              .map((e) -> (ODocument) e.toElement())
+              .collect(Collectors.toList());
 
       for (ODocument doc : result) {
         String jsonFull =
@@ -449,11 +448,10 @@ public class JSONTest extends DocumentDBBaseTest {
   @Test
   public void testToJSONWithNoLazyLoadAndClosedDatabase() {
     List<ODocument> result =
-        database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select * from Profile where name = 'Barack' and surname = 'Obama'"))
-            .execute();
+        database.command("select * from Profile where name = 'Barack' and surname = 'Obama'")
+            .stream()
+            .map((e) -> (ODocument) e.toElement())
+            .collect(Collectors.toList());
 
     for (ODocument doc : result) {
       doc.reload("*:0");
@@ -659,24 +657,17 @@ public class JSONTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "insert into device (resource_id, domainset) VALUES (0, [ { 'domain' : 'abc' }, { 'domain' : 'pqr' } ])"))
-        .execute();
+            "insert into device (resource_id, domainset) VALUES (0, [ { 'domain' : 'abc' }, { 'domain' : 'pqr' } ])")
+        .close();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<>("select from device where domainset.domain contains 'abc'"));
-    Assert.assertTrue(result.size() > 0);
+    OResultSet result = database.query("select from device where domainset.domain contains 'abc'");
+    Assert.assertTrue(result.stream().count() > 0);
 
-    result =
-        database.query(
-            new OSQLSynchQuery<>("select from device where domainset[domain = 'abc'] is not null"));
-    Assert.assertTrue(result.size() > 0);
+    result = database.query("select from device where domainset[domain = 'abc'] is not null");
+    Assert.assertTrue(result.stream().count() > 0);
 
-    result =
-        database.query(
-            new OSQLSynchQuery<>("select from device where domainset.domain contains 'pqr'"));
-    Assert.assertTrue(result.size() > 0);
+    result = database.query("select from device where domainset.domain contains 'pqr'");
+    Assert.assertTrue(result.stream().count() > 0);
   }
 
   public void testNestedEmbeddedJson() {
@@ -684,15 +675,11 @@ public class JSONTest extends DocumentDBBaseTest {
       database.getMetadata().getSchema().createClass("Device");
 
     database
-        .command(
-            new OCommandSQL(
-                "insert into device (resource_id, domainset) VALUES (1, { 'domain' : 'eee' })"))
-        .execute();
+        .command("insert into device (resource_id, domainset) VALUES (1, { 'domain' : 'eee' })")
+        .close();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<Object>("select from device where domainset.domain = 'eee'"));
-    Assert.assertTrue(result.size() > 0);
+    OResultSet result = database.query("select from device where domainset.domain = 'eee'");
+    Assert.assertTrue(result.stream().count() > 0);
   }
 
   public void testNestedMultiLevelEmbeddedJson() {
@@ -701,15 +688,13 @@ public class JSONTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "insert into device (domainset) values ({'domain' : { 'lvlone' : { 'value' : 'five' } } } )"))
-        .execute();
+            "insert into device (domainset) values ({'domain' : { 'lvlone' : { 'value' : 'five' } } } )")
+        .close();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<>(
-                "select from device where domainset.domain.lvlone.value = 'five'"));
-    Assert.assertTrue(result.size() > 0);
+    OResultSet result =
+        database.query("select from device where domainset.domain.lvlone.value = 'five'");
+
+    Assert.assertTrue(result.stream().count() > 0);
   }
 
   public void testSpaces() {

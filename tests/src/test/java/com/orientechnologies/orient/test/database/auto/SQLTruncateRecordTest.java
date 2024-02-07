@@ -17,11 +17,11 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -38,27 +38,20 @@ public class SQLTruncateRecordTest extends DocumentDBBaseTest {
   @Test
   public void truncateRecord() {
     if (!database.getMetadata().getSchema().existsClass("Profile"))
-      database.command(new OCommandSQL("create class Profile")).execute();
+      database.command("create class Profile").close();
 
-    database
-        .command(new OCommandSQL("insert into Profile (sex, salary) values ('female', 2100)"))
-        .execute();
+    database.command("insert into Profile (sex, salary) values ('female', 2100)").close();
 
     final Long total = database.countClass("Profile");
 
-    final List<ODocument> resultset =
-        database.query(
-            new OSQLSynchQuery<Object>(
-                "select from Profile where sex = 'female' and salary = 2100"));
+    final List<OResult> resultset =
+        database.query("select from Profile where sex = 'female' and salary = 2100").stream()
+            .collect(Collectors.toList());
 
-    final Number records =
-        (Number)
-            database
-                .command(
-                    new OCommandSQL("truncate record [" + resultset.get(0).getIdentity() + "]"))
-                .execute();
+    OResultSet result =
+        database.command("truncate record [" + resultset.get(0).getIdentity().get() + "]");
 
-    Assert.assertEquals(records.intValue(), 1);
+    Assert.assertTrue(result.hasNext());
 
     OClass cls = database.getMetadata().getSchema().getClass("Profile");
     Set<OIndex> indexes = cls.getIndexes();
@@ -67,24 +60,18 @@ public class SQLTruncateRecordTest extends DocumentDBBaseTest {
       index.rebuild();
     }
 
-    Assert.assertEquals(database.countClass("Profile"), total - records.intValue());
+    Assert.assertEquals(database.countClass("Profile"), total - 1);
   }
 
   @Test
   public void truncateNonExistingRecord() {
-    if (!database.getMetadata().getSchema().existsClass("Person"))
-      database.command(new OCommandSQL("create class Profile")).execute();
+    if (!database.getMetadata().getSchema().existsClass("Profile"))
+      database.command("create class Profile").close();
 
-    final Number records =
-        (Number)
-            database
-                .command(
-                    new OCommandSQL(
-                        "truncate record [ #"
-                            + database.getClusterIdByName("Profile")
-                            + ":99999999 ]"))
-                .execute();
+    OResultSet result =
+        database.command(
+            "truncate record [ #" + database.getClusterIdByName("Profile") + ":99999999 ]");
 
-    Assert.assertEquals(records.intValue(), 0);
+    Assert.assertFalse(result.hasNext());
   }
 }

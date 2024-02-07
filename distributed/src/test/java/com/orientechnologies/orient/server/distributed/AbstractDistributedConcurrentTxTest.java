@@ -28,8 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.Date;
@@ -187,29 +186,26 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
   protected OVertex createVertex(ODatabaseDocument graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-    final Object result =
-        graph
-            .command(
-                new OCommandSQL(
-                    "create vertex Provider content {'id': '"
-                        + UUID.randomUUID().toString()
-                        + "', 'name': 'Billy"
-                        + uniqueId
-                        + "', 'surname': 'Mayes"
-                        + uniqueId
-                        + "', 'birthday': '"
-                        + ODatabaseRecordThreadLocal.instance()
-                            .get()
-                            .getStorage()
-                            .getConfiguration()
-                            .getDateFormatInstance()
-                            .format(new Date())
-                        + "', 'children': '"
-                        + uniqueId
-                        + "', 'saved': 0}"))
-            .execute();
+    final OResultSet result =
+        graph.command(
+            "create vertex Provider content {'id': '"
+                + UUID.randomUUID().toString()
+                + "', 'name': 'Billy"
+                + uniqueId
+                + "', 'surname': 'Mayes"
+                + uniqueId
+                + "', 'birthday': '"
+                + ODatabaseRecordThreadLocal.instance()
+                    .get()
+                    .getStorage()
+                    .getConfiguration()
+                    .getDateFormatInstance()
+                    .format(new Date())
+                + "', 'children': '"
+                + uniqueId
+                + "', 'saved': 0}");
 
-    return getVertex((ODocument) result);
+    return result.next().getVertex().get();
   }
 
   protected void updateVertex(OVertex v) {

@@ -2,8 +2,6 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
 import java.util.stream.Stream;
@@ -40,11 +38,9 @@ public class LuceneIssuesTest extends BaseLuceneTest {
 
     db.query("SELECT from Song where title = 'BELIEVE IT OR NOT' ").close();
 
-    ODocument query =
-        db.command(
-                new OCommandSQL(
-                    "EXPLAIN SELECT from Song where author = 'Traditional'  OR ['title','author'] LUCENE 'title:believe'"))
-            .execute();
+    db.command(
+            "EXPLAIN SELECT from Song where author = 'Traditional'  OR [title,author] LUCENE '(title:believe'")
+        .close();
   }
 
   @Test

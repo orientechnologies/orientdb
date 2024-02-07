@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.IOException;
 import org.junit.Test;
 
@@ -19,9 +20,9 @@ public class OCommandExecutorSQLTruncateTest extends BaseMemoryDatabase {
     db.save(doc);
     doc = new ODocument("ab");
     db.save(doc);
-    Number ret = db.command(new OCommandSQL("truncate class A ")).execute();
+    OResultSet ret = db.command("truncate class A ");
 
-    assertEquals(ret.intValue(), 1);
+    assertEquals((long) ret.next().getProperty("count"), 1L);
   }
 
   @Test
@@ -49,8 +50,9 @@ public class OCommandExecutorSQLTruncateTest extends BaseMemoryDatabase {
     db.save(doc);
     doc = new ODocument("ab");
     db.save(doc);
-    Number ret = db.command(new OCommandSQL("truncate class A POLYMORPHIC")).execute();
-
-    assertEquals(ret.intValue(), 2);
+    try (OResultSet res = db.command("truncate class A POLYMORPHIC")) {
+      assertEquals((long) res.next().getProperty("count"), 1L);
+      assertEquals((long) res.next().getProperty("count"), 1L);
+    }
   }
 }

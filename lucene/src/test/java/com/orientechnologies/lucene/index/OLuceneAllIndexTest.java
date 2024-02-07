@@ -5,12 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.test.BaseLuceneTest;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.IOException;
-import java.util.List;
 import java.util.logging.Level;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -30,48 +26,34 @@ public class OLuceneAllIndexTest extends BaseLuceneTest {
 
     String fromStream =
         OIOUtils.readStreamAsString(ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql"));
-    db.command(new OCommandScript("sql", fromStream)).execute();
+    db.execute("sql", fromStream).close();
     db.setProperty("CUSTOM", "strictSql=false");
-
-    //    db.command(new OCommandSQL(
-    //        "create index Song.all on Song (title,author,lyrics) FULLTEXT ENGINE LUCENE METADATA
-    // {"
-    //            + "\"title_index_analyzer\":\"" + StandardAnalyzer.class.getName() + "\" , " +
-    // "\"author_index_analyzer\":\""
-    //            + StandardAnalyzer.class.getName() + "\" , " + "\"lyrics_index_analyzer\":\"" +
-    // EnglishAnalyzer.class.getName()
-    //            + "\"}")).execute();
 
     // three separate indeexs, one result
     db.command(
-            new OCommandSQL(
-                "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
-                    + StandardAnalyzer.class.getName()
-                    + "\"}"))
-        .execute();
+            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
+                + StandardAnalyzer.class.getName()
+                + "\"}")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
-                    + StandardAnalyzer.class.getName()
-                    + "\"}"))
-        .execute();
+            "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
+                + StandardAnalyzer.class.getName()
+                + "\"}")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "create index Song.lyrics on Song (lyrics) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
-                    + EnglishAnalyzer.class.getName()
-                    + "\"}"))
-        .execute();
+            "create index Song.lyrics on Song (lyrics) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
+                + EnglishAnalyzer.class.getName()
+                + "\"}")
+        .close();
   }
 
   @Test
   @Ignore // FIXME: No function with name 'lucene_match'
   public void testLuceneFunction() {
-    List<ODocument> docs =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from Song where lucene_match( \"Song.author:Fabbio\" ) = true "));
+    OResultSet docs =
+        db.query("select from Song where lucene_match( \"Song.author:Fabbio\" ) = true ");
     assertThat(docs).hasSize(87);
   }
 }

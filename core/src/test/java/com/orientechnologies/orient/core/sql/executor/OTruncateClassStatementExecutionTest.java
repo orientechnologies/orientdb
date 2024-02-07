@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,7 +41,7 @@ public class OTruncateClassStatementExecutionTest extends BaseMemoryInternalData
     db.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(1, 2)));
     db.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(3, 0)));
 
-    db.command(new OCommandSQL("truncate class test_class")).execute();
+    db.command("truncate class test_class").close();
 
     db.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(5, 6, 7)));
     db.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(8, 9, -1)));

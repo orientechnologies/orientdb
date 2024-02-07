@@ -20,7 +20,9 @@
 
 package com.orientechnologies.orient.server.distributed.asynch;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -28,11 +30,9 @@ import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterTest;
 import com.orientechnologies.orient.setup.ServerRun;
-import junit.framework.Assert;
 import org.junit.Test;
 
 /** Check vertex and edge creation are propagated across all the nodes in asynchronous mode. */
@@ -72,8 +72,7 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
 
         g.newVertex("User").save();
 
-        g.command(new OCommandSQL("insert into Post (content, timestamp) values('test', 1)"))
-            .execute();
+        g.command("insert into Post (content, timestamp) values('test', 1)").close();
       } finally {
         g.close();
       }
@@ -87,9 +86,10 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
 
       try {
 
-        Iterable<OElement> result = g2.command(new OCommandSQL("select from Post")).execute();
-        Assert.assertTrue(result.iterator().hasNext());
-        Assert.assertNotNull(result.iterator().next());
+        OResultSet result = g2.query("select from Post");
+        assertTrue(result.hasNext());
+        assertNotNull(result.next());
+        result.close();
 
       } finally {
         g2.close();
@@ -101,18 +101,7 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
       orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
       ODatabaseDocument g = orientdb.open(getDatabaseName(), "admin", "admin");
       try {
-        g.command(
-                new OCommandSQL("create edge Own from (select from User) to (select from Post)")
-                    .onAsyncReplicationError(
-                        new OAsyncReplicationError() {
-                          @Override
-                          public ACTION onAsyncReplicationError(Throwable iException, int iRetry) {
-                            return iException instanceof ONeedRetryException && iRetry <= 3
-                                ? ACTION.RETRY
-                                : ACTION.IGNORE;
-                          }
-                        }))
-            .execute();
+        g.command("create edge Own from (select from User) to (select from Post)").close();
 
       } finally {
         g.close();
@@ -129,29 +118,30 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
 
       try {
 
-        Iterable<OVertex> result = g2.command(new OCommandSQL("select from Own")).execute();
-        Assert.assertTrue(result.iterator().hasNext());
-        Assert.assertNotNull(result.iterator().next());
+        OResultSet result = g2.query("select from Own");
+        assertTrue(result.hasNext());
+        assertNotNull(result.next());
+        result.close();
 
-        result = g2.command(new OCommandSQL("select from Post")).execute();
-        Assert.assertTrue(result.iterator().hasNext());
+        result = g2.query("select from Post");
+        assertTrue(result.hasNext());
 
-        final OElement v = result.iterator().next();
-        Assert.assertNotNull(v);
+        final OElement v = result.next().getElement().get();
+        assertNotNull(v);
 
         final Iterable<OEdge> inEdges = v.asVertex().get().getEdges(ODirection.IN);
-        Assert.assertTrue(inEdges.iterator().hasNext());
-        Assert.assertNotNull(inEdges.iterator().next());
+        assertTrue(inEdges.iterator().hasNext());
+        assertNotNull(inEdges.iterator().next());
 
-        result = g2.command(new OCommandSQL("select from User")).execute();
-        Assert.assertTrue(result.iterator().hasNext());
+        result = g2.query("select from User");
+        assertTrue(result.hasNext());
 
-        final OElement v2 = result.iterator().next();
-        Assert.assertNotNull(v2);
+        final OElement v2 = result.next().getElement().get();
+        assertNotNull(v2);
 
         final Iterable<OEdge> outEdges = v2.asVertex().get().getEdges(ODirection.OUT);
-        Assert.assertTrue(outEdges.iterator().hasNext());
-        Assert.assertNotNull(outEdges.iterator().next());
+        assertTrue(outEdges.iterator().hasNext());
+        assertNotNull(outEdges.iterator().next());
 
       } finally {
         g2.close();

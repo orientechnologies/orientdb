@@ -15,8 +15,13 @@
  */
 package com.orientechnologies.spatial;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.spatial.shape.legacy.OPointLegecyBuilder;
 import java.io.IOException;
 import java.util.List;
@@ -36,21 +41,24 @@ public class LuceneSpatialFunctionFromTextTest extends BaseSpatialLuceneTest {
 
   protected void checkFromText(ODocument source, String query) {
 
-    List<ODocument> docs = db.command(new OCommandSQL(query)).execute();
+    OResultSet docs = db.command(query);
 
-    Assert.assertEquals(docs.size(), 1);
-    ODocument geom = docs.get(0).field("geom");
+    assertTrue(docs.hasNext());
+
+    OElement geom = ((OResult) docs.next().getProperty("geom")).toElement();
     assertGeometry(source, geom);
+    assertFalse(docs.hasNext());
   }
 
-  private void assertGeometry(ODocument source, ODocument geom) {
+  private void assertGeometry(OElement source, OElement geom) {
     Assert.assertNotNull(geom);
 
-    Assert.assertNotNull(geom.field("coordinates"));
+    Assert.assertNotNull(geom.getProperty("coordinates"));
 
-    Assert.assertEquals(source.getClassName(), geom.getClassName());
     Assert.assertEquals(
-        geom.<OPointLegecyBuilder>field("coordinates"), source.field("coordinates"));
+        source.getSchemaType().get().getName(), geom.getSchemaType().get().getName());
+    Assert.assertEquals(
+        geom.<OPointLegecyBuilder>getProperty("coordinates"), source.getProperty("coordinates"));
   }
 
   @Test
@@ -104,18 +112,19 @@ public class LuceneSpatialFunctionFromTextTest extends BaseSpatialLuceneTest {
 
   protected void checkFromCollectionText(ODocument source, String query) {
 
-    List<ODocument> docs = db.command(new OCommandSQL(query)).execute();
+    OResultSet docs = db.command(query);
 
-    Assert.assertEquals(docs.size(), 1);
-    ODocument geom = docs.get(0).field("geom");
+    assertTrue(docs.hasNext());
+    OElement geom = ((OResult) docs.next().getProperty("geom")).toElement();
+    assertFalse(docs.hasNext());
     Assert.assertNotNull(geom);
 
-    Assert.assertNotNull(geom.field("geometries"));
+    Assert.assertNotNull(geom.getProperty("geometries"));
 
-    Assert.assertEquals(source.getClassName(), geom.getClassName());
+    Assert.assertEquals(source.getClassName(), geom.getSchemaType().get().getName());
 
-    List<ODocument> sourceCollection = source.field("geometries");
-    List<ODocument> targetCollection = source.field("geometries");
+    List<ODocument> sourceCollection = source.getProperty("geometries");
+    List<ODocument> targetCollection = source.getProperty("geometries");
     Assert.assertEquals(sourceCollection.size(), targetCollection.size());
 
     int i = 0;

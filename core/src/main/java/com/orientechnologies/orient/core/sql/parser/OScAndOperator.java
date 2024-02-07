@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import java.util.Map;
 
@@ -19,9 +20,6 @@ public class OScAndOperator extends SimpleNode implements OBinaryCompareOperator
 
   @Override
   public boolean execute(Object iLeft, Object iRight) {
-    if (lowLevelOperator == null) {
-      // TODO implement this!
-    }
     if (lowLevelOperator == null) {
       throw new UnsupportedOperationException();
     }
@@ -51,6 +49,11 @@ public class OScAndOperator extends SimpleNode implements OBinaryCompareOperator
   @Override
   public OScAndOperator copy() {
     return this;
+  }
+
+  @Override
+  public Operation getOperation() {
+    throw new UnsupportedOperationException();
   }
 
   @Override

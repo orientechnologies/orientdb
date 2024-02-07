@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -14,9 +13,9 @@ public class SQLDropClassTest {
     db.create();
     try {
       Assert.assertFalse(db.getMetadata().getSchema().existsClass("testSimpleDrop"));
-      db.command(new OCommandSQL("create class testSimpleDrop")).execute();
+      db.command("create class testSimpleDrop").close();
       Assert.assertTrue(db.getMetadata().getSchema().existsClass("testSimpleDrop"));
-      db.command(new OCommandSQL("Drop class testSimpleDrop")).execute();
+      db.command("Drop class testSimpleDrop").close();
       Assert.assertFalse(db.getMetadata().getSchema().existsClass("testSimpleDrop"));
     } finally {
       db.drop();
@@ -30,13 +29,13 @@ public class SQLDropClassTest {
     db.create();
     try {
       Assert.assertFalse(db.getMetadata().getSchema().existsClass("testIfExists"));
-      db.command(new OCommandSQL("create class testIfExists if not exists")).execute();
+      db.command("create class testIfExists if not exists").close();
       db.getMetadata().getSchema().reload();
       Assert.assertTrue(db.getMetadata().getSchema().existsClass("testIfExists"));
-      db.command(new OCommandSQL("drop class testIfExists if exists")).execute();
+      db.command("drop class testIfExists if exists").close();
       db.getMetadata().getSchema().reload();
       Assert.assertFalse(db.getMetadata().getSchema().existsClass("testIfExists"));
-      db.command(new OCommandSQL("drop class testIfExists if exists")).execute();
+      db.command("drop class testIfExists if exists").close();
       db.getMetadata().getSchema().reload();
       Assert.assertFalse(db.getMetadata().getSchema().existsClass("testIfExists"));
 

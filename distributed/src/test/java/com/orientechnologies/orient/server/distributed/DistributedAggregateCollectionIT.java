@@ -2,8 +2,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,9 +24,9 @@ public class DistributedAggregateCollectionIT extends AbstractServerClusterTest 
 
   @Override
   protected void onAfterDatabaseCreation(ODatabaseDocument db) {
-    db.command(new OCommandSQL("CREATE CLASS Item extends V")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY Item.name STRING")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY Item.map EMBEDDEDMAP")).execute();
+    db.command("CREATE CLASS Item extends V").close();
+    db.command("CREATE PROPERTY Item.name STRING").close();
+    db.command("CREATE PROPERTY Item.map EMBEDDEDMAP").close();
   }
 
   @Override
@@ -36,22 +35,18 @@ public class DistributedAggregateCollectionIT extends AbstractServerClusterTest 
     ODatabaseDocument db = orientDB.open(getDatabaseName(), "admin", "admin");
 
     try {
-      db.command(new OCommandSQL("INSERT into Item (name) values ('foo')")).execute();
+      db.command("INSERT into Item (name) values ('foo')").close();
 
-      Iterable<ODocument> result =
-          db.command(new OCommandSQL("select set(name) as names from Item")).execute();
-      Assert.assertEquals(Collections.singleton("foo"), result.iterator().next().field("names"));
+      OResultSet result = db.query("select set(name) as names from Item");
+      Assert.assertEquals(Collections.singleton("foo"), result.next().getProperty("names"));
 
-      result = db.command(new OCommandSQL("select list(name) as names from Item")).execute();
-      Assert.assertEquals(
-          Collections.singletonList("foo"), result.iterator().next().field("names"));
+      result = db.query("select list(name) as names from Item");
+      Assert.assertEquals(Collections.singletonList("foo"), result.next().getProperty("names"));
 
-      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this"))
-          .execute();
+      db.command("INSERT into Item (map) values ({'a':'b'}) return @this").close();
 
-      result = db.command(new OCommandSQL("select map(map) as names from Item")).execute();
-      Assert.assertEquals(
-          Collections.singletonMap("a", "b"), result.iterator().next().field("names"));
+      result = db.query("select map(map) as names from Item");
+      Assert.assertEquals(Collections.singletonMap("a", "b"), result.next().getProperty("names"));
 
     } finally {
       db.close();

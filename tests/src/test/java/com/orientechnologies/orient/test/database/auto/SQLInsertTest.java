@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -282,14 +284,10 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     if (schema.getClass("test") == null) schema.createClass("test");
 
-    ODocument doc =
-        (ODocument)
-            database
-                .command(new OCommandSQL("INSERT INTO test(text) VALUES ('(Hello World)')"))
-                .execute();
+    OResult doc = database.command("INSERT INTO test(text) VALUES ('(Hello World)')").next();
 
     Assert.assertTrue(doc != null);
-    Assert.assertEquals(doc.field("text"), "(Hello World)");
+    Assert.assertEquals(doc.getProperty("text"), "(Hello World)");
   }
 
   @Test
@@ -359,7 +357,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   @Test
   public void insertSelect() {
-    database.command(new OCommandSQL("CREATE CLASS UserCopy")).execute();
+    database.command("CREATE CLASS UserCopy").close();
     database.getMetadata().getSchema().reload();
 
     long inserted =
@@ -381,20 +379,18 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   @Test(expectedExceptions = OValidationException.class)
   public void insertSelectFromProjection() {
-    database.command(new OCommandSQL("CREATE CLASS ProjectedInsert")).execute();
-    database
-        .command(new OCommandSQL("CREATE property ProjectedInsert.a Integer (max 3)"))
-        .execute();
+    database.command("CREATE CLASS ProjectedInsert").close();
+    database.command("CREATE property ProjectedInsert.a Integer (max 3)").close();
     database.getMetadata().getSchema().reload();
 
-    database.command(new OCommandSQL("INSERT INTO ProjectedInsert FROM select 10 as a ")).execute();
+    database.command("INSERT INTO ProjectedInsert FROM select 10 as a ").close();
   }
 
   @Test
   public void insertWithReturn() {
 
     if (!database.getMetadata().getSchema().existsClass("actor2")) {
-      database.command(new OCommandSQL("CREATE CLASS Actor2")).execute();
+      database.command("CREATE CLASS Actor2").close();
       database.getMetadata().getSchema().reload();
     }
 
@@ -621,17 +617,16 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "insert into TestEmbeddedDates set events = [{\"on\": date(\"2005-09-08 04:00:00\", \"yyyy-MM-dd HH:mm:ss\", \"UTC\")}]\n"))
-        .execute();
+            "insert into TestEmbeddedDates set events = [{\"on\": date(\"2005-09-08 04:00:00\", \"yyyy-MM-dd HH:mm:ss\", \"UTC\")}]\n")
+        .close();
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("select from TestEmbeddedDates"));
+    List<OResult> result =
+        database.query("select from TestEmbeddedDates").stream().collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 1);
     boolean found = false;
-    ODocument doc = result.get(0);
-    Collection events = doc.field("events");
+    OResult doc = result.get(0);
+    Collection events = doc.getProperty("events");
     for (Object event : events) {
       Assert.assertTrue(event instanceof Map);
       Object dateObj = ((Map) event).get("on");
@@ -642,7 +637,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
       found = true;
     }
 
-    doc.delete();
+    database.delete(doc.getIdentity().get());
     Assert.assertEquals(found, true);
   }
 
@@ -724,16 +719,15 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("InsertWithClusterAsFieldName");
 
     database
-        .command(
-            new OCommandSQL(
-                "INSERT INTO InsertWithClusterAsFieldName ( `cluster` ) values ( 'foo' )"))
-        .execute();
+        .command("INSERT INTO InsertWithClusterAsFieldName ( `cluster` ) values ( 'foo' )")
+        .close();
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("SELECT FROM InsertWithClusterAsFieldName"));
+    List<OResult> result =
+        database.query("SELECT FROM InsertWithClusterAsFieldName").stream()
+            .collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(result.get(0).field("cluster"), "foo");
+    Assert.assertEquals(result.get(0).getProperty("cluster"), "foo");
   }
 
   @Test
@@ -741,18 +735,16 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     // issue #6670
     database.getMetadata().getSchema().getOrCreateClass("TestInsertEmbeddedBigDecimal");
     database
-        .command(
-            new OCommandSQL("create property TestInsertEmbeddedBigDecimal.ed embeddedlist decimal"))
-        .execute();
+        .command("create property TestInsertEmbeddedBigDecimal.ed embeddedlist decimal")
+        .close();
     database
-        .command(
-            new OCommandSQL(
-                "INSERT INTO TestInsertEmbeddedBigDecimal CONTENT {\"ed\": [5,null,5]}"))
-        .execute();
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("SELECT FROM TestInsertEmbeddedBigDecimal"));
+        .command("INSERT INTO TestInsertEmbeddedBigDecimal CONTENT {\"ed\": [5,null,5]}")
+        .close();
+    List<OResult> result =
+        database.query("SELECT FROM TestInsertEmbeddedBigDecimal").stream()
+            .collect(Collectors.toList());
     Assert.assertEquals(result.size(), 1);
-    Iterable ed = result.get(0).field("ed");
+    Iterable ed = result.get(0).getProperty("ed");
     Object o = ed.iterator().next();
     Assert.assertEquals(o.getClass(), BigDecimal.class);
     Assert.assertEquals(((BigDecimal) o).intValue(), 5);

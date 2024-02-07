@@ -87,7 +87,7 @@ public class OLiveQueryV2Test {
 
   @Test
   public void testLiveInsert() throws InterruptedException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryV2Test");
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:OLiveQueryV2Test");
     db.activateOnCurrentThread();
     db.create();
     try {
@@ -106,9 +106,9 @@ public class OLiveQueryV2Test {
 
       monitor.unSubscribe();
 
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bax'")).execute();
-      db.command(new OCommandSQL("insert into test2 set name = 'foo'"));
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
+      db.command("insert into test set name = 'foo', surname = 'bax'").close();
+      db.command("insert into test2 set name = 'foo'").close();
+      db.command("insert into test set name = 'foo', surname = 'baz'").close();
 
       Assert.assertEquals(listener.ops.size(), 2);
       for (OResult doc : listener.ops) {
@@ -198,7 +198,7 @@ public class OLiveQueryV2Test {
 
   @Test
   public void testRestrictedLiveInsert() throws ExecutionException, InterruptedException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
     db.activateOnCurrentThread();
     db.create();
     try {
@@ -264,16 +264,17 @@ public class OLiveQueryV2Test {
 
       latch.await();
 
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar'")).execute();
+      db.command("insert into test set name = 'foo', surname = 'bar'").close();
 
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar', _allow=?"))
-          .execute(
+      db.command(
+              "insert into test set name = 'foo', surname = 'bar', _allow=?",
               new ArrayList<OIdentifiable>() {
                 {
                   add(current);
                   add(reader);
                 }
-              });
+              })
+          .close();
 
       Integer integer = future.get();
       Assert.assertEquals(integer.intValue(), liveMatch);
@@ -285,7 +286,7 @@ public class OLiveQueryV2Test {
   @Test
   public void testLiveProjections() throws InterruptedException {
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryV2Test");
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:OLiveQueryV2Test");
     db.activateOnCurrentThread();
     db.create();
     try {
@@ -304,9 +305,10 @@ public class OLiveQueryV2Test {
 
       monitor.unSubscribe();
 
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bax'")).execute();
-      db.command(new OCommandSQL("insert into test2 set name = 'foo'"));
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
+      db.command("insert into test set name = 'foo', surname = 'bax'").close();
+      db.command("insert into test2 set name = 'foo'").close();
+      ;
+      db.command("insert into test set name = 'foo', surname = 'baz'").close();
 
       Assert.assertEquals(listener.ops.size(), 2);
       for (OResult doc : listener.ops) {

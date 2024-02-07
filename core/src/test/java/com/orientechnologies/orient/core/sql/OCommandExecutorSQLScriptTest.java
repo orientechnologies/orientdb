@@ -21,11 +21,11 @@ public class OCommandExecutorSQLScriptTest extends BaseMemoryDatabase {
   public void beforeTest() {
     super.beforeTest();
 
-    db.command(new OCommandSQL("CREATE class foo")).execute();
+    db.command("CREATE class foo").close();
 
-    db.command(new OCommandSQL("insert into foo (name, bar) values ('a', 1)")).execute();
-    db.command(new OCommandSQL("insert into foo (name, bar) values ('b', 2)")).execute();
-    db.command(new OCommandSQL("insert into foo (name, bar) values ('c', 3)")).execute();
+    db.command("insert into foo (name, bar) values ('a', 1)").close();
+    db.command("insert into foo (name, bar) values ('b', 2)").close();
+    db.command("insert into foo (name, bar) values ('c', 3)").close();
 
     db.activateOnCurrentThread();
   }
@@ -289,7 +289,7 @@ public class OCommandExecutorSQLScriptTest extends BaseMemoryDatabase {
   @Test
   public void testQuotedRegex() {
     // issue #4996 (simplified)
-    db.command(new OCommandSQL("CREATE CLASS QuotedRegex2")).execute();
+    db.command("CREATE CLASS QuotedRegex2").close();
     String batch = "INSERT INTO QuotedRegex2 SET regexp=\"'';\"";
 
     db.command(new OCommandScript(batch.toString())).execute();

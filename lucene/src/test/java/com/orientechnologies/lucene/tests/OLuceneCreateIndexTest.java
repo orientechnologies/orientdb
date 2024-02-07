@@ -20,10 +20,8 @@ package com.orientechnologies.lucene.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -38,20 +36,18 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
   public void setUp() throws Exception {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    db.execute("sql", getScriptFromStream(stream)).close();
 
     db.command(
-            new OCommandSQL(
-                "create index Song.title on Song (title) fulltext ENGINE LUCENE METADATA {\"analyzer\":\""
-                    + StandardAnalyzer.class.getName()
-                    + "\"}"))
-        .execute();
+            "create index Song.title on Song (title) fulltext ENGINE LUCENE METADATA {\"analyzer\":\""
+                + StandardAnalyzer.class.getName()
+                + "\"}")
+        .close();
     db.command(
-            new OCommandSQL(
-                "create index Song.author on Song (author) FULLTEXT ENGINE lucene METADATA {\"analyzer\":\""
-                    + StandardAnalyzer.class.getName()
-                    + "\"}"))
-        .execute();
+            "create index Song.author on Song (author) FULLTEXT ENGINE lucene METADATA {\"analyzer\":\""
+                + StandardAnalyzer.class.getName()
+                + "\"}")
+        .close();
 
     OVertex doc = db.newVertex("Song");
 

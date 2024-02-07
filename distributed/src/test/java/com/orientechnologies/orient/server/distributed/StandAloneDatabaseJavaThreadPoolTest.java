@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
@@ -145,7 +145,7 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
                             + "' where prop2='v2-1'";
                     for (int k = 0; k < 10 && update; k++) {
                       try {
-                        graph.command(new OCommandSQL(sql)).execute();
+                        graph.command(sql).close();
                         if (isException) {
                           log(
                               "********** ["
@@ -196,16 +196,17 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
                   } else {
                     boolean retry = true;
 
-                    Iterable<OElement> vtxs = null;
+                    OResultSet vtxs = null;
                     for (int k = 0; k < 100 && retry; k++)
                       try {
-                        vtxs = graph.command(new OCommandSQL(query)).execute();
+                        vtxs = graph.command(query);
                         break;
                       } catch (ONeedRetryException e) {
                         // RETRY
                       }
 
-                    for (OElement vtx : vtxs) {
+                    while (vtxs.hasNext()) {
+                      OElement vtx = vtxs.next().toElement();
                       if (retry) {
                         retry = true;
                         boolean isException = false;

@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -1646,7 +1645,8 @@ public class OSelectExecutionPlanner {
                     + info.whereClause);
           }
         }
-        result.chain(new FetchFromIndexStep(index, keyCondition, null, ctx, profilingEnabled));
+        IndexSearchDescriptor desc = new IndexSearchDescriptor(index, keyCondition);
+        result.chain(new FetchFromIndexStep(desc, true, ctx, profilingEnabled));
         if (ridCondition != null) {
           OWhereClause where = new OWhereClause(-1);
           where.setBaseExpression(ridCondition);
@@ -1664,7 +1664,9 @@ public class OSelectExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(index, true, ctx, profilingEnabled));
+        result.chain(
+            new FetchFromIndexValuesStep(
+                new IndexSearchDescriptor(index, null), true, ctx, profilingEnabled));
         result.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
         break;
       case VALUESDESC:
@@ -1672,7 +1674,9 @@ public class OSelectExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(index, false, ctx, profilingEnabled));
+        result.chain(
+            new FetchFromIndexValuesStep(
+                new IndexSearchDescriptor(index, null), false, ctx, profilingEnabled));
         result.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
         break;
     }
@@ -2030,14 +2034,7 @@ public class OSelectExecutionPlanner {
         IndexSearchDescriptor bestIndex = findBestIndexFor(ctx, clazz.getIndexes(), block, clazz);
         if (bestIndex != null) {
 
-          FetchFromIndexStep step =
-              new FetchFromIndexStep(
-                  bestIndex.getIndex(),
-                  bestIndex.getKeyCondition(),
-                  bestIndex.getAdditionalRangeCondition(),
-                  true,
-                  ctx,
-                  profilingEnabled);
+          FetchFromIndexStep step = new FetchFromIndexStep(bestIndex, true, ctx, profilingEnabled);
 
           OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
           subPlan.chain(step);
@@ -2048,8 +2045,7 @@ public class OSelectExecutionPlanner {
             filterClusterIds = clazz.getPolymorphicClusterIds();
           }
           subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
-          if (requiresMultipleIndexLookups(bestIndex.getKeyCondition())
-              || duplicateResultsForRecord(bestIndex)) {
+          if (bestIndex.requiresDistinctStep()) {
             subPlan.chain(new DistinctExecutionStep(ctx, profilingEnabled));
           }
           if (!block.getSubBlocks().isEmpty()) {
@@ -2182,17 +2178,6 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  private boolean duplicateResultsForRecord(IndexSearchDescriptor bestIndex) {
-    if (bestIndex.getIndex().getDefinition() instanceof OCompositeIndexDefinition) {
-      if (((OCompositeIndexDefinition) bestIndex.getIndex().getDefinition())
-              .getMultiValueDefinition()
-          != null) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private boolean refersToLet(List<OBooleanExpression> subBlocks) {
     if (subBlocks == null) {
       return false;
@@ -2281,7 +2266,10 @@ public class OSelectExecutionPlanner {
       if (indexFound && orderType != null) {
         plan.chain(
             new FetchFromIndexValuesStep(
-                idx, orderType.equals(OOrderByItem.ASC), ctx, profilingEnabled));
+                new IndexSearchDescriptor(idx),
+                orderType.equals(OOrderByItem.ASC),
+                ctx,
+                profilingEnabled));
         int[] filterClusterIds = null;
         if (filterClusters != null) {
           filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
@@ -2460,22 +2448,30 @@ public class OSelectExecutionPlanner {
       return null; // some blocks could not be managed with an index
     }
 
-    List<OExecutionStepInternal> result = null;
     List<IndexSearchDescriptor> optimumIndexSearchDescriptors =
         commonFactor(indexSearchDescriptors);
 
-    if (indexSearchDescriptors.size() == 1) {
-      IndexSearchDescriptor desc = indexSearchDescriptors.get(0);
+    List<OExecutionStepInternal> result = null;
+    result =
+        executionStepFromIndexes(
+            filterClusters, clazz, info, ctx, profilingEnabled, optimumIndexSearchDescriptors);
+    return result;
+  }
+
+  private List<OExecutionStepInternal> executionStepFromIndexes(
+      Set<String> filterClusters,
+      OClass clazz,
+      QueryPlanningInfo info,
+      OCommandContext ctx,
+      boolean profilingEnabled,
+      List<IndexSearchDescriptor> optimumIndexSearchDescriptors) {
+    List<OExecutionStepInternal> result;
+    if (optimumIndexSearchDescriptors.size() == 1) {
+      IndexSearchDescriptor desc = optimumIndexSearchDescriptors.get(0);
       result = new ArrayList<>();
       Boolean orderAsc = getOrderDirection(info);
       result.add(
-          new FetchFromIndexStep(
-              desc.getIndex(),
-              desc.getKeyCondition(),
-              desc.getAdditionalRangeCondition(),
-              !Boolean.FALSE.equals(orderAsc),
-              ctx,
-              profilingEnabled));
+          new FetchFromIndexStep(desc, !Boolean.FALSE.equals(orderAsc), ctx, profilingEnabled));
       int[] filterClusterIds = null;
       if (filterClusters != null) {
         filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
@@ -2483,12 +2479,12 @@ public class OSelectExecutionPlanner {
         filterClusterIds = clazz.getPolymorphicClusterIds();
       }
       result.add(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
-      if (requiresMultipleIndexLookups(desc.getKeyCondition()) || duplicateResultsForRecord(desc)) {
+      if (desc.requiresDistinctStep()) {
         result.add(new DistinctExecutionStep(ctx, profilingEnabled));
       }
       if (orderAsc != null
           && info.orderBy != null
-          && fullySorted(info.orderBy, desc.getKeyCondition(), desc.getIndex())
+          && fullySorted(info.orderBy, desc)
           && info.serverToClusters.size() == 1) {
         info.orderApplied = true;
       }
@@ -2527,72 +2523,11 @@ public class OSelectExecutionPlanner {
     return ((OMetadataInternal) ctx.getDatabase().getMetadata()).getImmutableSchemaSnapshot();
   }
 
-  private boolean fullySorted(OOrderBy orderBy, OAndBlock conditions, OIndex idx) {
-    if (orderBy.getItems().stream().anyMatch(x -> x.getCollate() != null)) {
+  private boolean fullySorted(OOrderBy orderBy, IndexSearchDescriptor desc) {
+    if (orderBy.ordersWithCollate() || !orderBy.ordersSameDirection()) {
       return false;
     }
-
-    if (!idx.supportsOrderedIterations()) return false;
-
-    List<String> orderItems = new ArrayList<>();
-    String order = null;
-
-    for (OOrderByItem item : orderBy.getItems()) {
-      if (order == null) {
-        order = item.getType();
-      } else if (!order.equals(item.getType())) {
-        return false;
-      }
-      orderItems.add(item.getAlias() != null ? item.getAlias() : item.getRecordAttr());
-    }
-
-    List<String> conditionItems = new ArrayList<>();
-
-    for (int i = 0; i < conditions.getSubBlocks().size(); i++) {
-      OBooleanExpression item = conditions.getSubBlocks().get(i);
-      if (item instanceof OBinaryCondition) {
-        if (((OBinaryCondition) item).getOperator() instanceof OEqualsCompareOperator) {
-          conditionItems.add(((OBinaryCondition) item).getLeft().toString());
-        } else if (i != conditions.getSubBlocks().size() - 1) {
-          return false;
-        }
-
-      } else if (i != conditions.getSubBlocks().size() - 1) {
-        return false;
-      }
-    }
-
-    List<String> orderedFields = new ArrayList<>();
-    boolean overlapping = false;
-    for (String s : conditionItems) {
-      if (orderItems.isEmpty()) {
-        return true; // nothing to sort, the conditions completely overlap the ORDER BY
-      }
-      if (s.equals(orderItems.get(0))) {
-        orderItems.remove(0);
-        overlapping = true; // start overlapping
-      } else if (overlapping) {
-        return false; // overlapping, but next order item does not match...
-      }
-      orderedFields.add(s);
-    }
-    orderedFields.addAll(orderItems);
-
-    final OIndexDefinition definition = idx.getDefinition();
-    final List<String> fields = definition.getFields();
-    if (fields.size() < orderedFields.size()) {
-      return false;
-    }
-
-    for (int i = 0; i < orderedFields.size(); i++) {
-      final String orderFieldName = orderedFields.get(i);
-      final String indexFieldName = fields.get(i);
-      if (!orderFieldName.equals(indexFieldName)) {
-        return false;
-      }
-    }
-
-    return true;
+    return desc.fullySorted(orderBy.getProperties());
   }
 
   /**
@@ -2626,20 +2561,14 @@ public class OSelectExecutionPlanner {
     List<OInternalExecutionPlan> subPlans = new ArrayList<>();
     for (IndexSearchDescriptor desc : indexSearchDescriptors) {
       OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
-      subPlan.chain(
-          new FetchFromIndexStep(
-              desc.getIndex(),
-              desc.getKeyCondition(),
-              desc.getAdditionalRangeCondition(),
-              ctx,
-              profilingEnabled));
+      subPlan.chain(new FetchFromIndexStep(desc, true, ctx, profilingEnabled));
       int[] filterClusterIds = null;
       if (filterClusters != null) {
         filterClusterIds =
             ((ODatabaseDocumentInternal) ctx.getDatabase()).getClustersIds(filterClusters);
       }
       subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
-      if (requiresMultipleIndexLookups(desc.getKeyCondition()) || duplicateResultsForRecord(desc)) {
+      if (desc.requiresDistinctStep()) {
         subPlan.chain(new DistinctExecutionStep(ctx, profilingEnabled));
       }
       if (desc.getRemainingCondition() != null && !desc.getRemainingCondition().isEmpty()) {
@@ -2653,22 +2582,6 @@ public class OSelectExecutionPlanner {
       subPlans.add(subPlan);
     }
     return new ParallelExecStep(subPlans, ctx, profilingEnabled);
-  }
-
-  /**
-   * checks whether the condition has CONTAINSANY or similar expressions, that require multiple
-   * index evaluations
-   *
-   * @param keyCondition
-   * @return
-   */
-  private boolean requiresMultipleIndexLookups(OAndBlock keyCondition) {
-    for (OBooleanExpression oBooleanExpression : keyCondition.getSubBlocks()) {
-      if (!(oBooleanExpression instanceof OBinaryCondition)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private OWhereClause createWhereFrom(OBooleanExpression remainingCondition) {
@@ -2695,7 +2608,7 @@ public class OSelectExecutionPlanner {
             .map(index -> buildIndexSearchDescriptor(ctx, index, block, clazz))
             .filter(Objects::nonNull)
             .filter(x -> x.getKeyCondition() != null)
-            .filter(x -> x.getKeyCondition().getSubBlocks().size() > 0)
+            .filter(x -> x.blockCount() > 0)
             .collect(Collectors.toList());
 
     List<IndexSearchDescriptor> fullTextIndexDescriptors =
@@ -2705,7 +2618,7 @@ public class OSelectExecutionPlanner {
             .map(idx -> buildIndexSearchDescriptorForFulltext(ctx, idx, block, clazz))
             .filter(Objects::nonNull)
             .filter(x -> x.getKeyCondition() != null)
-            .filter(x -> x.getKeyCondition().getSubBlocks().size() > 0)
+            .filter(x -> x.blockCount() > 0)
             .collect(Collectors.toList());
 
     descriptors.addAll(fullTextIndexDescriptors);
@@ -2737,7 +2650,7 @@ public class OSelectExecutionPlanner {
     // sort remaining by the number of indexed fields
     descriptors =
         descriptors.stream()
-            .sorted(Comparator.comparingInt(x -> x.getKeyCondition().getSubBlocks().size()))
+            .sorted(Comparator.comparingInt(x -> x.blockCount()))
             .collect(Collectors.toList());
 
     // get the one that has more indexed fields
@@ -2754,7 +2667,7 @@ public class OSelectExecutionPlanner {
     for (IndexSearchDescriptor desc : descriptors) {
       IndexSearchDescriptor matching = null;
       for (IndexSearchDescriptor result : results) {
-        if (isSameCondition(desc, result)) {
+        if (desc.isSameCondition(result)) {
           matching = result;
           break;
         }
@@ -2769,20 +2682,6 @@ public class OSelectExecutionPlanner {
       }
     }
     return results;
-  }
-
-  private boolean isSameCondition(IndexSearchDescriptor item, IndexSearchDescriptor desc) {
-    List<OBooleanExpression> left = item.getKeyCondition().getSubBlocks();
-    List<OBooleanExpression> right = desc.getKeyCondition().getSubBlocks();
-    if (left.size() != right.size()) {
-      return false;
-    }
-    for (int i = 0; i < left.size(); i++) {
-      if (!left.get(i).equals(right.get(i))) {
-        return false;
-      }
-    }
-    return true;
   }
 
   private List<IndexSearchDescriptor> removePrefixIndexes(List<IndexSearchDescriptor> descriptors) {
@@ -2807,7 +2706,7 @@ public class OSelectExecutionPlanner {
 
   private boolean isPrefixOfAny(IndexSearchDescriptor desc, List<IndexSearchDescriptor> result) {
     for (IndexSearchDescriptor item : result) {
-      if (isPrefixOf(desc, item)) {
+      if (desc.isPrefixOf(item)) {
         return true;
       }
     }
@@ -2826,33 +2725,11 @@ public class OSelectExecutionPlanner {
       IndexSearchDescriptor desc, List<IndexSearchDescriptor> descriptors) {
     List<IndexSearchDescriptor> result = new ArrayList<>();
     for (IndexSearchDescriptor item : descriptors) {
-      if (isPrefixOf(item, desc)) {
+      if (item.isPrefixOf(desc)) {
         result.add(item);
       }
     }
     return result;
-  }
-
-  /**
-   * returns true if the first argument is a prefix for the second argument, eg. if the first
-   * argument is [a] and the second argument is [a, b]
-   *
-   * @param item
-   * @param desc
-   * @return
-   */
-  private boolean isPrefixOf(IndexSearchDescriptor item, IndexSearchDescriptor desc) {
-    List<OBooleanExpression> left = item.getKeyCondition().getSubBlocks();
-    List<OBooleanExpression> right = desc.getKeyCondition().getSubBlocks();
-    if (left.size() > right.size()) {
-      return false;
-    }
-    for (int i = 0; i < left.size(); i++) {
-      if (!left.get(i).equals(right.get(i))) {
-        return false;
-      }
-    }
-    return true;
   }
 
   /**

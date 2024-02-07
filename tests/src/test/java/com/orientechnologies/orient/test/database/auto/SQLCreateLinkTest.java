@@ -31,8 +31,7 @@ public class SQLCreateLinkTest extends DocumentDBBaseTest {
 
   @Test
   public void createLinktest() {
-    Assert.assertTrue(
-        (Integer) database.command(new OCommandSQL("CREATE CLASS POST")).execute() > 0);
+    database.command("CREATE CLASS POST").close();
     Assert.assertTrue(
         database
                 .command(
@@ -107,15 +106,15 @@ public class SQLCreateLinkTest extends DocumentDBBaseTest {
         5);
 
     Assert.assertEquals(
-        ((Number) database.command(new OCommandSQL("UPDATE comment REMOVE postId")).execute())
+        ((Number) database.command("UPDATE comment REMOVE postId").next().getProperty("count"))
             .intValue(),
         5);
   }
 
   @Test
   public void createRIDLinktest() {
-    Assert.assertTrue(
-        (Integer) database.command(new OCommandSQL("CREATE CLASS POST2")).execute() > 0);
+
+    database.command("CREATE CLASS POST2").close();
     Object p1 =
         database
             .command(

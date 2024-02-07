@@ -1,8 +1,7 @@
 package com.orientechnologies.spatial;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -10,15 +9,12 @@ public class GeometryCollectionTest extends BaseSpatialLuceneTest {
 
   @Test
   public void testDeleteVerticesWithGeometryCollection() {
-    db.command(new OCommandSQL("CREATE CLASS TestInsert extends V")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY TestInsert.name STRING")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY TestInsert.geometry EMBEDDED OGeometryCollection"))
-        .execute();
+    db.command("CREATE CLASS TestInsert extends V").close();
+    db.command("CREATE PROPERTY TestInsert.name STRING").close();
+    db.command("CREATE PROPERTY TestInsert.geometry EMBEDDED OGeometryCollection").close();
 
-    db.command(
-            new OCommandSQL(
-                "CREATE INDEX TestInsert.geometry ON TestInsert(geometry) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("CREATE INDEX TestInsert.geometry ON TestInsert(geometry) SPATIAL ENGINE LUCENE")
+        .close();
 
     db.command(
             new OCommandSQL(
@@ -29,16 +25,14 @@ public class GeometryCollectionTest extends BaseSpatialLuceneTest {
                 "insert into TestInsert content {'name': 'loc2', 'geometry': {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[0,20],[20,20],[20,0],[0,0]]]}]}}"))
         .execute();
 
-    List<ODocument> qResult =
+    OResultSet qResult =
         db.command(
-                new OCommandSQL(
-                    "select * from TestInsert where ST_WITHIN(geometry,'POLYGON ((0 0, 15 0, 15 15, 0 15, 0 0))') = true"))
-            .execute();
-    Assert.assertEquals(1, qResult.size());
+            "select * from TestInsert where ST_WITHIN(geometry,'POLYGON ((0 0, 15 0, 15 15, 0 15, 0 0))') = true");
+    Assert.assertEquals(1, qResult.stream().count());
 
-    db.command(new OCommandSQL("DELETE VERTEX TestInsert")).execute();
+    db.command("DELETE VERTEX TestInsert").close();
 
-    List<ODocument> qResult2 = db.command(new OCommandSQL("select * from TestInsert")).execute();
-    Assert.assertEquals(0, qResult2.size());
+    OResultSet qResult2 = db.command("select * from TestInsert");
+    Assert.assertEquals(0, qResult2.stream().count());
   }
 }

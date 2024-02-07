@@ -22,9 +22,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -48,10 +46,8 @@ public class LuceneBooleanIndexTest extends BaseLuceneTest {
     song.setSuperClass(v);
     song.createProperty("isDeleted", OType.BOOLEAN);
 
-    db.command(
-            new OCommandSQL(
-                "create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE")
+        .close();
   }
 
   @Test
@@ -63,16 +59,14 @@ public class LuceneBooleanIndexTest extends BaseLuceneTest {
       db.save(doc);
     }
 
-    List<ODocument> docs =
-        db.query(new OSQLSynchQuery<ODocument>("select from Person where isDeleted lucene false"));
+    OResultSet docs = db.query("select from Person where isDeleted lucene false");
 
-    Assert.assertEquals(500, docs.size());
-    Assert.assertEquals(false, docs.get(0).field("isDeleted"));
-    docs =
-        db.query(new OSQLSynchQuery<ODocument>("select from Person where isDeleted lucene true"));
-
-    Assert.assertEquals(500, docs.size());
-    Assert.assertEquals(true, docs.get(0).field("isDeleted"));
+    Assert.assertEquals(
+        500,
+        docs.stream().filter((doc) -> (Boolean) doc.getProperty("isDeleted") == false).count());
+    docs = db.query("select from Person where isDeleted lucene true");
+    Assert.assertEquals(
+        500, docs.stream().filter((doc) -> (Boolean) doc.getProperty("isDeleted") == true).count());
   }
 
   @Test

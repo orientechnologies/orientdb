@@ -29,8 +29,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
@@ -41,7 +40,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.zip.GZIPInputStream;
@@ -112,16 +110,13 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
     db = (ODatabaseDocumentInternal) orientDB.open(DBNAME, "admin", "admin");
 
-    db.command(new OCommandSQL("create class City ")).execute();
-    db.command(new OCommandSQL("create property City.name string")).execute();
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command("create class City ").close();
+    db.command("create property City.name string").close();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE").close();
 
-    db.command(new OCommandSQL("create property City.location EMBEDDED OPOINT")).execute();
+    db.command("create property City.location EMBEDDED OPOINT").close();
 
-    db.command(
-            new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE"))
-        .execute();
+    db.command("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE").close();
 
     ODocument rome = newCity("Rome", 12.5, 41.9);
 
@@ -169,9 +164,9 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     String query =
         "select * from City where  ST_WITHIN(location,'POLYGON ((12.314015 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))')"
             + " = true";
-    List<?> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    OResultSet docs = db.query(query);
 
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(docs.stream().count(), 1);
 
     String jsonConfig =
         OIOUtils.readStreamAsString(
@@ -240,7 +235,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.SPATIAL.name());
 
-    assertThat(db.<List>query(new OSQLSynchQuery<Object>(query))).hasSize(1);
+    assertThat(db.query(query).stream()).hasSize(1);
   }
 
   @Test
@@ -249,9 +244,9 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     String query =
         "select * from City where  ST_WITHIN(location,'POLYGON ((12.314015 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))')"
             + " = true";
-    List<?> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    OResultSet docs = db.query(query);
 
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(docs.stream().count(), 1);
 
     String jsonConfig =
         OIOUtils.readStreamAsString(
@@ -324,7 +319,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.SPATIAL.name());
 
-    assertThat(db.<List>query(new OSQLSynchQuery<Object>(query))).hasSize(1);
+    assertThat(db.query(query).stream()).hasSize(1);
   }
 
   private ODatabaseDocumentInternal createAndOpen() {

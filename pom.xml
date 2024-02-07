@@ -317,7 +317,6 @@
                     <artifactId>maven-release-plugin</artifactId>
                     <version>3.0.1</version>
                     <configuration>
-                        <autoResolveSnasphots>all</autoResolveSnasphots>
                         <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
                         <pushChanges>false</pushChanges>
                         <tagNameFormat>@{project.version}</tagNameFormat>
@@ -419,6 +418,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -431,12 +431,12 @@
                         <manifestEntries>
                             <Implementation-Build>${buildNumber}</Implementation-Build>
                             <Implementation-Url>${project.organization.url}</Implementation-Url>
-                            <Implementation-Build-Date>${maven.build.timestamp}</Implementation-Build-Date>
                             <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
                             <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
                             <Add-Opens>jdk.unsupported/sun.misc=ALL-UNNAMED java.base/sun.security.x509=ALL-UNNAMED
                             </Add-Opens>
                         </manifestEntries>
+                        <addMavenDescriptor>false</addMavenDescriptor>
                     </archive>
                 </configuration>
             </plugin>

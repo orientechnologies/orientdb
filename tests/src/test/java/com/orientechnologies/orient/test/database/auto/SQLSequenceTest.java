@@ -1,11 +1,11 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import org.testng.Assert;
@@ -19,7 +19,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "SqlSequence")
 public class SQLSequenceTest extends DocumentDBBaseTest {
-  private static final int CACHE_SIZE = 40;
   private static final long FIRST_START = OSequence.DEFAULT_START;
   private static final long SECOND_START = 31;
 
@@ -35,18 +34,13 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
   }
 
   private void testSequence(String sequenceName, OSequence.SEQUENCE_TYPE sequenceType) {
-    OSequenceLibrary sequenceLibrary = database.getMetadata().getSequenceLibrary();
 
-    database
-        .command(new OCommandSQL("CREATE SEQUENCE " + sequenceName + " TYPE " + sequenceType))
-        .execute();
+    database.command("CREATE SEQUENCE " + sequenceName + " TYPE " + sequenceType).close();
 
-    OSequenceException err = null;
+    OCommandExecutionException err = null;
     try {
-      database
-          .command(new OCommandSQL("CREATE SEQUENCE " + sequenceName + " TYPE " + sequenceType))
-          .execute();
-    } catch (OSequenceException se) {
+      database.command("CREATE SEQUENCE " + sequenceName + " TYPE " + sequenceType).close();
+    } catch (OCommandExecutionException se) {
       err = se;
     }
     Assert.assertTrue(
@@ -81,12 +75,10 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
   }
 
   private long sequenceSql(String sequenceName, String cmd) {
-    Iterable<ODocument> ret =
-        database
-            .command(
-                new OCommandSQL("SELECT sequence('" + sequenceName + "')." + cmd + " as value"))
-            .execute();
-    return (Long) ret.iterator().next().field("value");
+    try (OResultSet ret =
+        database.command("SELECT sequence('" + sequenceName + "')." + cmd + " as value")) {
+      return (Long) ret.next().getProperty("value");
+    }
   }
 
   @Test

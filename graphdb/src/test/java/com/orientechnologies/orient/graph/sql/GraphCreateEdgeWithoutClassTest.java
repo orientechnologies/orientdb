@@ -4,7 +4,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -27,11 +26,11 @@ public class GraphCreateEdgeWithoutClassTest {
       test1.setProperty("name", "bar");
       test1.save();
       graph.commit();
+      graph.createEdgeType("FooBar");
       graph
-          .command(
-              new OCommandSQL(
-                  "create edge FooBar from (select from V where name='foo') to (select from V where name = 'bar')"))
-          .execute();
+          .sqlCommand(
+              "create edge FooBar from (select from V where name='foo') to (select from V where name = 'bar')")
+          .close();
       graph.commit();
 
       Iterable<OrientElement> res =

@@ -10,7 +10,6 @@ public class CreateIndexCommandTest extends BaseMemoryDatabase {
   @Test(expected = OIndexException.class)
   public void testCreateIndexOnMissingPropertyWithCollate() {
     db.getMetadata().getSchema().createClass("Test");
-    db.command(new OCommandSQL(" create index Test.test on Test(test collate ci) UNIQUE"))
-        .execute();
+    db.command(" create index Test.test on Test(test collate ci) UNIQUE").close();
   }
 }

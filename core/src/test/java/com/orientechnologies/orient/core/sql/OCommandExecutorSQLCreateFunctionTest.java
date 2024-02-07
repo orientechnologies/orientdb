@@ -1,8 +1,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.BaseMemoryDatabase;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -14,12 +13,10 @@ public class OCommandExecutorSQLCreateFunctionTest extends BaseMemoryDatabase {
   @Test
   public void testCreateFunction() {
     db.command(
-            new OCommandSQL(
-                "CREATE FUNCTION testCreateFunction \"return 'hello '+name;\" PARAMETERS [name] IDEMPOTENT true LANGUAGE Javascript"))
-        .execute();
-    OLegacyResultSet<ODocument> result =
-        db.command(new OCommandSQL("select testCreateFunction('world') as name")).execute();
-    Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(result.get(0).field("name"), "hello world");
+            "CREATE FUNCTION testCreateFunction \"return 'hello '+name;\" PARAMETERS [name] IDEMPOTENT true LANGUAGE Javascript")
+        .close();
+    OResultSet result = db.command("select testCreateFunction('world') as name");
+    Assert.assertEquals(result.next().getProperty("name"), "hello world");
+    Assert.assertFalse(result.hasNext());
   }
 }

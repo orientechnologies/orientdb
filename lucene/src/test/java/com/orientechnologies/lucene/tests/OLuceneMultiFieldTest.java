@@ -20,7 +20,6 @@ package com.orientechnologies.lucene.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -39,7 +38,7 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
   public void init() throws Exception {
     try (InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql")) {
       //noinspection deprecation
-      db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+      db.execute("sql", getScriptFromStream(stream)).close();
     }
 
     //noinspection resource

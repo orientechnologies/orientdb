@@ -19,7 +19,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
@@ -82,22 +81,14 @@ public class LiveQueryTest extends DocumentDBBaseTest implements OCommandOutputL
     int token = tokenDoc.field("token");
     Assert.assertNotNull(token);
 
-    database
-        .command(
-            new OCommandSQL("insert into " + className1 + " set name = 'foo', surname = 'bar'"))
-        .execute();
-    database
-        .command(
-            new OCommandSQL("insert into  " + className1 + " set name = 'foo', surname = 'baz'"))
-        .execute();
-    database.command(new OCommandSQL("insert into " + className2 + " set name = 'foo'"));
+    database.command("insert into " + className1 + " set name = 'foo', surname = 'bar'").close();
+    database.command("insert into  " + className1 + " set name = 'foo', surname = 'baz'").close();
+    /// TODO check
+    database.command("insert into " + className2 + " set name = 'foo'").close();
     latch.await(1, TimeUnit.MINUTES);
 
-    database.command(new OCommandSQL("live unsubscribe " + token)).execute();
-    database
-        .command(
-            new OCommandSQL("insert into " + className1 + " set name = 'foo', surname = 'bax'"))
-        .execute();
+    database.command("live unsubscribe " + token).close();
+    database.command("insert into " + className1 + " set name = 'foo', surname = 'bax'").close();
     Assert.assertEquals(listener.ops.size(), 2);
     for (ORecordOperation doc : listener.ops) {
       Assert.assertEquals(doc.type, ORecordOperation.CREATED);

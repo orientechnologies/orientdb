@@ -3,9 +3,10 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -22,194 +23,177 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
   }
 
   public void testDeleteFromTo() {
-    database.command(new OCommandSQL("CREATE CLASS testFromToOneE extends E")).execute();
-    database.command(new OCommandSQL("CREATE CLASS testFromToTwoE extends E")).execute();
-    database.command(new OCommandSQL("CREATE CLASS testFromToV extends V")).execute();
+    database.command("CREATE CLASS testFromToOneE extends E").close();
+    database.command("CREATE CLASS testFromToTwoE extends E").close();
+    database.command("CREATE CLASS testFromToV extends V").close();
 
-    database.command(new OCommandSQL("create vertex testFromToV set name = 'Luca'")).execute();
-    database.command(new OCommandSQL("create vertex testFromToV set name = 'Luca'")).execute();
+    database.command("create vertex testFromToV set name = 'Luca'").close();
+    database.command("create vertex testFromToV set name = 'Luca'").close();
 
     List<OIdentifiable> result =
         database.query(new OSQLSynchQuery<ODocument>("select from testFromToV"));
 
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE testFromToOneE from "
-                    + result.get(1).getIdentity()
-                    + " to "
-                    + result.get(0).getIdentity()))
-        .execute();
+            "CREATE EDGE testFromToOneE from "
+                + result.get(1).getIdentity()
+                + " to "
+                + result.get(0).getIdentity())
+        .close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE testFromToTwoE from "
-                    + result.get(1).getIdentity()
-                    + " to "
-                    + result.get(0).getIdentity()))
-        .execute();
+            "CREATE EDGE testFromToTwoE from "
+                + result.get(1).getIdentity()
+                + " to "
+                + result.get(0).getIdentity())
+        .close();
 
-    List<OIdentifiable> resultTwo =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select expand(outE()) from " + result.get(1).getIdentity()));
-    Assert.assertEquals(resultTwo.size(), 2);
+    OResultSet resultTwo =
+        database.query("select expand(outE()) from " + result.get(1).getIdentity());
+
+    Assert.assertEquals(resultTwo.stream().count(), 2);
 
     database
         .command(
-            new OCommandSQL(
-                "DELETE EDGE testFromToTwoE from "
-                    + result.get(1).getIdentity()
-                    + " to"
-                    + result.get(0).getIdentity()))
-        .execute();
+            "DELETE EDGE testFromToTwoE from "
+                + result.get(1).getIdentity()
+                + " to"
+                + result.get(0).getIdentity())
+        .close();
 
-    resultTwo =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select expand(outE()) from " + result.get(1).getIdentity()));
-    Assert.assertEquals(resultTwo.size(), 1);
+    resultTwo = database.query("select expand(outE()) from " + result.get(1).getIdentity());
 
-    database.command(new OCommandSQL("DELETE FROM testFromToOneE unsafe")).execute();
-    database.command(new OCommandSQL("DELETE FROM testFromToTwoE unsafe")).execute();
-    int deleted = database.command(new OCommandSQL("DELETE VERTEX testFromToV")).execute();
+    Assert.assertEquals(resultTwo.stream().count(), 1);
+
+    database.command("DELETE FROM testFromToOneE unsafe").close();
+    database.command("DELETE FROM testFromToTwoE unsafe").close();
+    database.command("DELETE VERTEX testFromToV").close();
   }
 
   public void testDeleteFrom() {
-    database.command(new OCommandSQL("CREATE CLASS testFromOneE extends E")).execute();
-    database.command(new OCommandSQL("CREATE CLASS testFromTwoE extends E")).execute();
-    database.command(new OCommandSQL("CREATE CLASS testFromV extends V")).execute();
+    database.command("CREATE CLASS testFromOneE extends E").close();
+    database.command("CREATE CLASS testFromTwoE extends E").close();
+    database.command("CREATE CLASS testFromV extends V").close();
 
-    database.command(new OCommandSQL("create vertex testFromV set name = 'Luca'")).execute();
-    database.command(new OCommandSQL("create vertex testFromV set name = 'Luca'")).execute();
+    database.command("create vertex testFromV set name = 'Luca'").close();
+    database.command("create vertex testFromV set name = 'Luca'").close();
 
     List<OIdentifiable> result =
         database.query(new OSQLSynchQuery<ODocument>("select from testFromV"));
 
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE testFromOneE from "
-                    + result.get(1).getIdentity()
-                    + " to "
-                    + result.get(0).getIdentity()))
-        .execute();
+            "CREATE EDGE testFromOneE from "
+                + result.get(1).getIdentity()
+                + " to "
+                + result.get(0).getIdentity())
+        .close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE testFromTwoE from "
-                    + result.get(1).getIdentity()
-                    + " to "
-                    + result.get(0).getIdentity()))
-        .execute();
+            "CREATE EDGE testFromTwoE from "
+                + result.get(1).getIdentity()
+                + " to "
+                + result.get(0).getIdentity())
+        .close();
 
-    List<OIdentifiable> resultTwo =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select expand(outE()) from " + result.get(1).getIdentity()));
-    Assert.assertEquals(resultTwo.size(), 2);
+    OResultSet resultTwo =
+        database.query("select expand(outE()) from " + result.get(1).getIdentity());
 
-    database
-        .command(new OCommandSQL("DELETE EDGE testFromTwoE from " + result.get(1).getIdentity()))
-        .execute();
+    Assert.assertEquals(resultTwo.stream().count(), 2);
 
-    resultTwo =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select expand(outE()) from " + result.get(1).getIdentity()));
-    Assert.assertEquals(resultTwo.size(), 1);
+    try {
+      database.command("DELETE EDGE testFromTwoE from " + result.get(1).getIdentity()).close();
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
 
-    database.command(new OCommandSQL("DELETE FROM testFromOneE unsafe")).execute();
-    database.command(new OCommandSQL("DELETE FROM testFromTwoE unsafe")).execute();
-    int deleted = database.command(new OCommandSQL("DELETE VERTEX testFromV")).execute();
+    resultTwo = database.query("select expand(outE()) from " + result.get(1).getIdentity());
+
+    Assert.assertEquals(resultTwo.stream().count(), 1);
+
+    database.command("DELETE FROM testFromOneE unsafe").close();
+    database.command("DELETE FROM testFromTwoE unsafe").close();
+    database.command("DELETE VERTEX testFromV").close();
   }
 
   public void testDeleteTo() {
-    database.command(new OCommandSQL("CREATE CLASS testToOneE extends E")).execute();
-    database.command(new OCommandSQL("CREATE CLASS testToTwoE extends E")).execute();
-    database.command(new OCommandSQL("CREATE CLASS testToV extends V")).execute();
+    database.command("CREATE CLASS testToOneE extends E").close();
+    database.command("CREATE CLASS testToTwoE extends E").close();
+    database.command("CREATE CLASS testToV extends V").close();
 
-    database.command(new OCommandSQL("create vertex testToV set name = 'Luca'")).execute();
-    database.command(new OCommandSQL("create vertex testToV set name = 'Luca'")).execute();
+    database.command("create vertex testToV set name = 'Luca'").close();
+    database.command("create vertex testToV set name = 'Luca'").close();
 
     List<OIdentifiable> result =
         database.query(new OSQLSynchQuery<ODocument>("select from testToV"));
 
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE testToOneE from "
-                    + result.get(1).getIdentity()
-                    + " to "
-                    + result.get(0).getIdentity()))
-        .execute();
+            "CREATE EDGE testToOneE from "
+                + result.get(1).getIdentity()
+                + " to "
+                + result.get(0).getIdentity())
+        .close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE EDGE testToTwoE from "
-                    + result.get(1).getIdentity()
-                    + " to "
-                    + result.get(0).getIdentity()))
-        .execute();
+            "CREATE EDGE testToTwoE from "
+                + result.get(1).getIdentity()
+                + " to "
+                + result.get(0).getIdentity())
+        .close();
 
-    List<OIdentifiable> resultTwo =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select expand(outE()) from " + result.get(1).getIdentity()));
-    Assert.assertEquals(resultTwo.size(), 2);
+    OResultSet resultTwo =
+        database.query("select expand(outE()) from " + result.get(1).getIdentity());
 
-    database
-        .command(new OCommandSQL("DELETE EDGE testToTwoE to " + result.get(0).getIdentity()))
-        .execute();
+    Assert.assertEquals(resultTwo.stream().count(), 2);
 
-    resultTwo =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select expand(outE()) from " + result.get(1).getIdentity()));
-    Assert.assertEquals(resultTwo.size(), 1);
+    database.command("DELETE EDGE testToTwoE to " + result.get(0).getIdentity()).close();
 
-    database.command(new OCommandSQL("DELETE FROM testToOneE unsafe")).execute();
-    database.command(new OCommandSQL("DELETE FROM testToTwoE unsafe")).execute();
-    int deleted = database.command(new OCommandSQL("DELETE VERTEX testToV")).execute();
+    resultTwo = database.query("select expand(outE()) from " + result.get(1).getIdentity());
+
+    Assert.assertEquals(resultTwo.stream().count(), 1);
+
+    database.command("DELETE FROM testToOneE unsafe").close();
+    database.command("DELETE FROM testToTwoE unsafe").close();
+    database.command("DELETE VERTEX testToV").close();
   }
 
   public void testDropClassVandEwithUnsafe() {
-    database.command(new OCommandSQL("CREATE CLASS SuperE extends E")).execute();
-    database.command(new OCommandSQL("CREATE CLASS SuperV extends V")).execute();
+    database.command("CREATE CLASS SuperE extends E").close();
+    database.command("CREATE CLASS SuperV extends V").close();
 
     OIdentifiable v1 =
-        database.command(new OCommandSQL("create vertex SuperV set name = 'Luca'")).execute();
+        database.command("create vertex SuperV set name = 'Luca'").next().getIdentity().get();
     OIdentifiable v2 =
-        database.command(new OCommandSQL("create vertex SuperV set name = 'Mark'")).execute();
+        database.command("create vertex SuperV set name = 'Mark'").next().getIdentity().get();
     database
-        .command(
-            new OCommandSQL(
-                "CREATE EDGE SuperE from " + v1.getIdentity() + " to " + v2.getIdentity()))
-        .execute();
+        .command("CREATE EDGE SuperE from " + v1.getIdentity() + " to " + v2.getIdentity())
+        .close();
 
     try {
-      database.command(new OCommandSQL("DROP CLASS SuperV")).execute();
+      database.command("DROP CLASS SuperV").close();
       Assert.assertTrue(false);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(true);
     }
 
     try {
-      database.command(new OCommandSQL("DROP CLASS SuperE")).execute();
+      database.command("DROP CLASS SuperE").close();
       Assert.assertTrue(false);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(true);
     }
 
     try {
-      database.command(new OCommandSQL("DROP CLASS SuperV unsafe")).execute();
+      database.command("DROP CLASS SuperV unsafe").close();
       Assert.assertTrue(true);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(false);
     }
 
     try {
-      database.command(new OCommandSQL("DROP CLASS SuperE UNSAFE")).execute();
+      database.command("DROP CLASS SuperE UNSAFE").close();
       Assert.assertTrue(true);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(false);
@@ -217,44 +201,42 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
   }
 
   public void testDropClassVandEwithDeleteElements() {
-    database.command(new OCommandSQL("CREATE CLASS SuperE extends E")).execute();
-    database.command(new OCommandSQL("CREATE CLASS SuperV extends V")).execute();
+    database.command("CREATE CLASS SuperE extends E").close();
+    database.command("CREATE CLASS SuperV extends V").close();
 
     OIdentifiable v1 =
-        database.command(new OCommandSQL("create vertex SuperV set name = 'Luca'")).execute();
+        database.command("create vertex SuperV set name = 'Luca'").next().getIdentity().get();
     OIdentifiable v2 =
-        database.command(new OCommandSQL("create vertex SuperV set name = 'Mark'")).execute();
+        database.command("create vertex SuperV set name = 'Mark'").next().getIdentity().get();
     database
-        .command(
-            new OCommandSQL(
-                "CREATE EDGE SuperE from " + v1.getIdentity() + " to " + v2.getIdentity()))
-        .execute();
+        .command("CREATE EDGE SuperE from " + v1.getIdentity() + " to " + v2.getIdentity())
+        .close();
 
     try {
-      database.command(new OCommandSQL("DROP CLASS SuperV")).execute();
+      database.command("DROP CLASS SuperV").close();
       Assert.assertTrue(false);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(true);
     }
 
     try {
-      database.command(new OCommandSQL("DROP CLASS SuperE")).execute();
+      database.command("DROP CLASS SuperE").close();
       Assert.assertTrue(false);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(true);
     }
 
-    int deleted = database.command(new OCommandSQL("DELETE VERTEX SuperV")).execute();
+    database.command("DELETE VERTEX SuperV").close();
 
     try {
-      database.command(new OCommandSQL("DROP CLASS SuperV")).execute();
+      database.command("DROP CLASS SuperV").close();
       Assert.assertTrue(true);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(false);
     }
 
     try {
-      database.command(new OCommandSQL("DROP CLASS SuperE")).execute();
+      database.command("DROP CLASS SuperE").close();
       Assert.assertTrue(true);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(false);
@@ -262,60 +244,53 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
   }
 
   public void testFromInString() {
-    database.command(new OCommandSQL("CREATE CLASS FromInStringE extends E")).execute();
-    database.command(new OCommandSQL("CREATE CLASS FromInStringV extends V")).execute();
+    database.command("CREATE CLASS FromInStringE extends E").close();
+    database.command("CREATE CLASS FromInStringV extends V").close();
 
     OIdentifiable v1 =
         database
-            .command(new OCommandSQL("create vertex FromInStringV set name = ' from '"))
-            .execute();
+            .command("create vertex FromInStringV set name = ' from '")
+            .next()
+            .getIdentity()
+            .get();
     OIdentifiable v2 =
         database
-            .command(new OCommandSQL("create vertex FromInStringV set name = ' FROM '"))
-            .execute();
+            .command("create vertex FromInStringV set name = ' FROM '")
+            .next()
+            .getIdentity()
+            .get();
     OIdentifiable v3 =
         database
-            .command(new OCommandSQL("create vertex FromInStringV set name = ' TO '"))
-            .execute();
+            .command("create vertex FromInStringV set name = ' TO '")
+            .next()
+            .getIdentity()
+            .get();
 
     database
-        .command(
-            new OCommandSQL(
-                "create edge FromInStringE from " + v1.getIdentity() + " to " + v2.getIdentity()))
-        .execute();
+        .command("create edge FromInStringE from " + v1.getIdentity() + " to " + v2.getIdentity())
+        .close();
     database
-        .command(
-            new OCommandSQL(
-                "create edge FromInStringE from " + v1.getIdentity() + " to " + v3.getIdentity()))
-        .execute();
+        .command("create edge FromInStringE from " + v1.getIdentity() + " to " + v3.getIdentity())
+        .close();
 
-    List<OIdentifiable> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "SELECT expand(out()[name = ' FROM ']) FROM FromInStringV"));
-    Assert.assertEquals(result.size(), 1);
+    OResultSet result = database.query("SELECT expand(out()[name = ' FROM ']) FROM FromInStringV");
+    Assert.assertEquals(result.stream().count(), 1);
 
-    result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "SELECT expand(in()[name = ' from ']) FROM FromInStringV"));
-    Assert.assertEquals(result.size(), 2);
+    result = database.query("SELECT expand(in()[name = ' from ']) FROM FromInStringV");
+    Assert.assertEquals(result.stream().count(), 2);
 
-    result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "SELECT expand(out()[name = ' TO ']) FROM FromInStringV"));
-    Assert.assertEquals(result.size(), 1);
+    result = database.query("SELECT expand(out()[name = ' TO ']) FROM FromInStringV");
+    Assert.assertEquals(result.stream().count(), 1);
   }
 
   public void testDeleteVertexWithReturn() {
     OIdentifiable v1 =
-        database.command(new OCommandSQL("create vertex V set returning = true")).execute();
+        database.command("create vertex V set returning = true").next().getIdentity().get();
 
     List<OIdentifiable> v2s =
-        database
-            .command(new OCommandSQL("delete vertex V return before where returning = true"))
-            .execute();
+        database.command("delete vertex V return before where returning = true").stream()
+            .map((r) -> r.getIdentity().get())
+            .collect(Collectors.toList());
 
     Assert.assertEquals(v2s.size(), 1);
     Assert.assertTrue(v2s.contains(v1));

@@ -3,16 +3,15 @@ package com.orientechnologies.orient.core.metadata.schema;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.BaseMemoryDatabase;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Test;
 
 public class CreateClassMultipleClusterTest extends BaseMemoryDatabase {
 
   @Test
   public void testCreateClassSQL() {
-    db.command(new OCommandSQL("drop class V")).execute();
-    db.command(new OCommandSQL("create class V clusters 16")).execute();
-    db.command(new OCommandSQL("create class X extends V clusters 32")).execute();
+    db.command("drop class V").close();
+    db.command("create class V clusters 16").close();
+    db.command("create class X extends V clusters 32").close();
 
     final OClass clazzV = db.getMetadata().getSchema().getClass("V");
     assertEquals(16, clazzV.getClusterIds().length);
@@ -25,8 +24,8 @@ public class CreateClassMultipleClusterTest extends BaseMemoryDatabase {
   public void testCreateClassSQLSpecifiedClusters() {
     int s = db.addCluster("second");
     int t = db.addCluster("third");
-    db.command(new OCommandSQL("drop class V")).execute();
-    db.command(new OCommandSQL("create class V cluster " + s + "," + t)).execute();
+    db.command("drop class V").close();
+    db.command("create class V cluster " + s + "," + t).close();
 
     final OClass clazzV = db.getMetadata().getSchema().getClass("V");
     assertEquals(2, clazzV.getClusterIds().length);

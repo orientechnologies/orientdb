@@ -9,8 +9,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.UUID;
 import org.junit.Test;
 
@@ -35,14 +34,13 @@ public class CheckHookCallCountTest extends BaseMemoryDatabase {
     first.field(FIELD_STATUS, STATUS);
     db.save(first);
 
-    db.query(
-        new OSQLSynchQuery<ODocument>(
-            "SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_STATUS + " = '" + STATUS + "'"));
+    db.query("SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_STATUS + " = '" + STATUS + "'")
+        .stream()
+        .count();
     //      assertEquals(hook.readCount, 1); //TODO
     hook.readCount = 0;
-    db.query(
-        new OSQLSynchQuery<ODocument>(
-            "SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_ID + " = '" + id + "'"));
+    db.query("SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_ID + " = '" + id + "'").stream()
+        .count();
     //      assertEquals(hook.readCount, 1); //TODO
   }
 
@@ -76,9 +74,10 @@ public class CheckHookCallCountTest extends BaseMemoryDatabase {
           @Override
           public void onRecordAfterRead(ODocument iDocument) {
             String script = "select sum(a, b) as value from " + iDocument.getIdentity();
-            List<ODocument> calculated = database.query(new OSQLSynchQuery<Object>(script));
-            if (calculated != null && !calculated.isEmpty()) {
-              iDocument.field("c", calculated.get(0).<Object>field("value"));
+            try (OResultSet calculated = database.query(script)) {
+              if (calculated.hasNext()) {
+                iDocument.field("c", calculated.next().<Object>getProperty("value"));
+              }
             }
           }
 

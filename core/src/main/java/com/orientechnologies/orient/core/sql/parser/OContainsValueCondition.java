@@ -6,10 +6,14 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
+import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OContainsValueCondition extends OBooleanExpression {
@@ -294,6 +298,18 @@ public class OContainsValueCondition extends OBooleanExpression {
 
   public OContainsValueOperator getOperator() {
     return operator;
+  }
+
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    Optional<OPath> path = left.getPath();
+    if (path.isPresent()) {
+      if (expression != null && expression.isEarlyCalculated(ctx)) {
+        Object value = expression.execute((OResult) null, ctx);
+        return info.findByValueIndex(path.get(), value, ctx);
+      }
+    }
+
+    return Optional.empty();
   }
 
   public boolean isIndexAware(OIndexSearchInfo info) {

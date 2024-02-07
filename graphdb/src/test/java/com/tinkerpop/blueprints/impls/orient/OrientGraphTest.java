@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.tinkerpop.blueprints.EdgeTestSuite;
 import com.tinkerpop.blueprints.Graph;
@@ -160,7 +161,7 @@ public abstract class OrientGraphTest extends GraphTest {
     if (graph != null) {
       if (graph.isClosed()) currentGraphs.remove(url);
       else {
-        ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());
+        ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) graph.getRawGraph());
         return graph;
       }
     }

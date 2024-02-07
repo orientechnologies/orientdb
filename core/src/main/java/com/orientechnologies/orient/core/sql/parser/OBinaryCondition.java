@@ -12,6 +12,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
+import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -502,6 +505,25 @@ public class OBinaryCondition extends OBooleanExpression {
     base.right = right.copy();
 
     return result;
+  }
+
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    Optional<OPath> path = left.getPath();
+    if (path.isPresent()) {
+      OPath p = path.get();
+      if (right.isEarlyCalculated(ctx)) {
+        Object value = right.execute((OResult) null, ctx);
+        if (operator instanceof OEqualsCompareOperator) {
+          return info.findExactIndex(p, value, ctx);
+        } else if (operator instanceof OContainsKeyOperator) {
+          return info.findByKeyIndex(p, value, ctx);
+        } else if (operator.isRangeOperator()) {
+          return info.findAllowRangeIndex(p, operator.getOperation(), value, ctx);
+        }
+      }
+    }
+
+    return Optional.empty();
   }
 
   public boolean isIndexAware(OIndexSearchInfo info) {

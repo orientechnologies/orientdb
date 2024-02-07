@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -172,7 +171,7 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
       database.open("admin", "admin");
     }
 
-    database.command(new OCommandSQL("drop class sqlSelectIndexReuseTestClass")).execute();
+    database.command("drop class sqlSelectIndexReuseTestClass").close();
     database.getMetadata().getSchema().reload();
 
     database.close();

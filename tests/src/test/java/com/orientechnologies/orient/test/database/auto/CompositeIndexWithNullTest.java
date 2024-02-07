@@ -3,11 +3,12 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -50,12 +51,13 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     }
 
     String query = "select from compositeIndexNullPointQueryClass where prop1 = 1 and prop2 = 2";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OElement> result =
+        database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
     Assert.assertEquals(result.size(), 5);
     for (int k = 0; k < 5; k++) {
-      ODocument document = result.get(k);
-      Assert.assertEquals(document.<Object>field("prop1"), 1);
-      Assert.assertEquals(document.<Object>field("prop2"), 2);
+      OElement document = result.get(k);
+      Assert.assertEquals(document.<Object>getProperty("prop1"), 1);
+      Assert.assertEquals(document.<Object>getProperty("prop2"), 2);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -66,10 +68,10 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     query =
         "select from compositeIndexNullPointQueryClass where prop1 = 1 and prop2 = 2 and prop3 is null";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 2);
-    for (ODocument document : result) Assert.assertNull(document.field("prop3"));
+    for (OElement document : result) Assert.assertNull(document.getProperty("prop3"));
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(
@@ -111,12 +113,13 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     String query =
         "select from compositeIndexNullPointQueryInTxClass where prop1 = 1 and prop2 = 2";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OElement> result =
+        database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
     Assert.assertEquals(result.size(), 5);
     for (int k = 0; k < 5; k++) {
-      ODocument document = result.get(k);
-      Assert.assertEquals(document.<Object>field("prop1"), 1);
-      Assert.assertEquals(document.<Object>field("prop2"), 2);
+      OElement document = result.get(k);
+      Assert.assertEquals(document.<Object>getProperty("prop1"), 1);
+      Assert.assertEquals(document.<Object>getProperty("prop2"), 2);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -127,10 +130,10 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     query =
         "select from compositeIndexNullPointQueryInTxClass where prop1 = 1 and prop2 = 2 and prop3 is null";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 2);
-    for (ODocument document : result) Assert.assertNull(document.field("prop3"));
+    for (OElement document : result) Assert.assertNull(document.getProperty("prop3"));
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(
@@ -172,13 +175,14 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     String query =
         "select from compositeIndexNullPointQueryInMiddleTxClass where prop1 = 1 and prop2 = 2";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OElement> result =
+        database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
     Assert.assertEquals(result.size(), 5);
 
     for (int k = 0; k < 5; k++) {
-      ODocument document = result.get(k);
-      Assert.assertEquals(document.<Object>field("prop1"), 1);
-      Assert.assertEquals(document.<Object>field("prop2"), 2);
+      OElement document = result.get(k);
+      Assert.assertEquals(document.<Object>getProperty("prop1"), 1);
+      Assert.assertEquals(document.<Object>getProperty("prop2"), 2);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -189,10 +193,10 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     query =
         "select from compositeIndexNullPointQueryInMiddleTxClass where prop1 = 1 and prop2 = 2 and prop3 is null";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 2);
-    for (ODocument document : result) Assert.assertNull(document.field("prop3"));
+    for (OElement document : result) Assert.assertNull(document.getProperty("prop3"));
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(
@@ -232,13 +236,14 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     }
 
     String query = "select from compositeIndexNullRangeQueryClass where prop1 = 1 and prop2 > 2";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OElement> result =
+        database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 5);
     for (int k = 0; k < 5; k++) {
-      ODocument document = result.get(k);
-      Assert.assertEquals(document.<Object>field("prop1"), 1);
-      Assert.assertTrue(document.<Integer>field("prop2") > 2);
+      OElement document = result.get(k);
+      Assert.assertEquals(document.<Object>getProperty("prop1"), 1);
+      Assert.assertTrue(document.<Integer>getProperty("prop2") > 2);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -248,12 +253,12 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
             .contains("compositeIndexNullRangeQueryIndex"));
 
     query = "select from compositeIndexNullRangeQueryClass where prop1 > 0";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 10);
     for (int k = 0; k < 10; k++) {
-      ODocument document = result.get(k);
-      Assert.assertTrue(document.<Integer>field("prop1") > 0);
+      OElement document = result.get(k);
+      Assert.assertTrue(document.<Integer>getProperty("prop1") > 0);
     }
   }
 
@@ -290,13 +295,14 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     String query =
         "select from compositeIndexNullRangeQueryInMiddleTxClass where prop1 = 1 and prop2 > 2";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OElement> result =
+        database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 5);
     for (int k = 0; k < 5; k++) {
-      ODocument document = result.get(k);
-      Assert.assertEquals(document.<Object>field("prop1"), 1);
-      Assert.assertTrue(document.<Integer>field("prop2") > 2);
+      OElement document = result.get(k);
+      Assert.assertEquals(document.<Object>getProperty("prop1"), 1);
+      Assert.assertTrue(document.<Integer>getProperty("prop2") > 2);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -306,12 +312,12 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
             .contains("compositeIndexNullRangeQueryInMiddleTxIndex"));
 
     query = "select from compositeIndexNullRangeQueryInMiddleTxClass where prop1 > 0";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 10);
     for (int k = 0; k < 10; k++) {
-      ODocument document = result.get(k);
-      Assert.assertTrue(document.<Integer>field("prop1") > 0);
+      OElement document = result.get(k);
+      Assert.assertTrue(document.<Integer>getProperty("prop1") > 0);
     }
 
     database.commit();
@@ -347,11 +353,12 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     }
 
     String query = "select from compositeIndexNullPointQueryNullInTheMiddleClass where prop1 = 1";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OElement> result =
+        database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
     Assert.assertEquals(result.size(), 10);
     for (int k = 0; k < 10; k++) {
-      ODocument document = result.get(k);
-      Assert.assertEquals(document.<Object>field("prop1"), 1);
+      OElement document = result.get(k);
+      Assert.assertEquals(document.<Object>getProperty("prop1"), 1);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -362,12 +369,12 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     query =
         "select from compositeIndexNullPointQueryNullInTheMiddleClass where prop1 = 1 and prop2 is null";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 5);
-    for (ODocument document : result) {
-      Assert.assertEquals(document.<Object>field("prop1"), 1);
-      Assert.assertNull(document.field("prop2"));
+    for (OElement document : result) {
+      Assert.assertEquals(document.<Object>getProperty("prop1"), 1);
+      Assert.assertNull(document.getProperty("prop2"));
     }
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -378,7 +385,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     query =
         "select from compositeIndexNullPointQueryNullInTheMiddleClass where prop1 = 1 and prop2 is null and prop3 = 13";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 1);
 
@@ -425,11 +432,12 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     String query =
         "select from compositeIndexNullPointQueryNullInTheMiddleInMiddleTxClass where prop1 = 1";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OElement> result =
+        database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
     Assert.assertEquals(result.size(), 10);
     for (int k = 0; k < 10; k++) {
-      ODocument document = result.get(k);
-      Assert.assertEquals(document.<Object>field("prop1"), 1);
+      OElement document = result.get(k);
+      Assert.assertEquals(document.<Object>getProperty("prop1"), 1);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -440,12 +448,12 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     query =
         "select from compositeIndexNullPointQueryNullInTheMiddleInMiddleTxClass where prop1 = 1 and prop2 is null";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 5);
-    for (ODocument document : result) {
-      Assert.assertEquals(document.<Object>field("prop1"), 1);
-      Assert.assertNull(document.field("prop2"));
+    for (OElement document : result) {
+      Assert.assertEquals(document.<Object>getProperty("prop1"), 1);
+      Assert.assertNull(document.getProperty("prop2"));
     }
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -456,7 +464,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     query =
         "select from compositeIndexNullPointQueryNullInTheMiddleInMiddleTxClass where prop1 = 1 and prop2 is null and prop3 = 13";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 1);
 
@@ -499,11 +507,12 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     final String query =
         "select from compositeIndexNullRangeQueryNullInTheMiddleClass where prop1 > 0";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OElement> result =
+        database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
     Assert.assertEquals(result.size(), 10);
     for (int k = 0; k < 10; k++) {
-      ODocument document = result.get(k);
-      Assert.assertEquals(document.<Object>field("prop1"), 1);
+      OElement document = result.get(k);
+      Assert.assertEquals(document.<Object>getProperty("prop1"), 1);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -546,11 +555,12 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     final String query =
         "select from compositeIndexNullRangeQueryNullInTheMiddleInMiddleTxClass where prop1 > 0";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OElement> result =
+        database.query(query).stream().map((r) -> r.toElement()).collect(Collectors.toList());
     Assert.assertEquals(result.size(), 10);
     for (int k = 0; k < 10; k++) {
-      ODocument document = result.get(k);
-      Assert.assertEquals(document.<Object>field("prop1"), 1);
+      OElement document = result.get(k);
+      Assert.assertEquals(document.<Object>getProperty("prop1"), 1);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();

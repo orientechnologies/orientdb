@@ -17,10 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -36,27 +33,21 @@ public class SQLDeleteTest extends DocumentDBBaseTest {
 
   @Test
   public void deleteWithWhereOperator() {
-    database
-        .command(new OCommandSQL("insert into Profile (sex, salary) values ('female', 2100)"))
-        .execute();
+    database.command("insert into Profile (sex, salary) values ('female', 2100)").close();
 
     final Long total = database.countClass("Profile");
 
-    final List<ODocument> resultset =
-        database.query(
-            new OSQLSynchQuery<Object>(
-                "select from Profile where sex = 'female' and salary = 2100"));
+    OResultSet resultset =
+        database.query("select from Profile where sex = 'female' and salary = 2100");
+    long queryCount = resultset.stream().count();
 
-    final Number records =
-        (Number)
-            database
-                .command(
-                    new OCommandSQL("delete from Profile where sex = 'female' and salary = 2100"))
-                .execute();
+    OResultSet result =
+        database.command("delete from Profile where sex = 'female' and salary = 2100");
+    long count = result.next().getProperty("count");
 
-    Assert.assertEquals(records.intValue(), resultset.size());
+    Assert.assertEquals(count, queryCount);
 
-    Assert.assertEquals(database.countClass("Profile"), total - records.intValue());
+    Assert.assertEquals(database.countClass("Profile"), total - count);
   }
 
   @Test
@@ -66,21 +57,18 @@ public class SQLDeleteTest extends DocumentDBBaseTest {
 
     final Long total = db.countClass("Profile");
 
-    final List<ODocument> resultset =
-        db.query(
-            new OSQLSynchQuery<Object>(
-                "select from Profile where sex = 'male' and salary > 120 and salary <= 133"));
+    OResultSet resultset =
+        db.query("select from Profile where sex = 'male' and salary > 120 and salary <= 133");
 
-    final Number records =
-        (Number)
-            db.command(
-                    new OCommandSQL(
-                        "delete from Profile where sex = 'male' and salary > 120 and salary <= 133"))
-                .execute();
+    long queryCount = resultset.stream().count();
 
-    Assert.assertEquals(records.intValue(), resultset.size());
+    OResultSet records =
+        db.command("delete from Profile where sex = 'male' and salary > 120 and salary <= 133");
 
-    Assert.assertEquals(db.countClass("Profile"), total - records.intValue());
+    long count = records.next().getProperty("count");
+    Assert.assertEquals(count, queryCount);
+
+    Assert.assertEquals(db.countClass("Profile"), total - count);
 
     db.close();
   }
