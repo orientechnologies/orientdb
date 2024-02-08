@@ -7,7 +7,6 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
 import java.io.BufferedInputStream;
 import java.net.URL;
-import org.apache.http.HttpResponse;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -54,8 +53,8 @@ public class HttpGetStaticContentTest extends BaseHttpTest {
 
   @Test
   public void testIndexHTML() throws Exception {
-    HttpResponse response = get("fake/index.htm").getResponse();
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    var response = get("fake/index.htm").getResponse();
+    Assert.assertEquals(200, response.getCode());
 
     String expected =
         OIOUtils.readStreamAsString(

@@ -5,30 +5,24 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.server.OServer;
 import java.io.File;
 import java.io.IOException;
-import org.apache.http.Consts;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.AuthCache;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.entity.AbstractHttpEntity;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPatch;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.io.entity.AbstractHttpEntity;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 
 /**
  * Base test class for HTTP protocol.
@@ -36,6 +30,7 @@ import org.apache.http.impl.client.HttpClients;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public abstract class BaseHttpTest {
+
   protected String serverDirectory;
 
   private static OServer server;
@@ -51,9 +46,11 @@ public abstract class BaseHttpTest {
   private String databaseName;
   private Boolean keepAlive = null;
 
-  private HttpRequestBase request;
+  private ClassicHttpRequest request;
   private AbstractHttpEntity payload;
-  private HttpResponse response;
+  private ClassicHttpResponse response;
+
+  private CloseableHttpClient client;
   private int retry = 1;
 
   public enum CONTENT {
@@ -65,8 +62,7 @@ public abstract class BaseHttpTest {
     payload =
         new StringEntity(
             content,
-            ContentType.create(
-                contentType == CONTENT.JSON ? "application/json" : "plain/text", Consts.UTF_8));
+            ContentType.create(contentType == CONTENT.JSON ? "application/json" : "plain/text"));
     return this;
   }
 
@@ -82,6 +78,10 @@ public abstract class BaseHttpTest {
   }
 
   protected void stopServer() throws Exception {
+    if (client != null) {
+      client.close();
+    }
+
     if (server != null) {
       server.shutdown();
       server = null;
@@ -100,35 +100,31 @@ public abstract class BaseHttpTest {
   }
 
   protected BaseHttpTest exec() throws IOException {
-    final HttpHost targetHost = new HttpHost(getHost(), getPort(), getProtocol());
+    final HttpHost targetHost = new HttpHost(getProtocol(), getHost(), getPort());
 
-    CredentialsProvider credsProvider = new BasicCredentialsProvider();
+    var credsProvider = new BasicCredentialsProvider();
     credsProvider.setCredentials(
         new AuthScope(targetHost),
-        new UsernamePasswordCredentials(getUserName(), getUserPassword()));
+        new UsernamePasswordCredentials(getUserName(), getUserPassword().toCharArray()));
 
-    // Create AuthCache instance
-    AuthCache authCache = new BasicAuthCache();
-    // Generate BASIC scheme object and add it to the local auth cache
-    BasicScheme basicAuth = new BasicScheme();
-    authCache.put(targetHost, basicAuth);
+    final BasicCredentialsProvider provider = new BasicCredentialsProvider();
+    AuthScope authScope = new AuthScope(targetHost);
+    provider.setCredentials(
+        authScope, new UsernamePasswordCredentials(getUserName(), getUserPassword().toCharArray()));
 
-    // Add AuthCache to the execution context
-    HttpClientContext context = HttpClientContext.create();
-    context.setCredentialsProvider(credsProvider);
-    context.setAuthCache(authCache);
+    if (keepAlive != null) {
+      request.addHeader("Connection", keepAlive ? "Keep-Alive" : "Close");
+    }
 
-    if (keepAlive != null) request.addHeader("Connection", keepAlive ? "Keep-Alive" : "Close");
+    if (payload != null && request instanceof HttpUriRequestBase httpUriRequestBase) {
+      httpUriRequestBase.setEntity(payload);
+    }
 
-    if (payload != null && request instanceof HttpEntityEnclosingRequestBase)
-      ((HttpEntityEnclosingRequestBase) request).setEntity(payload);
-
-    final CloseableHttpClient httpClient = HttpClients.createDefault();
-
-    // DefaultHttpMethodRetryHandler retryhandler = new DefaultHttpMethodRetryHandler(retry, false);
+    client = HttpClientBuilder.create().setDefaultCredentialsProvider(provider).build();
+    // DefaultHttpMethodRetryHandler retryhandler = new DefaultHttpMethodRetryHandler(retry,
+    // false);
     // context.setAttribute(HttpMethodParams.RETRY_HANDLER, retryhandler);
-
-    response = httpClient.execute(targetHost, request, context);
+    response = client.execute(request);
 
     return this;
   }
@@ -171,8 +167,10 @@ public abstract class BaseHttpTest {
     return this;
   }
 
-  protected HttpResponse getResponse() throws IOException {
-    if (response == null) exec();
+  protected ClassicHttpResponse getResponse() throws IOException {
+    if (response == null) {
+      exec();
+    }
     return response;
   }
 

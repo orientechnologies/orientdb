@@ -29,8 +29,7 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
             .setUserName("root")
             .setUserPassword("root")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
 
     onAfterDatabaseCreated();
@@ -43,8 +42,7 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
             .setUserName("root")
             .setUserPassword("root")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         204);
     super.stopServer();
 

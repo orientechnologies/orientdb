@@ -14,24 +14,14 @@ public class HttpListDatabasesTest extends BaseHttpTest {
   @Test
   public void testListDatabasesRootUser() throws Exception {
     Assert.assertEquals(
-        setUserName("root")
-            .setUserPassword("root")
-            .get("listDatabases")
-            .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+        setUserName("root").setUserPassword("root").get("listDatabases").getResponse().getCode(),
         200);
   }
 
   @Test
   public void testListDatabasesGuestUser() throws Exception {
     Assert.assertEquals(
-        setUserName("guest")
-            .setUserPassword("guest")
-            .get("listDatabases")
-            .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+        setUserName("guest").setUserPassword("guest").get("listDatabases").getResponse().getCode(),
         200);
   }
 

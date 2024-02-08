@@ -20,8 +20,7 @@ public class HttpCommandTest extends BaseHttpDatabaseTest {
             .setUserName("root")
             .setUserPassword("root")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
   }
 
@@ -33,8 +32,7 @@ public class HttpCommandTest extends BaseHttpDatabaseTest {
             .setUserName("admin")
             .setUserPassword("admin")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
   }
 
@@ -49,8 +47,7 @@ public class HttpCommandTest extends BaseHttpDatabaseTest {
             .setUserName("admin")
             .setUserPassword("admin")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
 
     final InputStream response = getResponse().getEntity().getContent();
@@ -73,8 +70,7 @@ public class HttpCommandTest extends BaseHttpDatabaseTest {
             .setUserName("admin")
             .setUserPassword("admin")
             .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+            .getCode(),
         200);
 
     final InputStream response = getResponse().getEntity().getContent();

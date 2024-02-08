@@ -15,8 +15,7 @@ import org.junit.Test;
 public class HttpConnectionTest extends BaseHttpDatabaseTest {
   @Test
   public void testConnect() throws Exception {
-    Assert.assertEquals(
-        get("connect/" + getDatabaseName()).getResponse().getStatusLine().getStatusCode(), 204);
+    Assert.assertEquals(get("connect/" + getDatabaseName()).getResponse().getCode(), 204);
   }
 
   public void testTooManyConnect() throws Exception {
@@ -37,11 +36,7 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
       for (int i = 0; i < TOTAL; ++i) {
         try {
           final int response =
-              get("connect/" + getDatabaseName())
-                  .setRetry(0)
-                  .getResponse()
-                  .getStatusLine()
-                  .getStatusCode();
+              get("connect/" + getDatabaseName()).setRetry(0).getResponse().getCode();
           Assert.assertEquals(response, 204);
           good++;
         } catch (IOException e) {
@@ -79,12 +74,7 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
     int TOTAL = max * 3;
 
     for (int i = 0; i < TOTAL; ++i) {
-      final int response =
-          get("connect/" + getDatabaseName())
-              .setRetry(0)
-              .getResponse()
-              .getStatusLine()
-              .getStatusCode();
+      final int response = get("connect/" + getDatabaseName()).setRetry(0).getResponse().getCode();
       Assert.assertEquals(response, 204);
 
       if (i % 100 == 0) System.out.printf("\nConnections " + i);
@@ -100,8 +90,7 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
               .setUserName("root")
               .setUserPassword("root")
               .getResponse()
-              .getStatusLine()
-              .getStatusCode(),
+              .getCode(),
           200);
 
       final ODocument serverStatus =
