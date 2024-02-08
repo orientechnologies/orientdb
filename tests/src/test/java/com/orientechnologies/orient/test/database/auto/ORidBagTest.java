@@ -16,7 +16,6 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -264,9 +263,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     ORID rid = doc.getIdentity();
 
-    OStorage storage = database.getStorage();
     database.close();
-    storage.close(true, false);
 
     database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
@@ -337,10 +334,8 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     ORID rid = doc.getIdentity();
 
-    OStorage storage = database.getStorage();
     database.getSharedContext().close();
     database.close();
-    storage.close(true, false);
 
     database.activateOnCurrentThread();
     database.resetInitialization();
@@ -456,9 +451,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     ORID rid = doc.getIdentity();
 
-    OStorage storage = database.getStorage();
     database.close();
-    storage.close(true, false);
 
     database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
@@ -614,9 +607,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     ORID rid = doc.getIdentity();
 
-    OStorage storage = database.getStorage();
     database.close();
-    storage.close(true, false);
 
     database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
@@ -736,10 +727,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     ORID rid = doc.getIdentity();
-
-    OStorage storage = database.getStorage();
     database.close();
-    storage.close(true, false);
 
     database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
@@ -921,9 +909,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     doc.save(database.getClusterNameById(database.getDefaultClusterId()));
     final ORID id = doc.getIdentity();
 
-    OStorage storage = database.getStorage();
     database.close();
-    storage.close(true, false);
 
     database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");

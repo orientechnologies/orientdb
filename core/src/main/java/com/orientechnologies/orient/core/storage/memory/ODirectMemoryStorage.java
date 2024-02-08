@@ -81,7 +81,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
     try {
       return readCache != null && writeCache.exists("default" + OPaginatedCluster.DEF_EXTENSION);
     } catch (final RuntimeException e) {
-      throw logAndPrepareForRethrow(e, false);
+      throw logAndPrepareForRethrow(e);
     } catch (final Error e) {
       throw logAndPrepareForRethrow(e, false);
     } catch (final Throwable t) {

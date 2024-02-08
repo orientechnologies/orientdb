@@ -662,7 +662,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
         "Cannot check the existence of a database in a remote server. Please use the console or the OServerAdmin class.");
   }
 
-  public void close(final boolean iForce, boolean onDelete) {
+  public void close(final boolean iForce) {
     if (status == STATUS.CLOSED) return;
 
     final OStorageRemoteSession session = getCurrentSession();
@@ -697,7 +697,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       if (status == STATUS.CLOSED) return;
 
       status = STATUS.CLOSING;
-      close(true, false);
+      close(true);
     } finally {
       stateLock.writeLock().unlock();
     }
@@ -2466,7 +2466,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   }
 
   public void close() {
-    close(false, false);
+    close(false);
   }
 
   public boolean dropCluster(final String iClusterName) {

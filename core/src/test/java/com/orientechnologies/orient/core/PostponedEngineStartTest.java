@@ -282,7 +282,7 @@ public class PostponedEngineStartTest {
         public void close() {}
 
         @Override
-        public void close(boolean iForce, boolean onDelete) {}
+        public void close(boolean iForce) {}
 
         @Override
         public boolean isClosed() {
