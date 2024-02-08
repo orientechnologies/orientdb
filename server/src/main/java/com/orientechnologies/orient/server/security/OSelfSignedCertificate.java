@@ -200,9 +200,8 @@ public class OSelfSignedCertificate {
       var certHolder =
           certBuilder.build(
               new JcaContentSignerBuilder("SHA256WithRSA")
-                  .setProvider("BC")
                   .build(keypair.getPrivate()));
-      return new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
+      return new JcaX509CertificateConverter().getCertificate(certHolder);
     } catch (OperatorCreationException e) {
       throw new RuntimeException(e);
     }
