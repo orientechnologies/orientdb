@@ -360,7 +360,8 @@ public class FreezeMultiThreadingTestNonTX {
         int number = deleteCounter.getAndIncrement();
         while (number < DOCUMENT_COUNT) {
           // wait while necessary document will be created
-          while (number > createCounter.get()) ;
+          while (number > createCounter.get())
+            ;
           try {
 
             List<ODocument> execute;
@@ -424,7 +425,8 @@ public class FreezeMultiThreadingTestNonTX {
         int number = transactionalDeleteCounter.getAndIncrement();
         while (number < TRANSACTIONAL_DOCUMENT_COUNT) {
           // wait while necessary document will be created
-          while (number > transactionalCreateCounter.get()) ;
+          while (number > transactionalCreateCounter.get())
+            ;
           try {
 
             List<ODocument> execute;

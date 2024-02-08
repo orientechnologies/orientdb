@@ -395,7 +395,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
 
       stateBuffer.clear();
 
-      while (lruList.poll() != null) ;
+      while (lruList.poll() != null)
+        ;
     } finally {
       lruLock.unlock();
     }
@@ -788,7 +789,9 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
       OLogManager.instance()
           .debug(
               this,
-              "Reached maximum of opened files %d (max=%d), closed %d files. Consider to raise this limit by increasing the global setting '%s' and the OS limit on opened files per processor",
+              "Reached maximum of opened files %d (max=%d), closed %d files. Consider to raise this"
+                  + " limit by increasing the global setting '%s' and the OS limit on opened files"
+                  + " per processor",
               initialSize,
               openLimit,
               closedFiles,

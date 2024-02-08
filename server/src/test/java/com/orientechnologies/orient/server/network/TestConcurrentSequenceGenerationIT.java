@@ -40,7 +40,8 @@ public class TestConcurrentSequenceGenerationIT {
         "sql",
         "CREATE CLASS TestSequence EXTENDS V;\n"
             + " CREATE SEQUENCE TestSequenceIdSequence TYPE ORDERED;\n"
-            + "CREATE PROPERTY TestSequence.id LONG (MANDATORY TRUE, default \"sequence('TestSequenceIdSequence').next()\");\n"
+            + "CREATE PROPERTY TestSequence.id LONG (MANDATORY TRUE, default"
+            + " \"sequence('TestSequenceIdSequence').next()\");\n"
             + "CREATE INDEX TestSequence_id_index ON TestSequence (id BY VALUE) UNIQUE;");
     databaseSession.close();
   }

@@ -118,8 +118,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
       OLogManager.instance()
           .warnNoDb(
               ODefaultIndexFactory.class,
-              "You are creating native full text index instance. "
-                  + "That is unsafe because this type of index is deprecated and will be removed in future.");
+              "You are creating native full text index instance. That is unsafe because this type"
+                  + " of index is deprecated and will be removed in future.");
       return new OIndexFullText(im, storage);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
       return new OIndexDictionary(im, storage);

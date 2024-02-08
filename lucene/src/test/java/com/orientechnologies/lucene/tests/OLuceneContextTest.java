@@ -64,7 +64,8 @@ public class OLuceneContextTest extends OLuceneBaseTest {
   public void shouldReturnTotalHits() throws Exception {
     OResultSet docs =
         db.query(
-            "select *,$totalHits,$Song_title_totalHits from Song where search_class('title:man')= true  limit 1");
+            "select *,$totalHits,$Song_title_totalHits from Song where search_class('title:man')="
+                + " true  limit 1");
 
     List<OResult> results = docs.stream().collect(Collectors.toList());
     assertThat(results).hasSize(1);

@@ -25,16 +25,24 @@ public class ORemoteBasicSecurityTest {
 
   @Before
   public void before()
-      throws IOException, InstantiationException, InvocationTargetException, NoSuchMethodException,
-          MBeanRegistrationException, IllegalAccessException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, ClassNotFoundException, MalformedObjectNameException {
+      throws IOException,
+          InstantiationException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          MBeanRegistrationException,
+          IllegalAccessException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          ClassNotFoundException,
+          MalformedObjectNameException {
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     server = OServer.startFromClasspathConfig("abstract-orientdb-server-config.xml");
 
     OrientDB orientDB =
         new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     orientDB.execute(
-        "create database test memory users (admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+        "create database test memory users (admin identified by 'admin' role admin, reader"
+            + " identified by 'reader' role reader, writer identified by 'writer' role writer)");
     try (ODatabaseSession session = orientDB.open("test", "admin", "admin")) {
       session.createClass("one");
       session.save(new ODocument("one"));

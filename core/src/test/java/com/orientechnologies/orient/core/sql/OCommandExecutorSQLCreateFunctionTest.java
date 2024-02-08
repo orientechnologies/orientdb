@@ -11,7 +11,8 @@ public class OCommandExecutorSQLCreateFunctionTest extends BaseMemoryDatabase {
   @Test
   public void testCreateFunction() {
     db.command(
-            "CREATE FUNCTION testCreateFunction \"return 'hello '+name;\" PARAMETERS [name] IDEMPOTENT true LANGUAGE Javascript")
+            "CREATE FUNCTION testCreateFunction \"return 'hello '+name;\" PARAMETERS [name]"
+                + " IDEMPOTENT true LANGUAGE Javascript")
         .close();
     OResultSet result = db.command("select testCreateFunction('world') as name");
     Assert.assertEquals(result.next().getProperty("name"), "hello world");

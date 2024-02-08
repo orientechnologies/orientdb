@@ -36,8 +36,8 @@ public class OETLCodeBlock extends OETLAbstractBlock {
   public ODocument getConfiguration() {
     return new ODocument()
         .fromJSON(
-            "{parameters:[{language:{optional:true,description:'Code language, default is Javascript'}},"
-                + "{code:{optional:false,description:'Code to execute'}}],"
+            "{parameters:[{language:{optional:true,description:'Code language, default is"
+                + " Javascript'}},{code:{optional:false,description:'Code to execute'}}],"
                 + "input:['Object'],output:'Object'}");
   }
 

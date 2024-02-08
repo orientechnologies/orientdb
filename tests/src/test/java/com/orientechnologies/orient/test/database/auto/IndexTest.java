@@ -129,7 +129,8 @@ public class IndexTest extends ObjectDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<Profile>(
-                    "SELECT * FROM Profile WHERE nick in ['ZZZJayLongNickIndex0' ,'ZZZJayLongNickIndex1', 'ZZZJayLongNickIndex2']"))
+                    "SELECT * FROM Profile WHERE nick in ['ZZZJayLongNickIndex0'"
+                        + " ,'ZZZJayLongNickIndex1', 'ZZZJayLongNickIndex2']"))
             .execute();
 
     final List<String> expectedSurnames =
@@ -474,8 +475,9 @@ public class IndexTest extends ObjectDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<Profile>(
-                    "select * from Profile where (name = 'Giuseppe' OR name <> 'Napoleone')"
-                        + " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3'))"))
+                    "select * from Profile where (name = 'Giuseppe' OR name <> 'Napoleone') AND"
+                        + " (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND"
+                        + " (nick >= 'ZZZJayLongNickIndex3'))"))
             .execute();
     if (!oldRecording) {
       Orient.instance().getProfiler().stopRecording();
@@ -515,9 +517,9 @@ public class IndexTest extends ObjectDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<Profile>(
-                    "select * from Profile where "
-                        + "((name = 'Giuseppe' OR name <> 'Napoleone')"
-                        + " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))"))
+                    "select * from Profile where ((name = 'Giuseppe' OR name <> 'Napoleone') AND"
+                        + " (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND"
+                        + " (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))"))
             .execute();
     if (!oldRecording) {
       Orient.instance().getProfiler().stopRecording();
@@ -624,7 +626,8 @@ public class IndexTest extends ObjectDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<Profile>(
-                    "SELECT * FROM Profile WHERE nick in ['ZZZJayLongNickIndex0' ,'ZZZJayLongNickIndex1', 'ZZZJayLongNickIndex2']"))
+                    "SELECT * FROM Profile WHERE nick in ['ZZZJayLongNickIndex0'"
+                        + " ,'ZZZJayLongNickIndex1', 'ZZZJayLongNickIndex2']"))
             .execute();
 
     final List<String> expectedSurnames =
@@ -1309,7 +1312,8 @@ public class IndexTest extends ObjectDBBaseTest {
             .getUnderlying()
             .query(
                 new OSQLSynchQuery<ODocument>(
-                    "select from CompoundSQLIndexTest2 where address in (select from CompoundSQLIndexTest1 where city='Montreal')"));
+                    "select from CompoundSQLIndexTest2 where address in (select from"
+                        + " CompoundSQLIndexTest1 where city='Montreal')"));
     Assert.assertEquals(result.size(), 1);
 
     Assert.assertEquals(result.get(0).getIdentity(), docTwo.getIdentity());
@@ -1625,7 +1629,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
     database
         .command(
-            "create index ValuesContainerIsRemovedIfIndexIsRemovedIndex on ValuesContainerIsRemovedIfIndexIsRemovedClass (val) notunique")
+            "create index ValuesContainerIsRemovedIfIndexIsRemovedIndex on"
+                + " ValuesContainerIsRemovedIfIndexIsRemovedClass (val) notunique")
         .close();
 
     for (int i = 0; i < 10; i++) {

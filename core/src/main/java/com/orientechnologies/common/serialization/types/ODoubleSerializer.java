@@ -34,6 +34,7 @@ import java.nio.ByteOrder;
  */
 public class ODoubleSerializer implements OBinarySerializer<Double> {
   public static final byte ID = 6;
+
   /** size of double value in bytes */
   public static final int DOUBLE_SIZE = 8;
 

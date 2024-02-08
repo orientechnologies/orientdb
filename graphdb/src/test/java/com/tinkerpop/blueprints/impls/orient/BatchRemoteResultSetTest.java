@@ -33,9 +33,16 @@ public class BatchRemoteResultSetTest {
 
   @Before
   public void before()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException,
-          NoSuchMethodException, InstantiationException, IOException, IllegalAccessException {
+      throws ClassNotFoundException,
+          MalformedObjectNameException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          MBeanRegistrationException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          InstantiationException,
+          IOException,
+          IllegalAccessException {
 
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + File.separator + BaseHttpTest.class.getSimpleName();
@@ -62,8 +69,10 @@ public class BatchRemoteResultSetTest {
   public void runBatchQuery() {
 
     String batchQuery =
-        "begin; LET t0 = CREATE VERTEX V set mame=\"a\" ;\n LET t1 = CREATE VERTEX V set name=\"b\" ;\n"
-            + "LET t2 = CREATE EDGE E FROM $t0 TO $t1 ;\n commit retry 100\n"
+        "begin; LET t0 = CREATE VERTEX V set mame=\"a\" ;\n"
+            + " LET t1 = CREATE VERTEX V set name=\"b\" ;\n"
+            + "LET t2 = CREATE EDGE E FROM $t0 TO $t1 ;\n"
+            + " commit retry 100\n"
             + "return [$t0,$t1,$t2]";
 
     OrientGraph graph =

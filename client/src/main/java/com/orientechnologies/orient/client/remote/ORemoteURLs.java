@@ -270,7 +270,8 @@ public class ORemoteURLs {
         OLogManager.instance()
             .debug(
                 this,
-                "ROUND_ROBIN_CONNECT: Next remote operation will be executed on server: %s (isConnectOperation=%s)",
+                "ROUND_ROBIN_CONNECT: Next remote operation will be executed on server: %s"
+                    + " (isConnectOperation=%s)",
                 url,
                 iIsConnectOperation);
         break;
@@ -280,7 +281,8 @@ public class ORemoteURLs {
         OLogManager.instance()
             .debug(
                 this,
-                "ROUND_ROBIN_REQUEST: Next remote operation will be executed on server: %s (isConnectOperation=%s)",
+                "ROUND_ROBIN_REQUEST: Next remote operation will be executed on server: %s"
+                    + " (isConnectOperation=%s)",
                 url,
                 iIsConnectOperation);
         break;

@@ -17,14 +17,16 @@ public class OrientJdbcIssuesTest extends OrientJdbcDbPerMethodTemplateTest {
             //        + "CREATE PROPERTY Demo.lastName STRING\n"
             //        + "CREATE PROPERTY Demo.address STRING\n"
             //        + "CREATE PROPERTY Demo.amount INTEGER\n"
-            + "INSERT INTO Demo(firstName, lastName, address, amount) VALUES (\"John\", \"John\", \"Street1\", 1234);\n"
+            + "INSERT INTO Demo(firstName, lastName, address, amount) VALUES (\"John\", \"John\","
+            + " \"Street1\", 1234);\n"
             + "INSERT INTO Demo(firstName, lastName, amount) VALUES (\"Lars\", \"Lar\", 2232);\n"
             + "INSERT INTO Demo(firstName, amount) VALUES (\"Lars\", 2232);";
 
     Statement stmt = conn.createStatement();
     stmt.addBatch("CREATE CLASS Demo;");
     stmt.addBatch(
-        "INSERT INTO Demo(firstName, lastName, address, amount) VALUES (\"John\", \"John\", \"Street1\", 1234);");
+        "INSERT INTO Demo(firstName, lastName, address, amount) VALUES (\"John\", \"John\","
+            + " \"Street1\", 1234);");
     stmt.addBatch(
         "INSERT INTO Demo(firstName, lastName, amount) VALUES (\"Lars\", \"Lar\", 2232);");
     stmt.addBatch("INSERT INTO Demo(firstName, amount) VALUES (\"Lars\", 2232);");

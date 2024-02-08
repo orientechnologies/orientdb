@@ -41,6 +41,7 @@ import java.util.Map;
 public final class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   public static final int MAX_BUCKET_SIZE_BYTES =
       OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getValueAsInteger() * 1024;
+
   /**
    * Maximum size of key-value pair which can be put in SBTreeBonsai in bytes (24576000 by default)
    */

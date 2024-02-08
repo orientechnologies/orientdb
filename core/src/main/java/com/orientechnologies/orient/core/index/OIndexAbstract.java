@@ -1043,8 +1043,8 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public static void manualIndexesWarning() {
     if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean()) {
       throw new OManualIndexesAreProhibited(
-          "Manual indexes are deprecated, not supported any more and will be removed in next versions if you still want to use them, "
-              + "please set global property `"
+          "Manual indexes are deprecated, not supported any more and will be removed in next"
+              + " versions if you still want to use them, please set global property `"
               + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey()
               + "` to `true`");
     }
@@ -1053,9 +1053,9 @@ public abstract class OIndexAbstract implements OIndexInternal {
       OLogManager.instance()
           .warn(
               OIndexAbstract.class,
-              "Seems you use manual indexes. "
-                  + "Manual indexes are deprecated, not supported any more and will be removed in next versions if you do not want "
-                  + "to see warning, please set global property `"
+              "Seems you use manual indexes. Manual indexes are deprecated, not supported any more"
+                  + " and will be removed in next versions if you do not want to see warning,"
+                  + " please set global property `"
                   + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES_WARNING.getKey()
                   + "` to `false`");
     }

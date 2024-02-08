@@ -60,7 +60,8 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
         checkSyntax(
             iRequest.getUrl(),
             4,
-            "Syntax error: property/<database>/<class-name>/<property-name>/[<property-type>]/[<link-type>]");
+            "Syntax error:"
+                + " property/<database>/<class-name>/<property-name>/[<property-type>]/[<link-type>]");
 
     iRequest.getData().commandInfo = "Create property";
     iRequest.getData().commandDetail = urlParts[2] + "." + urlParts[3];
@@ -95,7 +96,8 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
                 throw new IllegalArgumentException(
                     "linked type declared as "
                         + urlParts[5]
-                        + " can be either a Type or a Class, use the JSON document usage instead. See 'http://code.google.com/p/orient/w/edit/OrientDB_REST'");
+                        + " can be either a Type or a Class, use the JSON document usage instead."
+                        + " See 'http://code.google.com/p/orient/w/edit/OrientDB_REST'");
               }
             }
           }

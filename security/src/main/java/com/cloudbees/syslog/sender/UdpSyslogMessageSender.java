@@ -45,6 +45,7 @@ public class UdpSyslogMessageSender extends AbstractSyslogMessageSender {
    * <p>Default value: {@link #DEFAULT_SYSLOG_HOST}
    */
   protected CachingReference<InetAddress> syslogServerHostnameReference;
+
   /**
    * Listen port of the remote Syslog server.
    *

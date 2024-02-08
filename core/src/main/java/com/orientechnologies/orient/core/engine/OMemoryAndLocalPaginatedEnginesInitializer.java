@@ -79,7 +79,8 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
       OLogManager.instance()
           .warnNoDb(
               this,
-              "Can not determine amount of memory installed on machine, default size of disk cache will be used");
+              "Can not determine amount of memory installed on machine, default size of disk cache"
+                  + " will be used");
       return;
     }
 
@@ -92,8 +93,8 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
       OLogManager.instance()
           .infoNoDb(
               this,
-              "Because OrientDB is running inside a container %s of memory will be left unallocated according to the setting '%s'"
-                  + " not taking into account heap memory",
+              "Because OrientDB is running inside a container %s of memory will be left unallocated"
+                  + " according to the setting '%s' not taking into account heap memory",
               OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getValueAsString(),
               OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey());
 
@@ -138,8 +139,9 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
       OLogManager.instance()
           .warnNoDb(
               null,
-              "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx "
-                  + "setting on JVM) and restart OrientDB. Now running with DISKCACHE="
+              "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower"
+                  + " Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with"
+                  + " DISKCACHE="
                   + diskCacheInMB
                   + "MB",
               osMemory.memoryLimit / 1024 / 1024,

@@ -305,7 +305,8 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract
                     engine);
       } else {
         throw new ODatabaseException(
-            "Impossible to create an index without specify the key type or the associated property");
+            "Impossible to create an index without specify the key type or the associated"
+                + " property");
       }
     } else {
       if ((keyTypes == null || keyTypes.length == 0) && collates == null) {
@@ -367,7 +368,8 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract
 
   @Override
   public String getSyntax() {
-    return "CREATE INDEX <name> [ON <class-name> (prop-names [COLLATE <collate>])] <type> [<key-type>] [ENGINE <engine>] [METADATA {JSON Index Metadata Document}]";
+    return "CREATE INDEX <name> [ON <class-name> (prop-names [COLLATE <collate>])] <type>"
+        + " [<key-type>] [ENGINE <engine>] [METADATA {JSON Index Metadata Document}]";
   }
 
   private OClass findClass(String part) {

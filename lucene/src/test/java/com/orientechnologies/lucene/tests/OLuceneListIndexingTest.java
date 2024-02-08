@@ -190,7 +190,8 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
               assertThat(queryFive).hasSize(2);
               try (OResultSet querySix =
                   db.query(
-                      "select from Person where search_class('(name:Enrico AND tags:Geek) ')=true")) {
+                      "select from Person where search_class('(name:Enrico AND tags:Geek)"
+                          + " ')=true")) {
                 assertThat(querySix).hasSize(1);
               }
             }

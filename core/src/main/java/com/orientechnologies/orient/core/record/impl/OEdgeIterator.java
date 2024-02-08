@@ -89,7 +89,8 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
       OLogManager.instance()
           .warn(
               this,
-              "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s",
+              "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s,"
+                  + " Database : %s",
               rec,
               sourceVertex != null ? sourceVertex.getIdentity() : null,
               targetVertex != null ? targetVertex.getIdentity() : null,

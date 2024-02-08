@@ -290,7 +290,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private void processBrokenRids(final Set<ORID> brokenRids) throws IOException, ParseException {
     if (exporterVersion >= 12) {
       listener.onMessage(
-          "Reading of set of RIDs of records which were detected as broken during database export\n");
+          "Reading of set of RIDs of records which were detected as broken during database"
+              + " export\n");
       jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
       while (true) {
@@ -306,8 +307,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (exporterVersion >= 12)
         listener.onMessage(
             brokenRids.size()
-                + " were detected as broken during database export, links on those records will be removed from"
-                + " result database");
+                + " were detected as broken during database export, links on those records will be"
+                + " removed from result database");
       migrateLinksInImportedDocuments(brokenRids);
     }
   }
@@ -1424,8 +1425,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
         listener.onMessage(
             String.format(
-                "\n- Imported %,d records into clusters: %s. "
-                    + "Total JSON records imported so for %,d .Total records imported so far: %,d (%,.2f/sec)",
+                "\n"
+                    + "- Imported %,d records into clusters: %s. Total JSON records imported so for"
+                    + " %,d .Total records imported so far: %,d (%,.2f/sec)",
                 lastLapRecords,
                 total,
                 sortedClusters.size(),
@@ -1714,7 +1716,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   private void migrateLinksInImportedDocuments(Set<ORID> brokenRids) throws IOException {
     listener.onMessage(
-        "\n\nStarted migration of links (-migrateLinks=true). Links are going to be updated according to new RIDs:");
+        "\n\n"
+            + "Started migration of links (-migrateLinks=true). Links are going to be updated"
+            + " according to new RIDs:");
 
     final long begin = System.currentTimeMillis();
     long last = begin;

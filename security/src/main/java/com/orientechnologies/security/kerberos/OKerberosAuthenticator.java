@@ -126,7 +126,8 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
               OLogManager.instance()
                   .info(
                       this,
-                      "OKerberosAuthenticator.authenticate() TicketHash and password Hash are equal, return principal: "
+                      "OKerberosAuthenticator.authenticate() TicketHash and password Hash are"
+                          + " equal, return principal: "
                           + ti.getPrincipal());
             if (isDebug())
               OLogManager.instance()
@@ -165,7 +166,8 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
               OLogManager.instance()
                   .info(
                       this,
-                      "OKerberosAuthenticator.authenticate() OKerberosLibrary.authenticate() returned "
+                      "OKerberosAuthenticator.authenticate() OKerberosLibrary.authenticate()"
+                          + " returned "
                           + principal);
 
             //							OLogManager.instance().info(this, "OKerberosAuthenticator.authenticate()
@@ -410,10 +412,12 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
           "OKerberosAuthenticator.createClientSubject() Client Principal cannot be null");
     if (clientUseTicketCache && clientCCName == null)
       throw new OSecurityAuthenticatorException(
-          "OKerberosAuthenticator.createClientSubject() Client UseTicketCache cannot be true while Credential Cache is null");
+          "OKerberosAuthenticator.createClientSubject() Client UseTicketCache cannot be true while"
+              + " Credential Cache is null");
     if (clientCCName == null && clientKTName == null)
       throw new OSecurityAuthenticatorException(
-          "OKerberosAuthenticator.createClientSubject() Client Credential Cache and Client KeyTab cannot both be null");
+          "OKerberosAuthenticator.createClientSubject() Client Credential Cache and Client KeyTab"
+              + " cannot both be null");
 
     try {
       Configuration cfg =

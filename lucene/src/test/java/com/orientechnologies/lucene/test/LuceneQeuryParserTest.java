@@ -22,7 +22,8 @@ public class LuceneQeuryParserTest extends BaseLuceneTest {
 
     // enabling leading wildcard
     db.command(
-            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {\"allowLeadingWildcard\": true}")
+            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata"
+                + " {\"allowLeadingWildcard\": true}")
         .close();
 
     // querying with leading wildcard
@@ -36,7 +37,8 @@ public class LuceneQeuryParserTest extends BaseLuceneTest {
 
     // enabling leading wildcard
     db.command(
-            "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE metadata {\"default\": \""
+            "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE metadata"
+                + " {\"default\": \""
                 + KeywordAnalyzer.class.getCanonicalName()
                 + "\", \"lowercaseExpandedTerms\": false}")
         .close();

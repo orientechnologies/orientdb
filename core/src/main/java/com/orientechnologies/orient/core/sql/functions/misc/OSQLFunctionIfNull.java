@@ -89,6 +89,7 @@ public class OSQLFunctionIfNull extends OSQLFunctionAbstract {
 
   @Override
   public String getSyntax() {
-    return "Syntax error: ifnull(<field|value>, <return_value_if_null> [,<return_value_if_not_null>])";
+    return "Syntax error: ifnull(<field|value>, <return_value_if_null>"
+        + " [,<return_value_if_not_null>])";
   }
 }

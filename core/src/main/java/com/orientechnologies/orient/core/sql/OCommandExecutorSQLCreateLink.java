@@ -351,6 +351,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
 
   @Override
   public String getSyntax() {
-    return "CREATE LINK <link-name> [TYPE <link-type>] FROM <source-class>.<source-property> TO <destination-class>.<destination-property> [INVERSE]";
+    return "CREATE LINK <link-name> [TYPE <link-type>] FROM <source-class>.<source-property> TO"
+        + " <destination-class>.<destination-property> [INVERSE]";
   }
 }

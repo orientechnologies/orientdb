@@ -128,10 +128,10 @@ public class JSONTest extends DocumentDBBaseTest {
   public void testNullity() {
     final ODocument doc = new ODocument();
     doc.fromJSON(
-        "{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\","
-            + "\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith Ave\","
-            + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"},"
-            + "\"dob\":\"2011-11-17 03:17:04\"}");
+        "{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\",\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith"
+            + " Ave\","
+            + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"},\"dob\":\"2011-11-17"
+            + " 03:17:04\"}");
     final String json = doc.toJSON();
     final ODocument loadedDoc = new ODocument().fromJSON(json);
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
@@ -518,7 +518,8 @@ public class JSONTest extends DocumentDBBaseTest {
   public void testArrayOfArray() {
     final ODocument doc = new ODocument();
     doc.fromJSON(
-        "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 100,  0 ],  [ 101, 1 ] ]}");
+        "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 100,"
+            + "  0 ],  [ 101, 1 ] ]}");
     doc.save();
     final ODocument loadedDoc = database.load(doc.getIdentity());
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
@@ -527,7 +528,8 @@ public class JSONTest extends DocumentDBBaseTest {
   public void testLongTypes() {
     final ODocument doc = new ODocument();
     doc.fromJSON(
-        "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 32874387347347,  0 ],  [ -23736753287327, 1 ] ]}");
+        "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ ["
+            + " 32874387347347,  0 ],  [ -23736753287327, 1 ] ]}");
     doc.save();
     final ODocument loadedDoc = database.load(doc.getIdentity());
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
@@ -660,7 +662,8 @@ public class JSONTest extends DocumentDBBaseTest {
 
     database
         .command(
-            "insert into device (resource_id, domainset) VALUES (0, [ { 'domain' : 'abc' }, { 'domain' : 'pqr' } ])")
+            "insert into device (resource_id, domainset) VALUES (0, [ { 'domain' : 'abc' }, {"
+                + " 'domain' : 'pqr' } ])")
         .close();
 
     OResultSet result = database.query("select from device where domainset.domain contains 'abc'");
@@ -691,7 +694,8 @@ public class JSONTest extends DocumentDBBaseTest {
 
     database
         .command(
-            "insert into device (domainset) values ({'domain' : { 'lvlone' : { 'value' : 'five' } } } )")
+            "insert into device (domainset) values ({'domain' : { 'lvlone' : { 'value' : 'five' } }"
+                + " } )")
         .close();
 
     OResultSet result =
@@ -717,7 +721,9 @@ public class JSONTest extends DocumentDBBaseTest {
   public void testEscaping() {
     ODocument doc = new ODocument();
     String s =
-        "{\"name\": \"test\", \"nested\": { \"key\": \"value\", \"anotherKey\": 123 }, \"deep\": {\"deeper\": { \"k\": \"v\",\"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\", \"likeJson\": \"[1,2,3]\",\"spaces\": \"value with spaces\"}}}";
+        "{\"name\": \"test\", \"nested\": { \"key\": \"value\", \"anotherKey\": 123 }, \"deep\":"
+            + " {\"deeper\": { \"k\": \"v\",\"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\","
+            + " \"likeJson\": \"[1,2,3]\",\"spaces\": \"value with spaces\"}}}";
     doc.fromJSON(s);
     Assert.assertEquals(doc.field("deep[deeper][quotes]"), "\"\",\"oops\":\"123\"");
 
@@ -963,7 +969,8 @@ public class JSONTest extends DocumentDBBaseTest {
   public void testEmbeddedRIDBagDeserialisationWhenFieldTypeIsProvided() throws Exception {
     ODocument documentSource = new ODocument();
     documentSource.fromJSON(
-        "{FirstName:\"Student A 0\",in_EHasGoodStudents:[#57:0],@fieldTypes:\"in_EHasGoodStudents=g\"}");
+        "{FirstName:\"Student A"
+            + " 0\",in_EHasGoodStudents:[#57:0],@fieldTypes:\"in_EHasGoodStudents=g\"}");
 
     ORidBag bag = documentSource.field("in_EHasGoodStudents");
     Assert.assertEquals(bag.size(), 1);
@@ -986,7 +993,8 @@ public class JSONTest extends DocumentDBBaseTest {
     // The link between jamie and tyrion is not saved properly
     ODocument tyrionDoc = new ODocument("NestedLinkCreation");
     tyrionDoc.fromJSON(
-        "{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"@type\":\"d\", \"relationship\":\"brother\",\"contact\":"
+        "{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"@type\":\"d\","
+            + " \"relationship\":\"brother\",\"contact\":"
             + jaimeDoc.toJSON()
             + "}}");
     tyrionDoc.save();
@@ -1061,7 +1069,8 @@ public class JSONTest extends DocumentDBBaseTest {
     // The link between jamie and tyrion is not saved properly
     ODocument tyrionDoc = new ODocument("NestedLinkCreationFieldTypes");
     tyrionDoc.fromJSON(
-        "{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"@type\":\"d\", \"@fieldTypes\":\"contact=x\",\"relationship\":\"brother\",\"contact\":"
+        "{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"@type\":\"d\","
+            + " \"@fieldTypes\":\"contact=x\",\"relationship\":\"brother\",\"contact\":"
             + jaimeDoc.getIdentity()
             + "}}");
     tyrionDoc.save();
@@ -1318,7 +1327,12 @@ public class JSONTest extends DocumentDBBaseTest {
   public void testOtherJson() {
     new ODocument()
         .fromJSON(
-            "{\"Salary\":1500.0,\"Type\":\"Person\",\"Address\":[{\"Zip\":\"JX2 MSX\",\"Type\":\"Home\",\"Street1\":\"13 Marge Street\",\"Country\":\"Holland\",\"Id\":\"Address-28813211\",\"City\":\"Amsterdam\",\"From\":\"1996-02-01\",\"To\":\"1998-01-01\"},{\"Zip\":\"90210\",\"Type\":\"Work\",\"Street1\":\"100 Hollywood Drive\",\"Country\":\"USA\",\"Id\":\"Address-11595040\",\"City\":\"Los Angeles\",\"From\":\"2009-09-01\"}],\"Id\":\"Person-7464251\",\"Name\":\"Stan\"}");
+            "{\"Salary\":1500.0,\"Type\":\"Person\",\"Address\":[{\"Zip\":\"JX2"
+                + " MSX\",\"Type\":\"Home\",\"Street1\":\"13 Marge"
+                + " Street\",\"Country\":\"Holland\",\"Id\":\"Address-28813211\",\"City\":\"Amsterdam\",\"From\":\"1996-02-01\",\"To\":\"1998-01-01\"},{\"Zip\":\"90210\",\"Type\":\"Work\",\"Street1\":\"100"
+                + " Hollywood"
+                + " Drive\",\"Country\":\"USA\",\"Id\":\"Address-11595040\",\"City\":\"Los"
+                + " Angeles\",\"From\":\"2009-09-01\"}],\"Id\":\"Person-7464251\",\"Name\":\"Stan\"}");
   }
 
   @Test

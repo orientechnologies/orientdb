@@ -330,24 +330,29 @@ public class OSelectStatementTest {
   public void testSpatial() {
 
     checkRightSyntax(
-        "select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]");
+        "select *,$distance from Place where [latitude,longitude,$spatial] NEAR"
+            + " [41.893056,12.482778,{\"maxDistance\": 0.5}]");
     checkRightSyntax(
-        "select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]");
+        "select * from Place where [latitude,longitude] WITHIN"
+            + " [[51.507222,-0.1275],[55.507222,-0.1275]]");
   }
 
   @Test
   public void testSubConditions() {
     checkRightSyntax(
-        "SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR 'roma' IN out('lives').localName ) ORDER BY age ASC");
+        "SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR"
+            + " 'roma' IN out('lives').localName ) ORDER BY age ASC");
   }
 
   @Test
   public void testRecordAttributes() {
     // issue #4430
     checkRightSyntax(
-        "SELECT @this, @rid, @rid_id, @rid_pos, @version, @class, @type, @size, @fields, @raw from V");
+        "SELECT @this, @rid, @rid_id, @rid_pos, @version, @class, @type, @size, @fields, @raw from"
+            + " V");
     checkRightSyntax(
-        "SELECT @THIS, @RID, @RID_ID, @RID_POS, @VERSION, @CLASS, @TYPE, @SIZE, @FIELDS, @RAW from V");
+        "SELECT @THIS, @RID, @RID_ID, @RID_POS, @VERSION, @CLASS, @TYPE, @SIZE, @FIELDS, @RAW from"
+            + " V");
   }
 
   @Test
@@ -363,7 +368,8 @@ public class OSelectStatementTest {
     checkRightSyntax("select from Person where name matches 'a'");
 
     checkRightSyntax(
-        "select from Person where name matches '(?i)(^\\\\Qname1\\\\E$)|(^\\\\Qname2\\\\E$)|(^\\\\Qname3\\\\E$)' and age=30");
+        "select from Person where name matches"
+            + " '(?i)(^\\\\Qname1\\\\E$)|(^\\\\Qname2\\\\E$)|(^\\\\Qname3\\\\E$)' and age=30");
   }
 
   @Test
@@ -448,13 +454,16 @@ public class OSelectStatementTest {
     checkWrongSyntax("select from Foo where a lucene 'a' and b lucene 'a'");
 
     checkWrongSyntax(
-        "select union($a, $b) let $a = (select from Foo where a lucene 'a' and b lucene 'b'), $b = (select from Foo where b lucene 'b')");
+        "select union($a, $b) let $a = (select from Foo where a lucene 'a' and b lucene 'b'), $b ="
+            + " (select from Foo where b lucene 'b')");
     checkRightSyntax(
-        "select union($a, $b) let $a = (select from Foo where a lucene 'a'), $b = (select from Foo where b lucene 'b')");
+        "select union($a, $b) let $a = (select from Foo where a lucene 'a'), $b = (select from Foo"
+            + " where b lucene 'b')");
     checkWrongSyntax("select from (select from Foo) where a lucene 'a'");
 
     checkWrongSyntax(
-        "select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo')))) or select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo'))))");
+        "select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo')))) or select"
+            + " from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo'))))");
 
     checkWrongSyntax("select from cluster:foo where a lucene 'b'");
     checkWrongSyntax("select from #12:0 where a lucene 'b'");
@@ -658,12 +667,14 @@ public class OSelectStatementTest {
     // issue #5589
     checkRightSyntax(
         "SELECT eval('$TotalListsQuery[0].Count') AS TotalLists\n"
-            + "   LET $TotalListsQuery = ( SELECT Count(1) AS Count FROM ContactList WHERE Account=#20:1 AND EntityInfo.State=0)\n"
+            + "   LET $TotalListsQuery = ( SELECT Count(1) AS Count FROM ContactList WHERE"
+            + " Account=#20:1 AND EntityInfo.State=0)\n"
             + " LIMIT 1");
 
     checkRightSyntax(
         "SELECT eval('$TotalListsQuery[0].Count') AS TotalLists\n"
-            + "   LET $TotalListsQuery = ( SELECT Count(1) AS Count FROM ContactList WHERE Account=#20:1 AND EntityInfo.State=0)\n"
+            + "   LET $TotalListsQuery = ( SELECT Count(1) AS Count FROM ContactList WHERE"
+            + " Account=#20:1 AND EntityInfo.State=0)\n"
             + " SKIP 10 LIMIT 1");
   }
 

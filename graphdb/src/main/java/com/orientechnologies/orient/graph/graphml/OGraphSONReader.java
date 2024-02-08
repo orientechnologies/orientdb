@@ -182,7 +182,8 @@ public class OGraphSONReader {
       if (inputSize > 0)
         output.onMessage(
             String.format(
-                "Imported %d graph elements: %d vertices and %d edges. Parsed %s/%s (uncompressed) (%s%%)",
+                "Imported %d graph elements: %d vertices and %d edges. Parsed %s/%s (uncompressed)"
+                    + " (%s%%)",
                 importedVertices + importedEdges,
                 importedVertices,
                 importedEdges,

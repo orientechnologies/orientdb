@@ -119,7 +119,8 @@ public class OObjectMethodFilter implements MethodFilter {
                   + f.getName()
                   + " in class "
                   + m.getDeclaringClass().toString()
-                  + " cannot be bound to proxied instance: parameter class don't match with field type "
+                  + " cannot be bound to proxied instance: parameter class don't match with field"
+                  + " type "
                   + f.getType().toString());
       isSetterCache.put(m, false);
       return false;

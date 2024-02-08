@@ -31,9 +31,16 @@ public class DirtyTrackingTreeRidBagRemoteTest {
 
   @Before
   public void before()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException,
-          NoSuchMethodException, InstantiationException, IOException, IllegalAccessException {
+      throws ClassNotFoundException,
+          MalformedObjectNameException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          MBeanRegistrationException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          InstantiationException,
+          IOException,
+          IllegalAccessException {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName();
     deleteDirectory(new File(serverHome));

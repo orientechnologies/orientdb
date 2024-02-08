@@ -44,7 +44,8 @@ public class FunctionsTest extends DocumentDBBaseTest {
         database
             .command(
                 new OCommandSQL(
-                    "create function FunctionsTest \"return a + b\" PARAMETERS [a,b] IDEMPOTENT true LANGUAGE Javascript"))
+                    "create function FunctionsTest \"return a + b\" PARAMETERS [a,b] IDEMPOTENT"
+                        + " true LANGUAGE Javascript"))
             .execute();
 
     final ODocument record = result.getRecord();
@@ -128,7 +129,8 @@ public class FunctionsTest extends DocumentDBBaseTest {
   public void testFunctionDefinitionAndCallWithParams() {
     database
         .command(
-            "create function testParams \"return 'Hello ' + name + ' ' + surname + ' from ' + country;\" PARAMETERS [name,surname,country] LANGUAGE Javascript")
+            "create function testParams \"return 'Hello ' + name + ' ' + surname + ' from ' +"
+                + " country;\" PARAMETERS [name,surname,country] LANGUAGE Javascript")
         .close();
 
     try (OResultSet res1 =
@@ -154,7 +156,8 @@ public class FunctionsTest extends DocumentDBBaseTest {
   public void testMapParamToFunction() {
     database
         .command(
-            "create function testMapParamToFunction \"return mapParam.get('foo')[0];\" PARAMETERS [mapParam] LANGUAGE Javascript")
+            "create function testMapParamToFunction \"return mapParam.get('foo')[0];\" PARAMETERS"
+                + " [mapParam] LANGUAGE Javascript")
         .close();
 
     Map<String, Object> params = new HashMap<String, Object>();

@@ -58,7 +58,8 @@ public class OCommandExecutorSQLCreateEdgeTest extends BaseMemoryDatabase {
     params.put("toId", 2);
 
     db.command(
-            "CREATE EDGE link from (select from Owner where id = :fromId) TO (select from Owner where id = :toId) SET foo = :foo",
+            "CREATE EDGE link from (select from Owner where id = :fromId) TO (select from Owner"
+                + " where id = :toId) SET foo = :foo",
             params)
         .close();
 
@@ -79,7 +80,8 @@ public class OCommandExecutorSQLCreateEdgeTest extends BaseMemoryDatabase {
 
     OResultSet edges =
         db.command(
-            "CREATE EDGE link from (select from owner where testbatch = true and id > 0) TO (select from owner where testbatch = true and id = 0) batch 10",
+            "CREATE EDGE link from (select from owner where testbatch = true and id > 0) TO (select"
+                + " from owner where testbatch = true and id = 0) batch 10",
             "456");
 
     Assert.assertEquals(edges.stream().count(), 19);

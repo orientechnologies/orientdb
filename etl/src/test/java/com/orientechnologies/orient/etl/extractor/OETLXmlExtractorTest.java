@@ -38,7 +38,8 @@ public class OETLXmlExtractorTest extends OETLBaseTest {
   @Test
   public void testSimpleXml() {
     configure(
-        "{source: { file: { path: 'src/test/resources/simple.xml' } }, extractor : { xml: {} }, loader: { test: {} } }");
+        "{source: { file: { path: 'src/test/resources/simple.xml' } }, extractor : { xml: {} },"
+            + " loader: { test: {} } }");
     proc.execute();
 
     assertEquals(1, getResult().size());
@@ -70,7 +71,9 @@ public class OETLXmlExtractorTest extends OETLBaseTest {
   @Test
   public void testCollectionXml() {
     configure(
-        "{source: { file: { path: 'src/test/resources/music.xml' } }, extractor : { xml: { rootNode: 'CATALOG.CD', tagsAsAttribute: ['CATALOG.CD'] } }, loader: { test: {} } }");
+        "{source: { file: { path: 'src/test/resources/music.xml' } }, extractor : { xml: {"
+            + " rootNode: 'CATALOG.CD', tagsAsAttribute: ['CATALOG.CD'] } }, loader: { test: {} }"
+            + " }");
     proc.execute();
 
     assertEquals(3, getResult().size());

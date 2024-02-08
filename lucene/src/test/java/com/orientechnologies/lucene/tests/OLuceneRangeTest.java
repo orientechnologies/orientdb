@@ -150,7 +150,8 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     //noinspection EmptyTryBlock
     try (OResultSet command =
         db.command(
-            "create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")) {}
+            "create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE"
+                + " LUCENE")) {}
 
     assertThat(
             db.getMetadata()
@@ -203,7 +204,8 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     //noinspection EmptyTryBlock
     try (OResultSet command =
         db.command(
-            "create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")) {}
+            "create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE"
+                + " LUCENE")) {}
 
     assertThat(
             db.getMetadata()

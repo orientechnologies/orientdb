@@ -111,9 +111,9 @@ public final class OSBTreeCollectionManagerShared
       OLogManager.instance()
           .infoNoDb(
               this,
-              "There are found %d RidBags "
-                  + "(containers for edges which are going to be migrated). "
-                  + "PLEASE DO NOT SHUTDOWN YOUR DATABASE DURING MIGRATION BECAUSE THAT RISKS TO DAMAGE YOUR DATA !!!",
+              "There are found %d RidBags (containers for edges which are going to be migrated)."
+                  + " PLEASE DO NOT SHUTDOWN YOUR DATABASE DURING MIGRATION BECAUSE THAT RISKS TO"
+                  + " DAMAGE YOUR DATA !!!",
               filesToMigrate.size());
     } else {
       return;

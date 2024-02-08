@@ -254,9 +254,13 @@ public class OLuceneIndexCrashRestoreIT {
     db.command("Create property Person.name STRING");
     db.command("Create property Person.surname STRING");
     db.command(
-        "Create index Person.name on Person(name) FULLTEXT ENGINE LUCENE METADATA {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer', 'unknownKey':'unknownValue'}");
+        "Create index Person.name on Person(name) FULLTEXT ENGINE LUCENE METADATA"
+            + " {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer',"
+            + " 'unknownKey':'unknownValue'}");
     db.command(
-        "Create index Person.surname on Person(surname) FULLTEXT ENGINE LUCENE METADATA {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer', 'unknownKey':'unknownValue'}");
+        "Create index Person.surname on Person(surname) FULLTEXT ENGINE LUCENE METADATA"
+            + " {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer',"
+            + " 'unknownKey':'unknownValue'}");
     db.getMetadata().getIndexManagerInternal().reload();
 
     System.out.println(

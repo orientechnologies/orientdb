@@ -193,7 +193,8 @@ public class OStatementIndexFinderTest {
 
     OSelectStatement stat =
         parseQuery(
-            "select from cl where (friend.name = 'a' and name='a') or (friend.name='b' and name='b') ");
+            "select from cl where (friend.name = 'a' and name='a') or (friend.name='b' and"
+                + " name='b') ");
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
 
     assertTrue((result.get() instanceof ORequiredIndexCanditate));
@@ -223,7 +224,8 @@ public class OStatementIndexFinderTest {
 
     OSelectStatement stat =
         parseQuery(
-            "select from cl where (friend.name = 'a' and name='a') or (friend.name='b' and name='b') ");
+            "select from cl where (friend.name = 'a' and name='a') or (friend.name='b' and"
+                + " name='b') ");
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
 
     assertTrue((result.get() instanceof ORequiredIndexCanditate));
@@ -250,7 +252,8 @@ public class OStatementIndexFinderTest {
 
     OSelectStatement stat =
         parseQuery(
-            "select from cl where (friend.name = 'a' and name='a') or (friend.other='b' and other='b') ");
+            "select from cl where (friend.name = 'a' and name='a') or (friend.other='b' and"
+                + " other='b') ");
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
 
     assertFalse(result.isPresent());

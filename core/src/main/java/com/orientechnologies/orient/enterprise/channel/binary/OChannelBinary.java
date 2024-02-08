@@ -379,7 +379,8 @@ public abstract class OChannelBinary extends OChannel
     final String message =
         "Received unread response from "
             + socket.getRemoteSocketAddress()
-            + " probably corrupted data from the network connection. Cleared dirty data in the buffer ("
+            + " probably corrupted data from the network connection. Cleared dirty data in the"
+            + " buffer ("
             + i
             + " bytes): ["
             + dirtyBuffer

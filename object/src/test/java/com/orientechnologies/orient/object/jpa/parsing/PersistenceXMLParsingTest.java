@@ -47,8 +47,11 @@ import org.junit.Test;
 public class PersistenceXMLParsingTest {
 
   public static void assertPersistenceUnit(PersistenceUnitInfo unit, Rule[] rules)
-      throws IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-          NoSuchMethodException, SecurityException {
+      throws IllegalAccessException,
+          IllegalArgumentException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          SecurityException {
     for (int i = 0; i < rules.length; i++) {
       Method method = OJPAPersistenceUnitInfo.class.getDeclaredMethod(rules[i].method);
       String msg =

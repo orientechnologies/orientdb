@@ -1813,7 +1813,7 @@ public abstract class OAbstractPaginatedStorage
               return Optional.of(new OBackgroundNewDelta(transactions));
             }
           }
-          records = writeAheadLog.next(records.get(records.size() -1).getLsn(), 1_000);
+          records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
         }
       } finally {
         writeAheadLog.removeCutTillLimit(beginLsn);
@@ -2499,7 +2499,8 @@ public abstract class OAbstractPaginatedStorage
                       new OPhysicalPosition(rec.getIdentity().getClusterPosition()));
                 } else {
                   throw new OStorageException(
-                      "Impossible to commit a transaction with not valid rid in pre-allocated commit");
+                      "Impossible to commit a transaction with not valid rid in pre-allocated"
+                          + " commit");
                 }
               } else if (rec.isDirty() && !rec.getIdentity().isPersistent()) {
                 final ORecordId rid = (ORecordId) rec.getIdentity().copy();
@@ -3044,7 +3045,8 @@ public abstract class OAbstractPaginatedStorage
           return ((OSingleValueIndexEngine) engine).remove(atomicOperation, key);
         } else {
           throw new OStorageException(
-              "To remove entry from multi-value index not only key but value also should be provided");
+              "To remove entry from multi-value index not only key but value also should be"
+                  + " provided");
         }
       }
     } catch (final IOException e) {
@@ -4441,7 +4443,8 @@ public abstract class OAbstractPaginatedStorage
   public void acquireWriteLock(final ORID rid, final long timeout) {
     if (!modificationLock) {
       throw new ODatabaseException(
-          "Record write locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+          "Record write locks are off by configuration, set the configuration"
+              + " \"storage.pessimisticLock\" to \""
               + OrientDBConfig.LOCK_TYPE_READWRITE
               + "\" for enable them");
     }
@@ -4460,7 +4463,8 @@ public abstract class OAbstractPaginatedStorage
   public final void acquireWriteLock(final ORID rid) {
     if (!modificationLock) {
       throw new ODatabaseException(
-          "Record write locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+          "Record write locks are off by configuration, set the configuration"
+              + " \"storage.pessimisticLock\" to \""
               + OrientDBConfig.LOCK_TYPE_MODIFICATION
               + "\" for enable them");
     }
@@ -4491,7 +4495,8 @@ public abstract class OAbstractPaginatedStorage
   public final void acquireReadLock(final ORID rid) {
     if (!readLock) {
       throw new ODatabaseException(
-          "Record read locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+          "Record read locks are off by configuration, set the configuration"
+              + " \"storage.pessimisticLock\" to \""
               + OrientDBConfig.LOCK_TYPE_READWRITE
               + "\" for enable them");
     }
@@ -4510,7 +4515,8 @@ public abstract class OAbstractPaginatedStorage
   public void acquireReadLock(final ORID rid, final long timeout) {
     if (!readLock) {
       throw new ODatabaseException(
-          "Record read locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+          "Record read locks are off by configuration, set the configuration"
+              + " \"storage.pessimisticLock\" to \""
               + OrientDBConfig.LOCK_TYPE_READWRITE
               + "\" for enable them");
     }
@@ -4649,7 +4655,8 @@ public abstract class OAbstractPaginatedStorage
           new OStorageException(
               "Internal error happened in storage "
                   + name
-                  + " please restart the server or re-open the storage to undergo the restore process and fix the error."),
+                  + " please restart the server or re-open the storage to undergo the restore"
+                  + " process and fix the error."),
           this.error.get());
     }
   }
@@ -5957,7 +5964,8 @@ public abstract class OAbstractPaginatedStorage
               OLogManager.instance()
                   .warnNoDb(
                       this,
-                      "Non tx operation was used during data modification we will need index rebuild.");
+                      "Non tx operation was used during data modification we will need index"
+                          + " rebuild.");
               wereNonTxOperationsPerformedInPreviousOpen = true;
             }
           } else if (walRecord instanceof MetaDataRecord metaDataRecord) {
@@ -5984,19 +5992,21 @@ public abstract class OAbstractPaginatedStorage
           }
         }
 
-        records = writeAheadLog.next(records.get(records.size() -1).getLsn(), 1_000);
+        records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
       }
     } catch (final OWALPageBrokenException e) {
       OLogManager.instance()
           .errorNoDb(
               this,
-              "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.",
+              "Data restore was paused because broken WAL page was found. The rest of changes will"
+                  + " be rolled back.",
               e);
     } catch (final RuntimeException e) {
       OLogManager.instance()
           .errorNoDb(
               this,
-              "Data restore was paused because of exception. The rest of changes will be rolled back.",
+              "Data restore was paused because of exception. The rest of changes will be rolled"
+                  + " back.",
               e);
     }
 
@@ -6007,7 +6017,7 @@ public abstract class OAbstractPaginatedStorage
       final List<OWALRecord> atomicUnit, final OModifiableBoolean atLeastOnePageUpdate)
       throws IOException {
     assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
-    
+
     final HashSet<PageKey> pages = new HashSet<>();
     boolean integrityCheckPassed = true;
     AtomicUnitEndRecordWithPageLSNs atomicUnitEndRecord = null;

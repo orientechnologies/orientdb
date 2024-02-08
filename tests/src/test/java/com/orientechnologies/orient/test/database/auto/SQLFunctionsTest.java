@@ -368,7 +368,8 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select MIN(id) as min, max(id) as max, AVG(id) as average, sum(id) as total from Account"))
+                    "select MIN(id) as min, max(id) as max, AVG(id) as average, sum(id) as total"
+                        + " from Account"))
             .execute();
 
     Assert.assertTrue(result.size() == 1);
@@ -394,7 +395,8 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select format('%d - %s (%s)', nr, street, type, dummy ) as output from Account"))
+                    "select format('%d - %s (%s)', nr, street, type, dummy ) as output from"
+                        + " Account"))
             .execute();
 
     Assert.assertTrue(result.size() > 1);

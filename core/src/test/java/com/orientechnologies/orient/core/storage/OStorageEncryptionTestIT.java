@@ -52,9 +52,10 @@ public class OStorageEncryptionTestIT {
           document.setProperty("id", i);
           document.setProperty(
               "value",
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
-                  + "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,"
-                  + " quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. ");
+              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"
+                  + " incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis"
+                  + " nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                  + " ");
           document.save();
         }
 
@@ -188,9 +189,10 @@ public class OStorageEncryptionTestIT {
         document.setProperty("id", 10);
         document.setProperty(
             "value",
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
-                + "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,"
-                + " quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. ");
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"
+                + " incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis"
+                + " nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                + " ");
         document.save();
 
         try (OResultSet resultSet = session.query("select from EncryptedData where id = ?", 10)) {

@@ -243,7 +243,8 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
         throw new OSerializationException(
             "Type "
                 + iClassName
-                + " cannot be serialized because is not part of registered entities. To fix this error register this class");
+                + " cannot be serialized because is not part of registered entities. To fix this"
+                + " error register this class");
       }
     } catch (Exception e) {
       final String message = "Error on creating object of class " + iClassName;
@@ -280,7 +281,8 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
         throw new OSerializationException(
             "Type "
                 + iClassName
-                + " cannot be serialized because is not part of registered entities. To fix this error register this class");
+                + " cannot be serialized because is not part of registered entities. To fix this"
+                + " error register this class");
       }
     } catch (Exception e) {
       final String message = "Error on creating object of class " + iClassName;
@@ -1366,7 +1368,9 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
   @Override
   public <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
-      throws IllegalStateException, IllegalArgumentException, ONeedRetryException,
+      throws IllegalStateException,
+          IllegalArgumentException,
+          ONeedRetryException,
           UnsupportedOperationException {
     return underlying.executeWithRetry(nRetries, function);
   }

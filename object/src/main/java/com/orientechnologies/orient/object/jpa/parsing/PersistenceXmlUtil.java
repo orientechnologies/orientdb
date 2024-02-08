@@ -58,8 +58,10 @@ public final class PersistenceXmlUtil {
   public static final String PERSISTENCE_XML_ROOT = "META-INF/";
 
   public static final String PERSISTENCE_XML_BASE_NAME = "persistence.xml";
+
   /** The persistence XSD location */
   public static final String PERSISTENCE_XSD_DIR = PERSISTENCE_XML_ROOT + "persistence/";
+
   /** The persistence XML location */
   public static final String PERSISTENCE_XML = PERSISTENCE_XML_ROOT + PERSISTENCE_XML_BASE_NAME;
 

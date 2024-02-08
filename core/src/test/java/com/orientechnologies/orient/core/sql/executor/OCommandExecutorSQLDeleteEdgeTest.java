@@ -55,7 +55,8 @@ public class OCommandExecutorSQLDeleteEdgeTest extends BaseMemoryDatabase {
   public void testFromSelectToSelect() throws Exception {
     OResultSet res =
         db.command(
-            "delete edge CanAccess from ( select from User where username = 'gongolo' ) to ( select from Folder where keyId = '01234567893' )");
+            "delete edge CanAccess from ( select from User where username = 'gongolo' ) to ( select"
+                + " from Folder where keyId = '01234567893' )");
     assertEquals((long) res.next().getProperty("count"), 1);
     assertFalse(db.query("select expand(out(CanAccess)) from " + userId1).hasNext());
   }

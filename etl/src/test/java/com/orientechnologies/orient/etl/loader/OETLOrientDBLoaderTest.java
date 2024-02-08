@@ -37,7 +37,8 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
   public void shouldFailToManageRemoteServer() throws Exception {
 
     configure(
-        "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
+        "{source: { content: { value: 'name,surname\n"
+            + "Jay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
             + "      dbURL: \"remote:sadserver/OETLBaseTest\",\n"
             + "      dbUser: \"admin\",\n"
             + "      dbPassword: \"admin\",\n"
@@ -51,7 +52,8 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
             + "      classes: [\n"
             + "        {name:\"Person\", extends: \"V\" },\n"
             + "      ],\n"
-            + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\", \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
+            + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\","
+            + " \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
 
     proc.execute();
   }
@@ -60,7 +62,8 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
   public void testAddMetadataToIndex() {
 
     configure(
-        "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
+        "{source: { content: { value: 'name,surname\n"
+            + "Jay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
             + "      dbURL: 'memory:"
             + name.getMethodName()
             + "',\n"
@@ -74,7 +77,8 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
             + "      classes: [\n"
             + "        {name:\"Person\", extends: \"V\" },\n"
             + "      ],\n"
-            + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\", \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
+            + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\","
+            + " \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
 
     proc.execute();
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) proc.getLoader().getPool().acquire();
@@ -114,7 +118,9 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
             + "      classes: [\n"
             + "        {name:\"Person\", extends: \"V\" },\n"
             + "      ],\n"
-            + "      indexes: [{class:\"Person\" , fields:[\"surname:String\"], \"type\":\"FULLTEXT\",  \"algorithm\":\"LUCENE\",  \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
+            + "      indexes: [{class:\"Person\" , fields:[\"surname:String\"],"
+            + " \"type\":\"FULLTEXT\",  \"algorithm\":\"LUCENE\",  \"metadata\": {"
+            + " \"ignoreNullValues\" : \"false\"}} ]  } } }");
 
     proc.execute();
 
@@ -141,7 +147,8 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
   public void shouldSaveDocumentsOnGivenCluster() {
 
     configure(
-        "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
+        "{source: { content: { value: 'name,surname\n"
+            + "Jay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
             + "      dbURL: \"memory:"
             + name.getMethodName()
             + "\",\n"
@@ -156,7 +163,8 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
             + "      classes: [\n"
             + "        {name:\"Person\", extends: \"V\" },\n"
             + "      ],\n"
-            + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\", \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
+            + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\","
+            + " \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
     proc.execute();
 
     ODatabaseDocument db = proc.getLoader().getPool().acquire();
@@ -177,7 +185,8 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
   public void shouldSaveDocuments() {
 
     configure(
-        "{source: { content: { value: 'name,surname,@class\nJay,Miner,Person' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
+        "{source: { content: { value: 'name,surname,@class\n"
+            + "Jay,Miner,Person' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
             + "      dbURL: 'memory:"
             + name.getMethodName()
             + "',\n"
@@ -211,8 +220,10 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
 
     // configure
     configure(
-        "{source: { content: { value: 'name,surname,married,birthday\nJay,Miner,false,1970-01-01 05:30:00' } }, "
-            + "extractor : { csv: {columns:['name:string','surname:string','married:boolean','birthday:datetime'], dateFormat :'yyyy-MM-dd HH:mm:ss'} }, loader: { orientdb: {\n"
+        "{source: { content: { value: 'name,surname,married,birthday\n"
+            + "Jay,Miner,false,1970-01-01 05:30:00' } }, extractor : { csv:"
+            + " {columns:['name:string','surname:string','married:boolean','birthday:datetime'],"
+            + " dateFormat :'yyyy-MM-dd HH:mm:ss'} }, loader: { orientdb: {\n"
             + "      dbURL: 'memory:"
             + name.getMethodName()
             + "', class:'Person',     dbUser: \"admin\",\n"

@@ -19,10 +19,13 @@ public class Token implements java.io.Serializable {
 
   /** The line number of the first character of this Token. */
   public int beginLine;
+
   /** The column number of the first character of this Token. */
   public int beginColumn;
+
   /** The line number of the last character of this Token. */
   public int endLine;
+
   /** The column number of the last character of this Token. */
   public int endColumn;
 

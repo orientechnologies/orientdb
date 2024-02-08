@@ -45,7 +45,8 @@ public class ODESEncryption extends OAbstractEncryption {
 
     if (iOptions == null)
       throw new OSecurityException(
-          "DES encryption has been selected, but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '"
+          "DES encryption has been selected, but no key was found. Please configure it by passing"
+              + " the key as property at database create/open. The property key is: '"
               + OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey()
               + "'");
 
@@ -61,7 +62,8 @@ public class ODESEncryption extends OAbstractEncryption {
     } catch (Exception e) {
       throw OException.wrapException(
           new OInvalidStorageEncryptionKeyException(
-              "Cannot initialize DES encryption with current key. Assure the key is a BASE64 - 64 bits long"),
+              "Cannot initialize DES encryption with current key. Assure the key is a BASE64 - 64"
+                  + " bits long"),
           e);
     }
 

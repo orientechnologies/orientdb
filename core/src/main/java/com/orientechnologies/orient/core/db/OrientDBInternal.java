@@ -72,6 +72,7 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
       public void close() {}
     };
   }
+
   /**
    * Create a new remote factory
    *

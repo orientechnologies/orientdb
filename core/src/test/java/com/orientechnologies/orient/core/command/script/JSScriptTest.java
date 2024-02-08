@@ -198,7 +198,8 @@ public class JSScriptTest {
       OResultSet resultSet =
           db.execute(
               "javascript",
-              "var elem = db.query(\"select from OUser\").stream().findFirst().get(); elem.getProperty(\"name\")");
+              "var elem = db.query(\"select from OUser\").stream().findFirst().get();"
+                  + " elem.getProperty(\"name\")");
       Assert.assertEquals(1, resultSet.stream().count());
     } finally {
       orientDB.drop(name.getMethodName());

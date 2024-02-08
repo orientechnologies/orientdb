@@ -213,14 +213,17 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
   }
 
   public String getSyntax() {
-    return "TRAVERSE <field>* FROM <target> [MAXDEPTH <max-depth>] [WHILE <condition>] [STRATEGY <strategy>]";
+    return "TRAVERSE <field>* FROM <target> [MAXDEPTH <max-depth>] [WHILE <condition>] [STRATEGY"
+        + " <strategy>]";
   }
 
   protected void warnDeprecatedWhere() {
     OLogManager.instance()
         .warn(
             this,
-            "Keyword WHERE in traverse has been replaced by WHILE. Please change your query to support WHILE instead of WHERE because now it's only deprecated, but in future it will be removed the back-ward compatibility.");
+            "Keyword WHERE in traverse has been replaced by WHILE. Please change your query to"
+                + " support WHILE instead of WHERE because now it's only deprecated, but in future"
+                + " it will be removed the back-ward compatibility.");
   }
 
   @Override

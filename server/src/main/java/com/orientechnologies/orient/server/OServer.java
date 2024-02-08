@@ -113,8 +113,8 @@ public class OServer {
       OLogManager.instance()
           .warnNoDb(
               this,
-              "OrientDB instance is running inside of web application, "
-                  + "it is highly unrecommended to force to shutdown OrientDB engine on server shutdown");
+              "OrientDB instance is running inside of web application, it is highly unrecommended"
+                  + " to force to shutdown OrientDB engine on server shutdown");
     }
 
     this.shutdownEngineOnExit = shutdownEngineOnExit;
@@ -228,8 +228,12 @@ public class OServer {
   }
 
   public void restart()
-      throws ClassNotFoundException, InvocationTargetException, InstantiationException,
-          NoSuchMethodException, IllegalAccessException, IOException {
+      throws ClassNotFoundException,
+          InvocationTargetException,
+          InstantiationException,
+          NoSuchMethodException,
+          IllegalAccessException,
+          IOException {
     try {
       deinit();
     } finally {
@@ -674,7 +678,8 @@ public class OServer {
     System.out.println();
     System.out.println(
         OAnsiCode.format(
-            "$ANSI{yellow +--------------------------------------------------------------------------+}"));
+            "$ANSI{yellow"
+                + " +--------------------------------------------------------------------------+}"));
     System.out.println(
         OAnsiCode.format(
             String.format(
@@ -682,16 +687,20 @@ public class OServer {
                 "'" + iDatabaseName + "'")));
     System.out.println(
         OAnsiCode.format(
-            "$ANSI{yellow +--------------------------------------------------------------------------+}"));
+            "$ANSI{yellow"
+                + " +--------------------------------------------------------------------------+}"));
     System.out.println(
         OAnsiCode.format(
-            "$ANSI{yellow | To avoid this message set the environment variable or JVM setting        |}"));
+            "$ANSI{yellow | To avoid this message set the environment variable or JVM setting      "
+                + "  |}"));
     System.out.println(
         OAnsiCode.format(
-            "$ANSI{yellow | 'storage.encryptionKey' to the key to use.                               |}"));
+            "$ANSI{yellow | 'storage.encryptionKey' to the key to use.                             "
+                + "  |}"));
     System.out.println(
         OAnsiCode.format(
-            "$ANSI{yellow +--------------------------------------------------------------------------+}"));
+            "$ANSI{yellow"
+                + " +--------------------------------------------------------------------------+}"));
     System.out.print(
         OAnsiCode.format("\n$ANSI{yellow Database encryption key [BLANK=to skip opening]: }"));
 
@@ -1017,7 +1026,8 @@ public class OServer {
           if (!rootPassword.equals(rootConfirmPassword)) {
             System.out.println(
                 OAnsiCode.format(
-                    "$ANSI{red ERROR: Passwords don't match, please reinsert both of them, or press ENTER to auto generate it}"));
+                    "$ANSI{red ERROR: Passwords don't match, please reinsert both of them, or press"
+                        + " ENTER to auto generate it}"));
           } else
             // PASSWORDS MATCH
 

@@ -124,7 +124,8 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
 
       // inserting record r1 and checking consistency on server1 and server2
       System.out.print(
-          "Inserting record r1 and on server1 and checking consistency on both server1 and server2...");
+          "Inserting record r1 and on server1 and checking consistency on both server1 and"
+              + " server2...");
       dbServer1.activateOnCurrentThread();
       ODocument r1onServer1 =
           new ODocument("Person").fields("id", "R001", "firstName", "Han", "lastName", "Solo");

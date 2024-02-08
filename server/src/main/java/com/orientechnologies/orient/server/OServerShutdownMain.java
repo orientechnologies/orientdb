@@ -111,7 +111,8 @@ public class OServerShutdownMain {
     if ("NOT_PRESENT".equals(rootPassword) || printUsage) {
       System.out.println("allowed parameters");
       System.out.println(
-          "-h | --host hostname : name or ip of the host where OrientDB is running. Deafult to localhost ");
+          "-h | --host hostname : name or ip of the host where OrientDB is running. Deafult to"
+              + " localhost ");
       System.out.println(
           "-P | --ports  ports : ports in the form of single value or range. Default to 2424-2430");
       System.out.println("-p | --password password : the super user password");

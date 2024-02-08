@@ -38,7 +38,8 @@ public class ODemoDbGroupByTestIT extends OIntegrationTestTemplate {
 
     OResultSet resultSet =
         db.query(
-            "SELECT count(*), OrderDate.format('yyyy') FROM Orders GROUP BY OrderDate.format('yyyy')");
+            "SELECT count(*), OrderDate.format('yyyy') FROM Orders GROUP BY"
+                + " OrderDate.format('yyyy')");
 
     assertThat(resultSet).hasSize(7);
     resultSet.close();
@@ -50,7 +51,8 @@ public class ODemoDbGroupByTestIT extends OIntegrationTestTemplate {
 
     OResultSet resultSet =
         db.query(
-            "SELECT count(*), OrderDate.format('yyyy') as year FROM Orders GROUP BY OrderDate.format('yyyy')");
+            "SELECT count(*), OrderDate.format('yyyy') as year FROM Orders GROUP BY"
+                + " OrderDate.format('yyyy')");
 
     assertThat(resultSet).hasSize(7);
     resultSet.close();

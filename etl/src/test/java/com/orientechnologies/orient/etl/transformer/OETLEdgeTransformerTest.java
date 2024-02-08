@@ -80,9 +80,10 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
   @Test
   public void testNotLightweightEdge() {
     configure(
-        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { csv: {} },"
-            + " transformers: [{vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
-            + "], loader: { orientdb: { dbURL: 'memory:"
+        "{source: { content: { value: 'name,surname,friend\n"
+            + "Jay,Miner,Luca' } }, extractor : { csv: {} }, transformers: [{vertex: {class:'V1'}},"
+            + " {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},], loader: {"
+            + " orientdb: { dbURL: 'memory:"
             + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
@@ -104,9 +105,10 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
   @Test
   public void testLookupMultipleValues() {
     configure(
-        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { csv: {} },"
-            + " transformers: [{vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
-            + "], loader: { orientdb: { dbURL: 'memory:"
+        "{source: { content: { value: 'name,surname,friend\n"
+            + "Jay,Miner,Luca' } }, extractor : { csv: {} }, transformers: [{vertex: {class:'V1'}},"
+            + " {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},], loader: {"
+            + " orientdb: { dbURL: 'memory:"
             + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
@@ -134,11 +136,13 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
   @Test
   public void testEdgeWithProperties() {
     configure(
-        "{source: { content: { value: 'id,name,surname,friendSince,friendId,friendName,friendSurname\n0,Jay,Miner,1996,1,Luca,Garulli' } }, extractor : { csv: {} },"
-            + " transformers: [ {vertex: {class:'V1'}}, "
+        "{source: { content: { value:"
+            + " 'id,name,surname,friendSince,friendId,friendName,friendSurname\n"
+            + "0,Jay,Miner,1996,1,Luca,Garulli' } }, extractor : { csv: {} }, transformers: ["
+            + " {vertex: {class:'V1'}}, "
             + "{edge:{unresolvedLinkAction:'CREATE',class:'Friend',joinFieldName:'friendId',lookup:'V2.fid',targetVertexFields:{name:'${input.friendName}',surname:'${input.friendSurname}'},edgeFields:{since:'${input.friendSince}'}}},"
-            + "{field:{fieldNames:['friendSince','friendId','friendName','friendSurname'],operation:'remove'}}"
-            + "], loader: { orientdb: { dbURL: 'memory:"
+            + "{field:{fieldNames:['friendSince','friendId','friendName','friendSurname'],operation:'remove'}}],"
+            + " loader: { orientdb: { dbURL: 'memory:"
             + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
@@ -191,9 +195,12 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
   @Test
   public void testErrorOnDuplicateVertex() {
     configure(
-        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { csv: {} },"
-            + " transformers: [{merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
-            + "], loader: { orientdb: { dbURL: 'memory:"
+        "{source: { content: { value: 'name,surname,friend\n"
+            + "Jay,Miner,Luca\n"
+            + "Jay,Miner,Luca' } }, extractor : { csv: {} }, transformers: [{merge:"
+            + " {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}},"
+            + " {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},], loader: {"
+            + " orientdb: { dbURL: 'memory:"
             + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
@@ -212,10 +219,12 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
   @Test
   public void testSkipDuplicateVertex() {
     configure(
-        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { csv: {} },"
-            + " transformers: [ {merge: {joinFieldName:'name',lookup:'V1.name'}}, "
-            + "{vertex: {class:'V1'}}, {edge:{class:'Friend',skipDuplicates:true, joinFieldName:'friend',lookup:'V2.name'}},"
-            + "], loader: { orientdb: { dbURL: 'memory:"
+        "{source: { content: { value: 'name,surname,friend\n"
+            + "Jay,Miner,Luca\n"
+            + "Jay,Miner,Luca' } }, extractor : { csv: {} }, transformers: [ {merge:"
+            + " {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}},"
+            + " {edge:{class:'Friend',skipDuplicates:true,"
+            + " joinFieldName:'friend',lookup:'V2.name'}},], loader: { orientdb: { dbURL: 'memory:"
             + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
@@ -237,9 +246,14 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
   public void testVertexAndEdgesOnSeparatedFiles() {
     // IMPORT PERSON (VERTICES)
     configure(
-        "{source: { content: { value: 'id,name\n1,Luigi\n2,Luca\n3,Enrico\n4,Franco\n5,Gianni' } }, extractor : { csv: {} },"
-            + " transformers: [ {merge: {joinFieldName:'id',lookup:'PersonMF.id'}}, {vertex: {class:'PersonMF'}}"
-            + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/etlEdgeTransformerTest"
+        "{source: { content: { value: 'id,name\n"
+            + "1,Luigi\n"
+            + "2,Luca\n"
+            + "3,Enrico\n"
+            + "4,Franco\n"
+            + "5,Gianni' } }, extractor : { csv: {} }, transformers: [ {merge:"
+            + " {joinFieldName:'id',lookup:'PersonMF.id'}}, {vertex: {class:'PersonMF'}}], loader:"
+            + " { orientdb: { dbURL: 'plocal:./target/databases/etlEdgeTransformerTest"
             + name.getMethodName()
             + "', dbType:'graph', classes: [{name:'PersonMF',extends:'V'}] } } }");
 
@@ -266,13 +280,11 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
             + "1,4,2015\n"
             + "2,5,2008\n"
             + "3,5,2015\n"
-            + "4,5,2015' } }, extractor : { csv: {} },"
-            + " transformers: ["
-            + "{merge: {joinFieldName:'friend_from',lookup:'PersonMF.id'}},"
-            + "{vertex: {class:'PersonMF'}},"
-            + "{edge:{class:'FriendMF',joinFieldName:'friend_to',lookup:'PersonMF.id',edgeFields:{since:'${input.since}'} }},"
-            + "{field: {operation:'remove', fieldNames:['friend_from','friend_to','since']}}"
-            + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/etlEdgeTransformerTest"
+            + "4,5,2015' } }, extractor : { csv: {} }, transformers: [{merge:"
+            + " {joinFieldName:'friend_from',lookup:'PersonMF.id'}},{vertex:"
+            + " {class:'PersonMF'}},{edge:{class:'FriendMF',joinFieldName:'friend_to',lookup:'PersonMF.id',edgeFields:{since:'${input.since}'}"
+            + " }},{field: {operation:'remove', fieldNames:['friend_from','friend_to','since']}}],"
+            + " loader: { orientdb: { dbURL: 'plocal:./target/databases/etlEdgeTransformerTest"
             + name.getMethodName()
             + "', dbType:'graph', classes: [{name:'FriendMF',extends:'E'}] } } }");
 

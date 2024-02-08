@@ -53,7 +53,8 @@ public class OLuceneSingleFieldEmbeddedTest extends OLuceneBaseTest {
     docs.close();
     docs =
         db.query(
-            "select * from Song where search_fields(['title'],\"(title:mountain)\")=true  and search_fields(['author'],\"(author:Fabbio)\")=true");
+            "select * from Song where search_fields(['title'],\"(title:mountain)\")=true  and"
+                + " search_fields(['author'],\"(author:Fabbio)\")=true");
 
     assertThat(docs).hasSize(1);
     docs.close();

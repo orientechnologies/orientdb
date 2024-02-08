@@ -66,7 +66,8 @@ public class ODatabaseFailDueCloseTest {
     try {
 
       String queryText =
-          "SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR 'roma' IN out('lives').localName ) ORDER BY age ASC";
+          "SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR"
+              + " 'roma' IN out('lives').localName ) ORDER BY age ASC";
       OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(queryText);
       List<ODocument> results = graph.getRawGraph().query(query);
       assertNotNull(results);

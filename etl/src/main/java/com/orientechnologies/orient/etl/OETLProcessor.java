@@ -302,7 +302,8 @@ public class OETLProcessor implements AutoCloseable {
           .getMessageHandler()
           .info(
               this,
-              "+ extracted %,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
+              "+ extracted %,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time:"
+                  + " %s [%d warnings, %d errors]",
               extractorProgress,
               extractorUnit,
               extractorItemsSec,
@@ -324,7 +325,8 @@ public class OETLProcessor implements AutoCloseable {
           .getMessageHandler()
           .info(
               this,
-              "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
+              "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d"
+                  + " %s/sec) Total time: %s [%d warnings, %d errors]",
               extractorPercentage,
               extractorProgress,
               extractorTotal,

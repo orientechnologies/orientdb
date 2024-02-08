@@ -21,8 +21,10 @@ public class ODemoDbFromDocumentationRecommendationsIT extends OIntegrationTestT
     OResultSet resultSet =
         db.query(
             "MATCH \n"
-                + "  {class: Profiles, as: profile, where: (Name = 'Isabella' AND Surname='Gomez')}-HasFriend-{as: friend},\n"
-                + "  {as: friend}-HasFriend-{as: friendOfFriend, where: ($matched.profile not in $currentMatch.both('HasFriend') and $matched.profile != $currentMatch)} \n"
+                + "  {class: Profiles, as: profile, where: (Name = 'Isabella' AND"
+                + " Surname='Gomez')}-HasFriend-{as: friend},\n"
+                + "  {as: friend}-HasFriend-{as: friendOfFriend, where: ($matched.profile not in"
+                + " $currentMatch.both('HasFriend') and $matched.profile != $currentMatch)} \n"
                 + "RETURN DISTINCT friendOfFriend.Name");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
@@ -38,7 +40,8 @@ public class ODemoDbFromDocumentationRecommendationsIT extends OIntegrationTestT
     OResultSet resultSet =
         db.query(
             "MATCH \n"
-                + "  {Class: Customers, as: customer, where: (OrderedId=1)}-HasProfile->{class: Profiles, as: profile},\n"
+                + "  {Class: Customers, as: customer, where: (OrderedId=1)}-HasProfile->{class:"
+                + " Profiles, as: profile},\n"
                 + "  {as: profile}-HasFriend->{class: Profiles, as: friend},\n"
                 + "  {as: friend}<-HasProfile-{Class: Customers, as: customerFriend},\n"
                 + "  {as: customerFriend}-HasStayed->{Class: Hotels, as: hotel},\n"
@@ -59,12 +62,14 @@ public class ODemoDbFromDocumentationRecommendationsIT extends OIntegrationTestT
     OResultSet resultSet =
         db.query(
             "MATCH\n"
-                + "  {Class: Customers, as: customer, where: (OrderedId=1)}-HasProfile->{class: Profiles, as: profile},\n"
+                + "  {Class: Customers, as: customer, where: (OrderedId=1)}-HasProfile->{class:"
+                + " Profiles, as: profile},\n"
                 + "  {as: profile}-HasFriend->{class: Profiles, as: friend},\n"
                 + "  {as: friend}<-HasProfile-{Class: Customers, as: customerFriend},\n"
                 + "  {as: customerFriend}-HasStayed->{Class: Hotels, as: hotel},\n"
                 + "  {as: customerFriend}-MadeReview->{Class: Reviews, as: review},\n"
-                + "  {as: hotel}.outE('HasReview'){as: ReviewStars, where: (Stars>3)}.inV(){as: review}\n"
+                + "  {as: hotel}.outE('HasReview'){as: ReviewStars, where: (Stars>3)}.inV(){as:"
+                + " review}\n"
                 + "RETURN $pathelements");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());

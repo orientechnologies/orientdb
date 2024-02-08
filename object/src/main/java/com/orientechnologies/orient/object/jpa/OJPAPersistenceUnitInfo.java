@@ -51,6 +51,7 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
    * unit's root.
    */
   private final URL unitRootUrl;
+
   /**
    * the list of mapping file names that the persistence provider must load to determine the
    * mappings for the entity classes

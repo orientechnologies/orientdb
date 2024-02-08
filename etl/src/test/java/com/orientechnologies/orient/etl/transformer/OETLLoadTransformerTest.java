@@ -107,10 +107,12 @@ public class OETLLoadTransformerTest extends OETLBaseTest {
 
     // CSV contains duplicated data
     configure(
-        "{source: { content: { value: 'num,name\n10000,FirstName\n10001,SecondName\n10000,FirstNameUpdated' } }, extractor : { csv: {} },"
-            + " transformers: [{load: { joinFieldName:'num', lookup:'Person.num'}}, {vertex: {class:'Person', skipDuplicates: true}}],"
-            + " "
-            + "loader: { orientdb: { dbURL: 'memory:"
+        "{source: { content: { value: 'num,name\n"
+            + "10000,FirstName\n"
+            + "10001,SecondName\n"
+            + "10000,FirstNameUpdated' } }, extractor : { csv: {} }, transformers: [{load: {"
+            + " joinFieldName:'num', lookup:'Person.num'}}, {vertex: {class:'Person',"
+            + " skipDuplicates: true}}], loader: { orientdb: { dbURL: 'memory:"
             + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
@@ -152,10 +154,12 @@ public class OETLLoadTransformerTest extends OETLBaseTest {
     configure(
         "{source: { content: { value: '"
             + csv
-            + "' } }, extractor : { csv: {} },"
-            + "transformers: [{load: { joinFieldName:'depot', lookup:'SupplyChainNode.id'}}"
-            + ", {edge: { class: 'HAS_ROUTE_TO', joinFieldName: '${extractedPayload.store}', lookup: 'SupplyChainNode.id', edgeFields: { 'StartDate': '${extractedPayload.StartDate}', 'EndDate': '${extractedPayload.EndDate}' }, direction: 'out', unresolvedLinkAction: 'NOTHING' } }"
-            + "], loader: { orientdb: { dbURL: 'memory:"
+            + "' } }, extractor : { csv: {} },transformers: [{load: { joinFieldName:'depot',"
+            + " lookup:'SupplyChainNode.id'}}, {edge: { class: 'HAS_ROUTE_TO', joinFieldName:"
+            + " '${extractedPayload.store}', lookup: 'SupplyChainNode.id', edgeFields: {"
+            + " 'StartDate': '${extractedPayload.StartDate}', 'EndDate':"
+            + " '${extractedPayload.EndDate}' }, direction: 'out', unresolvedLinkAction: 'NOTHING'"
+            + " } }], loader: { orientdb: { dbURL: 'memory:"
             + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 

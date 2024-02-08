@@ -65,6 +65,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     private OVertex current;
     private OVertex currentRight;
     public Integer maxDepth;
+
     /** option that decides whether or not to return the edge information */
     public Boolean edge;
   }
@@ -300,7 +301,8 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   }
 
   public String getSyntax() {
-    return "shortestPath(<sourceVertex>, <destinationVertex>, [<direction>, [ <edgeTypeAsString> ]])";
+    return "shortestPath(<sourceVertex>, <destinationVertex>, [<direction>, [ <edgeTypeAsString>"
+        + " ]])";
   }
 
   protected List<ORID> walkLeft(final OSQLFunctionShortestPath.OShortestPathContext ctx) {

@@ -272,7 +272,8 @@ public class OGremlinHelper {
               newClone = m[i].invoke(objectToClone);
               System.out.println(
                   objectToClone.getClass()
-                      + " cloned by Reflection. Performance can be improved by adding the class to the list of known types");
+                      + " cloned by Reflection. Performance can be improved by adding the class to"
+                      + " the list of known types");
               return newClone;
             }
           }
@@ -297,7 +298,8 @@ public class OGremlinHelper {
               new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
           System.out.println(
               objectToClone.getClass()
-                  + " cloned by Serialization. Performance can be improved by adding the class to the list of known types");
+                  + " cloned by Serialization. Performance can be improved by adding the class to"
+                  + " the list of known types");
           return in.readObject();
 
           // ***************************************************************************************************************************************

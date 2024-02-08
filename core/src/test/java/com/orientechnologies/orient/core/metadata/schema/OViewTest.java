@@ -70,7 +70,9 @@ public class OViewTest {
       session.createClass("test");
       session
           .command(
-              "create view test_view from( select name from test ) metadata {updateIntervalSeconds:1, indexes: [{type:'NOTUNIQUE', properties:{name:'STRING'}}]}")
+              "create view test_view from( select name from test ) metadata"
+                  + " {updateIntervalSeconds:1, indexes: [{type:'NOTUNIQUE',"
+                  + " properties:{name:'STRING'}}]}")
           .close();
       session.command("insert into test set name='abc'").close();
 

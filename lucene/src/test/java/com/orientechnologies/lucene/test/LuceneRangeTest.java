@@ -127,7 +127,8 @@ public class LuceneRangeTest extends BaseLuceneTest {
     // name and age range
     OResultSet results =
         db.query(
-            "SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'age:[5 TO 6] name:robert  '");
+            "SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'age:[5 TO 6] name:robert "
+                + " '");
 
     assertThat(results).hasSize(3);
 

@@ -36,11 +36,11 @@ public class OETLFlowTransformerTest extends OETLBaseTest {
   public void testSkip() {
 
     configure(
-        "{source: { content: { value: 'name,surname\nJay,Miner\nSkipMe,Test' } }, extractor : { csv: {} },"
-            + " transformers: [{vertex: {class:'V'}}, "
-            + "{flow:{operation:'skip',if: 'name <> \'Jay\''}},"
-            + "{field:{fieldName:'name', value:'3'}}"
-            + "], loader: { orientdb: { dbURL: 'memory:"
+        "{source: { content: { value: 'name,surname\n"
+            + "Jay,Miner\n"
+            + "SkipMe,Test' } }, extractor : { csv: {} }, transformers: [{vertex: {class:'V'}},"
+            + " {flow:{operation:'skip',if: 'name <> \'Jay\''}},{field:{fieldName:'name',"
+            + " value:'3'}}], loader: { orientdb: { dbURL: 'memory:"
             + name.getMethodName()
             + "', dbType:'graph' } } }");
     proc.execute();

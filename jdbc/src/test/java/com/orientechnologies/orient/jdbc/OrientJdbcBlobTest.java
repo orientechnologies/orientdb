@@ -137,7 +137,8 @@ public class OrientJdbcBlobTest extends OrientJdbcDbPerClassTemplateTest {
 
     try {
       fileStream = new DigestInputStream(fileStream, md);
-      while (fileStream.read() != -1) ;
+      while (fileStream.read() != -1)
+        ;
     } finally {
       try {
         fileStream.close();

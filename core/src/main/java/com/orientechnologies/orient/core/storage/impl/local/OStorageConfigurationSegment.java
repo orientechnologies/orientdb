@@ -135,7 +135,8 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
         OLogManager.instance()
             .warnNoDb(
                 this,
-                "Main storage configuration file %s is broken in storage %s, try to read from backup file %s",
+                "Main storage configuration file %s is broken in storage %s, try to read from"
+                    + " backup file %s",
                 file,
                 storageName,
                 backupFile);
@@ -159,8 +160,8 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
         OLogManager.instance()
             .warn(
                 this,
-                "Seems like previous update to the storage '%s' configuration was finished incorrectly, "
-                    + "main configuration file %s is absent, reading from backup",
+                "Seems like previous update to the storage '%s' configuration was finished"
+                    + " incorrectly, main configuration file %s is absent, reading from backup",
                 backupFile,
                 file);
 

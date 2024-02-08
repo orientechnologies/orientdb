@@ -32,7 +32,8 @@ public class LuceneDropIndexIntegrationTest {
     final OrientDB remote =
         new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.execute(
-        "create database LuceneDropIndexIntegrationTest plocal users(admin identified by 'admin' role admin)");
+        "create database LuceneDropIndexIntegrationTest plocal users(admin identified by 'admin'"
+            + " role admin)");
     ODatabaseSession session = remote.open("LuceneDropIndexIntegrationTest", "admin", "admin");
 
     session.command("create class Person");
@@ -75,8 +76,12 @@ public class LuceneDropIndexIntegrationTest {
 
   @After
   public void after()
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException,
-          NoSuchMethodException, IOException, InvocationTargetException {
+      throws InstantiationException,
+          IllegalAccessException,
+          ClassNotFoundException,
+          NoSuchMethodException,
+          IOException,
+          InvocationTargetException {
 
     server0.shutdown();
     server1.shutdown();

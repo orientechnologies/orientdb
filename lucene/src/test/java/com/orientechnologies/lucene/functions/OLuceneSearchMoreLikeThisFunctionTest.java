@@ -126,7 +126,8 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
 
     try (OResultSet resultSet =
         db.query(
-            "SELECT from Song  let $a=(SELECT @rid FROM Song WHERE author = 'Hunter')  where SEARCH_More( $a, { 'minTermFreq':1, 'minDocFreq':1} ) = true")) {
+            "SELECT from Song  let $a=(SELECT @rid FROM Song WHERE author = 'Hunter')  where"
+                + " SEARCH_More( $a, { 'minTermFreq':1, 'minDocFreq':1} ) = true")) {
       assertThat(resultSet).hasSize(229);
     }
   }

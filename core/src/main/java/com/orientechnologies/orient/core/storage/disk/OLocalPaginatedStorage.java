@@ -637,7 +637,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       OLogManager.instance()
           .debug(
               OLocalPaginatedStorage.class,
-              "Cannot delete database files because they are still locked by the OrientDB process: waiting %d ms and retrying %d/%d...",
+              "Cannot delete database files because they are still locked by the OrientDB process:"
+                  + " waiting %d ms and retrying %d/%d...",
               waitTime,
               i,
               maxRetries);

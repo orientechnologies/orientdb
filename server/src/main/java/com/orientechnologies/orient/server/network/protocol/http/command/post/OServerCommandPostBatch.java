@@ -101,7 +101,8 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         OLogManager.instance()
             .warn(
                 this,
-                "Found database instance from the pool with a pending transaction. Forcing rollback before using it");
+                "Found database instance from the pool with a pending transaction. Forcing rollback"
+                    + " before using it");
         db.rollback(true);
       }
 

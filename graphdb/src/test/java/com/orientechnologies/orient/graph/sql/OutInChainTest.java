@@ -77,11 +77,13 @@ public class OutInChainTest {
 
     graph
         .sqlCommand(
-            "create edge E1 from (select from V1 where name = '1') to (select from V1 where name = '2')")
+            "create edge E1 from (select from V1 where name = '1') to (select from V1 where name ="
+                + " '2')")
         .close();
     graph
         .sqlCommand(
-            "create edge E2 from (select from V1 where name = '1') to (select from V1 where name = '3')")
+            "create edge E2 from (select from V1 where name = '1') to (select from V1 where name ="
+                + " '3')")
         .close();
 
     Iterable result =

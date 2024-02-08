@@ -155,7 +155,8 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract
       throw new OCommandExecutionException(
           "Cannot alter class '"
               + className
-              + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
+              + "' because is an Edge class and could break vertices. Use UNSAFE if you want to"
+              + " force it");
 
     if (value != null && attribute == ATTRIBUTES.SUPERCLASS) {
       checkClassExists(database, className, decodeClassName(value));
@@ -171,7 +172,8 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract
         throw new OCommandExecutionException(
             "Cannot rename class '"
                 + className
-                + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at your won risk)");
+                + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at"
+                + " your won risk)");
       }
     }
     cls.set(attribute, value);

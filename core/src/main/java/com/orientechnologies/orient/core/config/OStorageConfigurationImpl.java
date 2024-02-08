@@ -110,6 +110,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
   private transient boolean validation = true;
   protected OStorageConfigurationUpdateListener updateListener;
+
   /** Version of product release under which storage was created */
   private String createdAtVersion;
 
@@ -422,7 +423,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
           OLogManager.instance()
               .warn(
                   this,
-                  "Information about storage locale is undefined (language is undefined) default locale "
+                  "Information about storage locale is undefined (language is undefined) default"
+                      + " locale "
                       + locale
                       + " will be used");
 
@@ -430,7 +432,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
           OLogManager.instance()
               .warn(
                   this,
-                  "Information about storage locale is undefined (country is undefined) default locale "
+                  "Information about storage locale is undefined (country is undefined) default"
+                      + " locale "
                       + locale
                       + " will be used");
       }

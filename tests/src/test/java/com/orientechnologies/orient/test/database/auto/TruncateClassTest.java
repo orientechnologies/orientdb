@@ -115,7 +115,8 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     database.command("create class TestTruncateVertexClassSuperclass").close();
     database
         .command(
-            "create class TestTruncateVertexClassSubclass extends TestTruncateVertexClassSuperclass")
+            "create class TestTruncateVertexClassSubclass extends"
+                + " TestTruncateVertexClassSuperclass")
         .close();
 
     database.command("insert into TestTruncateVertexClassSuperclass set name = 'foo'").close();
@@ -143,12 +144,14 @@ public class TruncateClassTest extends DocumentDBBaseTest {
         .close();
     database
         .command(
-            "create index TestTruncateVertexClassSuperclassWithIndex_index on TestTruncateVertexClassSuperclassWithIndex (name) NOTUNIQUE")
+            "create index TestTruncateVertexClassSuperclassWithIndex_index on"
+                + " TestTruncateVertexClassSuperclassWithIndex (name) NOTUNIQUE")
         .close();
 
     database
         .command(
-            "create class TestTruncateVertexClassSubclassWithIndex extends TestTruncateVertexClassSuperclassWithIndex")
+            "create class TestTruncateVertexClassSubclassWithIndex extends"
+                + " TestTruncateVertexClassSuperclassWithIndex")
         .close();
 
     database

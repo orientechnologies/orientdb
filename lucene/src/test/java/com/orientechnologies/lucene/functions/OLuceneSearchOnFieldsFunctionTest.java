@@ -23,7 +23,8 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
     db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE ");
     db.command("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE ");
     db.command(
-        "create index Song.lyrics_description on Song (lyrics,description) FULLTEXT ENGINE LUCENE ");
+        "create index Song.lyrics_description on Song (lyrics,description) FULLTEXT ENGINE LUCENE"
+            + " ");
   }
 
   @Test
@@ -39,7 +40,8 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
     // TODO: metadata still not used
     final OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_FIELDS(['title'], '*EVE*', {'allowLeadingWildcard': true}) = true");
+            "SELECT from Song where SEARCH_FIELDS(['title'], '*EVE*', {'allowLeadingWildcard':"
+                + " true}) = true");
     assertThat(resultSet).hasSize(14);
     resultSet.close();
   }
@@ -48,7 +50,8 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
   public void shouldSearhOnTwoFieldsInOR() throws Exception {
     final OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_FIELDS(['title'], 'BELIEVE') = true OR SEARCH_FIELDS(['author'], 'Bob') = true ");
+            "SELECT from Song where SEARCH_FIELDS(['title'], 'BELIEVE') = true OR"
+                + " SEARCH_FIELDS(['author'], 'Bob') = true ");
     assertThat(resultSet).hasSize(41);
     resultSet.close();
   }
@@ -57,7 +60,8 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
   public void shouldSearchOnTwoFieldsInAND() throws Exception {
     final OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_FIELDS(['title'], 'tambourine') = true AND SEARCH_FIELDS(['author'], 'Bob') = true ");
+            "SELECT from Song where SEARCH_FIELDS(['title'], 'tambourine') = true AND"
+                + " SEARCH_FIELDS(['author'], 'Bob') = true ");
     assertThat(resultSet).hasSize(1);
     resultSet.close();
   }
@@ -66,7 +70,8 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
   public void shouldSearhOnTwoFieldsWithLeadingWildcardInAND() throws Exception {
     final OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_FIELDS(['title'], 'tambourine') = true AND SEARCH_FIELDS(['author'], 'Bob', {'allowLeadingWildcard': true}) = true ");
+            "SELECT from Song where SEARCH_FIELDS(['title'], 'tambourine') = true AND"
+                + " SEARCH_FIELDS(['author'], 'Bob', {'allowLeadingWildcard': true}) = true ");
     assertThat(resultSet).hasSize(1);
     resultSet.close();
   }
@@ -75,20 +80,23 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
   public void shouldSearchOnMultiFieldIndex() throws Exception {
     OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_FIELDS(['lyrics','description'], '(description:happiness) (lyrics:sad)  ') = true ");
+            "SELECT from Song where SEARCH_FIELDS(['lyrics','description'],"
+                + " '(description:happiness) (lyrics:sad)  ') = true ");
     assertThat(resultSet).hasSize(2);
     resultSet.close();
 
     resultSet =
         db.query(
-            "SELECT from Song where SEARCH_FIELDS(['description','lyrics'], '(description:happiness) (lyrics:sad)  ') = true ");
+            "SELECT from Song where SEARCH_FIELDS(['description','lyrics'],"
+                + " '(description:happiness) (lyrics:sad)  ') = true ");
 
     assertThat(resultSet).hasSize(2);
     resultSet.close();
 
     resultSet =
         db.query(
-            "SELECT from Song where SEARCH_FIELDS(['description'], '(description:happiness) (lyrics:sad)  ') = true ");
+            "SELECT from Song where SEARCH_FIELDS(['description'], '(description:happiness)"
+                + " (lyrics:sad)  ') = true ");
     assertThat(resultSet).hasSize(2);
     resultSet.close();
   }
@@ -96,7 +104,8 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
   @Test(expected = OCommandExecutionException.class)
   public void shouldFailWithWrongFieldName() throws Exception {
     db.query(
-        "SELECT from Song where SEARCH_FIELDS(['wrongName'], '(description:happiness) (lyrics:sad)  ') = true ");
+        "SELECT from Song where SEARCH_FIELDS(['wrongName'], '(description:happiness) (lyrics:sad) "
+            + " ') = true ");
   }
 
   @Test

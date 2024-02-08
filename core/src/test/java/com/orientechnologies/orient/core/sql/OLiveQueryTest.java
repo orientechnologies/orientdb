@@ -61,7 +61,8 @@ public class OLiveQueryTest {
   public void before() {
     odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
     odb.execute(
-        "create database OLiveQueryTest memory users ( admin identified by 'admin' role admin, reader identified by 'reader' role reader)");
+        "create database OLiveQueryTest memory users ( admin identified by 'admin' role admin,"
+            + " reader identified by 'reader' role reader)");
     db = odb.open("OLiveQueryTest", "admin", "admin");
   }
 

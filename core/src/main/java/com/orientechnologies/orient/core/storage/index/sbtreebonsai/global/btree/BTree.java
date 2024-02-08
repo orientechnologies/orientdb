@@ -687,7 +687,8 @@ public final class BTree extends ODurableComponent {
     while (true) {
       if (path.size() > MAX_PATH_LENGTH) {
         throw new OStorageException(
-            "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.");
+            "We reached max level of depth of SBTree but still found nothing, seems like tree is in"
+                + " corrupted state. You should rebuild index related to given query.");
       }
 
       path.add(pageIndex);
@@ -728,7 +729,8 @@ public final class BTree extends ODurableComponent {
       depth++;
       if (depth > MAX_PATH_LENGTH) {
         throw new OStorageException(
-            "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.");
+            "We reached max level of depth of SBTree but still found nothing, seems like tree is in"
+                + " corrupted state. You should rebuild index related to given query.");
       }
 
       try (final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex)) {

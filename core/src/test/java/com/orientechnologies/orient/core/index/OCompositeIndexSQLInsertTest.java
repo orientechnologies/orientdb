@@ -37,20 +37,25 @@ public class OCompositeIndexSQLInsertTest extends BaseMemoryDatabase {
     clazz.createProperty("name", OType.STRING);
 
     db.command(
-            "create index CompositeIndexWithRangeAndConditions_id_tags_name on CompositeIndexWithRangeAndConditions (id, tags, name) NOTUNIQUE")
+            "create index CompositeIndexWithRangeAndConditions_id_tags_name on"
+                + " CompositeIndexWithRangeAndConditions (id, tags, name) NOTUNIQUE")
         .close();
 
     db.command(
-            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"green\",\"yellow\"] , name = \"Foo\", bar = 1")
+            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags ="
+                + " [\"green\",\"yellow\"] , name = \"Foo\", bar = 1")
         .close();
     db.command(
-            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"blue\",\"black\"] , name = \"Foo\", bar = 14")
+            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags ="
+                + " [\"blue\",\"black\"] , name = \"Foo\", bar = 14")
         .close();
     db.command(
-            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"white\"] , name = \"Foo\"")
+            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"white\"] , name"
+                + " = \"Foo\"")
         .close();
     db.command(
-            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"green\",\"yellow\"], name = \"Foo1\", bar = 14")
+            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags ="
+                + " [\"green\",\"yellow\"], name = \"Foo1\", bar = 14")
         .close();
 
     OResultSet res =
@@ -62,7 +67,8 @@ public class OCompositeIndexSQLInsertTest extends BaseMemoryDatabase {
     long count1 =
         db
             .query(
-                "select from CompositeIndexWithRangeAndConditions where id = 1 and tags CONTAINS \"white\"")
+                "select from CompositeIndexWithRangeAndConditions where id = 1 and tags CONTAINS"
+                    + " \"white\"")
             .stream()
             .count();
     Assert.assertEquals(count1, 1);
@@ -70,13 +76,15 @@ public class OCompositeIndexSQLInsertTest extends BaseMemoryDatabase {
     long count2 =
         db
             .query(
-                "select from CompositeIndexWithRangeAndConditions where id > 0 and tags CONTAINS \"white\"")
+                "select from CompositeIndexWithRangeAndConditions where id > 0 and tags CONTAINS"
+                    + " \"white\"")
             .stream()
             .count();
     Assert.assertEquals(count2, 1);
 
     long count3 =
-        db.query("select from CompositeIndexWithRangeAndConditions where id > 0 and bar = 1")
+        db
+            .query("select from CompositeIndexWithRangeAndConditions where id > 0 and bar = 1")
             .stream()
             .count();
 
@@ -85,7 +93,8 @@ public class OCompositeIndexSQLInsertTest extends BaseMemoryDatabase {
     long count4 =
         db
             .query(
-                "select from CompositeIndexWithRangeAndConditions where tags CONTAINS \"white\" and id > 0")
+                "select from CompositeIndexWithRangeAndConditions where tags CONTAINS \"white\" and"
+                    + " id > 0")
             .stream()
             .count();
     Assert.assertEquals(count4, 1);

@@ -528,7 +528,8 @@ public abstract class OSchemaShared implements OCloseable {
         OLogManager.instance()
             .error(
                 this,
-                "Database's schema is empty! Recreating the system classes and allow the opening of the database but double check the integrity of the database",
+                "Database's schema is empty! Recreating the system classes and allow the opening of"
+                    + " the database but double check the integrity of the database",
                 null);
         return;
       } else if (schemaVersion != CURRENT_VERSION_NUMBER && VERSION_NUMBER_V5 != schemaVersion) {
@@ -536,7 +537,8 @@ public abstract class OSchemaShared implements OCloseable {
         // changed associated with it
         // HANDLE SCHEMA UPGRADE
         throw new OConfigurationException(
-            "Database schema is different. Please export your old database with the previous version of OrientDB and reimport it using the current one.");
+            "Database schema is different. Please export your old database with the previous"
+                + " version of OrientDB and reimport it using the current one.");
       }
 
       properties.clear();
@@ -614,7 +616,8 @@ public abstract class OSchemaShared implements OCloseable {
                       + superClassName
                       + "' was declared in class '"
                       + cls.getName()
-                      + "' but was not found in schema. Remove the dependency or create the class to continue.");
+                      + "' but was not found in schema. Remove the dependency or create the class"
+                      + " to continue.");
             superClasses.add(superClass);
           }
           cls.setSuperClassesInternal(superClasses);
@@ -882,7 +885,8 @@ public abstract class OSchemaShared implements OCloseable {
 
     if (database.getTransaction().isActive()) {
       throw new OSchemaException(
-          "Cannot change the schema while a transaction is active. Schema changes are not transactional");
+          "Cannot change the schema while a transaction is active. Schema changes are not"
+              + " transactional");
     }
 
     OScenarioThreadLocal.executeAsDistributed(

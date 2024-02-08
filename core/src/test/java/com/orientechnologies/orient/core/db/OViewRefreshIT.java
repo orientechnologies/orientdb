@@ -217,7 +217,8 @@ public class OViewRefreshIT {
                 + i
                 + " FROM (SELECT name FROM "
                 + className
-                + " where toChange=\"data\") metadata {\"updateIntervalSeconds\":5, indexes:[{type:\"NOTUNIQUE\", properties:{name:\"String\"}}] } ";
+                + " where toChange=\"data\") metadata {\"updateIntervalSeconds\":5,"
+                + " indexes:[{type:\"NOTUNIQUE\", properties:{name:\"String\"}}] } ";
 
         db.command(statement);
       }

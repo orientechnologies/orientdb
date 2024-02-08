@@ -169,20 +169,20 @@ public class JSONTestBenchmark extends DocumentDBBaseTest {
   public void testNullity() {
     final ODocument doc = new ODocument();
     doc.fromJSON(
-        "{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\","
-            + "\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith Ave\","
-            + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"},"
-            + "\"dob\":\"2011-11-17 03:17:04\"}");
+        "{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\",\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith"
+            + " Ave\","
+            + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"},\"dob\":\"2011-11-17"
+            + " 03:17:04\"}");
   }
 
   @Benchmark
   public void testNullityStream() throws IOException {
     final ODocument doc = new ODocument();
     final String json =
-        "{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\","
-            + "\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith Ave\","
-            + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"},"
-            + "\"dob\":\"2011-11-17 03:17:04\"}";
+        "{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\",\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith"
+            + " Ave\","
+            + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"},\"dob\":\"2011-11-17"
+            + " 03:17:04\"}";
     doc.fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
   }
 }

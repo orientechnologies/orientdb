@@ -22,7 +22,8 @@ public class OBinaryProtocolHelper {
     if (NETWORK_BINARY_MIN_PROTOCOL_VERSION.getValueAsInteger() > protocolVersion) {
       String message =
           String.format(
-              "Backward compatibility support enabled from version %d your version is %d, check `%s` settings",
+              "Backward compatibility support enabled from version %d your version is %d, check"
+                  + " `%s` settings",
               NETWORK_BINARY_MIN_PROTOCOL_VERSION.getValueAsInteger(),
               protocolVersion,
               NETWORK_BINARY_MIN_PROTOCOL_VERSION.getKey());

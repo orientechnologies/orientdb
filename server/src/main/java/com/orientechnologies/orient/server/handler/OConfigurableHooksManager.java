@@ -106,7 +106,9 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
               OLogManager.instance()
                   .warn(
                       this,
-                      "[configure] Failed to configure hook '%s'. Parameters specified but hook don support parameters. Should have a method config with parameters OServerParameterConfiguration[] ",
+                      "[configure] Failed to configure hook '%s'. Parameters specified but hook don"
+                          + " support parameters. Should have a method config with parameters"
+                          + " OServerParameterConfiguration[] ",
                       hook.clazz);
             }
           db.registerHook(h, pos);

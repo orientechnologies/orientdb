@@ -48,7 +48,8 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
 
     OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_CLASS('BELIEVE') = true OR SEARCH_CLASS('GOODNIGHT') = true ");
+            "SELECT from Song where SEARCH_CLASS('BELIEVE') = true OR SEARCH_CLASS('GOODNIGHT') ="
+                + " true ");
 
     assertThat(resultSet).hasSize(5);
     resultSet.close();
@@ -59,7 +60,8 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
 
     OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_CLASS('GOODNIGHT') = true AND SEARCH_CLASS( 'Irene', {'allowLeadingWildcard': true}) = true ");
+            "SELECT from Song where SEARCH_CLASS('GOODNIGHT') = true AND SEARCH_CLASS( 'Irene',"
+                + " {'allowLeadingWildcard': true}) = true ");
 
     assertThat(resultSet).hasSize(1);
     resultSet.close();
@@ -69,7 +71,8 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
 
     OResultSet resultSet =
         db.query(
-            "SELECT from Author where SEARCH_CLASS('(description:happiness) (lyrics:sad)  ') = true ");
+            "SELECT from Author where SEARCH_CLASS('(description:happiness) (lyrics:sad)  ') = true"
+                + " ");
     resultSet.close();
   }
 
@@ -88,8 +91,8 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
 
     OResultSet resultSet =
         db.query(
-            "SELECT title, $title_hl from Song where SEARCH_CLASS('believe', {"
-                + "highlight: { fields: ['title'], 'start': '<span>', 'end': '</span>' } }) = true ");
+            "SELECT title, $title_hl from Song where SEARCH_CLASS('believe', {highlight: { fields:"
+                + " ['title'], 'start': '<span>', 'end': '</span>' } }) = true ");
 
     resultSet.stream()
         .forEach(
@@ -111,8 +114,9 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
 
     OResultSet resultSet =
         db.query(
-            "SELECT title, $title_hl,description, $description_hl  from Song where SEARCH_CLASS('shouldHighlightWithNullValues', {"
-                + "highlight: { fields: ['title','description'], 'start': '<span>', 'end': '</span>' } }) = true ");
+            "SELECT title, $title_hl,description, $description_hl  from Song where"
+                + " SEARCH_CLASS('shouldHighlightWithNullValues', {highlight: { fields:"
+                + " ['title','description'], 'start': '<span>', 'end': '</span>' } }) = true ");
 
     resultSet.stream()
         .forEach(

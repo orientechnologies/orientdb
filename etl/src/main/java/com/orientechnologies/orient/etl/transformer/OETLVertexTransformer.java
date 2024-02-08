@@ -35,10 +35,9 @@ public class OETLVertexTransformer extends OETLAbstractTransformer {
         .fromJSON(
             "{parameters:["
                 + getCommonConfigurationParameters()
-                + ","
-                + "{class:{optional:true,description:'Vertex class name to assign. Default is V  '}}"
-                + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}"
-                + "]"
+                + ",{class:{optional:true,description:'Vertex class name to assign. Default is V "
+                + " '}},skipDuplicates:{optional:true,description:'Vertices with duplicate keys are"
+                + " skipped', default:false}]"
                 + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
   }
 

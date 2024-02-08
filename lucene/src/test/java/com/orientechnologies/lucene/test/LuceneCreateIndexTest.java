@@ -36,12 +36,14 @@ public class LuceneCreateIndexTest extends BaseLuceneTest {
     db.execute("sql", getScriptFromStream(stream)).close();
 
     db.command(
-            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
+            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA"
+                + " {\"analyzer\":\""
                 + StandardAnalyzer.class.getName()
                 + "\"}")
         .close();
     db.command(
-            "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
+            "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA"
+                + " {\"analyzer\":\""
                 + StandardAnalyzer.class.getName()
                 + "\"}")
         .close();

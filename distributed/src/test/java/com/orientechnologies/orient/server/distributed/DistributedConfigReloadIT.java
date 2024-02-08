@@ -175,7 +175,8 @@ public final class DistributedConfigReloadIT {
                                   + id
                                   + "] Caught ["
                                   + e
-                                  + "] during reload because the record was already deleted, no errors just go ahead");
+                                  + "] during reload because the record was already deleted, no"
+                                  + " errors just go ahead");
                         }
                       } catch (ORecordNotFoundException e) {
                         // BY LUCA
@@ -184,7 +185,8 @@ public final class DistributedConfigReloadIT {
                                 + id
                                 + "] Caught ["
                                 + e
-                                + "] because the record was already deleted, no errors just go ahead");
+                                + "] because the record was already deleted, no errors just go"
+                                + " ahead");
                       } catch (Exception ex) {
                         log(
                             "["
@@ -293,7 +295,8 @@ public final class DistributedConfigReloadIT {
                         log(
                             "["
                                 + id
-                                + "] ODistributedConfigurationChangedException {} while updating vertex "
+                                + "] ODistributedConfigurationChangedException {} while updating"
+                                + " vertex "
                                 + vertex);
                       }
                     } catch (ORecordDuplicatedException ex) {
@@ -311,7 +314,8 @@ public final class DistributedConfigReloadIT {
                         log(
                             "["
                                 + id
-                                + "] ODistributedConfigurationChangedException {} while updating vertex "
+                                + "] ODistributedConfigurationChangedException {} while updating"
+                                + " vertex "
                                 + vertex);
                       }
                     } catch (Exception ex) {

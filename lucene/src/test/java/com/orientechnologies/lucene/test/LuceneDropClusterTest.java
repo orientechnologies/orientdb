@@ -37,12 +37,14 @@ public class LuceneDropClusterTest extends BaseLuceneTest {
     db.execute("sql", getScriptFromStream(stream)).close();
 
     db.command(
-            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"default\":\""
+            "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA"
+                + " {\"default\":\""
                 + StandardAnalyzer.class.getName()
                 + "\"}")
         .close();
     db.command(
-            "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"default\":\""
+            "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA"
+                + " {\"default\":\""
                 + StandardAnalyzer.class.getName()
                 + "\"}")
         .close();

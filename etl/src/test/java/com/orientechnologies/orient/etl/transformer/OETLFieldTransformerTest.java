@@ -37,7 +37,9 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
   @Test
   public void testValue() {
     configure(
-        "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [{field: {fieldName:'test', value: 33}}], loader: { test: {} } }");
+        "{source: { content: { value: 'name,surname\n"
+            + "Jay,Miner' } }, extractor : { csv: {} }, transformers: [{field: {fieldName:'test',"
+            + " value: 33}}], loader: { test: {} } }");
     proc.execute();
 
     assertEquals(1, getResult().size());
@@ -52,7 +54,9 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
   @Test
   public void testExpression() {
     configure(
-        "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [ {field: {fieldName:'test', expression: 'surname'}}], loader: { test: {} } }");
+        "{source: { content: { value: 'name,surname\n"
+            + "Jay,Miner' } }, extractor : { csv: {} }, transformers: [ {field: {fieldName:'test',"
+            + " expression: 'surname'}}], loader: { test: {} } }");
     proc.execute();
     assertEquals(1, getResult().size());
 
@@ -66,7 +70,9 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
   @Test
   public void testToLowerCase() {
     configure(
-        "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [ {field: {fieldName:'name', expression: '$input.name.toLowerCase()'}}], loader: { test: {} } }");
+        "{source: { content: { value: 'name,surname\n"
+            + "Jay,Miner' } }, extractor : { csv: {} }, transformers: [ {field: {fieldName:'name',"
+            + " expression: '$input.name.toLowerCase()'}}], loader: { test: {} } }");
     proc.execute();
     assertEquals(1, getResult().size());
 

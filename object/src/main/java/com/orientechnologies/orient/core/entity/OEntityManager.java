@@ -85,7 +85,8 @@ public class OEntityManager {
           new OConfigurationException(
               "The class '"
                   + iClassName
-                  + "' was not found between the entity classes. Ensure registerEntityClasses(package) has been called first"),
+                  + "' was not found between the entity classes. Ensure"
+                  + " registerEntityClasses(package) has been called first"),
           e);
     }
   }

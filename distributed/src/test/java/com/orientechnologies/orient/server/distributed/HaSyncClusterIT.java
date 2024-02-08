@@ -163,7 +163,8 @@ public class HaSyncClusterIT extends AbstractServerClusterTest {
                             OLogManager.instance()
                                 .info(
                                     this,
-                                    "Waiting for processed requests to be [%d], actual [%d] with stats [%s] ",
+                                    "Waiting for processed requests to be [%d], actual [%d] with"
+                                        + " stats [%s] ",
                                     NUM_RECORDS,
                                     processed,
                                     messageStats.toJSON());

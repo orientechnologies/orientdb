@@ -229,7 +229,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
    * @throws NoSuchMethodException
    */
   public void attach(final Object self)
-      throws IllegalArgumentException, IllegalAccessException, NoSuchMethodException,
+      throws IllegalArgumentException,
+          IllegalAccessException,
+          NoSuchMethodException,
           InvocationTargetException {
     for (Class<?> currentClass = self.getClass(); currentClass != Object.class; ) {
       if (Proxy.class.isAssignableFrom(currentClass)) {
@@ -313,8 +315,12 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   protected Object manageGetMethod(
       final Object self, final Method m, final Method proceed, final Object[] args)
-      throws IllegalAccessException, InvocationTargetException, NoSuchMethodException,
-          SecurityException, IllegalArgumentException, NoSuchFieldException {
+      throws IllegalAccessException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          SecurityException,
+          IllegalArgumentException,
+          NoSuchFieldException {
     this.reading = true;
     final String fieldName =
         OObjectEntityEnhancer.getInstance().getMethodFilter(self.getClass()).getFieldName(m);
@@ -993,7 +999,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       OLogManager.instance()
           .warn(
               this,
-              "Setting property '%s' in proxied class '%s' with an anonymous class '%s'. The document won't have this property.",
+              "Setting property '%s' in proxied class '%s' with an anonymous class '%s'. The"
+                  + " document won't have this property.",
               fieldName,
               self.getClass().getName(),
               valueToSet.getClass().getName());

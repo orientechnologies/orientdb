@@ -48,7 +48,8 @@ public class ETLJobTest {
               }
             });
     String json =
-        "{source: { content: { value: 'name,surname,@class\nJay,Miner,Person' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
+        "{source: { content: { value: 'name,surname,@class\n"
+            + "Jay,Miner,Person' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
             + "      dbURL: 'memory:"
             + name.getMethodName()
             + "',\n"

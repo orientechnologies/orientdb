@@ -33,6 +33,7 @@ public abstract class AbstractSyslogMessageSender implements SyslogMessageSender
   protected Facility defaultFacility = Facility.USER;
   protected String defaultMessageHostname;
   protected Severity defaultSeverity = Severity.INFORMATIONAL;
+
   // remote syslog server config
   /**
    * Format of messages accepted by the remote syslog server ({@link
@@ -40,6 +41,7 @@ public abstract class AbstractSyslogMessageSender implements SyslogMessageSender
    * com.cloudbees.syslog.MessageFormat#RFC_5424 RFC_5424})
    */
   protected MessageFormat messageFormat = DEFAULT_SYSLOG_MESSAGE_FORMAT;
+
   // statistics
   protected final AtomicInteger sendCounter = new AtomicInteger();
   protected final AtomicLong sendDurationInNanosCounter = new AtomicLong();

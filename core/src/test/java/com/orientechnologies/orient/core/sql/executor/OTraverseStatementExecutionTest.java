@@ -241,11 +241,15 @@ public class OTraverseStatementExecutionTest extends BaseMemoryDatabase {
     script += "begin;";
     script += "insert into testTraverseInBatchTx_V(name) values ('a'), ('b'), ('c');";
     script +=
-        "create edge testTraverseInBatchTx_E from (select from testTraverseInBatchTx_V where name = 'a') to (select from testTraverseInBatchTx_V where name = 'b');";
+        "create edge testTraverseInBatchTx_E from (select from testTraverseInBatchTx_V where name ="
+            + " 'a') to (select from testTraverseInBatchTx_V where name = 'b');";
     script +=
-        "create edge testTraverseInBatchTx_E from (select from testTraverseInBatchTx_V where name = 'b') to (select from testTraverseInBatchTx_V where name = 'c');";
+        "create edge testTraverseInBatchTx_E from (select from testTraverseInBatchTx_V where name ="
+            + " 'b') to (select from testTraverseInBatchTx_V where name = 'c');";
     script +=
-        "let top = (select * from (traverse in('testTraverseInBatchTx_E') from (select from testTraverseInBatchTx_V where name='c')) where in('testTraverseInBatchTx_E').size() == 0);";
+        "let top = (select * from (traverse in('testTraverseInBatchTx_E') from (select from"
+            + " testTraverseInBatchTx_V where name='c')) where in('testTraverseInBatchTx_E').size()"
+            + " == 0);";
     script += "commit;";
     script += "return $top";
 

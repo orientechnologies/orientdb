@@ -60,7 +60,8 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public String getSyntax() {
-    return "<left> TRAVERSE[(<begin-deep-level> [,<maximum-deep-level> [,<fields>]] )] ( <conditions> )";
+    return "<left> TRAVERSE[(<begin-deep-level> [,<maximum-deep-level> [,<fields>]] )] ("
+        + " <conditions> )";
   }
 
   @Override

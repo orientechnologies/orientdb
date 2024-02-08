@@ -205,9 +205,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         OLogManager.instance()
             .warn(
                 this,
-                "Found record in transaction with the same RID %s but different instance. "
-                    + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
-                    + "from current transaction before to update or delete it.",
+                "Found record in transaction with the same RID %s but different instance. Probably"
+                    + " the record has been loaded from another transaction and reused on the"
+                    + " current one: reload it from current transaction before to update or delete"
+                    + " it.",
                 iRecord.getIdentity());
       }
       return txRecord;
@@ -301,9 +302,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         OLogManager.instance()
             .warn(
                 this,
-                "Found record in transaction with the same RID %s but different instance. "
-                    + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
-                    + "from current transaction before to update or delete it",
+                "Found record in transaction with the same RID %s but different instance. Probably"
+                    + " the record has been loaded from another transaction and reused on the"
+                    + " current one: reload it from current transaction before to update or delete"
+                    + " it",
                 passedRecord.getIdentity());
       }
       return txRecord;

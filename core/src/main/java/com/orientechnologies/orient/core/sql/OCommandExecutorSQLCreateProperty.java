@@ -358,8 +358,8 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
   @Override
   public String getSyntax() {
-    return "CREATE PROPERTY <class>.<property> [IF NOT EXISTS] <type> [<linked-type>|<linked-class>] "
-        + "[(mandatory <true|false>, notnull <true|false>, <true|false>, default <value>, min <value>, max <value>)] "
-        + "[UNSAFE]";
+    return "CREATE PROPERTY <class>.<property> [IF NOT EXISTS] <type>"
+        + " [<linked-type>|<linked-class>] [(mandatory <true|false>, notnull <true|false>,"
+        + " <true|false>, default <value>, min <value>, max <value>)] [UNSAFE]";
   }
 }

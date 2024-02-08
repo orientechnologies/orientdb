@@ -27,7 +27,8 @@ public class UniqueIndexEngineValidator implements IndexEngineValidator<Object, 
         if (mergeSameKey == null || !mergeSameKey) {
           throw new ORecordDuplicatedException(
               String.format(
-                  "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                  "Cannot index record %s: found duplicated key '%s' in index '%s' previously"
+                      + " assigned to the record %s",
                   newValue.getIdentity(), key, indexUnique.getName(), oldValue.getIdentity()),
               indexUnique.getName(),
               oldValue.getIdentity(),

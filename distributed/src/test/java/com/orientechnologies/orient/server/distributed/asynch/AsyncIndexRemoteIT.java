@@ -31,12 +31,14 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
 
       graph
           .command(
-              "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')")
+              "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a"
+                  + " test')")
           .close();
       try {
         graph
             .command(
-                "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')")
+                "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is"
+                    + " a test')")
             .close();
         Assert.fail("violated unique index was not raised");
       } catch (ORecordDuplicatedException e) {
@@ -65,7 +67,8 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
       try {
         graph2
             .command(
-                "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')")
+                "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is"
+                    + " a test')")
             .close();
         Assert.fail("violated unique index was not raised");
       } catch (ORecordDuplicatedException e) {
@@ -93,7 +96,8 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
       try {
         graph3
             .command(
-                "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')")
+                "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is"
+                    + " a test')")
             .close();
         Assert.fail("violated unique index was not raised");
       } catch (ORecordDuplicatedException e) {

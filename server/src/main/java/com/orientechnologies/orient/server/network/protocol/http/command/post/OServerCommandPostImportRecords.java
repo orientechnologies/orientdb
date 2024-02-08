@@ -48,7 +48,8 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
         checkSyntax(
             iRequest.getUrl(),
             4,
-            "Syntax error: importRecords/<database>/<format>/<class>[/<separator>][/<string-delimiter>][/<locale>]");
+            "Syntax error:"
+                + " importRecords/<database>/<format>/<class>[/<separator>][/<string-delimiter>][/<locale>]");
 
     final long start = System.currentTimeMillis();
 
@@ -138,7 +139,10 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
 
         String message =
             String.format(
-                "Import of records of class '%s' completed in %5.3f seconds. Line parsed: %d, imported: %d, error: %d\nDetailed messages:\n%s",
+                "Import of records of class '%s' completed in %5.3f seconds. Line parsed: %d,"
+                    + " imported: %d, error: %d\n"
+                    + "Detailed messages:\n"
+                    + "%s",
                 cls.getName(), elapsed, line, imported, errors, output);
 
         iResponse.send(

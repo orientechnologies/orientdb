@@ -69,7 +69,8 @@ public class ODynamicSQLElementFactory
             new OCommandExecutionException(
                 "Error in creation of function "
                     + name
-                    + "(). Probably there is not an empty constructor or the constructor generates errors"),
+                    + "(). Probably there is not an empty constructor or the constructor generates"
+                    + " errors"),
             e);
       }
     }
@@ -92,7 +93,8 @@ public class ODynamicSQLElementFactory
           new OCommandExecutionException(
               "Error in creation of command "
                   + name
-                  + "(). Probably there is not an empty constructor or the constructor generates errors"),
+                  + "(). Probably there is not an empty constructor or the constructor generates"
+                  + " errors"),
           e);
     }
   }

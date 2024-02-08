@@ -666,7 +666,8 @@ public class ClassIndexTest extends DocumentDBBaseTest {
       exceptionIsThrown = true;
       assertEquals(
           e.getMessage(),
-          "Illegal field name format, should be '<property> [by key|value]' but was 'fEmbeddedMap by ttt'");
+          "Illegal field name format, should be '<property> [by key|value]' but was 'fEmbeddedMap"
+              + " by ttt'");
     }
 
     assertTrue(exceptionIsThrown);
@@ -2153,8 +2154,8 @@ public class ClassIndexTest extends DocumentDBBaseTest {
       assertTrue(
           e.getMessage()
               .contains(
-                  "Linked type was not provided. "
-                      + "You should provide linked type for embedded collections that are going to be indexed."));
+                  "Linked type was not provided. You should provide linked type for embedded"
+                      + " collections that are going to be indexed."));
     }
   }
 

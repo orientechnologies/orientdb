@@ -103,7 +103,8 @@ public class ONative {
             OLogManager.instance()
                 .warnNoDb(
                     this,
-                    "Value of limit of simultaneously open files is too small, recommended value is %d",
+                    "Value of limit of simultaneously open files is too small, recommended value is"
+                        + " %d",
                     recommended);
           }
           return (int) rLimit.rlimCur() / 2 - 512;
@@ -213,8 +214,8 @@ public class ONative {
             OLogManager.instance()
                 .infoNoDb(
                     this,
-                    "Can not find '%s' path for memory cgroup, it is supposed that "
-                        + "process is running in container, will try to read root '%s' memory cgroup data",
+                    "Can not find '%s' path for memory cgroup, it is supposed that process is"
+                        + " running in container, will try to read root '%s' memory cgroup data",
                     memoryCGroup,
                     memoryCGroupRoot);
           }
@@ -412,7 +413,8 @@ public class ONative {
           OLogManager.instance()
               .errorNoDb(
                   this,
-                  "Error during closing of reader which reads details of list of cgroups for the current process",
+                  "Error during closing of reader which reads details of list of cgroups for the"
+                      + " current process",
                   e);
         }
       } catch (final FileNotFoundException fnfe) {

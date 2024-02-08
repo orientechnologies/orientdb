@@ -121,6 +121,7 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
 
   @Override
   public String getSyntax() {
-    return "CREATE FUNCTION <name> <code> [PARAMETERS [<comma-separated list of parameters' name>]] [IDEMPOTENT true|false] [LANGUAGE <language>]";
+    return "CREATE FUNCTION <name> <code> [PARAMETERS [<comma-separated list of parameters' name>]]"
+        + " [IDEMPOTENT true|false] [LANGUAGE <language>]";
   }
 }

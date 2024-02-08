@@ -119,7 +119,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware
                       this,
                       "Requested command '"
                           + this.toString()
-                          + "' must be executed outside active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction");
+                          + "' must be executed outside active transaction: the transaction will be"
+                          + " committed and reopen right after it. To avoid this behavior execute"
+                          + " it outside a transaction");
               committed = database.getTransaction().amountOfNestedTxs();
               database.commit(true);
             } else committed = 0;

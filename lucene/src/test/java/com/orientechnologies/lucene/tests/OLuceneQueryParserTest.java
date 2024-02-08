@@ -26,7 +26,8 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
 
     // enabling leading wildcard
     db.command(
-        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {\"allowLeadingWildcard\": true}");
+        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata"
+            + " {\"allowLeadingWildcard\": true}");
 
     // querying with leading wildcard
     OResultSet docs = db.query("select * from Song where search_class(\"(title:*tain)\") = true");
@@ -60,7 +61,8 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
 
     // enabling leading wildcard
     db.command(
-        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {\"allowLeadingWildcard\": true}");
+        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata"
+            + " {\"allowLeadingWildcard\": true}");
 
     // querying with leading wildcard
     OResultSet docs = db.query("select * from Song where search_class ('title:*tain')=true");
@@ -120,7 +122,8 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
     // querying with boost
     OResultSet rs =
         db.query(
-            "select * from Song where search_class ('title:forever OR author:Boudleaux' , {'boost':{ 'title': 2  }  })=true");
+            "select * from Song where search_class ('title:forever OR author:Boudleaux' ,"
+                + " {'boost':{ 'title': 2  }  })=true");
     List<String> boostedDocs =
         rs.stream().map(r -> r.<String>getProperty("title")).collect(Collectors.toList());
 
@@ -164,7 +167,8 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
     // querying with boost
     OResultSet rs =
         db.query(
-            "select $score from Song where search_class ('title:forever OR author:Boudleaux' , {'boost':{ 'title': 2  }  })=true order by $score desc");
+            "select $score from Song where search_class ('title:forever OR author:Boudleaux' ,"
+                + " {'boost':{ 'title': 2  }  })=true order by $score desc");
     List<Float> boostedDocs =
         rs.stream().map(r -> r.<Float>getProperty("$score")).collect(Collectors.toList());
 
@@ -174,7 +178,8 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
 
     rs =
         db.query(
-            "select $score from Song where search_class ('(title:forever)^2 OR author:Boudleaux')=true order by $score desc");
+            "select $score from Song where search_class ('(title:forever)^2 OR"
+                + " author:Boudleaux')=true order by $score desc");
     List<Float> docs =
         rs.stream().map(r -> r.<Float>getProperty("$score")).collect(Collectors.toList());
 

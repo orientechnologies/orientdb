@@ -6,6 +6,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
 
   /** Debug output. */
   public java.io.PrintStream debugStream = System.out;
+
   /** Set debug output. */
   public void setDebugStream(java.io.PrintStream ds) {
     debugStream = ds;
@@ -5321,6 +5322,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
   private int jjimageLen;
   private int lengthOfMatch;
   protected char curChar;
+
   /** Constructor. */
   public OrientSqlTokenManager(CharStream stream) {
     input_stream = stream;

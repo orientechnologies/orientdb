@@ -544,7 +544,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
           .warnNoDb(
               this,
               String.format(
-                  "IMPORTANT! Using default password is unsafe, please change password for user '%s' on database '%s'",
+                  "IMPORTANT! Using default password is unsafe, please change password for user"
+                      + " '%s' on database '%s'",
                   user, database));
     }
   }

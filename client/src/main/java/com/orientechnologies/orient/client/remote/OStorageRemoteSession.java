@@ -47,6 +47,7 @@ public class OStorageRemoteSession {
       Collections.newSetFromMap(new WeakHashMap<OChannelBinary, Boolean>());
   private final int uniqueClientSessionId;
   private boolean closed = true;
+
   /**
    * Make the retry to happen only on the current session, if the current session is invalid or the
    * server is offline it kill the operation.

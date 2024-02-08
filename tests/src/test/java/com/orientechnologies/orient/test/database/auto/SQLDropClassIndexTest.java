@@ -69,7 +69,8 @@ public class SQLDropClassIndexTest {
   public void testIndexDeletion() throws Exception {
     database
         .command(
-            "CREATE INDEX SQLDropClassCompositeIndex ON SQLDropClassTestClass (prop1, prop2) UNIQUE")
+            "CREATE INDEX SQLDropClassCompositeIndex ON SQLDropClassTestClass (prop1, prop2)"
+                + " UNIQUE")
         .close();
     database.getMetadata().getIndexManagerInternal().reload();
 

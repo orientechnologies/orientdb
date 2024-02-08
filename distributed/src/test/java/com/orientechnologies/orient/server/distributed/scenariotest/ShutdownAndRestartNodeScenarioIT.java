@@ -258,7 +258,8 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
         System.out.println("Done.\n");
 
         System.out.print(
-            "Checking the last record wasn't inserted in the db because the quorum was not reached...");
+            "Checking the last record wasn't inserted in the db because the quorum was not"
+                + " reached...");
         try (OResultSet result = dbServer1.query("select from Person where id='L-001'")) {
           assertEquals(0, result.stream().count());
         }

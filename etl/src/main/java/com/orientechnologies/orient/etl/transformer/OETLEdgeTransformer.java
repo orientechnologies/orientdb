@@ -48,16 +48,20 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
         .fromJSON(
             "{parameters:["
                 + getCommonConfigurationParameters()
-                + ","
-                + "{joinValue:{optional:true,description:'value to use for join'}},"
-                + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
-                + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
-                + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
-                + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
-                + "{targetVertexFields:{optional:true,description:'Map of fields to set in target vertex. Use ${$input.<field>} to get input field values'}},"
-                + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
-                + "{skipDuplicates:{optional:true,description:'Duplicated edges (with a composite index built on both out and in properties) are skipped', default:false}},"
-                + "{unresolvedLinkAction:{optional:true,description:'action when the target vertex is not found',values:"
+                + ",{joinValue:{optional:true,description:'value to use for"
+                + " join'}},{joinFieldName:{optional:true,description:'field name containing the"
+                + " value to join'}},{lookup:{optional:false,description:'<Class>.<property> or"
+                + " Query to execute'}},{direction:{optional:true,description:'Direction between"
+                + " \'in\' and \'out\'. Default is"
+                + " \'out\''}},{class:{optional:true,description:'Edge class name. Default is"
+                + " \'E\''}},{targetVertexFields:{optional:true,description:'Map of fields to set"
+                + " in target vertex. Use ${$input.<field>} to get input field"
+                + " values'}},{edgeFields:{optional:true,description:'Map of fields to set in edge."
+                + " Use ${$input.<field>} to get input field"
+                + " values'}},{skipDuplicates:{optional:true,description:'Duplicated edges (with a"
+                + " composite index built on both out and in properties) are skipped',"
+                + " default:false}},{unresolvedLinkAction:{optional:true,description:'action when"
+                + " the target vertex is not found',values:"
                 + stringArray2Json(ACTION.values())
                 + "}}],"
                 + "input:['ODocument','OVertex'],output:'OVertex'}");
@@ -164,7 +168,8 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
               result = linkedV.getIdentity();
             } else {
               throw new OConfigurationException(
-                  "Cannot create linked document because target class is unknown. Use 'lookup' field");
+                  "Cannot create linked document because target class is unknown. Use 'lookup'"
+                      + " field");
             }
           }
           break;

@@ -65,7 +65,8 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
   public void testSelectSingleDocumentWithAndOperator() {
     try (OResultSet docs =
         db.query(
-            "select * from Song where  search_fields(['title','author'] ,'title:mountain AND author:Fabbio')=true")) {
+            "select * from Song where  search_fields(['title','author'] ,'title:mountain AND"
+                + " author:Fabbio')=true")) {
 
       assertThat(docs).hasSize(1);
     }
@@ -75,7 +76,8 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
   public void testSelectMultipleDocumentsWithOrOperator() {
     try (OResultSet docs =
         db.query(
-            "select * from Song where  search_fields(['title','author'] ,'title:mountain OR author:Fabbio')=true")) {
+            "select * from Song where  search_fields(['title','author'] ,'title:mountain OR"
+                + " author:Fabbio')=true")) {
 
       assertThat(docs).hasSize(91);
     }
@@ -109,7 +111,8 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
             + "create property Item.title string;\n"
             + "create property Item.summary string;\n"
             + "create property Item.content string;\n"
-            + "create index Item.fulltext on Item(title, summary, content) FULLTEXT ENGINE LUCENE METADATA {'ignoreNullValues':false};\n"
+            + "create index Item.fulltext on Item(title, summary, content) FULLTEXT ENGINE LUCENE"
+            + " METADATA {'ignoreNullValues':false};\n"
             + "insert into Item set title = 'wrong', content = 'not me please';\n"
             + "insert into Item set title = 'test', content = 'this is a test';\n";
 

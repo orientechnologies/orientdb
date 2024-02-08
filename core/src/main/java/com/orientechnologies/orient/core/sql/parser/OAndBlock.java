@@ -149,7 +149,8 @@ public class OAndBlock extends OBooleanExpression {
       for (OAndBlock subAndItem : subFlattened) {
         if (first) {
           result.add(subAndItem);
-        } else {;
+        } else {
+          ;
           for (OAndBlock oldResultItem : oldResult) {
             OAndBlock block = new OAndBlock(-1);
             block.subBlocks.addAll(oldResultItem.subBlocks);

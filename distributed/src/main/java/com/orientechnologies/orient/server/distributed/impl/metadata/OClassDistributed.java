@@ -596,7 +596,8 @@ public class OClassDistributed extends OClassEmbedded {
             manager.getLocalNodeName(),
             null,
             ODistributedServerLog.DIRECTION.NONE,
-            "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s (dCfgVersion=%d)",
+            "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s"
+                + " (dCfgVersion=%d)",
             getName(),
             clusterNames,
             buffer.toString(),

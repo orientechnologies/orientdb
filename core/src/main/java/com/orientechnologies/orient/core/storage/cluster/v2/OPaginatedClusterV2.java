@@ -206,9 +206,8 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
               OLogManager.instance()
                   .infoNoDb(
                       this,
-                      "Free space map is absent inside of %s cluster"
-                          + " of storage %s . Information about free space present inside of each page will "
-                          + "be recovered.",
+                      "Free space map is absent inside of %s cluster of storage %s . Information"
+                          + " about free space present inside of each page will be recovered.",
                       getName(),
                       storageName);
               OLogManager.instance()

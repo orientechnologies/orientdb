@@ -69,25 +69,29 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
   @Override
   public OObjectDatabaseTxPooled open(String iUserName, String iUserPassword) {
     throw new UnsupportedOperationException(
-        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a OObjectDatabaseTx instance if you want to manually open the connection");
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use"
+            + " directly a OObjectDatabaseTx instance if you want to manually open the connection");
   }
 
   @Override
   public OObjectDatabaseTxPooled open(OToken iToken) {
     throw new UnsupportedOperationException(
-        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a OObjectDatabaseTx instance if you want to manually open the connection");
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use"
+            + " directly a OObjectDatabaseTx instance if you want to manually open the connection");
   }
 
   @Override
   public OObjectDatabaseTxPooled create() {
     throw new UnsupportedOperationException(
-        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a OObjectDatabaseTx instance if you want to manually open the connection");
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use"
+            + " directly a OObjectDatabaseTx instance if you want to manually open the connection");
   }
 
   @Override
   public <THISDB extends ODatabase> THISDB create(String incrementalBackupPath) {
     throw new UnsupportedOperationException(
-        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a OObjectDatabaseTx instance if you want to manually open the connection");
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use"
+            + " directly a OObjectDatabaseTx instance if you want to manually open the connection");
   }
 
   @Override
@@ -135,7 +139,8 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
   protected void checkOpenness() {
     if (ownerPool == null)
       throw new ODatabaseException(
-          "Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
+          "Database instance has been released to the pool. Get another database instance from the"
+              + " pool with the right username and password");
 
     super.checkOpenness();
   }

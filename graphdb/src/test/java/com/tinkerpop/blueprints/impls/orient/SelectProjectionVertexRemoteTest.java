@@ -26,9 +26,16 @@ public class SelectProjectionVertexRemoteTest {
 
   @Before
   public void before()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException,
-          NoSuchMethodException, InstantiationException, IOException, IllegalAccessException {
+      throws ClassNotFoundException,
+          MalformedObjectNameException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          MBeanRegistrationException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          InstantiationException,
+          IOException,
+          IllegalAccessException {
     server = new OServer(false);
     server.startup(
         OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
@@ -69,7 +76,8 @@ public class SelectProjectionVertexRemoteTest {
       graph.commit();
 
       String query =
-          "SELECT $res as val LET $res = (SELECT @rid AS refId, out('AtoB') AS vertices FROM VertA) FETCHPLAN val:2";
+          "SELECT $res as val LET $res = (SELECT @rid AS refId, out('AtoB') AS vertices FROM VertA)"
+              + " FETCHPLAN val:2";
 
       Iterable<OrientVertex> results = graph.command(new OCommandSQL(query)).execute();
       final Iterator<OrientVertex> iterator = results.iterator();

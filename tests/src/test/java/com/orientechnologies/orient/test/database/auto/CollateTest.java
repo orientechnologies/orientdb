@@ -338,7 +338,8 @@ public class CollateTest extends DocumentDBBaseTest {
     database
         .command(
             new OCommandSQL(
-                "create index collateTestViaSQL.index on collateTestViaSQL (cip COLLATE CI) NOTUNIQUE"))
+                "create index collateTestViaSQL.index on collateTestViaSQL (cip COLLATE CI)"
+                    + " NOTUNIQUE"))
         .execute();
 
     for (int i = 0; i < 10; i++) {

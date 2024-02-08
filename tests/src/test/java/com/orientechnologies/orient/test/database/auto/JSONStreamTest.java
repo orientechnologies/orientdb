@@ -134,10 +134,10 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   public void testNullity() throws IOException {
     final ODocument doc = new ODocument();
     final String docString =
-        "{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\","
-            + "\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith Ave\","
-            + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"},"
-            + "\"dob\":\"2011-11-17 03:17:04\"}";
+        "{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\",\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith"
+            + " Ave\","
+            + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"},\"dob\":\"2011-11-17"
+            + " 03:17:04\"}";
     doc.fromJSON(new ByteArrayInputStream(docString.getBytes(StandardCharsets.UTF_8)));
     final String json = doc.toJSON();
     final ODocument loadedDoc = new ODocument().fromJSON(json);
@@ -607,7 +607,9 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   public void testEscaping() throws IOException {
     final ODocument doc = new ODocument();
     final String s =
-        "{\"name\": \"test\", \"nested\": { \"key\": \"value\", \"anotherKey\": 123 }, \"deep\": {\"deeper\": { \"k\": \"v\",\"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\", \"likeJson\": \"[1,2,3]\",\"spaces\": \"value with spaces\"}}}";
+        "{\"name\": \"test\", \"nested\": { \"key\": \"value\", \"anotherKey\": 123 }, \"deep\":"
+            + " {\"deeper\": { \"k\": \"v\",\"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\","
+            + " \"likeJson\": \"[1,2,3]\",\"spaces\": \"value with spaces\"}}}";
     doc.fromJSON(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("deep[deeper][quotes]"), "\"\",\"oops\":\"123\"");
 
@@ -879,7 +881,8 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     // The link between jamie and tyrion is not saved properly
     final ODocument tyrionDoc = new ODocument("NestedLinkCreation");
     final String jsonString2 =
-        "{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"@type\":\"d\", \"relationship\":\"brother\",\"contact\":"
+        "{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"@type\":\"d\","
+            + " \"relationship\":\"brother\",\"contact\":"
             + jaimeDoc.toJSON()
             + "}}";
     tyrionDoc.fromJSON(new ByteArrayInputStream(jsonString2.getBytes(StandardCharsets.UTF_8)));

@@ -188,7 +188,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
         database
             .command(
                 new OCommandSQL(
-                    "insert into cluster:default (equaledges, name, properties) values ('no', 'circleUpdate', {'round':'eeee', 'blaaa':'zigzag'} )"))
+                    "insert into cluster:default (equaledges, name, properties) values ('no',"
+                        + " 'circleUpdate', {'round':'eeee', 'blaaa':'zigzag'} )"))
             .execute();
 
     Integer records =
@@ -197,7 +198,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                 new OCommandSQL(
                     "update "
                         + doc.getIdentity()
-                        + " set properties = {'roundOne':'ffff', 'bla':'zagzig','testTestTEST':'okOkOK'}"))
+                        + " set properties = {'roundOne':'ffff',"
+                        + " 'bla':'zagzig','testTestTEST':'okOkOK'}"))
             .execute();
 
     Assert.assertEquals(records.intValue(), 1);
@@ -225,7 +227,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
         database
             .command(
                 new OCommandSQL(
-                    "insert into cluster:default (equaledges, name, properties) values ('no', 'updateMapsWithPutOperatorAndWhere', {} )"))
+                    "insert into cluster:default (equaledges, name, properties) values ('no',"
+                        + " 'updateMapsWithPutOperatorAndWhere', {} )"))
             .execute();
 
     Integer records =
@@ -234,7 +237,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                 new OCommandSQL(
                     "update "
                         + doc.getIdentity()
-                        + " put properties = 'one', 'two' where name = 'updateMapsWithPutOperatorAndWhere'"))
+                        + " put properties = 'one', 'two' where name ="
+                        + " 'updateMapsWithPutOperatorAndWhere'"))
             .execute();
 
     Assert.assertEquals(records.intValue(), 1);
@@ -333,7 +337,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     sqlString =
         "UPDATE "
             + doc.getIdentity().toString()
-            + " INCREMENT Age = 100 RETURN AFTER $current.Exclude('really_big_field') WHERE Age=101 LIMIT 1";
+            + " INCREMENT Age = 100 RETURN AFTER $current.Exclude('really_big_field') WHERE Age=101"
+            + " LIMIT 1";
     result1 = database.command(new OCommandSQL(sqlString)).execute();
     Assert.assertEquals(result1.size(), 1);
     Assert.assertTrue(result1.get(0).containsField("Age"));
@@ -477,7 +482,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     database
         .command(
-            "UPDATE FormatEscapingTest SET test = 'ccc \\' eee', test2 = format('aaa \\' bbb') WHERE @rid = "
+            "UPDATE FormatEscapingTest SET test = 'ccc \\' eee', test2 = format('aaa \\' bbb')"
+                + " WHERE @rid = "
                 + document.getIdentity())
         .close();
 
@@ -688,7 +694,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     ORID id =
         database
             .command(
-                "INSERT INTO TestConvert SET name = 'embeddedListWithLinkedClass', embeddedListWithLinkedClass = [{'line1':'123 Fake Street'}]")
+                "INSERT INTO TestConvert SET name = 'embeddedListWithLinkedClass',"
+                    + " embeddedListWithLinkedClass = [{'line1':'123 Fake Street'}]")
             .next()
             .getIdentity()
             .get();
@@ -697,7 +704,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
         .command(
             "UPDATE "
                 + id.getIdentity()
-                + " set embeddedListWithLinkedClass = embeddedListWithLinkedClass || [{'line1':'123 Fake Street'}]")
+                + " set embeddedListWithLinkedClass = embeddedListWithLinkedClass || [{'line1':'123"
+                + " Fake Street'}]")
         .close();
 
     OElement doc = database.reload(database.load(id), "", true);
@@ -709,7 +717,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
         .command(
             "UPDATE "
                 + doc.getIdentity()
-                + " set embeddedListWithLinkedClass =  embeddedListWithLinkedClass || [{'line1':'123 Fake Street'}]")
+                + " set embeddedListWithLinkedClass =  embeddedListWithLinkedClass ||"
+                + " [{'line1':'123 Fake Street'}]")
         .close();
 
     doc.reload();

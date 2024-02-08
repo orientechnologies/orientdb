@@ -26,7 +26,8 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
     db.command("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE ");
     db.command("create index Author.name on Author (name) FULLTEXT ENGINE LUCENE ");
     db.command(
-        "create index Song.lyrics_description on Song (lyrics,description) FULLTEXT ENGINE LUCENE ");
+        "create index Song.lyrics_description on Song (lyrics,description) FULLTEXT ENGINE LUCENE"
+            + " ");
   }
 
   @Test
@@ -70,7 +71,8 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
     // TODO: metadata still not used
     OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_INDEX('Song.title', '*EVE*', {'allowLeadingWildcard': true}) = true");
+            "SELECT from Song where SEARCH_INDEX('Song.title', '*EVE*', {'allowLeadingWildcard':"
+                + " true}) = true");
 
     //    resultSet.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 2)));
     assertThat(resultSet).hasSize(14);
@@ -83,7 +85,8 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
 
     OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_INDEX('Song.title', 'BELIEVE') = true OR SEARCH_INDEX('Song.author', 'Bob') = true ");
+            "SELECT from Song where SEARCH_INDEX('Song.title', 'BELIEVE') = true OR"
+                + " SEARCH_INDEX('Song.author', 'Bob') = true ");
 
     assertThat(resultSet).hasSize(41);
     resultSet.close();
@@ -94,7 +97,8 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
 
     OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_INDEX('Song.title', 'tambourine') = true AND SEARCH_INDEX('Song.author', 'Bob') = true ");
+            "SELECT from Song where SEARCH_INDEX('Song.title', 'tambourine') = true AND"
+                + " SEARCH_INDEX('Song.author', 'Bob') = true ");
 
     assertThat(resultSet).hasSize(1);
     resultSet.close();
@@ -105,7 +109,8 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
 
     OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_INDEX('Song.title', 'tambourine') = true AND SEARCH_INDEX('Song.author', 'Bob', {'allowLeadingWildcard': true}) = true ");
+            "SELECT from Song where SEARCH_INDEX('Song.title', 'tambourine') = true AND"
+                + " SEARCH_INDEX('Song.author', 'Bob', {'allowLeadingWildcard': true}) = true ");
 
     assertThat(resultSet).hasSize(1);
     resultSet.close();

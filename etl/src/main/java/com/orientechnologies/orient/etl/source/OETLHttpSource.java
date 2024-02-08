@@ -43,9 +43,9 @@ public class OETLHttpSource extends OETLAbstractSource {
   public ODocument getConfiguration() {
     return new ODocument()
         .fromJSON(
-            "{parameters:[{url:{optional:false,description:'HTTP URL to fetch'}},"
-                + "{httpMethod:{optional:true,description:'HTTP method to use between GET (default), POST, PUT, DELETE, HEAD'}}],"
-                + "output:'String'}");
+            "{parameters:[{url:{optional:false,description:'HTTP URL to"
+                + " fetch'}},{httpMethod:{optional:true,description:'HTTP method to use between GET"
+                + " (default), POST, PUT, DELETE, HEAD'}}],output:'String'}");
   }
 
   @Override

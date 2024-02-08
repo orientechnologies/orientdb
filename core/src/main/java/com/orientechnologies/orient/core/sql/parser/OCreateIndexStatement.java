@@ -129,7 +129,8 @@ public class OCreateIndexStatement extends ODDLStatement {
         String[] split = name.getValue().split("\\.");
         if (split.length != 2) {
           throw new ODatabaseException(
-              "Impossible to create an index without specify class and property name nor key types: "
+              "Impossible to create an index without specify class and property name nor key types:"
+                  + " "
                   + toString());
         }
         OClass oClass = database.getClass(split[0]);
@@ -146,7 +147,8 @@ public class OCreateIndexStatement extends ODDLStatement {
 
       } else {
         throw new ODatabaseException(
-            "Impossible to create an index without specify the key type or the associated property: "
+            "Impossible to create an index without specify the key type or the associated property:"
+                + " "
                 + toString());
       }
     } else {

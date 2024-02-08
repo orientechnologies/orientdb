@@ -43,7 +43,8 @@ public class HttpCommandTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(
         post("command/" + getDatabaseName() + "/sql/")
             .payload(
-                "{\"command\":\"select from OUSer where name = :name\",\"parameters\":{\"name\":\"admin\"}}",
+                "{\"command\":\"select from OUSer where name ="
+                    + " :name\",\"parameters\":{\"name\":\"admin\"}}",
                 CONTENT.TEXT)
             .setUserName("admin")
             .setUserPassword("admin")

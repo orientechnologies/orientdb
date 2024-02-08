@@ -41,9 +41,11 @@ public class ResourceDerivedTest {
     ODatabaseSession db = orientDB.open("test", "admin", "admin");
 
     db.command(
-        "CREATE SECURITY POLICY r SET create = (false), read = (true), before update = (false), after update = (false), delete = (false), execute = (true)");
+        "CREATE SECURITY POLICY r SET create = (false), read = (true), before update = (false),"
+            + " after update = (false), delete = (false), execute = (true)");
     db.command(
-        "CREATE SECURITY POLICY rw SET create = (true), read = (true), before update = (true), after update = (true), delete = (true), execute = (true)");
+        "CREATE SECURITY POLICY rw SET create = (true), read = (true), before update = (true),"
+            + " after update = (true), delete = (true), execute = (true)");
 
     db.command("CREATE CLASS Customer extends V ABSTRACT");
     db.command("CREATE PROPERTY Customer.name String");
@@ -71,7 +73,8 @@ public class ResourceDerivedTest {
         "tenant1");
 
     db.command(
-        "INSERT INTO OUser set name = 'tenant1', password = 'password', status = 'ACTIVE', roles = (SELECT FROM ORole WHERE name = 'tenant1')");
+        "INSERT INTO OUser set name = 'tenant1', password = 'password', status = 'ACTIVE', roles ="
+            + " (SELECT FROM ORole WHERE name = 'tenant1')");
 
     db.command("INSERT INTO ORole SET name = 'tenant2', mode = 0");
     db.command("ALTER ROLE tenant2 set policy rw ON database.class.*.*");
@@ -82,10 +85,12 @@ public class ResourceDerivedTest {
     db.command("ALTER ROLE tenant2 set policy rw ON database.class.Customer_t2");
     db.command("UPDATE ORole SET rules = {'database.class.customer': 0} WHERE name = ?", "tenant2");
     db.command(
-        "UPDATE ORole SET inheritedRole = (SELECT FROM ORole WHERE name = 'reader') WHERE name = 'tenant2'");
+        "UPDATE ORole SET inheritedRole = (SELECT FROM ORole WHERE name = 'reader') WHERE name ="
+            + " 'tenant2'");
 
     db.command(
-        "INSERT INTO OUser set name = 'tenant2', password = 'password', status = 'ACTIVE', roles = (SELECT FROM ORole WHERE name = 'tenant2')");
+        "INSERT INTO OUser set name = 'tenant2', password = 'password', status = 'ACTIVE', roles ="
+            + " (SELECT FROM ORole WHERE name = 'tenant2')");
 
     db.command("INSERT INTO Customer_t1 set name='Amy'");
     db.command("INSERT INTO Customer_t2 set name='Bob'");

@@ -116,7 +116,9 @@ public class OLuceneQueryBuilder {
       throws ParseException {
     final Map<String, Float> boost =
         Optional.ofNullable(metadata.<Map<String, Number>>getProperty("boost"))
-            .orElse(new HashMap<>()).entrySet().stream()
+            .orElse(new HashMap<>())
+            .entrySet()
+            .stream()
             .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().floatValue()));
     final Analyzer analyzer =
         Optional.ofNullable(metadata.<Boolean>getProperty("customAnalysis"))

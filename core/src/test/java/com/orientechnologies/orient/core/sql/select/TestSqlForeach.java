@@ -17,7 +17,8 @@ public class TestSqlForeach extends BaseMemoryDatabase {
     OResultSet result =
         db.execute(
             "sql",
-            "let $res = select from Test; foreach ($r in $res) { update $r set timestamp = sysdate(); }; return $res; ");
+            "let $res = select from Test; foreach ($r in $res) { update $r set timestamp ="
+                + " sysdate(); }; return $res; ");
 
     Assert.assertTrue(result.hasNext());
 

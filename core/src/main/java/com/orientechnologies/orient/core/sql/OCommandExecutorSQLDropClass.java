@@ -146,13 +146,15 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract
         throw new OCommandExecutionException(
             "'DROP CLASS' command cannot drop class '"
                 + className
-                + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid broken edges in a database, or apply the 'UNSAFE' keyword to force it");
+                + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid"
+                + " broken edges in a database, or apply the 'UNSAFE' keyword to force it");
       } else if (cls.isSubClassOf("E")) {
         // FOUND EDGE CLASS
         throw new OCommandExecutionException(
             "'DROP CLASS' command cannot drop class '"
                 + className
-                + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken vertices in a database, or apply the 'UNSAFE' keyword to force it");
+                + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken"
+                + " vertices in a database, or apply the 'UNSAFE' keyword to force it");
       }
     }
 
@@ -166,7 +168,8 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract
           OLogManager.instance()
               .warn(
                   this,
-                  "Dropped class '%s' containing %d vertices using UNSAFE mode. Database could contain broken edges",
+                  "Dropped class '%s' containing %d vertices using UNSAFE mode. Database could"
+                      + " contain broken edges",
                   className,
                   records);
       } else if (cls.isSubClassOf("E")) {
@@ -174,7 +177,8 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract
         OLogManager.instance()
             .warn(
                 this,
-                "Dropped class '%s' containing %d edges using UNSAFE mode. Database could contain broken vertices",
+                "Dropped class '%s' containing %d edges using UNSAFE mode. Database could contain"
+                    + " broken vertices",
                 className,
                 records);
       }

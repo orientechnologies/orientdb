@@ -639,7 +639,8 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       OLogManager.instance()
           .warn(
               this,
-              "ODefaultServerSecurity.reload(ODocument) The provided configuration document is null");
+              "ODefaultServerSecurity.reload(ODocument) The provided configuration document is"
+                  + " null");
       throw new OSecuritySystemException(
           "ODefaultServerSecurity.reload(ODocument) The provided configuration document is null");
     }
@@ -711,14 +712,16 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
                   OLogManager.instance()
                       .error(
                           this,
-                          "ODefaultServerSecurity.loadAuthenticators() class is not an OSecurityAuthenticator",
+                          "ODefaultServerSecurity.loadAuthenticators() class is not an"
+                              + " OSecurityAuthenticator",
                           null);
                 }
               } else {
                 OLogManager.instance()
                     .error(
                         this,
-                        "ODefaultServerSecurity.loadAuthenticators() authentication class is null for %s",
+                        "ODefaultServerSecurity.loadAuthenticators() authentication class is null"
+                            + " for %s",
                         null,
                         name);
               }
@@ -727,7 +730,8 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
             OLogManager.instance()
                 .error(
                     this,
-                    "ODefaultServerSecurity.loadAuthenticators() authentication object is missing name",
+                    "ODefaultServerSecurity.loadAuthenticators() authentication object is missing"
+                        + " name",
                     null);
           }
         } catch (Exception ex) {
@@ -964,14 +968,16 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
               OLogManager.instance()
                   .error(
                       this,
-                      "ODefaultServerSecurity.reloadPasswordValidator() class is not an OPasswordValidator",
+                      "ODefaultServerSecurity.reloadPasswordValidator() class is not an"
+                          + " OPasswordValidator",
                       null);
             }
           } else {
             OLogManager.instance()
                 .error(
                     this,
-                    "ODefaultServerSecurity.reloadPasswordValidator() PasswordValidator class property is missing",
+                    "ODefaultServerSecurity.reloadPasswordValidator() PasswordValidator class"
+                        + " property is missing",
                     null);
           }
         }
@@ -1001,14 +1007,16 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
               OLogManager.instance()
                   .error(
                       this,
-                      "ODefaultServerSecurity.reloadImportLDAP() class is not an OSecurityComponent",
+                      "ODefaultServerSecurity.reloadImportLDAP() class is not an"
+                          + " OSecurityComponent",
                       null);
             }
           } else {
             OLogManager.instance()
                 .error(
                     this,
-                    "ODefaultServerSecurity.reloadImportLDAP() ImportLDAP class property is missing",
+                    "ODefaultServerSecurity.reloadImportLDAP() ImportLDAP class property is"
+                        + " missing",
                     null);
           }
         }
@@ -1038,14 +1046,16 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
               OLogManager.instance()
                   .error(
                       this,
-                      "ODefaultServerSecurity.reloadAuditingService() class is not an OAuditingService",
+                      "ODefaultServerSecurity.reloadAuditingService() class is not an"
+                          + " OAuditingService",
                       null);
             }
           } else {
             OLogManager.instance()
                 .error(
                     this,
-                    "ODefaultServerSecurity.reloadAuditingService() Auditing class property is missing",
+                    "ODefaultServerSecurity.reloadAuditingService() Auditing class property is"
+                        + " missing",
                     null);
           }
         }

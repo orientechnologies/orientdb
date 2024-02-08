@@ -28,7 +28,8 @@ public class SelectProjectionVertexTest {
       graph.commit();
 
       String query =
-          "SELECT $res as val LET $res = (SELECT @rid AS refId, out('AtoB') AS vertices FROM VertA) FETCHPLAN val:2";
+          "SELECT $res as val LET $res = (SELECT @rid AS refId, out('AtoB') AS vertices FROM VertA)"
+              + " FETCHPLAN val:2";
 
       Iterable<OrientVertex> results = graph.command(new OCommandSQL(query)).execute();
       final Iterator<OrientVertex> iterator = results.iterator();

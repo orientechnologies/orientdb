@@ -100,7 +100,8 @@ public class SQLCreateLinkTest extends DocumentDBBaseTest {
                 database
                     .command(
                         new OCommandSQL(
-                            "CREATE LINK comments TYPE LINKSET FROM comment.postId TO post.id INVERSE"))
+                            "CREATE LINK comments TYPE LINKSET FROM comment.postId TO post.id"
+                                + " INVERSE"))
                     .execute())
             .intValue(),
         5);
@@ -192,7 +193,8 @@ public class SQLCreateLinkTest extends DocumentDBBaseTest {
                 database
                     .command(
                         new OCommandSQL(
-                            "CREATE LINK comments TYPE LINKSET FROM comment2.postId TO post2.@rid INVERSE"))
+                            "CREATE LINK comments TYPE LINKSET FROM comment2.postId TO post2.@rid"
+                                + " INVERSE"))
                     .execute())
             .intValue(),
         5);

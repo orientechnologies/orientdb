@@ -126,7 +126,9 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
               OLogManager.instance()
                   .info(
                       this,
-                      "Database '%s' uses %,dMB/%,dMB of DISKCACHE memory, while Heap is not completely used (usedHeap=%dMB maxHeap=%dMB). To improve performance set maxHeap to %dMB and DISKCACHE to %dMB",
+                      "Database '%s' uses %,dMB/%,dMB of DISKCACHE memory, while Heap is not"
+                          + " completely used (usedHeap=%dMB maxHeap=%dMB). To improve performance"
+                          + " set maxHeap to %dMB and DISKCACHE to %dMB",
                       s.getName(),
                       totalDiskCacheUsedMemory,
                       maxDiskCacheUsedMemory,
@@ -138,7 +140,8 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
               OLogManager.instance()
                   .info(
                       this,
-                      "-> Open server.sh (or server.bat on Windows) and change the following variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
+                      "-> Open server.sh (or server.bat on Windows) and change the following"
+                          + " variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
                       suggestedMaxHeap / OFileUtils.MEGABYTE,
                       suggestedDiskCache);
             }
@@ -206,7 +209,8 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
         buffer.append(
             String.format(
-                "OrientDB Memory profiler: HEAP=%s of %s - DISKCACHE (%s dbs)=%s of %s - OS=%s of %s - FS=%s of %s",
+                "OrientDB Memory profiler: HEAP=%s of %s - DISKCACHE (%s dbs)=%s of %s - OS=%s of"
+                    + " %s - FS=%s of %s",
                 OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
                 OFileUtils.getSizeAsString(runtime.maxMemory()),
                 stgs,
@@ -333,7 +337,9 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
           buffer.append(
               String.format(
-                  "\nCRUD: C(%d %d/sec) R(%d %d/sec) U(%d %d/sec) D(%d %d/sec) - COMMANDS (%d %d/sec) - TX: COMMIT(%d %d/sec) ROLLBACK(%d %d/sec)",
+                  "\n"
+                      + "CRUD: C(%d %d/sec) R(%d %d/sec) U(%d %d/sec) D(%d %d/sec) - COMMANDS (%d"
+                      + " %d/sec) - TX: COMMIT(%d %d/sec) ROLLBACK(%d %d/sec)",
                   lastCreateRecords,
                   lastCreateRecordsSec,
                   lastReadRecords,
@@ -509,14 +515,16 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
                         OGlobalConfiguration.PROFILER_AUTODUMP_TYPE.getValueAsString();
 
                     output.append(
-                        "\n*******************************************************************************************************************************************");
+                        "\n"
+                            + "*******************************************************************************************************************************************");
                     output.append(
                         "\nPROFILER AUTO DUMP '"
                             + dumpType
                             + "' OUTPUT (to disabled it set 'profiler.autoDump.interval' = 0):\n");
                     output.append(dump(dumpType));
                     output.append(
-                        "\n*******************************************************************************************************************************************");
+                        "\n"
+                            + "*******************************************************************************************************************************************");
 
                     OLogManager.instance().info(null, output.toString());
                   },

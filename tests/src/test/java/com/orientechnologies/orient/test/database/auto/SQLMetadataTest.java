@@ -48,7 +48,8 @@ public class SQLMetadataTest extends DocumentDBBaseTest {
         database
             .command(
                 new OSQLSynchQuery<ODocument>(
-                    "select expand(properties) from (select expand(classes) from metadata:schema) where name = 'OUser'"))
+                    "select expand(properties) from (select expand(classes) from metadata:schema)"
+                        + " where name = 'OUser'"))
             .execute();
 
     Assert.assertTrue(result.size() != 0);

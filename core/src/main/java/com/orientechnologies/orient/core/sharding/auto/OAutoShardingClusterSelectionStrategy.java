@@ -70,7 +70,8 @@ public class OAutoShardingClusterSelectionStrategy implements OClusterSelectionS
     } catch (OInvalidIndexEngineIdException e) {
       throw OException.wrapException(
           new OConfigurationException(
-              "Cannot use auto-sharding cluster strategy because the underlying index has not found"),
+              "Cannot use auto-sharding cluster strategy because the underlying index has not"
+                  + " found"),
           e);
     }
 

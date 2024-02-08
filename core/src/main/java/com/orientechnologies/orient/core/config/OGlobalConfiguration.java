@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.PrintStream;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -37,6 +29,13 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
+import java.io.PrintStream;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system
@@ -54,7 +53,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @Deprecated
   ENVIRONMENT_CONCURRENT(
       "environment.concurrent",
-      "Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management",
+      "Specifies if running in multi-thread environment. Setting this to false turns off the"
+          + " internal lock management",
       Boolean.class,
       Boolean.TRUE),
 
@@ -111,34 +111,38 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   MEMORY_LEFT_TO_OS(
       "memory.leftToOS",
-      "Amount of free memory which should be left unallocated in case of OrientDB is started outside of container. "
-          + "Value can be set as % of total memory provided to OrientDB or as absolute value in bytes, kilobytes, megabytes or gigabytes. "
-          + "If you set value as 10% it means that 10% of memory will not be allocated by OrientDB and will be left to use by the rest of "
-          + "applications, if 2g value is provided it means that 2 gigabytes of memory will be left to use by the rest of applications. "
-          + "Default value is 2g",
+      "Amount of free memory which should be left unallocated in case of OrientDB is started"
+          + " outside of container. Value can be set as % of total memory provided to OrientDB or"
+          + " as absolute value in bytes, kilobytes, megabytes or gigabytes. If you set value as"
+          + " 10% it means that 10% of memory will not be allocated by OrientDB and will be left to"
+          + " use by the rest of applications, if 2g value is provided it means that 2 gigabytes of"
+          + " memory will be left to use by the rest of applications. Default value is 2g",
       String.class,
       "2g"),
 
   MEMORY_LEFT_TO_CONTAINER(
       "memory.leftToContainer",
-      "Amount of free memory which should be left unallocated in case of OrientDB is started inside of container. "
-          + "Value can be set as % of total memory provided to OrientDB or as absolute value in bytes, kilobytes, megabytes or gigabytes. "
-          + "If you set value as 10% it means that 10% of memory will not be allocated by OrientDB and will be left to use by the rest of "
-          + "applications, if 2g value is provided it means that 2 gigabytes of memory will be left to use by the rest of applications. "
-          + "Default value is 256m",
+      "Amount of free memory which should be left unallocated in case of OrientDB is started inside"
+          + " of container. Value can be set as % of total memory provided to OrientDB or as"
+          + " absolute value in bytes, kilobytes, megabytes or gigabytes. If you set value as 10%"
+          + " it means that 10% of memory will not be allocated by OrientDB and will be left to use"
+          + " by the rest of applications, if 2g value is provided it means that 2 gigabytes of"
+          + " memory will be left to use by the rest of applications. Default value is 256m",
       String.class,
       "256m"),
 
   DIRECT_MEMORY_SAFE_MODE(
       "memory.directMemory.safeMode",
-      "Indicates whether to perform a range check before each direct memory update. It is true by default, "
-          + "but usually it can be safely set to false. It should only be to true after dramatic changes have been made in the storage structures",
+      "Indicates whether to perform a range check before each direct memory update. It is true by"
+          + " default, but usually it can be safely set to false. It should only be to true after"
+          + " dramatic changes have been made in the storage structures",
       Boolean.class,
       true),
 
   DIRECT_MEMORY_POOL_LIMIT(
       "memory.pool.limit",
-      "Limit of the pages cached inside of direct memory pool to avoid frequent reallocation of memory in OS",
+      "Limit of the pages cached inside of direct memory pool to avoid frequent reallocation of"
+          + " memory in OS",
       Integer.class,
       Integer.MAX_VALUE),
 
@@ -150,23 +154,27 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   DIRECT_MEMORY_TRACK_MODE(
       "memory.directMemory.trackMode",
-      "Activates the direct memory pool [leak detector](Leak-Detector.md). This detector causes a large overhead and should be used for debugging "
-          + "purposes only. It's also a good idea to pass the "
-          + "-Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager switch to the JVM, "
-          + "if you use this mode, this will enable the logging from JVM shutdown hooks.",
+      "Activates the direct memory pool [leak detector](Leak-Detector.md). This detector causes a"
+          + " large overhead and should be used for debugging purposes only. It's also a good idea"
+          + " to pass the"
+          + " -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager"
+          + " switch to the JVM, if you use this mode, this will enable the logging from JVM"
+          + " shutdown hooks.",
       Boolean.class,
       false),
 
   DIRECT_MEMORY_ONLY_ALIGNED_ACCESS(
       "memory.directMemory.onlyAlignedMemoryAccess",
-      "Some architectures do not allow unaligned memory access or may suffer from speed degradation. For such platforms, this flag should be set to true",
+      "Some architectures do not allow unaligned memory access or may suffer from speed"
+          + " degradation. For such platforms, this flag should be set to true",
       Boolean.class,
       true),
 
   @Deprecated
   JVM_GC_DELAY_FOR_OPTIMIZE(
       "jvm.gc.delayForOptimize",
-      "Minimal amount of time (in seconds), since the last System.gc(), when called after tree optimization",
+      "Minimal amount of time (in seconds), since the last System.gc(), when called after tree"
+          + " optimization",
       Long.class,
       600),
 
@@ -174,7 +182,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   /** Limit of amount of files which may be open simultaneously */
   OPEN_FILES_LIMIT(
       "storage.openFiles.limit",
-      "Limit of amount of files which may be open simultaneously, -1 (default) means automatic detection",
+      "Limit of amount of files which may be open simultaneously, -1 (default) means automatic"
+          + " detection",
       Integer.class,
       -1),
 
@@ -184,14 +193,15 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    */
   COMPONENTS_LOCK_CACHE(
       "storage.componentsLock.cache",
-      "Amount of cached locks is used for component lock to avoid constant creation of new lock instances",
+      "Amount of cached locks is used for component lock to avoid constant creation of new lock"
+          + " instances",
       Integer.class,
       10000),
 
   DISK_CACHE_PINNED_PAGES(
       "storage.diskCache.pinnedPages",
-      "Maximum amount of pinned pages which may be contained in cache,"
-          + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50",
+      "Maximum amount of pinned pages which may be contained in cache, if this percent is reached"
+          + " next pages will be left in unpinned state. You can not set value more than 50",
       Integer.class,
       20,
       false),
@@ -239,15 +249,16 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   DISK_WRITE_CACHE_FLUSH_WRITE_INACTIVITY_INTERVAL(
       "storage.diskCache.writeCacheFlushInactivityInterval",
-      "Interval between 2 writes to the disk cache,"
-          + " if writes are done with an interval more than provided, all files will be fsynced before the next write,"
-          + " which allows a data restore after a server crash (in ms)",
+      "Interval between 2 writes to the disk cache, if writes are done with an interval more than"
+          + " provided, all files will be fsynced before the next write, which allows a data"
+          + " restore after a server crash (in ms)",
       Long.class,
       60 * 1000),
 
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT(
       "storage.diskCache.writeCacheFlushLockTimeout",
-      "Maximum amount of time the write cache will wait before a page flushes (in ms, -1 to disable)",
+      "Maximum amount of time the write cache will wait before a page flushes (in ms, -1 to"
+          + " disable)",
       Integer.class,
       -1),
 
@@ -258,8 +269,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    */
   DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES(
       "storage.diskCache.diskFreeSpaceCheckIntervalInPages",
-      "The interval (how many new pages should be added before free space will be checked), after which the storage periodically "
-          + "checks whether the amount of free disk space is enough to work in write mode",
+      "The interval (how many new pages should be added before free space will be checked), after"
+          + " which the storage periodically checks whether the amount of free disk space is enough"
+          + " to work in write mode",
       Integer.class,
       2048),
 
@@ -269,28 +281,31 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    */
   STORAGE_KEEP_DISK_CACHE_STATE(
       "storage.diskCache.keepState",
-      "Keep disk cache state between moment when storage is closed and moment when it is opened again. true by default",
+      "Keep disk cache state between moment when storage is closed and moment when it is opened"
+          + " again. true by default",
       Boolean.class,
       false),
 
   STORAGE_CHECKSUM_MODE(
       "storage.diskCache.checksumMode",
-      "Controls the per-page checksum storage and verification done by "
-          + "the file cache. Possible modes: 'off' – checksums are completely off; 'store' – checksums are calculated and stored "
-          + "on page flushes, no verification is done on page loads, stored checksums are verified only during user-initiated health "
-          + "checks; 'storeAndVerify' – checksums are calculated and stored on page flushes, verification is performed on "
-          + "each page load, errors are reported in the log; 'storeAndThrow' – same as `storeAndVerify` with addition of exceptions "
-          + "thrown on errors, this mode is useful for debugging and testing, but should be avoided in a production environment;"
-          + " 'storeAndSwitchReadOnlyMode' (default) - Same as 'storeAndVerify' with addition that storage will be switched in read only mode "
-          + "till it will not be repaired.",
+      "Controls the per-page checksum storage and verification done by the file cache. Possible"
+          + " modes: 'off' – checksums are completely off; 'store' – checksums are calculated and"
+          + " stored on page flushes, no verification is done on page loads, stored checksums are"
+          + " verified only during user-initiated health checks; 'storeAndVerify' – checksums are"
+          + " calculated and stored on page flushes, verification is performed on each page load,"
+          + " errors are reported in the log; 'storeAndThrow' – same as `storeAndVerify` with"
+          + " addition of exceptions thrown on errors, this mode is useful for debugging and"
+          + " testing, but should be avoided in a production environment;"
+          + " 'storeAndSwitchReadOnlyMode' (default) - Same as 'storeAndVerify' with addition that"
+          + " storage will be switched in read only mode till it will not be repaired.",
       OChecksumMode.class,
       OChecksumMode.StoreAndSwitchReadOnlyMode,
       false),
 
   STORAGE_CHECK_LATEST_OPERATION_ID(
       "storage.checkLatestOperationId",
-      "Indicates wether storage should be checked for latest operation id, "
-          + "to ensure that all the records are needed to restore database are stored into the WAL (true by default)",
+      "Indicates wether storage should be checked for latest operation id, to ensure that all the"
+          + " records are needed to restore database are stored into the WAL (true by default)",
       Boolean.class,
       true),
 
@@ -371,20 +386,23 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE(
       "storage.doubleWriteLog.maxSegSize",
-      "Maximum size of double write log segment in megabytes, -1 means that size will be calculated automatically",
+      "Maximum size of double write log segment in megabytes, -1 means that size will be calculated"
+          + " automatically",
       Integer.class,
       -1),
 
   STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE_PERCENT(
       "storage.doubleWriteLog.maxSegSizePercent",
-      "Maximum size of segment of double write log in percents, should be set to value bigger than 0",
+      "Maximum size of segment of double write log in percents, should be set to value bigger than"
+          + " 0",
       Integer.class,
       5),
 
   STORAGE_DOUBLE_WRITE_LOG_MIN_SEG_SIZE(
       "storage.doubleWriteLog.minSegSize",
-      "Minimum size of segment of double write log in megabytes, should be set to value bigger than 0. "
-          + "If both set maximum and minimum size of segments. Minimum size always will have priority over maximum size.",
+      "Minimum size of segment of double write log in megabytes, should be set to value bigger than"
+          + " 0. If both set maximum and minimum size of segments. Minimum size always will have"
+          + " priority over maximum size.",
       Integer.class,
       256),
 
@@ -416,14 +434,15 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @Deprecated
   STORAGE_TRACK_CHANGED_RECORDS_IN_WAL(
       "storage.trackChangedRecordsInWAL",
-      "If this flag is set metadata which contains rids of changed records is added at the end of each atomic operation",
+      "If this flag is set metadata which contains rids of changed records is added at the end of"
+          + " each atomic operation",
       Boolean.class,
       false),
 
   STORAGE_INTERNAL_JOURNALED_TX_STREAMING_PORT(
       "storage.internal.journaled.tx.streaming.port",
-      "Activates journaled tx streaming "
-          + "on the given TCP/IP port. Used for internal testing purposes only. Never touch it if you don't know what you doing.",
+      "Activates journaled tx streaming on the given TCP/IP port. Used for internal testing"
+          + " purposes only. Never touch it if you don't know what you doing.",
       Integer.class,
       null),
 
@@ -442,7 +461,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @Deprecated
   USE_CHM_CACHE(
       "storage.useCHMCache",
-      "Whether to use new disk cache implementation based on CHM or old one based on cuncurrent queues",
+      "Whether to use new disk cache implementation based on CHM or old one based on cuncurrent"
+          + " queues",
       Boolean.class,
       true),
 
@@ -454,7 +474,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   WAL_CACHE_SIZE(
       "storage.wal.cacheSize",
-      "Maximum size of WAL cache (in amount of WAL pages, each page is 4k) If set to 0, caching will be disabled",
+      "Maximum size of WAL cache (in amount of WAL pages, each page is 4k) If set to 0, caching"
+          + " will be disabled",
       Integer.class,
       65536),
 
@@ -546,7 +567,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE(
       "storage.wal.reportAfterOperationsDuringRestore",
-      "Amount of processed log operations, after which status of data restore procedure will be printed (0 or a negative value, disables the logging)",
+      "Amount of processed log operations, after which status of data restore procedure will be"
+          + " printed (0 or a negative value, disables the logging)",
       Integer.class,
       10000),
 
@@ -571,7 +593,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT(
       "storage.wal.fullCheckpointShutdownTimeout",
-      "The amount of time the DB will wait, until a checkpoint is finished, during a DB shutdown (in seconds)",
+      "The amount of time the DB will wait, until a checkpoint is finished, during a DB shutdown"
+          + " (in seconds)",
       Integer.class,
       60 * 10),
 
@@ -590,20 +613,22 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   DISK_CACHE_PRINT_FLUSH_TILL_SEGMENT_STATISTICS(
       "storage.diskCache.printFlushTillSegmentStatistics",
-      "Print information about write cache state when it is requested to flush all data operations on which are logged "
-          + "till provided WAL segment",
+      "Print information about write cache state when it is requested to flush all data operations"
+          + " on which are logged till provided WAL segment",
       Boolean.class,
       true),
 
   DISK_CACHE_PRINT_FLUSH_FILE_STATISTICS(
       "storage.diskCache.printFlushFileStatistics",
-      "Print information about write cache state when it is requested to flush all data of file specified",
+      "Print information about write cache state when it is requested to flush all data of file"
+          + " specified",
       Boolean.class,
       true),
 
   DISK_CACHE_PRINT_FILE_REMOVE_STATISTICS(
       "storage.diskCache.printFileRemoveStatistics",
-      "Print information about write cache state when it is requested to clear all data of file specified",
+      "Print information about write cache state when it is requested to clear all data of file"
+          + " specified",
       Boolean.class,
       true),
 
@@ -615,19 +640,22 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   DISK_CACHE_EXCLUSIVE_FLUSH_BOUNDARY(
       "storage.diskCache.exclusiveFlushBoundary",
-      "If portion of exclusive pages into cache exceeds this value we start to flush only exclusive pages from disk cache",
+      "If portion of exclusive pages into cache exceeds this value we start to flush only exclusive"
+          + " pages from disk cache",
       Float.class,
       0.9),
 
   DISK_CACHE_CHUNK_SIZE(
       "storage.diskCache.chunkSize",
-      "Maximum distance between two pages after which they are not treated as single continous chunk",
+      "Maximum distance between two pages after which they are not treated as single continous"
+          + " chunk",
       Integer.class,
       256),
 
   DISK_CACHE_EXCLUSIVE_PAGES_BOUNDARY(
       "storage.diskCache.exclusiveBoundary",
-      "Portion of exclusive pages in write cache after which we will start to flush only exclusive pages",
+      "Portion of exclusive pages in write cache after which we will start to flush only exclusive"
+          + " pages",
       Float.class,
       0.7),
 
@@ -667,8 +695,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @Deprecated
   RECORD_DOWNSIZING_ENABLED(
       "record.downsizing.enabled",
-      "On updates, if the record size is lower than before, this reduces the space taken accordingly. "
-          + "If enabled this could increase defragmentation, but it reduces the used disk space",
+      "On updates, if the record size is lower than before, this reduces the space taken"
+          + " accordingly. If enabled this could increase defragmentation, but it reduces the used"
+          + " disk space",
       Boolean.class,
       true),
 
@@ -699,7 +728,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   DB_CACHED_POOL_CLEAN_UP_TIMEOUT(
       "db.cached.pool.cleanUpTimeout",
-      "Default timeout for clean up cache from unused or closed database pools, value in milliseconds",
+      "Default timeout for clean up cache from unused or closed database pools, value in"
+          + " milliseconds",
       Long.class,
       600_000),
 
@@ -722,8 +752,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   DB_MVCC_THROWFAST(
       "db.mvcc.throwfast",
-      "Use fast-thrown exceptions for MVCC OConcurrentModificationExceptions. No context information will be available. "
-          + "Set to true, when these exceptions are thrown, but the details are not necessary",
+      "Use fast-thrown exceptions for MVCC OConcurrentModificationExceptions. No context"
+          + " information will be available. Set to true, when these exceptions are thrown, but the"
+          + " details are not necessary",
       Boolean.class,
       false,
       true),
@@ -737,22 +768,24 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   // INDEX
   INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD(
       "index.embeddedToSbtreeBonsaiThreshold",
-      "Amount of values, after which the index implementation will use an sbtree as a values container. Set to -1, to disable and force using an sbtree",
+      "Amount of values, after which the index implementation will use an sbtree as a values"
+          + " container. Set to -1, to disable and force using an sbtree",
       Integer.class,
       40,
       true),
 
   INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD(
       "index.sbtreeBonsaiToEmbeddedThreshold",
-      "Amount of values, after which index implementation will use an embedded values container (disabled by default)",
+      "Amount of values, after which index implementation will use an embedded values container"
+          + " (disabled by default)",
       Integer.class,
       -1,
       true),
 
   HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH(
       "hashTable.slitBucketsBuffer.length",
-      "Length of buffer (in pages), where buckets "
-          + "that were split, but not flushed to the disk, are kept. This buffer is used to minimize random IO overhead",
+      "Length of buffer (in pages), where buckets that were split, but not flushed to the disk, are"
+          + " kept. This buffer is used to minimize random IO overhead",
       Integer.class,
       1500),
 
@@ -767,16 +800,17 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   INDEX_ALLOW_MANUAL_INDEXES(
       "index.allowManualIndexes",
-      "Switch which allows usage of manual indexes inside OrientDB. "
-          + "It is not recommended to switch it on, because manual indexes are deprecated, not supported and will be removed in next versions",
+      "Switch which allows usage of manual indexes inside OrientDB. It is not recommended to switch"
+          + " it on, because manual indexes are deprecated, not supported and will be removed in"
+          + " next versions",
       Boolean.class,
       true),
 
   INDEX_ALLOW_MANUAL_INDEXES_WARNING(
       "index.allowManualIndexesWarning",
-      "Switch which triggers printing of waring message any time when "
-          + "manual indexes are used. It is not recommended to switch it off, because manual indexes are deprecated, "
-          + "not supported and will be removed in next versions",
+      "Switch which triggers printing of waring message any time when manual indexes are used. It"
+          + " is not recommended to switch it off, because manual indexes are deprecated, not"
+          + " supported and will be removed in next versions",
       Boolean.class,
       true),
 
@@ -794,7 +828,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @Deprecated
   INDEX_TX_MODE(
       "index.txMode",
-      "Indicates the index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)",
+      "Indicates the index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY"
+          + " by default)",
       String.class,
       "FULL"),
 
@@ -804,7 +839,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   // SBTREE
   SBTREE_MAX_DEPTH(
       "sbtree.maxDepth",
-      "Maximum depth of sbtree, which will be traversed during key look up until it will be treated as broken (64 by default)",
+      "Maximum depth of sbtree, which will be traversed during key look up until it will be treated"
+          + " as broken (64 by default)",
       Integer.class,
       64),
 
@@ -816,13 +852,15 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   SBTREE_MAX_EMBEDDED_VALUE_SIZE(
       "sbtree.maxEmbeddedValueSize",
-      "Maximum size of value which can be put in an SBTree without creation link to a standalone page in bytes (40960 by default)",
+      "Maximum size of value which can be put in an SBTree without creation link to a standalone"
+          + " page in bytes (40960 by default)",
       Integer.class,
       40960),
 
   SBTREEBONSAI_BUCKET_SIZE(
       "sbtreebonsai.bucketSize",
-      "Size of bucket in OSBTreeBonsai (in kB). Contract: bucketSize < storagePageSize, storagePageSize % bucketSize == 0",
+      "Size of bucket in OSBTreeBonsai (in kB). Contract: bucketSize < storagePageSize,"
+          + " storagePageSize % bucketSize == 0",
       Integer.class,
       2),
 
@@ -834,13 +872,15 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE(
       "sbtreebonsai.linkBagCache.evictionSize",
-      "The number of cached LINKBAG collections, which will be removed, when the cache limit is reached",
+      "The number of cached LINKBAG collections, which will be removed, when the cache limit is"
+          + " reached",
       Integer.class,
       1000),
 
   SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER(
       "sbtreebonsai.freeSpaceReuseTrigger",
-      "How much free space should be in an sbtreebonsai file, before it will be reused during the next allocation",
+      "How much free space should be in an sbtreebonsai file, before it will be reused during the"
+          + " next allocation",
       Float.class,
       0.5),
 
@@ -853,14 +893,16 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD(
       "ridBag.embeddedToSbtreeBonsaiThreshold",
-      "Amount of values after which a LINKBAG implementation will use sbtree as values container. Set to -1 to always use an sbtree",
+      "Amount of values after which a LINKBAG implementation will use sbtree as values container."
+          + " Set to -1 to always use an sbtree",
       Integer.class,
       40,
       true),
 
   RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD(
       "ridBag.sbtreeBonsaiToEmbeddedToThreshold",
-      "Amount of values, after which a LINKBAG implementation will use an embedded values container (disabled by default)",
+      "Amount of values, after which a LINKBAG implementation will use an embedded values container"
+          + " (disabled by default)",
       Integer.class,
       -1,
       true),
@@ -885,7 +927,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   // SECURITY
   SECURITY_USER_PASSWORD_SALT_ITERATIONS(
       "security.userPasswordSaltIterations",
-      "Number of iterations to generate the salt or user password. Changing this setting does not affect stored passwords",
+      "Number of iterations to generate the salt or user password. Changing this setting does not"
+          + " affect stored passwords",
       Integer.class,
       65536),
 
@@ -963,7 +1006,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT(
       "network.binary.loadBalancing.timeout",
-      "Maximum time (in ms) to wait for the answer from DNS about the TXT record for load balancing",
+      "Maximum time (in ms) to wait for the answer from DNS about the TXT record for load"
+          + " balancing",
       Integer.class,
       2000,
       true),
@@ -977,7 +1021,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   NETWORK_BINARY_MIN_PROTOCOL_VERSION(
       "network.binary.minProtocolVersion",
-      "Set the minimum enabled binary protocol version and disable all backward compatible behaviour for version previous the one specified",
+      "Set the minimum enabled binary protocol version and disable all backward compatible"
+          + " behaviour for version previous the one specified",
       Integer.class,
       26,
       false),
@@ -991,7 +1036,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   NETWORK_BINARY_ALLOW_NO_TOKEN(
       "network.binary.allowNoToken",
-      "Backward compatibility option to allow binary connections without tokens (STRONGLY DISCOURAGED, FOR SECURITY REASONS)",
+      "Backward compatibility option to allow binary connections without tokens (STRONGLY"
+          + " DISCOURAGED, FOR SECURITY REASONS)",
       Boolean.class,
       Boolean.FALSE,
       true),
@@ -1008,7 +1054,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   NETWORK_HTTP_SERVER_INFO(
       "network.http.serverInfo",
-      "Server info to send in HTTP responses. Change the default if you want to hide it is a OrientDB Server",
+      "Server info to send in HTTP responses. Change the default if you want to hide it is a"
+          + " OrientDB Server",
       String.class,
       "OrientDB Server v." + OConstants.getVersion(),
       true),
@@ -1035,7 +1082,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   NETWORK_HTTP_JSONP_ENABLED(
       "network.http.jsonp",
-      "Enable the usage of JSONP, if requested by the client. The parameter name to use is 'callback'",
+      "Enable the usage of JSONP, if requested by the client. The parameter name to use is"
+          + " 'callback'",
       Boolean.class,
       false,
       true),
@@ -1126,7 +1174,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   SEQUENCE_RETRY_DELAY(
       "sequence.retryDelay",
-      "Maximum number of ms to wait between concurrent modification exceptions. The value is computed as random between 1 and this number",
+      "Maximum number of ms to wait between concurrent modification exceptions. The value is"
+          + " computed as random between 1 and this number",
       Integer.class,
       200),
 
@@ -1176,7 +1225,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   // LOG
   LOG_SUPPORTS_ANSI(
       "log.console.ansi",
-      "ANSI Console support. 'auto' means automatic check if it is supported, 'true' to force using ANSI, 'false' to avoid using ANSI",
+      "ANSI Console support. 'auto' means automatic check if it is supported, 'true' to force using"
+          + " ANSI, 'false' to avoid using ANSI",
       String.class,
       "auto"),
 
@@ -1213,8 +1263,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   // QUERY
   QUERY_REMOTE_RESULTSET_PAGE_SIZE(
       "query.remoteResultSet.pageSize",
-      "The size of a remote ResultSet page, ie. the number of records"
-          + "that are fetched together during remote query execution. This has to be set on the client.",
+      "The size of a remote ResultSet page, ie. the number of recordsthat are fetched together"
+          + " during remote query execution. This has to be set on the client.",
       Integer.class,
       1000),
 
@@ -1238,34 +1288,41 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   QUERY_PARALLEL_RESULT_QUEUE_SIZE(
       "query.parallelResultQueueSize",
-      "Size of the queue that holds results on parallel execution. The queue is blocking, so in case the queue is full, the query threads will be in a wait state",
+      "Size of the queue that holds results on parallel execution. The queue is blocking, so in"
+          + " case the queue is full, the query threads will be in a wait state",
       Integer.class,
       20000),
 
   QUERY_SCAN_BATCH_SIZE(
       "query.scanBatchSize",
-      "Scan clusters in blocks of records. This setting reduces the lock time on the cluster during scans."
-          + " A high value mean a faster execution, but also a lower concurrency level. Set to 0 to disable batch scanning. Disabling batch scanning is suggested for read-only databases only",
+      "Scan clusters in blocks of records. This setting reduces the lock time on the cluster during"
+          + " scans. A high value mean a faster execution, but also a lower concurrency level. Set"
+          + " to 0 to disable batch scanning. Disabling batch scanning is suggested for read-only"
+          + " databases only",
       Long.class,
       1000),
 
   QUERY_SCAN_THRESHOLD_TIP(
       "query.scanThresholdTip",
-      "If the total number of records scanned in a query exceeds this setting, then a warning is given. (Use 0 to disable)",
+      "If the total number of records scanned in a query exceeds this setting, then a warning is"
+          + " given. (Use 0 to disable)",
       Long.class,
       50000),
 
   QUERY_LIMIT_THRESHOLD_TIP(
       "query.limitThresholdTip",
-      "If the total number of returned records exceeds this value, then a warning is given. (Use 0 to disable)",
+      "If the total number of returned records exceeds this value, then a warning is given. (Use 0"
+          + " to disable)",
       Long.class,
       10000),
 
   QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP(
       "query.maxHeapElementsAllowedPerOp",
-      "Maximum number of elements (records) allowed in a single query for memory-intensive operations (eg. ORDER BY in heap). "
-          + "If exceeded, the query fails with an OCommandExecutionException. Negative number means no limit."
-          + "This setting is intended as a safety measure against excessive resource consumption from a single query (eg. prevent OutOfMemory)",
+      "Maximum number of elements (records) allowed in a single query for memory-intensive"
+          + " operations (eg. ORDER BY in heap). If exceeded, the query fails with an"
+          + " OCommandExecutionException. Negative number means no limit.This setting is intended"
+          + " as a safety measure against excessive resource consumption from a single query (eg."
+          + " prevent OutOfMemory)",
       Long.class,
       500_000),
 
@@ -1284,11 +1341,13 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   // GRAPH
   SQL_GRAPH_CONSISTENCY_MODE(
       "sql.graphConsistencyMode",
-      "Consistency mode for graphs. It can be 'tx' (default), 'notx_sync_repair' and 'notx_async_repair'. "
-          + "'tx' uses transactions to maintain consistency. Instead both 'notx_sync_repair' and 'notx_async_repair' do not use transactions, "
-          + "and the consistency, in case of JVM crash, is guaranteed by a database repair operation that run at startup. "
-          + "With 'notx_sync_repair' the repair is synchronous, so the database comes online after the repair is ended, while "
-          + "with 'notx_async_repair' the repair is a background process",
+      "Consistency mode for graphs. It can be 'tx' (default), 'notx_sync_repair' and"
+          + " 'notx_async_repair'. 'tx' uses transactions to maintain consistency. Instead both"
+          + " 'notx_sync_repair' and 'notx_async_repair' do not use transactions, and the"
+          + " consistency, in case of JVM crash, is guaranteed by a database repair operation that"
+          + " run at startup. With 'notx_sync_repair' the repair is synchronous, so the database"
+          + " comes online after the repair is ended, while with 'notx_async_repair' the repair is"
+          + " a background process",
       String.class,
       "tx"),
 
@@ -1298,7 +1357,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    */
   CLIENT_CHANNEL_MAX_POOL(
       "client.channel.maxPool",
-      "Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection",
+      "Maximum size of pool of network channels between client and server. A channel is a TCP/IP"
+          + " connection",
       Integer.class,
       100),
 
@@ -1308,7 +1368,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    */
   CLIENT_CONNECT_POOL_WAIT_TIMEOUT(
       "client.connectionPool.waitTimeout",
-      "Maximum time, where the client should wait for a connection from the pool, when all connections busy",
+      "Maximum time, where the client should wait for a connection from the pool, when all"
+          + " connections busy",
       Integer.class,
       5000,
       true),
@@ -1362,7 +1423,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
       "server.log.dumpClientExceptionLevel",
-      "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
+      "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF,"
+          + " FINE, CONFIG, INFO, WARNING, SEVERE",
       String.class,
       Level.FINE.getName()),
 
@@ -1448,26 +1510,31 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   DISTRIBUTED_ASYNCH_QUEUE_SIZE(
       "distributed.asynchQueueSize",
-      "Queue size to handle distributed asynchronous operations. The bigger is the queue, the more operation are buffered, but also more memory it's consumed. 0 = dynamic allocation, which means up to 2^31-1 entries",
+      "Queue size to handle distributed asynchronous operations. The bigger is the queue, the more"
+          + " operation are buffered, but also more memory it's consumed. 0 = dynamic allocation,"
+          + " which means up to 2^31-1 entries",
       Integer.class,
       0),
 
   DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT(
       "distributed.asynchResponsesTimeout",
-      "Maximum timeout (in ms) to collect all the asynchronous responses from replication. After this time the operation is rolled back (through an UNDO)",
+      "Maximum timeout (in ms) to collect all the asynchronous responses from replication. After"
+          + " this time the operation is rolled back (through an UNDO)",
       Long.class,
       15000l),
 
   DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY(
       "distributed.purgeResponsesTimerDelay",
-      "Maximum timeout (in ms) to collect all the asynchronous responses from replication. This is the delay the purge thread uses to check asynchronous requests in timeout",
+      "Maximum timeout (in ms) to collect all the asynchronous responses from replication. This is"
+          + " the delay the purge thread uses to check asynchronous requests in timeout",
       Long.class,
       15000l),
 
   /** @Since 2.2.7 */
   DISTRIBUTED_TX_EXPIRE_TIMEOUT(
       "distributed.txAliveTimeout",
-      "Maximum timeout (in ms) a distributed transaction can be alive. This timeout is to rollback pending transactions after a while",
+      "Maximum timeout (in ms) a distributed transaction can be alive. This timeout is to rollback"
+          + " pending transactions after a while",
       Long.class,
       1800000l,
       true),
@@ -1489,7 +1556,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   /** @Since 2.2.5 */
   DISTRIBUTED_HEARTBEAT_TIMEOUT(
       "distributed.heartbeatTimeout",
-      "Maximum time in ms to wait for the heartbeat. If the server does not respond in time, it is put offline",
+      "Maximum time in ms to wait for the heartbeat. If the server does not respond in time, it is"
+          + " put offline",
       Long.class,
       10000l),
 
@@ -1510,7 +1578,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   /** Since 2.2.4 */
   DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS(
       "distributed.autoRemoveOfflineServers",
-      "This is the amount of time (in ms) the server has to be OFFLINE, before it is automatically removed from the distributed configuration. -1 = never, 0 = immediately, >0 the actual time to wait",
+      "This is the amount of time (in ms) the server has to be OFFLINE, before it is automatically"
+          + " removed from the distributed configuration. -1 = never, 0 = immediately, >0 the"
+          + " actual time to wait",
       Long.class,
       0,
       true),
@@ -1518,7 +1588,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   /** @Since 2.2.0 */
   DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY(
       "distributed.publishNodeStatusEvery",
-      "Time in ms to publish the node status on distributed map. Set to 0 to disable such refresh of node configuration",
+      "Time in ms to publish the node status on distributed map. Set to 0 to disable such refresh"
+          + " of node configuration",
       Long.class,
       10000l,
       true),
@@ -1526,7 +1597,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   /** @Since 2.2.0 */
   DISTRIBUTED_REPLICATION_PROTOCOL_VERSION(
       "distributed.replicationProtocol.version",
-      "1 for legacy replication model (v 3.0 and previous), 2 for coordinated replication (v 3.1 and next)",
+      "1 for legacy replication model (v 3.0 and previous), 2 for coordinated replication (v 3.1"
+          + " and next)",
       Integer.class,
       1,
       true),
@@ -1543,7 +1615,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @OApi(maturity = OApi.MATURITY.NEW)
   DISTRIBUTED_DB_WORKERTHREADS(
       "distributed.dbWorkerThreads",
-      "Number of parallel worker threads per database that process distributed messages. Use 0 for automatic",
+      "Number of parallel worker threads per database that process distributed messages. Use 0 for"
+          + " automatic",
       Integer.class,
       0),
 
@@ -1551,7 +1624,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @OApi(maturity = OApi.MATURITY.NEW)
   DISTRIBUTED_BACKUP_DIRECTORY(
       "distributed.backupDirectory",
-      "Directory where the copy of an existent database is saved, before it is downloaded from the cluster. Leave it empty to avoid the backup.",
+      "Directory where the copy of an existent database is saved, before it is downloaded from the"
+          + " cluster. Leave it empty to avoid the backup.",
       String.class,
       "../backup/databases"),
 
@@ -1568,7 +1642,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @OApi(maturity = OApi.MATURITY.NEW)
   DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY(
       "distributed.concurrentTxMaxAutoRetry",
-      "Maximum attempts the transaction coordinator should execute a transaction automatically, if records are locked. (Minimum is 1 = no attempts)",
+      "Maximum attempts the transaction coordinator should execute a transaction automatically, if"
+          + " records are locked. (Minimum is 1 = no attempts)",
       Integer.class,
       15,
       true),
@@ -1586,14 +1661,16 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @OApi(maturity = OApi.MATURITY.NEW)
   DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY(
       "distributed.concurrentTxAutoRetryDelay",
-      "Delay (in ms) between attempts on executing a distributed transaction, which had failed because of locked records. (0=no delay)",
+      "Delay (in ms) between attempts on executing a distributed transaction, which had failed"
+          + " because of locked records. (0=no delay)",
       Integer.class,
       1000,
       true),
 
   DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE(
       "distributed.transactionSequenceSetSize",
-      "Size of the set of sequences used by distributed transactions, correspond to the amount of transactions commits that can be active at the same time",
+      "Size of the set of sequences used by distributed transactions, correspond to the amount of"
+          + " transactions commits that can be active at the same time",
       Integer.class,
       1000,
       false),
@@ -1622,7 +1699,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @OApi(maturity = OApi.MATURITY.STABLE)
   CLIENT_CONNECTION_STRATEGY(
       "client.connection.strategy",
-      "Strategy used for open connections from a client in case of multiple servers, possible options:STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST",
+      "Strategy used for open connections from a client in case of multiple servers, possible"
+          + " options:STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST",
       String.class,
       null),
 
@@ -1720,7 +1798,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @Deprecated
   JNA_DISABLE_USE_SYSTEM_LIBRARY(
       "jna.disable.system.library",
-      "This property disables using JNA, should it be installed on your system. (Default true) To use JNA bundled with database",
+      "This property disables using JNA, should it be installed on your system. (Default true) To"
+          + " use JNA bundled with database",
       boolean.class,
       true),
 
@@ -1772,14 +1851,16 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @Deprecated
   TX_AUTO_RETRY(
       "tx.autoRetry",
-      "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
+      "Maximum number of automatic retry if some resource has been locked in the middle of the"
+          + " transaction (Timeout exception)",
       Integer.class,
       1),
 
   @Deprecated
   TX_LOG_SYNCH(
       "tx.log.synch",
-      "Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives",
+      "Executes a synch against the file-system at every log entry. This slows down transactions"
+          + " but guarantee transaction reliability on unreliable drives",
       Boolean.class,
       Boolean.FALSE),
 

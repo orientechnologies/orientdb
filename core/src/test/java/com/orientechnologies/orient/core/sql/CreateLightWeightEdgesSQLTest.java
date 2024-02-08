@@ -77,7 +77,8 @@ public class CreateLightWeightEdgesSQLTest {
 
                             try {
                               session1.command(
-                                  "create edge e from (select from v where id=1) to (select from v where id=2) ");
+                                  "create edge e from (select from v where id=1) to (select from v"
+                                      + " where id=2) ");
                             } catch (OConcurrentModificationException e) {
 
                             }

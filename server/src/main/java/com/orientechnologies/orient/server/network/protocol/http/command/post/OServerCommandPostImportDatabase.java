@@ -57,7 +57,8 @@ public class OServerCommandPostImportDatabase
             OHttpUtils.STATUS_OK_CODE,
             OHttpUtils.STATUS_OK_DESCRIPTION,
             OHttpUtils.CONTENT_JSON,
-            "{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}",
+            "{\"responseText\": \"Database imported Correctly, see server log for more"
+                + " informations.\"}",
             null);
       } catch (Exception e) {
         iResponse.send(
@@ -101,7 +102,8 @@ public class OServerCommandPostImportDatabase
             OHttpUtils.STATUS_OK_CODE,
             OHttpUtils.STATUS_OK_DESCRIPTION,
             OHttpUtils.CONTENT_JSON,
-            "{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}",
+            "{\"responseText\": \"Database imported Correctly, see server log for more"
+                + " informations.\"}",
             null);
       } catch (Exception e) {
         iResponse.send(

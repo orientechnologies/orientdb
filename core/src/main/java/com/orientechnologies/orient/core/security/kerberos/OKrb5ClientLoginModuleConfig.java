@@ -37,6 +37,7 @@ public class OKrb5ClientLoginModuleConfig extends Configuration {
   public AppConfigurationEntry[] getAppConfigurationEntry(String applicationName) {
     return appConfigEntries;
   }
+
   /*
   	public OKrb5ClientLoginModuleConfig(String ccPath)
   	{

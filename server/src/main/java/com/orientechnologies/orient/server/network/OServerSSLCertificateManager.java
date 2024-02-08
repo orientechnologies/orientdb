@@ -135,8 +135,12 @@ public class OServerSSLCertificateManager {
 
   public static OSelfSignedCertificate autoGenerateSelfSignedX509Cerificate(
       OSelfSignedCertificate oCert)
-      throws SwitchToDefaultParamsException, NoSuchAlgorithmException, CertificateException,
-          NoSuchProviderException, InvalidKeyException, SignatureException {
+      throws SwitchToDefaultParamsException,
+          NoSuchAlgorithmException,
+          CertificateException,
+          NoSuchProviderException,
+          InvalidKeyException,
+          SignatureException {
     oCert.generateCertificateKeyPair();
     oCert.composeSelfSignedCertificate();
     oCert.checkThisCertificate();

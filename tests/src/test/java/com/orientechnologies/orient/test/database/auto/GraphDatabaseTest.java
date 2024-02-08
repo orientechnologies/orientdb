@@ -267,7 +267,8 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     }
 
     String query =
-        "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select expand(out('owns')) from V where name = 'UK') order by distance";
+        "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select"
+            + " expand(out('owns')) from V where name = 'UK') order by distance";
     result = database.getRawGraph().query(query).stream().collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 2);

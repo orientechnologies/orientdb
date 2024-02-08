@@ -36,9 +36,9 @@ public class OETLConsoleBlock extends OETLAbstractBlock {
         .fromJSON(
             "{parameters:["
                 + getCommonConfigurationParameters()
-                + "{file:{optional:true,description:'Input filename with commands.sh to execute'}}"
-                + "{commands.sh:{optional:true,description:'Commands to execute in sequence as an array of strings'}}"
-                + "]}");
+                + "{file:{optional:true,description:'Input filename with commands.sh to"
+                + " execute'}}{commands.sh:{optional:true,description:'Commands to execute in"
+                + " sequence as an array of strings'}}]}");
   }
 
   @Override

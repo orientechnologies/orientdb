@@ -290,7 +290,8 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract
 
   @Override
   public String getSyntax() {
-    return "CREATE CLASS <class> [IF NOT EXISTS] [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [CLUSTERS <total-cluster-number>] [ABSTRACT]";
+    return "CREATE CLASS <class> [IF NOT EXISTS] [EXTENDS <super-class> [,<super-class2>*] ]"
+        + " [CLUSTER <clusterId>*] [CLUSTERS <total-cluster-number>] [ABSTRACT]";
   }
 
   @Override

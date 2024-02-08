@@ -56,6 +56,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
   protected Map<String, Object> userData = new HashMap<String, Object>();
   private Map<ORID, LockedRecordMetadata> noTxLocks;
   private Optional<OTxMetadataHolder> metadata = Optional.empty();
+
   /**
    * token This set is used to track which documents are changed during tx, if documents are changed
    * but not saved all changes are made during tx will be undone.

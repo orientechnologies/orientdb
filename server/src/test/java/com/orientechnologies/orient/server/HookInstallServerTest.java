@@ -45,10 +45,18 @@ public class HookInstallServerTest {
 
   @Before
   public void before()
-      throws MalformedObjectNameException, InstanceAlreadyExistsException,
-          MBeanRegistrationException, NotCompliantMBeanException, ClassNotFoundException,
-          NullPointerException, IOException, IllegalArgumentException, SecurityException,
-          InvocationTargetException, NoSuchMethodException, InstantiationException,
+      throws MalformedObjectNameException,
+          InstanceAlreadyExistsException,
+          MBeanRegistrationException,
+          NotCompliantMBeanException,
+          ClassNotFoundException,
+          NullPointerException,
+          IOException,
+          IllegalArgumentException,
+          SecurityException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          InstantiationException,
           IllegalAccessException {
     server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);

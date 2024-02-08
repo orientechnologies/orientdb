@@ -266,7 +266,8 @@ public class OObjectSerializerHelper {
         OLogManager.instance()
             .warn(
                 OObjectSerializerHelper.class,
-                "@Id field has been declared as %s while the supported are: ORID, Number, String, Object",
+                "@Id field has been declared as %s while the supported are: ORID, Number, String,"
+                    + " Object",
                 fieldType);
       return idFieldName;
     }
@@ -335,7 +336,8 @@ public class OObjectSerializerHelper {
         OLogManager.instance()
             .warn(
                 OObjectSerializerHelper.class,
-                "@Version field has been declared as %s while the supported are: Number, String, Object",
+                "@Version field has been declared as %s while the supported are: Number, String,"
+                    + " Object",
                 fieldType);
       return vFieldName;
     }
@@ -366,7 +368,8 @@ public class OObjectSerializerHelper {
         OLogManager.instance()
             .warn(
                 OObjectSerializerHelper.class,
-                "@Version field has been declared as %s while the supported are: Number, String, Object",
+                "@Version field has been declared as %s while the supported are: Number, String,"
+                    + " Object",
                 ver.getClass());
     }
     return -1;
@@ -438,7 +441,8 @@ public class OObjectSerializerHelper {
           OLogManager.instance()
               .warn(
                   OObjectSerializerHelper.class,
-                  "@Id field has been declared as %s while the supported are: ORID, Number, String, Object",
+                  "@Id field has been declared as %s while the supported are: ORID, Number, String,"
+                      + " Object",
                   id.getClass());
       }
     }
@@ -458,7 +462,8 @@ public class OObjectSerializerHelper {
       throw new OTransactionException(
           "Cannot involve an object of class '"
               + pojoClass
-              + "' in an Optimistic Transaction commit because it does not define @Version or @OVersion and therefore cannot handle MVCC");
+              + "' in an Optimistic Transaction commit because it does not define @Version or"
+              + " @OVersion and therefore cannot handle MVCC");
 
     // SET OBJECT CLASS
     iRecord.setClassName(schemaClass != null ? schemaClass.getName() : null);
@@ -616,7 +621,8 @@ public class OObjectSerializerHelper {
                     + iFieldValue.getClass()
                     + ":"
                     + iFieldValue
-                    + "] cannot be serialized because is not part of registered entities. To fix this error register this class");
+                    + "] cannot be serialized because is not part of registered entities. To fix"
+                    + " this error register this class");
 
           iFieldValue = result;
         }

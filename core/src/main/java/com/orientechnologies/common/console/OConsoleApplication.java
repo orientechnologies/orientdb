@@ -565,7 +565,11 @@ public class OConsoleApplication {
 
   protected void syntaxError(String iCommand, Method m) {
     error(
-        "\n!Wrong syntax. If you're running in batch mode make sure all commands are delimited by semicolon (;) or a linefeed (\\n). Expected: \n\r\n\r%s",
+        "\n"
+            + "!Wrong syntax. If you're running in batch mode make sure all commands are delimited"
+            + " by semicolon (;) or a linefeed (\\n"
+            + "). Expected: \n\r\n\r"
+            + "%s",
         formatCommandSpecs(iCommand, m));
   }
 
@@ -685,7 +689,8 @@ public class OConsoleApplication {
   @ConsoleCommand(
       splitInWords = false,
       description =
-          "Receives help on available commands or a specific one. Use 'help -online <cmd>' to fetch online documentation")
+          "Receives help on available commands or a specific one. Use 'help -online <cmd>' to fetch"
+              + " online documentation")
   public void help(
       @ConsoleParameter(name = "command", description = "Command to receive help")
           String iCommand) {
@@ -727,7 +732,8 @@ public class OConsoleApplication {
           // } catch (Exception e) {
           // }
           error(
-              "!CANNOT FETCH ONLINE DOCUMENTATION, CHECK IF COMPUTER IS CONNECTED TO THE INTERNET.");
+              "!CANNOT FETCH ONLINE DOCUMENTATION, CHECK IF COMPUTER IS CONNECTED TO THE"
+                  + " INTERNET.");
           return;
         }
 

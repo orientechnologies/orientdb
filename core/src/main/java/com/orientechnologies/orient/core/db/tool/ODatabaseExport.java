@@ -264,7 +264,12 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
             OLogManager.instance()
                 .error(
                     this,
-                    "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+                    "\n"
+                        + "Error on exporting record %s. It seems corrupted; size: %d bytes, raw"
+                        + " content (as string):\n"
+                        + "==========\n"
+                        + "%s\n"
+                        + "==========",
                     t,
                     rec.getIdentity(),
                     buffer.length,
@@ -661,7 +666,12 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           OLogManager.instance()
               .error(
                   this,
-                  "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+                  "\n"
+                      + "Error on exporting record %s. It seems corrupted; size: %d bytes, raw"
+                      + " content (as string):\n"
+                      + "==========\n"
+                      + "%s\n"
+                      + "==========",
                   t,
                   rec.getIdentity(),
                   buffer.length,

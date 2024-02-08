@@ -79,7 +79,8 @@ public class OMatchStatementTest {
   @Test
   public void testLongPath2() {
     checkRightSyntax(
-        "MATCH {class: 'V', as: foo}.out().in('foo'){}.both('bar'){CLASS: 'bar'}.out(){as: bar} RETURN foo");
+        "MATCH {class: 'V', as: foo}.out().in('foo'){}.both('bar'){CLASS: 'bar'}.out(){as: bar}"
+            + " RETURN foo");
   }
 
   @Test
@@ -188,13 +189,15 @@ public class OMatchStatementTest {
   @Test
   public void testDepthAlias() {
     checkRightSyntax(
-        "MATCH {class: 'V', as: foo}-->{as:bar, while:($depth < 2), depthAlias: depth} RETURN depth");
+        "MATCH {class: 'V', as: foo}-->{as:bar, while:($depth < 2), depthAlias: depth} RETURN"
+            + " depth");
   }
 
   @Test
   public void testPathAlias() {
     checkRightSyntax(
-        "MATCH {class: 'V', as: foo}-->{as:bar, while:($depth < 2), pathAlias: barPath} RETURN barPath");
+        "MATCH {class: 'V', as: foo}-->{as:bar, while:($depth < 2), pathAlias: barPath} RETURN"
+            + " barPath");
   }
 
   @Test
@@ -225,11 +228,13 @@ public class OMatchStatementTest {
     checkRightSyntax(
         "MATCH {class: 'V', as: foo}.toBar{as:bar} RETURN foo.name, bar.name skip 10 limit 10");
     checkRightSyntax(
-        "MATCH {class: 'V', as: foo}.toBar{as:bar}.out(){as:c} RETURN foo.name, bar.name skip 10 limit 10");
+        "MATCH {class: 'V', as: foo}.toBar{as:bar}.out(){as:c} RETURN foo.name, bar.name skip 10"
+            + " limit 10");
     checkRightSyntax(
         "MATCH {class: 'V', as: foo}.toBar.baz{as:bar} RETURN foo.name, bar.name skip 10 limit 10");
     checkRightSyntax(
-        "MATCH {class: 'V', as: foo}.toBar.out(){as:bar} RETURN foo.name, bar.name skip 10 limit 10");
+        "MATCH {class: 'V', as: foo}.toBar.out(){as:bar} RETURN foo.name, bar.name skip 10 limit"
+            + " 10");
   }
 
   protected OrientSql getParserFor(String string) {

@@ -121,7 +121,8 @@ public class LockMultithreadingTest {
       int number = deleteCounter.getAndIncrement();
       while (number < DOCUMENT_COUNT) {
         // wait while necessary document will be created
-        while (number > createCounter.get()) ;
+        while (number > createCounter.get())
+          ;
         try {
           ODatabaseRecordThreadLocal.instance().set(db);
 

@@ -63,7 +63,8 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
   public void testForcePropertyEnabled() throws Exception {
     database
         .command(
-            "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2, prop1) UNIQUE")
+            "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2,"
+                + " prop1) UNIQUE")
         .close();
     database.getMetadata().getIndexManagerInternal().reload();
 
@@ -92,7 +93,8 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
   public void testForcePropertyEnabledBrokenCase() throws Exception {
     database
         .command(
-            "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2, prop1) UNIQUE")
+            "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2,"
+                + " prop1) UNIQUE")
         .close();
     database.getMetadata().getIndexManagerInternal().reload();
 
@@ -121,7 +123,8 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
   public void testForcePropertyDisabled() throws Exception {
     database
         .command(
-            "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop1, prop2) UNIQUE")
+            "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop1,"
+                + " prop2) UNIQUE")
         .close();
     database.getMetadata().getIndexManagerInternal().reload();
 
@@ -140,9 +143,8 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
       Assert.assertTrue(
           e.getMessage()
               .contains(
-                  "Property used in indexes ("
-                      + "DropPropertyIndexCompositeIndex"
-                      + "). Please drop these indexes before removing property or use FORCE parameter."));
+                  "Property used in indexes (DropPropertyIndexCompositeIndex). Please drop these"
+                      + " indexes before removing property or use FORCE parameter."));
     }
 
     database.getMetadata().getIndexManagerInternal().reload();
@@ -169,7 +171,8 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
   public void testForcePropertyDisabledBrokenCase() throws Exception {
     database
         .command(
-            "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop1, prop2) UNIQUE")
+            "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop1,"
+                + " prop2) UNIQUE")
         .close();
 
     try {
@@ -179,9 +182,8 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
       Assert.assertTrue(
           e.getMessage()
               .contains(
-                  "Property used in indexes ("
-                      + "DropPropertyIndexCompositeIndex"
-                      + "). Please drop these indexes before removing property or use FORCE parameter."));
+                  "Property used in indexes (DropPropertyIndexCompositeIndex). Please drop these"
+                      + " indexes before removing property or use FORCE parameter."));
     }
 
     database.getMetadata().getIndexManagerInternal().reload();

@@ -2110,8 +2110,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       OLogManager.instance()
           .infoNoDb(
               this,
-              "WAL stat:%s: %d KB was written, write speed is %d KB/s. FSync count %d. "
-                  + "Avg. fsync time %d ms. %d times threads were waiting for WAL. Avg wait interval %d ms.",
+              "WAL stat:%s: %d KB was written, write speed is %d KB/s. FSync count %d. Avg. fsync"
+                  + " time %d ms. %d times threads were waiting for WAL. Avg wait interval %d ms.",
               storageName,
               bytesWritten / 1024,
               writtenTime > 0 ? 1_000_000_000L * bytesWritten / writtenTime / 1024 : -1,

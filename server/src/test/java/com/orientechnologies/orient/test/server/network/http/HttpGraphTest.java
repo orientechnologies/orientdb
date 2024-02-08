@@ -42,7 +42,8 @@ public class HttpGraphTest extends BaseHttpDatabaseTest {
     script += "return $v1;";
 
     final String scriptPayload =
-        "{ \"operations\" : [{ \"type\" : \"script\", \"language\" : \"SQL\",  \"script\" : \"%s\"}]}";
+        "{ \"operations\" : [{ \"type\" : \"script\", \"language\" : \"SQL\",  \"script\" :"
+            + " \"%s\"}]}";
 
     HttpResponse response =
         post("batch/" + getDatabaseName() + "/sql/")
@@ -101,7 +102,8 @@ public class HttpGraphTest extends BaseHttpDatabaseTest {
     script += "return $v1;";
 
     final String scriptPayload =
-        "{ \"operations\" : [{ \"type\" : \"script\", \"language\" : \"SQL\",  \"script\" : \"%s\"}]}";
+        "{ \"operations\" : [{ \"type\" : \"script\", \"language\" : \"SQL\",  \"script\" :"
+            + " \"%s\"}]}";
 
     HttpResponse response =
         post("batch/" + getDatabaseName() + "/sql/")

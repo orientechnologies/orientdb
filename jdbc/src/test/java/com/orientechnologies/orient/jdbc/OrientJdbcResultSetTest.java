@@ -105,7 +105,8 @@ public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
     Statement stmt = conn.createStatement();
 
     stmt.execute(
-        "INSERT INTO Article(uuid, date, title, content) VALUES (123456, null, 'title', 'the content')");
+        "INSERT INTO Article(uuid, date, title, content) VALUES (123456, null, 'title', 'the"
+            + " content')");
 
     stmt.close();
 

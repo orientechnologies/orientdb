@@ -20,7 +20,8 @@ public class HttpFunctionTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(
         post("command/" + getDatabaseName() + "/sql/")
             .payload(
-                "CREATE FUNCTION hello \"return 'Hello ' + name + ' ' + surname;\" PARAMETERS [name,surname] LANGUAGE javascript",
+                "CREATE FUNCTION hello \"return 'Hello ' + name + ' ' + surname;\" PARAMETERS"
+                    + " [name,surname] LANGUAGE javascript",
                 CONTENT.TEXT)
             .getResponse()
             .getStatusLine()

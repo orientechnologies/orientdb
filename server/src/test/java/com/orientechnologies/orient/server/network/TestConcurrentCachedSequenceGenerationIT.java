@@ -41,7 +41,8 @@ public class TestConcurrentCachedSequenceGenerationIT {
         "sql",
         "CREATE CLASS TestSequence EXTENDS V;\n"
             + " CREATE SEQUENCE TestSequenceIdSequence TYPE CACHED CACHE 100;\n"
-            + "CREATE PROPERTY TestSequence.id LONG (MANDATORY TRUE, default \"sequence('TestSequenceIdSequence').next()\");\n"
+            + "CREATE PROPERTY TestSequence.id LONG (MANDATORY TRUE, default"
+            + " \"sequence('TestSequenceIdSequence').next()\");\n"
             + "CREATE INDEX TestSequence_id_index ON TestSequence (id BY VALUE) UNIQUE;");
     databaseSession.close();
   }

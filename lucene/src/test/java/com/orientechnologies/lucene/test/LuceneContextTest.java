@@ -61,7 +61,8 @@ public class LuceneContextTest extends BaseLuceneTest {
 
     docs =
         db.query(
-            "select *,$totalHits,$Song_title_totalHits from Song where [title] LUCENE \"(title:man)\" limit 1");
+            "select *,$totalHits,$Song_title_totalHits from Song where [title] LUCENE"
+                + " \"(title:man)\" limit 1");
 
     OResult doc = docs.next();
     Assert.assertEquals(new Long(14), doc.<Long>getProperty("$totalHits"));

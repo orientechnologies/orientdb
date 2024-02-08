@@ -87,27 +87,32 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
   protected void queryPoint() {
     // TODO remove = true when parser will support index function without expression
     String query =
-        "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })"
-            + " = true";
+        "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' ,"
+            + " 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} }) = true";
     OResultSet docs = db.query(query);
 
     Assert.assertEquals(1, docs.stream().count());
 
     query =
-        "select * from City where  ST_WITHIN(location,'POLYGON ((12.314015 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))')"
-            + " = true";
+        "select * from City where  ST_WITHIN(location,'POLYGON ((12.314015 41.8262816, 12.314015"
+            + " 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))') ="
+            + " true";
     docs = db.query(query);
 
     Assert.assertEquals(1, docs.stream().count());
 
     query =
-        "select * from City where  ST_WITHIN(location,ST_GeomFromText('POLYGON ((12.314015 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))'))"
-            + " = true";
+        "select * from City where  ST_WITHIN(location,ST_GeomFromText('POLYGON ((12.314015"
+            + " 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816,"
+            + " 12.314015 41.8262816))')) = true";
     docs = db.query(query);
     Assert.assertEquals(1, docs.stream().count());
 
     query =
-        "select * from City where location && 'LINESTRING(-160.06393432617188 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594 21.787556698550834)' ";
+        "select * from City where location && 'LINESTRING(-160.06393432617188"
+            + " 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375"
+            + " 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594"
+            + " 21.787556698550834)' ";
     List<?> old = db.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(1, old.size());
@@ -121,7 +126,8 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
 
   protected void queryOldNear() {
     String query =
-        "select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 2}]";
+        "select *,$distance from Place where [latitude,longitude,$spatial] NEAR"
+            + " [41.893056,12.482778,{\"maxDistance\": 2}]";
     List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(1, docs.size());

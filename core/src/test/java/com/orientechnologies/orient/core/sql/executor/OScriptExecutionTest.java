@@ -103,7 +103,8 @@ public class OScriptExecutionTest extends BaseMemoryDatabase {
   public void testLazyExecutionPlanning() {
     String script = "";
     script +=
-        "LET $1 = SELECT FROM (select expand(classes) from metadata:schema) where name = 'nonExistingClass';";
+        "LET $1 = SELECT FROM (select expand(classes) from metadata:schema) where name ="
+            + " 'nonExistingClass';";
     script += "IF($1.size() > 0) {";
     script += "   SELECT FROM nonExistingClass;";
     script += "   RETURN 'FAIL';";
@@ -298,9 +299,11 @@ public class OScriptExecutionTest extends BaseMemoryDatabase {
     script += "insert into V set name = 'd', PrimaryName = 'foo4';\n";
 
     script +=
-        "create edge E from (select from V where name = 'a') to (select from V where name = 'b');\n";
+        "create edge E from (select from V where name = 'a') to (select from V where name ="
+            + " 'b');\n";
     script +=
-        "create edge E from (select from V where name = 'c') to (select from V where name = 'd');\n";
+        "create edge E from (select from V where name = 'c') to (select from V where name ="
+            + " 'd');\n";
 
     script += "begin;\n";
     script += "LET SourceDataset = SELECT expand(out()) from V where name = 'a';\n";
@@ -308,7 +311,8 @@ public class OScriptExecutionTest extends BaseMemoryDatabase {
     script += "IF ($SourceDataset[0] != $TarDataset[0])\n";
     script += "{\n";
     script +=
-        "CREATE EDGE IndirectEdge FROM $SourceDataset To $TarDataset SET Source = $SourceDataset[0].PrimaryName;\n";
+        "CREATE EDGE IndirectEdge FROM $SourceDataset To $TarDataset SET Source ="
+            + " $SourceDataset[0].PrimaryName;\n";
     script += "};\n";
     script += "commit retry 10;\n";
 

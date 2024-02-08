@@ -89,6 +89,7 @@ public class SyslogMessage {
   private String appName;
   private String procId;
   private String msgId;
+
   /**
    * Use a {@link java.io.CharArrayWriter} instead of a {@link String} or a {@code char[]} because
    * middlewares like Apache Tomcat use {@code CharArrayWriter} and it's convenient for pooling

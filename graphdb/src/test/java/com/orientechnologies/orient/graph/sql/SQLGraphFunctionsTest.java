@@ -69,7 +69,8 @@ public class SQLGraphFunctionsTest {
   @Test
   public void checkDijkstra() {
     String subquery =
-        "select $current, $target, Dijkstra($current, $target , 'weight') as path from V let $target = ( select from V where name = \'C\' ) where 1 > 0";
+        "select $current, $target, Dijkstra($current, $target , 'weight') as path from V let"
+            + " $target = ( select from V where name = \'C\' ) where 1 > 0";
     Iterable<OrientVertex> result =
         graph.command(new OSQLSynchQuery<OrientVertex>(subquery)).execute();
     Assert.assertTrue(result.iterator().hasNext());

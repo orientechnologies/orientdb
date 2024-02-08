@@ -215,7 +215,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
 
     db.command("CREATE Class company").close();
     db.command(
-            "CREATE Property company.officers EMBEDDEDLIST STRING (MANDATORY, READONLY, NOTNULL) UNSAFE")
+            "CREATE Property company.officers EMBEDDEDLIST STRING (MANDATORY, READONLY, NOTNULL)"
+                + " UNSAFE")
         .close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
@@ -299,7 +300,8 @@ public class OCommandExecutorSQLCreatePropertyTest extends BaseMemoryInternalDat
 
     db.command("CREATE CLASS company").close();
     db.command(
-            "CREATE PROPERTY company.id INTEGER (MANDATORY, NOTNULL false, READONLY true, MAX 10, MIN 4, DEFAULT 6)  UNSAFE")
+            "CREATE PROPERTY company.id INTEGER (MANDATORY, NOTNULL false, READONLY true, MAX 10,"
+                + " MIN 4, DEFAULT 6)  UNSAFE")
         .close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");

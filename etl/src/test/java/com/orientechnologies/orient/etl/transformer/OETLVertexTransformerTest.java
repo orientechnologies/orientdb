@@ -46,9 +46,10 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
   @Test
   public void testCreateVertex() {
     configure(
-        "{source: { content: { value: 'name,\nGregor' } }, extractor : { csv: {} },"
-            + " transformers: [{vertex: {class:'Person', skipDuplicates:false}},"
-            + "], loader: { orientdb: { dbAutoCreateProperties:true, cluster: 'custom', dbURL: 'memory:"
+        "{source: { content: { value: 'name,\n"
+            + "Gregor' } }, extractor : { csv: {} }, transformers: [{vertex: {class:'Person',"
+            + " skipDuplicates:false}},], loader: { orientdb: { dbAutoCreateProperties:true,"
+            + " cluster: 'custom', dbURL: 'memory:"
             + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
@@ -70,10 +71,12 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
   @Test
   public void testCreateTargetVertexIfNotExists() {
     configure(
-        "{source: { content: { value: 'name,idf,parent\nParent,1,\nChild,2,1' } }, extractor : { csv: {} },"
-            + " transformers: [{merge: { joinFieldName:'idf', lookup:'V.idf'}}, {vertex: {class:'V'}},"
-            + "{edge:{ class: 'E', joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if: '$input.parent IS NOT NULL'}"
-            + "], loader: { orientdb: { dbURL: 'memory:"
+        "{source: { content: { value: 'name,idf,parent\n"
+            + "Parent,1,\n"
+            + "Child,2,1' } }, extractor : { csv: {} }, transformers: [{merge: {"
+            + " joinFieldName:'idf', lookup:'V.idf'}}, {vertex: {class:'V'}},{edge:{ class: 'E',"
+            + " joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if:"
+            + " '$input.parent IS NOT NULL'}], loader: { orientdb: { dbURL: 'memory:"
             + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
@@ -95,9 +98,11 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
   @Test
   public void testErrorOnDuplicateVertex() {
     configure(
-        "{ config: { 'log': 'DEBUG' },  source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
-            + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}},"
-            + "], loader: { orientdb: { dbURL: 'memory:"
+        "{ config: { 'log': 'DEBUG' },  source: { content: { value: 'name,\n"
+            + "Gregor\n"
+            + "Gregor\n"
+            + "Hans' } }, extractor : { csv: {} }, transformers: [ {vertex: {class:'Person',"
+            + " skipDuplicates:false}},], loader: { orientdb: { dbURL: 'memory:"
             + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 

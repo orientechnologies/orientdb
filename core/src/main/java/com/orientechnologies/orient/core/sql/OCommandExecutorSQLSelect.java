@@ -539,7 +539,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @Override
   public String getSyntax() {
-    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] [TIMEOUT <TimeoutInMs>] [LOCK none|record] [NOCACHE]";
+    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY"
+        + " <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] [TIMEOUT <TimeoutInMs>] [LOCK"
+        + " none|record] [NOCACHE]";
   }
 
   public String getFetchPlan() {
@@ -774,7 +776,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (tipLimitThreshold > 0 && resultCount > tipLimitThreshold && getLimit() == -1) {
       reportTip(
           String.format(
-              "Query '%s' returned a result set with more than %d records. Check if you really need all these records, or reduce the resultset by using a LIMIT to improve both performance and used RAM",
+              "Query '%s' returned a result set with more than %d records. Check if you really need"
+                  + " all these records, or reduce the resultset by using a LIMIT to improve both"
+                  + " performance and used RAM",
               parserText, tipLimitThreshold));
       tipLimitThreshold = 0;
     }
@@ -1170,7 +1174,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           List<String> pars = OStringSerializerHelper.getParameters(projection);
           if (pars.size() != 1)
             throw new OCommandSQLParsingException(
-                "EXPAND/FLATTEN operators expects the field name as parameter. Example EXPAND( out )");
+                "EXPAND/FLATTEN operators expects the field name as parameter. Example EXPAND( out"
+                    + " )");
 
           expandTarget = OSQLHelper.parseValue(this, pars.get(0).trim(), context);
 
@@ -1868,7 +1873,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           OLogManager.instance()
               .debug(
                   this,
-                  "Parallel query '%s' has result queue full (size=%d), this could reduce concurrency level. Consider increasing queue size with setting: %s=<size>",
+                  "Parallel query '%s' has result queue full (size=%d), this could reduce"
+                      + " concurrency level. Consider increasing queue size with setting:"
+                      + " %s=<size>",
                   parserText,
                   maxQueueSize + 1,
                   OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE.getKey());
@@ -2183,7 +2190,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             OLogManager.instance()
                 .error(
                     this,
-                    "Error on using index %s in query '%s'. Probably you need to rebuild indexes. Now executing query using cluster scan",
+                    "Error on using index %s in query '%s'. Probably you need to rebuild indexes."
+                        + " Now executing query using cluster scan",
                     e,
                     index.getName(),
                     request != null && request.getText() != null ? request.getText() : "");
@@ -2345,7 +2353,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               OLogManager.instance()
                   .error(
                       this,
-                      "Error on using index %s in query '%s'. Probably you need to rebuild indexes. Now executing query using cluster scan",
+                      "Error on using index %s in query '%s'. Probably you need to rebuild indexes."
+                          + " Now executing query using cluster scan",
                       e,
                       index.getName(),
                       request != null && request.getText() != null ? request.getText() : "");

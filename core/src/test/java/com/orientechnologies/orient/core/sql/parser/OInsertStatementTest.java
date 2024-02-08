@@ -47,14 +47,18 @@ public class OInsertStatementTest {
   @Test
   public void testInsertIntoCluster() {
     checkRightSyntax(
-        "insert into cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+        "insert into cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom',"
+            + " 'top','left','right'] )");
     checkRightSyntax(
-        "insert into CLUSTER:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+        "insert into CLUSTER:default (equaledges, name, list) values ('yes', 'square', ['bottom',"
+            + " 'top','left','right'] )");
 
     checkRightSyntax(
-        "insert into Foo cluster foo1 (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+        "insert into Foo cluster foo1 (equaledges, name, list) values ('yes', 'square', ['bottom',"
+            + " 'top','left','right'] )");
     checkRightSyntax(
-        "insert into Foo CLUSTER foo1 (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+        "insert into Foo CLUSTER foo1 (equaledges, name, list) values ('yes', 'square', ['bottom',"
+            + " 'top','left','right'] )");
   }
 
   @Test
@@ -92,7 +96,8 @@ public class OInsertStatementTest {
   public void testInsertContent() {
     checkRightSyntax("insert into Activity content {'name':'name1', 'surname':'surname1'}");
     checkRightSyntax(
-        "insert into Activity content {'name':'name1', 'surname':'surname1'}, {'name':'name2', 'surname':'surname2'}");
+        "insert into Activity content {'name':'name1', 'surname':'surname1'}, {'name':'name2',"
+            + " 'surname':'surname2'}");
   }
 
   @Test

@@ -36,42 +36,49 @@ public class LuceneSpatialQueryIntegrationTest extends BaseLuceneTest {
     db.command("create property POI.name STRING").close();
     db.command("create property POI.location EMBEDDED OPoint").close();
     db.command(
-            "insert into POI(name, location) values(\"zeropoint\", St_GeomFromText(\"Point(0 0)\"))")
+            "insert into POI(name, location) values(\"zeropoint\", St_GeomFromText(\"Point(0"
+                + " 0)\"))")
         .close();
     db.command(
-            "insert into Country(name, geometry) values(\"zeroland\", St_GeomFromText(\"MultiPolygon(((1 1, 1 -1, -1 -1, -1 1, 1 1)))\"))")
+            "insert into Country(name, geometry) values(\"zeroland\","
+                + " St_GeomFromText(\"MultiPolygon(((1 1, 1 -1, -1 -1, -1 1, 1 1)))\"))")
         .close();
     db.command("CREATE INDEX POI.location ON POI(location) SPATIAL ENGINE LUCENE");
     db.command("CREATE INDEX Country.geometry ON Country(geometry) SPATIAL ENGINE LUCENE;");
 
     try (OResultSet resultSet =
         db.query(
-            "select name from Country let locations = (select from Poi) where ST_Contains(geometry, $locations[0].location) = true")) {
+            "select name from Country let locations = (select from Poi) where ST_Contains(geometry,"
+                + " $locations[0].location) = true")) {
 
       assertThat(resultSet.stream().count()).isEqualTo(1);
     }
 
     try (OResultSet resultSet =
         db.query(
-            "select name from Country where ST_Contains(geometry, (select location from POI)) = true;")) {
+            "select name from Country where ST_Contains(geometry, (select location from POI)) ="
+                + " true;")) {
 
       assertThat(resultSet.stream().count()).isEqualTo(1);
     }
 
     try (OResultSet resultSet =
         db.query(
-            "select name from Country where ST_Contains(geometry, (select name,location from POI)) = true;")) {
+            "select name from Country where ST_Contains(geometry, (select name,location from POI))"
+                + " = true;")) {
 
       assertThat(resultSet.stream().count()).isEqualTo(0);
     }
 
     db.command(
-            "insert into POI(name, location) values(\"zeropoint\", St_GeomFromText(\"Point(0 0)\"))")
+            "insert into POI(name, location) values(\"zeropoint\", St_GeomFromText(\"Point(0"
+                + " 0)\"))")
         .close();
 
     try (OResultSet resultSet =
         db.query(
-            "select name from Country where ST_Contains(geometry, (select location from POI)) = true;")) {
+            "select name from Country where ST_Contains(geometry, (select location from POI)) ="
+                + " true;")) {
 
       Assert.fail("It should throw an exception");
     } catch (Exception e) {
@@ -82,7 +89,8 @@ public class LuceneSpatialQueryIntegrationTest extends BaseLuceneTest {
 
     try (OResultSet resultSet =
         db.query(
-            "select name from Country where ST_Contains(geometry, (select location from POI)) = true;")) {
+            "select name from Country where ST_Contains(geometry, (select location from POI)) ="
+                + " true;")) {
 
       assertThat(resultSet.stream().count()).isEqualTo(0);
     }

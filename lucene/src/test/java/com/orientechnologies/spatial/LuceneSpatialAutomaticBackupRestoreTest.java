@@ -162,8 +162,9 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
   public void shouldBackupAndRestore() throws IOException, InterruptedException {
 
     String query =
-        "select * from City where  ST_WITHIN(location,'POLYGON ((12.314015 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))')"
-            + " = true";
+        "select * from City where  ST_WITHIN(location,'POLYGON ((12.314015 41.8262816, 12.314015"
+            + " 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))') ="
+            + " true";
     OResultSet docs = db.query(query);
 
     Assert.assertEquals(docs.stream().count(), 1);
@@ -242,8 +243,9 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
   public void shouldExportImport() throws IOException, InterruptedException {
 
     String query =
-        "select * from City where  ST_WITHIN(location,'POLYGON ((12.314015 41.8262816, 12.314015 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))')"
-            + " = true";
+        "select * from City where  ST_WITHIN(location,'POLYGON ((12.314015 41.8262816, 12.314015"
+            + " 41.963125, 12.6605063 41.963125, 12.6605063 41.8262816, 12.314015 41.8262816))') ="
+            + " true";
     OResultSet docs = db.query(query);
 
     Assert.assertEquals(docs.stream().count(), 1);

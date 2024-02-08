@@ -12,8 +12,9 @@ public class OCreateSecurityPolicyStatementTest extends OParserTestAbstract {
     checkRightSyntax("CREATE SECURITY POLICY foo SET read = (name = 'foo')");
 
     checkRightSyntax(
-        "CREATE SECURITY POLICY foo SET CREATE = (name = 'foo'), READ = (name = 'foo')"
-            + ", BEFORE UPDATE = (name = 'foo'), AFTER UPDATE = (name = 'foo'), DELETE = (name = 'foo'), EXECUTE = (name = 'foo')");
+        "CREATE SECURITY POLICY foo SET CREATE = (name = 'foo'), READ = (name = 'foo'), BEFORE"
+            + " UPDATE = (name = 'foo'), AFTER UPDATE = (name = 'foo'), DELETE = (name = 'foo'),"
+            + " EXECUTE = (name = 'foo')");
 
     checkWrongSyntax("CREATE SECURITY POLICY foo SET foo = (name = 'foo')");
   }

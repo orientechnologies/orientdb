@@ -23,16 +23,24 @@ public class ORemoteScriptSecurityTest {
 
   @Before
   public void before()
-      throws IOException, InstantiationException, InvocationTargetException, NoSuchMethodException,
-          MBeanRegistrationException, IllegalAccessException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, ClassNotFoundException, MalformedObjectNameException {
+      throws IOException,
+          InstantiationException,
+          InvocationTargetException,
+          NoSuchMethodException,
+          MBeanRegistrationException,
+          IllegalAccessException,
+          InstanceAlreadyExistsException,
+          NotCompliantMBeanException,
+          ClassNotFoundException,
+          MalformedObjectNameException {
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     server = OServer.startFromClasspathConfig("abstract-orientdb-server-config.xml");
 
     OrientDB orientDB =
         new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     orientDB.execute(
-        "create database ORemoteScriptSecurityTest memory users (admin identified by 'admin' role admin)");
+        "create database ORemoteScriptSecurityTest memory users (admin identified by 'admin' role"
+            + " admin)");
 
     orientDB.close();
   }

@@ -34,8 +34,12 @@ public class TestTypeGuessingWorkingWithSQLAndMultiValues extends BaseMemoryData
     try (OResultSet result =
         db.execute(
             "sql",
-            "insert into client set name = 'James Bond', phones = ['1234', '34567'], addresses = [{'@class':'Address','city':'Shanghai', 'zip':'3999'}, {'@class':'Address','city':'New York', 'street':'57th Ave'}]\n;"
-                + "update client set addresses = addresses || [{'@type':'d','@class':'Address','city':'London', 'zip':'67373'}] return after;")) {
+            "insert into client set name = 'James Bond', phones = ['1234', '34567'], addresses ="
+                + " [{'@class':'Address','city':'Shanghai', 'zip':'3999'},"
+                + " {'@class':'Address','city':'New York', 'street':'57th Ave'}]\n"
+                + ";update client set addresses = addresses ||"
+                + " [{'@type':'d','@class':'Address','city':'London', 'zip':'67373'}] return"
+                + " after;")) {
 
       Assert.assertTrue(result.hasNext());
 
@@ -48,7 +52,8 @@ public class TestTypeGuessingWorkingWithSQLAndMultiValues extends BaseMemoryData
 
     try (OResultSet result =
         db.command(
-            "update client set addresses = addresses || [{'city':'London', 'zip':'67373'}] return after")) {
+            "update client set addresses = addresses || [{'city':'London', 'zip':'67373'}] return"
+                + " after")) {
       Assert.assertTrue(result.hasNext());
 
       OResult doc = result.next();

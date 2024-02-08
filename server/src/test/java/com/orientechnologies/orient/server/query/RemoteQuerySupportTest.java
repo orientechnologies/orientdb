@@ -232,7 +232,8 @@ public class RemoteQuerySupportTest extends BaseServerMemoryDatabase {
     db.command("create vertex testScriptWithRidbagsV set name = 'b'");
 
     db.command(
-        "create edge testScriptWithRidbagsE from (select from testScriptWithRidbagsV where name = 'a') TO (select from testScriptWithRidbagsV where name = 'b');");
+        "create edge testScriptWithRidbagsE from (select from testScriptWithRidbagsV where name ="
+            + " 'a') TO (select from testScriptWithRidbagsV where name = 'b');");
 
     String script = "";
     script += "BEGIN;";
@@ -254,7 +255,8 @@ public class RemoteQuerySupportTest extends BaseServerMemoryDatabase {
     db.command("create vertex letVertex set name = 'a'");
     db.command("create vertex letVertex set name = 'b'");
     db.command(
-        "create edge letEdge from (select from letVertex where name = 'a') TO (select from letVertex where name = 'b');");
+        "create edge letEdge from (select from letVertex where name = 'a') TO (select from"
+            + " letVertex where name = 'b');");
 
     OResultSet rs =
         db.query("select $someNode.in('letEdge') from letVertex LET $someNode =out('letEdge');");

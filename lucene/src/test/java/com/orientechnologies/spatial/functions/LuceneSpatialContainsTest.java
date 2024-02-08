@@ -29,7 +29,10 @@ public class LuceneSpatialContainsTest extends BaseSpatialLuceneTest {
 
     OResultSet execute =
         db.command(
-            "select ST_Contains(smallc,smallc) as smallinsmall,ST_Contains(smallc, bigc) As smallinbig, ST_Contains(bigc,smallc) As biginsmall from (SELECT ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20) As smallc,ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40) As bigc)");
+            "select ST_Contains(smallc,smallc) as smallinsmall,ST_Contains(smallc, bigc) As"
+                + " smallinbig, ST_Contains(bigc,smallc) As biginsmall from (SELECT"
+                + " ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20) As"
+                + " smallc,ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40) As bigc)");
     OResult next = execute.next();
 
     Assert.assertTrue(next.getProperty("smallinsmall"));
@@ -56,7 +59,8 @@ public class LuceneSpatialContainsTest extends BaseSpatialLuceneTest {
 
     execute =
         db.command(
-            "SELECT from Polygon where ST_Contains(geometry, ST_Buffer(ST_GeomFromText('POINT(50 50)'), 30)) = true");
+            "SELECT from Polygon where ST_Contains(geometry, ST_Buffer(ST_GeomFromText('POINT(50"
+                + " 50)'), 30)) = true");
 
     Assert.assertEquals(1, execute.stream().count());
   }
@@ -68,10 +72,12 @@ public class LuceneSpatialContainsTest extends BaseSpatialLuceneTest {
     db.command("create property TestInsert.geometry EMBEDDED OGeometryCollection").close();
 
     db.command(
-            "insert into TestInsert set geometry = {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[10,0],[10,10],[0,10],[0,0]]]}]}")
+            "insert into TestInsert set geometry ="
+                + " {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[10,0],[10,10],[0,10],[0,0]]]}]}")
         .close();
     db.command(
-            "insert into TestInsert set geometry = {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[11,11],[21,11],[21,21],[11,21],[11,11]]]}]}")
+            "insert into TestInsert set geometry ="
+                + " {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[11,11],[21,11],[21,21],[11,21],[11,11]]]}]}")
         .close();
 
     db.command("create index TestInsert.geometry on TestInsert (geometry) SPATIAL engine lucene")

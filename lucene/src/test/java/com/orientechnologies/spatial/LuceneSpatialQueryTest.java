@@ -136,7 +136,8 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
   public void testNearQuery() {
 
     String query =
-        "select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]";
+        "select *,$distance from Place where [latitude,longitude,$spatial] NEAR"
+            + " [41.893056,12.482778,{\"maxDistance\": 0.5}]";
     OResultSet docs = db.query(query);
 
     Assert.assertTrue(docs.hasNext());
@@ -153,7 +154,8 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
   @Ignore
   public void testWithinQuery() {
     String query =
-        "select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]";
+        "select * from Place where [latitude,longitude] WITHIN"
+            + " [[51.507222,-0.1275],[55.507222,-0.1275]]";
     OResultSet docs = db.query(query);
     Assert.assertEquals(238, docs.stream().count());
   }

@@ -35,6 +35,7 @@ import java.nio.ByteOrder;
 public class OLongSerializer implements OBinarySerializer<Long> {
 
   public static final byte ID = 10;
+
   /** size of long value in bytes */
   public static final int LONG_SIZE = 8;
 

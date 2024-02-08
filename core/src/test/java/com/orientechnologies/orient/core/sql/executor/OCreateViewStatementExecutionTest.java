@@ -151,7 +151,8 @@ public class OCreateViewStatementExecutionTest extends BaseMemoryDatabase {
     String statement =
         "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
     statement +=
-        "indexes: [{type:'NOTUNIQUE', properties:{name:'STRING'}},{type:'NOTUNIQUE', properties:{data:{type:'EMBEDDEDLIST',linkedType:'INTEGER'}}}]";
+        "indexes: [{type:'NOTUNIQUE', properties:{name:'STRING'}},{type:'NOTUNIQUE',"
+            + " properties:{data:{type:'EMBEDDEDLIST',linkedType:'INTEGER'}}}]";
     statement += "}";
 
     db.command(statement);

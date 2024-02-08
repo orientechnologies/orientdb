@@ -84,8 +84,8 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
     db.save(rome);
 
     String query =
-        "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })"
-            + " = true";
+        "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' ,"
+            + " 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} }) = true";
     OResultSet docs = db.query(query);
 
     Assert.assertEquals(1, docs.stream().count());
@@ -93,8 +93,8 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
     db.rollback();
 
     query =
-        "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })"
-            + " = true";
+        "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' ,"
+            + " 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} }) = true";
     docs = db.query(query);
 
     Assert.assertEquals(0, docs.stream().count());
@@ -116,8 +116,8 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
     db.commit();
 
     String query =
-        "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' , 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} })"
-            + " = true";
+        "select * from City where  ST_WITHIN(location,{ 'shape' : { 'type' : 'ORectangle' ,"
+            + " 'coordinates' : [12.314015,41.8262816,12.6605063,41.963125]} }) = true";
     OResultSet docs = db.query(query);
 
     Assert.assertEquals(1, docs.stream().count());

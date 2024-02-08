@@ -69,7 +69,8 @@ public class OGremlinConsoleTest {
     StringBuilder builder = new StringBuilder();
     builder.append("connect env embedded:./target/ root root;\n");
     builder.append(
-        "create database testGraphMLImport memory users (admin identified by 'admin' role admin);\n");
+        "create database testGraphMLImport memory users (admin identified by 'admin' role"
+            + " admin);\n");
     builder.append("open testGraphMLImport admin admin;\n");
 
     builder.append("import database " + INPUT_FILE + ";\n");
@@ -100,7 +101,8 @@ public class OGremlinConsoleTest {
     StringBuilder builder = new StringBuilder();
     builder.append("connect env embedded:./target/ root root;\n");
     builder.append(
-        "create database testGraphMLExport memory users (admin identified by 'admin' role admin);\n");
+        "create database testGraphMLExport memory users (admin identified by 'admin' role"
+            + " admin);\n");
     builder.append("open testGraphMLExport admin admin;\n");
 
     builder.append("import database " + INPUT_FILE + ";\n");
@@ -125,7 +127,8 @@ public class OGremlinConsoleTest {
     StringBuilder builder = new StringBuilder();
     builder.append("connect env embedded:./target/ root root;\n");
     builder.append(
-        "create database testMoveVertexCommand memory users (admin identified by 'admin' role admin);\n");
+        "create database testMoveVertexCommand memory users (admin identified by 'admin' role"
+            + " admin);\n");
     builder.append("open testMoveVertexCommand admin admin;\n");
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
     builder.append("create class newposition extends V;\n");
@@ -188,7 +191,8 @@ public class OGremlinConsoleTest {
     StringBuilder builder = new StringBuilder();
     builder.append("connect env embedded:./target/ root root;\n");
     builder.append(
-        "create database testGraphMLImportWithSmallBatch memory users (admin identified by 'admin' role admin);\n");
+        "create database testGraphMLImportWithSmallBatch memory users (admin identified by 'admin'"
+            + " role admin);\n");
     builder.append("open testGraphMLImportWithSmallBatch admin admin;\n");
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
     OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] {builder.toString()});
@@ -365,7 +369,8 @@ public class OGremlinConsoleTest {
     StringBuilder builder = new StringBuilder();
     builder.append("connect env embedded:./target/ root root;\n");
     builder.append(
-        "create database OConsoleDatabaseAppTest memory users (admin identified by 'admin' role admin);\n");
+        "create database OConsoleDatabaseAppTest memory users (admin identified by 'admin' role"
+            + " admin);\n");
     builder.append("open OConsoleDatabaseAppTest admin admin;\n");
     builder.append("profile storage on;\n");
     builder.append("create class foo;\n");
@@ -400,7 +405,8 @@ public class OGremlinConsoleTest {
     builder.append("traverse out() from V;\n");
 
     builder.append(
-        "create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
+        "create edge from (select from V where name = 'foo') to (select from V where name ="
+            + " 'bar');\n");
 
     builder.append("traverse out() from V;\n");
 

@@ -259,7 +259,8 @@ public class OFileUtils {
       OLogManager.instance()
           .warn(
               requester,
-              "atomic file move is not possible, falling back to regular move (moving '%s' to '%s')",
+              "atomic file move is not possible, falling back to regular move (moving '%s' to"
+                  + " '%s')",
               source,
               target);
       Files.move(source, target);
