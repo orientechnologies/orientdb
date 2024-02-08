@@ -524,8 +524,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
    * thread without affecting current instance. The database copy is not set in thread local.
    */
   public ODatabaseDocumentInternal copy() {
-    ODatabaseDocumentEmbedded database =
-        new ODatabaseDocumentEmbedded((OStorage) getSharedContext().getStorage());
+    var storage = (OStorage) getSharedContext().getStorage();
+    storage.open(null, null, config.getConfigurations());
+    ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage);
     database.init(config, this.sharedContext);
     String user;
     if (getUser() != null) {
@@ -533,6 +534,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     } else {
       user = null;
     }
+
     database.internalOpen(user, null, false);
     database.callOnOpenListeners();
     this.activateOnCurrentThread();
