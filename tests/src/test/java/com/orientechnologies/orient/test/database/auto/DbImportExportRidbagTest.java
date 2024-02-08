@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -64,9 +63,7 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
         "create edge E from (select from V where name ='a') to (select from V where name != 'a')");
 
     // ADD A CUSTOM TO THE CLASS
-    database
-        .command(new OCommandSQL("alter class V custom onBeforeCreate=onBeforeCreateItem"))
-        .execute();
+    database.command("alter class V custom onBeforeCreate=onBeforeCreateItem").close();
 
     ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
     export.exportDatabase();

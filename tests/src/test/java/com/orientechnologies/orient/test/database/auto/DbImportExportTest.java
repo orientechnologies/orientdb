@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,9 +70,7 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
     database.open("admin", "admin");
 
     // ADD A CUSTOM TO THE CLASS
-    database
-        .command(new OCommandSQL("alter class V custom onBeforeCreate=onBeforeCreateItem"))
-        .execute();
+    database.command("alter class V custom onBeforeCreate=onBeforeCreateItem").close();
 
     final ODatabaseExport export =
         new ODatabaseExport(
