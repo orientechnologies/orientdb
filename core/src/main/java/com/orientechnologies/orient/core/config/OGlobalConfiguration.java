@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.OChecksumMode;
-import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import java.io.PrintStream;
 import java.util.Locale;
 import java.util.Map;
@@ -38,6 +26,17 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system
@@ -198,12 +197,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       false),
 
   DISK_CACHE_SIZE(
-      "storage.diskCache.bufferSize",
-      "Size of disk buffer in megabytes, disk size may be changed at runtime, "
-          + "but if does not enough to contain all pinned pages exception will be thrown",
-      Integer.class,
-      4 * 1024,
-      new OCacheSizeChangeCallback()),
+      "storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 4 * 1024),
 
   DISK_WRITE_CACHE_PART(
       "storage.diskCache.writeCachePart",
@@ -405,7 +399,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "storage.cluster.version",
       "Binary version of cluster which will be used inside of storage",
       Integer.class,
-      OPaginatedCluster.getLatestBinaryVersion()),
+      2),
 
   STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS(
       "storage.printWALPerformanceStatistics",
@@ -1191,7 +1185,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "cache.local.impl",
       "Local Record cache implementation",
       String.class,
-      ORecordCacheWeakRefs.class.getName()),
+      "com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs"),
 
   // COMMAND
   COMMAND_TIMEOUT("command.timeout", "Default timeout for commands (in ms)", Long.class, 0, true),
@@ -1983,7 +1977,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    */
   public static OGlobalConfiguration findByKey(final String iKey) {
     for (OGlobalConfiguration v : values()) {
-      if (v.getKey().equalsIgnoreCase(iKey)) return v;
+      if (v.getKey().equalsIgnoreCase(iKey)) {
+        return v;
+      }
     }
     return null;
   }
@@ -2011,7 +2007,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
     String prop;
     for (OGlobalConfiguration config : values()) {
       prop = System.getProperty(config.key);
-      if (prop != null) config.setValue(prop);
+      if (prop != null) {
+        config.setValue(prop);
+      }
     }
 
     for (OGlobalConfiguration config : values()) {
@@ -2028,7 +2026,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   public static String getEnvKey(OGlobalConfiguration config) {
 
-    if (!config.env) return null;
+    if (!config.env) {
+      return null;
+    }
     return "ORIENTDB_" + config.name();
   }
 
@@ -2048,12 +2048,16 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   public void setValue(final Object iValue) {
     Object oldValue = value;
 
-    if (iValue != null)
-      if (type == Boolean.class) value = Boolean.parseBoolean(iValue.toString());
-      else if (type == Integer.class) value = Integer.parseInt(iValue.toString());
-      else if (type == Float.class) value = Float.parseFloat(iValue.toString());
-      else if (type == String.class) value = iValue.toString();
-      else if (type.isEnum()) {
+    if (iValue != null) {
+      if (type == Boolean.class) {
+        value = Boolean.parseBoolean(iValue.toString());
+      } else if (type == Integer.class) {
+        value = Integer.parseInt(iValue.toString());
+      } else if (type == Float.class) {
+        value = Float.parseFloat(iValue.toString());
+      } else if (type == String.class) {
+        value = iValue.toString();
+      } else if (type.isEnum()) {
         boolean accepted = false;
 
         if (type.isInstance(iValue)) {
@@ -2073,8 +2077,13 @@ public enum OGlobalConfiguration { // ENVIRONMENT
           }
         }
 
-        if (!accepted) throw new IllegalArgumentException("Invalid value of `" + key + "` option.");
-      } else value = iValue;
+        if (!accepted) {
+          throw new IllegalArgumentException("Invalid value of `" + key + "` option.");
+        }
+      } else {
+        value = iValue;
+      }
+    }
 
     if (changeCallback != null) {
       try {
