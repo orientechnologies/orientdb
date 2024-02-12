@@ -65,7 +65,7 @@ public class OExpression extends SimpleNode {
       return arrayConcatExpression.execute(iCurrentRecord, ctx);
     }
     if (json != null) {
-      return json.toMap(iCurrentRecord, ctx);
+      return json.toObjectDetermineType(iCurrentRecord, ctx);
     }
     if (booleanValue != null) {
       return booleanValue;
