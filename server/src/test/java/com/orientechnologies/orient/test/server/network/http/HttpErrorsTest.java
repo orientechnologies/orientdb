@@ -14,24 +14,14 @@ public class HttpErrorsTest extends BaseHttpTest {
   @Test
   public void testCommandNotFound() throws Exception {
     Assert.assertEquals(
-        setUserName("root")
-            .setUserPassword("root")
-            .get("commandNotfound")
-            .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+        setUserName("root").setUserPassword("root").get("commandNotfound").getResponse().getCode(),
         405);
   }
 
   @Test
   public void testCommandWrongMethod() throws Exception {
     Assert.assertEquals(
-        setUserName("root")
-            .setUserPassword("root")
-            .post("listDatabases")
-            .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
+        setUserName("root").setUserPassword("root").post("listDatabases").getResponse().getCode(),
         405);
   }
 

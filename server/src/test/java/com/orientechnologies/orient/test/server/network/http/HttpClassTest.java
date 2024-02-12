@@ -11,45 +11,27 @@ import org.junit.Test;
 public class HttpClassTest extends BaseHttpDatabaseTest {
   @Test
   public void testExistentClass() throws Exception {
-    Assert.assertEquals(
-        get("class/" + getDatabaseName() + "/OUser").getResponse().getStatusLine().getStatusCode(),
-        200);
+    Assert.assertEquals(get("class/" + getDatabaseName() + "/OUser").getResponse().getCode(), 200);
   }
 
   @Test
   public void testNonExistentClass() throws Exception {
     Assert.assertEquals(
-        get("class/" + getDatabaseName() + "/NonExistentCLass")
-            .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
-        404);
+        get("class/" + getDatabaseName() + "/NonExistentCLass").getResponse().getCode(), 404);
   }
 
   @Test
   public void testCreateClass() throws Exception {
     Assert.assertEquals(
-        post("class/" + getDatabaseName() + "/NewClass")
-            .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
-        201);
+        post("class/" + getDatabaseName() + "/NewClass").getResponse().getCode(), 201);
   }
 
   @Test
   public void testDropClass() throws Exception {
     Assert.assertEquals(
-        post("class/" + getDatabaseName() + "/NewClassToDrop")
-            .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
-        201);
+        post("class/" + getDatabaseName() + "/NewClassToDrop").getResponse().getCode(), 201);
     Assert.assertEquals(
-        delete("class/" + getDatabaseName() + "/NewClassToDrop")
-            .getResponse()
-            .getStatusLine()
-            .getStatusCode(),
-        204);
+        delete("class/" + getDatabaseName() + "/NewClassToDrop").getResponse().getCode(), 204);
   }
 
   @Override
