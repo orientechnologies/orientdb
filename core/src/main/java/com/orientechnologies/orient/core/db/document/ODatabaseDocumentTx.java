@@ -176,9 +176,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return factory;
   }
 
-  /**
-   * @Deprecated use {{@link OrientDB}} instead.
-   */
+  /** @Deprecated use {{@link OrientDB}} instead. */
   @Deprecated
   public ODatabaseDocumentTx(String url) {
     this(url, true);
