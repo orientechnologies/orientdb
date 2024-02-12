@@ -5,11 +5,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.OFieldTypesString;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OUpdatableResult;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -129,6 +131,20 @@ public class OJson extends SimpleNode {
     String type = getTypeForDocument(ctx);
     if (className != null || (type != null && "d".equalsIgnoreCase(type))) {
       return toDocument(source, ctx, className);
+    } else {
+      return toMap(source, ctx);
+    }
+  }
+
+  public Object toObjectDetermineType(OIdentifiable source, OCommandContext ctx) {
+    String className = getClassNameForDocument(ctx);
+    String type = getTypeForDocument(ctx);
+    if (className != null || (type != null && "d".equalsIgnoreCase(type))) {
+      OUpdatableResult element = null;
+      if (source != null) {
+        element = new OUpdatableResult((OElement) ctx.getDatabase().load(source.getIdentity()));
+      }
+      return toDocument(element, ctx, className);
     } else {
       return toMap(source, ctx);
     }
