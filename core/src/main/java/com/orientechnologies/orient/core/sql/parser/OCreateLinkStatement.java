@@ -51,11 +51,12 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
 
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
-    execute(ctx);
     OInternalResultSet rs = new OInternalResultSet();
+    Object total = execute(ctx);
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create link");
     result.setProperty("name", name.getValue());
+    result.setProperty("count", total);
     result.setProperty("fromClass", sourceClass.getStringValue());
     result.setProperty("toClass", destClass.getStringValue());
     rs.add(result);
