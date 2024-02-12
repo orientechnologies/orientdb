@@ -20,7 +20,6 @@ import static java.lang.Boolean.parseBoolean;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -318,10 +317,10 @@ public class OrientJdbcStatement implements Statement {
       // the following if-then structure makes sense if the query can be a
       // subclass of OCommandSQL.
 
-      if (this.sql == null) {
-        return OCommandSQL.class.isAssignableFrom(iface);
-      } else {
+      if (this.sql != null) {
         return this.sql.getClass().isAssignableFrom(iface);
+      } else {
+        return false;
       }
     } catch (NullPointerException e) {
       throw new SQLException(e);

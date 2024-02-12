@@ -32,77 +32,33 @@ public class SQLCreateLinkTest extends DocumentDBBaseTest {
   @Test
   public void createLinktest() {
     database.command("CREATE CLASS POST").close();
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL("INSERT INTO POST (id, title) VALUES ( 10, 'NoSQL movement' )"))
-                .execute()
-            instanceof ODocument);
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL("INSERT INTO POST (id, title) VALUES ( 20, 'New OrientDB' )"))
-                .execute()
-            instanceof ODocument);
+    database.command("INSERT INTO POST (id, title) VALUES ( 10, 'NoSQL movement' )").close();
+    database.command("INSERT INTO POST (id, title) VALUES ( 20, 'New OrientDB' )").close();
 
-    Assert.assertTrue(
-        database
-                .command(new OCommandSQL("INSERT INTO POST (id, title) VALUES ( 30, '(')"))
-                .execute()
-            instanceof ODocument);
+    database.command("INSERT INTO POST (id, title) VALUES ( 30, '(')").close();
 
-    Assert.assertTrue(
-        database
-                .command(new OCommandSQL("INSERT INTO POST (id, title) VALUES ( 40, ')')"))
-                .execute()
-            instanceof ODocument);
+    database.command("INSERT INTO POST (id, title) VALUES ( 40, ')')").close();
 
-    Assert.assertTrue(
-        (Integer) database.command(new OCommandSQL("CREATE CLASS COMMENT")).execute() > 0);
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL(
-                        "INSERT INTO COMMENT (id, postId, text) VALUES ( 0, 10, 'First' )"))
-                .execute()
-            instanceof ODocument);
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL(
-                        "INSERT INTO COMMENT (id, postId, text) VALUES ( 1, 10, 'Second' )"))
-                .execute()
-            instanceof ODocument);
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL(
-                        "INSERT INTO COMMENT (id, postId, text) VALUES ( 21, 10, 'Another' )"))
-                .execute()
-            instanceof ODocument);
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL(
-                        "INSERT INTO COMMENT (id, postId, text) VALUES ( 41, 20, 'First again' )"))
-                .execute()
-            instanceof ODocument);
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL(
-                        "INSERT INTO COMMENT (id, postId, text) VALUES ( 82, 20, 'Second Again' )"))
-                .execute()
-            instanceof ODocument);
+    database.command("CREATE CLASS COMMENT").close();
+    ;
+    database.command("INSERT INTO COMMENT (id, postId, text) VALUES ( 0, 10, 'First' )").close();
+    database.command("INSERT INTO COMMENT (id, postId, text) VALUES ( 1, 10, 'Second' )").close();
+    database.command("INSERT INTO COMMENT (id, postId, text) VALUES ( 21, 10, 'Another' )").close();
+    database
+        .command("INSERT INTO COMMENT (id, postId, text) VALUES ( 41, 20, 'First again' )")
+        .close();
+    database
+        .command("INSERT INTO COMMENT (id, postId, text) VALUES ( 82, 20, 'Second Again' )")
+        .close();
 
     Assert.assertEquals(
         ((Number)
                 database
                     .command(
-                        new OCommandSQL(
-                            "CREATE LINK comments TYPE LINKSET FROM comment.postId TO post.id"
-                                + " INVERSE"))
-                    .execute())
+                        "CREATE LINK comments TYPE LINKSET FROM comment.postId TO post.id"
+                            + " INVERSE")
+                    .next()
+                    .getProperty("count"))
             .intValue(),
         5);
 
@@ -118,75 +74,56 @@ public class SQLCreateLinkTest extends DocumentDBBaseTest {
     database.command("CREATE CLASS POST2").close();
     Object p1 =
         database
-            .command(
-                new OCommandSQL("INSERT INTO POST2 (id, title) VALUES ( 10, 'NoSQL movement' )"))
-            .execute();
+            .command("INSERT INTO POST2 (id, title) VALUES ( 10, 'NoSQL movement' )")
+            .next()
+            .toElement();
     Assert.assertTrue(p1 instanceof ODocument);
     Object p2 =
         database
-            .command(new OCommandSQL("INSERT INTO POST2 (id, title) VALUES ( 20, 'New OrientDB' )"))
-            .execute();
+            .command("INSERT INTO POST2 (id, title) VALUES ( 20, 'New OrientDB' )")
+            .next()
+            .toElement();
     Assert.assertTrue(p2 instanceof ODocument);
 
     Object p3 =
-        database
-            .command(new OCommandSQL("INSERT INTO POST2 (id, title) VALUES ( 30, '(')"))
-            .execute();
+        database.command("INSERT INTO POST2 (id, title) VALUES ( 30, '(')").next().toElement();
     Assert.assertTrue(p3 instanceof ODocument);
 
     Object p4 =
-        database
-            .command(new OCommandSQL("INSERT INTO POST2 (id, title) VALUES ( 40, ')')"))
-            .execute();
+        database.command("INSERT INTO POST2 (id, title) VALUES ( 40, ')')").next().toElement();
     Assert.assertTrue(p4 instanceof ODocument);
 
-    Assert.assertTrue(
-        (Integer) database.command(new OCommandSQL("CREATE CLASS COMMENT2")).execute() > 0);
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL(
-                        "INSERT INTO COMMENT2 (id, postId, text) VALUES ( 0, '"
-                            + ((ODocument) p1).getIdentity().toString()
-                            + "', 'First' )"))
-                .execute()
-            instanceof ODocument);
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL(
-                        "INSERT INTO COMMENT2 (id, postId, text) VALUES ( 1, '"
-                            + ((ODocument) p1).getIdentity().toString()
-                            + "', 'Second' )"))
-                .execute()
-            instanceof ODocument);
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL(
-                        "INSERT INTO COMMENT2 (id, postId, text) VALUES ( 21, '"
-                            + ((ODocument) p1).getIdentity().toString()
-                            + "', 'Another' )"))
-                .execute()
-            instanceof ODocument);
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL(
-                        "INSERT INTO COMMENT2 (id, postId, text) VALUES ( 41, '"
-                            + ((ODocument) p2).getIdentity().toString()
-                            + "', 'First again' )"))
-                .execute()
-            instanceof ODocument);
-    Assert.assertTrue(
-        database
-                .command(
-                    new OCommandSQL(
-                        "INSERT INTO COMMENT2 (id, postId, text) VALUES ( 82, '"
-                            + ((ODocument) p2).getIdentity().toString()
-                            + "', 'Second Again' )"))
-                .execute()
-            instanceof ODocument);
+    database.command("CREATE CLASS COMMENT2");
+    database
+        .command(
+            "INSERT INTO COMMENT2 (id, postId, text) VALUES ( 0, '"
+                + ((ODocument) p1).getIdentity().toString()
+                + "', 'First' )")
+        .close();
+    database
+        .command(
+            "INSERT INTO COMMENT2 (id, postId, text) VALUES ( 1, '"
+                + ((ODocument) p1).getIdentity().toString()
+                + "', 'Second' )")
+        .close();
+    database
+        .command(
+            "INSERT INTO COMMENT2 (id, postId, text) VALUES ( 21, '"
+                + ((ODocument) p1).getIdentity().toString()
+                + "', 'Another' )")
+        .close();
+    database
+        .command(
+            "INSERT INTO COMMENT2 (id, postId, text) VALUES ( 41, '"
+                + ((ODocument) p2).getIdentity().toString()
+                + "', 'First again' )")
+        .close();
+    database
+        .command(
+            "INSERT INTO COMMENT2 (id, postId, text) VALUES ( 82, '"
+                + ((ODocument) p2).getIdentity().toString()
+                + "', 'Second Again' )")
+        .close();
 
     Assert.assertEquals(
         ((Number)
@@ -200,7 +137,7 @@ public class SQLCreateLinkTest extends DocumentDBBaseTest {
         5);
 
     Assert.assertEquals(
-        ((Number) database.command(new OCommandSQL("UPDATE comment2 REMOVE postId")).execute())
+        ((Number) database.command("UPDATE comment2 REMOVE postId").next().getProperty("count"))
             .intValue(),
         5);
   }

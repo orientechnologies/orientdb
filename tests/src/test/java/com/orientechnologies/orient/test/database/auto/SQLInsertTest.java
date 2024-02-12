@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -668,17 +669,18 @@ public class SQLInsertTest extends DocumentDBBaseTest {
         OType.EMBEDDED,
         database.getMetadata().getSchema().getOrCreateClass("TestConvertLinkedClass"));
 
-    ODocument doc =
+    OElement doc =
         database
             .command(
-                new OCommandSQL(
-                    "INSERT INTO TestConvert SET name = 'embeddedWithLinkedClass',"
-                        + " embeddedWithLinkedClass = {'line1':'123 Fake Street'}"))
-            .execute();
+                "INSERT INTO TestConvert SET name = 'embeddedWithLinkedClass',"
+                    + " embeddedWithLinkedClass = {'line1':'123 Fake Street'}")
+            .next()
+            .getElement()
+            .get();
 
-    Assert.assertTrue(doc.field("embeddedWithLinkedClass") instanceof ODocument);
+    Assert.assertTrue(doc.getProperty("embeddedWithLinkedClass") instanceof ODocument);
     Assert.assertEquals(
-        ((ODocument) doc.field("embeddedWithLinkedClass")).getClassName(),
+        ((ODocument) doc.getProperty("embeddedWithLinkedClass")).getClassName(),
         "TestConvertLinkedClass");
   }
 
@@ -690,22 +692,23 @@ public class SQLInsertTest extends DocumentDBBaseTest {
         OType.EMBEDDED,
         database.getMetadata().getSchema().getOrCreateClass("EmbeddedWithRecordAttributes_Like"));
 
-    ODocument doc =
+    OElement doc =
         database
             .command(
-                new OCommandSQL(
-                    "INSERT INTO EmbeddedWithRecordAttributes SET `like` = { \n"
-                        + "      count: 0, \n"
-                        + "      latest: [], \n"
-                        + "      '@type': 'document', \n"
-                        + "      '@class': 'EmbeddedWithRecordAttributes_Like'\n"
-                        + "    } "))
-            .execute();
+                "INSERT INTO EmbeddedWithRecordAttributes SET `like` = { \n"
+                    + "      count: 0, \n"
+                    + "      latest: [], \n"
+                    + "      '@type': 'document', \n"
+                    + "      '@class': 'EmbeddedWithRecordAttributes_Like'\n"
+                    + "    } ")
+            .next()
+            .getElement()
+            .get();
 
-    Assert.assertTrue(doc.field("like") instanceof OIdentifiable);
+    Assert.assertTrue(doc.getProperty("like") instanceof OIdentifiable);
     Assert.assertEquals(
-        ((ODocument) doc.field("like")).getClassName(), "EmbeddedWithRecordAttributes_Like");
-    Assert.assertEquals(((ODocument) doc.field("like")).<Object>field("count"), 0);
+        ((ODocument) doc.getProperty("like")).getClassName(), "EmbeddedWithRecordAttributes_Like");
+    Assert.assertEquals(((OElement) doc.getProperty("like")).<Object>getProperty("count"), 0);
   }
 
   @Test
@@ -716,22 +719,23 @@ public class SQLInsertTest extends DocumentDBBaseTest {
         OType.EMBEDDED,
         database.getMetadata().getSchema().getOrCreateClass("EmbeddedWithRecordAttributes2_Like"));
 
-    ODocument doc =
+    OElement doc =
         database
             .command(
-                new OCommandSQL(
-                    "INSERT INTO EmbeddedWithRecordAttributes2 SET `like` = { \n"
-                        + "      count: 0, \n"
-                        + "      latest: [], \n"
-                        + "      @type: 'document', \n"
-                        + "      @class: 'EmbeddedWithRecordAttributes2_Like'\n"
-                        + "    } "))
-            .execute();
+                "INSERT INTO EmbeddedWithRecordAttributes2 SET `like` = { \n"
+                    + "      count: 0, \n"
+                    + "      latest: [], \n"
+                    + "      @type: 'document', \n"
+                    + "      @class: 'EmbeddedWithRecordAttributes2_Like'\n"
+                    + "    } ")
+            .next()
+            .getElement()
+            .get();
 
-    Assert.assertTrue(doc.field("like") instanceof OIdentifiable);
+    Assert.assertTrue(doc.getProperty("like") instanceof OIdentifiable);
     Assert.assertEquals(
-        ((ODocument) doc.field("like")).getClassName(), "EmbeddedWithRecordAttributes2_Like");
-    Assert.assertEquals(((ODocument) doc.field("like")).<Object>field("count"), 0);
+        ((ODocument) doc.getProperty("like")).getClassName(), "EmbeddedWithRecordAttributes2_Like");
+    Assert.assertEquals(((OElement) doc.getProperty("like")).<Object>getProperty("count"), 0);
   }
 
   @Test

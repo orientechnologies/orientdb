@@ -473,16 +473,14 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     } finally {
       // RESTORE DEFAULT
-      database.command(new OCommandSQL("alter database minimumclusters 0")).execute();
+      database.command("alter database minimumclusters 0").close();
     }
   }
 
   public void testExchangeCluster() {
 
     try {
-      database
-          .command(new OCommandSQL("CREATE CLASS TestRenameClusterOriginal clusters 2"))
-          .execute();
+      database.command("CREATE CLASS TestRenameClusterOriginal clusters 2").close();
 
       swapClusters(database, 1);
       swapClusters(database, 2);
