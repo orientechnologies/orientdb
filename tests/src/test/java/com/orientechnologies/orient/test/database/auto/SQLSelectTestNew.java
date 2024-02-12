@@ -2090,10 +2090,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     database.command("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'").close();
     database
         .command(
-            new OCommandSQL(
-                "CREATE VERTEX EmbeddedMapAndDotNotation set data = {\"bar\": \"baz\", \"quux\":"
-                    + " 1}, name = 'bar'"))
-        .execute();
+            "CREATE VERTEX EmbeddedMapAndDotNotation set data = {\"bar\": \"baz\", \"quux\":"
+                + " 1}, name = 'bar'")
+        .close();
     database
         .command(
             "CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to"
