@@ -1,6 +1,5 @@
 package com.orientechnologies.spatial;
 
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Test;
@@ -17,15 +16,13 @@ public class GeometryCollectionTest extends BaseSpatialLuceneTest {
         .close();
 
     db.command(
-            new OCommandSQL(
-                "insert into TestInsert content {'name': 'loc1', 'geometry':"
-                    + " {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[0,10],[10,10],[10,0],[0,0]]]}]}}"))
-        .execute();
+            "insert into TestInsert content {'name': 'loc1', 'geometry':"
+                + " {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[0,10],[10,10],[10,0],[0,0]]]}]}}")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into TestInsert content {'name': 'loc2', 'geometry':"
-                    + " {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[0,20],[20,20],[20,0],[0,0]]]}]}}"))
-        .execute();
+            "insert into TestInsert content {'name': 'loc2', 'geometry':"
+                + " {'@type':'d','@class':'OGeometryCollection','geometries':[{'@type':'d','@class':'OPolygon','coordinates':[[[0,0],[0,20],[20,20],[20,0],[0,0]]]}]}}")
+        .close();
 
     OResultSet qResult =
         db.command(
