@@ -15,28 +15,22 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -46,7 +40,6 @@ import org.testng.annotations.Test;
 
 @Test
 public class GraphDatabaseTest extends DocumentDBBaseTest {
-  private OrientGraph database;
 
   @Parameters(value = "url")
   public GraphDatabaseTest(@Optional String url) {
@@ -54,69 +47,83 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
   }
 
   @BeforeMethod
-  public void init() {
-    database = new OrientGraph(url);
-    database.setUseLightweightEdges(false);
-  }
+  public void init() {}
 
   @AfterMethod
-  public void deinit() {
-    database.shutdown();
-  }
+  public void deinit() {}
 
   @Test
   public void populate() {
-    OClass vehicleClass = database.createVertexType("GraphVehicle");
-    database.createVertexType("GraphCar", vehicleClass);
-    database.createVertexType("GraphMotocycle", "GraphVehicle");
+    OClass vehicleClass = database.createVertexClass("GraphVehicle");
+    database.createClass("GraphCar", vehicleClass.getName());
+    database.createClass("GraphMotocycle", "GraphVehicle");
 
-    ODocument carNode =
-        database
-            .addVertex("class:GraphCar", "brand", "Hyundai", "model", "Coupe", "year", 2003)
-            .getRecord();
-    ODocument motoNode =
-        database
-            .addVertex(
-                "class:GraphMotocycle", "brand", "Yamaha", "model", "X-City 250", "year", 2009)
-            .getRecord();
+    OVertex carNode = database.newVertex("GraphCar");
+    carNode.setProperty("brand", "Hyundai");
+    carNode.setProperty("model", "Coupe");
+    carNode.setProperty("year", 2003);
+    database.save(carNode);
+    OVertex motoNode = database.newVertex("GraphMotocycle");
+    motoNode.setProperty("brand", "Yamaha");
+    motoNode.setProperty("model", "X-City 250");
+    motoNode.setProperty("year", 2009);
+    database.save(motoNode);
 
     database.commit();
-    database.addEdge(null, database.getVertex(carNode), database.getVertex(motoNode), "E").save();
+    database.newEdge(carNode, motoNode).save();
 
     List<OResult> result =
-        database.getRawGraph().query("select from GraphVehicle").stream()
-            .collect(Collectors.toList());
+        database.query("select from GraphVehicle").stream().collect(Collectors.toList());
     Assert.assertEquals(result.size(), 2);
     for (OResult v : result) {
       Assert.assertTrue(v.getElement().get().getSchemaType().get().isSubClassOf(vehicleClass));
     }
 
     database.commit();
-    database.shutdown();
+    database.close();
+    database.open("admin", "admin");
 
-    database = new OrientGraph(url);
     database.setUseLightweightEdges(false);
 
-    database.getRawGraph().getMetadata().getSchema().reload();
+    database.getMetadata().getSchema().reload();
 
-    result =
-        database.getRawGraph().query("select from GraphVehicle").stream()
-            .collect(Collectors.toList());
+    result = database.query("select from GraphVehicle").stream().collect(Collectors.toList());
     Assert.assertEquals(result.size(), 2);
 
-    Edge edge1 = null;
-    Edge edge2 = null;
+    OEdge edge1 = null;
+    OEdge edge2 = null;
 
     for (OResult v : result) {
       Assert.assertTrue(v.getElement().get().getSchemaType().get().isSubClassOf("GraphVehicle"));
 
       if (v.getElement().get().getSchemaType().isPresent()
           && v.getElement().get().getSchemaType().get().getName().equals("GraphCar")) {
-        Assert.assertEquals(database.getVertex(v.getIdentity().get()).countEdges(Direction.OUT), 1);
-        edge1 = database.getVertex(v.getIdentity().get()).getEdges(Direction.OUT).iterator().next();
+        Assert.assertEquals(
+            StreamSupport.stream(
+                    ((OVertex) database.load(v.getIdentity().get()))
+                        .getEdges(ODirection.OUT)
+                        .spliterator(),
+                    false)
+                .count(),
+            1);
+        edge1 =
+            (((OVertex) database.load(v.getIdentity().get())).getEdges(ODirection.OUT))
+                .iterator()
+                .next();
       } else {
-        Assert.assertEquals(database.getVertex(v.getIdentity().get()).countEdges(Direction.IN), 1);
-        edge2 = database.getVertex(v.getIdentity().get()).getEdges(Direction.IN).iterator().next();
+        Assert.assertEquals(
+            StreamSupport.stream(
+                    ((OVertex) database.load(v.getIdentity().get()))
+                        .getEdges(ODirection.IN)
+                        .spliterator(),
+                    false)
+                .count(),
+            1);
+        edge2 =
+            ((OVertex) database.load(v.getIdentity().get()))
+                .getEdges(ODirection.IN)
+                .iterator()
+                .next();
       }
     }
     database.commit();
@@ -126,70 +133,88 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "populate")
   public void testSQLAgainstGraph() {
-    Vertex tom = database.addVertex(null, "name", "Tom");
-    Vertex ferrari = database.addVertex("class:GraphCar", "brand", "Ferrari");
-    Vertex maserati = database.addVertex("class:GraphCar", "brand", "Maserati");
-    Vertex porsche = database.addVertex("class:GraphCar", "brand", "Porsche");
-    database.addEdge(null, tom, ferrari, "drives");
-    database.addEdge(null, tom, maserati, "drives");
-    database.addEdge(null, tom, porsche, "owns");
+    OVertex tom = database.newVertex();
+    tom.setProperty("name", "Tom");
+    database.save(tom);
+    OVertex ferrari = database.newVertex("GraphCar");
+    ferrari.setProperty("brand", "Ferrari");
+    database.save(ferrari);
+
+    OVertex maserati = database.newVertex("GraphCar");
+    maserati.setProperty("brand", "Maserati");
+    database.save(maserati);
+
+    OVertex porsche = database.newVertex("GraphCar");
+    porsche.setProperty("brand", "Porsche");
+    database.save(porsche);
+
+    database.createEdgeClass("drives");
+
+    database.save(database.newEdge(tom, ferrari, "drives"));
+    database.save(database.newEdge(tom, maserati, "drives"));
+    database.save(database.newEdge(tom, porsche, "owns"));
     database.commit();
 
-    Assert.assertNotNull(database.getVertex(tom).getEdges(Direction.OUT, "drives"));
-    Assert.assertEquals(database.getVertex(tom).countEdges(Direction.OUT, "drives"), 2);
+    Assert.assertNotNull(((OVertex) database.load(tom)).getEdges(ODirection.OUT, "drives"));
+    Assert.assertEquals(
+        StreamSupport.stream(
+                ((OVertex) database.load(tom)).getEdges(ODirection.OUT, "drives").spliterator(),
+                false)
+            .count(),
+        2);
 
     OResultSet result =
-        database
-            .getRawGraph()
-            .query("select out_[in.@class = 'GraphCar'].in_ from V where name = 'Tom'");
+        database.query("select out_[in.@class = 'GraphCar'].in_ from V where name = 'Tom'");
     Assert.assertEquals(result.stream().count(), 1);
 
     result =
-        database
-            .getRawGraph()
-            .query(
-                "select out_[label='drives'][in.brand = 'Ferrari'].in_ from V where name = 'Tom'");
+        database.query(
+            "select out_[label='drives'][in.brand = 'Ferrari'].in_ from V where name = 'Tom'");
     Assert.assertEquals(result.stream().count(), 1);
 
-    result =
-        database
-            .getRawGraph()
-            .query("select out_[in.brand = 'Ferrari'].in_ from V where name = 'Tom'");
+    result = database.query("select out_[in.brand = 'Ferrari'].in_ from V where name = 'Tom'");
     Assert.assertEquals(result.stream().count(), 1);
   }
 
   public void testNotDuplicatedIndexTxChanges() throws IOException {
-    database.setAutoStartTx(false);
     database.commit();
-    OClass oc = database.getVertexType("vertexA");
-    if (oc == null) oc = database.createVertexType("vertexA");
+    OClass oc = database.getClass("vertexA");
+    if (oc == null) oc = database.createVertexClass("vertexA");
     if (!oc.existsProperty("name")) oc.createProperty("name", OType.STRING);
 
     if (oc.getClassIndex("vertexA_name_idx") == null)
       oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
 
-    database.setAutoStartTx(true);
     // FIRST: create a couple of records
-    Vertex vertexA = database.addVertex("class:vertexA", "name", "myKey");
-    Vertex vertexB = database.addVertex("class:vertexA", "name", "anotherKey");
+    OVertex vertexA = database.newVertex("vertexA");
+    vertexA.setProperty("name", "myKey");
+    vertexA = database.save(vertexA);
+    OVertex vertexB = database.newVertex("vertexA");
+    vertexB.setProperty("name", "anotherKey");
+    vertexB = database.save(vertexB);
     database.commit();
 
-    database.removeVertex(vertexB);
-    database.removeVertex(vertexA);
-    database.addVertex("class:vertexA", "name", "myKey");
+    database.delete(vertexB);
+    database.delete(vertexA);
+    OVertex vertexC = database.newVertex("vertexA");
+    vertexC.setProperty("name", "myKey");
     database.commit();
   }
 
   public void testNewVertexAndEdgesWithFieldsInOneShoot() throws IOException {
-    OrientVertex vertexA = database.addVertex(null, "field1", "value1", "field2", "value2");
+    OVertex vertexA = database.newVertex();
+    vertexA.setProperty("field1", "value1");
+    vertexA.setProperty("field2", "value2");
+    database.save(vertexA);
 
-    Map<String, Object> map = new HashMap<String, Object>();
-    map.put("field1", "value1");
-    map.put("field2", "value2");
-    OrientVertex vertexB = database.addVertex(null, map);
+    OVertex vertexB = database.newVertex();
+    vertexB.setProperty("field1", "value1");
+    vertexB.setProperty("field2", "value2");
+    database.save(vertexB);
 
-    OrientEdge edgeC = database.addEdge(null, vertexA, vertexB, "E");
+    OEdge edgeC = database.newEdge(vertexA, vertexB, "E");
     edgeC.setProperty("edgeF1", "edgeV2");
+    database.save(edgeC);
 
     database.commit();
 
@@ -204,61 +229,79 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
   @Test
   public void sqlNestedQueries() {
-    Vertex vertex1 = database.addVertex(null, "driver", "John");
-    Vertex vertex2 = database.addVertex(null, "car", "ford");
+    OVertex vertex1 = database.newVertex();
+    vertex1.setProperty("driver", "John");
+    database.save(vertex1);
+    OVertex vertex2 = database.newVertex();
+    vertex2.setProperty("car", "ford");
+    database.save(vertex2);
+    OVertex targetVertex = database.newVertex();
+    targetVertex.setProperty("car", "audi");
+    database.save(targetVertex);
 
-    Vertex targetVertex = database.addVertex(null, "car", "audi");
-
-    Edge edge = database.addEdge(null, vertex1, vertex2, "E");
+    OEdge edge = database.newEdge(vertex1, vertex2, "E");
     edge.setProperty("color", "red");
     edge.setProperty("action", "owns");
+    database.save(edge);
 
-    edge = database.addEdge(null, vertex1, targetVertex, "E");
+    edge = database.newEdge(vertex1, targetVertex, "E");
     edge.setProperty("color", "red");
     edge.setProperty("action", "wants");
+    database.save(edge);
 
     database.commit();
 
     String query1 = "select driver from V where out().car contains 'ford'";
-    OResultSet result = database.getRawGraph().query(query1);
+    OResultSet result = database.query(query1);
     Assert.assertEquals(result.stream().count(), 1);
 
     String query2 = "select driver from V where outE()[color='red'].inV().car contains 'ford'";
-    result = database.getRawGraph().query(query2);
+    result = database.query(query2);
     Assert.assertEquals(result.stream().count(), 1);
 
     // TODO these tests are broken, they should test "contains" instead of "="
     String query3 = "select driver from V where outE()[action='owns'].inV().car = 'ford'";
-    result = database.getRawGraph().query(query3);
+    result = database.query(query3);
     Assert.assertEquals(result.stream().count(), 1);
 
     String query4 =
         "select driver from V where outE()[color='red'][action='owns'].inV().car = 'ford'";
-    result = database.getRawGraph().query(query4);
+    result = database.query(query4);
     Assert.assertEquals(result.stream().count(), 1);
   }
 
-  @SuppressWarnings("unchecked")
   public void nestedQuery() {
-    Vertex countryVertex1 = database.addVertex(null, "name", "UK", "area", "Europe", "code", "2");
-    Vertex cityVertex1 =
-        database.addVertex(null, "name", "leicester", "lat", "52.64640", "long", "-1.13159");
-    Vertex cityVertex2 =
-        database.addVertex(null, "name", "manchester", "lat", "53.47497", "long", "-2.25769");
+    OVertex countryVertex1 = database.newVertex();
+    countryVertex1.setProperty("name", "UK");
+    countryVertex1.setProperty("area", "Europe");
+    countryVertex1.setProperty("code", "2");
+    database.save(countryVertex1);
 
-    database.addEdge(null, countryVertex1, cityVertex1, "owns");
-    database.addEdge(null, countryVertex1, cityVertex2, "owns");
+    OVertex cityVertex1 = database.newVertex();
+    cityVertex1.setProperty("name", "leicester");
+    cityVertex1.setProperty("lat", "52.64640");
+    cityVertex1.setProperty("long", "-1.13159");
+
+    database.save(cityVertex1);
+    OVertex cityVertex2 = database.newVertex();
+    cityVertex2.setProperty("name", "manchester");
+    cityVertex2.setProperty("lat", "53.47497");
+    cityVertex2.setProperty("long", "-2.25769");
+
+    database.save(cityVertex2);
+    database.createEdgeClass("owns");
+    database.save(database.newEdge(countryVertex1, cityVertex1, "owns"));
+    database.save(database.newEdge(countryVertex1, cityVertex2, "owns"));
 
     database.commit();
     String subquery = "select out('owns') as out from V where name = 'UK'";
-    List<OResult> result =
-        database.getRawGraph().query(subquery).stream().collect(Collectors.toList());
+    List<OResult> result = database.query(subquery).stream().collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(((Collection) result.get(0).getProperty("out")).size(), 2);
 
     subquery = "select expand(out('owns')) from V where name = 'UK'";
-    result = database.getRawGraph().query(subquery).stream().collect(Collectors.toList());
+    result = database.query(subquery).stream().collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {
@@ -269,7 +312,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     String query =
         "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select"
             + " expand(out('owns')) from V where name = 'UK') order by distance";
-    result = database.getRawGraph().query(query).stream().collect(Collectors.toList());
+    result = database.query(query).stream().collect(Collectors.toList());
 
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {
@@ -281,7 +324,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
   public void testDeleteOfVerticesWithDeleteCommandMustFail() {
     try {
-      database.sqlCommand("delete from GraphVehicle").close();
+      database.command("delete from GraphVehicle").close();
       Assert.assertTrue(false);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(true);
@@ -290,7 +333,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
   public void testDeleteOfEdgesWithDeleteCommandMustFail() {
     try {
-      database.sqlCommand("delete from E").close();
+      database.command("delete from E").close();
       Assert.assertTrue(false);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(true);
@@ -298,26 +341,25 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
   }
 
   public void testDeleteOfVerticesAndEdgesWithDeleteCommandAndUnsafe() {
-    Iterable<OIdentifiable> deletedVertices =
-        database
-            .command(new OCommandSQL("delete from GraphVehicle return before limit 1 unsafe"))
-            .execute();
-    Assert.assertTrue(deletedVertices.iterator().hasNext());
+    OResultSet deletedVertices =
+        database.command("delete from GraphVehicle return before limit 1 unsafe");
+    Assert.assertTrue(deletedVertices.hasNext());
 
-    OrientVertex v = (OrientVertex) deletedVertices.iterator().next();
+    OVertex v = deletedVertices.next().getVertex().get();
 
-    Integer confirmDeleted =
-        database.command(new OCommandSQL("delete from " + v.getIdentity() + " unsafe")).execute();
-    Assert.assertFalse(deletedVertices.iterator().hasNext());
+    Long confirmDeleted =
+        database.command("delete from " + v.getIdentity() + " unsafe").next().getProperty("count");
+    Assert.assertFalse(deletedVertices.hasNext());
     Assert.assertEquals(confirmDeleted.intValue(), 0);
 
-    Iterable<Edge> edges = v.getEdges(Direction.BOTH);
+    Iterable<OEdge> edges = v.getEdges(ODirection.BOTH);
 
-    for (Edge e : edges) {
-      Integer deletedEdges =
+    for (OEdge e : edges) {
+      Long deletedEdges =
           database
-              .command(new OCommandSQL("delete from " + ((OrientEdge) e).getIdentity() + " unsafe"))
-              .execute();
+              .command("delete from " + e.getIdentity() + " unsafe")
+              .next()
+              .getProperty("count");
       Assert.assertEquals(deletedEdges.intValue(), 1);
     }
   }
@@ -333,32 +375,31 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
   public void testInsertOfEdgeWithInsertCommandUnsafe() {
 
-    OrientEdge insertedEdge =
+    OElement insertedEdge =
         database
-            .command(new OCommandSQL("insert into E set in = #9:0, out = #9:1, a = 33 unsafe"))
-            .execute();
-    Assert.assertNotNull(insertedEdge);
+            .command("insert into E set in = #9:0, out = #9:1, a = 33 unsafe")
+            .next()
+            .getElement()
+            .get();
 
-    Integer confirmDeleted =
+    Long confirmDeleted =
         database
-            .command(new OCommandSQL("delete from " + insertedEdge.getIdentity() + " unsafe"))
-            .execute();
+            .command("delete from " + insertedEdge.getIdentity() + " unsafe")
+            .next()
+            .getProperty("count");
     Assert.assertEquals(confirmDeleted.intValue(), 1);
   }
 
   public void testEmbeddedDoc() {
-    database.executeOutsideTx(
-        new OCallable<Object, OrientBaseGraph>() {
-          @Override
-          public Object call(OrientBaseGraph iArgument) {
-            return iArgument.getRawGraph().getMetadata().getSchema().createClass("NonVertex");
-          }
-        });
-    Vertex vertex = database.addVertex("class:V", "name", "vertexWithEmbedded");
+    database.getMetadata().getSchema().createClass("NonVertex");
+
+    OVertex vertex = database.newVertex("V");
+    vertex.setProperty("name", "vertexWithEmbedded");
+    database.save(vertex);
+
     ODocument doc = new ODocument();
     doc.field("foo", "bar");
-    doc.save(
-        database.getRawGraph().getClusterNameById(database.getRawGraph().getDefaultClusterId()));
+    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     vertex.setProperty("emb1", doc);
 

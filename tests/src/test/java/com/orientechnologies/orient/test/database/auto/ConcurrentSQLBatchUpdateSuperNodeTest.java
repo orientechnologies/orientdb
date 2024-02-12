@@ -37,8 +37,6 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
   private static final int THREADS = 256;
   private static final int MAX_RETRIES = 100;
   private final AtomicLong counter = new AtomicLong();
-  private boolean mvccEnabled;
-  private long startedOn;
   private AtomicLong totalRetries = new AtomicLong();
 
   @Parameters(value = "url")
@@ -147,7 +145,6 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
     //    System.out.println("Started Test OPTIMISTIC Batch Update against SuperNode");
 
     counter.set(0);
-    startedOn = System.currentTimeMillis();
 
     OrientBaseGraph graphPool = new OrientGraph(url);
 
@@ -195,7 +192,6 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
     //    System.out.println("Started Test PESSIMISTIC Batch Update against SuperNode");
 
     counter.set(0);
-    startedOn = System.currentTimeMillis();
 
     OrientBaseGraph graphPool = new OrientGraph(url);
 

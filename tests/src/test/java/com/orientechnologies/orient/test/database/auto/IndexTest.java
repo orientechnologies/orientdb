@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -42,9 +44,7 @@ import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1654,63 +1654,71 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testPreservingIdentityInIndexTx() {
     checkEmbeddedDB();
 
-    OrientGraph graph = new OrientGraph((ODatabaseDocumentInternal) database.getUnderlying(), true);
-    graph.setAutoScaleEdgeType(true);
-
-    OrientVertexType fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
+    ODatabaseSession session = (ODatabaseSession) database.getUnderlying();
+    if (!session.getMetadata().getSchema().existsClass("PreservingIdentityInIndexTxParent")) {
+      session.createVertexClass("PreservingIdentityInIndexTxParent");
+    }
+    if (!session.getMetadata().getSchema().existsClass("PreservingIdentityInIndexTxEdge")) {
+      session.createEdgeClass("PreservingIdentityInIndexTxEdge");
+    }
+    OClass fieldClass = session.getClass("PreservingIdentityInIndexTxChild");
     if (fieldClass == null) {
-      fieldClass = graph.createVertexType("PreservingIdentityInIndexTxChild");
+      fieldClass = session.createVertexClass("PreservingIdentityInIndexTxChild");
       fieldClass.createProperty("name", OType.STRING);
       fieldClass.createProperty("in_field", OType.LINK);
       fieldClass.createIndex("nameParentIndex", OClass.INDEX_TYPE.NOTUNIQUE, "in_field", "name");
     }
 
-    Vertex parent = graph.addVertex("class:PreservingIdentityInIndexTxParent");
-    Vertex child = graph.addVertex("class:PreservingIdentityInIndexTxChild");
-    parent.addEdge("preservingIdentityInIndexTxEdge", child);
+    OVertex parent = session.newVertex("PreservingIdentityInIndexTxParent");
+    session.save(parent);
+    OVertex child = session.newVertex("PreservingIdentityInIndexTxChild");
+    session.save(child);
+    session.save(session.newEdge(parent, child, "PreservingIdentityInIndexTxEdge"));
     child.setProperty("name", "pokus");
+    session.save(child);
 
-    Vertex parent2 = graph.addVertex("class:PreservingIdentityInIndexTxParent");
-    Vertex child2 = graph.addVertex("class:PreservingIdentityInIndexTxChild");
-    parent2.addEdge("preservingIdentityInIndexTxEdge", child2);
+    OVertex parent2 = session.newVertex("PreservingIdentityInIndexTxParent");
+    session.save(parent2);
+    OVertex child2 = session.newVertex("PreservingIdentityInIndexTxChild");
+    session.save(child2);
+    session.save(session.newEdge(parent2, child2, "preservingIdentityInIndexTxEdge"));
     child2.setProperty("name", "pokus2");
-    graph.commit();
+    session.save(child2);
+    session.commit();
 
     {
-      fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
+      fieldClass = session.getClass("PreservingIdentityInIndexTxChild");
       OIndex index = fieldClass.getClassIndex("nameParentIndex");
-      OCompositeKey key = new OCompositeKey(parent.getId(), "pokus");
+      OCompositeKey key = new OCompositeKey(parent.getIdentity(), "pokus");
 
       Collection<ORID> h;
       try (Stream<ORID> stream = index.getInternal().getRids(key)) {
         h = stream.collect(Collectors.toList());
       }
       for (ORID o : h) {
-        Assert.assertNotNull(graph.getVertex(o));
+        Assert.assertNotNull(session.load(o));
       }
     }
 
     {
-      fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
+      fieldClass = session.getClass("PreservingIdentityInIndexTxChild");
       OIndex index = fieldClass.getClassIndex("nameParentIndex");
-      OCompositeKey key = new OCompositeKey(parent2.getId(), "pokus2");
+      OCompositeKey key = new OCompositeKey(parent2.getIdentity(), "pokus2");
 
       Collection<ORID> h;
       try (Stream<ORID> stream = index.getInternal().getRids(key)) {
         h = stream.collect(Collectors.toList());
       }
       for (ORID o : h) {
-        Assert.assertNotNull(graph.getVertex(o));
+        Assert.assertNotNull(session.load(o));
       }
     }
 
-    parent.remove();
-    child.remove();
+    session.delete(parent);
+    session.delete(child);
 
-    parent2.remove();
-    child2.remove();
-
-    graph.shutdown();
+    session.delete(parent2);
+    session.delete(child2);
   }
 
   public void testEmptyNotUniqueIndex() {

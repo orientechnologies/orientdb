@@ -17,10 +17,11 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,12 +34,11 @@ import org.testng.annotations.Test;
 
 // TODO re-enable when the new executor is implemented in remote
 @Test(enabled = false)
-@SuppressWarnings("unused")
 public class TraverseTestNew extends DocumentDBBaseTest {
   private int totalElements = 0;
-  private ODocument tomCruise;
-  private ODocument megRyan;
-  private ODocument nicoleKidman;
+  private OVertex tomCruise;
+  private OVertex megRyan;
+  private OVertex nicoleKidman;
 
   @Parameters(value = "url")
   public TraverseTestNew(@Optional String url) {
@@ -47,48 +47,55 @@ public class TraverseTestNew extends DocumentDBBaseTest {
 
   @BeforeClass
   public void init() {
-    OrientGraph graph = new OrientGraph(database);
-    graph.setUseLightweightEdges(false);
 
-    graph.createVertexType("Movie");
-    graph.createVertexType("Actor");
+    database.createVertexClass("Movie");
+    database.createVertexClass("Actor");
 
-    tomCruise = graph.addVertex("class:Actor", "name", "Tom Cruise").getRecord();
+    tomCruise = database.newVertex("Actor");
+    tomCruise.setProperty("name", "Tom Cruise");
     totalElements++;
-    megRyan = graph.addVertex("class:Actor", "name", "Meg Ryan").getRecord();
+    megRyan = database.newVertex("Actor");
+    megRyan.setProperty("name", "Meg Ryan");
     totalElements++;
-    nicoleKidman =
-        graph
-            .addVertex("class:Actor", "name", "Nicole Kidman", "attributeWithDotValue", "a.b")
-            .getRecord();
-    totalElements++;
-
-    ODocument topGun = graph.addVertex("class:Movie", "name", "Top Gun", "year", 1986).getRecord();
-    totalElements++;
-    ODocument missionImpossible =
-        graph.addVertex("class:Movie", "name", "Mission: Impossible", "year", 1996).getRecord();
-    totalElements++;
-    ODocument youHaveGotMail =
-        graph.addVertex("class:Movie", "name", "You've Got Mail", "year", 1998).getRecord();
+    nicoleKidman = database.newVertex("Actor");
+    nicoleKidman.setProperty("name", "Nicole Kidman");
+    nicoleKidman.setProperty("attributeWithDotValue", "a.b");
+    nicoleKidman = database.save(nicoleKidman);
     totalElements++;
 
-    graph.addEdge(null, graph.getVertex(tomCruise), graph.getVertex(topGun), "actorIn");
+    OVertex topGun = database.newVertex("Movie");
+    topGun.setProperty("name", "Top Gun");
+    topGun.setProperty("year", 1986);
+    topGun = database.save(topGun);
     totalElements++;
-    graph.addEdge(null, graph.getVertex(megRyan), graph.getVertex(topGun), "actorIn");
+    OVertex missionImpossible = database.newVertex("Movie");
+    missionImpossible.setProperty("name", "Mission: Impossible");
+    missionImpossible.setProperty("year", 1996);
+    missionImpossible = database.save(missionImpossible);
     totalElements++;
-    graph.addEdge(null, graph.getVertex(tomCruise), graph.getVertex(missionImpossible), "actorIn");
-    totalElements++;
-    graph.addEdge(null, graph.getVertex(megRyan), graph.getVertex(youHaveGotMail), "actorIn");
+    OVertex youHaveGotMail = database.newVertex("Movie");
+    youHaveGotMail.setProperty("name", "You've Got Mail");
+    youHaveGotMail.setProperty("year", 1998);
+    youHaveGotMail = database.save(youHaveGotMail);
     totalElements++;
 
-    graph.addEdge(null, graph.getVertex(tomCruise), graph.getVertex(megRyan), "friend");
+    database.save(database.newEdge(tomCruise, topGun, "actorIn"));
     totalElements++;
-    graph
-        .addEdge(null, graph.getVertex(tomCruise), graph.getVertex(nicoleKidman), "married")
-        .setProperty("year", 1990);
+    database.save(database.newEdge(megRyan, topGun, "actorIn"));
+    totalElements++;
+    database.save(database.newEdge(tomCruise, missionImpossible, "actorIn"));
+    totalElements++;
+    database.save(database.newEdge(megRyan, youHaveGotMail, "actorIn"));
     totalElements++;
 
-    graph.commit();
+    database.save(database.newEdge(tomCruise, megRyan, "friend"));
+    totalElements++;
+    OEdge e = database.newEdge(tomCruise, nicoleKidman, "married");
+    e.setProperty("year", 1990);
+    database.save(e);
+    totalElements++;
+
+    database.commit();
   }
 
   public void traverseSQLAllFromActorNoWhereBreadthFrirst() {
@@ -363,7 +370,6 @@ public class TraverseTestNew extends DocumentDBBaseTest {
             "select *, $depth as d from ( traverse out_married  from "
                 + tomCruise.getIdentity()
                 + " while $depth < 2)");
-    boolean found = false;
     Integer i = 0;
     while (result1.hasNext()) {
       OResult doc = result1.next();
@@ -384,7 +390,6 @@ public class TraverseTestNew extends DocumentDBBaseTest {
       ODatabaseRecordThreadLocal.instance().set(db);
       OResultSet result1 = db.query(q);
       Assert.assertTrue(result1.hasNext());
-      boolean found = false;
       Integer i = 0;
       OResult doc;
       while (result1.hasNext()) {

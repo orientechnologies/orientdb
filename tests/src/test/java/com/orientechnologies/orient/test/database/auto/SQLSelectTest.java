@@ -35,8 +35,6 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -67,13 +65,6 @@ public class SQLSelectTest extends AbstractSelectTest {
   @Parameters(value = "url")
   public SQLSelectTest(@Optional String url) throws Exception {
     super(url);
-  }
-
-  private static void createAndLink(
-      final OrientGraph graph, String name, Map<String, String> map, ODocument root) {
-    OrientVertex vertex = graph.addVertex("class:vertexB", "name", name, "map", map);
-
-    graph.addEdge(null, graph.getVertex(root), vertex, "E");
   }
 
   @BeforeClass
