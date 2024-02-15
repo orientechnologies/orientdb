@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -64,7 +63,6 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
     }
 
     db.create();
-    db.declareIntent(new OIntentMassiveInsert());
 
     ODocument document = new ODocument();
     ORidBag ridBag = new ORidBag();
@@ -122,7 +120,6 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
 
       ODatabaseDocument db = new ODatabaseDocumentTx(URL);
       db.open("admin", "admin");
-      db.declareIntent(new OIntentMassiveInsert());
 
       try {
         while (cont) {
@@ -176,7 +173,6 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
       Random rnd = new Random();
       ODatabaseDocument db = new ODatabaseDocumentTx(URL);
       db.open("admin", "admin");
-      db.declareIntent(new OIntentMassiveInsert());
 
       try {
         while (cont) {

@@ -70,8 +70,6 @@ import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.iterator.OIdentifiableIterator;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -2893,28 +2891,6 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       out.println();
       out.println(iPropertyName + " = " + iPropertyValue);
     }
-  }
-
-  @ConsoleCommand(description = "Declare an intent", onlineHelp = "")
-  public void declareIntent(
-      @ConsoleParameter(name = "Intent name", description = "name of the intent to execute")
-          final String iIntentName) {
-    checkForDatabase();
-
-    message("\nDeclaring intent '" + iIntentName + "'...");
-
-    if (iIntentName.equalsIgnoreCase("massiveinsert"))
-      currentDatabase.declareIntent(new OIntentMassiveInsert());
-    else if (iIntentName.equalsIgnoreCase("massiveread"))
-      currentDatabase.declareIntent(new OIntentMassiveRead());
-    else if (iIntentName.equalsIgnoreCase("null")) currentDatabase.declareIntent(null);
-    else
-      throw new IllegalArgumentException(
-          "Intent '"
-              + iIntentName
-              + "' not supported. Available ones are: massiveinsert, massiveread, null");
-
-    message("\nIntent '" + iIntentName + "' set successfully");
   }
 
   @ConsoleCommand(description = "Execute a command against the profiler")

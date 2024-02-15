@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.database;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -52,8 +51,6 @@ public class TestOrientBulkInsert {
     cBulk.createIndex("indexField1", INDEX_TYPE.NOTUNIQUE, "fieldString1");
     cBulk.createIndex("indexField2", INDEX_TYPE.UNIQUE, "fieldString2");
     cBulk.createIndex("indexField3", INDEX_TYPE.DICTIONARY, "fieldString3");
-
-    database.declareIntent(new OIntentMassiveInsert());
 
     for (int i = 0; i < NUM_INSERTLOOPS; i++) {
       database.save(createRandomDocument());

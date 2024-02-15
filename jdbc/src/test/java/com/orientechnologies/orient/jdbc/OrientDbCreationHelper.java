@@ -17,7 +17,6 @@ package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -42,16 +41,12 @@ public class OrientDbCreationHelper {
 
   public static void loadDB(ODatabaseDocument db, int documents) throws IOException {
 
-    db.declareIntent(new OIntentMassiveInsert());
-
     for (int i = 1; i <= documents; i++) {
       ODocument doc = new ODocument();
       doc.setClassName("Item");
       doc = createItem(i, doc);
       db.save(doc, "Item");
     }
-
-    db.declareIntent(null);
 
     createAuthorAndArticles(db, 50, 50);
     createArticleWithAttachmentSplitted(db);
@@ -211,7 +206,6 @@ public class OrientDbCreationHelper {
     BufferedInputStream binaryStream = new BufferedInputStream(new FileInputStream(binaryFile));
     byte[] chunk;
 
-    database.declareIntent(new OIntentMassiveInsert());
     OBlob recordChunk;
     for (int i = 0; i < numberOfRecords; i++) {
       if (i == numberOfRecords - 1) chunk = new byte[remainder];
@@ -221,7 +215,6 @@ public class OrientDbCreationHelper {
       database.save(recordChunk);
       binaryChuncks.add(recordChunk.getIdentity());
     }
-    database.declareIntent(null);
 
     return binaryChuncks;
   }

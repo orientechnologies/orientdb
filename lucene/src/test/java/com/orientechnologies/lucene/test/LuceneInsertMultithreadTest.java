@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -122,7 +121,6 @@ public class LuceneInsertMultithreadTest {
     public void run() {
 
       try (ODatabaseSession db = orientDB.open(dbName, "admin", "admin")) {
-        db.declareIntent(new OIntentMassiveInsert());
         db.begin();
         for (int i = 0; i < cycle; i++) {
           ODocument doc = new ODocument("City");

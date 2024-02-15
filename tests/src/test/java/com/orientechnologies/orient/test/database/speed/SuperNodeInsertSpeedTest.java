@@ -3,7 +3,6 @@ package com.orientechnologies.orient.test.database.speed;
 import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
@@ -51,8 +50,6 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
       OrientGraphFactory factory = new OrientGraphFactory(URL);
       graph = factory.getNoTx();
       factory.close();
-
-      graph.getRawGraph().declareIntent(new OIntentMassiveInsert());
 
       superNode = graph.getVertex(superNodeRID);
     }

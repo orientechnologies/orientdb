@@ -7,7 +7,6 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
@@ -21,7 +20,12 @@ import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /** Created by tglman on 04/05/16. */
 public class DirtyTrackingTreeRidBagRemoteTest {
@@ -87,7 +91,6 @@ public class DirtyTrackingTreeRidBagRemoteTest {
             "root");
 
     try {
-      graph.getRawGraph().declareIntent(new OIntentMassiveInsert());
       graph.createEdgeType("Edge");
       OIdentifiable oneVertex = null;
       final Map<Object, Vertex> vertices = new HashMap<Object, Vertex>();

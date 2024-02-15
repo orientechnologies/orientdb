@@ -3,7 +3,6 @@ package com.orientechnologies.orient.test.database.speed;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import org.testng.annotations.Test;
@@ -18,7 +17,6 @@ public class FullTextIndexerTest {
     final ODatabaseDocument database =
         new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
 
-    database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
 
     long time = System.currentTimeMillis();

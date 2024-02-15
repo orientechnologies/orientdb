@@ -19,7 +19,6 @@ import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -48,7 +47,6 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
     public void init() {
       database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
       record = database.newInstance();
-      database.declareIntent(new OIntentMassiveInsert());
       database.begin(TXTYPE.NOTX);
     }
 

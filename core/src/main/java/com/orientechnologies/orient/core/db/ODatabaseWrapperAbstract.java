@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -281,15 +280,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T>
   public int getDefaultClusterId() {
     checkOpenness();
     return underlying.getDefaultClusterId();
-  }
-
-  public boolean declareIntent(final OIntent iIntent) {
-    return underlying.declareIntent(iIntent);
-  }
-
-  @Override
-  public OIntent getActiveIntent() {
-    return underlying.getActiveIntent();
   }
 
   public <DBTYPE extends ODatabase> DBTYPE getUnderlying() {

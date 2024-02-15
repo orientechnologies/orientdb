@@ -21,7 +21,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.intent.OIntent;
 import java.util.Map;
 import org.apache.commons.configuration.Configuration;
 
@@ -509,8 +508,6 @@ public abstract class OrientConfigurableGraph {
   }
 
   protected OrientConfigurableGraph() {}
-
-  public abstract void declareIntent(OIntent iIntent);
 
   /** Returns true if is using lightweight edges, otherwise false. */
   public boolean isUseLightweightEdges() {

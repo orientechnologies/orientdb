@@ -7,7 +7,6 @@ import static org.junit.Assert.assertSame;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -118,7 +117,6 @@ public class OrientGraphFactoryTest {
   public void textReqTx() {
     final OrientGraphFactory gfactory = new OrientGraphFactory("memory:testPool");
     gfactory.setRequireTransaction(false);
-    gfactory.declareIntent(new OIntentMassiveInsert());
 
     OrientGraph g = gfactory.getTx();
     OrientVertex v1 = g.addVertex(null);

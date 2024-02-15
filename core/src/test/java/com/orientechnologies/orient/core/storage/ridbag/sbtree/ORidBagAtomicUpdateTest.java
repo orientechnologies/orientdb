@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,11 +23,6 @@ import org.junit.Test;
 public class ORidBagAtomicUpdateTest extends BaseMemoryDatabase {
   private int topThreshold;
   private int bottomThreshold;
-
-  @Before
-  public void setUp() throws Exception {
-    db.declareIntent(new OIntentMassiveInsert());
-  }
 
   @Before
   public void beforeMethod() {

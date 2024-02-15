@@ -52,7 +52,6 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
-import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -746,18 +745,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
           "Cannot retrieve a vertex with the RID " + rid + " because it is an edge");
 
     return getVertexInstance(rec);
-  }
-
-  @Override
-  public void declareIntent(final OIntent iIntent) {
-    makeActive();
-
-    getRawGraph().declareIntent(iIntent);
-  }
-
-  public OIntent getActiveIntent() {
-    makeActive();
-    return getRawGraph().getActiveIntent();
   }
 
   /**

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.graph;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
@@ -21,7 +20,6 @@ public class GraphIntentMassiveInsertTest {
   public void testIntent() {
     final OrientGraph graph = new OrientGraph("memory:default", false);
     graph.setUseLightweightEdges(true);
-    graph.getRawGraph().declareIntent(new OIntentMassiveInsert());
     final OrientVertexType c1 = graph.createVertexType("C1");
     c1.createProperty("p1", OType.INTEGER);
     graph.createEdgeType("parent");

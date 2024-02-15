@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
@@ -48,8 +47,6 @@ public class PLocalCreateVerticesMultiThreadSpeedTest extends OrientMultiThreadT
       OrientGraphFactory factory = new OrientGraphFactory(URL);
       graph = factory.getNoTx();
       factory.close();
-
-      graph.getRawGraph().declareIntent(new OIntentMassiveInsert());
     }
 
     public void cycle() {

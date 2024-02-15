@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -302,10 +301,6 @@ public class OScriptDocumentDatabaseWrapper {
 
   public <RET extends ORecord> RET load(ORecord iRecord) {
     return (RET) database.load(iRecord);
-  }
-
-  public boolean declareIntent(OIntent iIntent) {
-    return database.declareIntent(iIntent);
   }
 
   public <RET extends ORecord> RET load(ORecord iRecord, String iFetchPlan) {

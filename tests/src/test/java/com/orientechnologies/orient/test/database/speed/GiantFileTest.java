@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -161,7 +160,6 @@ public class GiantFileTest {
     // TODO: is this assumption ok?
     // Get the currently open database for this thread and set intent.
     final ODatabase database = ODatabaseRecordThreadLocal.instance().get();
-    database.declareIntent(new OIntentMassiveInsert());
 
     // Insert File data.
     final long fileSize = file.length();
@@ -271,7 +269,6 @@ public class GiantFileTest {
       System.out.printf(
           "Saved list of %d chunk RIDs in %d ms.\n", chunkRids.size(), saveChunkListMs);
     } finally {
-      database.declareIntent(null);
       in.close();
     }
   }

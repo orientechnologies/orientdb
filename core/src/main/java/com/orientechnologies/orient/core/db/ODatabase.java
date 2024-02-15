@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -167,22 +166,6 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return OContextConfiguration
    */
   OContextConfiguration getConfiguration();
-
-  /**
-   * Declares an intent to the database. Intents aim to optimize common use cases.
-   *
-   * @param iIntent The intent
-   */
-  @Deprecated
-  boolean declareIntent(final OIntent iIntent);
-
-  /**
-   * Get the active intent in the current session.
-   *
-   * @return
-   */
-  @Deprecated
-  OIntent getActiveIntent();
 
   /**
    * Checks if the database exists.

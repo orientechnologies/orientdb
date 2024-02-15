@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
@@ -50,7 +49,6 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
     database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
     record = database.newInstance();
 
-    database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
 
     beginRecords = database.countClass("Account");

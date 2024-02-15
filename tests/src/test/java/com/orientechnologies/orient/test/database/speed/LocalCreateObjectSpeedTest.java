@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
@@ -45,7 +44,6 @@ public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
 
     database = new OObjectDatabaseTx(System.getProperty("url")).open("admin", "admin");
     database.getEntityManager().registerEntityClass(Account.class);
-    database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
   }
 

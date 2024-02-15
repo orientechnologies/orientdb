@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.graph.sql;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -39,12 +38,6 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
     graph.setUseLightweightEdges(true);
 
     graph.setAutoStartTx(false);
-    graph.declareIntent(
-        new OIntentMassiveInsert()
-            .setDisableSecurity(true)
-            .setDisableHooks(true)
-            .setDisableValidation(true)
-            .setEnableCache(false));
 
     // graph.begin();
 

@@ -20,7 +20,6 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -93,7 +92,6 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
 
       db = openDatabase();
 
-      db.declareIntent(new OIntentMassiveInsert());
       db.begin();
       for (int i = 0; i < cycle; i++) {
         ODocument doc = new ODocument("City");

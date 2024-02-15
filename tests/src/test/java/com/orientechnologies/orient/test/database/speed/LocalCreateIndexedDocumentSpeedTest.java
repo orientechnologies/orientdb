@@ -18,7 +18,6 @@ package com.orientechnologies.orient.test.database.speed;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -52,7 +51,6 @@ public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadTest {
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
     System.out.println("Ok");
 
-    database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
   }
 

@@ -18,7 +18,6 @@ package com.orientechnologies.orient.test.database.speed;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
@@ -48,7 +47,6 @@ public class LocalCreateBinarySpeedTest extends OrientMonoThreadTest {
     database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
     record = new ORecordBytes();
 
-    database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
     Random rnd = new Random();
     recordContent = new byte[RECORD_SIZE];

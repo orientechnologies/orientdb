@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.intent.OIntent;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -40,7 +39,6 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   private final String user;
   private final String password;
   private final Map<String, Object> properties = new HashMap<String, Object>();
-  private OIntent intent;
   private AtomicBoolean used = new AtomicBoolean(false);
   private volatile OPartitionedDatabasePool pool;
 
@@ -371,11 +369,6 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     if (pool != null) return pool.getCreatedInstances();
 
     return 0;
-  }
-
-  @Override
-  public void declareIntent(final OIntent iIntent) {
-    intent = iIntent;
   }
 
   protected void initGraph(final OrientBaseGraph g) {

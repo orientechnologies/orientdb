@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -112,8 +111,6 @@ public class LocalPaginatedStorageRestoreFromWAL {
   @Ignore
   public void testSimpleRestore() throws Exception {
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
-
-    baseDocumentTx.declareIntent(new OIntentMassiveInsert());
 
     for (int i = 0; i < 8; i++) futures.add(executorService.submit(new DataPropagationTask()));
 

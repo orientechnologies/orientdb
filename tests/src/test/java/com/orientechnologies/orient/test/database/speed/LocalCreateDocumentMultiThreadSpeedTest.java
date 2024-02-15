@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -50,7 +49,6 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
       database.setSerializer(new ORecordSerializerBinary());
 
       record = database.newInstance();
-      database.declareIntent(new OIntentMassiveInsert());
       database.begin(TXTYPE.NOTX);
     }
 

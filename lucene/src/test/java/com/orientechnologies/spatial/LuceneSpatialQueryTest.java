@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -59,7 +58,6 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
       ZipFile zipFile =
           new ZipFile(new File(ClassLoader.getSystemResource("location.csv.zip").getPath()));
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
-      db.declareIntent(new OIntentMassiveInsert());
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
 
@@ -121,7 +119,6 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
           stream.close();
           db.commit();
         }
-        db.declareIntent(null);
       }
 
     } catch (Exception e) {

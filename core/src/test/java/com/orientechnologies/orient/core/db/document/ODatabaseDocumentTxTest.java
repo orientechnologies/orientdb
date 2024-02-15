@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.db.document;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryDatabase;
@@ -10,7 +9,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -212,13 +210,6 @@ public class ODatabaseDocumentTxTest extends BaseMemoryDatabase {
     List<OClass> superclasses = clazz.getSuperClasses();
     Assert.assertEquals(1, superclasses.size());
     Assert.assertEquals("E", superclasses.get(0).getName());
-  }
-
-  @Test
-  public void testReturnDeclaredIntent() {
-    db.declareIntent(new OIntentMassiveInsert());
-    assertNotNull(db.getActiveIntent());
-    assertTrue(db.getActiveIntent() instanceof OIntentMassiveInsert);
   }
 
   @Test

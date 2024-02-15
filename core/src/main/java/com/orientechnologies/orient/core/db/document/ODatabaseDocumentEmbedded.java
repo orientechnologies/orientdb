@@ -1978,11 +1978,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
       callOnCloseListeners();
 
-      if (currentIntent != null) {
-        currentIntent.end(this);
-        currentIntent = null;
-      }
-
       status = STATUS.CLOSED;
       if (!recycle) {
         sharedContext = null;

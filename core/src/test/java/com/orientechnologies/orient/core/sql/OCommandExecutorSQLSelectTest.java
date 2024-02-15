@@ -31,7 +31,6 @@ import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -298,7 +297,6 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   private static void initMassiveOrderSkipLimit(ODatabaseDocument db) {
     db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit", 1, null);
-    db.declareIntent(new OIntentMassiveInsert());
     String fieldValue =
         "laskdf lkajsd flaksjdf laksjd flakjsd flkasjd flkajsd flkajsd flkajsd flkajsd flkajsd"
             + " flkjas;lkj a;ldskjf laksdj asdklasdjf lskdaj fladsd";
@@ -314,7 +312,6 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
       doc.save();
     }
-    db.declareIntent(null);
   }
 
   private static void initExpandSkipLimit(ODatabaseDocument db) {

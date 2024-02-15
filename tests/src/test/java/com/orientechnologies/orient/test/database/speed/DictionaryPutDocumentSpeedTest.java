@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 import org.testng.annotations.Test;
@@ -53,7 +52,6 @@ public class DictionaryPutDocumentSpeedTest extends OrientMonoThreadTest {
     System.out.println("Total element in the dictionary at the beginning: " + startNum);
 
     record = new ODocument();
-    database.declareIntent(new OIntentMassiveInsert());
   }
 
   @Override

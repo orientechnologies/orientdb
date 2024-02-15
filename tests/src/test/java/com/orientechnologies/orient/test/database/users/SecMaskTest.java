@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.database.users;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -28,7 +27,6 @@ public class SecMaskTest {
   }
 
   public static void insert() {
-    database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
     long ndoc = 1000000;
     ODocument doc = new ODocument();

@@ -312,7 +312,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   }
 
   public void close() {
-    database.declareIntent(null);
 
     if (writer == null) return;
 

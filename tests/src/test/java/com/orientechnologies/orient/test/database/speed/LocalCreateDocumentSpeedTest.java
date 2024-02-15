@@ -18,7 +18,6 @@ package com.orientechnologies.orient.test.database.speed;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
@@ -60,7 +59,6 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
 
     record = database.newInstance();
 
-    database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
   }
 

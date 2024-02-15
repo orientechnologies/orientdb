@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.IndexableGraph;
@@ -264,9 +263,6 @@ public interface OrientExtendedGraph
    * @return Long as number of total edges
    */
   long countEdges(String iClassName);
-
-  /** Declare an intent. */
-  void declareIntent(OIntent iIntent);
 
   ORecordConflictStrategy getConflictStrategy();
 

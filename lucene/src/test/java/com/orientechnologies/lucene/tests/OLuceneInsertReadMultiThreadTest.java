@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -98,7 +97,6 @@ public class OLuceneInsertReadMultiThreadTest extends OLuceneBaseTest {
 
       final ODatabaseDocument db = pool.acquire();
       db.activateOnCurrentThread();
-      db.declareIntent(new OIntentMassiveInsert());
       db.begin();
       int i = 0;
       for (; i < cycle; i++) {
