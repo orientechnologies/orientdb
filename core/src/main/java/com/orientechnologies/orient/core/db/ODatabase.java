@@ -423,6 +423,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @param iListener the listener to register
    */
+  @Deprecated
   void registerListener(ODatabaseListener iListener);
 
   /**
@@ -430,6 +431,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @param iListener the listener to unregister
    */
+  @Deprecated
   void unregisterListener(ODatabaseListener iListener);
 
   @Deprecated

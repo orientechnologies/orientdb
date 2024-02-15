@@ -59,8 +59,9 @@ public class OrientDBConfigBuilder {
     return this;
   }
 
-  public void addListener(ODatabaseListener listener) {
+  public OrientDBConfigBuilder addListener(ODatabaseListener listener) {
     listeners.add(listener);
+    return this;
   }
 
   public OrientDBConfigBuilder addConfig(
@@ -74,8 +75,9 @@ public class OrientDBConfigBuilder {
     return this;
   }
 
-  public void setClassLoader(ClassLoader classLoader) {
+  public OrientDBConfigBuilder setClassLoader(ClassLoader classLoader) {
     this.classLoader = classLoader;
+    return this;
   }
 
   public ONodeConfigurationBuilder getNodeConfigurationBuilder() {
