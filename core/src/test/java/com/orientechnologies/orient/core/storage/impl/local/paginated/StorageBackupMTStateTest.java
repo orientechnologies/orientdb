@@ -169,13 +169,13 @@ public class StorageBackupMTStateTest {
     backupStorage.shutdown();
 
     System.out.println("Compare databases");
+    databaseDocumentTx.open("admin", "admin");
+    backedUpDb.open("admin", "admin");
 
     final ODatabaseCompare compare =
         new ODatabaseCompare(
-            "plocal:" + dbDirectory,
-            "plocal:" + backedUpDbDirectory,
-            "admin",
-            "admin",
+            databaseDocumentTx,
+            backedUpDb,
             new OCommandOutputListener() {
               @Override
               public void onMessage(String iText) {

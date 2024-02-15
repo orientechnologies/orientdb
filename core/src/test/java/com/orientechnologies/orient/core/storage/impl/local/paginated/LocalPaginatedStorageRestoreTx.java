@@ -128,10 +128,8 @@ public class LocalPaginatedStorageRestoreTx {
 
     ODatabaseCompare databaseCompare =
         new ODatabaseCompare(
-            testDocumentTx.getURL(),
-            baseDocumentTx.getURL(),
-            "admin",
-            "admin",
+            testDocumentTx,
+            baseDocumentTx,
             new OCommandOutputListener() {
               @Override
               public void onMessage(String text) {

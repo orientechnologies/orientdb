@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -69,25 +68,21 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private int clusterDifference = 0;
 
   public ODatabaseCompare(
-      String iDb1URL,
-      String iDb2URL,
-      final String userName,
-      final String userPassword,
+      ODatabaseDocumentInternal databaseOne,
+      ODatabaseDocumentInternal databaseTwo,
       final OCommandOutputListener iListener) {
     super(null, null, iListener);
 
     listener.onMessage(
-        "\nComparing two local databases:\n1) " + iDb1URL + "\n2) " + iDb2URL + "\n");
+        "\nComparing two local databases:\n1) "
+            + databaseOne.getURL()
+            + "\n2) "
+            + databaseTwo.getURL()
+            + "\n");
 
-    //noinspection deprecation
-    databaseOne = new ODatabaseDocumentTx(iDb1URL);
-    //noinspection deprecation
-    databaseOne.open(userName, userPassword);
+    this.databaseOne = databaseOne;
 
-    //noinspection deprecation
-    databaseTwo = new ODatabaseDocumentTx(iDb2URL);
-    //noinspection deprecation
-    databaseTwo.open(userName, userPassword);
+    this.databaseTwo = databaseTwo;
 
     // exclude automatically generated clusters
     excludeClusters.add("orids");

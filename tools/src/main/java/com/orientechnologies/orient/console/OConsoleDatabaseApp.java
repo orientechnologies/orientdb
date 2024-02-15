@@ -2512,17 +2512,47 @@ public class OConsoleDatabaseApp extends OConsoleApplication
               optional = true)
           String autoDiscoveringMappingData)
       throws IOException {
-    try {
-      final ODatabaseCompare compare =
-          new ODatabaseCompare(iDb1URL, iDb2URL, iUserName, iUserPassword, this);
-
-      compare.setAutoDetectExportImportMap(
-          autoDiscoveringMappingData != null ? Boolean.valueOf(autoDiscoveringMappingData) : true);
-      compare.setCompareIndexMetadata(true);
-      compare.compare();
-    } catch (ODatabaseExportException e) {
-      printError(e);
+    OURLConnection firstUrl = OURLHelper.parseNew(iDb1URL);
+    OURLConnection secondUrl = OURLHelper.parseNew(iDb2URL);
+    OrientDB firstContext =
+        new OrientDB(
+            firstUrl.getType() + ":" + firstUrl.getPath(),
+            iUserName,
+            iUserPassword,
+            OrientDBConfig.defaultConfig());
+    OrientDB secondContext;
+    if (!firstUrl.getType().equals(secondUrl.getType())
+        || !firstUrl.getPath().equals(secondUrl.getPath())) {
+      secondContext =
+          new OrientDB(
+              secondUrl.getType() + ":" + secondUrl.getPath(),
+              iUserName,
+              iUserPassword,
+              OrientDBConfig.defaultConfig());
+    } else {
+      secondContext = firstContext;
     }
+    try (ODatabaseDocumentInternal firstDB =
+        (ODatabaseDocumentInternal)
+            firstContext.open(firstUrl.getDbName(), iUserName, iUserPassword)) {
+
+      try (ODatabaseDocumentInternal secondDB =
+          (ODatabaseDocumentInternal)
+              secondContext.open(secondUrl.getDbName(), iUserName, iUserPassword)) {
+        final ODatabaseCompare compare = new ODatabaseCompare(firstDB, secondDB, this);
+
+        compare.setAutoDetectExportImportMap(
+            autoDiscoveringMappingData != null
+                ? Boolean.valueOf(autoDiscoveringMappingData)
+                : true);
+        compare.setCompareIndexMetadata(true);
+        compare.compare();
+      } catch (ODatabaseExportException e) {
+        printError(e);
+      }
+    }
+    firstContext.close();
+    secondContext.close();
   }
 
   @ConsoleCommand(

@@ -107,15 +107,13 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
       // EXECUTES ONLY IF NOT REMOTE ON CI/RELEASE TEST ENV
     }
 
-    String urlPrefix = getStorageType() + ":";
+    ODatabaseDocumentInternal first = new ODatabaseDocumentTx(url);
+    first.open("admin", "admin");
+    ODatabaseDocumentInternal second =
+        new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
+    second.open("admin", "admin");
 
-    final ODatabaseCompare databaseCompare =
-        new ODatabaseCompare(
-            url,
-            urlPrefix + testPath + "/" + DbImportExportRidbagTest.NEW_DB_URL,
-            "admin",
-            "admin",
-            this);
+    final ODatabaseCompare databaseCompare = new ODatabaseCompare(first, second, this);
     databaseCompare.setCompareEntriesForAutomaticIndexes(true);
     databaseCompare.setCompareIndexMetadata(true);
     Assert.assertTrue(databaseCompare.compare());
