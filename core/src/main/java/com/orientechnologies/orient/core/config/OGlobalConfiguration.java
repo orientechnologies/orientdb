@@ -1220,7 +1220,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "class.minimumClusters",
       "Minimum clusters to create when a new class is created. 0 means Automatic",
       Integer.class,
-      0),
+      8),
 
   // LOG
   LOG_SUPPORTS_ANSI(

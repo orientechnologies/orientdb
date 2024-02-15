@@ -1963,9 +1963,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private void autoInitClusters() {
     if (getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS)
         == 0) {
-      final int cpus = Runtime.getRuntime().availableProcessors();
-      getContextConfiguration()
-          .setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, Math.min(cpus, 64));
+      getContextConfiguration().setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 8);
     }
   }
 
