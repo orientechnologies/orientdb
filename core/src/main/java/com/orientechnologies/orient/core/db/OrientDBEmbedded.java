@@ -866,6 +866,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
           it.hasNext(); ) {
         it.next().onDrop(db);
       }
+      db.callOnDropListeners();
       db.close();
     } finally {
       ODatabaseRecordThreadLocal.instance().set(current);
