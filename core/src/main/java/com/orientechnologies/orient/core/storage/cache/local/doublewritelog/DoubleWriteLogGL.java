@@ -30,7 +30,9 @@ import net.jpountz.xxhash.XXHashFactory;
 
 public class DoubleWriteLogGL implements DoubleWriteLog {
 
-  /** Stands for "double write log" */
+  /**
+   * Stands for "double write log"
+   */
   public static final String EXTENSION = ".dwl";
 
   private static final ODirectMemoryAllocator ALLOCATOR = ODirectMemoryAllocator.instance();
@@ -233,6 +235,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
         final long filePosition = currentFile.position();
         long bytesWritten = OIOUtils.writeByteBuffer(containerBuffer, currentFile, filePosition);
+        currentFile.force(true);
+
         bytesWritten = ((bytesWritten + blockSize - 1) / blockSize) * blockSize;
         currentFile.position(bytesWritten + filePosition);
 
