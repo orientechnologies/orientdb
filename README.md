@@ -5,13 +5,11 @@
 
 ------
 
-<!---<img src="http://orientdb.com/orientdb-studio_800px.png">-->
-
 ## What is OrientDB?
 
 **OrientDB** is an Open Source Multi-Model [NoSQL](http://en.wikipedia.org/wiki/NoSQL) DBMS with the support of Native Graphs, Documents, Full-Text search, Reactivity, Geo-Spatial and Object Oriented concepts. It's written in Java and it's amazingly fast. No expensive run-time JOINs, connections are managed as persistent pointers between records. You can traverse thousands of records in no time. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user, roles and predicate security and supports [SQL](https://orientdb.org/docs/3.1.x/sql/) amongst the query languages. Thanks to the [SQL](https://orientdb.org/docs/3.1.x/sql/) layer it's straightforward to use for people skilled in the Relational world.
 
-[Get started with OrientDB](http://orientdb.org/docs/3.1.x/gettingstarted/) | [OrientDB Community Group](https://github.com/orientechnologies/orientdb/discussions).
+[Get started with OrientDB](http://orientdb.org/docs/3.2.x/gettingstarted/) | [OrientDB Community Group](https://github.com/orientechnologies/orientdb/discussions).
 
 ## Is OrientDB a Relational DBMS?
 
@@ -27,11 +25,10 @@ Yes. OrientDB is totally written in [Java](http://en.wikipedia.org/wiki/Java_%28
 
 
 ## Main References
-- [Documentation Version < 3.1.x](http://orientdb.org/docs/3.1.x/)
-- [Documentation Version > 3.2.x](https://orientdb.com/docs/3.2.x/)
+- [Documentation Version < 3.2.x](http://orientdb.org/docs/3.1.x/)
 - For any questions visit the [OrientDB Community Group](https://github.com/orientechnologies/orientdb/discussions)
 
-[Get started with OrientDB](http://orientdb.org/docs/3.1.x/gettingstarted/).
+[Get started with OrientDB](http://orientdb.org/docs/3.2.x/gettingstarted/).
 
 --------
 ## Contributing
@@ -62,11 +59,6 @@ References:
   http://www.eclipse.org/org/documents/edl-v10.php (http://www.eclipse.org/org/documents/edl-v10.php)
   
 ### Sponsors
-
-|[![](https://www.yourkit.com/images/yklogo.png)](https://www.yourkit.com/.net/profiler/index.jsp)|YourKit supports open source projects with its full-featured Java Profiler. YourKit, LLC is the creator of <a href="https://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and <a href="https://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>, innovative and intelligent tools for profiling Java and .NET applications.|
-|---|---|
-
---------
 
 [![](http://s1.softpedia-static.com/_img/sp100free.png?1)](http://www.softpedia.com/get/Internet/Servers/Database-Utils/OrientDB.shtml#status)
 

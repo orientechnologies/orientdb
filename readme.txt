@@ -1,30 +1,3 @@
-           .                                          
-          .`        `                                 
-          ,      `:.                                  
-         `,`    ,:`                                   
-         .,.   :,,                                    
-         .,,  ,,,                                     
-    .    .,.:::::  ````                                 :::::::::     :::::::::
-    ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::
-    `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::
-     ,,:,:,,,,,,,,::.   `        `         ``     .:    :::      :::  :::     :::
-      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::   :::      :::  :::    :::
-       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::
-        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::
-  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     :::
-  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     :::
-    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::
-      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::
-           ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::
-           ,,:` `,,.                                  
-          ,,,    .,`                                           MULTI  MODEL
-         ,,.     `,                                       GRAPH DOCUMENT DATABASE
-       ``        `.                                         
-                 ``                                         
-                 `                                           www.orientdb.org
-
-*********************************************************************************
-
  QUICK START
 ---------------
 1) Start the server by executing “server.sh” (or “server.bat” if you’re using
@@ -42,11 +15,8 @@
 ---------------
 
 Before to download, compile and install the last version of OrientDB please
-assure to have Java installed. OrientDB needs Oracle Java JDK version 8 or major
-to run the Server. JDK different by Oracle, like OpenJDK, could not work on some
-configuration. We noticed also Oracle JDK is generally faster than OpenJDK.
-
-To download Java go to: http://www.java.com/en/download/
+assure to have Java installed. OrientDB needs Java JDK version 17 or major
+to run the Server. 
 
 Note: Please assure to download the JDK and not JRE.
 
@@ -61,5 +31,3 @@ so it's always FREE for any purpose. If you're interested to Enterprise tools,
 professional support, training or consultancy contact: info@orientdb.com.
 
 Enjoy the Graphs,
-OrientDB
-(www.orientdb.com)
