@@ -192,8 +192,6 @@ public final class AsyncFile implements OFile {
               new OStorageException("Error during write operation to the file " + osFile), e);
         }
       } while (written < buffer.limit());
-
-      dirtyCounter.incrementAndGet();
       assert written == buffer.limit();
     } finally {
       lock.sharedUnlock();
@@ -202,6 +200,8 @@ public final class AsyncFile implements OFile {
 
   @Override
   public IOResult write(List<ORawPair<Long, ByteBuffer>> buffers) {
+    dirtyCounter.incrementAndGet();
+
     final CountDownLatch latch = new CountDownLatch(buffers.size());
     final AsyncIOResult asyncIOResult = new AsyncIOResult(latch);
 
@@ -295,7 +295,7 @@ public final class AsyncFile implements OFile {
       long dirtyCounterValue = dirtyCounter.get();
       if (dirtyCounterValue > 0) {
         try {
-          fileChannel.force(false);
+          fileChannel.force(true);
         } catch (final IOException e) {
           OLogManager.instance()
               .warn(

@@ -889,10 +889,7 @@ public final class OWOWCache extends OAbstractWriteCache
         }
 
         writeAheadLog.flush();
-
         writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
-
-        doubleWriteLog.truncate();
       } finally {
         doubleWriteLog.endCheckpoint();
       }
