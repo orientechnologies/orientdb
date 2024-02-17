@@ -4,7 +4,6 @@ import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.ORawPair;
@@ -61,7 +60,6 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   private FileChannel currentFile;
   private long currentSegment;
 
-  private long currentLogSize;
   private final long maxSegSize;
 
   private int blockSize;
@@ -119,7 +117,6 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
       Path path = createLogFilePath();
       this.currentFile = createLogFile(path);
-      this.currentLogSize = calculateLogSize();
 
       blockSize = OIOUtils.calculateBlockSize(path.toAbsolutePath().toString());
       if (blockSize == -1) {
@@ -150,7 +147,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.SYNC);
   }
 
-  private Path createLogFilePath() throws IOException {
+  private Path createLogFilePath() {
     return storagePath.resolve(generateSegmentsName(currentSegment));
   }
 
@@ -238,13 +235,12 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         bytesWritten = ((bytesWritten + blockSize - 1) / blockSize) * blockSize;
         currentFile.position(bytesWritten + filePosition);
 
-        this.currentLogSize += bytesWritten;
       } finally {
         ALLOCATOR.deallocate(pageContainer);
       }
 
       // we can not truncate log in restore mode because we remove all restore information
-      return !restoreMode && !tailSegments.isEmpty();
+      return !restoreMode && !tailSegments.isEmpty() && checkpointCounter == 0;
     }
   }
 
@@ -266,7 +262,6 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         return;
       }
 
-      //noinspection resource
       tailSegments.stream()
           .map(this::generateSegmentsName)
           .forEach(
@@ -285,27 +280,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
                 }
               });
 
-      this.currentLogSize = calculateLogSize();
       tailSegments.clear();
-    }
-  }
-
-  private long calculateLogSize() throws IOException {
-    try (final Stream<Path> stream = Files.list(storagePath)) {
-      return stream
-          .filter(DoubleWriteLogGL::fileFilter)
-          .mapToLong(
-              path -> {
-                try {
-                  return Files.size(path);
-                } catch (IOException e) {
-                  throw OException.wrapException(
-                      new OStorageException(
-                          "Can not calculate size of file " + path.toAbsolutePath()),
-                      e);
-                }
-              })
-          .sum();
     }
   }
 
@@ -403,7 +378,6 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       // sort to fetch the
       final Path[] segments;
       try (final Stream<Path> stream = Files.list(storagePath)) {
-        //noinspection resource
         segments =
             stream
                 .filter(DoubleWriteLogGL::fileFilter)
@@ -471,7 +445,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
             }
 
             position +=
-                (long) ((METADATA_SIZE + compressedLen + blockSize - -1) / blockSize) * blockSize;
+                (long) ((METADATA_SIZE + compressedLen + blockSize - 1) / blockSize) * blockSize;
           }
         }
       }
@@ -502,7 +476,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
                     Files.delete(path);
                   } catch (IOException e) {
                     throw new OStorageException(
-                        "Can not delete file " + path.toString() + " in storage " + storageName);
+                        "Can not delete file " + path + " in storage " + storageName);
                   }
                 });
       }
