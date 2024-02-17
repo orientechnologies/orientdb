@@ -143,8 +143,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   }
 
   private FileChannel createLogFile(Path path) throws IOException {
-    return FileChannel.open(
-        path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.SYNC);
+    return FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
   }
 
   private Path createLogFilePath() {
