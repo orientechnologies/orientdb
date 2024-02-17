@@ -923,31 +923,11 @@ public final class OWOWCache extends OAbstractWriteCache
         if (lastMetadata != null) {
           writeAheadLog.log(new MetaDataRecord(lastMetadata));
         }
-
-        for (final Integer intId : nameIdMap.values()) {
-          if (intId < 0) {
-            continue;
-          }
-
-          if (callFsync) {
-            final long fileId = composeFileId(id, intId);
-            final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
-            try {
-              final OFile fileClassic = entry.get();
-              fileClassic.synch();
-            } finally {
-              files.release(entry);
-            }
-          }
-        }
-
         writeAheadLog.flush();
         writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
       } finally {
         doubleWriteLog.endCheckpoint();
       }
-    } catch (final InterruptedException e) {
-      throw OException.wrapException(new OStorageException("Fuzzy checkpoint was interrupted"), e);
     } finally {
       filesLock.releaseReadLock();
     }
