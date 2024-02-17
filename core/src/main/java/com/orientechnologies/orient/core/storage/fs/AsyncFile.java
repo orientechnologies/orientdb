@@ -193,6 +193,8 @@ public final class AsyncFile implements OFile {
               new OStorageException("Error during write operation to the file " + osFile), e);
         }
       } while (written < buffer.limit());
+
+      dirtyCounter.incrementAndGet();
       assert written == buffer.limit();
     } finally {
       lock.sharedUnlock();
