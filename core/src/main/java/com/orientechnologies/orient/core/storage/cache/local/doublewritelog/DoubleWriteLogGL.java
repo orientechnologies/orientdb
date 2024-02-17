@@ -174,7 +174,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
     synchronized (mutex) {
       assert checkpointCounter >= 0;
 
-      if (checkpointCounter == 0 && currentFile.position() >= maxSegSize) {
+      if (checkpointCounter == 0 && currentFile.size() >= maxSegSize) {
         addNewSegment();
       }
 
@@ -246,17 +246,19 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       }
 
       // we can not truncate log in restore mode because we remove all restore information
-      return !restoreMode && this.currentLogSize >= maxSegSize && !tailSegments.isEmpty();
+      return !restoreMode && !tailSegments.isEmpty();
     }
   }
 
   private void addNewSegment() throws IOException {
-    currentFile.close();
+    if (currentFile.size() > 0) {
+      currentFile.close();
 
-    tailSegments.add(currentSegment);
+      tailSegments.add(currentSegment);
 
-    this.currentSegment++;
-    this.currentFile = createLogFile();
+      this.currentSegment++;
+      this.currentFile = createLogFile();
+    }
   }
 
   @Override
