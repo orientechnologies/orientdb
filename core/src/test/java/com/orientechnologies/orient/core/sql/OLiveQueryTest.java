@@ -183,7 +183,7 @@ public class OLiveQueryTest {
     OClass oRestricted = schema.getClass("ORestricted");
     schema.createClass("test", oRestricted);
 
-    int liveMatch = 1;
+    int liveMatch = 2;
     OResultSet query = db.query("select from OUSer where name = 'reader'");
 
     final OIdentifiable reader = query.next().getIdentity().get();
@@ -192,7 +192,7 @@ public class OLiveQueryTest {
     ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     final CountDownLatch latch = new CountDownLatch(1);
-    final CountDownLatch dataArrived = new CountDownLatch(1);
+    final CountDownLatch dataArrived = new CountDownLatch(2);
     Future<Integer> future =
         executorService.submit(
             new Callable<Integer>() {
