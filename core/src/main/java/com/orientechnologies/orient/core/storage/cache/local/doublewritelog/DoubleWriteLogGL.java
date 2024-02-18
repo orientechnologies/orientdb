@@ -336,7 +336,10 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
                 if (XX_HASH.hash(buffer, XX_HASH_LEN, buffer.capacity() - XX_HASH_LEN, XX_HASH_SEED)
                     != xxHash) {
-                  return null;
+                  throw new IllegalStateException(
+                      "DWL Segment "
+                          + segmentPath
+                          + " is broken and can not be used during restore");
                 }
 
                 final ByteBuffer pagesBuffer =
