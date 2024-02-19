@@ -28,6 +28,32 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.28 - (February, 21 2024)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3228---21-February-2024
+
+
+# Core
+- Check if the index exists before checking it's properties
+- Make sure to initialize maps on update of value in query engine
+- Add name to the OrientDB internal timer
+- Removed optimization in query engine that cause failing to update linked records, issue #10077
+- Corrected query with content of nested JSON documents to use embedded class
+- Add count on the create link result set
+- Make sure to call on drop on database drop
+- Double Write Log is fsynced on writes. Looks like usage of SYNC flag is not enough
+- Double Write Log is not truncated on file flush but only if it reaches file limit
+- Double Write Log is truncated every time there are tail segments in queue
+- We do not need to make fsync during Write Ahead Log truncation it will be forced by  Double Write Log itself
+- sync flag is removed for Double Write Log channel because we perform sync on data write
+- Dirty counter is updated on write sync
+
+# Etl
+- Fix concurrent issues in not x86 architectures
+
+# Client
+- removed duplicate cancel from client code
+
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.27 - (January, 26 2024)
