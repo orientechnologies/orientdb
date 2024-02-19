@@ -29,13 +29,11 @@ import net.jpountz.xxhash.XXHashFactory;
 
 public class DoubleWriteLogGL implements DoubleWriteLog {
 
-  /**
-   * Stands for "double write log"
-   */
+  /** Stands for "double write log" */
   public static final String EXTENSION = ".dwl";
 
   private static final ODirectMemoryAllocator ALLOCATOR = ODirectMemoryAllocator.instance();
-  static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
+  static final int BLOCK_SIZE = 4 * 1024;
 
   private static final int XX_HASH_LEN = 8;
   private static final int FILE_ID_LEN = 4;
@@ -63,8 +61,6 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   private long currentSegment;
 
   private final long maxSegSize;
-
-  private int blockSize;
 
   private static final LZ4Compressor LZ_4_COMPRESSOR;
   private static final LZ4FastDecompressor LZ_4_DECOMPRESSOR;
@@ -120,17 +116,12 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       Path path = createLogFilePath();
       this.currentFile = createLogFile(path);
 
-      blockSize = OIOUtils.calculateBlockSize(path.toAbsolutePath().toString());
-      if (blockSize == -1) {
-        blockSize = DEFAULT_BLOCK_SIZE;
-      }
-
       OLogManager.instance()
           .info(
               this,
               "DWL:%s: block size = %d bytes, maximum segment size = %d MB",
               storageName,
-              blockSize,
+              BLOCK_SIZE,
               maxSegSize / 1024 / 1024);
     }
   }
@@ -233,7 +224,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         long bytesWritten = OIOUtils.writeByteBuffer(containerBuffer, currentFile, filePosition);
         currentFile.force(true);
 
-        bytesWritten = ((bytesWritten + blockSize - 1) / blockSize) * blockSize;
+        bytesWritten = ((bytesWritten + BLOCK_SIZE - 1) / BLOCK_SIZE) * BLOCK_SIZE;
         currentFile.position(bytesWritten + filePosition);
 
       } finally {
@@ -449,7 +440,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
             }
 
             position +=
-                (long) ((METADATA_SIZE + compressedLen + blockSize - 1) / blockSize) * blockSize;
+                (long) ((METADATA_SIZE + compressedLen + BLOCK_SIZE - 1) / BLOCK_SIZE) * BLOCK_SIZE;
           }
         }
       }

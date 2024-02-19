@@ -23,6 +23,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class AsyncFile implements OFile {
@@ -39,6 +40,7 @@ public final class AsyncFile implements OFile {
   private final int pageSize;
   private final ExecutorService executor;
 
+  private final Semaphore syncSemaphore = new Semaphore(Integer.MAX_VALUE);
   private static final Set<OpenOption> options;
 
   static {
@@ -170,6 +172,7 @@ public final class AsyncFile implements OFile {
 
   @Override
   public void write(long offset, ByteBuffer buffer) {
+    syncSemaphore.acquireUninterruptibly();
     lock.sharedLock();
     try {
       buffer.rewind();
@@ -198,16 +201,16 @@ public final class AsyncFile implements OFile {
       assert written == buffer.limit();
     } finally {
       lock.sharedUnlock();
+      syncSemaphore.release();
     }
   }
 
   @Override
   public IOResult write(List<ORawPair<Long, ByteBuffer>> buffers) {
-    dirtyCounter.incrementAndGet();
-
     final CountDownLatch latch = new CountDownLatch(buffers.size());
     final AsyncIOResult asyncIOResult = new AsyncIOResult(latch);
 
+    syncSemaphore.acquireUninterruptibly(buffers.size());
     for (final ORawPair<Long, ByteBuffer> pair : buffers) {
       final ByteBuffer byteBuffer = pair.second;
       byteBuffer.rewind();
@@ -219,7 +222,10 @@ public final class AsyncFile implements OFile {
 
         final long position = pair.first + HEADER_SIZE;
         fileChannel.write(
-            byteBuffer, position, latch, new WriteHandler(byteBuffer, asyncIOResult, position));
+            byteBuffer,
+            position,
+            latch,
+            new WriteHandler(byteBuffer, asyncIOResult, position, syncSemaphore));
       } finally {
         lock.sharedUnlock();
       }
@@ -294,22 +300,27 @@ public final class AsyncFile implements OFile {
   }
 
   private void doSynch() {
-    synchronized (flushSemaphore) {
-      long dirtyCounterValue = dirtyCounter.get();
-      if (dirtyCounterValue > 0) {
-        try {
-          fileChannel.force(true);
-        } catch (final IOException e) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Error during flush of file %s. Data may be lost in case of power failure",
-                  e,
-                  getName());
-        }
+    syncSemaphore.acquireUninterruptibly(Integer.MAX_VALUE);
+    try {
+      synchronized (flushSemaphore) {
+        long dirtyCounterValue = dirtyCounter.get();
+        if (dirtyCounterValue > 0) {
+          try {
+            fileChannel.force(true);
+          } catch (final IOException e) {
+            OLogManager.instance()
+                .warn(
+                    this,
+                    "Error during flush of file %s. Data may be lost in case of power failure",
+                    e,
+                    getName());
+          }
 
-        dirtyCounter.addAndGet(-dirtyCounterValue);
+          dirtyCounter.addAndGet(-dirtyCounterValue);
+        }
       }
+    } finally {
+      syncSemaphore.release(Integer.MAX_VALUE);
     }
   }
 
@@ -400,10 +411,14 @@ public final class AsyncFile implements OFile {
     private final AsyncIOResult ioResult;
     private final long position;
 
-    private WriteHandler(ByteBuffer byteBuffer, AsyncIOResult ioResult, long position) {
+    private final Semaphore syncSemaphore;
+
+    private WriteHandler(
+        ByteBuffer byteBuffer, AsyncIOResult ioResult, long position, Semaphore syncSemaphore) {
       this.byteBuffer = byteBuffer;
       this.ioResult = ioResult;
       this.position = position;
+      this.syncSemaphore = syncSemaphore;
     }
 
     @Override
@@ -420,6 +435,7 @@ public final class AsyncFile implements OFile {
       } else {
         dirtyCounter.incrementAndGet();
         attachment.countDown();
+        syncSemaphore.release();
       }
     }
 
@@ -430,6 +446,7 @@ public final class AsyncFile implements OFile {
 
       dirtyCounter.incrementAndGet();
       attachment.countDown();
+      syncSemaphore.release();
     }
   }
 

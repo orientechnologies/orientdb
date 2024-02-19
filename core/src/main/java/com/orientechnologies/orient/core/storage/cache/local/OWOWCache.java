@@ -912,7 +912,6 @@ public final class OWOWCache extends OAbstractWriteCache
     return freeSpace < freeSpaceLimit;
   }
 
-  @Override
   public void syncDataFiles(final long segmentId, final byte[] lastMetadata) throws IOException {
     filesLock.acquireReadLock();
     try {
@@ -923,11 +922,31 @@ public final class OWOWCache extends OAbstractWriteCache
         if (lastMetadata != null) {
           writeAheadLog.log(new MetaDataRecord(lastMetadata));
         }
+
+        for (final Integer intId : nameIdMap.values()) {
+          if (intId < 0) {
+            continue;
+          }
+
+          if (callFsync) {
+            final long fileId = composeFileId(id, intId);
+            final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
+            try {
+              final OFile fileClassic = entry.get();
+              fileClassic.synch();
+            } finally {
+              files.release(entry);
+            }
+          }
+        }
+
         writeAheadLog.flush();
         writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
       } finally {
         doubleWriteLog.endCheckpoint();
       }
+    } catch (final InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Fuzzy checkpoint was interrupted"), e);
     } finally {
       filesLock.releaseReadLock();
     }
@@ -2958,7 +2977,9 @@ public final class OWOWCache extends OAbstractWriteCache
 
           entry = null;
         } else {
-          assert ioResults.size() == acquiredFiles.size();
+          if(ioResults.size() != acquiredFiles.size()) {
+            throw new IllegalStateException("Not all data are written to the files.");
+          }
 
           if (!ioResults.isEmpty()) {
             for (final IOResult ioResult : ioResults) {
@@ -2977,7 +2998,9 @@ public final class OWOWCache extends OAbstractWriteCache
         }
       }
 
-      assert ioResults.size() == acquiredFiles.size();
+      if(ioResults.size() != acquiredFiles.size()) {
+        throw new IllegalStateException("Not all data are written to the files.");
+      }
 
       if (!ioResults.isEmpty()) {
         for (final IOResult ioResult : ioResults) {

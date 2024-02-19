@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.cache.local.doublewritelog;
 
-import static com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogGL.DEFAULT_BLOCK_SIZE;
+import static com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogGL.BLOCK_SIZE;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
@@ -991,7 +991,7 @@ public class DoubleWriteLogGLTestIT {
     }
     int blockSize = OIOUtils.calculateBlockSize(f.getAbsolutePath().toString());
     if (blockSize == -1) {
-      blockSize = DEFAULT_BLOCK_SIZE;
+      blockSize = BLOCK_SIZE;
     }
 
     f.delete();
