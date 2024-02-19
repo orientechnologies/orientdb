@@ -2977,7 +2977,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
           entry = null;
         } else {
-          if(ioResults.size() != acquiredFiles.size()) {
+          if (ioResults.size() != acquiredFiles.size()) {
             throw new IllegalStateException("Not all data are written to the files.");
           }
 
@@ -2998,7 +2998,7 @@ public final class OWOWCache extends OAbstractWriteCache
         }
       }
 
-      if(ioResults.size() != acquiredFiles.size()) {
+      if (ioResults.size() != acquiredFiles.size()) {
         throw new IllegalStateException("Not all data are written to the files.");
       }
 
