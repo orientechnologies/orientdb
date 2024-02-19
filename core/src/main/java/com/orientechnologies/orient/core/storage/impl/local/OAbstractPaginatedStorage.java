@@ -220,6 +220,7 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -312,7 +313,7 @@ public abstract class OAbstractPaginatedStorage
   private final OLockManager<ORID> recordVersionManager;
 
   private final Map<String, OCluster> clusterMap = new HashMap<>();
-  private final List<OCluster> clusters = new ArrayList<>();
+  private final List<OCluster> clusters = new CopyOnWriteArrayList<>();
 
   private volatile ThreadLocal<OStorageTransaction> transaction;
   private final AtomicBoolean walVacuumInProgress = new AtomicBoolean();
