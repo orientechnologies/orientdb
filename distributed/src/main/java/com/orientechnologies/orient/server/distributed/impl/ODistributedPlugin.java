@@ -1252,8 +1252,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     internalCheckNodeInConfig(databaseName, cfg);
 
     // GET ALL THE OTHER SERVERS
-    final Collection<String> nodes = cfg.getServers(null, nodeName);
-    getAvailableNodes(nodes, databaseName);
+    final Collection<String> nodes = nodesOnlineNotSelf(databaseName);
     if (nodes.size() == 0) {
       ODistributedServerLog.error(
           this,
@@ -1379,11 +1378,35 @@ public class ODistributedPlugin extends OServerPluginAbstract
     return null;
   }
 
+  private Collection<String> nodesOnlineNotSelf(String db) {
+    Collection<String> nodes = new HashSet<String>(getActiveServers());
+    if (nodes.isEmpty()) {
+      return nodes;
+    }
+    nodes.remove(getLocalNodeName());
+    final List<String> selectedNodes = new ArrayList<String>();
+
+    for (String n : nodes) {
+      if (isNodeStatusEqualsTo(n, db, DB_STATUS.ONLINE, DB_STATUS.BACKUP)) {
+        selectedNodes.add(n);
+        break;
+      }
+    }
+    if (selectedNodes.isEmpty()) {
+      // NO NODE ONLINE, SEND THE MESSAGE TO EVERYONE
+      for (String n : nodes) {
+        if (isNodeAvailable(n)) {
+          selectedNodes.add(n);
+        }
+      }
+    }
+    return selectedNodes;
+  }
+
   private boolean requestNewDatabaseDelta(
       String databaseName, OModifiableDistributedConfiguration cfg) {
     // GET ALL THE OTHER SERVERS
-    final Collection<String> nodes = cfg.getServers(null, nodeName);
-    getAvailableNodes(nodes, databaseName);
+    final Collection<String> nodes = nodesOnlineNotSelf(databaseName);
     if (nodes.size() == 0) {
       return false;
     }
@@ -1547,7 +1570,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   protected boolean requestDatabaseFullSync(
       final boolean backupDatabase, final String databaseName) {
-    Collection<String> nodes = getActiveServers();
+    final Collection<String> nodes = nodesOnlineNotSelf(databaseName);
     if (nodes.isEmpty()) {
       ODistributedServerLog.warn(
           this,
@@ -1560,34 +1583,14 @@ public class ODistributedPlugin extends OServerPluginAbstract
       return false;
     }
 
-    final List<String> selectedNodes = new ArrayList<String>();
-
-    for (String n : nodes) {
-      if (isNodeStatusEqualsTo(n, databaseName, DB_STATUS.ONLINE, DB_STATUS.BACKUP)) {
-        selectedNodes.add(n);
-        break;
-      }
-    }
-    selectedNodes.remove(getLocalNodeName());
-
-    if (selectedNodes.isEmpty()) {
-      // NO NODE ONLINE, SEND THE MESSAGE TO EVERYONE
-      for (String n : nodes) {
-        if (isNodeAvailable(n)) {
-          selectedNodes.add(n);
-        }
-      }
-      selectedNodes.remove(getLocalNodeName());
-    }
-
     ODistributedServerLog.info(
         this,
         nodeName,
-        selectedNodes.toString(),
+        nodes.toString(),
         DIRECTION.OUT,
         "Requesting deploy of database '%s' on local server...",
         databaseName);
-    for (String noteToSend : selectedNodes) {
+    for (String noteToSend : nodes) {
       OSyncDatabaseTask deployTask = new OSyncDatabaseTask();
       List<String> singleNode = new ArrayList<>();
       singleNode.add(noteToSend);
@@ -1606,7 +1609,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
         ODistributedServerLog.error(
             this,
             nodeName,
-            selectedNodes.toString(),
+            nodes.toString(),
             DIRECTION.IN,
             "Timeout waiting the sync database please set the `distributed.deployDbTaskTimeout` to"
                 + " appropriate value");
