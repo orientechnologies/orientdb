@@ -234,6 +234,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       throw e;
     }
     embedded.getSharedContext().reInit(storage, embedded);
+    distributedSetOnline(dbName);
     ODatabaseRecordThreadLocal.instance().remove();
     return storage;
   }
