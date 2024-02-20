@@ -1484,7 +1484,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     for (int retry = 0; retry < DEPLOY_DB_MAX_RETRIES; ++retry) {
       // ASK DATABASE TO THE FIRST NODE, THE FIRST ATTEMPT, OTHERWISE ASK TO EVERYONE
-      if (requestDatabaseFullSync(backupDatabase, databaseName, retry > 0))
+      if (requestDatabaseFullSync(backupDatabase, databaseName))
         // DEPLOYED
         return true;
       try {
@@ -1546,8 +1546,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   protected boolean requestDatabaseFullSync(
-      final boolean backupDatabase, final String databaseName, final boolean iAskToAllNodes) {
-    // GET ALL THE OTHER SERVERS
+      final boolean backupDatabase, final String databaseName) {
     Collection<String> nodes = getActiveServers();
     if (nodes.isEmpty()) {
       ODistributedServerLog.warn(
@@ -1563,39 +1562,22 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     final List<String> selectedNodes = new ArrayList<String>();
 
-    if (!iAskToAllNodes) {
-      // GET THE FIRST ONE IN BACKUP STATUS. THIS FORCES TO HAVE ONE NODE TO DO BACKUP SAVING
-      // RESOURCES IN CASE BACKUP IS STILL
-      // VALID FOR FURTHER NODES
-      for (String n : nodes) {
-        if (isNodeStatusEqualsTo(n, databaseName, DB_STATUS.BACKUP)) {
-          // SERVER ALREADY IN BACKUP: USE IT
-          selectedNodes.add(n);
-          break;
-        }
-      }
-
-      if (selectedNodes.isEmpty()) {
-        // GET THE FIRST ONE TO ASK FOR DATABASE. THIS FORCES TO HAVE ONE NODE TO DO BACKUP SAVING
-        // RESOURCES IN CASE BACKUP IS STILL
-        // VALID FOR FURTHER NODES
-        final Iterator<String> it = nodes.iterator();
-        while (it.hasNext()) {
-          final String f = it.next();
-          if (isNodeStatusEqualsTo(f, databaseName, DB_STATUS.ONLINE, DB_STATUS.BACKUP)) {
-            selectedNodes.add(f);
-            break;
-          }
-        }
+    for (String n : nodes) {
+      if (isNodeStatusEqualsTo(n, databaseName, DB_STATUS.ONLINE, DB_STATUS.BACKUP)) {
+        selectedNodes.add(n);
+        break;
       }
     }
+    selectedNodes.remove(getLocalNodeName());
 
-    if (selectedNodes.isEmpty())
+    if (selectedNodes.isEmpty()) {
       // NO NODE ONLINE, SEND THE MESSAGE TO EVERYONE
-      selectedNodes.addAll(nodes);
-    Iterator<String> iter = selectedNodes.iterator();
-    while (iter.hasNext()) {
-      if (!isNodeAvailable(iter.next())) iter.remove();
+      for (String n : nodes) {
+        if (isNodeAvailable(n)) {
+          selectedNodes.add(n);
+        }
+      }
+      selectedNodes.remove(getLocalNodeName());
     }
 
     ODistributedServerLog.info(
