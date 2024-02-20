@@ -48,6 +48,9 @@ VERSION 3.2.28 - (February, 21 2024)
 - sync flag is removed for Double Write Log channel because we perform sync on data write
 - Dirty counter is updated on write sync
 
+# Distributed
+- Fixed database sync with enterprise agent
+
 # Etl
 - Fix concurrent issues in not x86 architectures
 
