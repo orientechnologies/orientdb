@@ -1,0 +1,239 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="admin-header">
+      <div class="row">
+        <div class="col-md-4 admin-title">
+          <h2> Schema Manager
+            <a href="{{ database.getWiki() }}" class="btn btn-trasparent btn-help"
+               data-placement="right"
+               data-title="Help"
+               target="_blank"
+               data-trigger="hover"
+               data-animation="am-flip-x"
+               bs-tooltip>
+              <i class="fa fa-question-circle fa-lg"></i>
+            </a>
+          </h2>
+        </div>
+        <div class="col-md-8 admin-actions">
+          <div class="btn-toolbar pull-right">
+            <div class="btn-group">
+              <button href="javascript:void(0)" class="btn btn-primary btn-sm"
+                      ng-click="saveColorConfig()"><i
+                class="fa fa-save"></i>
+                Save Colors Config
+              </button>
+            </div>
+
+            <div class="btn-group" ng-show="false">
+              <button href="javascript:void(0)" class="btn btn-sm"
+                      ng-click="createNewClass()"><i
+                class="icon-plus"></i>
+                New
+                Class
+              </button>
+            </div>
+            <div class="btn-group">
+              <button href="javascript:void(0)" class="btn btn-default btn-sm" ng-click="allIndexes()"><i
+                class="icon-list"></i>
+                All Indexes
+              </button>
+            </div>
+            <div class="btn-group">
+              <button href="javascript:void(0)" class="btn btn-default btn-sm"
+                      ng-click="rebuildAllIndexes()">
+                <i
+                  class="icon-refresh"></i>
+                Rebuild All Indexes
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="card">
+      <div class="row" ng-show="false">
+        <div class="col-md-12 dashboard-container">
+          <div class="row">
+            <div class="col-md-12 nomargin">
+
+              <div class="table-responsive">
+                <table st-table="displeyedClasses" st-safe-src="listClassesTotal"
+                       class="table table-striped table-bordered table-hover table-condensed pointer table-schema">
+                  <thead>
+                  <th colspan="10">
+                    <input st-search placeholder="Search class" class="input-sm form-control" type="text"/>
+                  </th>
+                  <tr>
+
+                    <th>Name
+                      <a href="javascript:void(0)" tabindex="1"
+                         data-trigger="focus" data-placement="right"
+                         data-container="body"
+                         data-content="{{ 'schema.class' | translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a>
+                    </th>
+                    <th>Color</th>
+                    <th>SuperClasses
+                      <a href="javascript:void(0)" tabindex="1"
+                         data-trigger="focus" data-placement="bottom"
+                         data-container="body"
+                         data-content="{{ 'schema.superClass' | translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a>
+                    </th>
+                    <th>Alias</th>
+                    <th>Abstract</th>
+                    <th>Clusters
+                      <a href="javascript:void(0)" tabindex="1"
+                         data-trigger="focus" data-placement="bottom"
+                         data-container="body"
+                         data-content="{{ 'schema.clusters' | translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a>
+                    </th>
+                    <th>Default Cluster</th>
+                    <th>
+                      Cluster Selection
+                      <a href="javascript:void(0)" tabindex="1"
+                         data-trigger="focus" data-placement="bottom"
+                         data-container="body"
+                         data-content="{{ 'schema.clusterSelection' | translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a>
+                    </th>
+                    <th>Records</th>
+
+                    <th>Actions</th>
+                  </tr>
+
+                  </thead>
+                  <tbody>
+                  <tr ng-repeat="result in displeyedClasses ">
+                    <td ng-click="openClass(result)">{{result['name']}}</td>
+                    <td>
+
+                      <spectrum-colorpicker
+                        ng-model="config.config['classes'][result['name']].fill"
+                        options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
+                    </td>
+                    <td ng-click="openClass(result)">{{result['superClasses'] | formatArray}}</td>
+                    <td ng-click="openClass(result)">{{result['alias']}}</td>
+                    <td ng-click="openClass(result)">
+                      <input type="checkbox" ng-model="result['abstract']" ng-disabled="true">
+                    </td>
+
+                    <td ng-click="openClass(result)">{{result['clusters']}}</td>
+                    <td ng-click="openClass(result)">{{result['defaultCluster']}}</td>
+                    <td>
+                      <select type="text" ng-options="opt for opt in clusterStrategies"
+                              ng-change="setClusterStrategy(result)"
+                              ng-model="result['clusterSelection']">
+                      </select>
+                    </td>
+                    <td ng-click="openClass(result)">{{result['records'] | number }}</td>
+                    <td>
+                      <button href="javascript:void(0)" class="btn btn-primary btn-xs"
+                              ng-click="rename(result)">
+                        Rename
+                      </button>
+                      <button href="javascript:void(0)" class="btn btn-default btn-xs"
+                              ng-click="queryAll(result['name'])">
+                        <i
+                          class="fa fa-list-alt"></i> Query All
+                      </button>
+
+                      <button href="javascript:void(0)" class="btn btn-default btn-xs" ng-hide="result['abstract']"
+                              ng-click="createRecord(result['name'])">
+                        <i
+                          class="fa fa-plus"></i> New Record
+
+
+                      </button>
+
+                      <button href="javascript:void(0)" tabindex="1" class="btn btn-default btn-xs btn-disabled disabled"
+                              ng-show="result['abstract']"
+                              data-trigger="hover" data-placement="bottom"
+                              data-container="body"
+                              data-content="{{ 'Cannoct create a new record for an abstract class' }}" bs-popover>
+                        <i
+                          class="fa fa-plus"></i> New Record
+                      </button>
+
+
+                      <button href="javascript:void(0)" ng-disabled="!canDrop(result['name'])"
+                              class="btn btn-danger btn-xs"
+                              ng-click="dropClass(result)">
+                        <i class="fa fa-trash-o"></i> Drop
+                      </button>
+                    </td>
+                  </tr>
+                  </tbody>
+                  <tfoot>
+                  <tr>
+                    <td colspan="10" class="text-center">
+                      <div st-pagination="" st-items-by-page="15" st-displayed-pages="7"></div>
+                    </td>
+                  </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 search-container">
+          <div class="row">
+
+            <div class="col-md-6 col-md-offset-3 col-xs-12">
+              <form class="form-search">
+                <div class="input-group">
+                  <input type="text" class="input-xxlarge form-control search-query" ng-model="query"
+                         placeholder="Search classes" focus="true">
+                  <span class="input-group-btn">
+                        <button type="submit" class="btn btn-default" ng-click="">
+                          <i class="fa fa-search"></i>
+                        </button>
+                            </span>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 dashboard-container">
+          <div class="row">
+            <div class="col-md-12 nomargin">
+              <ul class="nav nav-tabs">
+                <li ng-class="{active : tab == 'user'}">
+                  <a class="pointer" ng-click="tab = 'user'"> User Classes</a>
+                </li>
+                <li ng-class="{active : tab == 'system'}">
+                  <a class="pointer" ng-click="tab = 'system'"> System Classes</a>
+                </li>
+              </ul>
+            </div>
+            <div class="col-md-12 nomargin" ng-show="tab == 'user'">
+              <classes-list label="Vertex" classes="vClasses" query="query" config="config"
+                            on-create="createNewVertex()"></classes-list>
+              <classes-list label="Edge" classes="eClasses" query="query" on-create="createNewEdge()"
+                            config="config"></classes-list>
+              <classes-list label="Generic" classes="gClasses" on-create="createNewGeneric()" query="query"
+                            config="config"></classes-list>
+            </div>
+            <div class="col-md-12 nomargin" ng-show="tab == 'system'">
+              <classes-list classes="systemClasses" query="query"
+                            config="config"></classes-list>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

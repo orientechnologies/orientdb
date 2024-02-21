@@ -1,0 +1,29 @@
+<div class="popover">
+    <h3 class="popover-title">
+        New Field
+    </h3>
+
+    <div class="popover-content">
+        <form name="popoverForm">
+            <div class="form-group">
+                <label>Field Name</label>
+                <input type="text" class="form-control" ng-model="name" placeholder="Field name"/>
+            </div>
+            <div class="form-group">
+                <label>Field Type</label>
+                <select class='form-control' placeholder="Field Type" ng-model="type" ng-options="c for c in types">
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-xs" ng-click="$hide()">Close</button>
+                <button class="btn btn-xs btn-primary" ng-click="modal.saved=true;$hide();addField(name,type)">Add field
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
+

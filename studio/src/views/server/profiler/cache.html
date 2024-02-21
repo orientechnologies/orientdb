@@ -1,0 +1,139 @@
+<div class="col-md-12">
+  <div class="row">
+    <div class="col-md-12">
+      <form class="studio-well">
+        <div class="row">
+          <div class="col-md-2">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" ng-model="cache.enabled" ng-change="changeEnable()">
+                Enabled
+              </label>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-group">
+              <label class="control-label">
+                <h5>Cache Size: {{ cache.size }}</h5>
+              </label>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="btn-group">
+              <button class="btn btn-primary btn-sm" ng-click="saveConfig()">Save Config</button>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-3">
+            <div class="form-group">
+              <label class="control-label">
+                Cache Min execution time
+              </label>
+              <input type="number" class="form-control" ng-model="cache.minExecutionTime">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label class="control-label">
+                Cached Result Max Size
+              </label>
+              <input type="number" class="form-control" ng-model="cache.maxResultsetSize">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label class="control-label">
+                Evict Strategy
+              </label>
+              <select ng-options="s for s in strategies" class="form-control" ng-model="cache.evictStrategy">
+              </select>
+            </div>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row row-space-2x">
+
+    <div class="col-md-4">
+      <form class="form-search">
+        <div class="input-group">
+          <input type="text" class="input-xxlarge form-control search-query" ng-model="query"
+                 placeholder="Search query">
+                        <span class="input-group-btn">
+                        <button type="submit" class="btn btn-default" ng-click="">
+                          <i class="fa fa-search"></i>
+                        </button>
+                            </span>
+        </div>
+      </form>
+    </div>
+
+    <div class="col-md-8">
+      <div class="btn-toolbar pull-right">
+        <div class="btn-group">
+          <button href="javascript:void(0)" class="btn btn-primary btn-sm"
+                  ng-click="purgeCache()"><i
+            class="fa fa-eraser"></i>
+            Purge Cache
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row row-space-2x">
+    <div class="col-md-12">
+      <table st-table="results" class="table table-hover table-profiles">
+        <thead>
+        <tr>
+          <th>Query</th>
+          <th st-sort="size">Results Size</th>
+          <th st-sort="size">View Results</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="c  in results | filter:query">
+          <td>{{c.query | qtype }}</td>
+          <td>{{c.size}}</td>
+          <td>
+            <button class="btn btn-xs" ng-click="fetchResults(c)"> View Results</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="results-id">
+    <div class="row row-space-2x">
+
+      <div class="col-md-12">
+        <h4 class="text-center">Cached query results</h4>
+      </div>
+      <div class="col-md-12 table-responsive">
+        <table st-table="displayedResultsSet" st-safe-src="resultsSet" class="table table-hover table-profiles ">
+          <thead>
+          <tr>
+            <th ng-repeat="h in headers">{{h}}</th>
+          </tr>
+          </thead>
+
+          <tbody>
+          <tr ng-repeat="record  in displayedResultsSet">
+            <td ng-repeat="h in headers">{{record[h]}}</td>
+          </tr>
+          </tbody>
+          <tfoot>
+          <tr>
+            <td colspan="4" class="text-center">
+              <div st-pagination="" st-items-by-page="10" st-displayed-pages="7"></div>
+            </td>
+          </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

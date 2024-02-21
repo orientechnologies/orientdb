@@ -1,0 +1,53 @@
+<div class="servercommands-container" >
+
+
+  <div class="query-container master-query">
+
+    <div class="query-body">
+      <form class="form-inline">
+        <textarea #codemirror_query></textarea>
+        <!--codemirror [(text)]="queryText"  name="queryText" [options]="editorOptions"></codemirror-->
+
+
+      </form>
+      <div class="query-info">
+        <div class="container-fluid">
+          <div class="row vertical-align">
+            <div class="col-md-6  info">
+              <div class="query-hint">
+                <a class="btn btn-trasparent" tabindex="1"
+                   data-trigger="hover" data-placement="bottom-left"
+                   data-animation="am-flip-x"
+                   data-container="body"
+                   data-template-url="views/hints/query-hint.html" bs-popover>
+                  <i class="fa fa-keyboard-o fa-lg"> </i>
+                </a>
+              </div>
+
+            </div>
+            <div class="col-md-6  command">
+              <form class="form-inline pull-right" >
+                <fieldset>
+                  <button (click)="query()" class="btn btn-sm btn-success"><i
+                    class="fa fa-cog"></i>
+                    Run
+                  </button>
+
+                </fieldset>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="">
+    <div class="row">
+      <textarea #codemirror_result></textarea>
+
+    </div>
+  </div>
+
+
+
+</div>

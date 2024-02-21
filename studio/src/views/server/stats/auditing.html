@@ -1,0 +1,23 @@
+<div ng-controller="AuditingController">
+
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+
+  <div class="col-md-12" ng-show="agentActive">
+    <div class="row row-space">
+      <div class="col-md-12">
+        <tabset clazz="clazz">
+          <tab title="Auditing Log"
+               template-url="views/server/stats/auditing/log.html">
+          </tab>
+          <tab title="Auditing Configuration"
+               template-url="views/server/stats/auditing/config.html">
+          </tab>
+        </tabset>
+      </div>
+    </div>
+  </div>
+</div>

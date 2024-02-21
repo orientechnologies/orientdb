@@ -1,0 +1,21 @@
+<!--<input type='text' class='input-xlarge-auto' ng-required = 'isRequired(header)' ng-model='doc[header]'  dtpicker/>-->
+
+<div class="input-group date" ng-model='doc[header]'  >
+    <input type='text' class='form-control' ng-model='doc[header]' ng-required='isRequired(header)'
+           data-date-format="dd/MM/yyyy" bs-datepicker orientdatetime />
+    <span class="input-group-btn">
+        <button class="btn btn-default">
+            <i class="fa fa-calendar">
+            </i>
+        </button>
+    </span>
+    <input data-time-format="HH:mm:ss" class="form-control" ng-required='isRequired(header)' orientdatetime bs-timepicker
+           ng-model='doc[header]' type="text"/>
+    <span class="input-group-btn">
+        <button class="btn btn-default">
+            <i class="fa fa-clock-o">
+            </i>
+        </button>
+    </span>
+</div>
+

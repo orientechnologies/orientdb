@@ -1,0 +1,85 @@
+<div class="col-md-12" ng-controller="GlobalConfiController">
+  <h4>Properties</h4>
+
+  <div class="table-responsive">
+    <table class="table table-striped table-bordered table-condensed">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Value</th>
+      </thead>
+      <tbody>
+      <tr ng-repeat="props in properties">
+        <td>{{ props.name }}</td>
+        <td>{{ props.value }}</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <div class="row">
+    <div class="col-md-6">
+      <h4>Global Configuration</h4>
+    </div>
+    <div class="col-md-6">
+      <div class="btn-toolbar pull-right">
+        <div class="btn-group">
+          <button type="submit" class="btn btn-default" ng-click="saveGlobalProperties()">
+            <i class="fa fa-save"></i> Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="row row-space">
+    <div class="col-md-12">
+      <div class="table-responsive">
+        <table st-table="displayedGlobalProperties" st-safe-src="globalProperties"
+               class="table table-striped table-bordered table-condensed">
+          <thead>
+          <th colspan="4">
+            <input st-search placeholder="Search config" class="input-sm form-control" type="text"/>
+          </th>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Default Value</th>
+            <th>Value</th>
+          </thead>
+          <tbody>
+          <tr ng-repeat="props in displayedGlobalProperties | orderBy:'+key' | filter:query">
+            <td>{{ props.key }}</td>
+            <td>{{ props.description }}</td>
+            <td>
+              <input type="checkbox" disabled  ng-show="isBoolean(props.defaultValue)"
+                     ng-model="props.defaultValue">
+              <span ng-hide="isBoolean(props.defaultValue)"> {{ props.defaultValue }}</span>
+            </td>
+            <td ng-if="!props.canChange">
+
+              <input type="checkbox" disabled  ng-show="isBoolean(props.value)"
+                     ng-model="props.value">
+              <span ng-hide="isBoolean(props.value)"> {{ props.value }}</span>
+            </td>
+            <td ng-if="props.canChange">
+
+              <input class="{ 'form-control' : {{ getType(props.value) != 'checkbox' }} }" type=" {{ getType(props.value)}}" ng-change="changeGlobal(props)"
+                     ng-model="props.value">
+            </td>
+          </tr>
+          </tbody>
+          <tfoot>
+          <tr>
+            <td colspan="4" class="text-center">
+              <div st-pagination="" st-items-by-page="10" st-displayed-pages="7"></div>
+            </td>
+          </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

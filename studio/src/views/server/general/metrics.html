@@ -1,0 +1,15 @@
+<div class="col-md-12" ng-controller="MetricsController">
+
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+  <tabset clazz="clazz" ng-show="agentActive">
+    <tab title="Chronos" template-url="views/server/general/metrics/chronos.html"></tab>
+    <tab title="Counters" template-url="views/server/general/metrics/counters.html"></tab>
+    <tab title="Stats" template-url="views/server/general/metrics/stats.html"></tab>
+    <tab title="Sizes" template-url="views/server/general/metrics/sizes.html"></tab>
+    <tab title="Texts" template-url="views/server/general/metrics/texts.html"></tab>
+  </tabset>
+</div>

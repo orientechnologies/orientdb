@@ -1,0 +1,27 @@
+<div class="col-md-12" ng-controller="ThreadsController">
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+
+
+  <div class="row" ng-show="agentActive">
+    <div class="col-md-6">
+      <h5>Dumped at <b> {{ dumpDate | formatDate}}</b></h5>
+    </div>
+    <div class="col-md-6">
+      <div class="btn-group pull-right">
+        <button class="btn btn-sm btn-primary" ng-click="dump()">Dump</button>
+      </div>
+    </div>
+  </div>
+  <br/>
+  <div class="row">
+    <div class="widget">
+      <div class="widget-body">
+        <textarea ui-codemirror="editorOptions" ng-model="threadDump"></textarea>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+<div class="row">
+
+
+  <no-agent *ngIf="!ee"></no-agent>
+
+  <div *ngIf="ee">
+    <div class="row">
+      <div class="col-md-3 col-md-offset-0">
+        <form class="form-horizontal">
+          <div class="form-group">
+            <label class="control-label col-md-3">Database</label>
+            <div class="col-md-9">
+              <select class="form-control" name="db" [(ngModel)]="db" (change)="onChange()">
+                <option *ngFor="let db of databases" [value]="db">{{db}}</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <single-backup-management *ngIf="backup" [backup]="backup"></single-backup-management>
+      </div>
+    </div>
+  </div>
+</div>

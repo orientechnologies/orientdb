@@ -1,0 +1,16 @@
+<div *ngIf="!ee" class="col-md-12">
+    <no-agent></no-agent>
+</div>
+<div class="col-md-12" *ngIf="stats && name">
+
+    <div *ngIf="ee" class="row">
+        <div class="col-md-6">
+            <server-stats [name]="name" [stats]="stats">
+            </server-stats>
+        </div>
+        <div class="col-md-6">
+            <server-crud [name]="name" [stats]="stats">
+            </server-crud>
+        </div>
+    </div>
+</div>

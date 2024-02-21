@@ -1,0 +1,151 @@
+<div class="col-md-12">
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <b>Server</b>
+
+                    <div class="panel-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-sm" [disabled]="!canEdit" (click)="saveServerSecurity()">
+                                <i class="fa fa-save"></i>
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <!--<div class="form-group">-->
+                        <!--<label class="col-md-4 control-label">-->
+                        <!--Enabled-->
+                        <!--</label>-->
+                        <!--<div class="col-md-8">-->
+                        <!--<input type="checkbox" ng-model="serverSecurity.enabled">-->
+                        <!--</div>-->
+                        <!--</div>-->
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">
+                                createDefaultUsers
+
+                                <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                                    data-container="body" data-content="{{ 'sec.server.createDefaultUsers' | translate:links }}"
+                                    bs-popover>
+                                    <i class="fa fa-question-circle"></i>
+                                </a> -->
+                            </label>
+                            <div class="col-md-8">
+                                <input type="checkbox" [disabled]="!canEdit" name="createDefaultUsers" [(ngModel)]="serverSecurity.createDefaultUsers">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <b> Password Validator </b>
+                    <div class="panel-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-sm" [disabled]="!canEdit" (click)="savePasswordValidator()">
+                                <i class="fa fa-save"></i>
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">
+                                Enabled
+                                <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                                    data-container="body" data-content="{{ 'sec.passwordValidator.enabled' | translate:links }}"
+                                    bs-popover>
+                                    <i class="fa fa-question-circle"></i>
+                                </a> -->
+                            </label>
+                            <div class="col-md-8">
+                                <input type="checkbox" [disabled]="!canEdit" name="enabled" [(ngModel)]="passwordValidator.enabled">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">
+                                Ignore UUID
+                                <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                                    data-container="body" data-content="{{ 'sec.passwordValidator.ignoreUUID' | translate:links }}"
+                                    bs-popover>
+                                    <i class="fa fa-question-circle"></i>
+                                </a> -->
+                            </label>
+                            <div class="col-md-8">
+                                <input type="checkbox" [disabled]="!canEdit" name="ignoreUUID" [(ngModel)]="passwordValidator.ignoreUUID">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">
+                                Minimum Length
+                                <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                                    data-container="body" data-content="{{ 'sec.passwordValidator.minimumLength' | translate:links }}"
+                                    bs-popover>
+                                    <i class="fa fa-question-circle"></i>
+                                </a> -->
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number" [disabled]="!canEdit" name="minimumLength" class="form-control"
+                                    [(ngModel)]="passwordValidator.minimumLength">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">
+                                Number Regex
+                                <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                                    data-container="body" data-content="{{ 'sec.passwordValidator.numberRegEx' | translate:links }}"
+                                    bs-popover>
+                                    <i class="fa fa-question-circle"></i>
+                                </a> -->
+                            </label>
+                            <div class="col-md-8">
+                                <input type="text" [disabled]="!canEdit" name="numberRegEx" class="form-control"
+                                    [(ngModel)]="passwordValidator.numberRegEx">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">
+                                Upper Case Regex
+                                <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                                    data-container="body" data-content="{{ 'sec.passwordValidator.uppercaseRegEx' | translate:links }}"
+                                    bs-popover>
+                                    <i class="fa fa-question-circle"></i>
+                                </a> -->
+                            </label>
+                            <div class="col-md-8">
+                                <input type="text" [disabled]="!canEdit" name="uppercaseRegEx" class="form-control"
+                                    [(ngModel)]="passwordValidator.uppercaseRegEx">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">
+                                Special Regex
+                                <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                                    data-container="body" data-content="{{ 'sec.passwordValidator.specialRegEx' | translate:links }}"
+                                    bs-popover>
+                                    <i class="fa fa-question-circle"></i>
+                                </a> -->
+                            </label>
+                            <div class="col-md-8">
+                                <input type="text" [disabled]="!canEdit" name="specialRegEx" class="form-control"
+                                    [(ngModel)]="passwordValidator.specialRegEx">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,8 @@
+{
+	"name" : "studio",
+	"version" : "1.7",
+	"description" : "Official OrientDB Studio tool",
+	"web" : "https://github.com/orientechnologies/orientdb-studio",
+	"copyrights" : "Orient Technologies LTD",
+	"license" : "Apache 2"
+}

@@ -1,0 +1,29 @@
+<div class="row" ng-controller="BackupConfigController">
+
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+  <div ng-show="agentActive">
+    <div class="row">
+      <div class="col-md-3 col-md-offset-0">
+        <form class="form-horizontal">
+          <div class="form-group">
+            <label class="control-label col-md-3">Database</label>
+            <div class="col-md-9">
+              <select ng-model="database" class="form-control" ng-options="key for (key,value) in databases">
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <ng-include src="'views/server/backup/singleBackup.html'">
+        </ng-include>
+      </div>
+    </div>
+  </div>
+</div>

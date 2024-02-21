@@ -1,0 +1,43 @@
+<div ng-controller="BookmarkController" class="bookmarks-container">
+    <div ng-keydown="closeIfReturn($event)">
+        <span class="bookmarks-folder label label-warning" ng-click="click($event)">Bookmarks</span>
+
+        <div class="row-fluid">
+            <form class="form-search search-bookmarks">
+                <input type="text" ng-click="stopProps($event)" class="input-large search-query" ng-model="searchText"
+                       placeholder="Search bookmarks">
+            </form>
+        </div>
+        <div class="row-fluid">
+
+            <ul class="nav nav-tabs nav-stacked bookmarks-list">
+                <li class="bookmarks-item" ng-mouseover="hover(bk)" ng-repeat="bk in bks | filter:searchText">
+                    <div class="bookmarks-actions" ng-class='isSelected(bk)'>
+                        <a href="javascript:void(0)" ng-click="stopProps($event)" data-placement="right"
+                           bs-popover="'views/database/bookmarkEdit.html'"
+                           data-title="Edit bookmark">
+                            <i class="icon-edit icon-white"></i>
+                        </a>
+                        <a class="" ng-click="remove(bk,$event)" href="javascript:void(0)">
+                            <i class="icon-remove icon-white"></i>
+                        </a>
+                    </div>
+                    <a href="javascript:void(0)" ng-click="run(bk)" data-placement="right"
+                       bs-tooltip="bk.query">
+                        {{bk.name}}
+                        <br>
+
+                        <div class="pull-right">
+                            <span ng-repeat="b in bk.tags" ng-click=" search = b " class="badge book-badge">{{b}}</span>
+                        </div>
+
+                    </a>
+
+
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+</div>

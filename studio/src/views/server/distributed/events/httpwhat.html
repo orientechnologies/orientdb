@@ -1,0 +1,83 @@
+<div class="modal" ng-controller="HttpWhatController">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×</button>
+        <h3>
+          <i class="icon-exchange"></i>
+          Http Request
+        </h3>
+
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-12">
+            <form name="httpwhatform" novalidate>
+              <fieldset class="form_mailwhat">
+                <div class="form-group">
+                  <label>Method</label>
+                  <select class="form-control" ng-model="eventWhat['method']"
+                          ng-options="meth for meth in methods" required> </select>
+                </div>
+                <div class="form-group" ng-repeat="header in eventWhat['headers']">
+                  <div class="col-md-5">
+                    <input type="text" class="form-control" placeholder="Name"
+                           ng-model="header['name']" required>
+                  </div>
+                  <div class="col-md-5">
+                    <input type="text" class="form-control col-md-5" placeholder="Value"
+                           ng-model="header['value']" required>
+                  </div>
+                  <div class="col-md-2">
+                    <button class="btn btn-sm btn-danger " ng-click="removeHeader(header)"><i
+                      class="fa fa-minus-square-o"> </i></button>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <div class="btn-toolbar">
+                    <div class="btn-group  pull-right row-space">
+                      <button class="btn btn-sm" ng-click="addHeader()"><i class="fa fa-plus-circle"> </i>
+                        Add header
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Url ("localhost" is not recommended)</label>
+                  <input type="url" class="form-control" placeholder="http://0.0.0.0"
+                         ng-model="eventWhat['url']" required>
+
+                </div>
+                <div>
+                  <div class="form-group">
+                    <label>Body:
+                      <a href="javascript:void(0)" tabindex="1"
+                         data-trigger="focus" data-placement="right"
+                         data-container="body"
+                         data-content="{{ help |  translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a>
+                    </label>
+
+                    <div class="col-md-12">
+                      <textarea ui-codemirror="editorOptions" ng-disabled="checkMethod()" ng-model="eventWhat['body']"></textarea>
+                    </div>
+                    <!--<textarea type="text" rows="3" id="description" name="body" class="form-control"-->
+                              <!--ng-disabled="checkMethod()"-->
+                              <!--placeholder="{}"-->
+                              <!--ng-model="eventWhat['body']"></textarea>-->
+                  </div>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" ng-disabled="httpwhatform.$invalid" ng-click="$hide()">Ok
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

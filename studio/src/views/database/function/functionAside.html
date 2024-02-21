@@ -1,0 +1,34 @@
+<div class="container-fluid aside-list-container" role="dialog" tabindex="-1">
+
+    <div class="row">
+        <form class="form-search search-bookmarks">
+            <div class="form-group col-md-12" ng-hide="isCode">
+                <input type="text" class="form-control  search-query" ng-model="query.name"
+                       placeholder="Search Functions">
+            </div>
+            <div class="form-group col-md-12" ng-show="isCode">
+                <input type="text" class="form-control  search-query" ng-model="query"
+                       placeholder="Search Functions">
+            </div>
+            <div class="form-group col-md-12">
+                <label class="col-md-8 control-label">Search also in code</label>
+                <div class="col-md-4">
+                    <input type="checkbox" ng-change="query = null" bs-switch switch-size="mini" ng-model="isCode"
+                           placeholder="Search In code">
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="row">
+        <div class="list-group aside-list">
+            <a class="list-group-item" href="javascript:void(0)"
+               ng-repeat="func in functions | orderBy: 'name' | filter:query"
+               ng-class="{active : functionToExecute == func}" ng-click="selectFunction(func)"
+               value="{{func['name']}}">
+                <span class="badge">{{func['language']}}</span>
+                {{func['name']}}
+            </a>
+        </div>
+    </div>
+
+</div>

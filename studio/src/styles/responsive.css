@@ -1,0 +1,81 @@
+@media (min-width: 960px) {
+  .hide-user {
+    display: none;
+  }
+
+}
+
+@media (max-width: 798px) {
+
+
+  .hide-settings {
+    display: none;
+  }
+
+  .ologin .form-group:first-child div.col-md-5 {
+    padding-bottom: 10px;
+  }
+
+}
+
+@media (min-height: 10px) and (max-height: 768px) {
+  .console_class_functions .CodeMirror {
+    height: 300px;
+  }
+}
+
+@media (min-height: 769px) {
+  .console_class_functions .CodeMirror {
+    height: 400px;
+  }
+}
+
+@media (min-height: 900px) {
+  .console_class_functions .CodeMirror {
+    height: 550px;
+  }
+}
+
+@media (min-width: 798px) {
+  .query-hint-mobile {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 803px) {
+  .navbar-user {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1124px) {
+  .navbar-brand {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .navbar-user .username {
+    display: none;
+  }
+
+}
+
+@media (min-width: 768px) and (max-width: 959px) {
+
+  .hide-settings {
+    display: none;
+  }
+}
+
+table.table-schema tbody > tr > td input {
+  width: auto;
+}
+
+@media (min-width: 959px) and (max-width: 1100px) {
+  .info {
+    width: 60%;
+  }
+}
+
+

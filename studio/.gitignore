@@ -1,0 +1,16 @@
+node_modules
+dist
+.tmp
+.sass-cache
+app/components
+info
+hooks
+*.class
+.idea
+# Package Files #
+*.jar
+*.war
+*.ear
+target
+studio-2.2.zip
+orientdb-studio.iml

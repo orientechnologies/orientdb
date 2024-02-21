@@ -1,0 +1,114 @@
+<div class="well col-md-6 col-md-offset-3" ng-controller="MailController">
+  <div class="row">
+    <div class="col-md-6 col-md-offset-4">
+      <form class="form-inline">
+        <div class="form-group">
+          <select ng-options="p.name for p in profiles" class="form-control" ng-model="profile">
+
+          </select>
+
+        </div>
+        <div class="form-group">
+          <button class="btn btn-danger btn-xs" bs-tooltip data-title="Remove Profile" ng-click="removeProfile()"><i
+            class="fa fa-remove"></i></button>
+          <button class="btn btn-success btn-xs" bs-tooltip data-title="Add Profile" ng-click="addProfile()"><i
+            class="fa fa-plus"></i></button>
+        </div>
+        <div class="form-group">
+          <a href="{{ mailWiki }}"
+             target="_blank"
+             class="btn btn-sm btn-trasparent"
+             data-placement="top"
+             data-title="Mail Configuration Wiki"
+             data-trigger="hover"
+             target="_blank"
+             data-container="body"
+             data-animation="am-fade-and-scale"
+             bs-tooltip>
+            <i class="fa fa-question-circle fa-lg"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row row-space">
+
+  </div>
+  <div class="row row-space">
+    <div class="col-md-12">
+      <form accept-charset="utf-8" class="form-horizontal">
+        <div class="form-group">
+          <label class="control-label col-md-3">
+            User
+          </label>
+
+          <div class="col-md-8">
+            <input type="text" id="user" placeholder="user" ng-model="profile['mail.smtp.user']"
+                   class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label col-md-3">
+            Password
+          </label>
+
+          <div class="col-md-8">
+            <input type="password" id="password" placeholder="password" ng-model="profile['mail.smtp.password']"
+                   class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="control-label col-md-3">
+            Host
+          </label>
+
+          <div class="col-md-8">
+            <input type="text" id="host" placeholder="host" ng-model="profile['mail.smtp.host']"
+                   class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label col-md-3">
+            Port
+          </label>
+
+          <div class="col-md-8">
+            <input type="text" id="port" placeholder="port" ng-model="profile['mail.smtp.port']"
+                   class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="control-label col-md-3">
+            Start Tls Enable
+          </label>
+
+          <div class="col-md-8">
+            <input type="checkbox" id="starttlsEnable" placeholder="starttlsEnable"
+                   ng-model="profile['mail.smtp.starttls.enable']">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label col-md-3">
+            Auth
+          </label>
+
+          <div class="col-md-8">
+            <input type="checkbox" id="auth" ng-model="profile['mail.smtp.auth']">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label col-md-3">
+            Date Format
+          </label>
+
+          <div class="col-md-8">
+            <input type="text" id="dateFormat" placeholder="yyyy-MM-dd HH:mm:ss"
+                   ng-model="profile['mail.date.format']" class="form-control">
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

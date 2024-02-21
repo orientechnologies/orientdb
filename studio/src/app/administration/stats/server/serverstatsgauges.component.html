@@ -1,0 +1,49 @@
+<div class="row">
+        <div class="col-md-3">
+
+            <div>
+                <o-gauge [val]="cpuPercent" [height]="height"></o-gauge>
+            </div>
+            <div class="chart-label text-center">
+                <span>CPU</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div>
+                <o-gauge [val]="ramPercent" [height]="height">
+
+                </o-gauge>
+            </div>
+            <div class="chart-label text-center">
+                <span>RAM</span>
+                <br>
+                <span>
+                    <b>{{usedMemoy | toSizeString}} / {{maxMemory | toSizeString}}</b>
+                </span>
+            </div>
+        </div>
+        <div class="col-md-3">
+
+            <div>
+                <o-gauge [val]="diskCachePercent" [height]="height"></o-gauge>
+            </div>
+
+            <div class="chart-label text-center">
+                <span>DISK CACHE</span>
+                <br>
+                <span>
+                    <b>{{totalDiskCache | toSizeString}} / {{maxDiskCache | toSizeString}}</b>
+                </span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div>
+                <o-gauge [val]="diskPercent" [height]="height">
+
+                </o-gauge>
+            </div>
+            <div class="chart-label text-center">
+                <span>DISK</span>
+            </div>
+        </div>
+    </div>

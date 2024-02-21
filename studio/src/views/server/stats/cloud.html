@@ -1,0 +1,14 @@
+<div ng-controller="CloudController">
+
+    <div class="col-md-12 studio-well-tips" ng-show="agent.enterprise && !agent.cloud">
+        <h4 ng-bind-html=" 'agent.notConnected' | translate:links"></h4>
+    </div>
+    <div class="col-md-12 studio-well-tips" ng-show="agent.enterprise && agent.cloud">
+        <h4 ng-bind-html=" 'agent.Connected' | translate:links"></h4>
+    </div>
+    <div class="col-md-12 studio-well-tips" ng-show="!agent.enterprise">
+        <h4 ng-bind-html=" 'agent.notFound' | translate:links"></h4>
+    </div>
+
+
+</div>

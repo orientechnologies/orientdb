@@ -1,0 +1,80 @@
+<div class="row">
+  <div class="panel panel-default panel-orient">
+    <div class="panel-heading">
+      Sql Profiler
+
+
+      <div class="panel-actions">
+        <div class="btn-toolbar">
+          <div class="btn-group">
+            <button href="javascript:void(0)" class="btn btn-default btn-sm"
+                    ng-click="refresh()"><i
+              class="fa fa-refresh"></i>
+              Refresh
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <div class="panel-body query-profiler">
+
+      <div class="row">
+
+        <div class="col-md-8">
+          <form class="form-search">
+            <div class="input-group">
+              <input type="text" class="input-xxlarge form-control search-query" ng-model="query"
+                     placeholder="Search query">
+                        <span class="input-group-btn">
+                        <button type="submit" class="btn btn-default" ng-click="">
+                          <i class="fa fa-search"></i>
+                        </button>
+                            </span>
+            </div>
+          </form>
+        </div>
+        <div class="col-md-4">
+
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <table st-table="profiles" st-safe-src="safeCopy" class="table table-hover table-profiles">
+            <thead>
+            <tr>
+              <th>Type</th>
+              <th>Command</th>
+              <th>Users</th>
+              <th st-sort="entries">Entries</th>
+              <th st-sort="average">Average</th>
+              <th st-sort="total">Total</th>
+              <th st-sort="max">Max</th>
+              <th st-sort="min">Min</th>
+              <th st-sort="last">Last</th>
+            </tr>
+            <!--<tr>-->
+            <!--<th colspan="5"><input st-search=""  class="form-control" placeholder="global search ..." type="text"/></th>-->
+            <!--</tr>-->
+            </thead>
+            <tbody>
+            <tr ng-repeat="row in profiles | filter:query">
+              <td>{{row.name | ctype}}</td>
+              <td>{{row.name | cname}}</td>
+              <td>{{row.users}}</td>
+              <td>{{row.entries}}</td>
+              <td>{{row.average}}</td>
+              <td>{{row.total}}</td>
+              <td>{{row.max}}</td>
+              <td>{{row.min}}</td>
+              <td>{{row.last}}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

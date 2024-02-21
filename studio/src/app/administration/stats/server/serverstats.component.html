@@ -1,0 +1,13 @@
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <b>{{ name }}</b>
+        <div class="panel-node-actions">
+
+        </div>
+    </div>
+    <div class="panel-body">
+        <server-stats-gauges [stats]="stats"></server-stats-gauges>
+        <hr>
+        <server-stats-text [stats]="stats"></server-stats-text>
+    </div>
+</div>

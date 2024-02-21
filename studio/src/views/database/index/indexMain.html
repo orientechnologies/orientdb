@@ -1,0 +1,106 @@
+<div class="row">
+
+  <div class="col-md-12">
+    <div class="admin-header">
+      <div class="row">
+        <div class="col-md-4 admin-title">
+          <h2> Indexes List
+          </h2>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <div class="col-md-12 dashboard-container">
+          <div class="row">
+            <form class="form-search search-history col-md-6">
+              <div class="input-group">
+                <input type="text" class="input-xxlarge form-control search-query" ng-model="searchText"
+                       placeholder="Search index">
+                            <span class="input-group-btn">
+                            <button type="submit" class="btn btn-default">
+                              <i class="fa fa-search"></i>
+                            </button>
+                                </span>
+              </div>
+            </form>
+          </div>
+          <div class="row scroll-indexes">
+            <table class="table table-striped table-bordered table-hover table-condensed pointer">
+              <thead>
+              <tr>
+                <th>
+                  Name
+                </th>
+                <th>
+                  Type
+                  <a href="javascript:void(0)" tabindex="1"
+                     data-trigger="focus" data-placement="bottom"
+                     data-container="body"
+                     data-content="{{ 'index.type' | translate:links }}" bs-popover>
+                    <i class="fa fa-question-circle"></i>
+                  </a>
+                </th>
+
+                <th>
+                  Class
+                </th>
+                <th>
+                  Properties
+                </th>
+
+                <th>
+                  Engine
+                  <a href="javascript:void(0)" tabindex="1"
+                     data-trigger="focus" data-placement="bottom"
+                     data-container="body"
+                     data-content="{{ 'index.engine' | translate:links }}" bs-popover>
+                    <i class="fa fa-question-circle"></i>
+                  </a>
+                </th>
+                <th>
+                  Actions
+                </th>
+
+              </tr>
+
+              </thead>
+              <tbody>
+              <tr ng-repeat="index in indexes | filter:searchText |  orderBy:'name'">
+                <td>
+                  {{index.name}}
+                </td>
+                <td>
+                  {{index.configuration.type}}
+                </td>
+
+                <td>
+                  {{index.configuration.indexDefinition.className}}
+                </td>
+                <td>
+                  {{getFields(index.configuration.indexDefinition)}}
+                </td>
+
+                <td>
+                  {{index.configuration.algorithm}}
+                </td>
+                <td>
+                  <button href="javascript:void(0)" class="btn btn-default btn-xs"
+                          ng-click="rebuildIndex(index.name)">
+                    <i class="fa fa-refresh"></i> Rebuild
+                  </button>
+                  <button href="javascript:void(0)" class="btn btn-danger btn-xs"
+                          ng-click="dropIndex(index)">
+                    <i class="fa fa-trash-o"></i> Drop
+                  </button>
+
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

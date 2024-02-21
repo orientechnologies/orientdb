@@ -1,0 +1,33 @@
+<div class="popover">
+
+    <h3 class="popover-title" ng-bind-html="title" ng-show="title"></h3>
+
+    <div class="popover-content" ng-controller="BookmarkEditController">
+
+        <form class="form-horizontal" ng-if="viewTags">
+            <div class="form-group">
+
+                <label class="col-sm-2 control-label">Name</label>
+
+                <div class="col-sm-10">
+                    <input type="text" class="input-large" ng-model="bookmark.name"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Category</label>
+
+                <div class="col-sm-10">
+                    <input type="hidden" ng-model="bookmark.tags" ui-select2="select2Options" class="input-large"
+                           data-placeholder="Pick a tag">
+                    </input>
+                </div>
+
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-sm" ng-click="cancel();$hide()">Cancel</button>
+                <button class="btn btn-primary btn-sm" ng-click="addBookmark()">Done</button>
+            </div>
+        </form>
+
+    </div>
+</div>

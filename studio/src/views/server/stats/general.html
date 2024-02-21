@@ -1,0 +1,79 @@
+<div class="container-fluid" ng-controller="GeneralMonitorController">
+
+
+  <div class="row studio-well">
+
+
+    <div class="col-md-2">
+
+      <label>Server </label>
+      <select id="serverOnline" ng-model="server" class="form-control" ng-options="s.name for s in servers"
+              data-placeholder="Pick a Server"></select>
+    </div>
+
+    <div class="col-md-10">
+      <div class="col-md-4">
+        <div class="server-status">
+          <div class="row">
+            <div class="col-md-4">
+              <p>
+                <i class="icon-angle-right"></i> Status: <b>{{server.status}}</b>
+              </p>
+            </div>
+            <div class="col-md-8">
+              <ng-include src="'views/widget/restartButton.html'"></ng-include>
+            </div>
+          </div>
+        </div>
+        <div>
+          <i class="icon-angle-right"></i> Profiler Status:
+          <toggle-switch ng-model="attached">
+          </toggle-switch>
+        </div>
+        <div>
+          <i class="icon-angle-right"></i> Address: <b>{{formatAddress(server)}}</b>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="row">
+          <i class="icon-angle-right"></i> Java version: <b>{{server.configuration.java_version}}</b>
+        </div>
+        <div class="row">
+          <i class="icon-angle-right"></i> Os name: <b>{{server.configuration.os_name}} </b>
+        </div>
+        <div class="row">
+          <i class="icon-angle-right"></i> Os arch: <b>{{server.configuration.os_arch}} </b>
+        </div>
+      </div>
+      <div class="col-md-4">
+
+        <div class="row-fluid">
+          <i class="icon-angle-right"></i> Java vendor: <b>{{server.configuration.java_vendor}} </b>
+        </div>
+        <div>
+          <i class="icon-angle-right"></i> Num.CPU: <b>{{server.configuration.cpus}}</b>
+        </div>
+        <div>
+          <i class="icon-angle-right"></i> Agent Version :
+          <b>{{server.configuration.agentVersion}}</b>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="row row-space">
+    <tabset>
+      <tab title="Overview" template-url="views/server/general/overview.html"></tab>
+      <!--<tab title="Connections" template-url="views/server/general/conn.html"></tab>-->
+      <tab title="Monitoring" template-url="views/server/general/monitoring.html"></tab>
+      <tab title="Metrics" template-url="views/server/general/metrics.html"></tab>
+      <tab title="Databases" template-url="views/server/general/db.html"></tab>
+      <tab title="Warnings" template-url="views/server/general/warnings.html"></tab>
+      <tab title="Logs" template-url="views/server/general/log.html"></tab>
+      <tab title="Plugins" template-url="views/server/general/plugins.html"></tab>
+      <tab title="Global Cfg" template-url="views/server/general/config.html"></tab>
+      <tab title="Server Cfg" template-url="views/server/general/configuration.html"></tab>
+    </tabset>
+  </div>
+</div>

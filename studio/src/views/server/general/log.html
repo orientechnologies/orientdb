@@ -1,0 +1,140 @@
+<div class="col-md-12" ng-controller="LogsController">
+
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+  <div ng-show="agentActive" class="row">
+    <div class="col-md-12">
+      <form class="form-inline studio-well">
+
+        <div class="form-group">
+          <label for="searchIn"> Search in:</label>
+
+          <select ng-model="selectedFile" id="searchIn" class="form-control" ng-options="t for t in files"
+                  ng-change="selectType(selectedType)">
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="typeLog"> Type</label>
+          <select ng-model="selectedType" id="typeLog" class="form-control" ng-options="t for t in types"
+                  ng-change="selectType(selectedType)">
+            <option value=""></option>
+          </select>
+        </div>
+
+        <div class="form-group">
+
+          <input type="text" class="input-xxlarge form-control search-query" placeholder="Search in Logs"
+                 class="form-control" id="searchText"
+                 ng-model="selectedSearch">
+        </div>
+
+        <button type="submit" ng-click="search()" class="btn btn-sm btn-default">Search</button>
+        <div class="row">
+
+          <div class="col-md-3">
+            <div class="form-group">
+              <label> From</label>
+
+              <div class="input-group date" ng-model='selectedDateFrom'>
+                <input type='text' class='form-control' ng-model='selectedDateFrom'
+                       data-date-format="dd/MM/yyyy" bs-datepicker/>
+              <span class="input-group-btn">
+                  <button class="btn btn-default">
+                    <i class="fa fa-calendar">
+                    </i>
+                  </button>
+              </span>
+                <input data-time-format="HH:mm:ss" class="form-control"
+                       bs-timepicker
+                       ng-model='selectedDateFrom' type="text"/>
+                <span class="input-group-btn">
+                  <button class="btn btn-default">
+                    <i class="fa fa-clock-o">
+                    </i>
+                  </button>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label> To</label>
+
+              <div class="input-group date" ng-model='selectedDateTo'>
+                <input type='text' class='form-control' ng-model='selectedDateTo'
+                       data-date-format="dd/MM/yyyy" bs-datepicker/>
+              <span class="input-group-btn">
+                  <button class="btn btn-default">
+                    <i class="fa fa-calendar">
+                    </i>
+                  </button>
+              </span>
+                <input data-time-format="HH:mm:ss" data-time-type="number" class="form-control"
+                       bs-timepicker
+                       ng-model='selectedDateTo' type="text"/>
+                <span class="input-group-btn"><button class="btn btn-default">
+                  <i class="fa fa-clock-o">
+                  </i>
+                </button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div ng-show="agentActive" class="row row-space-2x">
+    <div class="col-md-12">
+
+      <table class="table table-striped table-bordered table-hover table-condensed table-width align-left">
+        <thead>
+        <tr>
+          <th>
+            Day
+          </th>
+          <th>
+            Hour
+          </th>
+          <th>
+            Type
+          </th>
+          <th>
+            File
+          </th>
+          <th>
+            Info
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="result in results">
+          <td>
+            {{result['day']}}
+
+          </td>
+          <td>
+            {{result['hour']}}
+
+          </td>
+          <td>
+            {{result['type']}}
+
+          </td>
+          <td>
+            {{result['file']}}
+
+          </td>
+          <td>
+            {{result['info']}}
+
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

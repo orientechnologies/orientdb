@@ -1,0 +1,37 @@
+<div ng-controller="BookmarkController" class="container-fluid  aside-list-container bookmarks-container">
+    <div ng-keydown="closeIfReturn($event)">
+
+        <div class="row">
+            <form class="form-search search-bookmarks">
+                <div class="form-group col-md-10 col-md-offset-1">
+                    <input type="text" class="form-control search-query" ng-model="searchText"
+                           placeholder="Search bookmarks">
+                </div>
+            </form>
+        </div>
+        <div class="row">
+            <div class="list-group aside-list">
+                <div class="list-group-item" ng-mouseover="hover(bk)"
+                     ng-repeat="bk in bks | filter:searchText">
+                    <div class="bookmarks-actions" ng-class="{ true : 'visible', false : 'invisible' }[bk == selected]">
+                        <a href="javascript:void(0)" data-placement="right" data-container="body"
+                           data-template="views/database/bookmarkEdit.html" bs-popover data-title="Edit bookmark">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                        <a class="" ng-click="remove(bk)" href="javascript:void(0)">
+                            <i class="fa fa-times-circle-o"></i>
+                        </a>
+                    </div>
+                    <a href="javascript:void(0)" data-placement="right" bs-tooltip="bk.query" ng-click="run(bk)">
+                        {{bk.name}}
+                    </a>
+                    <div class="pull-right" ng-hide="bk == selected">
+                        <span ng-repeat="b in bk.tags" ng-click=" search = b " class="badge book-badge">{{b}}</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+

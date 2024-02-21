@@ -1,0 +1,11 @@
+<div class="col-md-12">
+    <ul class="nav nav-tabs">
+        <li [ngClass]="{'active' : tab === 'connections'}" (click)="tab = 'connections'"><a href="javascript:void(0)"><span>Connections</span></a></li>
+        <li [ngClass]="{'active' : tab === 'threads'}" (click)="tab = 'threads'"><a href="javascript:void(0)"><span>Threads</span></a></li>
+
+    </ul>
+    <div class="tab-content row">
+        <server-management-connections *ngIf="tab === 'connections'" [name]="name"></server-management-connections>
+        <server-management-thread-dump *ngIf="tab === 'threads'" [name]="name"></server-management-thread-dump>
+    </div>
+</div>

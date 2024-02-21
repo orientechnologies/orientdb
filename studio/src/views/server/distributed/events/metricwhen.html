@@ -1,0 +1,63 @@
+<div class="modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3>
+          <i class="icon-bar-chart"></i>
+          Metrics Event
+        </h3>
+      </div>
+
+      <br>
+
+      <div class="modal-body">
+        <form name="form_metrics_when">
+          <fieldset class="form_mailwhat">
+
+            <div class="form-group">
+              <label>Metric:</label>
+              <select class="form-control" ng-model="eventWhen.type"
+                      ng-options="key as key for (key,value) in metadata">
+                <option value=""></option>
+              </select>
+            </div>
+
+            <div class="form-group studio-well-tips">
+              <span>{{metadata[eventWhen.type].description}}</span>
+            </div>
+            <div class="form-group">
+              <label>Parameter:</label>
+              <select class="form-control" ng-model="eventWhen['parameter']"
+                      ng-options="p for p in parameters">
+                <option value=""></option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label> Operator:</label>
+              <select class="form-control" ng-model="eventWhen['operator']"
+                      ng-options="f for f in alertValues">
+                <option value=""></option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Value:</label>
+              <input type="number" class="form-control" ng-model="eventWhen['value']">
+            </div>
+
+          </fieldset>
+        </form>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" ng-disabled="form_metrics_when.$invalid" ng-click="$hide()">
+          Ok
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

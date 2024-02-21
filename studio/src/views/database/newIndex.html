@@ -1,0 +1,84 @@
+<div class="modal" ng-controller="IndexController" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
+        </button>
+        <h4 class="modal-title">Index:{{newIndex['name']}}</h4>
+      </div>
+      <div class="modal-body edge">
+        <div class="row-fluid">
+          <div class="span12">
+            <form class="form-horizontal" name="indexForm" novalidate>
+              <div class="form-group">
+                <label class="control-label col-md-2" for="inputName">Name *</label>
+
+                <div class="col-md-10">
+                  <input type="text" class="form-control" id="inputName" focus="true" required
+                         ng-model="nameIndexToShow"
+                         value="{{nameIndexToShow}}"/>
+                </div>
+              </div>
+              <div id="spinner-container" class="">
+                <div id="spinner-popup">
+                </div>
+              </div>
+              <div class="form-group" ng-show="namesProp">
+                <label class="control-label col-md-2">Fields</label>
+
+                <div class="col-md-10">
+                  <div ng-repeat="zz in namesProp" class="checkbox-inline">
+                    <input type='checkbox' ng-model="namesProp[zz]" value="{{zz}}"
+                           ng-change="addedField(zz)"> {{zz}}<br/>
+                  </div>
+
+                </div>
+
+              </div>
+              <div class="form-group">
+                <label class="control-label col-md-2">Type * </label>
+
+                <div class="col-md-10">
+                  <select ng-model="newIndex['type']" class="form-control" required
+                          ng-options="p.toString() for p in listTypeIndex">
+                  </select>
+                </div>
+              </div>
+              <div class="form-group"  ng-if="newIndex['type'] == 'FULLTEXT'">
+                <label class="control-label col-md-2">Engine * </label>
+
+                <div class="col-md-10">
+                  <select ng-model="newIndex['engine']" class="form-control" required
+                          ng-options="p.toString() for p in engine">
+                  </select>
+                </div>
+              </div>
+              <div class="form-group" ng-show="newIndex['engine'] == 'LUCENE'">
+                <label class="control-label col-md-2">Metadata </label>
+
+                <div class="col-md-10">
+                  <textarea class="form-control" ng-model="newIndex['metadata']"></textarea>
+                </div>
+              </div>
+
+
+            </form>
+          </div>
+        </div>
+      </div>
+      <div ng-class="testMsgClass" ng-show="testMsg">
+        <button type="button" class="close" onclick="$('.alert-setting').hide()">&times;</button>
+        {{ testMsg }}
+      </div>
+      <div class="modal-footer">
+
+        <button type="button" class="btn btn-sm btn-default" ng-click="$hide()">Close</button>
+        <button type="submit" class="btn btn-sm btn-primary" ng-disabled="indexForm.$invalid"
+                ng-click="saveNewIndex()">Save
+        </button>
+
+      </div>
+    </div>
+  </div>
+</div>
+

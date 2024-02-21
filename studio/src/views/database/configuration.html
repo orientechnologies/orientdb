@@ -1,0 +1,39 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="admin-header">
+      <div class="row">
+        <div class="col-md-4 admin-title">
+          <h2> Database Management
+            <a href="{{ database.getWiki() }}" class="btn btn-trasparent btn-help"
+               data-placement="right"
+               data-title="Help"
+               data-trigger="hover"
+               target="_blank"
+               data-animation="am-flip-x"
+               bs-tooltip>
+              <i class="fa fa-question-circle fa-lg"></i>
+            </a>
+          </h2>
+        </div>
+      </div>
+    </div>
+    <div class="card config-card">
+      <div class="row">
+        <div class="col-md-12">
+          <ul class="nav nav-tabs">
+            <li ng-repeat="tab in tabs" ng-class="{active : tab == active}">
+              <a href="#/database/{{ db }}/db/{{ tab }}">{{ tabsI18n[tab] }}</a>
+            </li>
+          </ul>
+        </div>
+        <div class="col-md-12">
+          <div class="container-fluid config-tab">
+            <div class="row" ng-repeat="tab in tabs" ng-show="tab == active">
+              <ng-include src="getTemplate(tab)"></ng-include>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

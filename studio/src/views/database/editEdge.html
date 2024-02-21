@@ -1,0 +1,29 @@
+<div class="row opanel" ng-controller="EdgeEditController">
+  <div class="col-md-2">
+    <div class="panel panel-default panel-orient">
+      <div class="panel-heading">
+        From Vertex
+        <!--<a ng-show="isNew" href="javascript:void(0)" ng-click="showVertexModal('out')"><i-->
+          <!--class="fa fa-plus-circle"></i></a>-->
+      </div>
+      <div class="panel-body">
+        <h4 ng-show="doc['out']"><a href="{{editUrl(doc['out'])}}">{{doc['out']}}</a></h4>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <ng-include src="'views/database/record.html'" onload=""></ng-include>
+  </div>
+  <div class="col-md-2">
+    <div class="panel panel-default panel-orient">
+      <div class="panel-heading">
+        To Vertex
+        <!--<a ng-show="isNew" href="javascript:void(0)" ng-click="showVertexModal('in')"><i-->
+          <!--class="fa fa-plus-circle"></i></a>-->
+      </div>
+      <div class="panel-body">
+        <h4 ng-show="doc['in']"><a href="{{editUrl(doc['in'])}}">{{doc['in']}}</a></h4>
+      </div>
+    </div>
+  </div>
+</div>

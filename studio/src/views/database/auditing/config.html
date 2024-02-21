@@ -1,0 +1,197 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="btn-group pull-right">
+        <button class="btn btn-sm btn-primary" ng-click="save()"><i class="fa fa-save"></i> Save</button>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="page-header">
+        <h4>Class Auditing</h4>
+      </div>
+    </div>
+  </div>
+  <div class="row audit-form-controls">
+    <div class="col-md-6">
+      <form class="form-inline">
+        <div class="form-group">
+          <label for="auditClass">Auditing Class</label>
+          <input id="auditClass" ng-model="config.auditClassName" class="form-control"/>
+        </div>
+      </form>
+    </div>
+    <div class="col-md-6">
+      <div class="pull-right">
+        <div class="btn-group">
+          <button class="btn btn-sm btn-success" ng-click="addClass()"><i class="fa fa-plus-circle"></i> Add Class
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <hr/>
+  <div class="row">
+    <form class="form-inline">
+      <div class="form-group">
+        <label for="createClass">Create Class </label>
+        <input id="createClass" type="checkbox" ng-model="config.auditClassName" class="form-control"/>
+      </div>
+      <div class="form-group">
+        <label for="dropClass">Drop Class </label>
+        <input id="dropClass" type="checkbox" ng-model="config.auditClassName" class="form-control"/>
+      </div>
+    </form>
+
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>
+            Class
+          </th>
+
+          <th>
+            Create
+          </th>
+
+          <th>
+            Read
+          </th>
+
+          <th>
+            Update
+          </th>
+
+          <th>
+            Delete
+          </th>
+          <th>
+            Polymorphic
+          </th>
+          <th>
+
+          </th>
+        </tr>
+        </thead>
+        <tr ng-repeat="(k,v) in config.classes">
+          <td>{{k}}</td>
+          <td>
+            <form class="form-inline">
+
+              <div class="form-group">
+                <input type="checkbox" ng-model="v.onCreateEnabled">
+              </div>
+              <div class="form-group">
+                <textarea class="form-control" placeholder="Message" ng-disabled="!v.onCreateEnabled"
+                          ng-model="v.onCreateMessage"></textarea>
+              </div>
+            </form>
+          </td>
+          <td>
+            <form class="form-inline">
+              <div class="form-group">
+                <input type="checkbox" ng-model="v.onReadEnabled">
+              </div>
+              <div class="form-group">
+                <textarea class="form-control" placeholder="Message" ng-disabled="!v.onReadEnabled"
+                          ng-model="v.onReadMessage"></textarea>
+              </div>
+            </form>
+          </td>
+          <td>
+            <form class="form-inline">
+              <div class="form-group">
+                <input type="checkbox" ng-model="v.onUpdateEnabled">
+              </div>
+              <div class="form-group">
+                <textarea class="form-control" placeholder="Message" ng-disabled="!v.onUpdateEnabled"
+                          ng-model="v.onUpdateMessage"></textarea>
+
+                <input type="checkbox" ng-disabled="!v.onUpdateEnabled" ng-model="v.onUpdateChanges">
+                <label> Track Changes</label>
+              </div>
+            </form>
+          </td>
+          <td>
+            <form class="form-inline">
+              <div class="form-group">
+                <input type="checkbox" ng-model="v.onDeleteEnabled">
+              </div>
+              <div class="form-group">
+                <textarea class="form-control" placeholder="Message" ng-disabled="!v.onDeleteEnabled"
+                          ng-model="v.onDeleteMessage"></textarea>
+              </div>
+            </form>
+          </td>
+          <td><input type="checkbox" ng-model="v.polymorphic"></td>
+          <td>
+            <div class="btn-group">
+              <button ng-click="delete(k)" class="btn btn-sm btn-danger"> Delete</button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="page-header">
+        <h4>Command Auditing</h4>
+      </div>
+    </div>
+  </div>
+  <div class="row audit-form-controls">
+    <div class="col-md-12">
+      <div class="pull-right">
+        <div class="btn-group">
+          <button class="btn btn-sm btn-success" ng-click="addCommand()"><i class="fa fa-plus-circle"></i> Add Command
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>
+            Regex
+          </th>
+
+          <th>
+            Message
+          </th>
+
+          <th>
+
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="c in config.commands">
+          <td>
+            <input class="form-control" ng-model="c.regex">
+          </td>
+          <td>
+            <textarea class="form-control" placeholder="Message"
+                      ng-model="c.message"></textarea>
+
+          </td>
+          <td>
+            <div class="btn-group">
+              <button ng-click="deleteCommand($index)" class="btn btn-sm btn-danger"> Delete</button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>

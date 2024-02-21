@@ -1,0 +1,27 @@
+<div class="col-md-12" ng-controller="SinglePollerController">
+
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+
+  <div class="row" ng-show="agentActive">
+    <div class="col-md-6">
+      <div ng-if="server">
+        <ng-include src="'views/server/general/singleServer.html'"></ng-include>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel panel-default" ng-show="agentActive">
+        <div class="panel-heading">
+          <b> Server {{server.name}} Operations / Sec </b>
+        </div>
+        <div class="panel-body">
+          <div server-chart server="server" headers="transactionHeaders"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

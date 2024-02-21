@@ -1,0 +1,26 @@
+<div class="row">
+    <div class="col-md-6">
+        <b>Status:</b>
+        <span>{{ status }}</span>
+    </div>
+    <div class="col-md-6">
+        <span><b>Operations:</b> {{operations | async}} </span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <span><b>Active Sessions:</b> {{sessions}}</span>
+    </div>
+    <div class="col-md-6">
+        <span><b>Network Requests:</b> {{networkRequests | async}} </span>
+    </div>
+</div>
+<!-- <div class="row">
+    <div class="col-md-6">
+        <b>Average Latency:</b> {{latency}} ms</span>
+    </div>
+    <div class="col-md-6">
+        <b>Warnings:</b> {{ tips }} </span>
+    </div>
+</div> -->

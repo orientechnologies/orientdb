@@ -1,0 +1,22 @@
+<div class="popover rename-popover">
+    <div class="arrow"></div>
+    <h3 class="popover-title" ng-bind="title" ng-show="title"></h3>
+
+    <div class="popover-content">
+        <form>
+            <div class="form-group">
+                <input type="text" class="form-control" ng-model="tmpName" id="exampleInputEmail1"
+                       placeholder="Name">
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-default btn-sm " ng-click="$hide()">Cancel</button>
+                <button class="btn btn-primary btn-sm" type="submit" ng-disabled="!tmpName"
+                        ng-click="rename(tmpName);$hide();tmpName = null;">
+                    Rename
+                </button>
+            </div>
+        </form>
+
+
+    </div>
+</div>

@@ -1,0 +1,26 @@
+<div class="col-md-12" ng-controller="WarningsController">
+
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+  <div ng-show="agentActive" class="col-md-12">
+    <table class="table">
+      <thead>
+      <tr>
+        <th>Warning</th>
+        <th>Count</th>
+        <th>Last Time</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr ng-repeat="t in tips | orderBy:'time':true">
+        <td>{{ t.warning }}</td>
+        <td>{{ t.count }}</td>
+        <td>{{ t.time | formatDate }}</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

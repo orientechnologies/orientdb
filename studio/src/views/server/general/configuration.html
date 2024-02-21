@@ -1,0 +1,16 @@
+<div class="col-md-12">
+
+
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+  <div ng-show="agentActive" class="widget">
+
+    <div class="widget-body">
+      <textarea ui-codemirror="editorOptions" ng-model="configuration"></textarea>
+    </div>
+  </div>
+
+</div>

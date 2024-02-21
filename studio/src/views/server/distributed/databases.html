@@ -1,0 +1,31 @@
+<div class="col-md-12" ng-controller="ClusterDBController">
+
+
+  <div class="row row-space">
+    <div class="col-md-6">
+      <form class="form-horizontal">
+
+        <div class="form-group">
+          <label class="control-label col-md-2">
+            <b>Database</b>
+          </label>
+          <div class="col-md-6">
+            <select class="form-control" ng-model="selectedDb" ng-options="key as key for (key,v) in databases">
+            </select>
+
+          </div>
+          <div class="col-md-4">
+
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row row-space">
+    <div class="col-md-12">
+      <div class="row">
+        <ng-include src="'views/server/distributed/singleDB.html'"></ng-include>
+      </div>
+    </div>
+  </div>
+</div>
