@@ -86,7 +86,7 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-studio</artifactId>
-            <version>3.2.26</version>
+            <version>${project.version}</version>
             <type>zip</type>
         </dependency>
 
