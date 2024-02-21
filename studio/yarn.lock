@@ -14,11 +14,11 @@
   dependencies:
     tslib "^1.7.1"
 
-"@angular/core@^4.4.6":
-  version "4.4.6"
-  resolved "https://registry.yarnpkg.com/@angular/core/-/core-4.4.6.tgz#13031fd10dcfe438875419b38f21120958bc2354"
+"@angular/core@^10.2.5":
+  version "10.2.5"
+  resolved "https://registry.yarnpkg.com/@angular/core/-/core-10.2.5.tgz#2050b0dbb180aa98c2ec46bba6d4827565ba2a2d"
   dependencies:
-    tslib "^1.7.1"
+    tslib "^2.0.0"
 
 "@angular/forms@^4.4.6":
   version "4.4.6"
@@ -4215,6 +4215,10 @@ tryor@~0.1.2:
 tslib@^1.7.1:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.8.0.tgz#dc604ebad64bcbf696d613da6c954aa0e7ea1eb6"
+
+tslib@^2.0.0:
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.6.2.tgz#703ac29425e7b37cd6fd456e92404d46d1f3e4ae"
 
 tty-browserify@0.0.0:
   version "0.0.0"
