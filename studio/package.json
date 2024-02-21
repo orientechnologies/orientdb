@@ -57,7 +57,7 @@
     "noty": "^2.3.8",
     "nprogress": "^0.2.0",
     "raw-loader": "^0.5.1",
-    "reflect-metadata": "^0.1.8",
+    "reflect-metadata": "^0.1.14",
     "rxjs": "^5.5.2",
     "select2": "^4.0.5",
     "spectrum-colorpicker": "^1.8.0",
