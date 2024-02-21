@@ -167,7 +167,7 @@
         <javaassist.version>3.29.2-GA</javaassist.version>
         <jaxb.api.version>2.3.0</jaxb.api.version>
         <project.rootdir>${project.basedir}/</project.rootdir>
-        <graalvm.version>21.3.5</graalvm.version>
+        <graalvm.version>21.3.9</graalvm.version>
     </properties>
 
     <build>
