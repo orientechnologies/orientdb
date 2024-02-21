@@ -44,7 +44,7 @@
     "jquery-ui": "1.12.1",
     "js-base64": "^2.3.2",
     "json-loader": "^0.5.7",
-    "lodash": "^4.17.4",
+    "lodash": "^4.17.21",
     "moment": "^2.19.1",
     "ng-table": "^1.0.0",
     "ng-tags-input": "^3.2.0",
