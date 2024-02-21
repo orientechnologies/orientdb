@@ -59,7 +59,7 @@
     "raw-loader": "^0.5.1",
     "reflect-metadata": "^0.1.8",
     "rxjs": "^5.5.2",
-    "select2": "^4.0.5",
+    "select2": "^4.0.13",
     "spectrum-colorpicker": "^1.8.0",
     "spin.js": "^2.3.2",
     "string": "^3.3.1",
