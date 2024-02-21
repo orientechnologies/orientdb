@@ -1033,9 +1033,9 @@ bootstrap-switch@^3.3.4:
   version "3.3.4"
   resolved "https://registry.yarnpkg.com/bootstrap-switch/-/bootstrap-switch-3.3.4.tgz#70e0aeb2a877c0dc766991de108e2170fc29a2ff"
 
-bootstrap@>=2.3.2, bootstrap@^3.3.5:
-  version "3.3.7"
-  resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-3.3.7.tgz#5a389394549f23330875a3b150656574f8a9eb71"
+bootstrap@>=2.3.2, bootstrap@^3.4.1:
+  version "3.4.1"
+  resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-3.4.1.tgz#c3a347d419e289ad11f4033e3c4132b87c081d72"
 
 brace-expansion@^1.0.0:
   version "1.1.6"
