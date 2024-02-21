@@ -33,7 +33,17 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   public static final String EXTENSION = ".dwl";
 
   private static final ODirectMemoryAllocator ALLOCATOR = ODirectMemoryAllocator.instance();
-  static final int BLOCK_SIZE = 4 * 1024;
+  static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
+
+  private static final byte DATA_RECORD = 0;
+
+  private static final byte ONE_BYTE_FILLER_RECORD = 1;
+  private static final byte TWO_BYTE_FILLER_RECORD = 2;
+  private static final byte THREE_BYTE_FILLER_RECORD = 3;
+  private static final byte FOUR_BYTE_FILLER_RECORD = 4;
+  private static final byte FULL_FILLER_RECORD = 5;
+
+  private static final int RECORD_TYPE_FLAG_LEN = 1;
 
   private static final int XX_HASH_LEN = 8;
   private static final int FILE_ID_LEN = 4;
@@ -41,8 +51,13 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   private static final int CHUNK_SIZE_LEN = 4;
   private static final int COMPRESSED_SIZE_LEN = 4;
 
-  private static final int METADATA_SIZE =
-      XX_HASH_LEN + FILE_ID_LEN + START_PAGE_INDEX_LEN + CHUNK_SIZE_LEN + COMPRESSED_SIZE_LEN;
+  private static final int RECORD_METADATA_SIZE =
+      XX_HASH_LEN
+          + FILE_ID_LEN
+          + START_PAGE_INDEX_LEN
+          + CHUNK_SIZE_LEN
+          + COMPRESSED_SIZE_LEN
+          + RECORD_TYPE_FLAG_LEN;
 
   private static final long XX_HASH_SEED = 0x3242AEDF76L;
   private static final XXHash64 XX_HASH;
@@ -71,6 +86,11 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
   private int checkpointCounter;
 
+  private volatile int blockMask;
+  private volatile int blockSize;
+
+  private long segmentPosition;
+
   private Map<ORawPair<Integer, Integer>, ORawPair<Long, Long>> pageMap;
 
   static {
@@ -83,6 +103,11 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
   public DoubleWriteLogGL(final long maxSegSize) {
     this.maxSegSize = maxSegSize;
+  }
+
+  public DoubleWriteLogGL(final long maxSegSize, int blockSize) {
+    this.maxSegSize = maxSegSize;
+    this.blockSize = blockSize;
   }
 
   @Override
@@ -116,12 +141,23 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       Path path = createLogFilePath();
       this.currentFile = createLogFile(path);
 
+      if (blockSize <= 0) {
+        var supposedBlockSize = OIOUtils.calculateBlockSize(path);
+        if (supposedBlockSize > 0) {
+          blockSize = supposedBlockSize;
+        } else {
+          blockSize = DEFAULT_BLOCK_SIZE;
+        }
+      }
+
+      blockMask = blockSize - 1;
+
       OLogManager.instance()
           .info(
               this,
               "DWL:%s: block size = %d bytes, maximum segment size = %d MB",
               storageName,
-              BLOCK_SIZE,
+              blockSize,
               maxSegSize / 1024 / 1024);
     }
   }
@@ -161,7 +197,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
     synchronized (mutex) {
       assert checkpointCounter >= 0;
 
-      if (checkpointCounter == 0 && currentFile.size() >= maxSegSize) {
+      assert currentFile.size() == segmentPosition;
+      if (checkpointCounter == 0 && segmentPosition >= maxSegSize) {
         addNewSegment();
       }
 
@@ -170,7 +207,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         sizeToAllocate += LZ_4_COMPRESSOR.maxCompressedLength(byteBuffer.limit());
       }
 
-      sizeToAllocate += buffers.length * METADATA_SIZE;
+      sizeToAllocate += buffers.length * RECORD_METADATA_SIZE;
+      sizeToAllocate = (sizeToAllocate + blockMask) & ~blockMask;
       final OPointer pageContainer =
           ALLOCATOR.allocate(sizeToAllocate, false, Intention.DWL_ALLOCATE_CHUNK);
 
@@ -196,9 +234,10 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
             compressedBuffer.rewind();
             compressedBuffer.limit(compressedSize);
 
+            containerBuffer.put(DATA_RECORD);
+
             final int xxHashPosition = containerBuffer.position();
             containerBuffer.position(xxHashPosition + XX_HASH_LEN);
-
             containerBuffer.putInt(fileIds[i]);
             containerBuffer.putInt(pageIndexes[i]);
             containerBuffer.putInt(buffer.limit() / pageSize);
@@ -217,16 +256,32 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
           }
         }
 
-        containerBuffer.limit(containerBuffer.position());
+        var currentPosition = containerBuffer.position();
+        var bytesToFill = blockSize - (currentPosition & blockMask);
+
+        var fillerRecordId =
+            switch (bytesToFill) {
+              case 1 -> ONE_BYTE_FILLER_RECORD;
+              case 2 -> TWO_BYTE_FILLER_RECORD;
+              case 3 -> THREE_BYTE_FILLER_RECORD;
+              case 4 -> FOUR_BYTE_FILLER_RECORD;
+              default -> FULL_FILLER_RECORD;
+            };
+        containerBuffer.put(fillerRecordId);
+
+        if (fillerRecordId == FULL_FILLER_RECORD) {
+          containerBuffer.putInt(bytesToFill);
+        }
+
+        containerBuffer.limit(currentPosition + bytesToFill);
+        assert (currentPosition + bytesToFill) % blockSize == 0;
+
         containerBuffer.rewind();
-
-        final long filePosition = currentFile.position();
-        long bytesWritten = OIOUtils.writeByteBuffer(containerBuffer, currentFile, filePosition);
+        assert currentFile.size() == segmentPosition;
+        var written = OIOUtils.writeByteBuffer(containerBuffer, currentFile, segmentPosition);
         currentFile.force(true);
-
-        bytesWritten = ((bytesWritten + BLOCK_SIZE - 1) / BLOCK_SIZE) * BLOCK_SIZE;
-        currentFile.position(bytesWritten + filePosition);
-
+        segmentPosition += written;
+        assert currentFile.size() == segmentPosition;
       } finally {
         ALLOCATOR.deallocate(pageContainer);
       }
@@ -244,6 +299,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
       this.currentSegment++;
       this.currentFile = createLogFile();
+      this.segmentPosition = 0;
     }
   }
 
@@ -300,43 +356,51 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       if (Files.exists(segmentPath)) {
         try (final FileChannel channel = FileChannel.open(segmentPath, StandardOpenOption.READ)) {
           final long channelSize = channel.size();
-          if (channelSize - segmentPosition.second > METADATA_SIZE) {
+          if (channelSize - segmentPosition.second > RECORD_METADATA_SIZE) {
             final ByteBuffer metadataBuffer =
-                ByteBuffer.allocate(METADATA_SIZE).order(ByteOrder.nativeOrder());
+                ByteBuffer.allocate(RECORD_METADATA_SIZE).order(ByteOrder.nativeOrder());
 
             OIOUtils.readByteBuffer(metadataBuffer, channel, segmentPosition.second, true);
             metadataBuffer.rewind();
 
+            final byte recordType = metadataBuffer.get();
             final long xxHash = metadataBuffer.getLong();
+            if (recordType != DATA_RECORD) {
+              throwSegmentIsBroken(segmentPath);
+            }
             final int storedFileId = metadataBuffer.getInt();
             final int storedPageIndex = metadataBuffer.getInt();
             final int pages = metadataBuffer.getInt();
             final int compressedLen = metadataBuffer.getInt();
 
-            if (pages >= 0
-                && storedFileId == fileId
+            if (pages < 0 || storedPageIndex < 0 || storedFileId < 0 || compressedLen < 0) {
+              throwSegmentIsBroken(segmentPath);
+            }
+
+            if (storedFileId == fileId
                 && pageIndex >= storedPageIndex
                 && pageIndex < storedPageIndex + pages) {
-              if (channelSize - segmentPosition.second - METADATA_SIZE >= compressedLen) {
+              if (channelSize - segmentPosition.second - RECORD_METADATA_SIZE >= compressedLen) {
                 final ByteBuffer buffer =
-                    ByteBuffer.allocate(compressedLen + METADATA_SIZE)
+                    ByteBuffer.allocate(compressedLen + RECORD_METADATA_SIZE)
                         .order(ByteOrder.nativeOrder());
                 OIOUtils.readByteBuffer(buffer, channel, segmentPosition.second, true);
 
                 buffer.rewind();
 
-                if (XX_HASH.hash(buffer, XX_HASH_LEN, buffer.capacity() - XX_HASH_LEN, XX_HASH_SEED)
+                if (XX_HASH.hash(
+                        buffer,
+                        XX_HASH_LEN + RECORD_TYPE_FLAG_LEN,
+                        buffer.capacity() - XX_HASH_LEN - RECORD_TYPE_FLAG_LEN,
+                        XX_HASH_SEED)
                     != xxHash) {
-                  throw new IllegalStateException(
-                      "DWL Segment "
-                          + segmentPath
-                          + " is broken and can not be used during restore");
+                  throwSegmentIsBroken(segmentPath);
                 }
 
                 final ByteBuffer pagesBuffer =
                     ByteBuffer.allocate(pages * pageSize).order(ByteOrder.nativeOrder());
                 LZ_4_DECOMPRESSOR.decompress(
-                    buffer, METADATA_SIZE, pagesBuffer, 0, pagesBuffer.capacity());
+                    buffer, RECORD_METADATA_SIZE, pagesBuffer, 0, pagesBuffer.capacity());
 
                 final int pagePosition = (pageIndex - storedPageIndex) * pageSize;
 
@@ -359,6 +423,11 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
       return null;
     }
+  }
+
+  private static void throwSegmentIsBroken(Path segmentPath) {
+    throw new IllegalStateException(
+        "DWL Segment " + segmentPath + " is broken and can not be used during restore");
   }
 
   @Override
@@ -391,11 +460,33 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
           long position = 0;
           long fileSize = channel.size();
 
-          while (fileSize - position > METADATA_SIZE) {
+          while (fileSize - position > RECORD_METADATA_SIZE) {
             final ByteBuffer metadataBuffer =
-                ByteBuffer.allocate(METADATA_SIZE).order(ByteOrder.nativeOrder());
+                ByteBuffer.allocate(RECORD_METADATA_SIZE).order(ByteOrder.nativeOrder());
             OIOUtils.readByteBuffer(metadataBuffer, channel, position, true);
             metadataBuffer.rewind();
+
+            final byte recordType = metadataBuffer.get();
+            if (recordType < 0 || recordType > FULL_FILLER_RECORD) {
+              printSegmentIsBroken(segment);
+              continue segmentLoop;
+            }
+
+            if (recordType != DATA_RECORD) {
+              final int bytesToFill =
+                  switch (recordType) {
+                    case ONE_BYTE_FILLER_RECORD -> 1;
+                    case TWO_BYTE_FILLER_RECORD -> 2;
+                    case THREE_BYTE_FILLER_RECORD -> 3;
+                    case FOUR_BYTE_FILLER_RECORD -> 4;
+                    case FULL_FILLER_RECORD -> metadataBuffer.getInt();
+                    default ->
+                        throw new IllegalStateException("Unexpected record type : " + recordType);
+                  };
+
+              position += bytesToFill;
+              continue;
+            }
 
             final long xxHash = metadataBuffer.getLong();
             final int fileId = metadataBuffer.getInt();
@@ -407,23 +498,24 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
                 && pages >= 0
                 && pageIndex >= 0
                 && compressedLen >= 0
-                && position + METADATA_SIZE + compressedLen <= fileSize) {
+                && position + RECORD_METADATA_SIZE + compressedLen <= fileSize) {
               final ByteBuffer buffer =
-                  ByteBuffer.allocate(METADATA_SIZE + compressedLen).order(ByteOrder.nativeOrder());
+                  ByteBuffer.allocate(RECORD_METADATA_SIZE + compressedLen)
+                      .order(ByteOrder.nativeOrder());
               OIOUtils.readByteBuffer(buffer, channel, position, true);
               buffer.rewind();
 
-              if (XX_HASH.hash(buffer, XX_HASH_LEN, buffer.capacity() - XX_HASH_LEN, XX_HASH_SEED)
+              if (XX_HASH.hash(
+                      buffer,
+                      XX_HASH_LEN + RECORD_TYPE_FLAG_LEN,
+                      buffer.capacity() - XX_HASH_LEN - RECORD_TYPE_FLAG_LEN,
+                      XX_HASH_SEED)
                   != xxHash) {
-                OLogManager.instance()
-                    .warnNoDb(
-                        this,
-                        "DWL Segment "
-                            + segment
-                            + " is broken and will not be used during restore");
+                printSegmentIsBroken(segment);
                 continue segmentLoop;
               }
             } else {
+              printSegmentIsBroken(segment);
               continue segmentLoop;
             }
 
@@ -431,6 +523,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
             try {
               segmentId = extractSegmentId(segment.getFileName().toString());
             } catch (NumberFormatException e) {
+              printSegmentIsBroken(segment);
               continue segmentLoop;
             }
 
@@ -439,14 +532,22 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
                   new ORawPair<>(fileId, pageIndex + i), new ORawPair<>(segmentId, position));
             }
 
-            position +=
-                (long) ((METADATA_SIZE + compressedLen + BLOCK_SIZE - 1) / BLOCK_SIZE) * BLOCK_SIZE;
+            position += RECORD_METADATA_SIZE + compressedLen;
           }
         }
       }
 
       restoreMode = true;
     }
+  }
+
+  private void printSegmentIsBroken(Path segment) {
+    OLogManager.instance()
+        .warnNoDb(
+            this,
+            "DWL Segment "
+                + segment
+                + " is broken and only part of its content will be used during data restore");
   }
 
   @Override

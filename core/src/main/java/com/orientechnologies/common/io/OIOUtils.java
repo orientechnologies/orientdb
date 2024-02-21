@@ -37,7 +37,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -466,9 +466,9 @@ public class OIOUtils {
     return compareStartIgnoreCase(osName, "linux");
   }
 
-  public static int calculateBlockSize(String path) {
+  public static int calculateBlockSize(Path path) {
     try {
-      var fileStore = Files.getFileStore(Paths.get(path));
+      var fileStore = Files.getFileStore(path);
       return (int) fileStore.getBlockSize();
     } catch (IOException | UnsupportedOperationException e) {
       OLogManager.instance()
