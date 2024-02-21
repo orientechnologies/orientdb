@@ -63,7 +63,7 @@
     "spectrum-colorpicker": "^1.8.0",
     "spin.js": "^2.3.2",
     "string": "^3.3.1",
-    "ui-select": "^0.18.0",
+    "ui-select": "^0.19.8",
     "underscore": "^1.8.3",
     "zone.js": "^0.7.2"
   },
