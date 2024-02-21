@@ -80,21 +80,21 @@
   version "2.6.3"
   resolved "https://registry.yarnpkg.com/@types/jasmine/-/jasmine-2.6.3.tgz#586963bfdd35e38f24a0a0b63a438cf521292ed9"
 
-"@types/jquery@*", "@types/jquery@^2.0.39":
-  version "2.0.40"
-  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-2.0.40.tgz#acdd69e29b74cdec15dc3c074bcb064bc1b87213"
-
-"@types/jquery@^3.3.6":
+"@types/jquery@*", "@types/jquery@^3.3.6":
   version "3.3.9"
   resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.3.9.tgz#91f2aaf5c1e91fd79598fc00ecb4504d78b51fd7"
+
+"@types/jquery@^2.0.39":
+  version "2.0.40"
+  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-2.0.40.tgz#acdd69e29b74cdec15dc3c074bcb064bc1b87213"
 
 "@types/node@*", "@types/node@^7.0.46":
   version "7.0.46"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.46.tgz#c3dedd25558c676b3d6303e51799abb9c3f8f314"
 
-"@types/select2@^4.0.31":
-  version "4.0.35"
-  resolved "https://registry.yarnpkg.com/@types/select2/-/select2-4.0.35.tgz#646e0a6d2088eb76a39e255b1c130b2563e11b5d"
+"@types/select2@4.0.42":
+  version "4.0.42"
+  resolved "https://registry.yarnpkg.com/@types/select2/-/select2-4.0.42.tgz#798e69ebf3455d2c692a1b8be2977c3a4ba79c4e"
   dependencies:
     "@types/jquery" "*"
 
@@ -2985,12 +2985,12 @@ ng2-material-dropdown@0.7.3:
   version "0.7.3"
   resolved "https://registry.yarnpkg.com/ng2-material-dropdown/-/ng2-material-dropdown-0.7.3.tgz#4993e8c3598a6bdf4c3ef13b79b1923c90c65787"
 
-ng2-select2@^1.0.0-beta.10:
-  version "1.0.0-beta.10"
-  resolved "https://registry.yarnpkg.com/ng2-select2/-/ng2-select2-1.0.0-beta.10.tgz#908b0b8a9f8cd06736f3bca16b1e35a1f696a145"
+ng2-select2@^1.0.0-beta.16:
+  version "1.0.0-beta.16"
+  resolved "https://registry.yarnpkg.com/ng2-select2/-/ng2-select2-1.0.0-beta.16.tgz#3f36cb33ea7939b5ae50302c036e0f78f15789a4"
   dependencies:
     "@types/jquery" "^2.0.39"
-    "@types/select2" "^4.0.31"
+    "@types/select2" "4.0.42"
 
 ng2-tag-input@^0.8.8:
   version "0.8.8"
