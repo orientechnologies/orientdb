@@ -128,3 +128,51 @@ License: Apache-2.0
 Files: .mvn/*
 Copyright: Apache Software Foundation
 License: Apache-2.0
+
+Files: studio/assembly/archive.xml
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: studio/build.sh
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: studio/helpers.js
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: studio/*.conf.js
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: studio/*.json
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: studio/yarn.lock
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: studio/webpack.config.js
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: studio/test/*
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: studio/.jshintrc 
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: studio/.editorconfig
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: studio/README.md
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: studio/CHANGELOG.md
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0

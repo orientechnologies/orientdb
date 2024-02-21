@@ -77,7 +77,7 @@ jobs:
       run: mvn -B package --file pom.xml
     - name: Publish Snapshot
       if: github.event_name != 'pull_request' 
-      run: mvn -B clean deploy -DskipTests --file pom.xml
+      run: mvn -B clean deploy -P all -DskipTests --file pom.xml
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}

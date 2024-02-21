@@ -705,5 +705,11 @@
                 </plugins>
             </build>
         </profile>
+		<profile>
+			<id>all</id>
+            <modules>
+                <module>studio</module>
+            </modules>
+        </profile>
     </profiles>
 </project>
