@@ -42,6 +42,7 @@ public abstract class AbstractBackupTest {
 
   protected final int numberOfThreads = 5;
   protected volatile int[] incrementalVerticesIdForThread;
+
   /*
    * A Callable task that inserts many vertices as indicated by the count variable on the specified server and cluster (shard).
    */
@@ -192,7 +193,8 @@ public abstract class AbstractBackupTest {
 
   protected void banner(final String message) {
     System.out.println(
-        "\n**********************************************************************************************************");
+        "\n"
+            + "**********************************************************************************************************");
     System.out.println(message);
     System.out.println(
         "**********************************************************************************************************\n");

@@ -140,7 +140,8 @@ public class OBackupDBLogger implements OBackupLogger {
       throws IOException {
     String query =
         String.format(
-            "select from %s where op = :op and uuid = :uuid and unitId = :unitId order by timestamp desc limit 1",
+            "select from %s where op = :op and uuid = :uuid and unitId = :unitId order by timestamp"
+                + " desc limit 1",
             CLASS_NAME);
     Map<String, Object> params =
         new HashMap<String, Object>() {
@@ -192,7 +193,8 @@ public class OBackupDBLogger implements OBackupLogger {
         queryParams.put("tsTo", Long.parseLong(to));
         query =
             String.format(
-                "select * from %s where uuid = :uuid and timestamp >= :tsFrom and timestamp <= :tsTo order by timestamp desc limit :limit",
+                "select * from %s where uuid = :uuid and timestamp >= :tsFrom and timestamp <="
+                    + " :tsTo order by timestamp desc limit :limit",
                 CLASS_NAME);
       }
 
@@ -233,7 +235,8 @@ public class OBackupDBLogger implements OBackupLogger {
     if (params != null && params.size() > 0) {
       query =
           String.format(
-              "select * from %s where uuid = :uuid and unitId = :unitId and op= :op order by timestamp desc ",
+              "select * from %s where uuid = :uuid and unitId = :unitId and op= :op order by"
+                  + " timestamp desc ",
               CLASS_NAME);
       for (Map.Entry<String, String> entry : params.entrySet()) {
         queryParams.put(entry.getKey(), entry.getValue());
@@ -258,7 +261,8 @@ public class OBackupDBLogger implements OBackupLogger {
 
     final String selectQuery =
         String.format(
-            "select from %s where uuid = :uuid and timestamp <= :timestamp group by unitId order by timestamp asc",
+            "select from %s where uuid = :uuid and timestamp <= :timestamp group by unitId order by"
+                + " timestamp asc",
             CLASS_NAME);
 
     final Map<String, Object> queryParams =
@@ -448,7 +452,8 @@ public class OBackupDBLogger implements OBackupLogger {
         };
     String query =
         String.format(
-            "select * from %s where  uuid = :uuid  group by unitId  order by timestamp desc limit :limit",
+            "select * from %s where  uuid = :uuid  group by unitId  order by timestamp desc limit"
+                + " :limit",
             CLASS_NAME);
 
     return getLogs(
@@ -465,7 +470,8 @@ public class OBackupDBLogger implements OBackupLogger {
 
     final String query =
         String.format(
-            "delete from %s where uuid = :uuid and unitId = :unitId and txId = :txId  and timestamp = :timestamp",
+            "delete from %s where uuid = :uuid and unitId = :unitId and txId = :txId  and timestamp"
+                + " = :timestamp",
             CLASS_NAME);
     final Map<String, Object> queryParams =
         new HashMap<String, Object>() {

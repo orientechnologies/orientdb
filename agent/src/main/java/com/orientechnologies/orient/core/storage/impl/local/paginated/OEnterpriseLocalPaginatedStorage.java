@@ -157,7 +157,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         OLogManager.instance()
             .error(
                 this,
-                "Another incremental backup process is in progress, please wait till it will be finished",
+                "Another incremental backup process is in progress, please wait till it will be"
+                    + " finished",
                 null);
       } catch (final IOException e) {
         throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
@@ -300,7 +301,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       OLogManager.instance()
           .error(
               this,
-              "Another incremental backup process is in progress, please wait till it will be finished",
+              "Another incremental backup process is in progress, please wait till it will be"
+                  + " finished",
               null);
     } catch (final IOException e) {
       throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
@@ -464,7 +466,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
     if (singleThread && isIcrementalBackupRunning()) {
       throw new OBackupInProgressException(
-          "You are trying to start incremental backup but it is in progress now, please wait till it will be finished",
+          "You are trying to start incremental backup but it is in progress now, please wait till"
+              + " it will be finished",
           getName(),
           OErrorCode.BACKUP_IN_PROGRESS);
     }
@@ -1048,7 +1051,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
         if (!writeCache.fileIdsAreEqual(expectedFileId, fileId))
           throw new OStorageException(
-              "Can not restore database from backup because expected and actual file ids are not the same");
+              "Can not restore database from backup because expected and actual file ids are not"
+                  + " the same");
 
         while (true) {
           final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];

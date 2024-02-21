@@ -262,7 +262,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     OLogManager.instance()
         .warn(
             this,
-            "The current agent version %s is not compatible with OrientDB %s. Please use the same version.",
+            "The current agent version %s is not compatible with OrientDB %s. Please use the same"
+                + " version.",
             enterpriseVersion,
             OConstants.getVersion());
     return false;

@@ -20,7 +20,8 @@ public class FullSyncIT {
     remote.execute(
         "create database `"
             + FullSyncIT.class.getSimpleName()
-            + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+            + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader'"
+            + " role reader, writer identified by 'writer' role writer)");
     ODatabaseSession session = remote.open(FullSyncIT.class.getSimpleName(), "admin", "admin");
     session.createClass("test");
     session.close();

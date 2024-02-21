@@ -294,7 +294,9 @@ public class OEnterpriseProfiler extends OAbstractProfiler
     buffer.append(" secs of profiling");
     buffer.append(
         String.format(
-            "\nFree memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb - CPUs: %d",
+            "\n"
+                + "Free memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb -"
+                + " CPUs: %d",
             freeMem,
             (freeMem * 100 / (float) maxMem),
             totMem,
@@ -487,14 +489,16 @@ public class OEnterpriseProfiler extends OAbstractProfiler
 
               final StringBuilder output = new StringBuilder();
               output.append(
-                  "\n*******************************************************************************************************************************************");
+                  "\n"
+                      + "*******************************************************************************************************************************************");
               output.append(
                   "\nPROFILER AUTO DUMP '"
                       + dumpType
                       + "' OUTPUT (to disabled it set 'profiler.autoDump.interval' = 0):\n");
               output.append(dump(dumpType));
               output.append(
-                  "\n*******************************************************************************************************************************************");
+                  "\n"
+                      + "*******************************************************************************************************************************************");
 
               OLogManager.instance().info(null, output.toString());
             }

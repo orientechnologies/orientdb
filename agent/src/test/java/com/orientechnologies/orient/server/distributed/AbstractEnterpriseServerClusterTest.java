@@ -57,7 +57,8 @@ public abstract class AbstractEnterpriseServerClusterTest {
 
   private static void syntaxError() {
     System.err.println(
-        "Syntax error. Usage: <class> <operation> [<servers>]\nWhere <operation> can be: prepare|execute|prepare+execute");
+        "Syntax error. Usage: <class> <operation> [<servers>]\n"
+            + "Where <operation> can be: prepare|execute|prepare+execute");
     System.exit(1);
   }
 
@@ -210,7 +211,8 @@ public abstract class AbstractEnterpriseServerClusterTest {
     OLogManager.instance()
         .error(
             this,
-            "\n**********************************************************************************************************",
+            "\n"
+                + "**********************************************************************************************************",
             null);
     OLogManager.instance().error(this, iMessage, null);
     OLogManager.instance()

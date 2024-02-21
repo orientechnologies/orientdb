@@ -33,7 +33,8 @@ public class QueryProfilerTest {
         .execute(
             "create database "
                 + QueryProfilerTest.class.getSimpleName()
-                + " memory users(admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+                + " memory users(admin identified by 'admin' role admin, reader identified by"
+                + " 'reader' role reader, writer identified by 'writer' role writer)");
   }
 
   @Test

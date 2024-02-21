@@ -13,6 +13,7 @@ public abstract class AbstractSecurityTest {
   protected static final String ROOT_PASSWORD =
       "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3";
   protected static String prevOrientHome;
+
   //  private static OServer server;
 
   public static void setup(final String dbName) throws Exception {

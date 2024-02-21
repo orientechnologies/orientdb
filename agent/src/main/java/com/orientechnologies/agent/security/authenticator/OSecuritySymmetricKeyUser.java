@@ -88,6 +88,7 @@ public class OSecuritySymmetricKeyUser extends OServerUserConfiguration
         && keystoreKeyAlias != null
         && !keystoreKeyAlias.isEmpty();
   }
+
   //////////
 
   public OSecuritySymmetricKeyUser() {}

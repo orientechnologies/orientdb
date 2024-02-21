@@ -58,7 +58,8 @@ public abstract class EEBaseDistributedHttpTest {
     remote.execute(
         "create database `"
             + name.getMethodName()
-            + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+            + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader'"
+            + " role reader, writer identified by 'writer' role writer)");
   }
 
   @After

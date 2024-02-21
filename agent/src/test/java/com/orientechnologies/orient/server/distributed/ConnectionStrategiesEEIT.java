@@ -38,7 +38,8 @@ public class ConnectionStrategiesEEIT {
     remote.execute(
         "create database `"
             + ConnectionStrategiesEEIT.class.getSimpleName()
-            + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+            + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader'"
+            + " role reader, writer identified by 'writer' role writer)");
     remote.close();
     waitForDbOnlineStatus(ConnectionStrategiesEEIT.class.getSimpleName());
   }
@@ -58,8 +59,11 @@ public class ConnectionStrategiesEEIT {
   @Ignore
   @Test
   public void testRoundRobinShutdownWrite()
-      throws InterruptedException, ClassNotFoundException, InstantiationException,
-          IllegalAccessException, IOException {
+      throws InterruptedException,
+          ClassNotFoundException,
+          InstantiationException,
+          IllegalAccessException,
+          IOException {
     OrientDB remote1 =
         new OrientDB(
             "remote:localhost;localhost:2425;localhost:2426",
@@ -136,8 +140,11 @@ public class ConnectionStrategiesEEIT {
   @Ignore
   @Test
   public void testRoundRobinShutdownWriteRestartWithoutWait()
-      throws InterruptedException, ClassNotFoundException, InstantiationException,
-          IllegalAccessException, IOException {
+      throws InterruptedException,
+          ClassNotFoundException,
+          InstantiationException,
+          IllegalAccessException,
+          IOException {
     OrientDB remote1 =
         new OrientDB(
             "remote:localhost;localhost:2425;localhost:2426",

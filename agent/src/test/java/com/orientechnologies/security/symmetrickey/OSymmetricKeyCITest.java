@@ -142,7 +142,8 @@ public class OSymmetricKeyCITest extends AbstractSecurityTest {
       final String password =
           "{'keyStore':{ 'file':'"
               + SERVER_DIRECTORY
-              + "/config/test.jks', 'password':'password', 'keyAlias':'keyAlias', 'keyPassword':'password' } }";
+              + "/config/test.jks', 'password':'password', 'keyAlias':'keyAlias',"
+              + " 'keyPassword':'password' } }";
 
       // The keystore is specified for username "test3" in the security.json file.
       OServerAdmin serverAd = new OServerAdmin("remote:localhost");

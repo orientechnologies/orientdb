@@ -79,14 +79,16 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
         .getSystemDatabase()
         .execute(
             null,
-            "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)",
+            "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM"
+                + " ORole WHERE name = ?)",
             sysuser,
             "root");
     server
         .getSystemDatabase()
         .execute(
             null,
-            "update OUser set properties={'@type':'d', 'key':'8BC7LeGkFbmHEYNTz5GwDw==','keyAlgorithm':'AES'} where name = ?",
+            "update OUser set properties={'@type':'d',"
+                + " 'key':'8BC7LeGkFbmHEYNTz5GwDw==','keyAlgorithm':'AES'} where name = ?",
             sysuser);
 
     OSymmetricKey sk = new OSymmetricKey("AES", "8BC7LeGkFbmHEYNTz5GwDw==");
@@ -107,14 +109,17 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
         .getSystemDatabase()
         .execute(
             null,
-            "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)",
+            "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM"
+                + " ORole WHERE name = ?)",
             sysuser,
             "root");
     server
         .getSystemDatabase()
         .execute(
             null,
-            "update OUser set properties={'@type':'d', 'keyFile':'${ORIENTDB_HOME}/config/AES.key','keyAlgorithm':'AES'} where name = ?",
+            "update OUser set properties={'@type':'d',"
+                + " 'keyFile':'${ORIENTDB_HOME}/config/AES.key','keyAlgorithm':'AES'} where name ="
+                + " ?",
             sysuser);
 
     OSymmetricKey sk =
@@ -136,14 +141,17 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
         .getSystemDatabase()
         .execute(
             null,
-            "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)",
+            "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM"
+                + " ORole WHERE name = ?)",
             sysuser,
             "root");
     server
         .getSystemDatabase()
         .execute(
             null,
-            "update OUser set properties={'@type':'d', 'keyStore':{'file':'${ORIENTDB_HOME}/config/test.jks','password':'password','keyAlias':'keyAlias','keyPassword':'password'}} where name = ?",
+            "update OUser set properties={'@type':'d',"
+                + " 'keyStore':{'file':'${ORIENTDB_HOME}/config/test.jks','password':'password','keyAlias':'keyAlias','keyPassword':'password'}}"
+                + " where name = ?",
             sysuser);
 
     OSymmetricKey sk =

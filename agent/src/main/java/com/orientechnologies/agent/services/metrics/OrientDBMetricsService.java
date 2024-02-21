@@ -65,7 +65,8 @@ public class OrientDBMetricsService implements OEnterpriseService {
                                     OLogManager.instance()
                                         .warn(
                                             this,
-                                            "OEnterpriseProfilerFactory.loadConfig() Could not access the profiler JSON file: %s",
+                                            "OEnterpriseProfilerFactory.loadConfig() Could not"
+                                                + " access the profiler JSON file: %s",
                                             null,
                                             configFile);
                                     content = "{ \"enabled\" : false}";
