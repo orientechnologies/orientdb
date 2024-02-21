@@ -40,7 +40,7 @@
     "font-awesome": "^4.6.3",
     "fullcalendar": "^3.9.0",
     "ie-shim": "^0.1.0",
-    "jquery": "2.1.4",
+    "jquery": "2.2.4",
     "jquery-ui": "1.12.1",
     "js-base64": "^2.3.2",
     "json-loader": "^0.5.7",
