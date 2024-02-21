@@ -178,9 +178,9 @@ amdefine@>=0.0.4:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/amdefine/-/amdefine-1.0.1.tgz#4a5282ac164729e93619bcfd3ad151f817ce91f5"
 
-angular-animate@1.5.9:
-  version "1.5.9"
-  resolved "https://registry.yarnpkg.com/angular-animate/-/angular-animate-1.5.9.tgz#c958d524f9333a48abdaefb32947c7e611f54453"
+angular-animate@1.8.3:
+  version "1.8.3"
+  resolved "https://registry.yarnpkg.com/angular-animate/-/angular-animate-1.8.3.tgz#f88db37325de256f9144d1242ce3158134a9d72a"
 
 angular-bootstrap-switch@^0.5.2:
   version "0.5.2"
