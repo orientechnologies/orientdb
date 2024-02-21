@@ -111,6 +111,22 @@ public class ODurablePage {
   /**
    * DO NOT DELETE THIS METHOD IT IS USED IN ENTERPRISE STORAGE
    *
+   * <p>Copies content of page into passed in byte array.
+   *
+   * @param buffer Buffer from which data will be copied
+   * @param data Byte array to which data will be copied
+   * @param offset Offset of data inside page
+   * @param length Length of data to be copied
+   */
+  @SuppressWarnings("unused")
+  public static void getPageData(
+      final ByteBuffer buffer, final byte[] data, final int offset, final int length) {
+    buffer.get(0, data, offset, length);
+  }
+
+  /**
+   * DO NOT DELETE THIS METHOD IT IS USED IN ENTERPRISE STORAGE
+   *
    * <p>Get value of LSN from the passed in offset in byte array.
    *
    * @param offset Offset inside of byte array from which LSN value will be read.
