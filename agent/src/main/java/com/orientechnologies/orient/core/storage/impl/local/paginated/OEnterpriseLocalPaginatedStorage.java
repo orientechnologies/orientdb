@@ -20,7 +20,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.agent.Utils;
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
@@ -37,7 +36,11 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OBackupInProgressException;
+import com.orientechnologies.orient.core.exception.OInvalidInstanceIdException;
+import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -54,7 +57,16 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -69,12 +81,23 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-import javax.crypto.*;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -93,10 +116,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   private static final String CONF_ENTRY_NAME = "database.ocf";
   private static final String INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
   private static final String CONF_UTF_8_ENTRY_NAME = "database_utf8.ocf";
-
-  private volatile int backupRunning = 0;
-  private volatile int ddlRunning = 0;
-
   private static final String ENCRYPTION_IV = "encryption.iv";
 
   private final List<OEnterpriseStorageOperationListener> listeners = new CopyOnWriteArrayList<>();
@@ -1215,62 +1234,5 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           new OSecurityException("Implementation of encryption " + TRANSFORMATION + " is absent"),
           e);
     }
-  }
-
-  protected synchronized void startBackup() {
-    while (isDDLRunning()) {
-      try {
-        this.wait();
-      } catch (InterruptedException e) {
-        throw OException.wrapException(
-            new OInterruptedException("Interrupted wait for backup to finish"), e);
-      }
-    }
-    this.backupRunning += 1;
-  }
-
-  protected synchronized void endBackup() {
-    assert this.backupRunning > 0;
-    this.backupRunning -= 1;
-    if (this.backupRunning == 0) {
-      this.notifyAll();
-    }
-  }
-
-  public synchronized boolean isIcrementalBackupRunning() {
-    return this.backupRunning > 0;
-  }
-
-  private synchronized boolean isDDLRunning() {
-    return this.ddlRunning > 0;
-  }
-
-  private synchronized void waitBackup() {
-    while (isIcrementalBackupRunning()) {
-      try {
-        this.wait();
-      } catch (InterruptedException e) {
-        throw OException.wrapException(
-            new OInterruptedException("Interrupted wait for backup to finish"), e);
-      }
-    }
-  }
-
-  public synchronized void startDDL() {
-    waitBackup();
-    this.ddlRunning += 1;
-  }
-
-  public synchronized void endDDL() {
-    assert this.ddlRunning > 0;
-    this.ddlRunning -= 1;
-    if (this.ddlRunning == 0) {
-      this.notifyAll();
-    }
-  }
-
-  @Override
-  protected void checkBackupRunning() {
-    waitBackup();
   }
 }
