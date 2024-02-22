@@ -2390,7 +2390,7 @@ public final class OWOWCache extends OAbstractWriteCache
           assert buffer.position() == 0;
           assert buffer.order() == ByteOrder.nativeOrder();
 
-          fileClassic.read(pagePosition, buffer, false);
+          fileClassic.read(pagePosition, buffer, true);
 
           if (verifyChecksums
               && (checksumMode == OChecksumMode.StoreAndVerify
@@ -2554,9 +2554,8 @@ public final class OWOWCache extends OAbstractWriteCache
   private boolean verifyMagicChecksumAndDecryptPage(
       final ByteBuffer buffer, final int intId, final long pageIndex) {
     assert buffer.order() == ByteOrder.nativeOrder();
-
-    buffer.position(MAGIC_NUMBER_OFFSET);
-    final long magicNumber = OLongSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+    final long magicNumber =
+        OLongSerializer.INSTANCE.deserializeFromByteBufferObject(MAGIC_NUMBER_OFFSET, buffer);
 
     if ((aesKey == null && magicNumber != MAGIC_NUMBER_WITH_CHECKSUM)
         || (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM
@@ -2580,8 +2579,8 @@ public final class OWOWCache extends OAbstractWriteCache
           intId, (int) pageIndex, Cipher.DECRYPT_MODE, buffer, magicNumber >>> 8);
     }
 
-    buffer.position(CHECKSUM_OFFSET);
-    final int storedChecksum = OIntegerSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+    final int storedChecksum =
+        OIntegerSerializer.INSTANCE.deserializeFromByteBufferObject(CHECKSUM_OFFSET, buffer);
 
     buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
     final CRC32 crc32 = new CRC32();
