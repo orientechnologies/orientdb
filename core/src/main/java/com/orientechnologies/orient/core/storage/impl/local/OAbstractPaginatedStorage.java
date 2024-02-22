@@ -333,6 +333,9 @@ public abstract class OAbstractPaginatedStorage
   protected OrientDBInternal context;
   private volatile CountDownLatch migration = new CountDownLatch(1);
 
+  private volatile int backupRunning = 0;
+  private volatile int ddlRunning = 0;
+
   public OAbstractPaginatedStorage(
       final String name, final String filePath, final int id, OrientDBInternal context) {
     this.context = context;
@@ -7005,11 +7008,33 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  protected abstract void checkBackupRunning();
+  public synchronized void startDDL() {
+    waitBackup();
+    this.ddlRunning += 1;
+  }
 
-  public void startDDL() {}
+  public synchronized void endDDL() {
+    assert this.ddlRunning > 0;
+    this.ddlRunning -= 1;
+    if (this.ddlRunning == 0) {
+      this.notifyAll();
+    }
+  }
 
-  public void endDDL() {}
+  private synchronized void waitBackup() {
+    while (isIcrementalBackupRunning()) {
+      try {
+        this.wait();
+      } catch (InterruptedException e) {
+        throw OException.wrapException(
+            new OInterruptedException("Interrupted wait for backup to finish"), e);
+      }
+    }
+  }
+
+  protected void checkBackupRunning() {
+    waitBackup();
+  }
 
   @Override
   public OrientDBInternal getContext() {
@@ -7018,5 +7043,33 @@ public abstract class OAbstractPaginatedStorage
 
   public boolean isMemory() {
     return false;
+  }
+
+  protected synchronized void endBackup() {
+    assert this.backupRunning > 0;
+    this.backupRunning -= 1;
+    if (this.backupRunning == 0) {
+      this.notifyAll();
+    }
+  }
+
+  public synchronized boolean isIcrementalBackupRunning() {
+    return this.backupRunning > 0;
+  }
+
+  protected synchronized boolean isDDLRunning() {
+    return this.ddlRunning > 0;
+  }
+
+  protected synchronized void startBackup() {
+    while (isDDLRunning()) {
+      try {
+        this.wait();
+      } catch (InterruptedException e) {
+        throw OException.wrapException(
+            new OInterruptedException("Interrupted wait for backup to finish"), e);
+      }
+    }
+    this.backupRunning += 1;
   }
 }
