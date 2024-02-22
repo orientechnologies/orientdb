@@ -457,7 +457,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     return index < 0 ? 0 : Math.abs(index);
   }
 
-  private OLogSequenceNumber incrementalBackup(
+  protected OLogSequenceNumber incrementalBackup(
       final OutputStream stream, final OLogSequenceNumber fromLsn, final boolean singleThread)
       throws IOException {
     OLogSequenceNumber lastLsn;
@@ -590,7 +590,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     return lastLsn;
   }
 
-  private static void doEncryptionDecryption(
+  protected static void doEncryptionDecryption(
       final int mode,
       final byte[] aesKey,
       final long pageIndex,
@@ -687,15 +687,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         cacheEntry.acquireSharedLock();
         try {
           final OLogSequenceNumber pageLsn =
-              ODurablePage.getLogSequenceNumberFromPage(
-                  cacheEntry.getCachePointer().getBufferDuplicate());
+              ODurablePage.getLogSequenceNumberFromPage(cacheEntry.getCachePointer().getBuffer());
 
           if (changeLsn == null || pageLsn.compareTo(changeLsn) > 0) {
 
             final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
             OLongSerializer.INSTANCE.serializeNative(pageIndex, data, 0);
             ODurablePage.getPageData(
-                cacheEntry.getCachePointer().getBufferDuplicate(),
+                cacheEntry.getCachePointer().getBuffer(),
                 data,
                 OLongSerializer.LONG_SIZE,
                 pageSize);
@@ -763,7 +762,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
-  private OQuarto<Locale, OContextConfiguration, String, Locale> preprocessingIncrementalRestore()
+  protected OQuarto<Locale, OContextConfiguration, String, Locale> preprocessingIncrementalRestore()
       throws IOException {
     final Locale serverLocale = configuration.getLocaleInstance();
     final OContextConfiguration contextConfiguration = configuration.getContextConfiguration();
@@ -897,7 +896,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
-  private void postProcessIncrementalRestore(OContextConfiguration contextConfiguration)
+  protected void postProcessIncrementalRestore(OContextConfiguration contextConfiguration)
       throws IOException {
     if (OClusterBasedStorageConfiguration.exists(writeCache)) {
       configuration = new OClusterBasedStorageConfiguration(this);
@@ -947,7 +946,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         });
   }
 
-  private void restoreFromIncrementalBackup(
+  protected void restoreFromIncrementalBackup(
       final String charset,
       final Locale serverLocale,
       final Locale locale,
@@ -1093,12 +1092,12 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           }
 
           try {
-            final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
+            final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
             final OLogSequenceNumber backedUpPageLsn =
                 ODurablePage.getLogSequenceNumber(OLongSerializer.LONG_SIZE, data);
             if (isFull) {
-              buffer.position(0);
-              buffer.put(data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+              buffer.put(
+                  0, data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
 
               if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) < 0) {
                 maxLsn = backedUpPageLsn;
@@ -1107,9 +1106,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               final OLogSequenceNumber currentPageLsn =
                   ODurablePage.getLogSequenceNumberFromPage(buffer);
               if (backedUpPageLsn.compareTo(currentPageLsn) > 0) {
-                buffer.position(0);
                 buffer.put(
-                    data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+                    0, data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
 
                 if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) < 0) {
                   maxLsn = backedUpPageLsn;
@@ -1219,7 +1217,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
-  private synchronized void startBackup() {
+  protected synchronized void startBackup() {
     while (isDDLRunning()) {
       try {
         this.wait();
@@ -1231,7 +1229,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     this.backupRunning += 1;
   }
 
-  private synchronized void endBackup() {
+  protected synchronized void endBackup() {
     assert this.backupRunning > 0;
     this.backupRunning -= 1;
     if (this.backupRunning == 0) {
