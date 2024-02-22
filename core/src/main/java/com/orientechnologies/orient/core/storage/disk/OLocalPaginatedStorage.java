@@ -88,11 +88,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @SuppressWarnings("WeakerAccess")
   protected static final long IV_SEED = 234120934;
 
-  private static final String IV_EXT = ".iv";
-
-  @SuppressWarnings("WeakerAccess")
-  protected static final String IV_NAME = "data" + IV_EXT;
-
   private static final String[] ALL_FILE_EXTENSIONS = {
     ".cm",
     ".ocf",
@@ -857,6 +852,53 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     }
   }
 
-  @Override
-  protected void checkBackupRunning() {}
+  protected void postProcessIncrementalRestore(OContextConfiguration contextConfiguration)
+      throws IOException {
+    if (OClusterBasedStorageConfiguration.exists(writeCache)) {
+      configuration = new OClusterBasedStorageConfiguration(this);
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null,
+          atomicOperation ->
+              ((OClusterBasedStorageConfiguration) configuration)
+                  .load(contextConfiguration, atomicOperation));
+    } else {
+      if (Files.exists(getStoragePath().resolve("database.ocf"))) {
+        final OStorageConfigurationSegment oldConfig = new OStorageConfigurationSegment(this);
+        oldConfig.load(contextConfiguration);
+
+        final OClusterBasedStorageConfiguration atomicConfiguration =
+            new OClusterBasedStorageConfiguration(this);
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            atomicOperation ->
+                atomicConfiguration.create(atomicOperation, contextConfiguration, oldConfig));
+        configuration = atomicConfiguration;
+
+        oldConfig.close();
+        Files.deleteIfExists(getStoragePath().resolve("database.ocf"));
+      }
+
+      if (configuration == null) {
+        configuration = new OClusterBasedStorageConfiguration(this);
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            atomicOperation ->
+                ((OClusterBasedStorageConfiguration) configuration)
+                    .load(contextConfiguration, atomicOperation));
+      }
+    }
+
+    atomicOperationsManager.executeInsideAtomicOperation(null, this::openClusters);
+    sbTreeCollectionManager.close();
+    sbTreeCollectionManager.load();
+    openIndexes();
+
+    flushAllData();
+
+    atomicOperationsManager.executeInsideAtomicOperation(
+        null,
+        atomicOperation2 -> {
+          generateDatabaseInstanceId(atomicOperation2);
+        });
+  }
 }
