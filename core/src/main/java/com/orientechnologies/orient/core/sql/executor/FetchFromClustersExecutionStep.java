@@ -5,9 +5,11 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
+import com.orientechnologies.orient.core.sql.executor.resultset.OMultipleExecutionStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /** Created by luigidellaquila on 21/07/16. */
@@ -65,8 +67,29 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    return new OSubResultsExecutionStream(
-        this.subSteps.stream().map((step) -> ((AbstractExecutionStep) step).start(ctx)).iterator());
+
+    List<OExecutionStep> stepsIter = getSubSteps();
+
+    OExecutionStreamProducer res =
+        new OExecutionStreamProducer() {
+          private final Iterator<OExecutionStep> iter = stepsIter.iterator();
+
+          @Override
+          public OExecutionStream next(OCommandContext ctx) {
+            OExecutionStep step = iter.next();
+            return ((AbstractExecutionStep) step).start(ctx);
+          }
+
+          @Override
+          public boolean hasNext(OCommandContext ctx) {
+            return iter.hasNext();
+          }
+
+          @Override
+          public void close(OCommandContext ctx) {}
+        };
+
+    return new OMultipleExecutionStream(res);
   }
 
   @Override

@@ -7,7 +7,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
+import com.orientechnologies.orient.core.sql.executor.resultset.OMultipleExecutionStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -131,9 +132,28 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
 
-    Iterator<OExecutionStream> substeps =
-        getSubSteps().stream().map((step) -> ((AbstractExecutionStep) step).start(ctx)).iterator();
-    return new OSubResultsExecutionStream(substeps)
+    List<OExecutionStep> stepsIter = getSubSteps();
+
+    OExecutionStreamProducer res =
+        new OExecutionStreamProducer() {
+          private final Iterator<OExecutionStep> iter = stepsIter.iterator();
+
+          @Override
+          public OExecutionStream next(OCommandContext ctx) {
+            OExecutionStep step = iter.next();
+            return ((AbstractExecutionStep) step).start(ctx);
+          }
+
+          @Override
+          public boolean hasNext(OCommandContext ctx) {
+            return iter.hasNext();
+          }
+
+          @Override
+          public void close(OCommandContext ctx) {}
+        };
+
+    return new OMultipleExecutionStream(res)
         .map(
             (result, context) -> {
               context.setVariable("$current", result);

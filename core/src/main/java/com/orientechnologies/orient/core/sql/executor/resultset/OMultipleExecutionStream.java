@@ -2,13 +2,12 @@ package com.orientechnologies.orient.core.sql.executor.resultset;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import java.util.Iterator;
 
-public final class OSubResultsExecutionStream implements OExecutionStream {
-  private final Iterator<OExecutionStream> streamsSource;
+public final class OMultipleExecutionStream implements OExecutionStream {
+  private final OExecutionStreamProducer streamsSource;
   private OExecutionStream currentStream;
 
-  public OSubResultsExecutionStream(Iterator<OExecutionStream> streamSource) {
+  public OMultipleExecutionStream(OExecutionStreamProducer streamSource) {
     this.streamsSource = streamSource;
   }
 
@@ -18,10 +17,10 @@ public final class OSubResultsExecutionStream implements OExecutionStream {
       if (currentStream != null) {
         currentStream.close(ctx);
       }
-      if (!streamsSource.hasNext()) {
+      if (!streamsSource.hasNext(ctx)) {
         return false;
       }
-      currentStream = streamsSource.next();
+      currentStream = streamsSource.next(ctx);
     }
     return true;
   }
@@ -39,8 +38,6 @@ public final class OSubResultsExecutionStream implements OExecutionStream {
     if (currentStream != null) {
       currentStream.close(ctx);
     }
-    while (streamsSource.hasNext()) {
-      streamsSource.next().close(ctx);
-    }
+    streamsSource.close(ctx);
   }
 }

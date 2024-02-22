@@ -9,7 +9,8 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
+import com.orientechnologies.orient.core.sql.executor.resultset.OMultipleExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
@@ -25,6 +26,7 @@ import com.orientechnologies.orient.core.sql.parser.OLtOperator;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -69,19 +71,35 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
     Set<Stream<ORawPair<Object, ORID>>> streams = init(condition);
-    Stream<OExecutionStream> resultStreams =
-        streams.stream()
-            .map(
-                (s) -> {
-                  return OExecutionStream.resultIterator(
-                      s.filter(
-                              (entry) -> {
-                                return filter(entry, ctx);
-                              })
-                          .map((nextEntry) -> readResult(ctx, nextEntry))
-                          .iterator());
-                });
-    return new OSubResultsExecutionStream(resultStreams.iterator());
+    OExecutionStreamProducer res =
+        new OExecutionStreamProducer() {
+          private final Iterator<Stream<ORawPair<Object, ORID>>> iter = streams.iterator();
+
+          @Override
+          public OExecutionStream next(OCommandContext ctx) {
+            Stream<ORawPair<Object, ORID>> s = iter.next();
+            return OExecutionStream.resultIterator(
+                s.filter(
+                        (entry) -> {
+                          return filter(entry, ctx);
+                        })
+                    .map((nextEntry) -> readResult(ctx, nextEntry))
+                    .iterator());
+          }
+
+          @Override
+          public boolean hasNext(OCommandContext ctx) {
+            return iter.hasNext();
+          }
+
+          @Override
+          public void close(OCommandContext ctx) {
+            while (iter.hasNext()) {
+              iter.next().close();
+            }
+          }
+        };
+    return new OMultipleExecutionStream(res);
   }
 
   private OResult readResult(OCommandContext ctx, ORawPair<Object, ORID> entry) {

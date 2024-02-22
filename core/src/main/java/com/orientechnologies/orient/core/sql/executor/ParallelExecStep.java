@@ -3,7 +3,9 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OSubResultsExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
+import com.orientechnologies.orient.core.sql.executor.resultset.OMultipleExecutionStream;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,8 +24,29 @@ public class ParallelExecStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    return new OSubResultsExecutionStream(
-        subExecutionPlans.stream().map((step) -> step.start()).iterator());
+
+    List<OInternalExecutionPlan> stepsIter = subExecutionPlans;
+
+    OExecutionStreamProducer res =
+        new OExecutionStreamProducer() {
+          private final Iterator<OInternalExecutionPlan> iter = stepsIter.iterator();
+
+          @Override
+          public OExecutionStream next(OCommandContext ctx) {
+            OInternalExecutionPlan step = iter.next();
+            return ((OInternalExecutionPlan) step).start();
+          }
+
+          @Override
+          public boolean hasNext(OCommandContext ctx) {
+            return iter.hasNext();
+          }
+
+          @Override
+          public void close(OCommandContext ctx) {}
+        };
+
+    return new OMultipleExecutionStream(res);
   }
 
   @Override
