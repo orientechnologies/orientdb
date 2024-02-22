@@ -102,10 +102,8 @@ public class StorageBackupMTIT {
 
       final ODatabaseCompare compare =
           new ODatabaseCompare(
-              "plocal:" + dbDirectory,
-              "plocal:" + backedUpDbDirectory,
-              "admin",
-              "admin",
+              embedded.open(dbName, "admin", "admin"),
+              embedded.open(backupDbName, "admin", "admin"),
               System.out::println);
       System.out.println("compare");
 
@@ -212,10 +210,8 @@ public class StorageBackupMTIT {
       OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue("T1JJRU5UREJfSVNfQ09PTA==");
       final ODatabaseCompare compare =
           new ODatabaseCompare(
-              "plocal:" + dbDirectory,
-              "plocal:" + backedUpDbDirectory,
-              "admin",
-              "admin",
+              embedded.open(dbName, "admin", "admin"),
+              embedded.open(backupDbName, "admin", "admin"),
               System.out::println);
       System.out.println("compare");
 

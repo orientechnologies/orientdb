@@ -116,6 +116,7 @@ public class QueryProfilerTest {
     Assert.assertEquals(2, queries.size());
 
     endLatch.countDown();
+    context.close();
   }
 
   @Test
@@ -165,6 +166,7 @@ public class QueryProfilerTest {
     }
 
     local.close();
+    context.close();
   }
 
   @After

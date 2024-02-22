@@ -4,12 +4,12 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -119,13 +119,11 @@ public class StorageBackupMTTest {
           backupDir.getAbsolutePath(),
           OrientDBConfig.defaultConfig());
       embedded.close();
-
+      orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
       final ODatabaseCompare compare =
           new ODatabaseCompare(
-              "plocal:" + dbDirectory,
-              "plocal:" + backedUpDbDirectory,
-              "admin",
-              "admin",
+              (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "admin"),
+              (ODatabaseDocumentInternal) orientDB.open(backupDbName, "admin", "admin"),
               System.out::println);
       System.out.println("compare");
 
@@ -134,29 +132,12 @@ public class StorageBackupMTTest {
 
     } finally {
 
-      try {
-        ODatabaseDocumentTx.closeAll();
-      } catch (Exception ex) {
-        OLogManager.instance().error(this, "", ex);
-      }
-      if (orientDB.isOpen()) {
-        try {
-          orientDB.close();
-        } catch (Exception ex) {
-          OLogManager.instance().error(this, "", ex);
-        }
-      }
-      try {
-        orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
-        orientDB.drop(dbName);
-        orientDB.drop(backupDbName);
+      orientDB.drop(dbName);
+      orientDB.drop(backupDbName);
 
-        orientDB.close();
+      orientDB.close();
 
-        OFileUtils.deleteRecursively(backupDir);
-      } catch (Exception ex) {
-        OLogManager.instance().error(this, "", ex);
-      }
+      OFileUtils.deleteRecursively(backupDir);
     }
   }
 
@@ -240,12 +221,11 @@ public class StorageBackupMTTest {
       embedded.close();
 
       OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue("T1JJRU5UREJfSVNfQ09PTA==");
+      orientDB = new OrientDB("embedded:" + buildDirectory, config);
       final ODatabaseCompare compare =
           new ODatabaseCompare(
-              "plocal:" + dbDirectory,
-              "plocal:" + backedUpDbDirectory,
-              "admin",
-              "admin",
+              (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "admin"),
+              (ODatabaseDocumentInternal) orientDB.open(backupDbName, "admin", "admin"),
               System.out::println);
       System.out.println("compare");
 
@@ -253,30 +233,13 @@ public class StorageBackupMTTest {
       Assert.assertTrue(areSame);
 
     } finally {
-      try {
-        ODatabaseDocumentTx.closeAll();
-        OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue(null);
-      } catch (Exception ex) {
-        OLogManager.instance().error(this, "", ex);
-      }
-      if (orientDB.isOpen()) {
-        try {
-          orientDB.close();
-        } catch (Exception ex) {
-          OLogManager.instance().error(this, "", ex);
-        }
-      }
-      try {
-        orientDB = new OrientDB("embedded:" + buildDirectory, config);
-        orientDB.drop(dbName);
-        orientDB.drop(backupDbName);
 
-        orientDB.close();
+      orientDB.drop(dbName);
+      orientDB.drop(backupDbName);
 
-        OFileUtils.deleteRecursively(backupDir);
-      } catch (Exception ex) {
-        OLogManager.instance().error(this, "", ex);
-      }
+      orientDB.close();
+
+      OFileUtils.deleteRecursively(backupDir);
     }
   }
 

@@ -100,6 +100,7 @@ public class BruteForceSecurityTest {
 
     long mean = total.get() / count.get();
     Assert.assertTrue(mean < 300 && mean > 0);
+    context.close();
   }
 
   @After

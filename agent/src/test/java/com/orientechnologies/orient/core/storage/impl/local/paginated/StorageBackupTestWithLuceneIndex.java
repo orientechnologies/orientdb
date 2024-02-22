@@ -34,6 +34,8 @@ import java.io.IOException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Disabled for now. Re-enable it when this is implemented
@@ -86,7 +88,8 @@ public class StorageBackupTestWithLuceneIndex {
     OFileUtils.deleteRecursively(new File(buildDirectory, "backupDir"));
   }
 
-  // @Test
+  @Test
+  @Ignore
   public void testSingeThreadFullBackup() throws IOException {
 
     final OSchema schema = db.getMetadata().getSchema();
@@ -116,7 +119,7 @@ public class StorageBackupTestWithLuceneIndex {
     final OStorage storage = db.getStorage();
     db.close();
 
-    storage.close(true, false);
+    storage.close(true);
 
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
@@ -127,14 +130,12 @@ public class StorageBackupTestWithLuceneIndex {
     final OStorage backupStorage = backedUpDb.getStorage();
     backedUpDb.close();
 
-    backupStorage.close(true, false);
+    backupStorage.close(true);
 
     final ODatabaseCompare compare =
         new ODatabaseCompare(
-            "plocal:" + dbDirectory,
-            "plocal:" + backedUpDbDirectory,
-            "admin",
-            "admin",
+            db,
+            backedUpDb,
             new OCommandOutputListener() {
               @Override
               public void onMessage(String iText) {
@@ -183,7 +184,7 @@ public class StorageBackupTestWithLuceneIndex {
     final OStorage storage = db.getStorage();
     db.close();
 
-    storage.close(true, false);
+    storage.close(true);
 
     final String backedUpDbDirectory =
         buildDirectory
@@ -199,14 +200,12 @@ public class StorageBackupTestWithLuceneIndex {
     final OStorage backupStorage = backedUpDb.getStorage();
     backedUpDb.close();
 
-    backupStorage.close(true, false);
+    backupStorage.close(true);
 
     final ODatabaseCompare compare =
         new ODatabaseCompare(
-            "plocal:" + dbDirectory,
-            "plocal:" + backedUpDbDirectory,
-            "admin",
-            "admin",
+            db,
+            backedUpDb,
             new OCommandOutputListener() {
               @Override
               public void onMessage(String iText) {

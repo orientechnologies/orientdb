@@ -22,7 +22,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -105,20 +104,15 @@ public class StorageBackupTest {
         backupDir.getAbsolutePath(),
         OrientDBConfig.defaultConfig());
     embedded.close();
-
-    final ODatabaseCompare compare =
+    orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
+    ODatabaseCompare compare =
         new ODatabaseCompare(
-            "plocal:" + dbDirectory,
-            "plocal:" + backedUpDbDirectory,
-            "admin",
-            "admin",
+            (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "admin"),
+            (ODatabaseDocumentInternal) orientDB.open(backupDbName, "admin", "admin"),
             System.out::println);
 
     Assert.assertTrue(compare.compare());
 
-    ODatabaseDocumentTx.closeAll();
-
-    orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
     orientDB.drop(dbName);
     orientDB.drop(backupDbName);
 
@@ -207,20 +201,16 @@ public class StorageBackupTest {
         backupDir.getAbsolutePath(),
         OrientDBConfig.defaultConfig());
     embedded.close();
+    orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
 
     final ODatabaseCompare compare =
         new ODatabaseCompare(
-            "plocal:" + dbDirectory,
-            "plocal:" + backedUpDbDirectory,
-            "admin",
-            "admin",
+            (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "admin"),
+            (ODatabaseDocumentInternal) orientDB.open(backupDbName, "admin", "admin"),
             System.out::println);
 
     Assert.assertTrue(compare.compare());
 
-    ODatabaseDocumentTx.closeAll();
-
-    orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
     orientDB.drop(dbName);
     orientDB.drop(backupDbName);
 
@@ -308,20 +298,17 @@ public class StorageBackupTest {
     embedded.close();
 
     OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue("T1JJRU5UREJfSVNfQ09PTA==");
-    final ODatabaseCompare compare =
+    orientDB = new OrientDB("embedded:" + buildDirectory, config);
+    ODatabaseCompare compare =
         new ODatabaseCompare(
-            "plocal:" + dbDirectory,
-            "plocal:" + backedUpDbDirectory,
-            "admin",
-            "admin",
+            (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "admin"),
+            (ODatabaseDocumentInternal) orientDB.open(backupDbName, "admin", "admin"),
             System.out::println);
 
     Assert.assertTrue(compare.compare());
 
-    ODatabaseDocumentTx.closeAll();
     OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue(null);
 
-    orientDB = new OrientDB("embedded:" + buildDirectory, config);
     orientDB.drop(dbName);
     orientDB.drop(backupDbName);
 
