@@ -27,7 +27,6 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.concur.lock.ONotThreadRWLockManager;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OSimpleRWLockManager;
-import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOException;
@@ -211,6 +210,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -319,7 +320,7 @@ public abstract class OAbstractPaginatedStorage
 
   protected AtomicOperationsTable atomicOperationsTable;
   protected final String url;
-  protected final ScalableRWLock stateLock;
+  protected final ReadWriteLock stateLock;
 
   protected volatile OStorageConfiguration configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
@@ -339,7 +340,7 @@ public abstract class OAbstractPaginatedStorage
 
     url = filePath;
 
-    stateLock = new ScalableRWLock();
+    stateLock = new ReentrantReadWriteLock();
 
     this.id = id;
     lockManager = new ONotThreadRWLockManager<>();
