@@ -5907,7 +5907,7 @@ public abstract class OAbstractPaginatedStorage
   public void fullIncrementalBackup(final OutputStream stream)
       throws UnsupportedOperationException {
     try {
-      incrementalBackup(stream, null, false);
+      incrementalBackup(stream, null, false, false);
     } catch (IOException e) {
       throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
     }
@@ -5915,6 +5915,15 @@ public abstract class OAbstractPaginatedStorage
 
   protected OLogSequenceNumber incrementalBackup(
       final OutputStream stream, final OLogSequenceNumber fromLsn, final boolean singleThread)
+      throws IOException {
+    return incrementalBackup(stream, fromLsn, singleThread, true);
+  }
+
+  protected OLogSequenceNumber incrementalBackup(
+      final OutputStream stream,
+      final OLogSequenceNumber fromLsn,
+      final boolean singleThread,
+      boolean writeMetadata)
       throws IOException {
     OLogSequenceNumber lastLsn;
 
@@ -6028,7 +6037,9 @@ public abstract class OAbstractPaginatedStorage
           }
         } finally {
           try {
-            zipOutputStream.finish();
+            if (writeMetadata) {
+              zipOutputStream.finish();
+            }
             zipOutputStream.flush();
           } catch (IOException e) {
             OLogManager.instance().warn(this, "Failed to flush resource " + zipOutputStream);
