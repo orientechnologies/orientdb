@@ -344,7 +344,7 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
     throw new UnsupportedOperationException();
   }
 
-  default void deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
+  default boolean deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     throw new UnsupportedOperationException();
   }
 
