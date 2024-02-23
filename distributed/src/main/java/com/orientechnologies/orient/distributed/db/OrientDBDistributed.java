@@ -386,10 +386,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   @Override
-  public void deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
-    new ONewDeltaSyncImporter()
-        .importDelta(server, dbName, backupStream, plugin.getLocalNodeName());
-    getDatabase(dbName).setOnline();
+  public boolean deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
+    if (new ONewDeltaSyncImporter()
+        .importDelta(server, dbName, backupStream, plugin.getLocalNodeName())) {
+      getDatabase(dbName).setOnline();
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private void offlineOnShutdown() {

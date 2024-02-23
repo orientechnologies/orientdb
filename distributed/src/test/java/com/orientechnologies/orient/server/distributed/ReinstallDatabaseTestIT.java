@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -74,9 +75,13 @@ public class ReinstallDatabaseTestIT {
     OServer server2Instance = setup.getServer(server2).getServerInstance();
     new Thread(
             () -> {
-              server2Instance
-                  .getDistributedManager()
-                  .installDatabase(false, DATABASE_NAME, true, true);
+              try {
+                server2Instance
+                    .getDistributedManager()
+                    .installDatabase(false, DATABASE_NAME, true, true);
+              } catch (RuntimeException e) {
+                OLogManager.instance().error(this, " error on install database", e);
+              }
               try {
                 Thread.sleep(2000);
               } catch (InterruptedException e) {

@@ -1535,22 +1535,24 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
         try (InputStream in = receiver.getInputStream()) {
           OrientDBInternal context = serverInstance.getDatabases();
-          context.deltaSync(databaseName, in, OrientDBConfig.defaultConfig());
+          databaseInstalledCorrectly =
+              context.deltaSync(databaseName, in, OrientDBConfig.defaultConfig());
         } catch (IOException e) {
           throw OException.wrapException(
               new OIOException("Error on distributed sync of database"), e);
         }
-
-        ODistributedServerLog.info(
-            this,
-            nodeName,
-            targetNode,
-            DIRECTION.IN,
-            "Installed delta of database '%s'",
-            databaseName);
+        if (databaseInstalledCorrectly) {
+          ODistributedServerLog.info(
+              this,
+              nodeName,
+              targetNode,
+              DIRECTION.IN,
+              "Installed delta of database '%s'",
+              databaseName);
+        }
 
         // DATABASE INSTALLED CORRECTLY
-        databaseInstalledCorrectly = true;
+
       } catch (OException | InterruptedException e) {
         OLogManager.instance().error(this, "Error installing database from network", e);
         databaseInstalledCorrectly = false;
@@ -2199,8 +2201,11 @@ public class ODistributedPlugin extends OServerPluginAbstract
                     null);
             if (response == null)
               throw new ODistributedDatabaseDeltaSyncException("Error Requesting delta sync");
-            installResponseNewDeltaSync(
-                databaseName, iNode, (ONewDeltaTaskResponse) response.getPayload());
+            boolean installed =
+                installResponseNewDeltaSync(
+                    databaseName, iNode, (ONewDeltaTaskResponse) response.getPayload());
+            if (!installed)
+              throw new ODistributedDatabaseDeltaSyncException("Error Requesting delta sync");
           }
         }
       } else {

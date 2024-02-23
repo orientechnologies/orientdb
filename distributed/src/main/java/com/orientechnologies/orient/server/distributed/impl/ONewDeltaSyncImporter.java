@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.util.concurrent.Callable;
 
 public class ONewDeltaSyncImporter {
-  public void importDelta(
+  public boolean importDelta(
       OServer serverInstance, String databaseName, InputStream in, String targetNode) {
     final String nodeName = serverInstance.getDistributedManager().getLocalNodeName();
     try {
@@ -39,8 +39,10 @@ public class ONewDeltaSyncImporter {
               return null;
             }
           });
+      return true;
     } catch (OException e) {
       OLogManager.instance().error(this, "Error running delta sync import", e);
+      return false;
     }
   }
 }
