@@ -93,7 +93,7 @@ public class OSuffixIdentifier extends SimpleNode {
         }
         return result;
       }
-      return null;
+      return varName;
     }
     if (recordAttribute != null && iCurrentRecord != null) {
       OElement rec =
