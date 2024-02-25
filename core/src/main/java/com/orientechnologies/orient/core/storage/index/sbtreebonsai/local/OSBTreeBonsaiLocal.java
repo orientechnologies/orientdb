@@ -1251,9 +1251,17 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           new ArrayList<>(indexToSplit);
 
       final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
+      if (startRightIndex == 0) {
+        throw new OStorageException("Left part of bucket is empty");
+      }
 
-      for (int i = startRightIndex; i < bucketSize; i++)
+      for (int i = startRightIndex; i < bucketSize; i++) {
         rightEntries.add(bucketToSplit.getEntry(i));
+      }
+
+      if (rightEntries.isEmpty()) {
+        throw new OStorageException("Right part of bucket is empty");
+      }
 
       if (!bucketPointer.equals(rootBucketPointer)) {
         final AllocationResult allocationResult =
@@ -1370,7 +1378,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         final List<OSBTreeBonsaiBucket.SBTreeEntry<K, V>> leftEntries =
             new ArrayList<>(indexToSplit);
 
-        for (int i = 0; i < indexToSplit; i++) leftEntries.add(bucketToSplit.getEntry(i));
+        for (int i = 0; i < indexToSplit; i++) {
+          leftEntries.add(bucketToSplit.getEntry(i));
+        }
 
         final AllocationResult leftAllocationResult =
             allocateBucketForWrite(

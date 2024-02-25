@@ -28,6 +28,7 @@ import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -1407,9 +1408,16 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
 
     final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
+    if (startRightIndex == 0) {
+      throw new OStorageException("Left part of bucket is empty");
+    }
 
     for (int i = startRightIndex; i < bucketSize; i++) {
       rightEntries.add(bucketToSplit.getRawEntry(i, keySerializer));
+    }
+
+    if (rightEntries.isEmpty()) {
+      throw new OStorageException("Right part of bucket is empty");
     }
 
     if (entryToSplit.getPageIndex() != ROOT_INDEX) {
