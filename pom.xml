@@ -164,7 +164,7 @@
         <!--Override with the given url on external modules-->
         <!--<license.location>https://github.com/orientechnologies/orientdb/raw/develop/ODB-ASL-LICENSE.txt</license.location>-->
         <heapSize>2048m</heapSize>
-        <javaassist.version>3.29.2-GA</javaassist.version>
+        <javaassist.version>3.30.2-GA</javaassist.version>
         <jaxb.api.version>2.3.0</jaxb.api.version>
         <project.rootdir>${project.basedir}/</project.rootdir>
         <graalvm.version>21.3.9</graalvm.version>
