@@ -226,9 +226,9 @@ angular-spectrum-colorpicker@^1.4.5:
     angular "^1.2.8"
     spectrum-colorpicker "^1.7.0"
 
-angular-strap@2.3.9:
-  version "2.3.9"
-  resolved "https://registry.yarnpkg.com/angular-strap/-/angular-strap-2.3.9.tgz#69b865e9e9627327e661ca16fbcac84da993ccf2"
+angular-strap@2.3.12:
+  version "2.3.12"
+  resolved "https://registry.yarnpkg.com/angular-strap/-/angular-strap-2.3.12.tgz#fae21655cd77079671bf918ab7ed6227783062fa"
 
 angular-translate-loader-partial@^2.15.2:
   version "2.15.2"
