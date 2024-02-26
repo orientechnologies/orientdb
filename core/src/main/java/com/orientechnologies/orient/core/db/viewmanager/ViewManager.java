@@ -174,10 +174,10 @@ public class ViewManager {
   }
 
   public void close() {
+    closed = true;
     if (timerTask != null) {
       timerTask.cancel();
     }
-    closed = true;
   }
 
   public void cleanUnusedViewClusters(ODatabaseDocument db) {
