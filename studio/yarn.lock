@@ -215,9 +215,9 @@ angular-scroll@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/angular-scroll/-/angular-scroll-1.0.2.tgz#2768ff35dbe1ce40e0c3fbedd4534888299c3e2d"
 
-angular-smart-table@^2.1.8:
-  version "2.1.8"
-  resolved "https://registry.yarnpkg.com/angular-smart-table/-/angular-smart-table-2.1.8.tgz#521f32a465e7334e073c5c1ae093c59c2b8fca50"
+angular-smart-table@^2.1.11:
+  version "2.1.11"
+  resolved "https://registry.yarnpkg.com/angular-smart-table/-/angular-smart-table-2.1.11.tgz#d0ca625f5bfb873bf3748ab861c82892e42ddfa2"
 
 angular-spectrum-colorpicker@^1.4.5:
   version "1.4.5"
