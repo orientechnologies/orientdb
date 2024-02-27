@@ -45,7 +45,7 @@
     "js-base64": "^2.3.2",
     "json-loader": "^0.5.7",
     "lodash": "^4.17.21",
-    "moment": "^2.19.1",
+    "moment": "^2.29.4",
     "ng-table": "^1.0.0",
     "ng-tags-input": "^3.2.0",
     "ng2-bootstrap": "^1.6.3",
