@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -169,10 +168,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.plugin = plugin;
   }
 
-  public OStorage fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
+  public void fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     OAbstractPaginatedStorage storage = null;
     ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
+      if (!isOpen()) {
+        return;
+      }
       try {
         storage = storages.get(dbName);
 
@@ -233,10 +235,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           buildName(dbName));
       throw e;
     }
+
     embedded.getSharedContext().reInit(storage, embedded);
     distributedSetOnline(dbName);
     ODatabaseRecordThreadLocal.instance().remove();
-    return storage;
+    return;
   }
 
   @Override
