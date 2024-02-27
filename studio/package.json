@@ -41,7 +41,7 @@
     "fullcalendar": "^3.9.0",
     "ie-shim": "^0.1.0",
     "jquery": "3.5.0",
-    "jquery-ui": "1.13.2",
+    "jquery-ui": "1.12.1",
     "js-base64": "^2.3.2",
     "json-loader": "^0.5.7",
     "lodash": "^4.17.21",
