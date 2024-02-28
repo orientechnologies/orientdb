@@ -14,23 +14,17 @@ You can traverse thousands of records in no time. Supports schema-less, schema-f
 Has a strong security profiling system based on user, roles and predicate security and supports [SQL](https://orientdb.org/docs/3.1.x/sql/) amongst the query languages. 
 Thanks to the [SQL](https://orientdb.org/docs/3.1.x/sql/) layer it's straightforward to use for people skilled in the Relational world.
 
-[Get started with OrientDB](http://orientdb.org/docs/3.2.x/gettingstarted/) | [OrientDB Community Group](https://github.com/orientechnologies/orientdb/discussions) | [Dev Updates](https://fosstodon.org/@orientdb).
+[Get started with OrientDB](http://orientdb.org/docs/3.2.x/gettingstarted/) | [OrientDB Community Group](https://github.com/orientechnologies/orientdb/discussions) | [Dev Updates](https://fosstodon.org/@orientdb) | [Community Chat] (https://matrix.to/#/#orientdb-community:matrix.org) .
 
 ## Is OrientDB a Relational DBMS?
 
 No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports [ACID Transactions](https://orientdb.org/docs/3.2.x/internals/Transactions.html) and 
 [SQL](https://orientdb.org/docs/3.2.x/sql/) as query language. In this way it's easy to start using it without having to learn too much new stuff. 
 
-## Scalability: the database is the bottleneck of most applications
-
-The most common reason applications scale out badly is, very often, the database. The database is the bottleneck of most applications. 
-OrientDB scales out very well on multiple machines. 
-The database can be up to 302,231,454,903,657 billion (2^78) records for the maximum capacity of 19,807,040,628,566,084 Terabytes of data on a single server or multiple nodes.
 
 ## Easy to install and use
 
 Yes. OrientDB is totally written in [Java](http://en.wikipedia.org/wiki/Java_%28programming_language%29) and can run on any platform without configuration and installation. 
-The full Server distribution is a few MBs without the demo database. 
 Do you develop with a language different than Java? No problem, look at the [Programming Language Binding](http://orientdb.org/docs/3.1.x/apis-and-drivers/).
 
 
