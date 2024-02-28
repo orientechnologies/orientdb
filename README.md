@@ -14,7 +14,10 @@ You can traverse thousands of records in no time. Supports schema-less, schema-f
 Has a strong security profiling system based on user, roles and predicate security and supports [SQL](https://orientdb.org/docs/3.1.x/sql/) amongst the query languages. 
 Thanks to the [SQL](https://orientdb.org/docs/3.1.x/sql/) layer it's straightforward to use for people skilled in the Relational world.
 
-[Get started with OrientDB](http://orientdb.org/docs/3.2.x/gettingstarted/) | [OrientDB Community Group](https://github.com/orientechnologies/orientdb/discussions) | [Dev Updates](https://fosstodon.org/@orientdb) | [Community Chat] (https://matrix.to/#/#orientdb-community:matrix.org) .
+[Get started with OrientDB](http://orientdb.org/docs/3.2.x/gettingstarted/) | 
+[OrientDB Community Group](https://github.com/orientechnologies/orientdb/discussions) | 
+[Dev Updates](https://fosstodon.org/@orientdb) | 
+[Community Chat](https://matrix.to/#/#orientdb-community:matrix.org) .
 
 ## Is OrientDB a Relational DBMS?
 
