@@ -23,7 +23,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.File;
 import java.io.IOException;
@@ -99,6 +98,8 @@ public interface ODistributedServerManager {
   boolean isNodeAvailable(String iNodeName);
 
   Set<String> getAvailableNodeNames(String databaseName);
+
+  Set<String> getAvailableNodeNotLocalNames(String databaseName);
 
   @Deprecated
   String getCoordinatorServer();
@@ -205,12 +206,21 @@ public interface ODistributedServerManager {
   ODistributedResponse sendRequest(
       String iDatabaseName, Collection<String> iTargetNodeNames, ORemoteTask iTask);
 
+  /**
+   * Sends a distributed request against multiple servers.
+   *
+   * @param iDatabaseName
+   * @param node
+   * @param iTask
+   * @return
+   */
+  ODistributedResponse sendSingleRequest(String iDatabaseName, String node, ORemoteTask iTask);
+
   ODistributedResponse sendRequest(
       String iDatabaseName,
       Collection<String> iTargetNodeNames,
       ORemoteTask iTask,
       long messageId,
-      EXECUTION_MODE iExecutionMode,
       Object localResult,
       ODistributedResponseManagerFactory responseManagerFactory);
 
@@ -219,6 +229,8 @@ public interface ODistributedServerManager {
   Throwable convertException(Throwable original);
 
   List<String> getOnlineNodes(String iDatabaseName);
+
+  List<String> getOnlineNodesNotLocal(String iDatabaseName);
 
   boolean installDatabase(
       boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst);
@@ -230,6 +242,8 @@ public interface ODistributedServerManager {
   ORemoteTaskFactoryManager getTaskFactoryManager();
 
   Set<String> getActiveServers();
+
+  Set<String> getActiveServerNotLocal();
 
   /**
    * Returns the cluster-wide time in milliseconds.

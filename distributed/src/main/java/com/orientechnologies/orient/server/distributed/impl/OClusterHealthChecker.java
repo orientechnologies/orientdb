@@ -40,7 +40,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabase
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -107,10 +106,7 @@ public class OClusterHealthChecker implements Runnable {
 
       for (String s : manager.getActiveServers()) {
         if (manager.isNodeAvailable(s, databaseName) && !confServers.contains(s)) {
-          final List<String> nodes = new ArrayList<String>();
-          for (String n : manager.getActiveServers()) {
-            if (manager.isNodeAvailable(n, databaseName)) nodes.add(n);
-          }
+          final Set<String> nodes = manager.getAvailableNodeNames(databaseName);
 
           // THE SERVERS HAS THE DATABASE ONLINE BUT IT IS NOT IN THE CFG. DETERMINE THE MOST UPD
           // CFG
@@ -294,8 +290,7 @@ public class OClusterHealthChecker implements Runnable {
         // ONLY ONLINE NODE/DB CAN CHECK FOR OTHERS
         continue;
 
-      final Set<String> servers = manager.getAvailableNodeNames(dbName);
-      servers.remove(manager.getLocalNodeName());
+      final Set<String> servers = manager.getAvailableNodeNotLocalNames(dbName);
 
       if (servers.isEmpty()) continue;
 
@@ -351,8 +346,7 @@ public class OClusterHealthChecker implements Runnable {
         // SKIP SYSTEM DATABASE FROM HEALTH CHECK
         continue;
 
-      final List<String> servers = manager.getOnlineNodes(dbName);
-      servers.remove(manager.getLocalNodeName());
+      final List<String> servers = manager.getOnlineNodesNotLocal(dbName);
 
       if (servers.isEmpty()) continue;
 

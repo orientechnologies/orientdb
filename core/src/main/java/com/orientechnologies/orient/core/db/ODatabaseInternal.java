@@ -96,18 +96,6 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
   }
 
   /**
-   * returns the cluster map for current deploy. The keys of the map are node names, the values
-   * contain names of clusters (data files) available on the single node.
-   *
-   * @return the cluster map for current deploy
-   */
-  default Map<String, Set<String>> getActiveClusterMap() {
-    Map<String, Set<String>> result = new HashMap<>();
-    result.put(getLocalNodeName(), getStorage().getClusterNames());
-    return result;
-  }
-
-  /**
    * returns the data center map for current deploy. The keys are data center names, the values are
    * node names per data center
    *

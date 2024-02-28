@@ -77,7 +77,6 @@ public class ODistributedTxCoordinatorTest {
             argThat(targetNodes -> CollectionUtils.isEqualCollection(targetNodes, remoteNodes)),
             any(),
             anyLong(),
-            eq(ODistributedRequest.EXECUTION_MODE.RESPONSE),
             any(OTxSuccess.class),
             any());
     inOrder.verify(responseManager).getDistributedTxFinalResponse();

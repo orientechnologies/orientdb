@@ -69,7 +69,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -97,7 +96,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -129,48 +127,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    */
   public String getLocalNodeName() {
     return distributedManager.getLocalNodeName();
-  }
-
-  /**
-   * returns the cluster map for current deploy. The keys of the map are node names, the values
-   * contain names of clusters (data files) available on the single node.
-   *
-   * @return the cluster map for current deploy
-   */
-  public Map<String, Set<String>> getActiveClusterMap() {
-    if (distributedManager.isOffline()
-        || !distributedManager.isNodeOnline(distributedManager.getLocalNodeName(), getName())
-        || OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
-      return super.getActiveClusterMap();
-    }
-    Map<String, Set<String>> result = new HashMap<>();
-    ODistributedConfiguration cfg = getDistributedConfiguration();
-
-    for (String server : distributedManager.getActiveServers()) {
-      if (getClustersOnServer(cfg, server).contains("*")) {
-        // TODO check this!!!
-        result.put(server, new HashSet<String>(getClusterNames()));
-      } else {
-        result.put(server, getClustersOnServer(cfg, server));
-      }
-    }
-    return result;
-  }
-
-  public Set<String> getClustersOnServer(ODistributedConfiguration cfg, String server) {
-    Set<String> result = cfg.getClustersOnServer(server);
-    if (result.contains("*")) {
-      result.remove("*");
-      HashSet<String> more = new HashSet<>();
-      more.addAll(getClusterNames());
-      for (String s : cfg.getClusterNames()) {
-        if (!cfg.getServers(s, null).contains(s)) {
-          more.remove(s);
-        }
-      }
-      result.addAll(more);
-    }
-    return result;
   }
 
   /**
@@ -305,7 +261,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     final String databaseName = getName();
 
-    return distributedManager.sendRequest(databaseName, Collections.singletonList(nodeName), task);
+    return distributedManager.sendSingleRequest(databaseName, nodeName, task);
   }
 
   @Override
@@ -1149,7 +1105,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             nodes,
             task,
             next,
-            EXECUTION_MODE.RESPONSE,
             localResult,
             ((iRequest,
                 iNodes,

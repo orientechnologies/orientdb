@@ -53,8 +53,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL HA SYNC CLUSTER command: synchronizes a cluster from distributed servers.
@@ -140,8 +140,7 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
 
     final String nodeName = dManager.getLocalNodeName();
 
-    final List<String> nodesWhereClusterIsCfg = cfg.getServers(clusterName, null);
-    nodesWhereClusterIsCfg.remove(nodeName);
+    final Set<String> nodesWhereClusterIsCfg = dManager.getAvailableNodeNotLocalNames(databaseName);
 
     if (nodesWhereClusterIsCfg.isEmpty())
       throw new OCommandExecutionException(

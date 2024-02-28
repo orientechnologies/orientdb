@@ -422,20 +422,6 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the set of clusters managed by a server.
-   *
-   * @param iNodeName Server name
-   */
-  public Set<String> getClustersOnServer(final String iNodeName) {
-    final Set<String> clusters = new HashSet<String>();
-    for (String cl : getClusterNames()) {
-      final List<String> servers = getServers(cl, null);
-      if (servers.contains(iNodeName)) clusters.add(cl);
-    }
-    return clusters;
-  }
-
-  /**
    * Returns the set of clusters where server is the owner.
    *
    * @param iNodeName Server name
@@ -600,25 +586,6 @@ public class ODistributedConfiguration {
     }
 
     return (Integer) wq;
-  }
-
-  /**
-   * Returns true if the database is sharded across servers. False if it's completely replicated.
-   */
-  public boolean isSharded() {
-
-    final ODocument allCluster = getClusterConfiguration(ALL_WILDCARD);
-    if (allCluster != null) {
-      final List<String> allServers = allCluster.field(SERVERS);
-      if (allServers != null && !allServers.isEmpty()) {
-        for (String cl : getClusterNames()) {
-          final List<String> servers = getServers(cl, null);
-          if (servers != null && !servers.isEmpty() && !allServers.containsAll(servers))
-            return false;
-        }
-      }
-    }
-    return false;
   }
 
   /**

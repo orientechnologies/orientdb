@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
@@ -77,9 +76,9 @@ public class OSyncReceiver implements Runnable {
         long fileSize = writeDatabaseChunk(1, chunk, output);
         for (int chunkNum = 2; !chunk.last && !finished; chunkNum++) {
           final ODistributedResponse response =
-              distributed.sendRequest(
+              distributed.sendSingleRequest(
                   databaseName,
-                  OMultiValue.getSingletonList(iNode),
+                  iNode,
                   new OCopyDatabaseChunkTask(
                       chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false));
 

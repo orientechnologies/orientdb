@@ -73,6 +73,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
@@ -494,12 +495,17 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public ODistributedResponse sendRequest(
       final String iDatabaseName, final Collection<String> iTargetNodes, final ORemoteTask iTask) {
+    return sendRequest(iDatabaseName, iTargetNodes, iTask, getNextMessageIdCounter(), null, null);
+  }
+
+  @Override
+  public ODistributedResponse sendSingleRequest(
+      String databaseName, String node, ORemoteTask iTask) {
     return sendRequest(
-        iDatabaseName,
-        iTargetNodes,
+        databaseName,
+        Collections.singletonList(node),
         iTask,
         getNextMessageIdCounter(),
-        ODistributedRequest.EXECUTION_MODE.RESPONSE,
         null,
         null);
   }
@@ -509,10 +515,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final Collection<String> iTargetNodes,
       final ORemoteTask iTask,
       final long reqId,
-      final ODistributedRequest.EXECUTION_MODE iExecutionMode,
       final Object localResult,
       ODistributedResponseManagerFactory responseManagerFactory) {
-
+    final ODistributedRequest.EXECUTION_MODE iExecutionMode = EXECUTION_MODE.RESPONSE;
     final ODistributedRequest req =
         new ODistributedRequest(this, getLocalNodeId(), reqId, iDatabaseName, iTask);
 
@@ -1056,6 +1061,13 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   @Override
+  public List<String> getOnlineNodesNotLocal(String iDatabaseName) {
+    List<String> list = clusterManager.getOnlineNodes(iDatabaseName);
+    list.remove(getLocalNodeName());
+    return list;
+  }
+
+  @Override
   public void reassignClustersOwnership(
       final String iNode,
       final String databaseName,
@@ -1101,6 +1113,13 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public Set<String> getAvailableNodeNames(String databaseName) {
     return clusterManager.getAvailableNodeNames(databaseName);
+  }
+
+  @Override
+  public Set<String> getAvailableNodeNotLocalNames(String databaseName) {
+    Set<String> set = clusterManager.getAvailableNodeNames(databaseName);
+    set.remove(getLocalNodeName());
+    return set;
   }
 
   public boolean isOffline() {
@@ -1389,10 +1408,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final OSyncDatabaseNewDeltaTask deployTask =
           new OSyncDatabaseNewDeltaTask(metadata.getStatus());
 
-      final List<String> targetNodes = new ArrayList<String>(1);
-      targetNodes.add(targetNode);
       try {
-        final ODistributedResponse response = sendRequest(databaseName, targetNodes, deployTask);
+        final ODistributedResponse response =
+            sendSingleRequest(databaseName, targetNode, deployTask);
 
         if (response == null)
           throw new ODistributedDatabaseDeltaSyncException("Error requesting delta sync");
@@ -1536,10 +1554,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
         databaseName);
     for (String noteToSend : nodes) {
       OSyncDatabaseTask deployTask = new OSyncDatabaseTask();
-      List<String> singleNode = new ArrayList<>();
-      singleNode.add(noteToSend);
-
-      ODistributedResponse response = sendRequest(databaseName, singleNode, deployTask);
+      ODistributedResponse response = sendSingleRequest(databaseName, noteToSend, deployTask);
 
       if (response == null || response.getPayload() == null) {
         ODistributedServerLog.error(
@@ -1740,6 +1755,13 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public Set<String> getActiveServers() {
     return clusterManager.getActiveServers();
+  }
+
+  @Override
+  public Set<String> getActiveServerNotLocal() {
+    Set<String> res = clusterManager.getActiveServers();
+    res.remove(getLocalNodeName());
+    return res;
   }
 
   /** Guarantees that each class has own master cluster. */
@@ -2075,29 +2097,26 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   private Object internalInstallDatabase(
-      final String databaseName, final String iNode, boolean incremental, OSyncReceiver receiver) {
+      final String database, final String node, boolean incremental, OSyncReceiver receiver) {
     try {
       OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
       if (incremental) {
-        context.fullSync(databaseName, receiver.getInputStream(), OrientDBConfig.defaultConfig());
-        context.saveDatabaseConfiguration(databaseName);
+        context.fullSync(database, receiver.getInputStream(), OrientDBConfig.defaultConfig());
+        context.saveDatabaseConfiguration(database);
 
-        try (ODatabaseDocumentInternal inst = context.openNoAuthorization(databaseName)) {
+        try (ODatabaseDocumentInternal inst = context.openNoAuthorization(database)) {
           Optional<byte[]> read = ((OAbstractPaginatedStorage) inst.getStorage()).getLastMetadata();
           if (read.isPresent()) {
             OTxMetadataHolder metadata = OTxMetadataHolderImpl.read(read.get());
             final OSyncDatabaseNewDeltaTask deployTask =
                 new OSyncDatabaseNewDeltaTask(metadata.getStatus());
 
-            final List<String> targetNodes = new ArrayList<String>(1);
-            targetNodes.add(iNode);
-            final ODistributedResponse response =
-                sendRequest(databaseName, targetNodes, deployTask);
+            final ODistributedResponse response = sendSingleRequest(database, node, deployTask);
             if (response == null)
               throw new ODistributedDatabaseDeltaSyncException("Error Requesting delta sync");
             boolean installed =
                 installResponseNewDeltaSync(
-                    databaseName, iNode, (ONewDeltaTaskResponse) response.getPayload());
+                    database, node, (ONewDeltaTaskResponse) response.getPayload());
             if (!installed)
               throw new ODistributedDatabaseDeltaSyncException("Error Requesting delta sync");
           }
@@ -2108,7 +2127,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
         try (InputStream in = receiver.getInputStream()) {
 
           // IMPORT FULL DATABASE (LISTENER ONLY FOR DEBUG PURPOSE)
-          context.networkRestore(databaseName, in, null);
+          context.networkRestore(database, in, null);
         }
       }
       return null;

@@ -24,7 +24,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -1030,15 +1029,6 @@ public class OHazelcastClusterMetadataManager
 
   public ODistributedServerManager.DB_STATUS getDatabaseStatus(
       final String iNode, final String iDatabaseName) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(iDatabaseName)) {
-      // CHECK THE SERVER STATUS
-      if (getActiveServers().contains(iNode)) {
-        return ODistributedServerManager.DB_STATUS.ONLINE;
-      } else {
-        return ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
-      }
-    }
-
     final ODistributedServerManager.DB_STATUS status =
         configurationMap.getCachedDatabaseStatus(iNode, iDatabaseName);
     return status != null ? status : ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
