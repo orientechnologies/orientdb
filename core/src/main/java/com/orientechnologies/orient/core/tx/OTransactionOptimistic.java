@@ -697,6 +697,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   protected void resolveTracking(final ORecordOperation change) {
+    if (!(change.getRecord() instanceof ODocument)) {
+      return;
+    }
     final ODocument rec = (ODocument) change.getRecord();
     switch (change.getType()) {
       case ORecordOperation.CREATED:
