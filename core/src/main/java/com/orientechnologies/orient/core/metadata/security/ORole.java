@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -448,7 +449,13 @@ public class ORole extends OIdentity implements OSecurityRole {
     Map<String, OSecurityPolicy> result = new HashMap<String, OSecurityPolicy>();
     policies
         .entrySet()
-        .forEach(x -> result.put(x.getKey(), new OSecurityPolicyImpl(x.getValue().getRecord())));
+        .forEach(
+            x -> {
+              OElement rec = x.getValue().getRecord();
+              if (rec != null) {
+                result.put(x.getKey(), new OSecurityPolicyImpl(rec));
+              }
+            });
     return result;
   }
 
@@ -462,6 +469,10 @@ public class ORole extends OIdentity implements OSecurityRole {
     if (entry == null) {
       return null;
     }
-    return new OSecurityPolicyImpl(entry.getRecord());
+    OElement policy = entry.getRecord();
+    if (policy == null) {
+      return null;
+    }
+    return new OSecurityPolicyImpl(policy);
   }
 }
