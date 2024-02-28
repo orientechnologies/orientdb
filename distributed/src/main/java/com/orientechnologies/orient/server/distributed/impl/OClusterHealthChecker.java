@@ -119,7 +119,6 @@ public class OClusterHealthChecker implements Runnable {
             final ODistributedResponse response =
                 manager.sendRequest(
                     databaseName,
-                    null,
                     nodes,
                     new ORequestDatabaseConfigurationTask(databaseName),
                     manager.getNextMessageIdCounter(),
@@ -310,7 +309,6 @@ public class OClusterHealthChecker implements Runnable {
         final ODistributedResponse response =
             manager.sendRequest(
                 dbName,
-                null,
                 servers,
                 new OGossipTask(),
                 manager.getNextMessageIdCounter(),
@@ -379,7 +377,6 @@ public class OClusterHealthChecker implements Runnable {
           final ODistributedResponse response =
               manager.sendRequest(
                   dbName,
-                  null,
                   servers,
                   task,
                   manager.getNextMessageIdCounter(),

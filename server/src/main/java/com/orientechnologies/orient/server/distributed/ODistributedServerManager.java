@@ -198,7 +198,6 @@ public interface ODistributedServerManager {
    * Sends a distributed request against multiple servers.
    *
    * @param iDatabaseName
-   * @param iClusterNames
    * @param iTargetNodeNames
    * @param iTask
    * @param messageId Message Id as long
@@ -208,7 +207,6 @@ public interface ODistributedServerManager {
    */
   ODistributedResponse sendRequest(
       String iDatabaseName,
-      Collection<String> iClusterNames,
       Collection<String> iTargetNodeNames,
       ORemoteTask iTask,
       long messageId,
@@ -217,7 +215,6 @@ public interface ODistributedServerManager {
 
   ODistributedResponse sendRequest(
       String iDatabaseName,
-      Collection<String> iClusterNames,
       Collection<String> iTargetNodeNames,
       ORemoteTask iTask,
       long messageId,

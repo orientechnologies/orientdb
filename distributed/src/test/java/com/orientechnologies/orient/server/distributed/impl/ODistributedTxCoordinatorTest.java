@@ -57,7 +57,7 @@ public class ODistributedTxCoordinatorTest {
     when(responseManager.isQuorumReached()).thenReturn(true);
     when(databaseDocument.beginDistributedTx(any(), any(), eq(tx), eq(true), anyInt()))
         .thenReturn(true);
-    when(distributedDatabase.getAvailableNodesButLocal(any(), anySet()))
+    when(distributedDatabase.getAvailableNodesButLocal(any()))
         .thenReturn(new HashSet<>(remoteNodes));
     when(responseManager.getDistributedTxFinalResponse()).thenReturn(Optional.of(new OTxSuccess()));
 
@@ -74,7 +74,6 @@ public class ODistributedTxCoordinatorTest {
         .verify(serverManager)
         .sendRequest(
             eq(dbName),
-            anyCollection(),
             argThat(targetNodes -> CollectionUtils.isEqualCollection(targetNodes, remoteNodes)),
             any(),
             anyLong(),
@@ -86,7 +85,6 @@ public class ODistributedTxCoordinatorTest {
         .verify(serverManager)
         .sendRequest(
             eq(dbName),
-            anyCollection(),
             argThat(targetNodes -> CollectionUtils.isEqualCollection(targetNodes, remoteNodes)),
             any(),
             anyLong(),

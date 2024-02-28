@@ -80,7 +80,6 @@ public class OSyncReceiver implements Runnable {
           final ODistributedResponse response =
               distributed.sendRequest(
                   databaseName,
-                  null,
                   OMultiValue.getSingletonList(iNode),
                   new OCopyDatabaseChunkTask(
                       chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),

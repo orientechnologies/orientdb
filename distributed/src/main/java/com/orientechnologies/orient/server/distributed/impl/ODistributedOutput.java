@@ -564,14 +564,9 @@ public class ODistributedOutput {
     if (cfg.isLocalDataCenterWriteQuorum()) {
       defaultWQ = ODistributedConfiguration.QUORUM_LOCAL_DC;
     } else {
-      defaultWQ =
-          ""
-              + cfg.getWriteQuorum(
-                  ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
+      defaultWQ = "" + cfg.getWriteQuorum(totalConfiguredServers, localNodeName);
     }
-    final int defaultRQ =
-        cfg.getReadQuorum(
-            ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
+    final int defaultRQ = cfg.getReadQuorum(totalConfiguredServers, localNodeName);
     final String defaultOwner = "" + cfg.getClusterOwner(ODistributedConfiguration.ALL_WILDCARD);
     final List<String> defaultServers =
         cfg.getConfiguredServers(ODistributedConfiguration.ALL_WILDCARD);
@@ -584,9 +579,9 @@ public class ODistributedOutput {
       if (cfg.isLocalDataCenterWriteQuorum()) {
         wQ = ODistributedConfiguration.QUORUM_LOCAL_DC;
       } else {
-        wQ = "" + cfg.getWriteQuorum(cluster, totalConfiguredServers, localNodeName);
+        wQ = "" + cfg.getWriteQuorum(totalConfiguredServers, localNodeName);
       }
-      final int rQ = cfg.getReadQuorum(cluster, totalConfiguredServers, localNodeName);
+      final int rQ = cfg.getReadQuorum(totalConfiguredServers, localNodeName);
       final String owner = cfg.getClusterOwner(cluster);
       final List<String> servers = cfg.getConfiguredServers(cluster);
 

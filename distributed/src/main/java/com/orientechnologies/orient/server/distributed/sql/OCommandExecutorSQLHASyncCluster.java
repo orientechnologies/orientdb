@@ -154,7 +154,6 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
     final ODistributedResponse response =
         dManager.sendRequest(
             databaseName,
-            null,
             nodesWhereClusterIsCfg,
             task,
             dManager.getNextMessageIdCounter(),
@@ -207,7 +206,6 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
             final Object result =
                 dManager.sendRequest(
                     databaseName,
-                    null,
                     OMultiValue.getSingletonList(r.getKey()),
                     new OCopyDatabaseChunkTask(
                         chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),

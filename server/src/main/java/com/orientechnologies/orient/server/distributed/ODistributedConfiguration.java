@@ -692,29 +692,21 @@ public class ODistributedConfiguration {
 
   /**
    * Returns the read quorum.
-   *
-   * @param clusterName Cluster name, or null for *
    * @param totalConfiguredServers Total node available
    */
-  public int getReadQuorum(
-      final String clusterName, final int totalConfiguredServers, final String server) {
-    return getQuorum(
-        "readQuorum", clusterName, totalConfiguredServers, DEFAULT_READ_QUORUM, server);
+  public int getReadQuorum(final int totalConfiguredServers, final String server) {
+    return getQuorum("readQuorum", totalConfiguredServers, DEFAULT_READ_QUORUM, server);
   }
 
   /**
    * Returns the write quorum.
-   *
-   * @param clusterName Cluster name, or null for *
    * @param totalConfiguredMasterServers Total node available
    */
-  public int getWriteQuorum(
-      final String clusterName, final int totalConfiguredMasterServers, final String server) {
+  public int getWriteQuorum(final int totalConfiguredMasterServers, final String server) {
     Integer overWrite = overwriteWriteQuorum.get();
     if (overWrite != null) return overWrite.intValue();
     else
-      return getQuorum(
-          "writeQuorum", clusterName, totalConfiguredMasterServers, DEFAULT_WRITE_QUORUM, server);
+      return getQuorum("writeQuorum", totalConfiguredMasterServers, DEFAULT_WRITE_QUORUM, server);
   }
 
   private ODocument getConfiguredClusters() {
@@ -779,28 +771,18 @@ public class ODistributedConfiguration {
 
   /**
    * Returns the read quorum.
-   *
-   * @param iClusterName Cluster name, or null for *
    * @param totalServers Total nodes available
    */
   private int getQuorum(
       final String quorumSetting,
-      final String iClusterName,
       final int totalServers,
       final Object defaultValue,
       final String server) {
-    Object value = getClusterConfiguration(iClusterName).field(quorumSetting);
+    Object value = configuration.field(quorumSetting);
     if (value == null) {
-      value = configuration.field(quorumSetting);
-      if (value == null) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "%s setting not found for cluster=%s in distributed-config.json",
-                quorumSetting,
-                iClusterName);
-        value = defaultValue;
-      }
+      OLogManager.instance()
+          .warn(this, "%s setting not found in distributed-config.json", quorumSetting);
+      value = defaultValue;
     }
 
     if (value instanceof String) {

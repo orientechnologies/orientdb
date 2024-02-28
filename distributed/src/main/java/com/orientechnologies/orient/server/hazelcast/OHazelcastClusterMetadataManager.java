@@ -401,7 +401,7 @@ public class OHazelcastClusterMetadataManager
       final int availableServers = getAvailableNodes(databaseName);
       if (availableServers == 0) return false;
 
-      final int quorum = cfg.getWriteQuorum(null, cfg.getMasterServers().size(), nodeName);
+      final int quorum = cfg.getWriteQuorum(cfg.getMasterServers().size(), nodeName);
       return availableServers >= quorum;
     }
     return false;

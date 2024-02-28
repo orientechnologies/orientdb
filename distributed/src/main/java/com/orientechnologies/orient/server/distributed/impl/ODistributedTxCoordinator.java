@@ -87,7 +87,7 @@ public class ODistributedTxCoordinator {
         Optional<OTransactionId> genId = localDistributedDatabase.nextId();
         if (genId.isPresent()) {
           OTransactionId txId = genId.get();
-          tryCommit(database, iTx, txId, requestId, clusters);
+          tryCommit(database, iTx, txId, requestId);
           return;
         } else {
           try {
@@ -137,8 +137,7 @@ public class ODistributedTxCoordinator {
       final ODatabaseDocumentDistributed database,
       final OTransactionInternal iTx,
       OTransactionId txId,
-      final ODistributedRequestId requestId,
-      Set<String> clusters) {
+      final ODistributedRequestId requestId) {
 
     iTx.setStatus(OTransaction.TXSTATUS.BEGUN);
 
@@ -165,7 +164,7 @@ public class ODistributedTxCoordinator {
           nodeName, ((OTxKeyLockTimeout) localResult).getKey());
     }
 
-    Set<String> nodes = localDistributedDatabase.getAvailableNodesButLocal(database, clusters);
+    Set<String> nodes = localDistributedDatabase.getAvailableNodesButLocal(database);
     if (nodes.isEmpty()) {
       switch (localResult.getResponseType()) {
         case OTxSuccess.ID:
@@ -228,7 +227,6 @@ public class ODistributedTxCoordinator {
     // SYNCHRONOUS CALL: REPLICATE IT
     dManager.sendRequest(
         storage.getName(),
-        clusters,
         nodes,
         txTask,
         requestId.getMessageId(),
@@ -254,22 +252,16 @@ public class ODistributedTxCoordinator {
           return responseManager;
         }));
 
-    handleResponse(requestId, responseManager, clusters, sentNodes, database, iTx, txTask);
+    handleResponse(requestId, responseManager, sentNodes, database, iTx, txTask);
   }
 
   private void handleResponse(
       ODistributedRequestId requestId,
       ODistributedTxResponseManager responseManager,
-      Set<String> involvedClusters,
       Set<String> nodes,
       ODatabaseDocumentDistributed database,
       OTransactionInternal iTx,
       OTransactionPhase1Task txTask) {
-    int[] involvedClustersIds = new int[involvedClusters.size()];
-    int i = 0;
-    for (String involvedCluster : involvedClusters) {
-      involvedClustersIds[i++] = database.getClusterIdByName(involvedCluster);
-    }
 
     if (responseManager.isQuorumReached()) {
       Optional<OTransactionResultPayload> result = responseManager.getDistributedTxFinalResponse();
@@ -278,18 +270,18 @@ public class ODistributedTxCoordinator {
       switch (resultPayload.getResponseType()) {
         case OTxSuccess.ID:
           // Success send ok
-          sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, true));
+          sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, true));
           localOk(requestId, database, txTask);
           break;
         case OTxException.ID:
           // Exception send ko and throws the exception
-          sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+          sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
           localKo(requestId, database, txTask);
           throw ((OTxException) resultPayload).getException();
         case OTxUniqueIndex.ID:
           {
             // Unique index quorum error send ko and throw unique index exception
-            sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+            sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
             localKo(requestId, database, txTask);
             ORID id = ((OTxUniqueIndex) resultPayload).getRecordId();
             String index = ((OTxUniqueIndex) resultPayload).getIndex();
@@ -306,7 +298,7 @@ public class ODistributedTxCoordinator {
           {
             // Concurrent modification exception quorum send ko and throw cuncurrent modification
             // exception
-            sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+            sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
             localKo(requestId, database, txTask);
             ORID id = ((OTxConcurrentModification) resultPayload).getRecordId();
             int version = ((OTxConcurrentModification) resultPayload).getVersion();
@@ -318,7 +310,7 @@ public class ODistributedTxCoordinator {
           }
         case OTxConcurrentCreation.ID:
           {
-            sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+            sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
             localKo(requestId, database, txTask);
             throw new OConcurrentCreateException(
                 ((OTxConcurrentCreation) resultPayload).getExpectedRid(),
@@ -326,19 +318,19 @@ public class ODistributedTxCoordinator {
           }
 
         case OTxRecordLockTimeout.ID:
-          sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+          sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
           localKo(requestId, database, txTask);
           throw new ODistributedRecordLockedException(
               ((OTxRecordLockTimeout) resultPayload).getNode(),
               ((OTxRecordLockTimeout) resultPayload).getLockedId());
         case OTxKeyLockTimeout.ID:
-          sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+          sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
           localKo(requestId, database, txTask);
           throw new ODistributedKeyLockedException(
               ((OTxKeyLockTimeout) resultPayload).getNode(),
               ((OTxKeyLockTimeout) resultPayload).getKey());
         case OTxInvalidSequential.ID:
-          sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+          sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
           localKo(requestId, database, txTask);
           throw new OInvalidSequentialException();
       }
@@ -358,19 +350,19 @@ public class ODistributedTxCoordinator {
         String node = responseManager.getNodeNameFromPayload(result);
         switch (result.getResponseType()) {
           case OTxRecordLockTimeout.ID:
-            sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+            sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
             localKo(requestId, database, txTask);
             throw new ODistributedRecordLockedException(
                 ((OTxRecordLockTimeout) result).getNode(),
                 ((OTxRecordLockTimeout) result).getLockedId());
           case OTxKeyLockTimeout.ID:
-            sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+            sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
             localKo(requestId, database, txTask);
             throw new ODistributedKeyLockedException(
                 ((OTxKeyLockTimeout) result).getNode(), ((OTxKeyLockTimeout) result).getKey());
 
           case OTxConcurrentCreation.ID:
-            sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+            sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
             localKo(requestId, database, txTask);
             throw new OConcurrentCreateException(
                 ((OTxConcurrentCreation) result).getExpectedRid(),
@@ -380,7 +372,7 @@ public class ODistributedTxCoordinator {
             messages.add("node: " + node + " success");
             break;
           case OTxConcurrentModification.ID:
-            sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+            sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
             localKo(requestId, database, txTask);
             ORecordId recordId = ((OTxConcurrentModification) result).getRecordId();
             throw new OConcurrentModificationException(
@@ -408,12 +400,12 @@ public class ODistributedTxCoordinator {
                     ((OTxUniqueIndex) result).getRecordId()));
             break;
           case OTxInvalidSequential.ID:
-            sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+            sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
             localKo(requestId, database, txTask);
             throw new OInvalidSequentialException();
         }
       }
-      sendPhase2Task(involvedClusters, nodes, createTxPhase2Task(requestId, txTask, false));
+      sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
       localKo(requestId, database, txTask);
 
       ODistributedOperationException ex =
@@ -452,11 +444,9 @@ public class ODistributedTxCoordinator {
     }
   }
 
-  private void sendPhase2Task(
-      Set<String> involvedClusters, Set<String> nodes, OTransactionPhase2Task task) {
+  private void sendPhase2Task(Set<String> nodes, OTransactionPhase2Task task) {
     dManager.sendRequest(
         storage.getName(),
-        involvedClusters,
         nodes,
         task,
         dManager.getNextMessageIdCounter(),

@@ -308,7 +308,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     return distributedManager.sendRequest(
         databaseName,
-        null,
         Collections.singletonList(nodeName),
         task,
         distributedManager.getNextMessageIdCounter(),
@@ -445,8 +444,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       Set<String> clusters = getInvolvedClusters(iTx.getRecordOperations());
       for (String clusterName : clusters) {
         final List<String> clusterServers = dbCfg.getServers(clusterName, null);
-        final int writeQuorum =
-            dbCfg.getWriteQuorum(clusterName, clusterServers.size(), localNodeName);
+        final int writeQuorum = dbCfg.getWriteQuorum(clusterServers.size(), localNodeName);
         quorum = Math.max(quorum, writeQuorum);
       }
       final int availableNodes = dManager.getAvailableNodes(getName());
@@ -1139,7 +1137,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedResponse response =
         dManager.sendRequest(
             getName(),
-            null,
             nodes,
             new OSQLCommandTaskSecondPhase(messageId, apply),
             dManager.getNextMessageIdCounter(),
@@ -1162,7 +1159,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ((ODistributedPlugin) dManager)
         .sendRequest(
             getName(),
-            null,
             nodes,
             task,
             next,

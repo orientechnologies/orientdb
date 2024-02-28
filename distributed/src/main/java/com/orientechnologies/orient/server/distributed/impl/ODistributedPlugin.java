@@ -405,7 +405,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     if (!servers.isEmpty() && getDatabase(dbName) != null) {
       sendRequest(
           dbName,
-          null,
           servers,
           new ODropDatabaseTask(),
           getNextMessageIdCounter(),
@@ -501,26 +500,17 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public ODistributedResponse sendRequest(
       final String iDatabaseName,
-      final Collection<String> iClusterNames,
       final Collection<String> iTargetNodes,
       final ORemoteTask iTask,
       final long reqId,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
       final Object localResult) {
     return sendRequest(
-        iDatabaseName,
-        iClusterNames,
-        iTargetNodes,
-        iTask,
-        reqId,
-        iExecutionMode,
-        localResult,
-        null);
+        iDatabaseName, iTargetNodes, iTask, reqId, iExecutionMode, localResult, null);
   }
 
   public ODistributedResponse sendRequest(
       final String iDatabaseName,
-      final Collection<String> iClusterNames,
       final Collection<String> iTargetNodes,
       final ORemoteTask iTask,
       final long reqId,
@@ -537,20 +527,18 @@ public class ODistributedPlugin extends OServerPluginAbstract
           nodeName,
           null,
           DIRECTION.OUT,
-          "No nodes configured for partition '%s.%s' request: %s",
+          "No nodes configured for partition '%s' request: %s",
           iDatabaseName,
-          iClusterNames,
           req);
       throw new ODistributedException(
-          "No nodes configured '" + iDatabaseName + "." + iClusterNames + "' request: " + req);
+          "No nodes configured '" + iDatabaseName + "' request: " + req);
     }
 
     messageService.updateMessageStats(iTask.getName());
     if (responseManagerFactory != null) {
-      return send2Nodes(
-          req, iClusterNames, iTargetNodes, iExecutionMode, localResult, responseManagerFactory);
+      return send2Nodes(req, iTargetNodes, iExecutionMode, localResult, responseManagerFactory);
     } else {
-      return send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult);
+      return send2Nodes(req, iTargetNodes, iExecutionMode, localResult);
     }
   }
 
@@ -578,7 +566,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   public ODistributedResponse send2Nodes(
       final ODistributedRequest iRequest,
-      final Collection<String> iClusterNames,
       Collection<String> iNodes,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
       final Object localResult,
@@ -644,7 +631,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final int quorum =
           calculateQuorum(
               task.getQuorumType(),
-              iClusterNames,
               cfg,
               expectedResponses,
               nodesConcurToTheQuorum.size(),
@@ -655,7 +641,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final boolean groupByResponse =
           task.getResultStrategy() != OAbstractRemoteTask.RESULT_STRATEGY.UNION;
 
-      final boolean waitLocalNode = waitForLocalNode(cfg, iClusterNames, iNodes);
+      final boolean waitLocalNode = waitForLocalNode(cfg, iNodes);
 
       // CREATE THE RESPONSE MANAGER
       final ODistributedResponseManager currentResponseMgr =
@@ -742,7 +728,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                 + iRequest
                 + ") against database '"
                 + databaseName
-                + (iClusterNames != null ? "." + iClusterNames : "")
                 + "' to nodes "
                 + iNodes);
 
@@ -761,14 +746,12 @@ public class ODistributedPlugin extends OServerPluginAbstract
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      String names = iClusterNames != null ? "." + iClusterNames : "";
       throw OException.wrapException(
           new ODistributedException(
               "Error on executing distributed request ("
                   + iRequest
                   + ") against database '"
                   + this.nodeName
-                  + names
                   + "' to nodes "
                   + iNodes),
           e);
@@ -805,7 +788,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   protected int calculateQuorum(
       final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType,
-      Collection<String> clusterNames,
       final ODistributedConfiguration cfg,
       final int totalServers,
       final int totalMasterServers,
@@ -815,50 +797,42 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     int quorum = 1;
 
-    if (clusterNames == null || clusterNames.isEmpty()) {
-      clusterNames = new ArrayList<String>(1);
-      clusterNames.add(null);
-    }
-
     int totalServerInQuorum = totalServers;
-    for (String cluster : clusterNames) {
-      int clusterQuorum = 0;
-      switch (quorumType) {
-        case NONE:
-          // IGNORE IT
-          break;
-        case READ:
-          if (cfg != null) {
-            clusterQuorum = cfg.getReadQuorum(cluster, totalServers, localNodeName);
-          } else {
-            clusterQuorum = 1;
-          }
-          break;
-        case WRITE:
-          if (cfg != null) {
-            clusterQuorum = cfg.getWriteQuorum(cluster, totalMasterServers, localNodeName);
-            totalServerInQuorum = totalMasterServers;
-          } else {
-            clusterQuorum = totalMasterServers / 2 + 1;
-            totalServerInQuorum = totalMasterServers;
-          }
-          break;
-        case WRITE_ALL_MASTERS:
-          if (cfg != null) {
-            int cfgQuorum = cfg.getWriteQuorum(cluster, totalMasterServers, localNodeName);
-            clusterQuorum = Math.max(cfgQuorum, onlineMasters);
-          } else {
-            clusterQuorum = totalMasterServers;
-            totalServerInQuorum = totalMasterServers;
-          }
-          break;
-        case ALL:
-          clusterQuorum = totalServers;
-          break;
-      }
-
-      quorum = Math.max(quorum, clusterQuorum);
+    int clusterQuorum = 0;
+    switch (quorumType) {
+      case NONE:
+        // IGNORE IT
+        break;
+      case READ:
+        if (cfg != null) {
+          clusterQuorum = cfg.getReadQuorum(totalServers, localNodeName);
+        } else {
+          clusterQuorum = 1;
+        }
+        break;
+      case WRITE:
+        if (cfg != null) {
+          clusterQuorum = cfg.getWriteQuorum(totalMasterServers, localNodeName);
+          totalServerInQuorum = totalMasterServers;
+        } else {
+          clusterQuorum = totalMasterServers / 2 + 1;
+          totalServerInQuorum = totalMasterServers;
+        }
+        break;
+      case WRITE_ALL_MASTERS:
+        if (cfg != null) {
+          int cfgQuorum = cfg.getWriteQuorum(totalMasterServers, localNodeName);
+          clusterQuorum = Math.max(cfgQuorum, onlineMasters);
+        } else {
+          clusterQuorum = totalMasterServers;
+          totalServerInQuorum = totalMasterServers;
+        }
+        break;
+      case ALL:
+        clusterQuorum = totalServers;
+        break;
     }
+    quorum = Math.max(quorum, clusterQuorum);
 
     if (quorum < 0) quorum = 0;
 
@@ -892,13 +866,11 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   public ODistributedResponse send2Nodes(
       final ODistributedRequest iRequest,
-      final Collection<String> iClusterNames,
       Collection<String> iNodes,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
       final Object localResult) {
     return send2Nodes(
         iRequest,
-        iClusterNames,
         iNodes,
         iExecutionMode,
         localResult,
@@ -928,24 +900,11 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   protected boolean waitForLocalNode(
-      final ODistributedConfiguration cfg,
-      final Collection<String> iClusterNames,
-      final Collection<String> iNodes) {
+      final ODistributedConfiguration cfg, final Collection<String> iNodes) {
     boolean waitLocalNode = false;
     if (iNodes.contains(this.nodeName)) {
       if (cfg != null) {
-        if (iClusterNames == null || iClusterNames.isEmpty()) {
-          // DEFAULT CLUSTER (*)
-          if (cfg.isReadYourWrites(null)) waitLocalNode = true;
-        } else {
-          // BROWSE FOR ALL CLUSTER TO GET THE FIRST 'waitLocalNode'
-          for (String clName : iClusterNames) {
-            if (cfg.isReadYourWrites(clName)) {
-              waitLocalNode = true;
-              break;
-            }
-          }
-        }
+        if (cfg.isReadYourWrites(null)) waitLocalNode = true;
       } else {
         waitLocalNode = true;
       }
@@ -1441,7 +1400,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
         final ODistributedResponse response =
             sendRequest(
                 databaseName,
-                null,
                 targetNodes,
                 deployTask,
                 getNextMessageIdCounter(),
@@ -1596,7 +1554,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       ODistributedResponse response =
           sendRequest(
               databaseName,
-              null,
               singleNode,
               deployTask,
               getNextMessageIdCounter(),
@@ -2156,7 +2113,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
             final ODistributedResponse response =
                 sendRequest(
                     databaseName,
-                    null,
                     targetNodes,
                     deployTask,
                     getNextMessageIdCounter(),
@@ -2737,7 +2693,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final ODistributedResponse dResponse =
           sendRequest(
               databaseName,
-              null,
               servers,
               new OUpdateDatabaseConfigurationTask(databaseName, config),
               getNextMessageIdCounter(),
