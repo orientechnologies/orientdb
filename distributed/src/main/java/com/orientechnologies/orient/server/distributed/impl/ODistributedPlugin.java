@@ -597,8 +597,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       if (databaseName != null) {
         cfg = getDatabaseConfiguration(databaseName);
         nodesConcurToTheQuorum =
-            getDistributedStrategy()
-                .getNodesConcurInQuorum(this, cfg, iRequest, iNodes, localResult);
+            getDistributedStrategy().getNodesConcurInQuorum(this, cfg, iRequest, iNodes);
 
         // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE
         // NODES

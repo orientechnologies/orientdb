@@ -54,8 +54,7 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
       final ODistributedServerManager manager,
       final ODistributedConfiguration cfg,
       final ODistributedRequest request,
-      final Collection<String> iNodes,
-      final Object localResult) {
+      final Collection<String> iNodes) {
 
     final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
     if (request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE
@@ -67,9 +66,7 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
           nodesConcurToTheQuorum.add(node);
       }
 
-      if (localResult != null
-          && cfg.getServerRole(manager.getLocalNodeName())
-              == ODistributedConfiguration.ROLES.MASTER)
+      if (cfg.getServerRole(manager.getLocalNodeName()) == ODistributedConfiguration.ROLES.MASTER)
         // INCLUDE LOCAL NODE TOO
         nodesConcurToTheQuorum.add(manager.getLocalNodeName());
 
@@ -78,9 +75,7 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
       // ALL NODES CONCUR TO THE MINIMUM QUORUM
       nodesConcurToTheQuorum.addAll(iNodes);
 
-      if (localResult != null)
-        // INCLUDE LOCAL NODE TOO
-        nodesConcurToTheQuorum.add(manager.getLocalNodeName());
+      nodesConcurToTheQuorum.add(manager.getLocalNodeName());
     }
 
     return nodesConcurToTheQuorum;

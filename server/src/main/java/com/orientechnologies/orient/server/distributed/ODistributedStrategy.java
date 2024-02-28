@@ -35,6 +35,5 @@ public interface ODistributedStrategy {
       ODistributedServerManager manager,
       ODistributedConfiguration cfg,
       ODistributedRequest request,
-      Collection<String> iNodes,
-      Object localResult);
+      Collection<String> iNodes);
 }
