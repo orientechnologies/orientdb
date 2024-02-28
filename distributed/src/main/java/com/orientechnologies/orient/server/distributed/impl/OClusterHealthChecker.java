@@ -30,7 +30,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -118,12 +117,7 @@ public class OClusterHealthChecker implements Runnable {
           try {
             final ODistributedResponse response =
                 manager.sendRequest(
-                    databaseName,
-                    nodes,
-                    new ORequestDatabaseConfigurationTask(databaseName),
-                    manager.getNextMessageIdCounter(),
-                    ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                    null);
+                    databaseName, nodes, new ORequestDatabaseConfigurationTask(databaseName));
 
             final Object payload = response != null ? response.getPayload() : null;
             if (payload instanceof Map) {
@@ -307,13 +301,7 @@ public class OClusterHealthChecker implements Runnable {
 
       try {
         final ODistributedResponse response =
-            manager.sendRequest(
-                dbName,
-                servers,
-                new OGossipTask(),
-                manager.getNextMessageIdCounter(),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                null);
+            manager.sendRequest(dbName, servers, new OGossipTask());
 
         final Object payload = response != null ? response.getPayload() : null;
         if (payload instanceof Map) {
@@ -374,14 +362,7 @@ public class OClusterHealthChecker implements Runnable {
         if (status.isPresent()) {
           ORemoteTask task = new OUpdateDatabaseSequenceStatusTask(dbName, status.get());
 
-          final ODistributedResponse response =
-              manager.sendRequest(
-                  dbName,
-                  servers,
-                  task,
-                  manager.getNextMessageIdCounter(),
-                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                  null);
+          final ODistributedResponse response = manager.sendRequest(dbName, servers, task);
         }
       } catch (ODistributedException e) {
         // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE

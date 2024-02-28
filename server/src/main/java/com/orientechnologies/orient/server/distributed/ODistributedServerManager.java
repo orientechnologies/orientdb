@@ -200,18 +200,10 @@ public interface ODistributedServerManager {
    * @param iDatabaseName
    * @param iTargetNodeNames
    * @param iTask
-   * @param messageId Message Id as long
-   * @param iExecutionMode
-   * @param localResult It's the result of the request executed locally
    * @return
    */
   ODistributedResponse sendRequest(
-      String iDatabaseName,
-      Collection<String> iTargetNodeNames,
-      ORemoteTask iTask,
-      long messageId,
-      EXECUTION_MODE iExecutionMode,
-      Object localResult);
+      String iDatabaseName, Collection<String> iTargetNodeNames, ORemoteTask iTask);
 
   ODistributedResponse sendRequest(
       String iDatabaseName,

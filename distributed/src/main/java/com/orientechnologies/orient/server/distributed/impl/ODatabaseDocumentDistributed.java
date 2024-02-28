@@ -69,7 +69,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
@@ -306,13 +305,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     final String databaseName = getName();
 
-    return distributedManager.sendRequest(
-        databaseName,
-        Collections.singletonList(nodeName),
-        task,
-        distributedManager.getNextMessageIdCounter(),
-        ODistributedRequest.EXECUTION_MODE.RESPONSE,
-        null);
+    return distributedManager.sendRequest(databaseName, Collections.singletonList(nodeName), task);
   }
 
   @Override
@@ -1135,13 +1128,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   private void confirmPhase2DDL(Set<String> nodes, ODistributedRequestId messageId, boolean apply) {
     ODistributedServerManager dManager = getDistributedManager();
     ODistributedResponse response =
-        dManager.sendRequest(
-            getName(),
-            nodes,
-            new OSQLCommandTaskSecondPhase(messageId, apply),
-            dManager.getNextMessageIdCounter(),
-            EXECUTION_MODE.RESPONSE,
-            null);
+        dManager.sendRequest(getName(), nodes, new OSQLCommandTaskSecondPhase(messageId, apply));
     if (response != null && response.getPayload() instanceof RuntimeException) {
       throw (RuntimeException) response.getPayload();
     }

@@ -42,7 +42,6 @@ import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
@@ -152,13 +151,7 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
 
     final OSyncClusterTask task = new OSyncClusterTask(clusterName);
     final ODistributedResponse response =
-        dManager.sendRequest(
-            databaseName,
-            nodesWhereClusterIsCfg,
-            task,
-            dManager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE,
-            null);
+        dManager.sendRequest(databaseName, nodesWhereClusterIsCfg, task);
 
     final Map<String, Object> results = (Map<String, Object>) response.getPayload();
 
@@ -208,10 +201,7 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
                     databaseName,
                     OMultiValue.getSingletonList(r.getKey()),
                     new OCopyDatabaseChunkTask(
-                        chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-                    dManager.getNextMessageIdCounter(),
-                    ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                    null);
+                        chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false));
 
             if (result instanceof Boolean) {
               continue;

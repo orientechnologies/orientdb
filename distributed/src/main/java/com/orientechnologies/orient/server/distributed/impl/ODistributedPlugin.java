@@ -403,13 +403,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   public void dropOnAllServers(final String dbName) {
     Set<String> servers = clusterManager.dropDbFromConfiguration(dbName);
     if (!servers.isEmpty() && getDatabase(dbName) != null) {
-      sendRequest(
-          dbName,
-          servers,
-          new ODropDatabaseTask(),
-          getNextMessageIdCounter(),
-          ODistributedRequest.EXECUTION_MODE.RESPONSE,
-          null);
+      sendRequest(dbName, servers, new ODropDatabaseTask());
     }
   }
 
@@ -499,14 +493,15 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   @Override
   public ODistributedResponse sendRequest(
-      final String iDatabaseName,
-      final Collection<String> iTargetNodes,
-      final ORemoteTask iTask,
-      final long reqId,
-      final ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      final Object localResult) {
+      final String iDatabaseName, final Collection<String> iTargetNodes, final ORemoteTask iTask) {
     return sendRequest(
-        iDatabaseName, iTargetNodes, iTask, reqId, iExecutionMode, localResult, null);
+        iDatabaseName,
+        iTargetNodes,
+        iTask,
+        getNextMessageIdCounter(),
+        ODistributedRequest.EXECUTION_MODE.RESPONSE,
+        null,
+        null);
   }
 
   public ODistributedResponse sendRequest(
@@ -1397,14 +1392,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final List<String> targetNodes = new ArrayList<String>(1);
       targetNodes.add(targetNode);
       try {
-        final ODistributedResponse response =
-            sendRequest(
-                databaseName,
-                targetNodes,
-                deployTask,
-                getNextMessageIdCounter(),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                null);
+        final ODistributedResponse response = sendRequest(databaseName, targetNodes, deployTask);
 
         if (response == null)
           throw new ODistributedDatabaseDeltaSyncException("Error requesting delta sync");
@@ -1551,14 +1539,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       List<String> singleNode = new ArrayList<>();
       singleNode.add(noteToSend);
 
-      ODistributedResponse response =
-          sendRequest(
-              databaseName,
-              singleNode,
-              deployTask,
-              getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.RESPONSE,
-              null);
+      ODistributedResponse response = sendRequest(databaseName, singleNode, deployTask);
 
       if (response == null || response.getPayload() == null) {
         ODistributedServerLog.error(
@@ -2111,13 +2092,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
             final List<String> targetNodes = new ArrayList<String>(1);
             targetNodes.add(iNode);
             final ODistributedResponse response =
-                sendRequest(
-                    databaseName,
-                    targetNodes,
-                    deployTask,
-                    getNextMessageIdCounter(),
-                    ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                    null);
+                sendRequest(databaseName, targetNodes, deployTask);
             if (response == null)
               throw new ODistributedDatabaseDeltaSyncException("Error Requesting delta sync");
             boolean installed =
@@ -2692,12 +2667,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       final ODistributedResponse dResponse =
           sendRequest(
-              databaseName,
-              servers,
-              new OUpdateDatabaseConfigurationTask(databaseName, config),
-              getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE,
-              null);
+              databaseName, servers, new OUpdateDatabaseConfigurationTask(databaseName, config));
     }
   }
 

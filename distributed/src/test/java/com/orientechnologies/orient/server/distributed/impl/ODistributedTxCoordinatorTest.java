@@ -86,10 +86,7 @@ public class ODistributedTxCoordinatorTest {
         .sendRequest(
             eq(dbName),
             argThat(targetNodes -> CollectionUtils.isEqualCollection(targetNodes, remoteNodes)),
-            any(),
-            anyLong(),
-            eq(ODistributedRequest.EXECUTION_MODE.RESPONSE),
-            eq(ODistributedTxCoordinator.LOCAL_RESULT_SUCCESS));
+            any());
     inOrder.verify(distributedDatabase).localLock(any());
     inOrder.verify(databaseDocument).commit2pcLocal(any());
     inOrder.verify(distributedDatabase).localUnlock(any());

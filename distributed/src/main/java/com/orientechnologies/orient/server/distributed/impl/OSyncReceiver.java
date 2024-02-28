@@ -5,7 +5,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
@@ -82,10 +81,7 @@ public class OSyncReceiver implements Runnable {
                   databaseName,
                   OMultiValue.getSingletonList(iNode),
                   new OCopyDatabaseChunkTask(
-                      chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-                  distributed.getNextMessageIdCounter(),
-                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                  null);
+                      chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false));
 
           if (response == null) {
             output.close();

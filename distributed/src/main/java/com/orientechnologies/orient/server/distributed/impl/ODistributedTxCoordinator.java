@@ -445,13 +445,7 @@ public class ODistributedTxCoordinator {
   }
 
   private void sendPhase2Task(Set<String> nodes, OTransactionPhase2Task task) {
-    dManager.sendRequest(
-        storage.getName(),
-        nodes,
-        task,
-        dManager.getNextMessageIdCounter(),
-        EXECUTION_MODE.RESPONSE,
-        LOCAL_RESULT_SUCCESS);
+    dManager.sendRequest(storage.getName(), nodes, task);
   }
 
   protected OTransactionPhase1Task createTxPhase1Task(
