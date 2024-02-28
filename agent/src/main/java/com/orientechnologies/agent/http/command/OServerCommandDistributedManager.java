@@ -249,7 +249,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       final ODistributedResponse dResponse =
           manager.sendRequest(
               null,
-              null,
               OMultiValue.getSingletonList(id),
               new OEnterpriseStatsTask(),
               manager.getNextMessageIdCounter(),
@@ -285,7 +284,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     final ODistributedResponse dResponse =
         manager.sendRequest(
             databases.iterator().next(),
-            null,
             servers,
             new OEnterpriseStatsTask(),
             manager.getNextMessageIdCounter(),
@@ -351,7 +349,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       final ODistributedResponse dResponse =
           manager.sendRequest(
-              null,
               null,
               servers,
               new OEnterpriseStatsTask(),

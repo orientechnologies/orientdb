@@ -24,8 +24,7 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
       final ODistributedServerManager manager,
       final ODistributedConfiguration cfg,
       final ODistributedRequest request,
-      final Collection<String> iNodes,
-      final Object localResult) {
+      final Collection<String> iNodes) {
 
     final String localNode = manager.getLocalNodeName();
 
@@ -38,7 +37,7 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
         || !localDataCenterWriteQuorum
         || quorum == OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL)
       // NO DC: DEFAULT CFG
-      return super.getNodesConcurInQuorum(manager, cfg, request, iNodes, localResult);
+      return super.getNodesConcurInQuorum(manager, cfg, request, iNodes);
 
     // DC CONFIGURATION
     final List<String> dcServers = cfg.getDataCenterServers(dc);
@@ -53,8 +52,7 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
         }
       }
 
-      if (localResult != null
-          && cfg.getServerRole(localNode) == ODistributedConfiguration.ROLES.MASTER) {
+      if (cfg.getServerRole(localNode) == ODistributedConfiguration.ROLES.MASTER) {
         if (!localDataCenterWriteQuorum || dcServers.contains(localNode))
           // INCLUDE LOCAL NODE TOO
           nodesConcurToTheQuorum.add(localNode);
@@ -68,7 +66,7 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
           nodesConcurToTheQuorum.add(node);
       }
 
-      if (localResult != null && (!localDataCenterWriteQuorum || dcServers.contains(localNode)))
+      if ((!localDataCenterWriteQuorum || dcServers.contains(localNode)))
         // INCLUDE LOCAL NODE TOO
         nodesConcurToTheQuorum.add(localNode);
     }
