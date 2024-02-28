@@ -32,7 +32,6 @@ import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -108,13 +107,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1678,40 +1674,21 @@ public class ODistributedPlugin extends OServerPluginAbstract
   protected void backupCurrentDatabase(final String iDatabaseName) {
     serverInstance.getDatabases().forceDatabaseClose(iDatabaseName);
 
-    // move directory to ../backup/databases/<db-name>
     final String backupDirectory =
         serverInstance
             .getContextConfiguration()
             .getValueAsString(OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY);
 
-    if (backupDirectory == null || OIOUtils.getStringContent(backupDirectory).trim().isEmpty())
-      // skip backup
-      return;
+    Path serverDir = Paths.get(serverInstance.getDatabaseDirectory());
+    Path backupPath = serverDir.resolve(backupDirectory).toAbsolutePath();
 
-    String backupPath;
-
-    if (backupDirectory.startsWith("/")) backupPath = backupDirectory;
-    else {
-      if (backupDirectory.startsWith("../")) {
-        backupPath =
-            new File(serverInstance.getDatabaseDirectory()).getParent()
-                + backupDirectory.substring("..".length());
-      } else {
-        backupPath = serverInstance.getDatabaseDirectory() + backupDirectory;
-      }
-    }
-
-    if (!backupPath.endsWith("/")) {
-      backupPath += "/";
-    }
-
-    backupPath += iDatabaseName;
+    backupPath = backupPath.resolve(iDatabaseName);
 
     final String dbpath = serverInstance.getDatabaseDirectory() + iDatabaseName;
-    final File backupFullPath = new File(backupPath);
+    final File backupFullPath = backupPath.toFile();
     try {
       if (backupFullPath.exists()) {
-        deleteRecursively(backupFullPath);
+        OFileUtils.deleteRecursively(backupFullPath);
       }
 
       Files.createDirectories(backupFullPath.toPath());
@@ -1747,11 +1724,11 @@ public class ODistributedPlugin extends OServerPluginAbstract
                     "Atomic moves not supported during database backup, will try not atomic move",
                     null);
             if (backupFullPath.exists()) {
-              deleteRecursively(backupFullPath);
+              OFileUtils.deleteRecursively(backupFullPath);
             }
             Files.createDirectories(backupFullPath.toPath());
 
-            Files.move(oldDirectory.toPath(), Paths.get(backupPath, oldDirectory.getName()));
+            Files.move(oldDirectory.toPath(), backupPath.resolve(oldDirectory.getName()));
           }
         } catch (DirectoryNotEmptyException e) {
           OLogManager.instance()
@@ -1760,16 +1737,16 @@ public class ODistributedPlugin extends OServerPluginAbstract
                   "File rename not supported during database backup, will try coping files",
                   null);
           if (backupFullPath.exists()) {
-            deleteRecursively(backupFullPath);
+            OFileUtils.deleteRecursively(backupFullPath);
           }
           Files.createDirectories(backupFullPath.toPath());
           try {
             OFileUtils.copyDirectory(
-                oldDirectory, Paths.get(backupPath, oldDirectory.getName()).toFile());
-            deleteRecursively(oldDirectory);
+                oldDirectory, backupPath.resolve(oldDirectory.getName()).toFile());
+            OFileUtils.deleteRecursively(backupFullPath);
           } catch (IOException ioe) {
             OLogManager.instance().errorNoDb(this, "Error moving old database removing it", ioe);
-            deleteRecursively(oldDirectory);
+            OFileUtils.deleteRecursively(backupFullPath);
           }
         }
       }
@@ -1786,26 +1763,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
           backupFullPath,
           e);
     }
-  }
-
-  private void deleteRecursively(final File path) throws IOException {
-    // delete directory and its content
-    Files.walkFileTree(
-        path.toPath(),
-        new SimpleFileVisitor<Path>() {
-          @Override
-          public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-            Files.delete(dir);
-            return FileVisitResult.CONTINUE;
-          }
-
-          @Override
-          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-              throws IOException {
-            Files.delete(file);
-            return FileVisitResult.CONTINUE;
-          }
-        });
   }
 
   /** Installs a database from the network. */
