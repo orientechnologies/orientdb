@@ -612,10 +612,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
   public void resetAllocatedIds() {
     for (Map.Entry<ORID, ORecordOperation> op : allEntries.entrySet()) {
       if (op.getValue().type == ORecordOperation.CREATED) {
+        ORID lastCreateId = op.getValue().getRID().copy();
         ORecordId oldNew =
-            new ORecordId(op.getKey().getClusterId(), op.getKey().getClusterPosition());
-        updateIdentityAfterCommit(op.getValue().getRID(), oldNew);
-        updatedRids.remove(op.getValue().getRID());
+            new ORecordId(lastCreateId.getClusterId(), op.getKey().getClusterPosition());
+        updateIdentityAfterCommit(lastCreateId, oldNew);
+        updatedRids.put(oldNew, op.getKey());
       }
     }
   }
