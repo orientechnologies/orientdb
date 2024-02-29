@@ -1,7 +1,8 @@
 package com.orientechnologies.security.symmetrickey;
 
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
@@ -21,6 +22,7 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
   private static final String DATABASE_URL = "remote:localhost/" + TESTDB;
 
   private static OServer server;
+  private static OrientDB remote;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -50,10 +52,18 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
     server.startup(new File(SERVER_DIRECTORY + "/config/orientdb-server-config.xml"));
     server.activate();
 
-    OServerAdmin serverAd = new OServerAdmin("remote:localhost");
-    serverAd.connect("root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
-    serverAd.createDatabase(TESTDB, "graph", "plocal");
-    serverAd.close();
+    remote =
+        new OrientDB(
+            "remote:localhost",
+            "root",
+            "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3",
+            OrientDBConfig.defaultConfig());
+    remote
+        .execute(
+            "create database "
+                + TESTDB
+                + " plocal users(admin identified by 'adminpwd' role admin)")
+        .close();
 
     server
         .getSystemDatabase()

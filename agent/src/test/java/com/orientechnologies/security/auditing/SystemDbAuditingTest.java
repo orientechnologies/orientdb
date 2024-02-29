@@ -3,10 +3,10 @@ package com.orientechnologies.security.auditing;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.security.AbstractSecurityTest;
@@ -36,9 +36,9 @@ import org.junit.Test;
 public class SystemDbAuditingTest extends AbstractSecurityTest {
 
   private static final String TESTDB = "SystemDbAuditingTestDB";
-  private static final String DATABASE_URL = "remote:localhost/" + TESTDB;
 
   private static OServer server;
+  private static OrientDB remote;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -66,14 +66,23 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
         SystemDbAuditingTest.class.getResourceAsStream(
             "/com/orientechnologies/security/auditing/auditing-config.json"));
 
-    OServerAdmin serverAd = new OServerAdmin("remote:localhost");
-    serverAd.connect("root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
-    serverAd.createDatabase(TESTDB, "graph", "plocal");
-    serverAd.close();
+    remote =
+        new OrientDB(
+            "remote:localhost",
+            "root",
+            "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3",
+            OrientDBConfig.defaultConfig());
+    remote
+        .execute(
+            "create database "
+                + TESTDB
+                + " plocal users(admin identified by 'adminpwd' role admin)")
+        .close();
   }
 
   @AfterClass
   public static void afterClass() {
+    remote.close();
     server.shutdown();
 
     cleanup(TESTDB);
@@ -84,8 +93,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
 
   @Test
   public void createDropClassTest() throws IOException {
-    ODatabaseDocument db = new ODatabaseDocumentTx("remote:localhost/" + TESTDB);
-    db.open("admin", "admin");
+    ODatabaseDocument db = remote.open(TESTDB, "admin", "adminpwd");
 
     server.getSystemDatabase().execute(null, "delete from OAuditingLog where database = ?", TESTDB);
 

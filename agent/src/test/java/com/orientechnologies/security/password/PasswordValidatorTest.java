@@ -3,9 +3,10 @@ package com.orientechnologies.security.password;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.security.AbstractSecurityTest;
@@ -28,7 +29,6 @@ import org.junit.Test;
 public class PasswordValidatorTest extends AbstractSecurityTest {
 
   private static final String TESTDB = "PasswordValidatorTestDB";
-  private static final String DATABASE_URL = "remote:localhost/" + TESTDB;
 
   private static OServer server;
 
@@ -50,19 +50,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
     server.startup(new File(SERVER_DIRECTORY + "/config/orientdb-server-config.xml"));
     server.activate();
 
-    server
-        .getDatabases()
-        .create(
-            TESTDB,
-            "root",
-            "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3",
-            ODatabaseType.PLOCAL);
-
-    //    OServerAdmin serverAd = new OServerAdmin("remote:localhost");
-    //    serverAd.connect("root",
-    // "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
-    //    serverAd.createDatabase(TESTDB, "graph", "plocal");
-    //    serverAd.close();
+    server.getContext().create(TESTDB, ODatabaseType.PLOCAL);
   }
 
   @AfterClass
@@ -77,95 +65,85 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
 
   @Test
   public void minCharacterTest() {
-    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
-    db.open("root", ROOT_PASSWORD);
+    try (OrientDB orientDb = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+      try (ODatabaseSession db = orientDb.open(TESTDB, "root", ROOT_PASSWORD)) {
+        final String sql =
+            String.format("create user %s identified by %s role %s", "testuser", "pass", "admin");
+        db.command(sql).close();
+      } catch (Exception ex) {
 
-    try {
-      final String sql =
-          String.format("create user %s identified by %s role %s", "testuser", "pass", "admin");
-      db.command(sql).close();
-    } catch (Exception ex) {
-
-      assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
+        assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
+      }
     }
-
-    db.close();
   }
 
   @Test
   public void minNumberTest() {
-    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
-    db.open("root", ROOT_PASSWORD);
-
-    try {
-      final String sql =
-          String.format("create user %s identified by %s role %s", "testuser", "passw", "admin");
-      db.command(sql).close();
-    } catch (Exception ex) {
-      assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
+    try (OrientDB orientDb = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+      try (ODatabaseSession db = orientDb.open(TESTDB, "root", ROOT_PASSWORD)) {
+        final String sql =
+            String.format("create user %s identified by %s role %s", "testuser", "passw", "admin");
+        db.command(sql).close();
+      } catch (Exception ex) {
+        assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
+      }
     }
-
-    db.close();
   }
 
   @Test
   public void minSpecialTest() {
-    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
-    db.open("root", ROOT_PASSWORD);
+    try (OrientDB orientDb = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+      try (ODatabaseSession db = orientDb.open(TESTDB, "root", ROOT_PASSWORD)) {
 
-    try {
-      final String sql =
-          String.format("create user %s identified by %s role %s", "testuser", "passw12", "admin");
-      db.command(sql).close();
-    } catch (Exception ex) {
-      assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
+        final String sql =
+            String.format(
+                "create user %s identified by %s role %s", "testuser", "passw12", "admin");
+        db.command(sql).close();
+      } catch (Exception ex) {
+        assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
+      }
     }
-
-    db.close();
   }
 
   @Test
   public void minUppercaseTest() {
-    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
-    db.open("root", ROOT_PASSWORD);
+    try (OrientDB orientDb = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+      try (ODatabaseSession db = orientDb.open(TESTDB, "root", ROOT_PASSWORD)) {
 
-    try {
-
-      final String sql =
-          String.format(
-              "create user %s identified by \"%s\" role %s", "testuser", "passw12$$", "admin");
-      db.command(sql).close();
-    } catch (Exception ex) {
-      assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
+        final String sql =
+            String.format(
+                "create user %s identified by \"%s\" role %s", "testuser", "passw12$$", "admin");
+        db.command(sql).close();
+      } catch (Exception ex) {
+        assertThat(ex).isInstanceOf(OInvalidPasswordException.class);
+      }
     }
-
-    db.close();
   }
 
   @Test
   public void uuidTest() {
-    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
-    db.open("root", ROOT_PASSWORD);
+    try (OrientDB orientDb = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+      try (ODatabaseSession db = orientDb.open(TESTDB, "root", ROOT_PASSWORD)) {
 
-    final String sql =
-        String.format(
-            "create user %s identified by '%s' role %s",
-            "uuiduser", java.util.UUID.randomUUID().toString(), "admin");
-    db.command(sql).close();
-
-    db.close();
+        final String sql =
+            String.format(
+                "create user %s identified by '%s' role %s",
+                "uuiduser", java.util.UUID.randomUUID().toString(), "admin");
+        db.command(sql).close();
+      }
+    }
   }
 
   @Test
   public void validTest() {
-    ODatabaseDocument db = new ODatabaseDocumentTx(DATABASE_URL);
-    db.open("root", ROOT_PASSWORD);
+    try (OrientDB orientDb = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+      try (ODatabaseSession db = orientDb.open(TESTDB, "root", ROOT_PASSWORD)) {
 
-    final String sql =
-        String.format(
-            "create user %s identified by '%s' role %s", "testuser", "PASsw12$$", "admin");
-    db.command(sql).close();
-
-    db.close();
+        final String sql =
+            String.format(
+                "create user %s identified by '%s' role %s", "testuser", "PASsw12$$", "admin");
+        db.command(sql).close();
+      }
+    }
   }
 }
