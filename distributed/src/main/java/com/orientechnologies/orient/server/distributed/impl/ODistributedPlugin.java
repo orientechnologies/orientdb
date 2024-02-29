@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
@@ -297,7 +298,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
     try {
       clusterManager.startupHazelcastPlugin();
 
-      final long statsDelay = OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY.getValueAsLong();
+      OContextConfiguration ctx = serverInstance.getContextConfiguration();
+      final long statsDelay = ctx.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY);
       if (statsDelay > 0) {
         haStatsTask =
             new TimerTask() {
@@ -310,7 +312,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       }
 
       final long healthChecker =
-          OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY.getValueAsLong();
+          ctx.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
       if (healthChecker > 0) {
         OClusterHealthChecker checkTask = new OClusterHealthChecker(this, healthChecker);
         healthCheckerTask =
@@ -2391,10 +2393,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   public ORemoteServerController getRemoteServer(final String rNodeName) throws IOException {
     if (rNodeName == null) throw new IllegalArgumentException("Server name is NULL");
 
-    // TODO: check if it's possible to bypass remote call
-    //    if (rNodeName.equalsIgnoreCase(getLocalNodeName()))
-    //      throw new IllegalArgumentException("Cannot send remote message to the local server");
-
     ORemoteServerController remoteServer = remoteServerManager.getRemoteServer(rNodeName);
     if (remoteServer == null) {
       Member member = clusterManager.getClusterMemberByName(rNodeName);
@@ -2592,69 +2590,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
-
-      final String dbName = iDatabase.getName();
-
-      //      final ODocument dCfg = (ODocument)
-      // configurationMap.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
-      //      if (dCfg != null && getAvailableNodes(dbName) > 0) {
-      //        throw new ODistributedException(
-      //            "Cannot create the new database '" + dbName + "' because it is already present
-      // in distributed configuration");
-      //      }
-
-      final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
-
-      // TODO: TEMPORARY PATCH TO WAIT FOR DB PROPAGATION IN CFG TO ALL THE OTHER SERVERS
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw OException.wrapException(
-            new ODistributedException(
-                "Error on creating database '" + dbName + "' on distributed nodes"),
-            e);
-      }
-
-      // WAIT UNTIL THE DATABASE HAS BEEN PROPAGATED TO ALL THE SERVERS
-      final Set<String> servers = cfg.getAllConfiguredServers();
-      if (servers.size() > 1) {
-        int retry = 0;
-        for (; retry < 100; ++retry) {
-          boolean allServersAreOnline = true;
-          for (String server : servers) {
-            if (!isNodeOnline(server, dbName)) {
-              allServersAreOnline = false;
-              break;
-            }
-          }
-
-          if (allServersAreOnline) break;
-
-          // WAIT FOR ANOTHER RETRY
-          try {
-            Thread.sleep(200);
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw OException.wrapException(
-                new ODistributedException(
-                    "Error on creating database '" + dbName + "' on distributed nodes"),
-                e);
-          }
-        }
-
-        if (retry >= 100)
-          ODistributedServerLog.warn(
-              this,
-              getLocalNodeName(),
-              null,
-              DIRECTION.NONE,
-              "Timeout waiting for all nodes to be up for database %s",
-              dbName);
-      }
-
       onOpen(iDatabase);
-
     } finally {
       // RESTORE ORIGINAL DATABASE INSTANCE IN TL
       ODatabaseRecordThreadLocal.instance().set(currDb);
