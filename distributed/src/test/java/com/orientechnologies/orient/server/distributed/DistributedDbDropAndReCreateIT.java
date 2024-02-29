@@ -48,7 +48,7 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
 
       orientDB.drop(getDatabaseName());
 
-      Thread.sleep(2000);
+      Thread.sleep(3000);
 
       Assert.assertNull(
           server
@@ -79,7 +79,7 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
       }
 
     } while (++s < serverInstance.size());
-
+    Thread.sleep(3000);
     // DROP LAST DATABASE
     serverInstance
         .get(serverInstance.size() - 1)
