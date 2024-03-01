@@ -125,6 +125,9 @@ public class ODocumentInternal {
     if (element == null) {
       return null;
     }
+    if (!(element instanceof ODocument)) {
+      element = element.getRecord();
+    }
     return ((ODocument) element).rawField(propertyName);
   }
 
