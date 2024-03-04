@@ -27,6 +27,18 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.29 - (March, 6 2024)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3229---06-March-2024
+
+# Core
+- Fix issue on delegated records on raw access, issue #10171
+- Minor fix in transaction not document record handling
+- Make sure to check the security policy record exists before creating instance
+
+# Distributed
+- Correct id swap revert in distributed transaction during retry
+- Make sure to execute full sync in case of delta sync failure
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.28 - (February, 21 2024)
