@@ -279,7 +279,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <version>3.21.0</version>
+                    <version>3.21.2</version>
                 </plugin>
 
                 <plugin>
