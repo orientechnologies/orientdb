@@ -545,7 +545,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
               }
             } else {
               for (int sizeOffset = (OIntegerSerializer.INT_SIZE - recordSizePart) << 3;
-                  sizeOffset < OIntegerSerializer.INT_SIZE & spaceLeft > 0;
+                  sizeOffset < (OIntegerSerializer.INT_SIZE * 8) && spaceLeft > 0;
                   sizeOffset += 8, spaceLeft--, written++) {
                 final byte sizeByte = (byte) (0xFF & (recordContent.length >> sizeOffset));
                 chunk[spaceLeft - 1] = sizeByte;
