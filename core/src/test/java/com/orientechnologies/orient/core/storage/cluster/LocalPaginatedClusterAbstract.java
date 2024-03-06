@@ -1397,6 +1397,51 @@ public abstract class LocalPaginatedClusterAbstract {
   }
 
   @Test
+  public void testUpdateRecordNearMaxPageSize() throws IOException {
+    long seed = System.currentTimeMillis();
+    Random mersenneTwisterFast = new Random(seed);
+    System.out.println("testUpdateRecordNearMaxPageSize seed : " + seed);
+    final int recordVersion = 1;
+    final int recordSize = OClusterPage.MAX_RECORD_SIZE - 30;
+    final byte[] record = new byte[recordSize];
+    mersenneTwisterFast.nextBytes(record);
+
+    final OPhysicalPosition physicalPosition =
+        atomicOperationsManager.calculateInsideAtomicOperation(
+            null,
+            atomicOperation ->
+                paginatedCluster.createRecord(
+                    record, recordVersion, (byte) 2, null, atomicOperation));
+
+    ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition, false);
+
+    Assert.assertEquals(recordVersion, rawBuffer.version);
+    Assertions.assertThat(rawBuffer.buffer).isEqualTo(record);
+    Assert.assertEquals(2L, rawBuffer.recordType);
+
+    for (int i = 0; i < 40; i++) {
+      int updatedRecordVersion = recordVersion + 1 + i;
+      final byte[] updatedRecord = new byte[recordSize + i];
+      mersenneTwisterFast.nextBytes(record);
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null,
+          atomicOperation ->
+              paginatedCluster.updateRecord(
+                  physicalPosition.clusterPosition,
+                  updatedRecord,
+                  updatedRecordVersion,
+                  (byte) 2,
+                  atomicOperation));
+
+      rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition, false);
+
+      Assert.assertEquals(updatedRecordVersion, rawBuffer.version);
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(updatedRecord);
+      Assert.assertEquals(2L, rawBuffer.recordType);
+    }
+  }
+
+  @Test
   public void testForwardIteration() throws IOException {
     final int records = 10000;
 
