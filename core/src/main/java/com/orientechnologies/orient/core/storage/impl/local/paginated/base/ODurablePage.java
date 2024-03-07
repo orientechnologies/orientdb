@@ -261,7 +261,7 @@ public class ODurablePage {
   protected final int setShortValue(final int pageOffset, final short value) {
 
     if (changes != null) {
-      changes.setIntValue(buffer, value, pageOffset);
+      changes.setShortValue(buffer, value, pageOffset);
     } else {
       assert buffer != null;
       assert buffer.order() == ByteOrder.nativeOrder();
