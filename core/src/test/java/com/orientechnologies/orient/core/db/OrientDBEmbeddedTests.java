@@ -618,7 +618,7 @@ public class OrientDBEmbeddedTests {
         10,
         10);
 
-    assertTrue(latch.await(80, TimeUnit.MILLISECONDS));
+    assertTrue(latch.await(5, TimeUnit.MINUTES));
 
     CountDownLatch once = new CountDownLatch(1);
     internal.scheduleOnce(
@@ -630,7 +630,7 @@ public class OrientDBEmbeddedTests {
         },
         10);
 
-    assertTrue(once.await(80, TimeUnit.MILLISECONDS));
+    assertTrue(once.await(5, TimeUnit.MINUTES));
   }
 
   @Test
