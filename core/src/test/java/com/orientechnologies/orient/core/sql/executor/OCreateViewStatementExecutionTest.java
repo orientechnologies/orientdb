@@ -281,7 +281,7 @@ public class OCreateViewStatementExecutionTest extends BaseMemoryDatabase {
 
     db.command("DELETE FROM " + className + " WHERE name = 'name3'").close();
 
-    Thread.sleep(2000);
+    Thread.sleep(3000);
     db.getLocalCache().clear();
     result = db.query("SELECT FROM " + viewName + " WHERE name = 'name3'");
     Assert.assertTrue(
