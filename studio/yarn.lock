@@ -98,9 +98,9 @@
   dependencies:
     "@types/jquery" "*"
 
-"@types/selenium-webdriver@^2.53.42":
-  version "2.53.42"
-  resolved "https://registry.yarnpkg.com/@types/selenium-webdriver/-/selenium-webdriver-2.53.42.tgz#74cb77fb6052edaff2a8984ddafd88d419f25cac"
+"@types/selenium-webdriver@^2.53.53":
+  version "2.53.53"
+  resolved "https://registry.yarnpkg.com/@types/selenium-webdriver/-/selenium-webdriver-2.53.53.tgz#736b84421f5483804bd22801dc1d20ef492ad813"
 
 "@types/source-map@*", "@types/source-map@^0.5.2":
   version "0.5.2"
