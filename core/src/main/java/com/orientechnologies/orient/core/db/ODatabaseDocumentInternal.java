@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -304,4 +305,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   public long truncateClass(String name, boolean polimorfic);
 
   public long truncateClusterInternal(String name);
+
+  void commitPreallocate();
+
+  void internalCommitPreallocate(OTransactionOptimistic oTransactionOptimistic);
 }

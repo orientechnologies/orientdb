@@ -66,6 +66,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollection
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 import java.io.IOException;
@@ -1754,5 +1755,15 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public long truncateClass(String name, boolean polimorfic) {
     return internal.truncateClass(name, polimorfic);
+  }
+
+  @Override
+  public void commitPreallocate() {
+    internal.commitPreallocate();
+  }
+
+  @Override
+  public void internalCommitPreallocate(OTransactionOptimistic oTransactionOptimistic) {
+    internal.internalCommitPreallocate(oTransactionOptimistic);
   }
 }

@@ -20,8 +20,10 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -2085,5 +2087,71 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   @Override
   public void truncateCluster(String clusterName) {
     truncateClusterInternal(clusterName);
+  }
+
+  @Override
+  public void commitPreallocate() {
+    checkOpenness();
+    checkIfActive();
+
+    if (!currentTx.isActive()) return;
+
+    if (currentTx.amountOfNestedTxs() > 1) {
+      // This just do count down no real commit here
+      ((OTransactionOptimistic) currentTx).commitPreallocate();
+      return;
+    }
+
+    // WAKE UP LISTENERS
+
+    try {
+      beforeCommitOperations();
+    } catch (OException e) {
+      try {
+        rollback();
+      } catch (Exception re) {
+        OLogManager.instance()
+            .error(this, "Exception during rollback `%08X`", re, System.identityHashCode(re));
+      }
+      throw e;
+    }
+    try {
+      ((OTransactionOptimistic) currentTx).commitPreallocate();
+    } catch (RuntimeException e) {
+
+      if ((e instanceof OHighLevelException) || (e instanceof ONeedRetryException))
+        OLogManager.instance()
+            .debug(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
+      else
+        OLogManager.instance()
+            .error(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
+
+      // WAKE UP ROLLBACK LISTENERS
+      beforeRollbackOperations();
+
+      try {
+        // ROLLBACK TX AT DB LEVEL
+        ((OTransactionAbstract) currentTx).internalRollback();
+      } catch (Exception re) {
+        OLogManager.instance()
+            .error(
+                this, "Error during transaction rollback `%08X`", re, System.identityHashCode(re));
+      }
+
+      // WAKE UP ROLLBACK LISTENERS
+      afterRollbackOperations();
+      throw e;
+    }
+
+    // WAKE UP LISTENERS
+    afterCommitOperations();
+
+    return;
+  }
+
+  @Override
+  public void internalCommitPreallocate(OTransactionOptimistic oTransactionOptimistic) {
+    ((OAbstractPaginatedStorage) getStorage()).preallocateRids(oTransactionOptimistic);
+    ((OAbstractPaginatedStorage) getStorage()).commitPreAllocated(oTransactionOptimistic);
   }
 }
