@@ -406,6 +406,26 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
+  public void internalCommitPreallocate(OTransactionOptimistic iTx) {
+    int protocolVersion = DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger();
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()
+        || (iTx.isSequenceTransaction() && protocolVersion == 2)) {
+      // Exclusive for handling schema manipulation, remove after refactor for distributed schema
+      super.internalCommitPreallocate(iTx);
+    } else {
+      switch (protocolVersion) {
+        case 1:
+          distributedCommitV1(iTx);
+          break;
+        default:
+          throw new IllegalStateException(
+              "Invalid distributed replicaiton protocol version: "
+                  + DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger());
+      }
+    }
+  }
+
+  @Override
   public <T> T sendSequenceAction(OSequenceAction action)
       throws ExecutionException, InterruptedException {
     throw new UnsupportedOperationException();

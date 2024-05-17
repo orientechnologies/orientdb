@@ -252,6 +252,8 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
 
     } else if (option.equalsIgnoreCase("-useLineFeedForRecords")) {
       useLineFeedForRecords = Boolean.parseBoolean(items.get(0));
+    } else if (option.equalsIgnoreCase("-preserveRids")) {
+      setPreserveRids(Boolean.parseBoolean(items.get(0)));
     }
   }
 }

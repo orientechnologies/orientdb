@@ -150,7 +150,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
                             + " where key = ?",
                         rid.toString())) {
                   if (resultSet.hasNext()) {
-                    return new ORecordId(resultSet.next().<String>getProperty("value"));
+                    return (ORID) resultSet.next().getProperty("value");
                   }
                   return null;
                 }

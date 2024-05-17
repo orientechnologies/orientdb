@@ -122,6 +122,34 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
   }
 
+  public void commitPreallocate() {
+    checkTransactionValid();
+    if (txStartCounter < 0) {
+      throw new OStorageException("Invalid value of tx counter: " + txStartCounter);
+    }
+    txStartCounter--;
+
+    if (txStartCounter == 0) {
+      if (status == TXSTATUS.ROLLED_BACK || status == TXSTATUS.ROLLBACKING) {
+        throw new ORollbackException(
+            "Given transaction was rolled back, and thus cannot be committed.");
+      }
+      status = TXSTATUS.COMMITTING;
+
+      if (sentToServer || !allEntries.isEmpty() || !indexEntries.isEmpty()) {
+        database.internalCommitPreallocate(this);
+      }
+      invokeCallbacks();
+      close();
+      status = TXSTATUS.COMPLETED;
+    } else if (txStartCounter > 0) {
+      OLogManager.instance()
+          .debug(this, "Nested transaction was closed but transaction itself was not committed.");
+    } else {
+      throw new OTransactionException("Transaction was committed more times than it was started.");
+    }
+  }
+
   @Override
   public int amountOfNestedTxs() {
     return txStartCounter;

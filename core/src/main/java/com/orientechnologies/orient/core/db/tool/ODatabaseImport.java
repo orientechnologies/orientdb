@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldWalker;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.tool.importer.OConverterData;
 import com.orientechnologies.orient.core.db.tool.importer.OLinksRewriter;
@@ -72,6 +73,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.ORidSet;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -105,7 +107,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private final Map<OPropertyImpl, String> linkedClasses = new HashMap<>();
   private final Map<OClass, List<String>> superClasses = new HashMap<>();
   private OJSONReader jsonReader;
-  private ORecord record;
   private boolean schemaImported = false;
   private int exporterVersion = -1;
   private ORID schemaRecordId;
@@ -371,6 +372,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     this.preserveClusterIDs = preserveClusterIDs;
   }
 
+  public void setPreserveRids(boolean preserveRids) {
+    super.setPreserveRids(preserveRids);
+    if (preserveRids) {
+      setPreserveClusterIDs(true);
+    }
+  }
+
   public boolean isMerge() {
     return merge;
   }
@@ -462,8 +470,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     for (final OClass dbClass : classes) {
       final String className = dbClass.getName();
       if (!dbClass.isSuperClassOf(role)
-          && !dbClass.isSuperClassOf(user)
-          && !dbClass.isSuperClassOf(identity) /*&& !dbClass.isSuperClassOf(oSecurityPolicy)*/) {
+              && !dbClass.isSuperClassOf(user)
+              && !dbClass.isSuperClassOf(identity)
+          || isPreserveRids()) {
         classesToDrop.put(className, dbClass);
         for (final OIndex index : dbClass.getIndexes()) {
           indexNames.add(index.getName());
@@ -556,7 +565,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
               if (!result.hasNext()) {
                 newRid = oldRid;
               } else {
-                newRid = new ORecordId(result.next().<String>getProperty("value"));
+                newRid = result.next().getProperty("value");
               }
             }
 
@@ -573,7 +582,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
               if (!result.hasNext()) {
                 newRid = document.field("rid");
               } else {
-                newRid = new ORecordId(result.next().<String>getProperty("value"));
+                newRid = result.next().getProperty("value");
               }
             }
 
@@ -1159,7 +1168,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       value = value.substring(1);
     }
 
-    record = null;
+    ORecord record = null;
 
     // big ridbags (ie. supernodes) sometimes send the system OOM, so they have to be discarded at
     // this stage
@@ -1307,21 +1316,31 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           ORecordInternal.setVersion(record, loadedRecord.getVersion());
         } else {
           ORecordInternal.setVersion(record, 0);
-          ORecordInternal.setIdentity(record, new ORecordId());
+          if (!preserveRids) {
+            ORecordInternal.setIdentity(record, new ORecordId());
+          }
         }
         record.setDirty();
-
-        if (!preserveRids
-            && record instanceof ODocument
-            && ODocumentInternal.getImmutableSchemaClass(database, ((ODocument) record)) != null)
+        if (preserveRids) {
+          database.begin();
           record.save();
-        else record.save(database.getClusterNameById(clusterId));
+          ((OTransactionInternal) database.getTransaction())
+                  .getRecordEntry(record.getIdentity())
+                  .type =
+              ORecordOperation.CREATED;
+          database.commitPreallocate();
+        } else if (record instanceof ODocument
+            && ODocumentInternal.getImmutableSchemaClass(database, ((ODocument) record)) != null) {
+          record.save();
+        } else {
+          record.save(database.getClusterNameById(clusterId));
+        }
 
         if (!rid.equals(record.getIdentity())) {
           // SAVE IT ONLY IF DIFFERENT
           new ODocument(EXPORT_IMPORT_CLASS_NAME)
               .field("key", rid.toString())
-              .field("value", record.getIdentity().toString())
+              .field("value", record)
               .save();
         }
       }
@@ -1375,7 +1394,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
     final OClass cls = schema.createClass(EXPORT_IMPORT_CLASS_NAME);
     cls.createProperty("key", OType.STRING);
-    cls.createProperty("value", OType.STRING);
+    cls.createProperty("value", OType.LINK);
     cls.createIndex(EXPORT_IMPORT_INDEX_NAME, OClass.INDEX_TYPE.DICTIONARY, "key");
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
@@ -1437,8 +1456,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         lastLapRecords = 0;
         involvedClusters.clear();
       }
-
-      record = null;
     }
 
     if (!merge) {

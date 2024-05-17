@@ -1286,4 +1286,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     }
     return count;
   }
+
+  @Override
+  public void commitPreallocate() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void internalCommitPreallocate(OTransactionOptimistic oTransactionOptimistic) {
+    throw new UnsupportedOperationException();
+  }
 }
