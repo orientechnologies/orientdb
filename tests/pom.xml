@@ -69,7 +69,7 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>7.9.0</version>
+            <version>7.10.2</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -130,7 +130,7 @@
         <dependency>
             <groupId>org.knowm.xchart</groupId>
             <artifactId>xchart</artifactId>
-            <version>3.8.7</version>
+            <version>3.8.5</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
