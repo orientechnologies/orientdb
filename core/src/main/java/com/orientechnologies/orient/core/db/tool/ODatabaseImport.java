@@ -480,11 +480,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
     }
 
-    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
-    for (final String indexName : indexNames) {
-      indexManager.dropIndex(database, indexName);
-    }
-
     int removedClasses = 0;
     while (!classesToDrop.isEmpty()) {
       final AbstractList<String> classesReadyToDrop = new ArrayList<>();
