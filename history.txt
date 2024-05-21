@@ -28,6 +28,16 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.30 - (May, 24 2024)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3230---24-May-2024
+
+# Core
+- Fix disk compatiblity on some specific CPU architectures
+
+# Tool
+- Add Support of preserving record ids on database import
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.29 - (March, 6 2024)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3229---06-March-2024
 
