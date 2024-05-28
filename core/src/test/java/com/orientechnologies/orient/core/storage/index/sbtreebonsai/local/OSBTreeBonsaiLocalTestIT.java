@@ -1,8 +1,7 @@
 package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local;
 
+import com.orientechnologies.BasePlocalInternalDatabase;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -20,67 +19,57 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.08.13
  */
-public class OSBTreeBonsaiLocalTestIT {
+public class OSBTreeBonsaiLocalTestIT extends BasePlocalInternalDatabase {
   private static final int KEYS_COUNT = 500000;
   protected static OSBTreeBonsaiLocal<Integer, OIdentifiable> sbTree;
-  protected static ODatabaseDocumentInternal db;
   private static OAtomicOperationsManager atomicOperationsManager;
 
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null) buildDirectory = "./target";
-
-    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeBonsaiTest");
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
-
-    db.create();
-
+  @Before
+  public void beforeTest() throws Exception {
+    super.beforeTest();
     sbTree =
         new OSBTreeBonsaiLocal<>(
             "actualSBTreeBonsaiLocalTest", ".irs", (OAbstractPaginatedStorage) db.getStorage());
 
     atomicOperationsManager =
-        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db).getStorage())
-            .getAtomicOperationsManager();
-    atomicOperationsManager.executeInsideAtomicOperation(
-        null, atomicOperation -> sbTree.createComponent(atomicOperation));
+        ((OAbstractPaginatedStorage) db.getStorage()).getAtomicOperationsManager();
+    try {
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null, atomicOperation -> sbTree.createComponent(atomicOperation));
 
-    atomicOperationsManager.executeInsideAtomicOperation(
-        null,
-        atomicOperation ->
-            sbTree.create(atomicOperation, OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE));
-  }
-
-  @AfterClass
-  public static void afterClass() throws Exception {
-    atomicOperationsManager.executeInsideAtomicOperation(
-        null,
-        atomicOperation -> {
-          sbTree.clear(atomicOperation);
-          sbTree.delete(atomicOperation);
-          sbTree.deleteComponent(atomicOperation);
-        });
-
-    db.drop();
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null,
+          atomicOperation ->
+              sbTree.create(
+                  atomicOperation, OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE));
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @After
-  public void afterMethod() throws Exception {
-    atomicOperationsManager.executeInsideAtomicOperation(
-        null, atomicOperation -> sbTree.clear(atomicOperation));
+  public void afterTest() throws Exception {
+    try {
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null,
+          atomicOperation -> {
+            sbTree.clear(atomicOperation);
+            sbTree.delete(atomicOperation);
+            sbTree.deleteComponent(atomicOperation);
+          });
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    super.afterTest();
   }
 
   @Test

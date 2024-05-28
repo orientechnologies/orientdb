@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
+import com.orientechnologies.BasePlocalInternalDatabase;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -26,26 +26,15 @@ import org.junit.Test;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 13.03.13
  */
-public class LocalHashTableV2IterationTestIT {
+public class LocalHashTableV2IterationTestIT extends BasePlocalInternalDatabase {
   private static final int KEYS_COUNT = 500000;
-
-  private ODatabaseDocumentInternal db;
 
   private LocalHashTableV2<Integer, String> localHashTable;
   private OAtomicOperationsManager atomicOperationsManager;
 
   @Before
-  public void beforeClass() throws Exception {
-    String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null) buildDirectory = ".";
-
-    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableV2IterationTest");
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
-
-    db.create();
+  public void beforeTest() throws Exception {
+    super.beforeTest();
 
     OHashFunction<Integer> hashFunction = value -> Long.MAX_VALUE / 2 + value;
 
@@ -76,17 +65,12 @@ public class LocalHashTableV2IterationTestIT {
   }
 
   @After
-  public void afterClass() throws Exception {
+  public void afterTest() throws Exception {
     doClearTable();
 
     atomicOperationsManager.executeInsideAtomicOperation(
         null, atomicOperation -> localHashTable.delete(atomicOperation));
-    db.drop();
-  }
-
-  @After
-  public void afterMethod() throws Exception {
-    doClearTable();
+    super.afterTest();
   }
 
   private void doClearTable() throws IOException {
