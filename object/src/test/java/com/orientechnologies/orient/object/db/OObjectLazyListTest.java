@@ -3,6 +3,7 @@ package com.orientechnologies.orient.object.db;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
@@ -11,29 +12,29 @@ import org.junit.Test;
 
 /** Created by Anders Heintz on 20/06/15. */
 public class OObjectLazyListTest {
-  private OObjectDatabaseTx databaseTx;
+  private ODatabaseObject database;
   private int count;
 
   @Before
   public void setUp() throws Exception {
-    databaseTx = new OObjectDatabaseTx("memory:OObjectEnumLazyListTest");
-    databaseTx.create();
+    database = new OObjectDatabaseTx("memory:OObjectEnumLazyListTest");
+    database.create();
 
-    databaseTx.getEntityManager().registerEntityClass(EntityObject.class);
-    databaseTx.getEntityManager().registerEntityClass(EntityObjectWithList.class);
+    database.getEntityManager().registerEntityClass(EntityObject.class);
+    database.getEntityManager().registerEntityClass(EntityObjectWithList.class);
   }
 
   @After
   public void tearDown() {
 
-    databaseTx.drop();
+    database.drop();
   }
 
   @Test
   public void positionTest() {
     EntityObjectWithList listObject = getTestObject();
 
-    listObject = databaseTx.save(listObject);
+    listObject = database.save(listObject);
 
     EntityObject newObject = new EntityObject();
     newObject.setFieldValue("NewObject");
@@ -42,7 +43,7 @@ public class OObjectLazyListTest {
     listObject.getEntityObjects().add(0, newObject);
     listObject.getEntityObjects().add(listObject.getEntityObjects().size(), newObject2);
 
-    listObject = databaseTx.save(listObject);
+    listObject = database.save(listObject);
 
     assert (listObject.getEntityObjects().get(0).getFieldValue().equals("NewObject"));
     assert (listObject
@@ -61,7 +62,7 @@ public class OObjectLazyListTest {
   public void stream() {
     EntityObjectWithList listObject = getTestObject();
 
-    listObject = databaseTx.save(listObject);
+    listObject = database.save(listObject);
 
     EntityObject newObject = new EntityObject();
     newObject.setFieldValue("NewObject");
@@ -70,7 +71,7 @@ public class OObjectLazyListTest {
     listObject.getEntityObjects().add(0, newObject);
     listObject.getEntityObjects().add(listObject.getEntityObjects().size(), newObject2);
 
-    listObject = databaseTx.save(listObject);
+    listObject = database.save(listObject);
     count = 0;
     listObject.getEntityObjects().stream()
         .forEach(

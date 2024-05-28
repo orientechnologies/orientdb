@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.After;
@@ -19,19 +20,19 @@ public class OObjectLazyMapTest {
   private final int idOfFirstMapEntry = 1;
   private final int idOfSecondMapEntry = 2;
   private final int invalidId = 3;
-  private OObjectDatabaseTx databaseTx;
+  private ODatabaseObject database;
 
   @Before
   public void setUp() throws Exception {
-    databaseTx = new OObjectDatabaseTx("memory:OObjectLazyMapTest");
-    databaseTx.create();
+    database = new OObjectDatabaseTx("memory:OObjectLazyMapTest");
+    database.create();
 
-    databaseTx.getEntityManager().registerEntityClass(EntityWithMap.class);
+    database.getEntityManager().registerEntityClass(EntityWithMap.class);
   }
 
   @After
   public void tearDown() {
-    databaseTx.drop();
+    database.drop();
   }
 
   @Test
@@ -121,7 +122,7 @@ public class OObjectLazyMapTest {
 
     toStore.setMap(mapToStore);
 
-    EntityWithMap fromDb = this.databaseTx.save(toStore);
+    EntityWithMap fromDb = this.database.save(toStore);
 
     assertTrue(fromDb != null);
     assertTrue(fromDb.getMap() != null);

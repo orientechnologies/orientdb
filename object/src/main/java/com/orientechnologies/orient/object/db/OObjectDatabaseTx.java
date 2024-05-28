@@ -916,10 +916,6 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     return false;
   }
 
-  public boolean isManaged(final Object iEntity) {
-    return false;
-  }
-
   public void registerClassMethodFilter(Class<?> iClass, OObjectMethodFilter iMethodFilter) {
     OObjectEntityEnhancer.getInstance().registerClassMethodFilter(iClass, iMethodFilter);
   }

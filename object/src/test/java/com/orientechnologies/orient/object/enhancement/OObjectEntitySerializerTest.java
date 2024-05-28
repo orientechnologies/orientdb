@@ -2,6 +2,7 @@ package com.orientechnologies.orient.object.enhancement;
 
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.junit.After;
 import org.junit.Before;
@@ -13,25 +14,25 @@ import org.junit.Test;
  */
 public class OObjectEntitySerializerTest {
 
-  private OObjectDatabaseTx databaseTx;
+  private ODatabaseObject database;
 
   @Before
   public void setUp() throws Exception {
-    databaseTx = new OObjectDatabaseTx("memory:OObjectEntitySerializerTest");
-    databaseTx.create();
+    database = new OObjectDatabaseTx("memory:OObjectEntitySerializerTest");
+    database.create();
 
-    databaseTx.getEntityManager().registerEntityClass(ExactEntity.class);
+    database.getEntityManager().registerEntityClass(ExactEntity.class);
   }
 
   @After
   public void tearDown() {
-    databaseTx.drop();
+    database.drop();
   }
 
   @Test
   public void testCallbacksHierarchy() {
     ExactEntity entity = new ExactEntity();
-    databaseTx.save(entity);
+    database.save(entity);
 
     assertTrue(entity.callbackExecuted());
   }
@@ -39,10 +40,10 @@ public class OObjectEntitySerializerTest {
   @Test
   public void testCallbacksHierarchyUpdate() {
     ExactEntity entity = new ExactEntity();
-    entity = databaseTx.save(entity);
+    entity = database.save(entity);
 
     entity.reset();
-    databaseTx.save(entity);
+    database.save(entity);
     assertTrue(entity.callbackExecuted());
   }
 }

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.object.enhancement;
 
 import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.annotation.OVersion;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -31,7 +32,7 @@ import org.junit.Test;
  * @since 12/14/12
  */
 public class OVersionSerializationTest {
-  private OObjectDatabaseTx database;
+  private ODatabaseObject database;
 
   @Before
   public void setUp() throws Exception {

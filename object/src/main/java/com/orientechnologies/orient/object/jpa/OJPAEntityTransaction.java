@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.orient.object.jpa;
 
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import javax.persistence.EntityTransaction;
 
 public class OJPAEntityTransaction implements EntityTransaction {
-  private final OObjectDatabaseTx database;
+  private final ODatabaseObject database;
 
-  public OJPAEntityTransaction(final OObjectDatabaseTx iDatabase) {
+  public OJPAEntityTransaction(final ODatabaseObject iDatabase) {
     database = iDatabase;
   }
 

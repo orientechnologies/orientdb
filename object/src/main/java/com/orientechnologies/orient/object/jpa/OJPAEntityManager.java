@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.object.jpa;
 
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -41,7 +42,7 @@ public class OJPAEntityManager implements EntityManager {
   private static Logger logger = Logger.getLogger(OJPAPersistenceProvider.class.getName());
 
   private final EntityManagerFactory emFactory;
-  private final OObjectDatabaseTx database;
+  private final ODatabaseObject database;
   private final EntityTransaction transaction;
   private final OJPAProperties properties;
   private FlushModeType flushMode = FlushModeType.AUTO;
@@ -153,7 +154,7 @@ public class OJPAEntityManager implements EntityManager {
 
   @Override
   public boolean contains(Object entity) {
-    return database.isManaged(entity);
+    return false;
   }
 
   @Override

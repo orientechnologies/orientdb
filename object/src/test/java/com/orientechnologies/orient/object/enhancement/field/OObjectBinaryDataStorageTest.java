@@ -15,6 +15,7 @@
 package com.orientechnologies.orient.object.enhancement.field;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.IOException;
@@ -26,11 +27,11 @@ import org.junit.Test;
 /** @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a> */
 public class OObjectBinaryDataStorageTest {
 
-  private OObjectDatabaseTx databaseTx;
+  private ODatabaseObject database;
 
   @After
   public void tearDown() {
-    databaseTx.drop();
+    database.drop();
   }
 
   @Test
@@ -45,8 +46,8 @@ public class OObjectBinaryDataStorageTest {
     hunt.setImageData(huntUglyPicture);
 
     // exercise
-    Driver savedHunt = this.databaseTx.save(hunt);
-    Driver loadedHunt = this.databaseTx.load(new ORecordId(savedHunt.getId()));
+    Driver savedHunt = this.database.save(hunt);
+    Driver loadedHunt = this.database.load(new ORecordId(savedHunt.getId()));
 
     // verify
     Assert.assertNotNull(savedHunt);
@@ -68,8 +69,8 @@ public class OObjectBinaryDataStorageTest {
     lauda.setImageData(laudaRealisticPicture);
 
     // exercise
-    Driver savedLauda = this.databaseTx.save(lauda);
-    Driver loadedLauda = this.databaseTx.load(new ORecordId(savedLauda.getId()));
+    Driver savedLauda = this.database.save(lauda);
+    Driver loadedLauda = this.database.load(new ORecordId(savedLauda.getId()));
 
     // verify
     Assert.assertNotNull(savedLauda);
@@ -91,8 +92,8 @@ public class OObjectBinaryDataStorageTest {
     prost.setImageData(prostUglyPicture);
 
     // exercise
-    Driver savedProst = this.databaseTx.save(prost);
-    Driver loadedProst = this.databaseTx.load(new ORecordId(savedProst.getId()));
+    Driver savedProst = this.database.save(prost);
+    Driver loadedProst = this.database.load(new ORecordId(savedProst.getId()));
 
     // verify
     Assert.assertNotNull(savedProst);
@@ -114,8 +115,8 @@ public class OObjectBinaryDataStorageTest {
     monzasGorilla.setImageData(brambillaPicture);
 
     // exercise
-    Driver savedBrambilla = this.databaseTx.save(monzasGorilla);
-    Driver loadedBrambilla = this.databaseTx.load(new ORecordId(savedBrambilla.getId()));
+    Driver savedBrambilla = this.database.save(monzasGorilla);
+    Driver loadedBrambilla = this.database.load(new ORecordId(savedBrambilla.getId()));
 
     // verify
     Assert.assertNotNull(savedBrambilla);
@@ -132,14 +133,14 @@ public class OObjectBinaryDataStorageTest {
     // setup
     this.createDb(ODocumentFieldHandlingStrategyFactory.SIMPLE);
 
-    Driver ronnie = this.databaseTx.newInstance(Driver.class);
+    Driver ronnie = this.database.newInstance(Driver.class);
     ronnie.setName("Ronnie Peterson");
     byte[] ronniePicture = randomBytes(1024 * 32);
     ronnie.setImageData(ronniePicture);
 
     // exercise
-    Driver savedRonnie = this.databaseTx.save(ronnie);
-    Driver loadedRonnie = this.databaseTx.load(new ORecordId(savedRonnie.getId()));
+    Driver savedRonnie = this.database.save(ronnie);
+    Driver loadedRonnie = this.database.load(new ORecordId(savedRonnie.getId()));
 
     // verify
     Assert.assertNotNull(savedRonnie);
@@ -157,10 +158,10 @@ public class OObjectBinaryDataStorageTest {
     }
 
     // Create
-    databaseTx = new OObjectDatabaseTx("memory:" + this.getClass().getSimpleName());
-    databaseTx.create();
+    database = new OObjectDatabaseTx("memory:" + this.getClass().getSimpleName());
+    database.create();
 
-    databaseTx.getEntityManager().registerEntityClass(Driver.class);
+    database.getEntityManager().registerEntityClass(Driver.class);
   }
 
   private byte[] randomBytes(int size) {

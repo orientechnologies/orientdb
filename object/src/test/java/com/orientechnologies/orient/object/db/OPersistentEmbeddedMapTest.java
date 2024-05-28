@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.object.db.entity.Car;
 import com.orientechnologies.orient.object.db.entity.Person;
@@ -15,7 +16,7 @@ import org.junit.Test;
 public class OPersistentEmbeddedMapTest {
 
   private OPartitionedDatabasePool pool;
-  private OObjectDatabaseTx createdDb;
+  private ODatabaseObject createdDb;
 
   @Before
   public void setup() {

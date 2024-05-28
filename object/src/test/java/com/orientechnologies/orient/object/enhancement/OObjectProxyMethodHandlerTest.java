@@ -3,6 +3,7 @@ package com.orientechnologies.orient.object.enhancement;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -23,7 +24,7 @@ import org.junit.Test;
  * @since 18.08.2014
  */
 public class OObjectProxyMethodHandlerTest {
-  private OObjectDatabaseTx databaseTx;
+  private ODatabaseObject databaseTx;
 
   private Map<String, Object> fieldsAndThereDefaultValue;
 
