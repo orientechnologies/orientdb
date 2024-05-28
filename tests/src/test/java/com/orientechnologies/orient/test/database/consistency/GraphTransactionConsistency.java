@@ -19,13 +19,14 @@
  */
 package com.orientechnologies.orient.test.database.consistency;
 
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -35,7 +36,7 @@ import org.testng.annotations.Test;
 
 @Test
 public class GraphTransactionConsistency {
-  private OrientBaseGraph database;
+  private ODatabaseDocument database;
   private boolean txMode = true;
   private static final int TXNUM = 10000;
   private static final int TXBATCH = 50;
@@ -43,17 +44,19 @@ public class GraphTransactionConsistency {
   private static final int THREADS = 8;
 
   public void testTransactionConsistency() throws InterruptedException {
-    final OrientGraphFactory factory =
-        new OrientGraphFactory("plocal:target/GraphTransactionConsistency", false);
+    OrientDB context = new OrientDB("embedded:target/", OrientDBConfig.defaultConfig());
+    context.execute(
+        "create database GraphTransactionConsistency plocal users(admin identified by 'adminpwd'"
+            + " role admin)");
 
-    database = txMode ? factory.getTx() : factory.getNoTx();
+    database = context.open("GraphTransactionConsistency", "admin", "adminpwd");
 
     System.out.println("Checking consistency of database...");
     System.out.println(
-        "Records found V=" + database.countVertices() + " E=" + database.countEdges());
+        "Records found V=" + database.countClass("V") + " E=" + database.countClass("E"));
 
     final List<OVertex> vertices =
-        database.getRawGraph().query("select from V").stream()
+        database.query("select from V").stream()
             .map((r) -> r.getVertex().get())
             .collect(Collectors.toList());
     for (OVertex v : vertices) {
@@ -105,27 +108,28 @@ public class GraphTransactionConsistency {
               new Runnable() {
                 @Override
                 public void run() {
-                  OrientBaseGraph graph = txMode ? factory.getTx() : factory.getNoTx();
+                  ODatabaseDocument graph =
+                      context.open("GraphTransactionConsistency", "admin", "adminpwd");
                   try {
                     System.out.println(
                         "THREAD " + threadNum + " Start transactions (" + TXNUM + ")");
                     for (int i = 0; i < TXNUM; ++i) {
-                      final OrientVertex v1 =
-                          graph.addVertex(null, "v", i, "type", "Main", "lastUpdate", new Date());
+                      final OVertex v1 = graph.newVertex();
+                      v1.setProperty("v", i);
+                      v1.setProperty("type", "Main");
+                      v1.setProperty("lastUpdate", new Date());
+                      graph.save(v1);
 
                       for (int e = 0; e < EDGENUM; ++e) {
-                        final OrientVertex v2 =
-                            graph.addVertex(
-                                null,
-                                "v",
-                                i,
-                                "e",
-                                e,
-                                "type",
-                                "Connected",
-                                "lastUpdate",
-                                new Date());
-                        v1.addEdge("E", v2);
+                        final OVertex v2 = graph.newVertex();
+                        v2.setProperty("v", i);
+                        v2.setProperty("e", e);
+                        v2.setProperty("type", "Connected");
+                        v2.setProperty("lastUpdate", new Date());
+                        graph.save(v2);
+
+                        OEdge edge = graph.newEdge(v1, v2, "E");
+                        graph.save(edge);
                       }
 
                       if (i % TXBATCH == 0) {
@@ -145,14 +149,14 @@ public class GraphTransactionConsistency {
                             "THREAD "
                                 + threadNum
                                 + " Commit ok - records found V="
-                                + graph.countVertices()
+                                + graph.countClass("V")
                                 + " E="
-                                + graph.countEdges());
+                                + graph.countClass("E"));
                         System.out.flush();
                       }
                     }
                   } finally {
-                    graph.shutdown();
+                    graph.close();
                   }
                 }
               });
@@ -169,6 +173,7 @@ public class GraphTransactionConsistency {
       }
     }
 
-    database.shutdown();
+    database.close();
+    context.close();
   }
 }

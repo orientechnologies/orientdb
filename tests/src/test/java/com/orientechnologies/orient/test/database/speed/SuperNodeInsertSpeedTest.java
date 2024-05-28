@@ -2,15 +2,16 @@ package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import java.util.concurrent.atomic.AtomicLong;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -32,14 +33,15 @@ import org.testng.annotations.Test;
 @Test(enabled = false)
 public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
   protected static final String URL = "plocal:target/databases/graphspeedtest";
-  protected final OrientGraphFactory factory = new OrientGraphFactory(URL);
+  protected static final OrientDB factory =
+      new OrientDB("embedded:target/databases/", OrientDBConfig.defaultConfig());
   protected static final AtomicLong counter = new AtomicLong();
   protected static ORID superNodeRID;
 
   @Test(enabled = false)
   public static class CreateObjectsThread extends OrientThreadTest {
-    protected OrientBaseGraph graph;
-    protected OrientVertex superNode;
+    protected ODatabaseSession graph;
+    protected OVertex superNode;
 
     public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
       super(parent, threadId);
@@ -47,24 +49,22 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
 
     @Override
     public void init() {
-      OrientGraphFactory factory = new OrientGraphFactory(URL);
-      graph = factory.getNoTx();
-      factory.close();
+      graph = factory.open("graphspeedtest", "admin", "adminpwd");
 
-      superNode = graph.getVertex(superNodeRID);
+      superNode = graph.load(superNodeRID);
     }
 
     public void cycle() {
-      final OrientVertex v =
-          graph.addVertex(
-              "class:Client,cluster:client_" + currentThreadId(), "uid", counter.getAndIncrement());
+      final OVertex v = graph.newVertex("Client");
+      v.setProperty("uid", counter.getAndIncrement());
+      graph.save(v);
 
-      superNode.addEdge("test", v);
+      graph.newEdge(superNode, v, "test");
     }
 
     @Override
     public void deinit() throws Exception {
-      if (graph != null) graph.shutdown();
+      if (graph != null) graph.close();
       super.deinit();
     }
 
@@ -86,16 +86,22 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
 
   @Override
   public void init() {
-    if (factory.exists()) factory.drop();
+    if (factory.exists("graphspeedtest")) factory.drop("graphspeedtest");
 
-    final OrientGraphNoTx graph = factory.getNoTx();
+    factory.execute(
+        "create database graphspeedtest plocal users(admin identified by 'adminpwd' role 'admin')");
+
+    final ODatabaseSession graph = factory.open("graphspeedtest", "admin", "adminpwd");
 
     try {
-      if (graph.getVertexType("Client") == null) {
-        final OrientVertexType clientType = graph.createVertexType("Client");
+      if (!graph.getMetadata().getSchema().existsClass("Client")) {
+        final OClass clientType =
+            graph
+                .getMetadata()
+                .getSchema()
+                .createClass("Client", graph.getMetadata().getSchema().getClass("V"));
 
-        final OrientVertexType.OrientVertexProperty property =
-            clientType.createProperty("uid", OType.STRING);
+        final OProperty property = clientType.createProperty("uid", OType.STRING);
         // property.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
 
         // CREATE ONE CLUSTER PER THREAD
@@ -105,22 +111,27 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
         }
       }
 
-      OrientVertex superNode = graph.addVertex("class:Client", "name", "superNode");
-      final OrientVertex v = graph.addVertex("class:Client", "uid", counter.getAndIncrement());
-      superNode.addEdge("test", v);
+      OVertex superNode = graph.newVertex("Client");
+      superNode.setProperty("name", "superNode");
+      graph.save(superNode);
+
+      final OVertex v = graph.newVertex("Client");
+      v.setProperty("uid", counter.getAndIncrement());
+      graph.save(v);
+      graph.save(graph.newEdge(superNode, v, "test"));
 
       superNodeRID = superNode.getIdentity();
 
     } finally {
-      graph.shutdown();
+      graph.close();
     }
   }
 
   @Override
   public void deinit() {
-    final OrientGraphNoTx graph = factory.getNoTx();
+    final ODatabaseSession graph = factory.open("graphspeedtest", "admin", "adminpwd");
     try {
-      final long total = graph.countVertices("Client");
+      final long total = graph.countClass("Client");
 
       System.out.println("\nTotal objects in Client cluster after the test: " + total);
       System.out.println("Created " + (total));
@@ -131,7 +142,7 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
       //      System.out.println("\nTotal indexed objects after the test: " + indexedItems);
 
     } finally {
-      graph.shutdown();
+      graph.close();
     }
   }
 }
