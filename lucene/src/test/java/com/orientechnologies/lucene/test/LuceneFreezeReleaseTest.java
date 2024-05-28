@@ -1,8 +1,9 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -24,38 +25,36 @@ public class LuceneFreezeReleaseTest {
   @Test
   public void freezeReleaseTest() {
     if (isWindows()) return;
+    try (OrientDB orientdb = new OrientDB("embedded:target/", OrientDBConfig.defaultConfig())) {
+      orientdb.execute(
+          "create database freezeRelease plocal users(admin identified by 'adminpwd' role"
+              + " admin)");
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("plocal:target/freezeRelease");
+      try (ODatabaseDocument db = orientdb.open("freezeRelease", "admin", "adminpwd")) {
 
-    db.create();
+        OSchema schema = db.getMetadata().getSchema();
+        OClass person = schema.createClass("Person");
+        person.createProperty("name", OType.STRING);
 
-    OSchema schema = db.getMetadata().getSchema();
-    OClass person = schema.createClass("Person");
-    person.createProperty("name", OType.STRING);
+        db.command("create index Person.name on Person (name) FULLTEXT ENGINE LUCENE").close();
 
-    db.command("create index Person.name on Person (name) FULLTEXT ENGINE LUCENE").close();
+        db.save(new ODocument("Person").field("name", "John"));
 
-    db.save(new ODocument("Person").field("name", "John"));
+        OResultSet results = db.query("select from Person where name lucene 'John'");
+        Assert.assertEquals(1, results.stream().count());
+        db.freeze();
 
-    try {
+        results = db.query("select from Person where name lucene 'John'");
+        Assert.assertEquals(1, results.stream().count());
 
-      OResultSet results = db.query("select from Person where name lucene 'John'");
-      Assert.assertEquals(1, results.stream().count());
-      db.freeze();
+        db.release();
 
-      results = db.query("select from Person where name lucene 'John'");
-      Assert.assertEquals(1, results.stream().count());
+        db.save(new ODocument("Person").field("name", "John"));
 
-      db.release();
-
-      db.save(new ODocument("Person").field("name", "John"));
-
-      results = db.query("select from Person where name lucene 'John'");
-      Assert.assertEquals(2, results.stream().count());
-
-    } finally {
-
-      db.drop();
+        results = db.query("select from Person where name lucene 'John'");
+        Assert.assertEquals(2, results.stream().count());
+      }
+      orientdb.drop("freezeRelease");
     }
   }
 
@@ -63,41 +62,40 @@ public class LuceneFreezeReleaseTest {
   @Test
   public void freezeReleaseMisUsageTest() {
     if (isWindows()) return;
+    try (OrientDB orientdb = new OrientDB("embedded:target/", OrientDBConfig.defaultConfig())) {
+      orientdb.execute(
+          "create database freezeRelease plocal users(admin identified by 'adminpwd' role"
+              + " admin)");
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("plocal:target/freezeRelease");
+      try (ODatabaseDocument db = orientdb.open("freezeRelease", "admin", "adminpwd")) {
 
-    db.create();
+        OSchema schema = db.getMetadata().getSchema();
+        OClass person = schema.createClass("Person");
+        person.createProperty("name", OType.STRING);
 
-    OSchema schema = db.getMetadata().getSchema();
-    OClass person = schema.createClass("Person");
-    person.createProperty("name", OType.STRING);
+        db.command("create index Person.name on Person (name) FULLTEXT ENGINE LUCENE").close();
 
-    db.command("create index Person.name on Person (name) FULLTEXT ENGINE LUCENE").close();
+        db.save(new ODocument("Person").field("name", "John"));
 
-    db.save(new ODocument("Person").field("name", "John"));
+        OResultSet results = db.query("select from Person where name lucene 'John'");
+        Assert.assertEquals(1, results.stream().count());
 
-    try {
+        db.freeze();
 
-      OResultSet results = db.query("select from Person where name lucene 'John'");
-      Assert.assertEquals(1, results.stream().count());
+        db.freeze();
 
-      db.freeze();
+        results = db.query("select from Person where name lucene 'John'");
+        Assert.assertEquals(1, results.stream().count());
 
-      db.freeze();
+        db.release();
+        db.release();
 
-      results = db.query("select from Person where name lucene 'John'");
-      Assert.assertEquals(1, results.stream().count());
+        db.save(new ODocument("Person").field("name", "John"));
 
-      db.release();
-      db.release();
-
-      db.save(new ODocument("Person").field("name", "John"));
-
-      results = db.query("select from Person where name lucene 'John'");
-      Assert.assertEquals(2, results.stream().count());
-
-    } finally {
-      db.drop();
+        results = db.query("select from Person where name lucene 'John'");
+        Assert.assertEquals(2, results.stream().count());
+      }
+      orientdb.drop("freezeRelease");
     }
   }
 

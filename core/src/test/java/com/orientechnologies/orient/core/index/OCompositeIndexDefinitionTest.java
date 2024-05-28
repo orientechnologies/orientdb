@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
@@ -669,25 +671,31 @@ public class OCompositeIndexDefinitionTest {
 
   @Test
   public void testEmptyIndexReload() {
-    final ODatabaseDocumentTx database = new ODatabaseDocumentTx("memory:compositetestone");
-    database.create();
+    try (OrientDB orientdb = new OrientDB("memory:", OrientDBConfig.defaultConfig())) {
+      orientdb.execute(
+          "create database compositetestone memory users(admin identified by 'adminpwd' role"
+              + " admin)");
+      try (ODatabaseDocument database = orientdb.open("compositetestone", "admin", "adminpwd")) {
 
-    final OCompositeIndexDefinition emptyCompositeIndex =
-        new OCompositeIndexDefinition("testClass");
+        final OCompositeIndexDefinition emptyCompositeIndex =
+            new OCompositeIndexDefinition("testClass");
 
-    emptyCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER));
-    emptyCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING));
+        emptyCompositeIndex.addIndex(
+            new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER));
+        emptyCompositeIndex.addIndex(
+            new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING));
 
-    final ODocument docToStore = emptyCompositeIndex.toStream();
-    database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
+        final ODocument docToStore = emptyCompositeIndex.toStream();
+        database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
 
-    final ODocument docToLoad = database.load(docToStore.getIdentity());
+        final ODocument docToLoad = database.load(docToStore.getIdentity());
 
-    final OCompositeIndexDefinition result = new OCompositeIndexDefinition();
-    result.fromStream(docToLoad);
-
-    database.drop();
-    Assert.assertEquals(result, emptyCompositeIndex);
+        final OCompositeIndexDefinition result = new OCompositeIndexDefinition();
+        result.fromStream(docToLoad);
+        Assert.assertEquals(result, emptyCompositeIndex);
+      }
+      orientdb.drop("compositetestone");
+    }
   }
 
   @Test
@@ -702,37 +710,43 @@ public class OCompositeIndexDefinitionTest {
 
   @Test
   public void testClassOnlyConstructor() {
-    final ODatabaseDocumentTx database = new ODatabaseDocumentTx("memory:compositetesttwo");
-    database.create();
 
-    final OCompositeIndexDefinition emptyCompositeIndex =
-        new OCompositeIndexDefinition(
-            "testClass",
-            Arrays.asList(
-                new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER),
-                new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING)),
-            -1);
+    try (OrientDB orientdb = new OrientDB("memory:", OrientDBConfig.defaultConfig())) {
+      orientdb.execute(
+          "create database compositetesttwo memory users(admin identified by 'adminpwd' role"
+              + " admin)");
+      try (ODatabaseDocument database = orientdb.open("compositetesttwo", "admin", "adminpwd")) {
 
-    final OCompositeIndexDefinition emptyCompositeIndexTwo =
-        new OCompositeIndexDefinition("testClass");
+        final OCompositeIndexDefinition emptyCompositeIndex =
+            new OCompositeIndexDefinition(
+                "testClass",
+                Arrays.asList(
+                    new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER),
+                    new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING)),
+                -1);
 
-    emptyCompositeIndexTwo.addIndex(
-        new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER));
-    emptyCompositeIndexTwo.addIndex(
-        new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING));
+        final OCompositeIndexDefinition emptyCompositeIndexTwo =
+            new OCompositeIndexDefinition("testClass");
 
-    Assert.assertEquals(emptyCompositeIndex, emptyCompositeIndexTwo);
+        emptyCompositeIndexTwo.addIndex(
+            new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER));
+        emptyCompositeIndexTwo.addIndex(
+            new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING));
 
-    final ODocument docToStore = emptyCompositeIndex.toStream();
-    database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
+        Assert.assertEquals(emptyCompositeIndex, emptyCompositeIndexTwo);
 
-    final ODocument docToLoad = database.load(docToStore.getIdentity());
+        final ODocument docToStore = emptyCompositeIndex.toStream();
+        database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
 
-    final OCompositeIndexDefinition result = new OCompositeIndexDefinition();
-    result.fromStream(docToLoad);
+        final ODocument docToLoad = database.load(docToStore.getIdentity());
 
-    database.drop();
-    Assert.assertEquals(result, emptyCompositeIndexTwo);
+        final OCompositeIndexDefinition result = new OCompositeIndexDefinition();
+        result.fromStream(docToLoad);
+
+        Assert.assertEquals(result, emptyCompositeIndexTwo);
+      }
+      orientdb.drop("compositetesttwo");
+    }
   }
 
   @Test

@@ -19,8 +19,9 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -45,27 +46,30 @@ public class LuceneTransactionEmbeddedQueryTest {
   @Test
   public void testRollback() {
 
-    @SuppressWarnings("deprecation")
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:updateTxTest");
-    db.create();
-    createSchema(db);
-    try {
-      ODocument doc = new ODocument("c1");
-      doc.field("p1", new String[] {"abc"});
-      db.begin();
-      db.save(doc);
+    try (OrientDB orientdb = new OrientDB("memory", OrientDBConfig.defaultConfig())) {
+      orientdb.execute(
+          "create database updateTxTest memory users(admin identified by 'adminpwd' role"
+              + " admin)");
 
-      String query = "select from C1 where p1 lucene \"abc\" ";
-      OResultSet vertices = db.query(query);
+      try (ODatabaseDocumentInternal db =
+          (ODatabaseDocumentInternal) orientdb.open("updateTxTest", "admin", "adminpwd")) {
+        createSchema(db);
+        ODocument doc = new ODocument("c1");
+        doc.field("p1", new String[] {"abc"});
+        db.begin();
+        db.save(doc);
 
-      Assert.assertEquals(vertices.stream().count(), 1);
-      db.rollback();
+        String query = "select from C1 where p1 lucene \"abc\" ";
+        OResultSet vertices = db.query(query);
 
-      query = "select from C1 where p1 lucene \"abc\" ";
-      vertices = db.query(query);
-      Assert.assertEquals(vertices.stream().count(), 0);
-    } finally {
-      db.drop();
+        Assert.assertEquals(vertices.stream().count(), 1);
+        db.rollback();
+
+        query = "select from C1 where p1 lucene \"abc\" ";
+        vertices = db.query(query);
+        Assert.assertEquals(vertices.stream().count(), 0);
+      }
+      orientdb.drop("updateTxTest");
     }
   }
 
@@ -77,242 +81,246 @@ public class LuceneTransactionEmbeddedQueryTest {
 
   @Test
   public void txRemoveTest() {
-    @SuppressWarnings("deprecation")
-    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:updateTxTest");
-    //noinspection deprecation
-    db.create();
-    createSchema(db);
-    try {
-      db.begin();
 
-      ODocument doc = new ODocument("c1");
-      doc.field("p1", new String[] {"abc"});
+    try (OrientDB orientdb = new OrientDB("memory", OrientDBConfig.defaultConfig())) {
+      orientdb.execute(
+          "create database updateTxTest memory users(admin identified by 'adminpwd' role"
+              + " admin)");
 
-      OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+      try (ODatabaseDocumentInternal db =
+          (ODatabaseDocumentInternal) orientdb.open("updateTxTest", "admin", "adminpwd")) {
+        createSchema(db);
+        db.begin();
 
-      db.save(doc);
+        ODocument doc = new ODocument("c1");
+        doc.field("p1", new String[] {"abc"});
 
-      String query = "select from C1 where p1 lucene \"abc\" ";
-      OResultSet vertices = db.query(query);
+        OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
-      Assert.assertEquals(1, vertices.stream().count());
+        db.save(doc);
 
-      Assert.assertEquals(1, index.getInternal().size());
-      db.commit();
+        String query = "select from C1 where p1 lucene \"abc\" ";
+        OResultSet vertices = db.query(query);
 
-      query = "select from C1 where p1 lucene \"abc\" ";
-      vertices = db.query(query);
+        Assert.assertEquals(1, vertices.stream().count());
 
-      OResult res = vertices.next();
-      Assert.assertEquals(1, index.getInternal().size());
+        Assert.assertEquals(1, index.getInternal().size());
+        db.commit();
 
-      db.begin();
+        query = "select from C1 where p1 lucene \"abc\" ";
+        vertices = db.query(query);
 
-      db.delete(res.getIdentity().get());
+        OResult res = vertices.next();
+        Assert.assertEquals(1, index.getInternal().size());
 
-      query = "select from C1 where p1 lucene \"abc\" ";
-      vertices = db.query(query);
+        db.begin();
 
-      Collection coll;
-      try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
-        coll = stream.collect(Collectors.toList());
+        db.delete(res.getIdentity().get());
+
+        query = "select from C1 where p1 lucene \"abc\" ";
+        vertices = db.query(query);
+
+        Collection coll;
+        try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+          coll = stream.collect(Collectors.toList());
+        }
+
+        Assert.assertEquals(vertices.stream().count(), 0);
+        Assert.assertEquals(coll.size(), 0);
+
+        Iterator iterator = coll.iterator();
+        int i = 0;
+        while (iterator.hasNext()) {
+          iterator.next();
+          i++;
+        }
+        Assert.assertEquals(0, i);
+        Assert.assertEquals(0, index.getInternal().size());
+
+        db.rollback();
+
+        query = "select from C1 where p1 lucene \"abc\" ";
+        vertices = db.query(query);
+
+        Assert.assertEquals(1, vertices.stream().count());
+
+        Assert.assertEquals(1, index.getInternal().size());
       }
-
-      Assert.assertEquals(vertices.stream().count(), 0);
-      Assert.assertEquals(coll.size(), 0);
-
-      Iterator iterator = coll.iterator();
-      int i = 0;
-      while (iterator.hasNext()) {
-        iterator.next();
-        i++;
-      }
-      Assert.assertEquals(0, i);
-      Assert.assertEquals(0, index.getInternal().size());
-
-      db.rollback();
-
-      query = "select from C1 where p1 lucene \"abc\" ";
-      vertices = db.query(query);
-
-      Assert.assertEquals(1, vertices.stream().count());
-
-      Assert.assertEquals(1, index.getInternal().size());
-    } finally {
-      //noinspection deprecation
-      db.drop();
+      orientdb.drop("updateTxTest");
     }
   }
 
   @Test
   public void txUpdateTest() {
 
-    @SuppressWarnings("deprecation")
-    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:updateTxTest");
-    //noinspection deprecation
-    db.create();
-    createSchema(db);
-    try {
+    try (OrientDB orientdb = new OrientDB("memory", OrientDBConfig.defaultConfig())) {
+      orientdb.execute(
+          "create database updateTxTest memory users(admin identified by 'adminpwd' role"
+              + " admin)");
 
-      OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+      try (ODatabaseDocumentInternal db =
+          (ODatabaseDocumentInternal) orientdb.open("updateTxTest", "admin", "adminpwd")) {
+        createSchema(db);
 
-      Assert.assertEquals(0, index.getInternal().size());
+        OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
-      db.begin();
+        Assert.assertEquals(0, index.getInternal().size());
 
-      ODocument doc = new ODocument("c1");
-      doc.field("p1", new String[] {"update removed", "update fixed"});
+        db.begin();
 
-      db.save(doc);
+        ODocument doc = new ODocument("c1");
+        doc.field("p1", new String[] {"update removed", "update fixed"});
 
-      String query = "select from C1 where p1 lucene \"update\" ";
-      OResultSet vertices = db.query(query);
+        db.save(doc);
 
-      Assert.assertEquals(vertices.stream().count(), 1);
+        String query = "select from C1 where p1 lucene \"update\" ";
+        OResultSet vertices = db.query(query);
 
-      Assert.assertEquals(2, index.getInternal().size());
+        Assert.assertEquals(vertices.stream().count(), 1);
 
-      db.commit();
+        Assert.assertEquals(2, index.getInternal().size());
 
-      query = "select from C1 where p1 lucene \"update\" ";
-      //noinspection deprecation
-      vertices = db.query(query);
+        db.commit();
 
-      Collection coll;
-      try (final Stream<ORID> stream = index.getInternal().getRids("update")) {
-        coll = stream.collect(Collectors.toList());
+        query = "select from C1 where p1 lucene \"update\" ";
+        //noinspection deprecation
+        vertices = db.query(query);
+
+        Collection coll;
+        try (final Stream<ORID> stream = index.getInternal().getRids("update")) {
+          coll = stream.collect(Collectors.toList());
+        }
+
+        OResult resultRecord = vertices.next();
+        Assert.assertEquals(2, coll.size());
+        Assert.assertEquals(2, index.getInternal().size());
+
+        db.begin();
+
+        // select in transaction while updating
+        OElement record = resultRecord.getElement().get();
+        Collection p1 = record.getProperty("p1");
+        p1.remove("update removed");
+        db.save(record);
+
+        query = "select from C1 where p1 lucene \"update\" ";
+        vertices = db.query(query);
+        try (Stream<ORID> stream = index.getInternal().getRids("update")) {
+          coll = stream.collect(Collectors.toList());
+        }
+
+        Assert.assertEquals(vertices.stream().count(), 1);
+        Assert.assertEquals(coll.size(), 1);
+
+        Iterator iterator = coll.iterator();
+        int i = 0;
+        while (iterator.hasNext()) {
+          iterator.next();
+          i++;
+        }
+        Assert.assertEquals(i, 1);
+
+        Assert.assertEquals(1, index.getInternal().size());
+
+        query = "select from C1 where p1 lucene \"update\"";
+        vertices = db.query(query);
+
+        try (Stream<ORID> stream = index.getInternal().getRids("update")) {
+          coll = stream.collect(Collectors.toList());
+        }
+        Assert.assertEquals(coll.size(), 1);
+
+        Assert.assertEquals(vertices.stream().count(), 1);
+
+        db.rollback();
+
+        query = "select from C1 where p1 lucene \"update\" ";
+        vertices = db.query(query);
+
+        Assert.assertEquals(1, vertices.stream().count());
+
+        Assert.assertEquals(2, index.getInternal().size());
       }
-
-      OResult resultRecord = vertices.next();
-      Assert.assertEquals(2, coll.size());
-      Assert.assertEquals(2, index.getInternal().size());
-
-      db.begin();
-
-      // select in transaction while updating
-      OElement record = resultRecord.getElement().get();
-      Collection p1 = record.getProperty("p1");
-      p1.remove("update removed");
-      db.save(record);
-
-      query = "select from C1 where p1 lucene \"update\" ";
-      vertices = db.query(query);
-      try (Stream<ORID> stream = index.getInternal().getRids("update")) {
-        coll = stream.collect(Collectors.toList());
-      }
-
-      Assert.assertEquals(vertices.stream().count(), 1);
-      Assert.assertEquals(coll.size(), 1);
-
-      Iterator iterator = coll.iterator();
-      int i = 0;
-      while (iterator.hasNext()) {
-        iterator.next();
-        i++;
-      }
-      Assert.assertEquals(i, 1);
-
-      Assert.assertEquals(1, index.getInternal().size());
-
-      query = "select from C1 where p1 lucene \"update\"";
-      vertices = db.query(query);
-
-      try (Stream<ORID> stream = index.getInternal().getRids("update")) {
-        coll = stream.collect(Collectors.toList());
-      }
-      Assert.assertEquals(coll.size(), 1);
-
-      Assert.assertEquals(vertices.stream().count(), 1);
-
-      db.rollback();
-
-      query = "select from C1 where p1 lucene \"update\" ";
-      vertices = db.query(query);
-
-      Assert.assertEquals(1, vertices.stream().count());
-
-      Assert.assertEquals(2, index.getInternal().size());
-    } finally {
-      //noinspection deprecation
-      db.drop();
+      orientdb.drop("updateTxTest");
     }
   }
 
   @Test
   public void txUpdateTestComplex() {
 
-    @SuppressWarnings("deprecation")
-    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:updateTxTest");
-    //noinspection deprecation
-    db.create();
-    createSchema(db);
-    try {
-      OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
+    try (OrientDB orientdb = new OrientDB("memory", OrientDBConfig.defaultConfig())) {
+      orientdb.execute(
+          "create database updateTxTest memory users(admin identified by 'adminpwd' role"
+              + " admin)");
 
-      Assert.assertEquals(0, index.getInternal().size());
+      try (ODatabaseDocumentInternal db =
+          (ODatabaseDocumentInternal) orientdb.open("updateTxTest", "admin", "adminpwd")) {
+        createSchema(db);
+        OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
-      db.begin();
+        Assert.assertEquals(0, index.getInternal().size());
 
-      ODocument doc = new ODocument("c1");
-      doc.field("p1", new String[] {"abc"});
+        db.begin();
 
-      ODocument doc1 = new ODocument("c1");
-      doc1.field("p1", new String[] {"abc"});
+        ODocument doc = new ODocument("c1");
+        doc.field("p1", new String[] {"abc"});
 
-      db.save(doc1);
-      db.save(doc);
+        ODocument doc1 = new ODocument("c1");
+        doc1.field("p1", new String[] {"abc"});
 
-      db.commit();
+        db.save(doc1);
+        db.save(doc);
 
-      db.begin();
+        db.commit();
 
-      doc.field("p1", new String[] {"removed"});
-      db.save(doc);
+        db.begin();
 
-      String query = "select from C1 where p1 lucene \"abc\"";
-      OResultSet vertices = db.query(query);
-      Collection coll;
-      try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
-        coll = stream.collect(Collectors.toList());
+        doc.field("p1", new String[] {"removed"});
+        db.save(doc);
+
+        String query = "select from C1 where p1 lucene \"abc\"";
+        OResultSet vertices = db.query(query);
+        Collection coll;
+        try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+          coll = stream.collect(Collectors.toList());
+        }
+
+        Assert.assertEquals(1, vertices.stream().count());
+        Assert.assertEquals(1, coll.size());
+
+        Iterator iterator = coll.iterator();
+        int i = 0;
+        ORecordId rid = null;
+        while (iterator.hasNext()) {
+          rid = (ORecordId) iterator.next();
+          i++;
+        }
+
+        Assert.assertEquals(1, i);
+        Assert.assertNotNull(doc1);
+        Assert.assertNotNull(rid);
+        Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
+        Assert.assertEquals(2, index.getInternal().size());
+
+        query = "select from C1 where p1 lucene \"removed\" ";
+        vertices = db.query(query);
+        try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+          coll = stream.collect(Collectors.toList());
+        }
+
+        Assert.assertEquals(1, vertices.stream().count());
+        Assert.assertEquals(1, coll.size());
+
+        db.rollback();
+
+        query = "select from C1 where p1 lucene \"abc\" ";
+        vertices = db.query(query);
+
+        Assert.assertEquals(2, vertices.stream().count());
+
+        Assert.assertEquals(2, index.getInternal().size());
       }
-
-      Assert.assertEquals(1, vertices.stream().count());
-      Assert.assertEquals(1, coll.size());
-
-      Iterator iterator = coll.iterator();
-      int i = 0;
-      ORecordId rid = null;
-      while (iterator.hasNext()) {
-        rid = (ORecordId) iterator.next();
-        i++;
-      }
-
-      Assert.assertEquals(1, i);
-      Assert.assertNotNull(doc1);
-      Assert.assertNotNull(rid);
-      Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
-      Assert.assertEquals(2, index.getInternal().size());
-
-      query = "select from C1 where p1 lucene \"removed\" ";
-      vertices = db.query(query);
-      try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
-        coll = stream.collect(Collectors.toList());
-      }
-
-      Assert.assertEquals(1, vertices.stream().count());
-      Assert.assertEquals(1, coll.size());
-
-      db.rollback();
-
-      query = "select from C1 where p1 lucene \"abc\" ";
-      vertices = db.query(query);
-
-      Assert.assertEquals(2, vertices.stream().count());
-
-      Assert.assertEquals(2, index.getInternal().size());
-    } finally {
-      //noinspection deprecation
-      db.drop();
+      orientdb.drop("updateTxTest");
     }
   }
 }

@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -206,44 +208,52 @@ public class OPropertyMapIndexDefinitionTest {
 
   @Test
   public void testEmptyIndexByKeyReload() {
-    final ODatabaseDocumentTx database = new ODatabaseDocumentTx("memory:propertytest");
-    database.create();
+    try (OrientDB orientdb = new OrientDB("memory:", OrientDBConfig.defaultConfig())) {
+      orientdb.execute(
+          "create database propertytest memory users(admin identified by 'adminpwd' role admin)");
+      try (ODatabaseDocument database = orientdb.open("propertytest", "admin", "adminpwd")) {
 
-    propertyIndexByKey =
-        new OPropertyMapIndexDefinition(
-            "tesClass", "fOne", OType.STRING, OPropertyMapIndexDefinition.INDEX_BY.KEY);
+        propertyIndexByKey =
+            new OPropertyMapIndexDefinition(
+                "tesClass", "fOne", OType.STRING, OPropertyMapIndexDefinition.INDEX_BY.KEY);
 
-    final ODocument docToStore = propertyIndexByKey.toStream();
-    database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
+        final ODocument docToStore = propertyIndexByKey.toStream();
+        database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
 
-    final ODocument docToLoad = database.load(docToStore.getIdentity());
+        final ODocument docToLoad = database.load(docToStore.getIdentity());
 
-    final OPropertyIndexDefinition result = new OPropertyMapIndexDefinition();
-    result.fromStream(docToLoad);
+        final OPropertyIndexDefinition result = new OPropertyMapIndexDefinition();
+        result.fromStream(docToLoad);
 
-    database.drop();
-    Assert.assertEquals(result, propertyIndexByKey);
+        Assert.assertEquals(result, propertyIndexByKey);
+      }
+      orientdb.drop("propertytest");
+    }
   }
 
   @Test
   public void testEmptyIndexByValueReload() {
-    final ODatabaseDocumentTx database = new ODatabaseDocumentTx("memory:propertytest");
-    database.create();
+    try (OrientDB orientdb = new OrientDB("memory:", OrientDBConfig.defaultConfig())) {
+      orientdb.execute(
+          "create database propertytest memory users(admin identified by 'adminpwd' role admin)");
+      try (ODatabaseDocument database = orientdb.open("propertytest", "admin", "adminpwd")) {
 
-    propertyIndexByValue =
-        new OPropertyMapIndexDefinition(
-            "tesClass", "fOne", OType.INTEGER, OPropertyMapIndexDefinition.INDEX_BY.VALUE);
+        propertyIndexByValue =
+            new OPropertyMapIndexDefinition(
+                "tesClass", "fOne", OType.INTEGER, OPropertyMapIndexDefinition.INDEX_BY.VALUE);
 
-    final ODocument docToStore = propertyIndexByValue.toStream();
-    database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
+        final ODocument docToStore = propertyIndexByValue.toStream();
+        database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
 
-    final ODocument docToLoad = database.load(docToStore.getIdentity());
+        final ODocument docToLoad = database.load(docToStore.getIdentity());
 
-    final OPropertyIndexDefinition result = new OPropertyMapIndexDefinition();
-    result.fromStream(docToLoad);
+        final OPropertyIndexDefinition result = new OPropertyMapIndexDefinition();
+        result.fromStream(docToLoad);
 
-    database.drop();
-    Assert.assertEquals(result, propertyIndexByValue);
+        Assert.assertEquals(result, propertyIndexByValue);
+      }
+      orientdb.drop("propertytest");
+    }
   }
 
   @Test

@@ -5,7 +5,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -20,8 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
@@ -40,8 +37,6 @@ public class AutomaticBackupTest {
   private static final String DBNAME3 = DBNAME + "3";
   private static String BACKUPDIR;
 
-  private static String URL;
-  private static String URL2;
   private final String tempDirectory;
   private ODatabaseDocument database;
   private final OServer server;
@@ -64,15 +59,7 @@ public class AutomaticBackupTest {
     tempDirectory = new File("target/testhome").getAbsolutePath();
     System.setProperty("ORIENTDB_HOME", tempDirectory);
 
-    server =
-        new OServer(false) {
-          @Override
-          public Map<String, String> getAvailableStorageNames() {
-            HashMap<String, String> result = new HashMap<String, String>();
-            result.put(DBNAME, URL);
-            return result;
-          }
-        };
+    server = new OServer(false);
   }
 
   @BeforeClass
@@ -81,8 +68,6 @@ public class AutomaticBackupTest {
         new File(System.getProperty("buildDirectory", ".")).getAbsolutePath();
 
     BACKUPDIR = new File(buildDirectory, "backup").getAbsolutePath();
-    URL = "plocal:" + buildDirectory + File.separator + DBNAME;
-    URL2 = "plocal:" + buildDirectory + File.separator + DBNAME2;
 
     OFileUtils.deleteRecursively(new File(BACKUPDIR));
 
@@ -238,9 +223,8 @@ public class AutomaticBackupTest {
 
     aBackup.sendShutdown();
 
-    final ODatabaseDocument database2 = new ODatabaseDocumentTx(URL2);
-    if (database2.exists()) database2.open("admin", "admin").drop();
-    database2.create();
+    server.createDatabase(DBNAME2, null, null);
+    final ODatabaseDocument database2 = server.openDatabase(DBNAME2);
 
     database2.restore(new FileInputStream(BACKUPDIR + "/fullBackup.zip"), null, null, null);
 

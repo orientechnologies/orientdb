@@ -2,7 +2,6 @@ package com.orientechnologies.lucene.sandbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import java.io.IOException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -74,7 +73,5 @@ public class VertexIndexTest {
   public void name() throws Exception {}
 
   @After
-  public void deInit() {
-    ODatabaseDocumentTx.closeAll();
-  }
+  public void deInit() {}
 }
