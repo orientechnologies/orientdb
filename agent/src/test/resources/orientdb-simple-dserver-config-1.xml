@@ -71,9 +71,6 @@
         <user resources="*" password="root" name="root"/>
         <user resources="connect,server.listDatabases" password="guest"
               name="guest"/>
-        <user resources="database.passthrough"
-              password="42BF13166BD3DCA08BF21DCD7BE9F1FFDCD81772B9467F6C61ABC634AEF14B77"
-              name="replicator"/>
     </users>
     <properties>
         <entry name="server.database.path" value="target/server1/"/>
