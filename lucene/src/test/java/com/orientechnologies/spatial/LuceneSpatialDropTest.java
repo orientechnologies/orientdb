@@ -1,8 +1,9 @@
 package com.orientechnologies.spatial;
 
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -10,6 +11,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.File;
 import java.util.List;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,19 +20,23 @@ import org.junit.Test;
 public class LuceneSpatialDropTest {
 
   private int insertcount;
-  private String dbName;
+  private String dbpath;
+  private OrientDB context;
 
   @Before
   public void setUp() throws Exception {
 
-    dbName = "plocal:./target/databases/" + this.getClass().getSimpleName();
+    dbpath = "plocal:./target/databases/" + this.getClass().getSimpleName();
 
     // @maggiolo00 set cont to 0 and the test will not fail anymore
     insertcount = 100;
+    context = new OrientDB("embedded:./target/databases/", OrientDBConfig.defaultConfig());
+    context.execute(
+        "create database "
+            + this.getClass().getSimpleName()
+            + " plocal users(admin identified by 'adminpwd' role admin)");
+    ODatabaseDocument db = context.open(this.getClass().getSimpleName(), "admin", "adminpwd");
 
-    ODatabaseDocument db = new ODatabaseDocumentTx(dbName);
-
-    db.create();
     OClass test = db.getMetadata().getSchema().createClass("test");
     test.createProperty("name", OType.STRING);
     test.createProperty("latitude", OType.DOUBLE).setMandatory(false);
@@ -40,10 +46,16 @@ public class LuceneSpatialDropTest {
     db.close();
   }
 
+  @After
+  public void after() {
+    context.close();
+  }
+
   @Test
   public void testDeleteLuceneIndex1() {
 
-    OPartitionedDatabasePool dbPool = new OPartitionedDatabasePool(dbName, "admin", "admin");
+    ODatabasePool dbPool =
+        new ODatabasePool(this.context, this.getClass().getSimpleName(), "admin", "adminpwd");
 
     ODatabaseDocument db = dbPool.acquire();
     fillDb(db, insertcount);
@@ -60,10 +72,8 @@ public class LuceneSpatialDropTest {
     dbPool.close();
 
     // reopen to drop
-    db = new ODatabaseDocumentTx(dbName).open("admin", "admin");
-
-    db.drop();
-    File dbFolder = new File(dbName);
+    context.drop(this.getClass().getSimpleName());
+    File dbFolder = new File(dbpath);
     Assert.assertEquals(false, dbFolder.exists());
   }
 

@@ -4,10 +4,10 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
@@ -26,9 +26,13 @@ public class OLiveQueryShotdownTest {
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
 
-    OServerAdmin server = new OServerAdmin("remote:localhost");
-    server.connect("root", "root");
-    server.createDatabase(OLiveQueryShotdownTest.class.getSimpleName(), "graph", "memory");
+    OrientDB orientdb =
+        new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    orientdb.execute(
+        "create database "
+            + OLiveQueryShotdownTest.class.getSimpleName()
+            + " memory users(admin identified by 'adminpwd' role admin)");
+    orientdb.close();
   }
 
   public void shutdownServer() {
@@ -41,9 +45,9 @@ public class OLiveQueryShotdownTest {
   @Test
   public void testShutDown() throws Exception {
     bootServer();
+    OrientDB orientdb = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig());
     ODatabaseDocument db =
-        new ODatabaseDocumentTx("remote:localhost/" + OLiveQueryShotdownTest.class.getSimpleName());
-    db.open("admin", "admin");
+        orientdb.open(OLiveQueryShotdownTest.class.getSimpleName(), "admin", "adminpwd");
     db.getMetadata().getSchema().createClass("Test");
     final CountDownLatch error = new CountDownLatch(1);
     try {
@@ -72,6 +76,7 @@ public class OLiveQueryShotdownTest {
 
     } finally {
       //      db.close();
+      orientdb.close();
     }
   }
 }

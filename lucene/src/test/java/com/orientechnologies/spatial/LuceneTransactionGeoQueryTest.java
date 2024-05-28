@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.spatial;
 
+import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -30,131 +30,112 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /** Created by Enrico Risa on 05/10/15. */
-public class LuceneTransactionGeoQueryTest {
+public class LuceneTransactionGeoQueryTest extends BaseLuceneTest {
 
   private static String PWKT = "POINT(-160.2075374 21.9029803)";
 
   @Test
   public void testPointTransactionRollBack() {
 
-    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:txPoint");
+    OSchema schema = db.getMetadata().getSchema();
+    OClass v = schema.getClass("V");
+    OClass oClass = schema.createClass("City");
+    oClass.setSuperClass(v);
+    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OPoint"));
+    oClass.createProperty("name", OType.STRING);
 
-    try {
-      db.create();
+    db.command("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE").close();
 
-      OSchema schema = db.getMetadata().getSchema();
-      OClass v = schema.getClass("V");
-      OClass oClass = schema.createClass("City");
-      oClass.setSuperClass(v);
-      oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OPoint"));
-      oClass.createProperty("name", OType.STRING);
+    OIndex idx =
+        ((OMetadataDefault) db.getMetadata())
+            .getIndexManagerInternal()
+            .getIndex((ODatabaseDocumentInternal) db, "City.location");
+    ODocument rome = newCity("Rome", 12.5, 41.9);
+    ODocument london = newCity("London", -0.1275, 51.507222);
 
-      db.command("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE").close();
+    db.begin();
 
-      OIndex idx =
-          ((OMetadataDefault) db.getMetadata())
-              .getIndexManagerInternal()
-              .getIndex((ODatabaseDocumentInternal) db, "City.location");
-      ODocument rome = newCity("Rome", 12.5, 41.9);
-      ODocument london = newCity("London", -0.1275, 51.507222);
+    db.command(
+            "insert into City set name = 'TestInsert' , location = ST_GeomFromText('" + PWKT + "')")
+        .close();
+    db.save(rome);
+    db.save(london);
+    String query =
+        "select * from City where location && 'LINESTRING(-160.06393432617188"
+            + " 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375"
+            + " 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594"
+            + " 21.787556698550834)' ";
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    Assert.assertEquals(1, docs.size());
+    Assert.assertEquals(3, idx.getInternal().size());
+    db.rollback();
 
-      db.begin();
-
-      db.command(
-              "insert into City set name = 'TestInsert' , location = ST_GeomFromText('"
-                  + PWKT
-                  + "')")
-          .close();
-      db.save(rome);
-      db.save(london);
-      String query =
-          "select * from City where location && 'LINESTRING(-160.06393432617188"
-              + " 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375"
-              + " 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594"
-              + " 21.787556698550834)' ";
-      List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
-      Assert.assertEquals(1, docs.size());
-      Assert.assertEquals(3, idx.getInternal().size());
-      db.rollback();
-
-      query =
-          "select * from City where location && 'LINESTRING(-160.06393432617188"
-              + " 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375"
-              + " 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594"
-              + " 21.787556698550834)' ";
-      docs = db.query(new OSQLSynchQuery<ODocument>(query));
-      Assert.assertEquals(0, docs.size());
-      Assert.assertEquals(0, idx.getInternal().size());
-    } finally {
-      db.drop();
-    }
+    query =
+        "select * from City where location && 'LINESTRING(-160.06393432617188"
+            + " 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375"
+            + " 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594"
+            + " 21.787556698550834)' ";
+    docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    Assert.assertEquals(0, docs.size());
+    Assert.assertEquals(0, idx.getInternal().size());
   }
 
   @Test
   public void testPointTransactionUpdate() {
 
-    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:txPoint");
+    OSchema schema = db.getMetadata().getSchema();
+    OClass v = schema.getClass("V");
+    OClass oClass = schema.createClass("City");
+    oClass.setSuperClass(v);
+    oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OPoint"));
+    oClass.createProperty("name", OType.STRING);
 
-    try {
-      db.create();
+    db.command("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE").close();
 
-      OSchema schema = db.getMetadata().getSchema();
-      OClass v = schema.getClass("V");
-      OClass oClass = schema.createClass("City");
-      oClass.setSuperClass(v);
-      oClass.createProperty("location", OType.EMBEDDED, schema.getClass("OPoint"));
-      oClass.createProperty("name", OType.STRING);
+    OIndex idx =
+        ((OMetadataDefault) db.getMetadata())
+            .getIndexManagerInternal()
+            .getIndex((ODatabaseDocumentInternal) db, "City.location");
+    ODocument rome = newCity("Rome", 12.5, 41.9);
 
-      db.command("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE").close();
+    db.begin();
 
-      OIndex idx =
-          ((OMetadataDefault) db.getMetadata())
-              .getIndexManagerInternal()
-              .getIndex((ODatabaseDocumentInternal) db, "City.location");
-      ODocument rome = newCity("Rome", 12.5, 41.9);
+    db.save(rome);
 
-      db.begin();
+    db.commit();
 
-      db.save(rome);
+    String query =
+        "select * from City where location && 'LINESTRING(-160.06393432617188"
+            + " 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375"
+            + " 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594"
+            + " 21.787556698550834)' ";
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    Assert.assertEquals(0, docs.size());
+    Assert.assertEquals(1, idx.getInternal().size());
 
-      db.commit();
+    db.begin();
 
-      String query =
-          "select * from City where location && 'LINESTRING(-160.06393432617188"
-              + " 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375"
-              + " 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594"
-              + " 21.787556698550834)' ";
-      List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
-      Assert.assertEquals(0, docs.size());
-      Assert.assertEquals(1, idx.getInternal().size());
+    db.command("update City set location = ST_GeomFromText('" + PWKT + "')").close();
 
-      db.begin();
+    query =
+        "select * from City where location && 'LINESTRING(-160.06393432617188"
+            + " 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375"
+            + " 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594"
+            + " 21.787556698550834)' ";
+    docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    Assert.assertEquals(1, docs.size());
+    Assert.assertEquals(1, idx.getInternal().size());
 
-      db.command("update City set location = ST_GeomFromText('" + PWKT + "')").close();
+    db.commit();
 
-      query =
-          "select * from City where location && 'LINESTRING(-160.06393432617188"
-              + " 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375"
-              + " 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594"
-              + " 21.787556698550834)' ";
-      docs = db.query(new OSQLSynchQuery<ODocument>(query));
-      Assert.assertEquals(1, docs.size());
-      Assert.assertEquals(1, idx.getInternal().size());
-
-      db.commit();
-
-      query =
-          "select * from City where location && 'LINESTRING(-160.06393432617188"
-              + " 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375"
-              + " 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594"
-              + " 21.787556698550834)' ";
-      docs = db.query(new OSQLSynchQuery<ODocument>(query));
-      Assert.assertEquals(1, docs.size());
-      Assert.assertEquals(1, idx.getInternal().size());
-
-    } finally {
-      db.drop();
-    }
+    query =
+        "select * from City where location && 'LINESTRING(-160.06393432617188"
+            + " 21.996535232496047,-160.1099395751953 21.94304553343818,-160.169677734375"
+            + " 21.89399562866819,-160.21087646484375 21.844928843026818,-160.21018981933594"
+            + " 21.787556698550834)' ";
+    docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    Assert.assertEquals(1, docs.size());
+    Assert.assertEquals(1, idx.getInternal().size());
   }
 
   protected ODocument newCity(String name, final Double longitude, final Double latitude) {

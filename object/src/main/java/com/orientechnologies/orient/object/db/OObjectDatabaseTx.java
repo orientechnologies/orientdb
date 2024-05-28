@@ -97,7 +97,6 @@ import javassist.util.proxy.ProxyObject;
  * between ODocument instances and POJOs using javassist APIs.
  *
  * @author Luca Molino
- * @see ODatabaseDocumentTx
  */
 @SuppressWarnings("unchecked")
 public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumentInternal, Object>
