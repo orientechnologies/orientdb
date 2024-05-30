@@ -229,10 +229,6 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     if (database.getStorage().getType().equals(OEngineRemote.NAME)
         || database.getStorage().getType().equals(OEngineMemory.NAME)) return;
 
-    float reuseTrigger =
-        OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.getValueAsFloat();
-    OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.setValue(Float.MIN_VALUE);
-
     ODocument realDoc = new ODocument();
     ORidBag realDocRidBag = new ORidBag();
     realDoc.field("ridBag", realDocRidBag);
@@ -271,7 +267,6 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     database.freeze();
     database.release();
 
-    OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.setValue(reuseTrigger);
     testRidBagFile =
         new File(
             directory,

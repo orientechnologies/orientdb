@@ -64,7 +64,6 @@ public class WOWCacheTestIT {
 
   @BeforeClass
   public static void beforeClass() {
-    OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.setValue(Boolean.FALSE);
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
     String buildDirectory = System.getProperty("buildDirectory", ".");
 
@@ -124,7 +123,6 @@ public class WOWCacheTestIT {
     Files.deleteIfExists(storagePath);
     bufferPool.clear();
 
-    OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.setValue(Boolean.TRUE);
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.TRUE);
   }
 

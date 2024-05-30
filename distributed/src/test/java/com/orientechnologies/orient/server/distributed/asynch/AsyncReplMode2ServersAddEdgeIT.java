@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -23,7 +22,6 @@ public class AsyncReplMode2ServersAddEdgeIT extends BareBoneBase2ServerTest {
   }
 
   protected void dbClient1(BareBonesServer[] servers) {
-    OGlobalConfiguration.LOG_CONSOLE_LEVEL.setValue("FINEST");
 
     synchronized (LOCK) {
       OrientDB orientdb = servers[0].getServer().getContext();

@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.ridbag;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_BAG_SBTREEBONSAI_DELETE_DELAY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -21,7 +20,6 @@ public class SBTreeBagDeleteTest extends BaseMemoryInternalDatabase {
 
   public void beforeTest() {
     super.beforeTest();
-    db.getConfiguration().setValue(RID_BAG_SBTREEBONSAI_DELETE_DELAY, 50);
   }
 
   @Test

@@ -31,7 +31,6 @@ public class ReinstallDatabaseTestIT {
   public void before() throws Exception {
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.setValue(2);
-    OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.setValue(5);
     config = new SimpleDServerConfig();
     server0 = SimpleDServerConfig.SERVER0;
     server1 = SimpleDServerConfig.SERVER1;
@@ -130,8 +129,6 @@ public class ReinstallDatabaseTestIT {
 
   @After
   public void after() {
-    OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.setValue(
-        OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getDefValue());
     try {
       OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
       remote.drop(DATABASE_NAME);

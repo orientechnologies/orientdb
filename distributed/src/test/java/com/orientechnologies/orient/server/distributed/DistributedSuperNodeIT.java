@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ODirection;
@@ -35,18 +34,10 @@ import org.junit.Test;
 public class DistributedSuperNodeIT extends AbstractServerClusterGraphTest {
   @Test
   public void test() throws Exception {
-    final long timeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong();
-    OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(1);
-    try {
-
-      count = 200;
-      init(3);
-      prepare(false);
-      execute();
-
-    } finally {
-      OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(timeout);
-    }
+    count = 200;
+    init(3);
+    prepare(false);
+    execute();
   }
 
   @Override
