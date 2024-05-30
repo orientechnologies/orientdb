@@ -2095,6 +2095,14 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
     for (OGlobalConfiguration config : values()) {
 
+      String legacyKey = getEnvKeyLegacy(config);
+      if (legacyKey != null) {
+        prop = System.getenv(legacyKey);
+        if (prop != null) {
+          config.setValue(prop);
+        }
+      }
+
       String key = getEnvKey(config);
       if (key != null) {
         prop = System.getenv(key);
@@ -2105,12 +2113,15 @@ public enum OGlobalConfiguration { // ENVIRONMENT
     }
   }
 
-  public static String getEnvKey(OGlobalConfiguration config) {
-
+  public static String getEnvKeyLegacy(OGlobalConfiguration config) {
     if (!config.env) {
       return null;
     }
     return "ORIENTDB_" + config.name();
+  }
+
+  public static String getEnvKey(OGlobalConfiguration config) {
+    return "ORIENTDB_" + config.name().toUpperCase().replace('.', '_');
   }
 
   public <T> T getValue() {
