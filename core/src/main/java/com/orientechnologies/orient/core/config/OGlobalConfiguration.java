@@ -1358,8 +1358,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   /** @Since 3.1 */
   @OApi(maturity = OApi.MATURITY.NEW)
-  DISTRIBUTED(
-      "distributed", "Enable the clustering mode", Boolean.class, false, false, false, true),
+  DISTRIBUTED("distributed", "Enable the clustering mode", Boolean.class, false, false, false),
 
   /** @Since 3.1 */
   @OApi(maturity = OApi.MATURITY.NEW)
@@ -1369,8 +1368,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       String.class,
       null,
       false,
-      false,
-      true),
+      false),
 
   CLIENT_CHANNEL_IDLE_CLOSE(
       "client.channel.idleAutoClose",
@@ -1429,7 +1427,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   private final OConfigurationChangeCallback changeCallback;
   private final Boolean canChangeAtRuntime;
   private final boolean hidden;
-  private boolean env;
 
   private volatile Object value = nullValue;
 
@@ -1469,24 +1466,12 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       final Object iDefValue,
       final boolean iCanChange,
       final boolean iHidden) {
-    this(iKey, iDescription, iType, iDefValue, iCanChange, iHidden, false);
-  }
-
-  OGlobalConfiguration(
-      final String iKey,
-      final String iDescription,
-      final Class<?> iType,
-      final Object iDefValue,
-      final boolean iCanChange,
-      final boolean iHidden,
-      final boolean iEnv) {
     key = iKey;
     description = iDescription;
     defValue = iDefValue;
     type = iType;
     canChangeAtRuntime = iCanChange;
     hidden = iHidden;
-    env = iEnv;
     changeCallback = null;
   }
 
@@ -1572,10 +1557,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   }
 
   public static String getEnvKey(OGlobalConfiguration config) {
-
-    if (!config.env) {
-      return null;
-    }
     return "ORIENTDB_" + config.name();
   }
 
