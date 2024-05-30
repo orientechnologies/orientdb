@@ -19,10 +19,13 @@
  */
 package com.orientechnologies.orient.object.jpa;
 
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import com.orientechnologies.orient.core.util.OURLConnection;
+import com.orientechnologies.orient.core.util.OURLHelper;
+import com.orientechnologies.orient.object.db.OrientDBObject;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,6 +45,7 @@ public class OJPAEntityManager implements EntityManager {
   private static Logger logger = Logger.getLogger(OJPAPersistenceProvider.class.getName());
 
   private final EntityManagerFactory emFactory;
+  private final OrientDBObject orientDB;
   private final ODatabaseObject database;
   private final EntityTransaction transaction;
   private final OJPAProperties properties;
@@ -50,9 +54,11 @@ public class OJPAEntityManager implements EntityManager {
   OJPAEntityManager(EntityManagerFactory entityManagerFactory, OJPAProperties properties) {
     this.properties = properties;
     this.emFactory = entityManagerFactory;
-
-    this.database = new OObjectDatabaseTx(properties.getURL());
-    database.open(properties.getUser(), properties.getPassword());
+    OURLConnection url = OURLHelper.parse(properties.getURL());
+    this.orientDB =
+        new OrientDBObject(url.getType() + ':' + url.getPath(), OrientDBConfig.defaultConfig());
+    this.database =
+        this.orientDB.open(url.getDbName(), properties.getUser(), properties.getPassword());
     if (properties.isEntityClasses()) {
       database.getEntityManager().registerEntityClasses(properties.getEntityClasses());
     }
@@ -296,6 +302,7 @@ public class OJPAEntityManager implements EntityManager {
   @Override
   public void close() {
     database.close();
+    orientDB.close();
     if (logger.isLoggable(Level.INFO)) {
       logger.info("EntityManager closed. " + toString());
     }

@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -359,14 +358,24 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
   /** */
   public void checkAndCreateDatabase(String dbName) {
     try {
-      OServerAdmin serverAdmin = new OServerAdmin(getDBURL()).connect("root", "root");
-      if (!serverAdmin.existsDatabase("plocal")) {
+      OrientDB orientDB =
+          new OrientDB(
+              "remote:localhost:2424;localhost:2425;localhost:2426",
+              "root",
+              "root",
+              OrientDBConfig.defaultConfig());
+      if (!orientDB.exists(dbName)) {
         log("Database does not exists. New database is created");
-        serverAdmin.createDatabase(dbName, "graph", "plocal");
+        orientDB.execute(
+            "create database "
+                + dbName
+                + " plocal users(admin identified by 'admin' role admin,reader identified by"
+                + " 'reader' role reader,writer identified by 'writer' role writer )");
       } else {
         log(dbName + " database already exists");
       }
-      serverAdmin.close();
+      orientDB.close();
+
     } catch (Exception ex) {
       log("Failed to create database", ex);
     }

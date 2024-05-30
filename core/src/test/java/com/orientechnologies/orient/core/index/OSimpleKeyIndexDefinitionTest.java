@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.tool.TestSchemaImportExport;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Arrays;
@@ -136,21 +138,23 @@ public class OSimpleKeyIndexDefinitionTest {
 
   @Test
   public void testReload() {
-    final ODatabaseDocument databaseDocumentTx =
-        new ODatabaseDocumentTx("memory:osimplekeyindexdefinitiontest");
-    databaseDocumentTx.create();
+    OrientDB orientdb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+    orientdb.execute(
+        "create database osimplekeyindexdefinitiontest memory users(admin identified by 'adminpwd'"
+            + " role admin)");
 
-    final ODocument storeDocument = simpleKeyIndexDefinition.toStream();
-    storeDocument.save(
-        databaseDocumentTx.getClusterNameById(databaseDocumentTx.getDefaultClusterId()));
+    try (ODatabaseDocument db =
+        orientdb.open(TestSchemaImportExport.class.getSimpleName(), "admin", "adminpwd")) {
 
-    final ODocument loadDocument = databaseDocumentTx.load(storeDocument.getIdentity());
-    final OSimpleKeyIndexDefinition loadedKeyIndexDefinition = new OSimpleKeyIndexDefinition();
-    loadedKeyIndexDefinition.fromStream(loadDocument);
+      final ODocument storeDocument = simpleKeyIndexDefinition.toStream();
+      storeDocument.save(db.getClusterNameById(db.getDefaultClusterId()));
 
-    databaseDocumentTx.drop();
-
-    Assert.assertEquals(loadedKeyIndexDefinition, simpleKeyIndexDefinition);
+      final ODocument loadDocument = db.load(storeDocument.getIdentity());
+      final OSimpleKeyIndexDefinition loadedKeyIndexDefinition = new OSimpleKeyIndexDefinition();
+      loadedKeyIndexDefinition.fromStream(loadDocument);
+      Assert.assertEquals(loadedKeyIndexDefinition, simpleKeyIndexDefinition);
+    }
+    orientdb.close();
   }
 
   @Test(expected = OIndexException.class)

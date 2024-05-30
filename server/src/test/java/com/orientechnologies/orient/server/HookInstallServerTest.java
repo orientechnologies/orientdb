@@ -1,9 +1,10 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -74,18 +75,20 @@ public class HookInstallServerTest {
     server.startup(ret.getConfiguration());
     server.activate();
 
-    OServerAdmin admin = new OServerAdmin("remote:localhost");
-    admin.connect("root", "root");
-    admin.createDatabase("test", "nothign", "memory");
-    admin.close();
+    OrientDB orientDB =
+        new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    orientDB.execute(
+        "create database test memory users(admin identified by 'adminpwd' role admin) ");
+    orientDB.close();
   }
 
   @After
   public void after() throws IOException {
-    OServerAdmin admin = new OServerAdmin("remote:localhost");
-    admin.connect("root", "root");
-    admin.dropDatabase("test", "memory");
-    admin.close();
+    OrientDB orientDB =
+        new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    orientDB.execute("drop database test ");
+    orientDB.close();
+
     server.shutdown();
 
     Orient.instance().shutdown();
@@ -98,7 +101,7 @@ public class HookInstallServerTest {
     final int initValue = count;
 
     OPartitionedDatabasePool pool =
-        new OPartitionedDatabasePool("remote:localhost/test", "admin", "admin");
+        new OPartitionedDatabasePool("remote:localhost/test", "admin", "adminpwd");
     for (int i = 0; i < 10; i++) {
       ODatabaseDocument some = pool.acquire();
       try {

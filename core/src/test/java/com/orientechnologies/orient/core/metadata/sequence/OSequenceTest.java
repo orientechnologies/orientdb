@@ -2,8 +2,9 @@ package com.orientechnologies.orient.core.metadata.sequence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
@@ -25,19 +26,24 @@ import org.junit.rules.ExternalResource;
 public class OSequenceTest {
 
   private ODatabaseDocument db;
+  private OrientDB ctx;
 
   @Rule
   public ExternalResource resource =
       new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-          db = new ODatabaseDocumentTx("memory:" + OSequenceTest.class.getSimpleName());
-          db.create();
+          ctx = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+          ctx.execute(
+              "create database "
+                  + OSequenceTest.class.getSimpleName()
+                  + " memory users(admin identified by 'adminpwd' role admin) ");
+          db = ctx.open(OSequenceTest.class.getSimpleName(), "admin", "adminpwd");
         }
 
         @Override
         protected void after() {
-          db.drop();
+          ctx.drop(OSequenceTest.class.getSimpleName());
         }
       };
 
@@ -161,8 +167,7 @@ public class OSequenceTest {
             @Override
             public void run() {
               ODatabaseDocument databaseDocument =
-                  new ODatabaseDocumentTx("memory:" + OSequenceTest.class.getName());
-              databaseDocument.open("admin", "admin");
+                  ctx.open(OSequenceTest.class.getName(), "admin", "adminpwd");
               OSequence mtSeq1 =
                   databaseDocument.getMetadata().getSequenceLibrary().getSequence("mtSeq");
 
@@ -176,6 +181,7 @@ public class OSequenceTest {
                 }
                 latch.countDown();
               }
+              databaseDocument.close();
             }
           });
     }
@@ -206,8 +212,7 @@ public class OSequenceTest {
             @Override
             public void run() {
               ODatabaseDocument databaseDocument =
-                  new ODatabaseDocumentTx("memory:" + OSequenceTest.class.getName());
-              databaseDocument.open("admin", "admin");
+                  ctx.open(OSequenceTest.class.getName(), "admin", "adminpwd");
               OSequence mtSeq1 =
                   databaseDocument.getMetadata().getSequenceLibrary().getSequence("mtSeq");
 
@@ -242,6 +247,7 @@ public class OSequenceTest {
                 }
                 latch.countDown();
               }
+              databaseDocument.close();
             }
           });
     }

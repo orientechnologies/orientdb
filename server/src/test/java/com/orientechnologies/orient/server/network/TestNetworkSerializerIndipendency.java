@@ -3,13 +3,12 @@ package com.orientechnologies.orient.server.network;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -37,13 +36,17 @@ public class TestNetworkSerializerIndipendency {
   public void createCsvDatabaseConnectBinary() throws IOException {
     ORecordSerializer prev = ODatabaseDocumentAbstract.getDefaultSerializer();
     ODatabaseDocumentAbstract.setDefaultSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
-    createDatabase();
+    OrientDB orientdb =
+        new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    orientdb
+        .execute("create database test plocal users(admin identified by 'adminpwd' role admin)")
+        .close();
 
     ODatabaseDocument dbTx = null;
     try {
       ODatabaseDocumentAbstract.setDefaultSerializer(ORecordSerializerBinary.INSTANCE);
-      dbTx = new ODatabaseDocumentTx("remote:localhost/test");
-      dbTx.open("admin", "admin");
+
+      dbTx = orientdb.open("test", "admin", "adminpwd");
       ODocument document = new ODocument();
       document.field("name", "something");
       document.field("surname", "something-else");
@@ -53,40 +56,33 @@ public class TestNetworkSerializerIndipendency {
       assertEquals(doc.fields(), document.fields());
       assertEquals(doc.<Object>field("name"), document.field("name"));
       assertEquals(doc.<Object>field("surname"), document.field("surname"));
+
     } finally {
       if (dbTx != null && !dbTx.isClosed()) {
         dbTx.close();
         ((ODatabaseDocumentInternal) dbTx).getStorage().close();
       }
 
-      dropDatabase();
+      orientdb.execute("drop database test ").close();
       ODatabaseDocumentAbstract.setDefaultSerializer(prev);
     }
-  }
-
-  private void dropDatabase() throws IOException {
-    OServerAdmin admin = new OServerAdmin("remote:localhost/test");
-    admin.connect("root", "root");
-    admin.dropDatabase("plocal");
-  }
-
-  private void createDatabase() throws IOException {
-    OServerAdmin admin = new OServerAdmin("remote:localhost/test");
-    admin.connect("root", "root");
-    admin.createDatabase("document", "plocal");
+    orientdb.close();
   }
 
   @Test
   public void createBinaryDatabaseConnectCsv() throws IOException {
     ORecordSerializer prev = ODatabaseDocumentAbstract.getDefaultSerializer();
     ODatabaseDocumentAbstract.setDefaultSerializer(ORecordSerializerBinary.INSTANCE);
-    createDatabase();
+    OrientDB orientdb =
+        new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    orientdb
+        .execute("create database test plocal users(admin identified by 'adminpwd' role admin)")
+        .close();
 
     ODatabaseDocument dbTx = null;
     try {
       ODatabaseDocumentAbstract.setDefaultSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
-      dbTx = new ODatabaseDocumentTx("remote:localhost/test");
-      dbTx.open("admin", "admin");
+      dbTx = orientdb.open("test", "admin", "adminpwd");
       ODocument document = new ODocument();
       document.field("name", "something");
       document.field("surname", "something-else");
@@ -102,9 +98,10 @@ public class TestNetworkSerializerIndipendency {
         ((ODatabaseDocumentInternal) dbTx).getStorage().close();
       }
 
-      dropDatabase();
+      orientdb.execute("drop database test ").close();
       ODatabaseDocumentAbstract.setDefaultSerializer(prev);
     }
+    orientdb.close();
   }
 
   @After
@@ -117,13 +114,5 @@ public class TestNetworkSerializerIndipendency {
     ODatabaseDocumentAbstract.setDefaultSerializer(
         ORecordSerializerFactory.instance().getFormat(ORecordSerializerBinary.NAME));
     Orient.instance().startup();
-  }
-
-  private void deleteDirectory(File iDirectory) {
-    if (iDirectory.isDirectory())
-      for (File f : iDirectory.listFiles()) {
-        if (f.isDirectory()) deleteDirectory(f);
-        else if (!f.delete()) throw new OConfigurationException("Cannot delete the file: " + f);
-      }
   }
 }

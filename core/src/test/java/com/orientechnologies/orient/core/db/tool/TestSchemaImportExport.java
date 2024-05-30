@@ -2,8 +2,9 @@ package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -17,11 +18,15 @@ public class TestSchemaImportExport {
 
   @Test
   public void testExportImportCustomData() throws IOException {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:" + TestSchemaImportExport.class.getSimpleName());
-    db.create();
+    OrientDB orientdb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+    orientdb.execute(
+        "create database "
+            + TestSchemaImportExport.class.getSimpleName()
+            + " memory users(admin identified by 'adminpwd' role admin)");
+
     ByteArrayOutputStream output = new ByteArrayOutputStream();
-    try {
+    try (ODatabaseDocument db =
+        orientdb.open(TestSchemaImportExport.class.getSimpleName(), "admin", "adminpwd")) {
       OClass clazz = db.getMetadata().getSchema().createClass("Test");
       clazz.createProperty("some", OType.STRING);
       clazz.setCustom("testcustom", "test");
@@ -29,74 +34,93 @@ public class TestSchemaImportExport {
           new ODatabaseExport((ODatabaseDocumentInternal) db, output, new MockOutputListener());
       exp.exportDatabase();
     } finally {
-      db.drop();
+      orientdb.drop(TestSchemaImportExport.class.getSimpleName());
     }
-    ODatabaseDocument db1 =
-        new ODatabaseDocumentTx("memory:imp_" + TestSchemaImportExport.class.getSimpleName());
-    db1.create();
-    try {
+
+    orientdb.execute(
+        "create database imp_"
+            + TestSchemaImportExport.class.getSimpleName()
+            + " memory users(admin identified by 'adminpwd' role admin)");
+    try (ODatabaseDocument db1 =
+        orientdb.open("imp_" + TestSchemaImportExport.class.getSimpleName(), "admin", "adminpwd")) {
       ODatabaseImport imp =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db1,
               new ByteArrayInputStream(output.toByteArray()),
               new MockOutputListener());
       imp.importDatabase();
-      db1.close();
-      db1.open("admin", "admin");
+    }
+    try (ODatabaseDocument db1 =
+        orientdb.open("imp_" + TestSchemaImportExport.class.getSimpleName(), "admin", "adminpwd")) {
       OClass clas1 = db1.getMetadata().getSchema().getClass("Test");
       Assert.assertNotNull(clas1);
       Assert.assertEquals(clas1.getCustom("testcustom"), "test");
     } finally {
-      db1.drop();
+      orientdb.drop("imp_" + TestSchemaImportExport.class.getSimpleName());
     }
+    orientdb.close();
   }
 
   @Test
   public void testExportImportDefaultValue() throws IOException {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx("memory:" + TestSchemaImportExport.class.getSimpleName());
-    db.create();
+    OrientDB orientdb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+    orientdb.execute(
+        "create database "
+            + TestSchemaImportExport.class.getSimpleName()
+            + " memory users(admin identified by 'adminpwd' role admin)");
+
     ByteArrayOutputStream output = new ByteArrayOutputStream();
-    try {
+    try (ODatabaseDocument db =
+        orientdb.open(TestSchemaImportExport.class.getSimpleName(), "admin", "adminpwd")) {
       OClass clazz = db.getMetadata().getSchema().createClass("Test");
       clazz.createProperty("bla", OType.STRING).setDefaultValue("something");
       ODatabaseExport exp =
           new ODatabaseExport((ODatabaseDocumentInternal) db, output, new MockOutputListener());
       exp.exportDatabase();
     } finally {
-      db.drop();
+      orientdb.drop(TestSchemaImportExport.class.getSimpleName());
     }
 
-    ODatabaseDocument db1 =
-        new ODatabaseDocumentTx("memory:imp_" + TestSchemaImportExport.class.getSimpleName());
-    db1.create();
-    try {
+    orientdb.execute(
+        "create database imp_"
+            + TestSchemaImportExport.class.getSimpleName()
+            + " memory users(admin identified by 'adminpwd' role admin)");
+    try (ODatabaseDocument db1 =
+        orientdb.open("imp_" + TestSchemaImportExport.class.getSimpleName(), "admin", "adminpwd")) {
       ODatabaseImport imp =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db1,
               new ByteArrayInputStream(output.toByteArray()),
               new MockOutputListener());
       imp.importDatabase();
-      db1.close();
-      db1.open("admin", "admin");
+    }
+    try (ODatabaseDocument db1 =
+        orientdb.open("imp_" + TestSchemaImportExport.class.getSimpleName(), "admin", "adminpwd")) {
       OClass clas1 = db1.getMetadata().getSchema().getClass("Test");
       Assert.assertNotNull(clas1);
       OProperty prop1 = clas1.getProperty("bla");
       Assert.assertNotNull(prop1);
       Assert.assertEquals(prop1.getDefaultValue(), "something");
     } finally {
-      db1.drop();
+      orientdb.drop("imp_" + TestSchemaImportExport.class.getSimpleName());
     }
+    orientdb.close();
   }
 
   @Test
   public void testExportImportMultipleInheritance() throws IOException {
-    ODatabaseDocument db =
-        new ODatabaseDocumentTx(
-            "memory:" + TestSchemaImportExport.class.getSimpleName() + "MultipleInheritance");
-    db.create();
+    OrientDB orientdb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+    orientdb.execute(
+        "create database "
+            + TestSchemaImportExport.class.getSimpleName()
+            + "MultipleInheritance memory users(admin identified by 'adminpwd' role admin)");
+
     ByteArrayOutputStream output = new ByteArrayOutputStream();
-    try {
+    try (ODatabaseDocument db =
+        orientdb.open(
+            TestSchemaImportExport.class.getSimpleName() + "MultipleInheritance",
+            "admin",
+            "adminpwd")) {
       OClass clazz = db.getMetadata().getSchema().createClass("Test");
       clazz.addSuperClass(db.getMetadata().getSchema().getClass("ORestricted"));
       clazz.addSuperClass(db.getMetadata().getSchema().getClass("OIdentity"));
@@ -105,28 +129,37 @@ public class TestSchemaImportExport {
           new ODatabaseExport((ODatabaseDocumentInternal) db, output, new MockOutputListener());
       exp.exportDatabase();
     } finally {
-      db.drop();
+      orientdb.drop(TestSchemaImportExport.class.getSimpleName() + "MultipleInheritance");
     }
+    orientdb.execute(
+        "create database imp_"
+            + TestSchemaImportExport.class.getSimpleName()
+            + "MultipleInheritance memory users(admin identified by 'adminpwd' role admin)");
 
-    ODatabaseDocument db1 =
-        new ODatabaseDocumentTx(
-            "memory:imp_" + TestSchemaImportExport.class.getSimpleName() + "MultipleInheritance");
-    db1.create();
-    try {
+    try (ODatabaseDocument db1 =
+        orientdb.open(
+            "imp_" + TestSchemaImportExport.class.getSimpleName() + "MultipleInheritance",
+            "admin",
+            "adminpwd")) {
       ODatabaseImport imp =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db1,
               new ByteArrayInputStream(output.toByteArray()),
               new MockOutputListener());
       imp.importDatabase();
-      db1.close();
-      db1.open("admin", "admin");
+    }
+    try (ODatabaseDocument db1 =
+        orientdb.open(
+            "imp_" + TestSchemaImportExport.class.getSimpleName() + "MultipleInheritance",
+            "admin",
+            "adminpwd")) {
       OClass clas1 = db1.getMetadata().getSchema().getClass("Test");
       Assert.assertTrue(clas1.isSubClassOf("OIdentity"));
       Assert.assertTrue(clas1.isSubClassOf("ORestricted"));
     } finally {
-      db1.drop();
+      orientdb.drop("imp_" + TestSchemaImportExport.class.getSimpleName() + "MultipleInheritance");
     }
+    orientdb.close();
   }
 
   private static final class MockOutputListener implements OCommandOutputListener {

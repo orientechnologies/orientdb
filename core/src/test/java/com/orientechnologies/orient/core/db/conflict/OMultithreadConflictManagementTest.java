@@ -2,8 +2,9 @@ package com.orientechnologies.orient.core.db.conflict;
 
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
@@ -22,10 +23,14 @@ public class OMultithreadConflictManagementTest {
 
   @Test
   public void testAutomergeConflictStrategyThreaded() {
+    OrientDB orientdb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+    orientdb.execute(
+        "create database "
+            + OMultithreadConflictManagementTest.class.getSimpleName()
+            + " memory users(admin identified by 'adminpwd' role admin)");
     final ODatabaseDocument db =
-        new ODatabaseDocumentTx(
-            "memory:" + OMultithreadConflictManagementTest.class.getSimpleName());
-    db.create();
+        orientdb.open(
+            OMultithreadConflictManagementTest.class.getSimpleName(), "admin", "adminpwd");
     db.setConflictStrategy("automerge");
     try {
       db.begin();
@@ -45,10 +50,11 @@ public class OMultithreadConflictManagementTest {
             @Override
             public void run() {
               ODatabaseDocument db =
-                  new ODatabaseDocumentTx(
-                      "memory:" + OMultithreadConflictManagementTest.class.getSimpleName());
+                  orientdb.open(
+                      OMultithreadConflictManagementTest.class.getSimpleName(),
+                      "admin",
+                      "adminpwd");
               db.setConflictStrategy("automerge");
-              db.open("admin", "admin");
               db.begin();
               ODocument doc = db.load(id);
               ORidBag bag1 = ((ORidBag) doc.field("bag"));
@@ -84,7 +90,9 @@ public class OMultithreadConflictManagementTest {
       assertTrue(ids.isEmpty());
 
     } finally {
-      db.drop();
+      db.close();
+      orientdb.drop(OMultithreadConflictManagementTest.class.getSimpleName());
+      orientdb.close();
     }
   }
 }
