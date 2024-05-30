@@ -1,7 +1,5 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.client.db.ODatabaseHelper;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -45,20 +43,11 @@ public class OrientCommitMTTestIT {
 
   @Before
   public void setUp() throws IOException {
-    if (DB_URL.startsWith("remote:")) {
-      OServerAdmin serverAdmin = new OServerAdmin(DB_URL);
-      serverAdmin.connect("root", ODatabaseHelper.getServerRootPassword());
 
-      if (serverAdmin.existsDatabase(OrientGraphTest.getStorageType())) {
-        serverAdmin.dropDatabase(OrientGraphTest.getStorageType());
-      }
-      serverAdmin.createDatabase(DB_URL, "graph", OrientGraphTest.getStorageType());
-    } else {
-      OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
-      graph.drop();
-      graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
-      graph.shutdown();
-    }
+    OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+    graph.drop();
+    graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+    graph.shutdown();
     factory = new OrientGraphFactory(DB_URL).setupPool(5, 10);
 
     buildSchemaAndSeed();
@@ -67,17 +56,9 @@ public class OrientCommitMTTestIT {
 
   @AfterClass
   public static void afterClass() throws IOException {
-    if (DB_URL.startsWith("remote:")) {
-      OServerAdmin serverAdmin = new OServerAdmin(DB_URL);
-      serverAdmin.connect("root", ODatabaseHelper.getServerRootPassword());
 
-      if (serverAdmin.existsDatabase(OrientGraphTest.getStorageType())) {
-        serverAdmin.dropDatabase(OrientGraphTest.getStorageType());
-      }
-    } else {
-      OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
-      graph.drop();
-    }
+    OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+    graph.drop();
   }
 
   @Test

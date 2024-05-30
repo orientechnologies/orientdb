@@ -3,9 +3,10 @@ package com.tinkerpop.blueprints.impls.orient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.Vertex;
@@ -59,11 +60,14 @@ public class DirtyTrackingTreeRidBagRemoteTest {
     server.startup(
         OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
     server.activate();
-    OServerAdmin admin = new OServerAdmin("remote:localhost:3064");
-    admin.connect("root", "root");
-    admin.createDatabase(
-        DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName(), "graph", "memory");
-    admin.close();
+    OrientDB orientdb =
+        new OrientDB("remote:localhost:3064", "root", "root", OrientDBConfig.defaultConfig());
+    orientdb.execute(
+        "create database "
+            + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName()
+            + " memory users(admin identified by 'adminpwd' role admin,reader identified by"
+            + " 'readerpwd' role reader, writer identified by 'writerpwd' role writer)");
+    orientdb.close();
   }
 
   @After

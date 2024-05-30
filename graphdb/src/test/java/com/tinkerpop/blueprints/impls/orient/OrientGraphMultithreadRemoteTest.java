@@ -2,14 +2,14 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.Vertex;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
@@ -75,19 +75,19 @@ public class OrientGraphMultithreadRemoteTest {
             + "/"
             + OrientGraphMultithreadRemoteTest.class.getSimpleName();
 
-    try {
-      final OServerAdmin serverAdmin = new OServerAdmin(url);
-      serverAdmin.connect("root", "root");
-      if (!serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
-        serverAdmin.createDatabase("graph", OrientGraphTest.getStorageType());
-
-      serverAdmin.close();
-
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+    OrientDB orientdb =
+        new OrientDB(
+            "remote:localhost:" + serverPort, "root", "root", OrientDBConfig.defaultConfig());
+    if (!orientdb.exists(OrientGraphMultithreadRemoteTest.class.getSimpleName())) {
+      orientdb.execute(
+          "create database "
+              + OrientGraphMultithreadRemoteTest.class.getSimpleName()
+              + " memory users(admin identified by 'adminpwd' role admin,reader identified by"
+              + " 'readerpwd' role reader, writer identified by 'writerpwd' role writer)");
     }
+    orientdb.close();
 
-    graphFactory = new OrientGraphFactory(url);
+    graphFactory = new OrientGraphFactory(url, "admin", "adminpwd");
     graphFactory.setupPool(5, 256);
   }
 

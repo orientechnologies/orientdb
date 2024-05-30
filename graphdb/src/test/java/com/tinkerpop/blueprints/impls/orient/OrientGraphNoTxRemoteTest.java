@@ -1,10 +1,11 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.Graph;
@@ -17,7 +18,6 @@ import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Locale;
@@ -153,17 +153,17 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
       }
     }
 
-    try {
-      final OServerAdmin serverAdmin = new OServerAdmin(url);
-      serverAdmin.connect("root", "root");
-      if (!serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
-        serverAdmin.createDatabase("graph", OrientGraphTest.getStorageType());
-
-      serverAdmin.close();
-
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+    OrientDB orientdb =
+        new OrientDB(
+            "remote:localhost:T" + serverPort, "root", "root", OrientDBConfig.defaultConfig());
+    if (orientdb.exists(graphDirectoryName)) {
+      orientdb.execute(
+          "create database "
+              + graphDirectoryName
+              + " memory users(admin identified by 'adminpwd' role admin,reader identified by"
+              + " 'readerpwd' role reader, writer identified by 'writerpwd' role writer)");
     }
+    orientdb.close();
 
     OrientGraphFactory factory = graphFactories.get(url);
     if (factory == null) {
@@ -185,24 +185,18 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
   public void dropGraph(final String graphDirectoryName) {
     // this is necessary on windows systems: deleting the directory is not enough because it takes a
     // while to unlock files
-    try {
-      final String url = "remote:localhost:" + serverPort + "/" + graphDirectoryName;
-      final OrientGraphNoTx graph = currentGraphs.get(url);
-      if (graph != null) graph.shutdown();
+    final String url = "remote:localhost:" + serverPort + "/" + graphDirectoryName;
+    final OrientGraphNoTx graph = currentGraphs.get(url);
+    if (graph != null) graph.shutdown();
 
-      final OrientGraphFactory factory = graphFactories.remove(url);
-      if (factory != null) factory.close();
+    final OrientGraphFactory factory = graphFactories.remove(url);
+    if (factory != null) factory.close();
 
-      final OServerAdmin serverAdmin = new OServerAdmin(url);
-      serverAdmin.connect("root", "root");
-
-      if (serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
-        serverAdmin.dropDatabase(OrientGraphTest.getStorageType());
-
-      serverAdmin.close();
-    } catch (Exception e) {
-      throw new IllegalStateException(e);
-    }
+    OrientDB orientdb =
+        new OrientDB(
+            "remote:localhost:" + serverPort, "root", "root", OrientDBConfig.defaultConfig());
+    orientdb.drop(graphDirectoryName);
+    orientdb.close();
   }
 
   public void doTestSuite(final TestSuite testSuite) throws Exception {
