@@ -3,8 +3,9 @@ package com.orientechnologies.orient.core.sql.method.misc;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
+import java.util.stream.IntStream;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -113,5 +114,22 @@ public class OSQLMethodAsSetTest {
     HashSet<Object> expected = new HashSet<Object>();
     expected.add(new Integer(4));
     assertEquals(result, expected);
+  }
+
+  @Test
+  public void testIterableOrder() {
+
+    var values = new ArrayList<Integer>(IntStream.rangeClosed(0, 1000).boxed().toList());
+    Random rnd = new Random();
+    var seed = System.currentTimeMillis();
+    rnd.setSeed(seed);
+    System.out.println(seed);
+    Collections.shuffle(values, rnd);
+
+    TestIterable<Integer> anIterable = new TestIterable<>(values);
+    Object result = function.execute(null, null, null, anIterable, null);
+
+    Assert.assertTrue(result instanceof Set<?>);
+    Assert.assertEquals(values, ((Set<?>) result).stream().toList());
   }
 }
