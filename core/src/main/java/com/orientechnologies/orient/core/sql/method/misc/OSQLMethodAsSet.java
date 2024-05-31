@@ -20,11 +20,7 @@ import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Transforms current value in a Set.
@@ -60,7 +56,7 @@ public class OSQLMethodAsSet extends OAbstractSQLMethod {
     }
 
     if (ioResult instanceof Collection<?>) {
-      return new HashSet<Object>((Collection<Object>) ioResult);
+      return new LinkedHashSet<Object>((Collection<Object>) ioResult);
     } else if (!(ioResult instanceof ODocument) && ioResult instanceof Iterable<?>) {
       ioResult = ((Iterable<?>) ioResult).iterator();
     }
@@ -68,9 +64,9 @@ public class OSQLMethodAsSet extends OAbstractSQLMethod {
     if (ioResult instanceof Iterator<?>) {
       final Set<Object> set;
       if (ioResult instanceof OSizeable) {
-        set = new HashSet<Object>(((OSizeable) ioResult).size());
+        set = new LinkedHashSet<Object>(((OSizeable) ioResult).size());
       } else {
-        set = new HashSet<Object>();
+        set = new LinkedHashSet<Object>();
       }
 
       for (Iterator<Object> iter = (Iterator<Object>) ioResult; iter.hasNext(); ) {
