@@ -932,8 +932,7 @@ public class OHazelcastClusterMetadataManager
       ctx.execute(
           () -> {
             try {
-              for (final String databaseName :
-                  distributedPlugin.getMessageService().getDatabases()) {
+              for (final String databaseName : distributedPlugin.getDatabases()) {
                 executeInDistributedDatabaseLock(
                     databaseName,
                     20000,

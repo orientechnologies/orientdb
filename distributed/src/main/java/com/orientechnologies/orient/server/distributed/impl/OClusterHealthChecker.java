@@ -101,7 +101,7 @@ public class OClusterHealthChecker implements Runnable {
   private void checkServerConfig() {
     // NO NODES CONFIGURED: CHECK IF THERE IS ANY MISCONFIGURATION BY CHECKING THE DATABASE STATUSES
     OrientDBDistributed context = (OrientDBDistributed) manager.getServerInstance().getDatabases();
-    for (String databaseName : manager.getMessageService().getDatabases()) {
+    for (String databaseName : manager.getDatabases()) {
       final ODistributedConfiguration cfg = context.getDistributedConfiguration(databaseName);
 
       final Set<String> confServers = cfg.getServers(null);
@@ -224,7 +224,7 @@ public class OClusterHealthChecker implements Runnable {
     if (!server.isActive()) return;
 
     OrientDBDistributed context = (OrientDBDistributed) server.getDatabases();
-    for (String dbName : manager.getMessageService().getDatabases()) {
+    for (String dbName : manager.getDatabases()) {
       final ODistributedServerManager.DB_STATUS localNodeStatus =
           manager.getDatabaseStatus(manager.getLocalNodeName(), dbName);
       if (localNodeStatus != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE)
@@ -291,7 +291,7 @@ public class OClusterHealthChecker implements Runnable {
       // ONLY ONLINE NODE CAN CHECK FOR OTHERS
       return;
 
-    for (String dbName : manager.getMessageService().getDatabases()) {
+    for (String dbName : manager.getDatabases()) {
       final ODistributedServerManager.DB_STATUS localNodeStatus =
           manager.getDatabaseStatus(manager.getLocalNodeName(), dbName);
       if (localNodeStatus != ODistributedServerManager.DB_STATUS.ONLINE)
@@ -352,7 +352,7 @@ public class OClusterHealthChecker implements Runnable {
 
     if (!manager.getServerInstance().isActive()) return;
 
-    for (String dbName : manager.getMessageService().getDatabases()) {
+    for (String dbName : manager.getDatabases()) {
       final ODistributedServerManager.DB_STATUS localNodeStatus =
           manager.getDatabaseStatus(manager.getLocalNodeName(), dbName);
       if (localNodeStatus != ODistributedServerManager.DB_STATUS.ONLINE)
