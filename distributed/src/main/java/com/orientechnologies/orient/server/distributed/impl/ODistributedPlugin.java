@@ -100,6 +100,7 @@ import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabase
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -984,7 +985,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   public Set<String> getManagedDatabases() {
-    return messageService != null ? messageService.getDatabases() : Collections.EMPTY_SET;
+    return getDatabases();
   }
 
   public String getLocalNodeName() {
@@ -1030,7 +1031,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     Map<String, Object> databases = new HashMap<String, Object>();
     localNode.put("databases", databases);
-    for (String dbName : getMessageService().getDatabases()) {
+    for (String dbName : getDatabases()) {
       Map<String, Object> db = new HashMap<String, Object>();
       databases.put(dbName, db);
     }
@@ -2493,7 +2494,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName);
 
     // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
-    for (String db : getMessageService().getDatabases()) {
+    for (String db : getDatabases()) {
       if (getDatabaseConfiguration(db).isAutoDeploy()
           && getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE) {
         setDatabaseStatus(joinedNodeName, db, DB_STATUS.NOT_AVAILABLE);
@@ -2535,7 +2536,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       // UNLOCK ANY PENDING LOCKS
       if (messageService != null) {
-        for (String dbName : messageService.getDatabases())
+        for (String dbName : getDatabases())
           getDatabase(dbName).handleUnreachableNode(nodeLeftName);
       }
 
@@ -2607,7 +2608,13 @@ public class ODistributedPlugin extends OServerPluginAbstract
     final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
     if (s == DB_STATUS.NOT_AVAILABLE) {
       // INSTALL THE DATABASE
-      installDatabase(false, databaseName, false, true);
+      try {
+        installDatabase(false, databaseName, false, true);
+      } catch (ODistributedLockException lock) {
+        setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
+        OLogManager.instance()
+            .warn(this, " Failing to acquire lock install database '%s' will retry later ", lock);
+      }
     }
   }
 
@@ -2682,5 +2689,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public ODistributedDatabaseImpl getDatabase(String name) {
     return getMessageService().getDatabase(name);
+  }
+
+  public Set<String> getDatabases() {
+    return clusterManager.getDatabases();
   }
 }
