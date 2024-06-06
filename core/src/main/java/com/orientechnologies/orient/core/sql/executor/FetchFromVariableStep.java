@@ -6,14 +6,16 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.parser.OFromItem;
 import java.util.Collections;
 
 /** Created by luigidellaquila on 22/07/16. */
 public class FetchFromVariableStep extends AbstractExecutionStep {
 
-  private String variableName;
+  private OFromItem variableName;
 
-  public FetchFromVariableStep(String variableName, OCommandContext ctx, boolean profilingEnabled) {
+  public FetchFromVariableStep(
+      OFromItem variableName, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.variableName = variableName;
     reset();
@@ -24,7 +26,7 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    Object src = ctx.getVariable(variableName);
+    Object src = ctx.getVariable(variableName.toString());
     OExecutionStream source;
     if (src instanceof OExecutionStream) {
       source = (OExecutionStream) src;
@@ -58,7 +60,7 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
   @Override
   public OResult serialize() {
     OResultInternal result = OExecutionStepInternal.basicSerialize(this);
-    result.setProperty("variableName", variableName);
+    result.setProperty("variableName", this.variableName.serialize());
     return result;
   }
 
@@ -67,7 +69,8 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
     try {
       OExecutionStepInternal.basicDeserialize(fromResult, this);
       if (fromResult.getProperty("variableName") != null) {
-        this.variableName = fromResult.getProperty(variableName);
+        this.variableName = new OFromItem(-1);
+        this.variableName.deserialize(fromResult.getProperty("variableName"));
       }
       reset();
     } catch (Exception e) {

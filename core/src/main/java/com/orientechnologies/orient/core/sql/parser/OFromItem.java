@@ -456,6 +456,9 @@ public class OFromItem extends SimpleNode {
   }
 
   public boolean refersToParent() {
+    if (this.identifier != null && this.identifier.refersToParent()) {
+      return true;
+    }
     if (modifier != null && modifier.refersToParent()) {
       return true;
     }
