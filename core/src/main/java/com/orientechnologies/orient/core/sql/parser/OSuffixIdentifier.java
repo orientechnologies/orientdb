@@ -331,7 +331,7 @@ public class OSuffixIdentifier extends SimpleNode {
   public void extractSubQueries(SubQueryCollector collector) {}
 
   public boolean refersToParent() {
-    if (identifier != null && identifier.getStringValue().equalsIgnoreCase("$parent")) {
+    if (identifier != null && identifier.refersToParent()) {
       return true;
     }
     return false;

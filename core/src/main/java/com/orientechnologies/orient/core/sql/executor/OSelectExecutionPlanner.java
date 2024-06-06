@@ -1410,9 +1410,7 @@ public class OSelectExecutionPlanner {
       QueryPlanningInfo info,
       OCommandContext ctx,
       boolean profilingEnabled) {
-    plan.chain(
-        new FetchFromVariableStep(
-            info.target.getItem().getIdentifier().getStringValue(), ctx, profilingEnabled));
+    plan.chain(new FetchFromVariableStep(info.target.getItem(), ctx, profilingEnabled));
   }
 
   private boolean clusterMatchesRidRange(

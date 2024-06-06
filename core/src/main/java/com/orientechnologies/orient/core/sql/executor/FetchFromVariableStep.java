@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.parser.OFromItem;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -13,12 +14,13 @@ import java.util.Optional;
 /** Created by luigidellaquila on 22/07/16. */
 public class FetchFromVariableStep extends AbstractExecutionStep {
 
-  private String variableName;
+  private OFromItem variableName;
   private OResultSet source;
   private OResult nextResult = null;
   private boolean inited = false;
 
-  public FetchFromVariableStep(String variableName, OCommandContext ctx, boolean profilingEnabled) {
+  public FetchFromVariableStep(
+      OFromItem variableName, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.variableName = variableName;
     reset();
@@ -75,12 +77,16 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
         nRecords);
   }
 
+  private Object getValue() {
+    return ctx.getVariable(variableName.toString());
+  }
+
   private void init() {
     if (inited) {
       return;
     }
     inited = true;
-    Object src = ctx.getVariable(variableName);
+    Object src = getValue();
     if (src instanceof OInternalResultSet) {
       source = ((OInternalResultSet) src).copy();
     } else if (src instanceof OResultSet) {
@@ -126,7 +132,7 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
   @Override
   public OResult serialize() {
     OResultInternal result = OExecutionStepInternal.basicSerialize(this);
-    result.setProperty("variableName", variableName);
+    result.setProperty("variableName", this.variableName.serialize());
     return result;
   }
 
@@ -135,7 +141,8 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
     try {
       OExecutionStepInternal.basicDeserialize(fromResult, this);
       if (fromResult.getProperty("variableName") != null) {
-        this.variableName = fromResult.getProperty(variableName);
+        this.variableName = new OFromItem(-1);
+        this.variableName.deserialize(fromResult.getProperty("variableName"));
       }
       reset();
     } catch (Exception e) {

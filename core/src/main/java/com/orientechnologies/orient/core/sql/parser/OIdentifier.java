@@ -85,6 +85,13 @@ public class OIdentifier extends SimpleNode {
     return value;
   }
 
+  public boolean refersToParent() {
+    if (value.equalsIgnoreCase("$parent") || value.equalsIgnoreCase("$current")) {
+      return true;
+    }
+    return false;
+  }
+
   /**
    * sets the value of the identifier. It can contain any values, this method can manage back-ticks
    * (internally quote them), so back-ticks have not to be quoted when passed as a parameter
