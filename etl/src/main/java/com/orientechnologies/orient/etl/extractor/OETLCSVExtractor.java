@@ -132,9 +132,12 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
       Boolean columnsOnFirstLine = (Boolean) iConfiguration.field("columnsOnFirstLine");
       if (columnsOnFirstLine.equals(Boolean.TRUE)) {
         csvFormat = csvFormat.withHeader();
+      } else {
+        csvFormat = csvFormat.withAllowMissingColumnNames();
       }
     } else {
       csvFormat = csvFormat.withHeader();
+      csvFormat = csvFormat.withAllowMissingColumnNames();
     }
 
     if (iConfiguration.containsField("columns")) {
