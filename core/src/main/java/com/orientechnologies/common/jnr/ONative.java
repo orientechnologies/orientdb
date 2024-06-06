@@ -556,7 +556,8 @@ public class ONative {
     try (RandomAccessFile file = new RandomAccessFile(path, "r")) {
       return posix.fstat(file.getFD()).blockSize();
     } catch (Exception e) {
-      OLogManager.instance().warn(this, "Error detecting block size ignoring", e);
+      OLogManager.instance().warn(this, "Error detecting block size ignoring");
+      OLogManager.instance().debug(this, "Error detecting block size ignoring", e);
       return 4096;
     }
   }
