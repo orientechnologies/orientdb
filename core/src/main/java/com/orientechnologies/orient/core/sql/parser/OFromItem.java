@@ -22,6 +22,7 @@ public class OFromItem extends SimpleNode {
   protected OIdentifier identifier;
   protected OFunctionCall functionCall;
   protected OModifier modifier;
+  protected OEmptyList emptyList;
 
   public OFromItem(int id) {
     super(id);
@@ -95,6 +96,9 @@ public class OFromItem extends SimpleNode {
     if (modifier != null) {
       modifier.toString(params, builder);
     }
+    if (emptyList != null) {
+      emptyList.toString(params, builder);
+    }
   }
 
   public void toGenericStatement(StringBuilder builder) {
@@ -159,6 +163,9 @@ public class OFromItem extends SimpleNode {
     if (modifier != null) {
       modifier.toGenericStatement(builder);
     }
+    if (emptyList != null) {
+      emptyList.toGenericStatement(builder);
+    }
   }
 
   public OIdentifier getIdentifier() {
@@ -222,6 +229,7 @@ public class OFromItem extends SimpleNode {
     result.identifier = identifier == null ? null : identifier.copy();
     result.functionCall = functionCall == null ? null : functionCall.copy();
     result.modifier = modifier == null ? null : modifier.copy();
+    result.emptyList = emptyList == null ? null : emptyList.copy();
 
     return result;
   }
@@ -258,6 +266,8 @@ public class OFromItem extends SimpleNode {
         : oFromItem.functionCall != null) return false;
     if (modifier != null ? !modifier.equals(oFromItem.modifier) : oFromItem.modifier != null)
       return false;
+    if (emptyList != null ? !emptyList.equals(oFromItem.emptyList) : oFromItem.emptyList != null)
+      return false;
 
     return true;
   }
@@ -275,6 +285,7 @@ public class OFromItem extends SimpleNode {
     result = 31 * result + (identifier != null ? identifier.hashCode() : 0);
     result = 31 * result + (functionCall != null ? functionCall.hashCode() : 0);
     result = 31 * result + (modifier != null ? modifier.hashCode() : 0);
+    result = 31 * result + (emptyList != null ? emptyList.hashCode() : 0);
     return result;
   }
 
@@ -359,7 +370,9 @@ public class OFromItem extends SimpleNode {
     if (modifier != null) {
       result.setProperty("modifier", modifier.serialize());
     }
-
+    if (emptyList != null) {
+      result.setProperty("emptyList", emptyList.serialize());
+    }
     return result;
   }
 
@@ -416,6 +429,10 @@ public class OFromItem extends SimpleNode {
       modifier = new OModifier(-1);
       modifier.deserialize(fromResult.getProperty("modifier"));
     }
+    if (fromResult.getProperty("emptyList") != null) {
+      emptyList = new OEmptyList(-1);
+      emptyList.deserialize(fromResult.getProperty("emptyList"));
+    }
   }
 
   public boolean isCacheable() {
@@ -457,6 +474,10 @@ public class OFromItem extends SimpleNode {
 
   public void addInputParam(OInputParameter par) {
     this.inputParams.add(par);
+  }
+
+  public boolean isEmptyList() {
+    return emptyList != null;
   }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

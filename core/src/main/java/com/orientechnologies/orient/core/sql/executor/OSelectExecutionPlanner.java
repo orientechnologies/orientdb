@@ -1396,6 +1396,8 @@ public class OSelectExecutionPlanner {
         } else {
           result.chain(new EmptyStep(ctx, profilingEnabled)); // nothing to return
         }
+      } else if (target.isEmptyList()) {
+        result.chain(new EmptyStep(ctx, profilingEnabled));
       } else {
         throw new UnsupportedOperationException();
       }

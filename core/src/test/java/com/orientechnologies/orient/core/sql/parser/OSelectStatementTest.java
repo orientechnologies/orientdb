@@ -57,6 +57,12 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testParserFromSelect() {
+    checkRightSyntax("select from []");
+    checkRightSyntax("select from (select from [])");
+  }
+
+  @Test
   public void testParserSimpleSelect1() {
     SimpleNode stm = checkRightSyntax("select from Foo");
     assertTrue(stm instanceof OSelectStatement);

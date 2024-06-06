@@ -55,6 +55,13 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testSelectTargetEmptyList() {
+    OResultSet result = db.query("select from []");
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
   public void testGroupByCount() {
     db.getMetadata().getSchema().createClass("InputTx");
 
