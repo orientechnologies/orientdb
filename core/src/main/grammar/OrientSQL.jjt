@@ -2618,6 +2618,9 @@ OFromItem FromItem():
     	lastRid = Rid() { jjtThis.addRid(lastRid); }
     	|
     	LOOKAHEAD(2)
+    	jjtThis.emptyList = EmptyList()
+        |
+        LOOKAHEAD(2)
     	(
     	    <LBRACKET> lastRid = Rid() { jjtThis.addRid(lastRid); }
     	    (
@@ -2677,6 +2680,15 @@ OFromItem FromItem():
         )
 
     )
+    { return jjtThis; }
+}
+
+OEmptyList EmptyList():
+{}
+{
+	(
+		<LBRACKET><RBRACKET>
+	)
     { return jjtThis; }
 }
 
