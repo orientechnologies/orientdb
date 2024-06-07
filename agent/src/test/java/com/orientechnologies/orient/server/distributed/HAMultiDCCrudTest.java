@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -37,7 +36,6 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
-    OGlobalConfiguration.NETWORK_SOCKET_RETRY_STRATEGY.setValue("same-dc");
     final ODistributedConfiguration cfg =
         serverInstance
             .get(0)
