@@ -118,6 +118,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private boolean migrateLinks = true;
   private boolean merge = false;
   private boolean rebuildIndexes = true;
+  private boolean ignoreFailedRecords = false;
 
   private final Set<String> indexesToRebuild = new HashSet<>();
   private final Map<String, String> convertedClassNames = new HashMap<>();
@@ -191,6 +192,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       migrateLinks = Boolean.parseBoolean(items.get(0));
     else if (option.equalsIgnoreCase("-rebuildIndexes"))
       rebuildIndexes = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-ignoreFailedRecords"))
+      ignoreFailedRecords = Boolean.parseBoolean(items.get(0));
     else super.parseSetting(option, items);
   }
 
@@ -1352,31 +1355,23 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
     } catch (Exception t) {
-      if (record != null)
-        OLogManager.instance()
-            .error(
-                this,
-                "Error importing record "
-                    + record.getIdentity()
-                    + ". Source line "
-                    + jsonReader.getLineNumber()
-                    + ", column "
-                    + jsonReader.getColumnNumber(),
-                t);
-      else
-        OLogManager.instance()
-            .error(
-                this,
-                "Error importing record. Source line "
-                    + jsonReader.getLineNumber()
-                    + ", column "
-                    + jsonReader.getColumnNumber(),
-                t);
+      OLogManager.instance()
+          .error(
+              this,
+              "Error importing record "
+                  + ". Source line "
+                  + jsonReader.getLineNumber()
+                  + ", column "
+                  + jsonReader.getColumnNumber()
+                  + " content "
+                  + value,
+              t);
 
-      if (!(t instanceof ODatabaseException)) {
+      if (!(t instanceof ODatabaseException) && !ignoreFailedRecords) {
         throw t;
       }
     }
+
     return record.getIdentity();
   }
 
