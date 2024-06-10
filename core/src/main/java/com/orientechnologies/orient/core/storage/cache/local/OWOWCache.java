@@ -1225,15 +1225,8 @@ public final class OWOWCache extends OAbstractWriteCache
     try {
       checkForClose();
 
-      final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
-      try {
-        return entry.get().getFileSize() / pageSize;
-      } finally {
-        files.release(entry);
-      }
-    } catch (final InterruptedException e) {
-      throw OException.wrapException(
-          new OStorageException("Calculation of file size was interrupted"), e);
+      OFile file = files.get(fileId);
+      return file.getFileSize() / pageSize;
     } finally {
       filesLock.releaseReadLock();
     }
