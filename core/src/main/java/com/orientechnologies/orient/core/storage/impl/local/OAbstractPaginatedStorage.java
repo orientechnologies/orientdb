@@ -5644,7 +5644,9 @@ public abstract class OAbstractPaginatedStorage
               stream = serializer.toStream(rec);
             } catch (RuntimeException e) {
               throw OException.wrapException(
-                  new OCommitSerializationException("Error During Record Serialization"), e);
+                  new OCommitSerializationException(
+                      "Error during record serialization: " + e.getMessage()),
+                  e);
             }
             if (allocated != null) {
               final OPhysicalPosition ppos;
@@ -5689,7 +5691,9 @@ public abstract class OAbstractPaginatedStorage
               stream = serializer.toStream(rec);
             } catch (RuntimeException e) {
               throw OException.wrapException(
-                  new OCommitSerializationException("Error During Record Serialization"), e);
+                  new OCommitSerializationException(
+                      "Error during record serialization: " + e.getMessage()),
+                  e);
             }
 
             final OStorageOperationResult<Integer> updateRes =
