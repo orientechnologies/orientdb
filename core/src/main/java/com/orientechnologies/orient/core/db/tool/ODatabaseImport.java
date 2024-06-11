@@ -1368,7 +1368,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
               t);
 
       listener.onMessage(
-          "Error importing record: '" + t.getMessage() + "' content:'" + value + "'");
+          "Error importing record: '" + t.getMessage() + "' content:'" + value + "' \n");
 
       if (!(t instanceof ODatabaseException) && !ignoreFailedRecords) {
         throw t;
