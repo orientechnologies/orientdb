@@ -28,7 +28,7 @@ public final class OPatternConst {
   public static final Pattern PATTERN_FETCH_PLAN = Pattern.compile(".*:-?\\d+");
   public static final Pattern PATTERN_SINGLE_SPACE = Pattern.compile(" ");
   public static final Pattern PATTERN_NUMBERS = Pattern.compile("[^\\d]");
-  public static final Pattern PATTERN_RID = Pattern.compile("#(-?[0-9]+):(-?[0-9]+)");
+  public static final Pattern PATTERN_RID = Pattern.compile("\\s*#(-?[0-9]+):(-?[0-9]+)\\s*");
   public static final Pattern PATTERN_DIACRITICAL_MARKS =
       Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
   public static final Pattern PATTERN_AMP = Pattern.compile("&");
