@@ -1,7 +1,8 @@
 package com.orientechnologies.security.symmetrickey;
 
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -53,10 +54,18 @@ public class OSecuritySymmetricKeyTest extends AbstractSecurityTest {
     server.startup(new File(SERVER_DIRECTORY + "/config/orientdb-server-config.xml"));
     server.activate();
 
-    OServerAdmin serverAd = new OServerAdmin("remote:localhost");
-    serverAd.connect("root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
-    serverAd.createDatabase(TESTDB, "graph", "plocal");
-    serverAd.close();
+    OrientDB orientDB =
+        new OrientDB(
+            "remote:localhost",
+            "root",
+            "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3",
+            OrientDBConfig.defaultConfig());
+    orientDB.execute(
+        "create database "
+            + TESTDB
+            + " plocal users(admin identified by 'admin' role admin,reader identified by 'reader'"
+            + " role reader,writer identified by 'writer' role writer )");
+    orientDB.close();
   }
 
   @AfterClass
