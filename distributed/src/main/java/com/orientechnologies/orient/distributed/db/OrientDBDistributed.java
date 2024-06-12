@@ -85,7 +85,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         ODistributedServerManager dm = getDistributedManager();
         ODistributedServerLog.info(
             this,
-            dm.getLocalNodeName(),
+            dm != null ? dm.getLocalNodeName() : "",
             null,
             DIRECTION.NONE,
             "Opening database '%s'...",
