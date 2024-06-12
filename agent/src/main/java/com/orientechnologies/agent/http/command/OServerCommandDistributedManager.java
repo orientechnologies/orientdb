@@ -360,9 +360,12 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       if (payload != null && payload instanceof Map) {
         for (ODocument document : documents) {
           final String serverName = (String) document.field("name");
-          final ODocument dStat = (ODocument) ((Map<String, Object>) payload).get(serverName);
-          addConfiguration("realtime.sizes", document, dStat);
-          addConfiguration("realtime.texts", document, dStat);
+          Object stats = ((Map<String, Object>) payload).get(serverName);
+          if (stats instanceof ODocument) {
+            final ODocument dStat = (ODocument) stats;
+            addConfiguration("realtime.sizes", document, dStat);
+            addConfiguration("realtime.texts", document, dStat);
+          }
         }
       }
 
