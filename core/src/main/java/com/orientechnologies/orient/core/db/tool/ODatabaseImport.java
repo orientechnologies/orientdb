@@ -1374,8 +1374,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         throw t;
       }
     }
-
-    return record.getIdentity();
+    if (record != null) {
+      return record.getIdentity();
+    } else {
+      return null;
+    }
   }
 
   private long importRecords() throws Exception {
