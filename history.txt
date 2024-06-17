@@ -28,6 +28,27 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.31 - (June, 19 2024)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3231---19-June-2024
+
+# Core
+
+- Reduced logging for block size detecting
+- Add support of empty array as from target of query
+- Make sure to run let query every record when there is a context variable
+- Make sure to be able to start and load databases on startup also when not run in distributed mode
+
+# Tools
+
+- Add skipping of failed record on import, improved import logging add content of failed record
+- Corrected parsing of rid to allow white space around it in import
+- Corrected imported to avoid to terminate in case of failure to read a record
+
+# Distributed
+
+- Make sure to retry to install the database later if it fail to install the first time
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.30 - (May, 24 2024)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3230---24-May-2024
 
