@@ -16,7 +16,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <gremlin.version>3.6.2</gremlin.version>
+        <gremlin.version>3.6.7</gremlin.version>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
