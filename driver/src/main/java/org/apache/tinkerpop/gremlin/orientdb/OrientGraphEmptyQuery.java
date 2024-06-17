@@ -1,12 +1,14 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OIteratorResultSet;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResultSet;
+
+import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.resultset.OIteratorResultSet;
 
 /** Created by Enrico Risa on 05/01/2018. */
 public class OrientGraphEmptyQuery implements OrientGraphBaseQuery {
