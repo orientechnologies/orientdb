@@ -27,7 +27,8 @@ public class OrientGraphTxTest extends OrientGraphBaseTest {
     noTx.executeSql("CREATE CLASS HasFriend EXTENDS E");
     noTx.executeSql("CREATE SEQUENCE personIdSequence TYPE ORDERED;");
     noTx.executeSql(
-        "CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");");
+        "CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default"
+            + " \"sequence('personIdSequence').next()\");");
     noTx.executeSql("CREATE INDEX Person.id ON Person (id) UNIQUE");
 
     noTx.close();
@@ -58,7 +59,8 @@ public class OrientGraphTxTest extends OrientGraphBaseTest {
         "sql",
         "CREATE CLASS TestSequence EXTENDS V;\n"
             + " CREATE SEQUENCE TestSequenceIdSequence TYPE CACHED;\n"
-            + "CREATE PROPERTY TestSequence.mm LONG (MANDATORY TRUE, default \"sequence('TestSequenceIdSequence').next()\");\n");
+            + "CREATE PROPERTY TestSequence.mm LONG (MANDATORY TRUE, default"
+            + " \"sequence('TestSequenceIdSequence').next()\");\n");
 
     OrientGraph graph = null;
     final int recCount = 50;

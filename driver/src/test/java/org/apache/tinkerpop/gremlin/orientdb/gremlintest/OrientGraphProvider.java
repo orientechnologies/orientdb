@@ -113,7 +113,8 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     if (config.getString("name").equals("readGraph"))
       // FIXME eventually ne need to get ride of this
       assumeFalse(
-          "there is some technical limitation on orientDB that makes tests enter in an infinite loop when reading and writing to orientDB",
+          "there is some technical limitation on orientDB that makes tests enter in an infinite"
+              + " loop when reading and writing to orientDB",
           true);
 
     return super.openTestGraph(config);

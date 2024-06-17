@@ -117,7 +117,8 @@ public class OrientGraphTest {
     try (Graph graph = graphFactory.getTx()) {
       Vertex vertex = graph.vertices(id).next();
       assertEquals(
-          "The property value should have been changed since the graph was used in noTx mode and all actions are atomic.",
+          "The property value should have been changed since the graph was used in noTx mode and"
+              + " all actions are atomic.",
           "changed",
           vertex.value("test"));
     }

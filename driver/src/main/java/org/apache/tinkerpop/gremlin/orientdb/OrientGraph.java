@@ -525,7 +525,8 @@ public final class OrientGraph implements OGraph {
     if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED) currentDocument.load();
     if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null)
       throw new IllegalArgumentException(
-          "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
+          "Cannot determine the graph element type because the document class is null. Probably"
+              + " this is a projection, use the EXPAND() function");
     return currentDocument;
   }
 

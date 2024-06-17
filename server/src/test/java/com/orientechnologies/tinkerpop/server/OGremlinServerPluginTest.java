@@ -75,8 +75,9 @@ public class OGremlinServerPluginTest extends AbstractRemoteTest {
     } catch (ExecutionException e) {
       Assert.assertTrue(e.getCause() instanceof ResponseException);
       Assert.assertEquals(
-          "User 'reader' does not have permission to execute the operation 'Create' against the resource: ResourceGeneric [name=SCHEMA, legacyName=database.schema].null"
-              + "\tDB name=\"shouldUseReaderAndGiveExceptionOnWrite\"",
+          "User 'reader' does not have permission to execute the operation 'Create' against the"
+              + " resource: ResourceGeneric [name=SCHEMA, legacyName=database.schema].null\tDB"
+              + " name=\"shouldUseReaderAndGiveExceptionOnWrite\"",
           e.getCause().getMessage());
     } finally {
       cluster.close();

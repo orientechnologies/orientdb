@@ -73,8 +73,7 @@ public class OrientGraphMatchStrategyTest {
       Assert.assertEquals(0, countStep.findIndex().size());
 
       admin =
-          traversal
-              .V()
+          traversal.V()
               .match(__.as("a").hasLabel("Person").has("name", "Foo").out("Friends").as("b"))
               .asAdmin();
 
@@ -116,8 +115,7 @@ public class OrientGraphMatchStrategyTest {
       Assert.assertEquals(1, admin.size());
 
       admin =
-          traversal
-              .V()
+          traversal.V()
               .match(__.as("a").hasLabel("Person").has("name", "Foo0").in("Friends").as("b"))
               .toList();
 
