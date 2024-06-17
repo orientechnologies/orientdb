@@ -926,6 +926,8 @@ public class OSelectExecutionPlanner {
       while (iterator.hasNext()) {
         OLetItem item = iterator.next();
         if (item.getExpression() != null
+            && item.getExpression().getMathExpression() != null
+            && !item.getExpression().getMathExpression().isParentesis()
             && (item.getExpression().isEarlyCalculated(ctx)
                 || isUnionAllOfQueries(info, item.getVarName(), item.getExpression()))) {
           iterator.remove();
