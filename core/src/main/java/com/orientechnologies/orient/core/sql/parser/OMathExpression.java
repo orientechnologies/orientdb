@@ -42,6 +42,10 @@ public class OMathExpression extends SimpleNode {
     return false;
   }
 
+  public boolean isParentesis() {
+    return false;
+  }
+
   public enum Operator {
     STAR(10) {
       @Override

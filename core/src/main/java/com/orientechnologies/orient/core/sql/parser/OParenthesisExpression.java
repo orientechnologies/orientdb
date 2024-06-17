@@ -32,6 +32,10 @@ public class OParenthesisExpression extends OMathExpression {
     this.expression = exp;
   }
 
+  public boolean isParentesis() {
+    return true;
+  }
+
   @Override
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (expression != null) {
