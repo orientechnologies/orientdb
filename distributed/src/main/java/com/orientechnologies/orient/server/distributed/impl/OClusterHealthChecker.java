@@ -101,9 +101,10 @@ public class OClusterHealthChecker implements Runnable {
     OrientDBDistributed context = (OrientDBDistributed) manager.getServerInstance().getDatabases();
     for (String databaseName : manager.getDatabases()) {
       final ODistributedConfiguration cfg = context.getDistributedConfiguration(databaseName);
-
+      if (cfg == null) {
+        continue;
+      }
       final Set<String> confServers = cfg.getServers(null);
-
       for (String s : manager.getActiveServers()) {
         if (manager.isNodeAvailable(s, databaseName) && !confServers.contains(s)) {
           final Set<String> nodes = manager.getAvailableNodeNames(databaseName);
