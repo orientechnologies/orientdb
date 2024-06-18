@@ -5,9 +5,9 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ develop, 3.1.x, 3.0.x ]
+    branches: [ develop, 3.2.x]
   pull_request:
-    branches: [ develop, 3.1.x, 3.0.x ]
+    branches: [ develop, 3.2.x ]
   workflow_dispatch:
   schedule:
     - cron: 0 5 * * 1
