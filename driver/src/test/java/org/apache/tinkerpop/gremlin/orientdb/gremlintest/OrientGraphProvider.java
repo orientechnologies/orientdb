@@ -16,7 +16,6 @@ import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.FeatureSupportTest.GraphFunctionalityTest;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.GraphTest;
-import org.apache.tinkerpop.gremlin.structure.SerializationTest;
 import org.apache.tinkerpop.gremlin.structure.io.IoCustomTest;
 import org.junit.AssumptionViolatedException;
 
@@ -45,14 +44,7 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     IGNORED_TESTS.put(
         GraphFunctionalityTest.class, asList("shouldSupportTransactionsIfAGraphConstructsATx"));
 
-    // This tests become broken after gremlin 3.2.4
-    IGNORED_TESTS.put(
-        SerializationTest.GraphSONV3d0Test.class, asList("shouldSerializeTraversalMetrics"));
-
     // This tests become broken after gremlin 3.2.0
-    IGNORED_TESTS.put(SerializationTest.GryoV1d0Test.class, asList("shouldSerializeTree"));
-    IGNORED_TESTS.put(SerializationTest.GryoV3d0Test.class, asList("shouldSerializeTree"));
-
     IGNORED_TESTS.put(IoCustomTest.class, asList("shouldSerializeTree"));
   }
 
