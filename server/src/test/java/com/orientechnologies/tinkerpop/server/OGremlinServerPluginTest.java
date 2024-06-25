@@ -13,11 +13,11 @@ import org.apache.tinkerpop.gremlin.driver.Client;
 import org.apache.tinkerpop.gremlin.driver.Cluster;
 import org.apache.tinkerpop.gremlin.driver.MessageSerializer;
 import org.apache.tinkerpop.gremlin.driver.exception.ResponseException;
-import org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV3d0;
+import org.apache.tinkerpop.gremlin.driver.ser.GraphSONMessageSerializerV3d0;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.io.gryo.GryoMapper;
+import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,8 +34,8 @@ public class OGremlinServerPluginTest extends AbstractRemoteTest {
   public void shouldAuthenticateWithPlainText() throws Exception {
 
     MessageSerializer serializer =
-        new GryoMessageSerializerV3d0(
-            GryoMapper.build().addRegistry(OrientIoRegistry.getInstance()));
+        new GraphSONMessageSerializerV3d0(
+            GraphSONMapper.build().addRegistry(OrientIoRegistry.getInstance()));
     final Cluster cluster =
         Cluster.build().credentials("root", "root").serializer(serializer).create();
     final Client client = cluster.connect();
@@ -87,8 +87,8 @@ public class OGremlinServerPluginTest extends AbstractRemoteTest {
   @Test
   public void shouldCreateAVertexPerson() throws Exception {
     MessageSerializer serializer =
-        new GryoMessageSerializerV3d0(
-            GryoMapper.build().addRegistry(OrientIoRegistry.getInstance()));
+        new GraphSONMessageSerializerV3d0(
+            GraphSONMapper.build().addRegistry(OrientIoRegistry.getInstance()));
     final Cluster cluster =
         Cluster.build().credentials("root", "root").serializer(serializer).create();
     final Client client = cluster.connect();
