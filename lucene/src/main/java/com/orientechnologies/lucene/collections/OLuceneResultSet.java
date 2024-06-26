@@ -209,10 +209,8 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
       final boolean hasNext = index < (totalHits - deletedMatchCount);
       if (!hasNext && !closed) {
         final IndexSearcher searcher = queryContext.getSearcher();
-        if (searcher.getIndexReader().getRefCount() > 1) {
-          engine.release(searcher);
-          closed = true;
-        }
+        engine.release(searcher);
+        closed = true;
       }
       return hasNext;
     }

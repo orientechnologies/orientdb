@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -104,9 +105,15 @@ public class OLuceneQueryContext {
   }
 
   private MultiReader multiReader(final OLuceneTxChanges luceneTxChanges) {
+    final IndexReader primaryReader = searcher.getIndexReader();
+    final IndexReader txReader = luceneTxChanges.searcher().getIndexReader();
     try {
-      return new MultiReader(
-          searcher.getIndexReader(), luceneTxChanges.searcher().getIndexReader());
+      // Transfer ownership to the MultiReader so the index searcher can be releases transparently.
+      // Without this, the primary IndexReader will leak a refcount each time it is wrapped.
+      MultiReader multiReader = new MultiReader(new IndexReader[] {primaryReader, txReader}, false);
+      primaryReader.decRef();
+      txReader.decRef();
+      return multiReader;
     } catch (final IOException e) {
       throw OException.wrapException(
           new OLuceneIndexException("unable to create reader on changes"), e);
