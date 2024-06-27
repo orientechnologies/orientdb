@@ -22,6 +22,7 @@ import com.orientechnologies.agent.services.backup.OBackupConfig;
 import com.orientechnologies.agent.services.backup.OBackupListener;
 import com.orientechnologies.agent.services.backup.log.*;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,6 +36,7 @@ import java.util.Date;
 
 /** Created by Enrico Risa on 25/03/16. */
 public class OBackupStrategyMixBackup extends OBackupStrategy {
+  private static final OLogger log = OLogManager.instance().logger(OBackupStrategyMixBackup.class);
   // Make sure not to displace / skip a full backup (e.g. in case an incremental backup took
   // longer). Hence (1) store last (and potentially skipped) full backup.
   private Date skippedFull = null;
@@ -60,7 +62,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
     try {
       last = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
+      log.error("Error " + e.getMessage(), e);
     }
     try {
       if (last != null
@@ -69,7 +71,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
         return last.getPath();
       }
     } catch (IOException e) {
-      OLogManager.instance().warn(this, "Error checking backup compatibility", e);
+      log.warn("Error checking backup compatibility", e);
       return last.getPath();
     }
 
@@ -84,7 +86,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
         begin = last.getUnitId();
       }
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
+      log.error("Error " + e.getMessage(), e);
     }
     String basePath = cfg.field(OBackupConfig.DIRECTORY);
     String dbName = cfg.field(OBackupConfig.DBNAME);
@@ -122,25 +124,23 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
             // (2) when deciding on incremental check for skipped full backup that actually came
             // before the next incremental.
             if (skippedFull != null && skippedFull.before(nextIncremental)) {
-              OLogManager.instance()
-                  .info(this, "Found skipped full backup (i.e. before incremental)");
+              log.info("Found skipped full backup (i.e. before incremental)");
               isIncremental = false;
               skippedFull = null;
             } else {
               // (3) else take incremental, but remember skipped full backup.
-              OLogManager.instance()
-                  .debug(this, "Found incremental backup before full (i.e. remember skipped full)");
+              log.debug("Found incremental backup before full (i.e. remember skipped full)");
               isIncremental = true;
               skippedFull = nextFull;
             }
           } else {
             // (4) if full exercised, forget skipped full backup.
-            OLogManager.instance().debug(this, "Found full backup before incremental");
+            log.debug("Found full backup before incremental");
             isIncremental = false;
             skippedFull = null;
           }
         } catch (final IOException e) {
-          OLogManager.instance().error(this, "Error " + e.getMessage(), e);
+          log.error("Error " + e.getMessage(), e);
         }
         final Date nextExecution = nextIncremental.before(nextFull) ? nextIncremental : nextFull;
         final OBackupScheduledLog log =
@@ -151,7 +151,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
         listener.onEvent(cfg, log);
         return nextExecution;
       } catch (final ParseException e) {
-        OLogManager.instance().error(this, "Parse exception: " + e.getMessage(), e);
+        log.error("Parse exception: " + e.getMessage(), e);
         return null;
       }
     } else {

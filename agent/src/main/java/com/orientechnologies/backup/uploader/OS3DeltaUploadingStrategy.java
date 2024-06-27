@@ -24,9 +24,15 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.orientechnologies.agent.services.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -47,6 +53,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @param
  */
 public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OS3DeltaUploadingStrategy.class);
 
   private final String suffix = "/";
   private String bucketName;
@@ -80,36 +88,29 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
       success =
           executeS3Upload(s3client, bucketName, sourceBackupDirectory, destinationDirectoryPath);
     } catch (AmazonServiceException ase) {
-      OLogManager.instance()
-          .info(
-              this,
-              "Caught an AmazonServiceException, which "
-                  + "means your request made it "
-                  + "to Amazon S3, but was rejected with an error response"
-                  + " for some reason.");
-      OLogManager.instance()
-          .info(
-              this,
-              "Error Message:    %s\nHTTP Status Code: %s\nAWS Error Code:   %s\n"
-                  + "Error Type:       %s\nRequest ID:       %s",
-              ase.getMessage(),
-              ase.getStatusCode(),
-              ase.getErrorCode(),
-              ase.getErrorType(),
-              ase.getRequestId());
+      logger.info(
+          "Caught an AmazonServiceException, which "
+              + "means your request made it "
+              + "to Amazon S3, but was rejected with an error response"
+              + " for some reason.");
+      logger.info(
+          "Error Message:    %s\nHTTP Status Code: %s\nAWS Error Code:   %s\n"
+              + "Error Type:       %s\nRequest ID:       %s",
+          ase.getMessage(),
+          ase.getStatusCode(),
+          ase.getErrorCode(),
+          ase.getErrorType(),
+          ase.getRequestId());
     } catch (AmazonClientException ace) {
-      OLogManager.instance()
-          .info(
-              this,
-              "Caught an AmazonClientException, which "
-                  + "means the client encountered "
-                  + "an internal error while trying to "
-                  + "communicate with S3, "
-                  + "such as not being able to access the network.");
-      OLogManager.instance().info(this, "Error Message: %s", ace.getMessage());
+      logger.info(
+          "Caught an AmazonClientException, which "
+              + "means the client encountered "
+              + "an internal error while trying to "
+              + "communicate with S3, "
+              + "such as not being able to access the network.");
+      logger.info("Error Message: %s", ace.getMessage());
     } catch (Exception e) {
-      OLogManager.instance()
-          .info(this, "Caught an exception client side. Error Message: %s", e.getMessage());
+      logger.info("Caught an exception client side. Error Message: %s", e.getMessage());
     }
 
     return success;
@@ -280,7 +281,7 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
       }
       return tempDir.toString();
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
+      logger.error("Error " + e.getMessage(), e);
     }
 
     return null;

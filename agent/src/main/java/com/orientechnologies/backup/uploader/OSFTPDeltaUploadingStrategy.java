@@ -22,6 +22,7 @@ import com.jcraft.jsch.*;
 import com.orientechnologies.agent.Utils;
 import com.orientechnologies.agent.services.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,6 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * backup directory and the remote one is performed.
  */
 public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OSFTPDeltaUploadingStrategy.class);
 
   private String host;
   private Integer port;
@@ -132,14 +135,14 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
       success = true;
 
     } catch (JSchException e) {
-      OLogManager.instance().info(this, "Caught a JSchException.");
-      OLogManager.instance().info(this, "Error Message:    %s", e.getMessage());
+      logger.info("Caught a JSchException.");
+      logger.info("Error Message:    %s", e.getMessage());
     } catch (SftpException e) {
-      OLogManager.instance().info(this, "Caught a SftpException.");
-      OLogManager.instance().info(this, "Error Message:    %s", e.getMessage());
+      logger.info("Caught a SftpException.");
+      logger.info("Error Message:    %s", e.getMessage());
     } catch (Exception e) {
-      OLogManager.instance().info(this, "Caught a Exception.");
-      OLogManager.instance().info(this, "Error Message:    %s", e.getMessage());
+      logger.info("Caught a Exception.");
+      logger.info("Error Message:    %s", e.getMessage());
     } finally {
       if (channel != null) {
         channel.disconnect();
@@ -205,7 +208,7 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error", e);
+      logger.error("Error", e);
     }
 
     long end = System.currentTimeMillis();
@@ -268,7 +271,7 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
 
       return tempDir.toString();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
+      logger.error("Error " + e.getMessage(), e);
     }
     return null;
   }

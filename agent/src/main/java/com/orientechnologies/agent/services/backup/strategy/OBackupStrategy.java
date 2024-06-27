@@ -25,6 +25,7 @@ import com.orientechnologies.agent.services.backup.log.*;
 import com.orientechnologies.backup.uploader.OLocalBackupUploader;
 import com.orientechnologies.backup.uploader.OUploadMetadata;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -40,7 +41,7 @@ import java.util.function.Consumer;
 
 /** Created by Enrico Risa on 25/03/16. */
 public abstract class OBackupStrategy {
-
+  private static final OLogger log = OLogManager.instance().logger(OBackupStrategy.class);
   protected ODocument cfg;
   protected OBackupLogger logger;
   protected Optional<OLocalBackupUploader> uploader;
@@ -156,7 +157,7 @@ public abstract class OBackupStrategy {
       new Thread(() -> startRestoreBackup(logger.getServer(), finished, databaseName, listener))
           .start();
     } catch (final IOException e) {
-      OLogManager.instance().error(this, "Error finding backup log for " + getUUID(), e);
+      log.error("Error finding backup log for " + getUUID(), e);
     }
   }
 
@@ -329,16 +330,12 @@ public abstract class OBackupStrategy {
         final OBackupLog lastBackup = logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
         if (lastBackup != null && lastBackup.getTxId() == lastSchedule.getTxId()) {
           lastSchedule = null;
-          OLogManager.instance()
-              .debug(
-                  this,
-                  "Last backup not null, but set to null due to equal TX ids: "
-                      + lastBackup.getMode());
+          log.debug(
+              "Last backup not null, but set to null due to equal TX ids: " + lastBackup.getMode());
         }
       }
     } catch (final Exception e) {
-      OLogManager.instance()
-          .error(this, "Error finding last unfired schedule for UUID : " + getUUID(), e);
+      log.error("Error finding last unfired schedule for UUID : " + getUUID(), e);
     }
     return (OBackupScheduledLog) lastSchedule;
   }
@@ -347,7 +344,7 @@ public abstract class OBackupStrategy {
     try {
       logger.deleteByUUIDAndUnitIdAndTx(getUUID(), unitId, tx);
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error deleting backups for UUID : " + getUUID(), e);
+      log.error("Error deleting backups for UUID : " + getUUID(), e);
     }
   }
 
@@ -367,7 +364,7 @@ public abstract class OBackupStrategy {
     try {
       logger.deleteByUUIDAndTimestamp(getUUID(), time);
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error deleting backups for UUID : " + getUUID(), e);
+      log.error("Error deleting backups for UUID : " + getUUID(), e);
     }
   }
 
@@ -405,7 +402,7 @@ public abstract class OBackupStrategy {
       }
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error updating lob backups for UUID : " + getUUID(), e);
+      log.error("Error updating lob backups for UUID : " + getUUID(), e);
     }
   }
 }

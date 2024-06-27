@@ -1,9 +1,11 @@
 package com.orientechnologies.agent;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.Closeable;
 
 public class Utils {
+  private static final OLogger logger = OLogManager.instance().logger(Utils.class);
 
   public static void safeClose(Object owner, Closeable... streams) {
     if (streams != null) {
@@ -12,7 +14,7 @@ public class Utils {
           try {
             closeable.close();
           } catch (Exception e) {
-            OLogManager.instance().info(owner, "Failed to close output stream " + closeable);
+            logger.info("Failed to close output stream " + closeable);
           }
         }
       }

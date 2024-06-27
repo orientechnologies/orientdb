@@ -20,6 +20,7 @@
 package com.orientechnologies.agent.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,11 +36,13 @@ import com.orientechnologies.orient.server.security.authenticator.OSystemUserAut
  * @author S. Colin Leister
  */
 public class OSystemSymmetricKeyAuth extends OSystemUserAuthenticator {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OSystemSymmetricKeyAuth.class);
 
   // OSecurityComponent
   // Called once the Server is running.
   public void active() {
-    OLogManager.instance().debug(this, "OSystemSymmetricKeyAuth is active");
+    logger.debug("OSystemSymmetricKeyAuth is active");
   }
 
   // OSecurityAuthenticator
@@ -73,7 +76,7 @@ public class OSystemSymmetricKeyAuth extends OSystemUserAuthenticator {
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "authenticate()", ex);
+      logger.error("authenticate()", ex);
     }
 
     return principal;

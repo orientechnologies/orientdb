@@ -20,9 +20,15 @@ package com.orientechnologies.orient.incrementalbackup;
 
 import static org.junit.Assert.assertTrue;
 
-import com.jcraft.jsch.*;
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 import com.orientechnologies.backup.uploader.OLocalBackupUploader;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import java.io.File;
@@ -39,6 +45,7 @@ import java.util.Vector;
  * files in local folder and the S3 bucket
  */
 public class SFTPUploaderTest extends AbstractUploaderTest {
+  private static final OLogger logger = OLogManager.instance().logger(SFTPUploaderTest.class);
 
   private final String destinationDirectoryPath = "/orientdb-backups/";
   private final String host = "206.142.241.244";
@@ -187,14 +194,14 @@ public class SFTPUploaderTest extends AbstractUploaderTest {
       }
 
     } catch (JSchException e) {
-      OLogManager.instance().info(this, "Caught a JSchException.");
-      OLogManager.instance().info(this, "Error Message:    %s", e.getMessage());
+      logger.info("Caught a JSchException.");
+      logger.info("Error Message:    %s", e.getMessage());
     } catch (SftpException e) {
-      OLogManager.instance().info(this, "Caught a SftpException.");
-      OLogManager.instance().info(this, "Error Message:    %s", e.getMessage());
+      logger.info("Caught a SftpException.");
+      logger.info("Error Message:    %s", e.getMessage());
     } catch (Exception e) {
-      OLogManager.instance().info(this, "Caught a Exception.");
-      OLogManager.instance().info(this, "Error Message:    %s", e.getMessage());
+      logger.info("Caught a Exception.");
+      logger.info("Error Message:    %s", e.getMessage());
     } finally {
       if (channel != null) {
         channel.disconnect();
@@ -241,11 +248,11 @@ public class SFTPUploaderTest extends AbstractUploaderTest {
       success = true;
 
     } catch (JSchException e) {
-      OLogManager.instance().error(this, "", e);
+      logger.error("", e);
     } catch (SftpException e) {
-      OLogManager.instance().error(this, "", e);
+      logger.error("", e);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "", e);
+      logger.error("", e);
     } finally {
       if (channel != null) {
         channel.disconnect();

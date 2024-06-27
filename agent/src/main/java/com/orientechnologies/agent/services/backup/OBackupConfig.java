@@ -26,6 +26,7 @@ import com.orientechnologies.agent.services.backup.strategy.OBackupStrategyMixBa
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -38,6 +39,7 @@ import java.util.*;
 
 /** Created by Enrico Risa on 22/03/16. */
 public class OBackupConfig {
+  private static final OLogger logger = OLogManager.instance().logger(OBackupConfig.class);
 
   public static final String BACKUPS = "backups";
   private ODocument configuration;
@@ -80,15 +82,14 @@ public class OBackupConfig {
     } else {
       try {
         if (!f.getParentFile().mkdirs()) {
-          OLogManager.instance()
-              .warn(this, "Error creating directories '%s'", f.getParentFile().getName());
+          logger.warn("Error creating directories '%s'", f.getParentFile().getName());
         }
         if (!f.createNewFile()) {
-          OLogManager.instance().warn(this, "Error creating file '%s'", f.getName());
+          logger.warn("Error creating file '%s'", f.getName());
         }
         OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
 
-        OLogManager.instance().info(this, "Backups plugin: created configuration to file '%s'", f);
+        logger.info("Backups plugin: created configuration to file '%s'", f);
       } catch (IOException e) {
         throw OException.wrapException(
             new OConfigurationException(
@@ -218,7 +219,7 @@ public class OBackupConfig {
     try {
       final File f = new File(filePath);
       OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
-      OLogManager.instance().info(this, "Write backup config to " + filePath);
+      logger.info("Write backup config to " + filePath);
     } catch (final IOException e) {
       throw OException.wrapException(
           new OConfigurationException(

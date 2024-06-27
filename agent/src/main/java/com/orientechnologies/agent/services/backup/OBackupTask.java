@@ -22,6 +22,7 @@ import com.orientechnologies.agent.services.backup.log.OBackupLog;
 import com.orientechnologies.agent.services.backup.log.OBackupLogType;
 import com.orientechnologies.agent.services.backup.strategy.OBackupStrategy;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,6 +32,7 @@ import java.util.TimerTask;
 
 /** Created by Enrico Risa on 25/03/16. */
 public class OBackupTask implements OBackupListener {
+  private static final OLogger logger = OLogManager.instance().logger(OBackupTask.class);
   private OBackupStrategy strategy;
   private TimerTask task;
   private OBackupListener listener;
@@ -58,35 +60,31 @@ public class OBackupTask implements OBackupListener {
                                 strategy.doBackup(OBackupTask.this);
                                 tickEnd(start);
                               } catch (final IOException e) {
-                                OLogManager.instance().error(this, "Error " + e.getMessage(), e);
+                                logger.error("Error " + e.getMessage(), e);
                               }
                             });
                   },
                   nextExecution,
                   0);
-      OLogManager.instance()
-          .info(
-              this,
-              "Scheduled ["
-                  + strategy.getMode()
-                  + "] task : "
-                  + strategy.getUUID()
-                  + ". Next execution will be "
-                  + nextExecution);
+      logger.info(
+          "Scheduled ["
+              + strategy.getMode()
+              + "] task : "
+              + strategy.getUUID()
+              + ". Next execution will be "
+              + nextExecution);
     }
     strategy.retainLogs();
   }
 
   private long tickStart() {
-    OLogManager.instance().info(this, "Backup started " + strategy.getMode());
+    logger.info("Backup started " + strategy.getMode());
     return System.currentTimeMillis();
   }
 
   private void tickEnd(long start) {
-    OLogManager.instance()
-        .info(
-            this,
-            "Backup " + strategy.getMode() + " in (ms):" + (System.currentTimeMillis() - start));
+    logger.info(
+        "Backup " + strategy.getMode() + " in (ms):" + (System.currentTimeMillis() - start));
   }
 
   public OBackupStrategy getStrategy() {
@@ -124,8 +122,7 @@ public class OBackupTask implements OBackupListener {
       try {
         return listener.onEvent(cfg, log);
       } catch (Exception e) {
-        OLogManager.instance()
-            .info(this, "Error invoking listener on event  [" + log.getType() + "] ");
+        logger.info("Error invoking listener on event  [" + log.getType() + "] ");
       }
     }
     return true;
@@ -134,8 +131,7 @@ public class OBackupTask implements OBackupListener {
   public void stop() {
     if (task != null) {
       task.cancel();
-      OLogManager.instance()
-          .info(this, "Cancelled schedule backup on database  [" + strategy.getDbName() + "] ");
+      logger.info("Cancelled schedule backup on database  [" + strategy.getDbName() + "] ");
     }
   }
 

@@ -19,6 +19,7 @@
 package com.orientechnologies.agent.profiler;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.profiler.OProfilerListener;
@@ -36,8 +37,16 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -56,6 +65,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class OEnterpriseProfiler extends OAbstractProfiler
     implements ODistributedLifecycleListener {
+  private static final OLogger logger = OLogManager.instance().logger(OEnterpriseProfiler.class);
   protected final Timer timer = new Timer(true);
   protected static final int BUFFER_SIZE = 2048;
   public static final int KEEP_ALIVE = 60 * 1000;
@@ -129,9 +139,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler
   public boolean startRecording() {
     if (!super.startRecording()) return false;
 
-    OLogManager.instance()
-        .info(
-            this, "Profiler is recording metrics with configuration: %d", elapsedToCreateSnapshot);
+    logger.info("Profiler is recording metrics with configuration: %d", elapsedToCreateSnapshot);
 
     if (elapsedToCreateSnapshot > 0) {
       lastSnapshot.set(new OProfilerData());
@@ -154,7 +162,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler
   public boolean stopRecording() {
     if (!super.stopRecording()) return false;
 
-    OLogManager.instance().config(this, "Profiler has stopped recording metrics");
+    logger.info("Profiler has stopped recording metrics");
 
     lastSnapshot.set(null);
     realTime.clear();
@@ -500,7 +508,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler
                   "\n"
                       + "*******************************************************************************************************************************************");
 
-              OLogManager.instance().info(null, output.toString());
+              logger.info(null, output.toString());
             }
           },
           ms,

@@ -20,6 +20,7 @@
 package com.orientechnologies.agent.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
@@ -39,13 +40,16 @@ import java.util.Map;
  * @author S. Colin Leister
  */
 public class OSecuritySymmetricKeyAuth extends ODefaultPasswordAuthenticator {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OSecuritySymmetricKeyAuth.class);
+
   // OSecurityComponent
   // Called once the Server is running.
   private Map<String, OSecuritySymmetricKeyUser> symmetricKeys = new HashMap<>();
 
   @Override
   public void active() {
-    OLogManager.instance().debug(this, "OSecuritySymmetricKeyAuth is active");
+    logger.debug("OSecuritySymmetricKeyAuth is active");
   }
 
   // Derived implementations can override this method to provide new server user implementations.
@@ -61,7 +65,7 @@ public class OSecuritySymmetricKeyAuth extends ODefaultPasswordAuthenticator {
           new OImmutableUser(
               user.getName(), user.getPassword(), OSecurityUser.SECURITY_USER_TYPE, role);
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "createServerUser()", ex);
+      logger.error("createServerUser()", ex);
     }
 
     return userCfg;
@@ -86,7 +90,7 @@ public class OSecuritySymmetricKeyAuth extends ODefaultPasswordAuthenticator {
           return serverUser;
         }
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "authenticate()", ex);
+        logger.error("authenticate()", ex);
       }
     }
 

@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.closabledictionary.OClosableLinke
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -75,6 +76,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OEnterpriseLocalPaginatedStorage.class);
 
   private static final String INCREMENTAL_BACKUP_LOCK = "backup.ibl";
 
@@ -95,7 +98,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       long doubleWriteLogMaxSize,
       OrientDBInternal context) {
     super(name, filePath, id, readCache, files, walMaxSize, doubleWriteLogMaxSize, context);
-    OLogManager.instance().info(this, "Enterprise storage installed correctly.");
+    logger.info("Enterprise storage installed correctly.");
   }
 
   @Override
@@ -123,12 +126,10 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           }
         }
       } catch (final OverlappingFileLockException e) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Another incremental backup process is in progress, please wait till it will be"
-                    + " finished",
-                null);
+        logger.error(
+            "Another incremental backup process is in progress, please wait till it will be"
+                + " finished",
+            null);
       } catch (final IOException e) {
         throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
       }
@@ -248,9 +249,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             rndIBUFile.close();
 
             if (!ibuFile.delete()) {
-              OLogManager.instance()
-                  .error(
-                      this, ibuFile.getAbsolutePath() + " is closed but can not be deleted", null);
+              logger.error(ibuFile.getAbsolutePath() + " is closed but can not be deleted", null);
             }
 
             throw e;
@@ -262,17 +261,15 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           try {
             if (rndIBUFile != null) rndIBUFile.close();
           } catch (IOException e) {
-            OLogManager.instance().error(this, "Can not close %s file", e, fileName);
+            logger.error("Can not close %s file", e, fileName);
           }
         }
       }
     } catch (final OverlappingFileLockException e) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Another incremental backup process is in progress, please wait till it will be"
-                  + " finished",
-              null);
+      logger.error(
+          "Another incremental backup process is in progress, please wait till it will be"
+              + " finished",
+          null);
     } catch (final IOException e) {
       throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
     }
@@ -407,7 +404,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       try {
         rndIBUFile.close();
       } catch (IOException e) {
-        OLogManager.instance().error(this, "Error during read of backup file", e);
+        logger.error("Error during read of backup file", e);
       }
     }
   }
@@ -521,16 +518,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               try {
                 rndIBUFile.close();
               } catch (IOException e) {
-                OLogManager.instance().warn(this, "Failed to close resource " + rndIBUFile);
+                logger.warn("Failed to close resource " + rndIBUFile);
               }
             }
           } else {
-            OLogManager.instance()
-                .warn(
-                    this,
-                    "Skipped file '"
-                        + file
-                        + "' is not a backup of the same database of previous backups");
+            logger.warn(
+                "Skipped file '"
+                    + file
+                    + "' is not a backup of the same database of previous backups");
           }
 
           postProcessIncrementalRestore(contextConfiguration);

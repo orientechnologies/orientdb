@@ -28,6 +28,7 @@ import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
 import com.orientechnologies.agent.services.security.OSecurityService;
 import com.orientechnologies.agent.services.studio.StudioService;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
@@ -68,6 +69,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract
         OPluginLifecycleListener,
         OServerLifecycleListener,
         OEnterpriseEndpoint {
+  private static final OLogger logger = OLogManager.instance().logger(OEnterpriseAgent.class);
+
   private static final String PLUGIN_NAME = "enterprise-agent";
   private static final String PATH_TO_EE_AGENT_PROPS = "/com/orientechnologies/agent.properties";
   private static final String EE_VERSION = "version";
@@ -122,9 +125,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
         Orient.instance().addDbLifecycleListener(this);
       }
     } catch (final Exception e) {
-      OLogManager.instance()
-          .warn(
-              this, "Error loading agent.properties file. EE will be disabled: %s", e.getMessage());
+      logger.warn("Error loading agent.properties file. EE will be disabled: %s", e.getMessage());
     }
   }
 
@@ -194,17 +195,11 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   private boolean checkLicense() {
-    OLogManager.instance().info(this, "");
-    OLogManager.instance()
-        .info(
-            this, "*****************************************************************************");
-    OLogManager.instance()
-        .info(
-            this, "*                     ORIENTDB  -  ENTERPRISE EDITION                       *");
-    OLogManager.instance()
-        .info(
-            this, "*****************************************************************************");
-    OLogManager.instance().info(this, "");
+    logger.info("");
+    logger.info("*****************************************************************************");
+    logger.info("*                     ORIENTDB  -  ENTERPRISE EDITION                       *");
+    logger.info("*****************************************************************************");
+    logger.info("");
     Orient.instance()
         .getProfiler()
         .registerHookValue(
@@ -234,7 +229,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       try {
         inputStream.close();
       } catch (IOException e) {
-        OLogManager.instance().warn(this, "Failed to close input stream " + inputStream);
+        logger.warn("Failed to close input stream " + inputStream);
       }
     }
   }
@@ -259,13 +254,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       return true;
     }
 
-    OLogManager.instance()
-        .warn(
-            this,
-            "The current agent version %s is not compatible with OrientDB %s. Please use the same"
-                + " version.",
-            enterpriseVersion,
-            OConstants.getVersion());
+    logger.warn(
+        "The current agent version %s is not compatible with OrientDB %s. Please use the same"
+            + " version.",
+        enterpriseVersion, OConstants.getVersion());
     return false;
   }
 

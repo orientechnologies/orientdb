@@ -29,6 +29,7 @@ import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.orientechnologies.backup.uploader.OLocalBackupUploader;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import java.io.File;
@@ -44,6 +45,7 @@ import java.util.List;
  * folder and the S3 bucket
  */
 public class S3UploaderTest extends AbstractUploaderTest {
+  private static final OLogger logger = OLogManager.instance().logger(S3UploaderTest.class);
 
   private final String destinationDirectoryPath = "/orientdb-backups/";
   private final String bucketName = "orientdb-databases-backup";
@@ -176,33 +178,29 @@ public class S3UploaderTest extends AbstractUploaderTest {
 
     } catch (AmazonServiceException ase) {
       consistent = false;
-      OLogManager.instance()
-          .info(
-              this,
-              "Caught an AmazonServiceException, which "
-                  + "means your request made it "
-                  + "to Amazon S3, but was rejected with an error response"
-                  + " for some reason.");
-      OLogManager.instance().info(this, "Error Message:    %s", ase.getMessage());
-      OLogManager.instance().info(this, "HTTP Status Code: %s", ase.getStatusCode());
-      OLogManager.instance().info(this, "AWS Error Code:   %s", ase.getErrorCode());
-      OLogManager.instance().info(this, "Error Type:       %s", ase.getErrorType());
-      OLogManager.instance().info(this, "Request ID:       %s", ase.getRequestId());
+      logger.info(
+          "Caught an AmazonServiceException, which "
+              + "means your request made it "
+              + "to Amazon S3, but was rejected with an error response"
+              + " for some reason.");
+      logger.info("Error Message:    %s", ase.getMessage());
+      logger.info("HTTP Status Code: %s", ase.getStatusCode());
+      logger.info("AWS Error Code:   %s", ase.getErrorCode());
+      logger.info("Error Type:       %s", ase.getErrorType());
+      logger.info("Request ID:       %s", ase.getRequestId());
     } catch (AmazonClientException ace) {
       consistent = false;
-      OLogManager.instance()
-          .info(
-              this,
-              "Caught an AmazonClientException, which "
-                  + "means the client encountered "
-                  + "an internal error while trying to "
-                  + "communicate with S3, "
-                  + "such as not being able to access the network.");
-      OLogManager.instance().info(this, "Error Message: %s", ace.getMessage());
+      logger.info(
+          "Caught an AmazonClientException, which "
+              + "means the client encountered "
+              + "an internal error while trying to "
+              + "communicate with S3, "
+              + "such as not being able to access the network.");
+      logger.info("Error Message: %s", ace.getMessage());
     } catch (Exception e) {
       consistent = false;
-      OLogManager.instance().info(this, "Caught an exception client side.");
-      OLogManager.instance().info(this, "Error Message: %s", e.getMessage());
+      logger.info("Caught an exception client side.");
+      logger.info("Error Message: %s", e.getMessage());
     }
 
     return consistent;
@@ -222,31 +220,27 @@ public class S3UploaderTest extends AbstractUploaderTest {
       success = true;
 
     } catch (AmazonServiceException ase) {
-      OLogManager.instance()
-          .info(
-              this,
-              "Caught an AmazonServiceException, which "
-                  + "means your request made it "
-                  + "to Amazon S3, but was rejected with an error response"
-                  + " for some reason.");
-      OLogManager.instance().info(this, "Error Message:    %s", ase.getMessage());
-      OLogManager.instance().info(this, "HTTP Status Code: %s", ase.getStatusCode());
-      OLogManager.instance().info(this, "AWS Error Code:   %s", ase.getErrorCode());
-      OLogManager.instance().info(this, "Error Type:       %s", ase.getErrorType());
-      OLogManager.instance().info(this, "Request ID:       %s", ase.getRequestId());
+      logger.info(
+          "Caught an AmazonServiceException, which "
+              + "means your request made it "
+              + "to Amazon S3, but was rejected with an error response"
+              + " for some reason.");
+      logger.info("Error Message:    %s", ase.getMessage());
+      logger.info("HTTP Status Code: %s", ase.getStatusCode());
+      logger.info("AWS Error Code:   %s", ase.getErrorCode());
+      logger.info("Error Type:       %s", ase.getErrorType());
+      logger.info("Request ID:       %s", ase.getRequestId());
     } catch (AmazonClientException ace) {
-      OLogManager.instance()
-          .info(
-              this,
-              "Caught an AmazonClientException, which "
-                  + "means the client encountered "
-                  + "an internal error while trying to "
-                  + "communicate with S3, "
-                  + "such as not being able to access the network.");
-      OLogManager.instance().info(this, "Error Message: %s", ace.getMessage());
+      logger.info(
+          "Caught an AmazonClientException, which "
+              + "means the client encountered "
+              + "an internal error while trying to "
+              + "communicate with S3, "
+              + "such as not being able to access the network.");
+      logger.info("Error Message: %s", ace.getMessage());
     } catch (Exception e) {
-      OLogManager.instance().info(this, "Caught an exception client side.");
-      OLogManager.instance().info(this, "Error Message: %s", e.getMessage());
+      logger.info("Caught an exception client side.");
+      logger.info("Error Message: %s", e.getMessage());
     }
 
     return success;

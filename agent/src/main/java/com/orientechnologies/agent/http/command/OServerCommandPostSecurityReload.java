@@ -19,6 +19,7 @@ package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -30,6 +31,8 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import java.io.IOException;
 
 public class OServerCommandPostSecurityReload extends OServerCommandAuthenticatedServerAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerCommandPostSecurityReload.class);
   private static final String[] NAMES = {"POST|security/reload"};
 
   private OSecuritySystem serverSecurity;
@@ -76,8 +79,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
         final String configName =
             OSystemVariableResolver.resolveSystemVariables((String) jsonParams.field("configFile"));
 
-        OLogManager.instance()
-            .info(this, "OServerCommandPostSecurityReload.execute() configName = %s", configName);
+        logger.info("OServerCommandPostSecurityReload.execute() configName = %s", configName);
 
         serverSecurity.reload(user, configName);
       } else if (jsonParams.containsField("config")) {
@@ -111,7 +113,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
   protected void writeError(
       final OHttpResponse iResponse, final String method, final String reason) {
     try {
-      OLogManager.instance().error(this, "%s %s", null, method, reason);
+      logger.error("%s %s", null, method, reason);
 
       final StringBuilder json = new StringBuilder();
 
@@ -126,7 +128,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
           json.toString(),
           null);
     } catch (IOException ex) {
-      OLogManager.instance().error(this, "OServerCommandPostSecurityReload.writeJSON()", ex);
+      logger.error("OServerCommandPostSecurityReload.writeJSON()", ex);
     }
   }
 
@@ -139,7 +141,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
           new ODocument().field("message", json).toJSON(),
           null);
     } catch (IOException ex) {
-      OLogManager.instance().error(this, "OServerCommandPostSecurityReload.writeJSON", ex);
+      logger.error("OServerCommandPostSecurityReload.writeJSON", ex);
     }
   }
 }
