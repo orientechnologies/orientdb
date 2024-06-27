@@ -26,6 +26,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
@@ -142,6 +143,8 @@ import java.util.concurrent.TimeUnit;
 /** Created by tglman on 27/06/16. */
 public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     implements OQueryLifecycleListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ODatabaseDocumentEmbedded.class);
 
   private OrientDBConfig config;
   private OStorage storage;
@@ -1375,19 +1378,15 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) record.reload();
 
         if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                      + lockingStrategy);
+          logger.warn(
+              "You use deprecated record locking strategy: %s it may lead to deadlocks "
+                  + lockingStrategy);
           record.lock(false);
 
         } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                      + lockingStrategy);
+          logger.warn(
+              "You use deprecated record locking strategy: %s it may lead to deadlocks "
+                  + lockingStrategy);
           record.lock(true);
         }
 
@@ -1545,15 +1544,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         user.allow(resourceGeneric, resourceSpecific, iOperation);
       } catch (OSecurityAccessException e) {
 
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance()
-              .debug(
-                  this,
-                  "User '%s' tried to access the reserved resource '%s.%s', operation '%s'",
-                  getUser(),
-                  resourceGeneric,
-                  resourceSpecific,
-                  iOperation);
+        if (logger.isDebugEnabled())
+          logger.debug(
+              "User '%s' tried to access the reserved resource '%s.%s', operation '%s'",
+              getUser(), resourceGeneric, resourceSpecific, iOperation);
 
         throw e;
       }
@@ -1836,12 +1830,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   public void freeze(final boolean throwException) {
     checkOpenness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Only local paginated storage supports freeze. If you are using remote client please"
-                  + " use OServerAdmin instead",
-              null);
+      logger.error(
+          "Only local paginated storage supports freeze. If you are using remote client please"
+              + " use OServerAdmin instead",
+          null);
 
       return;
     }
@@ -1870,12 +1862,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   public void release() {
     checkOpenness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Only local paginated storage supports release. If you are using remote client please"
-                  + " use OServerAdmin instead",
-              null);
+      logger.error(
+          "Only local paginated storage supports release. If you are using remote client please"
+              + " use OServerAdmin instead",
+          null);
       return;
     }
 
@@ -1899,9 +1889,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     OStorage s = getStorage();
     if (s instanceof OFreezableStorageComponent) return (OFreezableStorageComponent) s;
     else {
-      OLogManager.instance()
-          .error(
-              this, "Storage of type " + s.getType() + " does not support freeze operation", null);
+      logger.error("Storage of type " + s.getType() + " does not support freeze operation", null);
       return null;
     }
   }
@@ -1975,7 +1963,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       try {
         rollback(true);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Exception during rollback of active transaction", e);
+        logger.error("Exception during rollback of active transaction", e);
       }
 
       callOnCloseListeners();
@@ -2110,8 +2098,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       try {
         rollback();
       } catch (Exception re) {
-        OLogManager.instance()
-            .error(this, "Exception during rollback `%08X`", re, System.identityHashCode(re));
+        logger.error("Exception during rollback `%08X`", re, System.identityHashCode(re));
       }
       throw e;
     }
@@ -2120,11 +2107,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     } catch (RuntimeException e) {
 
       if ((e instanceof OHighLevelException) || (e instanceof ONeedRetryException))
-        OLogManager.instance()
-            .debug(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
-      else
-        OLogManager.instance()
-            .error(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
+        logger.debug("Error on transaction commit `%08X`", e, System.identityHashCode(e));
+      else logger.error("Error on transaction commit `%08X`", e, System.identityHashCode(e));
 
       // WAKE UP ROLLBACK LISTENERS
       beforeRollbackOperations();
@@ -2133,9 +2117,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         // ROLLBACK TX AT DB LEVEL
         ((OTransactionAbstract) currentTx).internalRollback();
       } catch (Exception re) {
-        OLogManager.instance()
-            .error(
-                this, "Error during transaction rollback `%08X`", re, System.identityHashCode(re));
+        logger.error("Error during transaction rollback `%08X`", re, System.identityHashCode(re));
       }
 
       // WAKE UP ROLLBACK LISTENERS

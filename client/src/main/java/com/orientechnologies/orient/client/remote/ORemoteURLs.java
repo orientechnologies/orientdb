@@ -3,6 +3,7 @@ package com.orientechnologies.orient.client.remote;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CONNECTION_FETCH_HOST_LIST;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.remote.OStorageRemote.CONNECTION_STRATEGY;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -19,6 +20,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
 public class ORemoteURLs {
+  private static final OLogger logger = OLogManager.instance().logger(ORemoteURLs.class);
 
   private static final int DEFAULT_PORT = 2424;
   private static final int DEFAULT_SSL_PORT = 2434;
@@ -46,7 +48,7 @@ public class ORemoteURLs {
 
   public synchronized String removeAndGet(String url) {
     remove(url);
-    OLogManager.instance().debug(this, "Updated server list: %s...", serverURLs);
+    logger.debug("Updated server list: %s...", serverURLs);
 
     if (!serverURLs.isEmpty()) return serverURLs.get(0);
     else return null;
@@ -82,7 +84,7 @@ public class ORemoteURLs {
 
     if (!serverURLs.contains(host)) {
       serverURLs.add(host);
-      OLogManager.instance().debug(this, "Registered the new available server '%s'", host);
+      logger.debug("Registered the new available server '%s'", host);
     }
 
     return host;
@@ -144,13 +146,11 @@ public class ORemoteURLs {
 
   private List<String> fetchHostsFromDns(
       final String primaryServer, OContextConfiguration contextConfiguration) {
-    OLogManager.instance()
-        .debug(
-            this,
-            "Retrieving URLs from DNS '%s' (timeout=%d)...",
-            primaryServer,
-            contextConfiguration.getValueAsInteger(
-                OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT));
+    logger.debug(
+        "Retrieving URLs from DNS '%s' (timeout=%d)...",
+        primaryServer,
+        contextConfiguration.getValueAsInteger(
+            OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT));
 
     List<String> toAdd = new ArrayList<>();
     try {
@@ -267,24 +267,18 @@ public class ORemoteURLs {
         } else {
           url = session.getServerUrl();
         }
-        OLogManager.instance()
-            .debug(
-                this,
-                "ROUND_ROBIN_CONNECT: Next remote operation will be executed on server: %s"
-                    + " (isConnectOperation=%s)",
-                url,
-                iIsConnectOperation);
+        logger.debug(
+            "ROUND_ROBIN_CONNECT: Next remote operation will be executed on server: %s"
+                + " (isConnectOperation=%s)",
+            url, iIsConnectOperation);
         break;
 
       case ROUND_ROBIN_REQUEST:
         url = getServerURFromList(true, session, contextConfiguration);
-        OLogManager.instance()
-            .debug(
-                this,
-                "ROUND_ROBIN_REQUEST: Next remote operation will be executed on server: %s"
-                    + " (isConnectOperation=%s)",
-                url,
-                iIsConnectOperation);
+        logger.debug(
+            "ROUND_ROBIN_REQUEST: Next remote operation will be executed on server: %s"
+                + " (isConnectOperation=%s)",
+            url, iIsConnectOperation);
         break;
 
       default:

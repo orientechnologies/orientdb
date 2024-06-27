@@ -23,6 +23,7 @@ package com.orientechnologies.common.profiler;
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
@@ -50,6 +51,7 @@ import javax.management.ObjectName;
 
 public abstract class OAbstractProfiler extends OSharedResourceAbstract
     implements OProfiler, OOrientStartupListener, OProfilerMXBean {
+  private static final OLogger logger = OLogManager.instance().logger(OAbstractProfiler.class);
 
   protected final Map<String, OProfilerHookRuntime> hooks =
       new ConcurrentHashMap<String, OProfilerHookRuntime>();
@@ -123,34 +125,29 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
                   OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong()
                       + (jvmMaxMemory - suggestedMaxHeap) / OFileUtils.MEGABYTE;
 
-              OLogManager.instance()
-                  .info(
-                      this,
-                      "Database '%s' uses %,dMB/%,dMB of DISKCACHE memory, while Heap is not"
-                          + " completely used (usedHeap=%dMB maxHeap=%dMB). To improve performance"
-                          + " set maxHeap to %dMB and DISKCACHE to %dMB",
-                      s.getName(),
-                      totalDiskCacheUsedMemory,
-                      maxDiskCacheUsedMemory,
-                      jvmTotMemory / OFileUtils.MEGABYTE,
-                      jvmMaxMemory / OFileUtils.MEGABYTE,
-                      suggestedMaxHeap / OFileUtils.MEGABYTE,
-                      suggestedDiskCache);
+              logger.info(
+                  "Database '%s' uses %,dMB/%,dMB of DISKCACHE memory, while Heap is not"
+                      + " completely used (usedHeap=%dMB maxHeap=%dMB). To improve performance"
+                      + " set maxHeap to %dMB and DISKCACHE to %dMB",
+                  s.getName(),
+                  totalDiskCacheUsedMemory,
+                  maxDiskCacheUsedMemory,
+                  jvmTotMemory / OFileUtils.MEGABYTE,
+                  jvmMaxMemory / OFileUtils.MEGABYTE,
+                  suggestedMaxHeap / OFileUtils.MEGABYTE,
+                  suggestedDiskCache);
 
-              OLogManager.instance()
-                  .info(
-                      this,
-                      "-> Open server.sh (or server.bat on Windows) and change the following"
-                          + " variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
-                      suggestedMaxHeap / OFileUtils.MEGABYTE,
-                      suggestedDiskCache);
+              logger.info(
+                  "-> Open server.sh (or server.bat on Windows) and change the following"
+                      + " variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
+                  suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
             }
           }
         }
       } catch (Exception e) {
-        OLogManager.instance().debug(this, "Error on memory checker task", e);
+        logger.debug("Error on memory checker task", e);
       } catch (Error e) {
-        OLogManager.instance().debug(this, "Error on memory checker task", e);
+        logger.debug("Error on memory checker task", e);
         throw e;
       }
     }
@@ -389,7 +386,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
     AtomicInteger counter = getTip(iMessage);
     if (counter == null) {
       // DUMP THE MESSAGE ONLY THE FIRST TIME
-      OLogManager.instance().info(this, "[TIP] " + iMessage);
+      logger.info("[TIP] " + iMessage);
 
       counter = new AtomicInteger(0);
     }
@@ -500,8 +497,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
     }
 
     if (iSeconds > 0) {
-      OLogManager.instance()
-          .info(this, "Enabled auto dump of profiler every %d second(s)", iSeconds);
+      logger.info("Enabled auto dump of profiler every %d second(s)", iSeconds);
 
       final int ms = iSeconds * 1000;
 
@@ -526,11 +522,11 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
                         "\n"
                             + "*******************************************************************************************************************************************");
 
-                    OLogManager.instance().info(null, output.toString());
+                    logger.info(null, output.toString());
                   },
                   ms,
                   ms);
-    } else OLogManager.instance().info(this, "Auto dump of profiler disabled", iSeconds);
+    } else logger.info("Auto dump of profiler disabled", iSeconds);
   }
 
   @Override

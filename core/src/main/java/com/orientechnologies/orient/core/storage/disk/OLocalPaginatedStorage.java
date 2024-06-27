@@ -29,6 +29,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.OConstants;
@@ -64,13 +65,27 @@ import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -84,6 +99,7 @@ import net.jpountz.xxhash.XXHashFactory;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
+  private static final OLogger logger = OLogManager.instance().logger(OLocalPaginatedStorage.class);
 
   @SuppressWarnings("WeakerAccess")
   protected static final long IV_SEED = 234120934;
@@ -252,7 +268,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           try {
             callable.call();
           } catch (final Exception e) {
-            OLogManager.instance().error(this, "Error on callback invocation during backup", e);
+            logger.error("Error on callback invocation during backup", e);
           }
         }
         OLogSequenceNumber freezeLSN = null;
@@ -363,7 +379,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           try {
             callable.call();
           } catch (final Exception e) {
-            OLogManager.instance().error(this, "Error on calling callback on database restore", e);
+            logger.error("Error on calling callback on database restore", e);
           }
         }
       } finally {
@@ -615,28 +631,22 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         if (notDeletedFiles == 0) {
           // TRY TO DELETE ALSO THE DIRECTORY IF IT'S EMPTY
           if (!dbDir.delete()) {
-            OLogManager.instance()
-                .error(
-                    OLocalPaginatedStorage.class,
-                    "Cannot delete storage directory with path "
-                        + dbDir.getAbsolutePath()
-                        + " because directory is not empty. Files: "
-                        + Arrays.toString(dbDir.listFiles()),
-                    null);
+            logger.error(
+                "Cannot delete storage directory with path "
+                    + dbDir.getAbsolutePath()
+                    + " because directory is not empty. Files: "
+                    + Arrays.toString(dbDir.listFiles()),
+                null);
           }
           return;
         }
       } else {
         return;
       }
-      OLogManager.instance()
-          .debug(
-              OLocalPaginatedStorage.class,
-              "Cannot delete database files because they are still locked by the OrientDB process:"
-                  + " waiting %d ms and retrying %d/%d...",
-              waitTime,
-              i,
-              maxRetries);
+      logger.debug(
+          "Cannot delete database files because they are still locked by the OrientDB process:"
+              + " waiting %d ms and retrying %d/%d...",
+          waitTime, i, maxRetries);
     }
 
     throw new OStorageException(
@@ -698,7 +708,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   protected void readIv() throws IOException {
     final Path ivPath = storagePath.resolve(IV_NAME).toAbsolutePath();
     if (!Files.exists(ivPath)) {
-      OLogManager.instance().info(this, "IV file is absent, will create new one.");
+      logger.info("IV file is absent, will create new one.");
       initIv();
       return;
     }

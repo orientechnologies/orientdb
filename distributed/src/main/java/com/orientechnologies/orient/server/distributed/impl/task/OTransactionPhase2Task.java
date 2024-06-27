@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -26,6 +27,8 @@ import java.util.TreeSet;
 
 /** @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com) */
 public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLockKeySource {
+  private static final OLogger logger = OLogManager.instance().logger(OTransactionPhase2Task.class);
+
   public static final int FACTORYID = 44;
 
   private OTransactionId transactionId;
@@ -132,12 +135,10 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
             < database
                 .getConfiguration()
                 .getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
-          OLogManager.instance()
-              .info(
-                  OTransactionPhase2Task.this,
-                  "Received second phase but not yet first phase for commit tx:%s, re-enqueue"
-                      + " second phase",
-                  firstPhaseId);
+          logger.info(
+              "Received second phase but not yet first phase for commit tx:%s, re-enqueue"
+                  + " second phase",
+              firstPhaseId);
           ((ODatabaseDocumentDistributed) database)
               .getDistributedShared()
               .reEnqueue(
@@ -154,11 +155,9 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
               .getOrientDB()
               .execute(
                   () -> {
-                    OLogManager.instance()
-                        .warn(
-                            OTransactionPhase2Task.this,
-                            "Reached limit of retry for commit tx:%s forcing database re-install",
-                            firstPhaseId);
+                    logger.warn(
+                        "Reached limit of retry for commit tx:%s forcing database re-install",
+                        firstPhaseId);
                     ((ODatabaseDocumentDistributed) database).forceRsync();
                   });
           hasResponse = true;
@@ -176,10 +175,7 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
             < database
                 .getConfiguration()
                 .getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
-          OLogManager.instance()
-              .info(
-                  OTransactionPhase2Task.this,
-                  "Received second phase but not yet first phase, re-enqueue second phase");
+          logger.info("Received second phase but not yet first phase, re-enqueue second phase");
           ((ODatabaseDocumentDistributed) database)
               .getDistributedShared()
               .reEnqueue(

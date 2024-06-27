@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -37,6 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author S. Colin Leister
  */
 public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ODefaultPasswordAuthenticator.class);
   // Holds a map of the users specified in the security.json file.
   private ConcurrentHashMap<String, OSecurityUser> usersMap =
       new ConcurrentHashMap<String, OSecurityUser>();
@@ -44,7 +47,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
   // OSecurityComponent
   // Called once the Server is running.
   public void active() {
-    OLogManager.instance().debug(this, "ODefaultPasswordAuthenticator is active");
+    logger.debug("ODefaultPasswordAuthenticator is active");
   }
 
   // OSecurityComponent
@@ -69,7 +72,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "config()", ex);
+      logger.error("config()", ex);
     }
   }
 
@@ -115,7 +118,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultPasswordAuthenticator.authenticate()", ex);
+      logger.error("ODefaultPasswordAuthenticator.authenticate()", ex);
     }
     return null;
   }

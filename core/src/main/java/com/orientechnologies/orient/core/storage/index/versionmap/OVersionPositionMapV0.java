@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -35,6 +36,7 @@ import java.io.IOException;
  * data) and expected number of elements OBaseIndexEngine.DEFAULT_VERSION_ARRAY_SIZE.
  */
 public final class OVersionPositionMapV0 extends OVersionPositionMap {
+  private static final OLogger logger = OLogManager.instance().logger(OVersionPositionMapV0.class);
   private long fileId;
   private int numberOfPages;
   public static final int PAGE_SIZE =
@@ -143,12 +145,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     // created corrupt, and thus subsequent access will (not hiding the issue), or the file will not
     // be created properly and a new one will be created during the next access on openVPM.
     if (!isFileExists(atomicOperation, getFullName())) {
-      OLogManager.instance()
-          .debug(
-              this,
-              "VPM missing with fileId:%s: fileName = %s. A new VPM will be created.",
-              fileId,
-              getFullName());
+      logger.debug(
+          "VPM missing with fileId:%s: fileName = %s. A new VPM will be created.",
+          fileId, getFullName());
       if (atomicOperation != null) {
         createVPM(atomicOperation);
       } else {
@@ -156,7 +155,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
       }
     }
     fileId = openFile(atomicOperation, getFullName());
-    OLogManager.instance().debug(this, "VPM open fileId:%s: fileName = %s", fileId, getFullName());
+    logger.debug("VPM open fileId:%s: fileName = %s", fileId, getFullName());
   }
 
   private void createVPM(final OAtomicOperation atomicOperation) throws IOException {
@@ -168,14 +167,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
                 (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0)
                     / OVersionPositionMapV0.PAGE_SIZE);
     final long foundNumberOfPages = getFilledUpTo(atomicOperation, fileId);
-    OLogManager.instance()
-        .debug(
-            this,
-            "VPM created with fileId:%s: fileName = %s, expected #pages = %d, actual #pages = %d",
-            fileId,
-            getFullName(),
-            numberOfPages,
-            foundNumberOfPages);
+    logger.debug(
+        "VPM created with fileId:%s: fileName = %s, expected #pages = %d, actual #pages = %d",
+        fileId, getFullName(), numberOfPages, foundNumberOfPages);
     if (foundNumberOfPages != numberOfPages) {
       for (int i = 0; i < numberOfPages; i++) {
         addInitializedPage(atomicOperation);

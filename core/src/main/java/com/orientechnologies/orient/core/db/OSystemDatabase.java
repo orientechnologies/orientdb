@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.UUID;
 
 public class OSystemDatabase {
+  private static final OLogger logger = OLogManager.instance().logger(OSystemDatabase.class);
   public static final String SYSTEM_DB_NAME = "OSystem";
 
   public static final String SERVER_INFO_CLASS = "ServerInfo";
@@ -61,8 +63,7 @@ public class OSystemDatabase {
           if (cls != null) {
             cls.addCluster(clusterName);
           } else {
-            OLogManager.instance()
-                .error(this, "createCluster() Class name %s does not exist", null, className);
+            logger.error("createCluster() Class name %s does not exist", null, className);
           }
         }
 
@@ -133,8 +134,7 @@ public class OSystemDatabase {
     final ODatabaseDocumentInternal oldDbInThread = tl != null ? tl.getIfDefined() : null;
     try {
       if (!exists()) {
-        OLogManager.instance()
-            .info(this, "Creating the system database '%s' for current server", SYSTEM_DB_NAME);
+        logger.info("Creating the system database '%s' for current server", SYSTEM_DB_NAME);
 
         OrientDBConfig config =
             OrientDBConfig.builder()

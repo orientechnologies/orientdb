@@ -16,10 +16,12 @@
 package com.orientechnologies.security.password;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 import com.orientechnologies.orient.core.security.OPasswordValidator;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
+import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
 import java.util.regex.Pattern;
 
 /**
@@ -28,6 +30,8 @@ import java.util.regex.Pattern;
  * @author S. Colin Leister
  */
 public class ODefaultPasswordValidator implements OPasswordValidator {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerConfigAuthenticator.class);
   private boolean enabled = true;
   private boolean ignoreUUID = true;
   private int minLength = 0;
@@ -40,7 +44,7 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
 
   // OSecurityComponent
   public void active() {
-    OLogManager.instance().debug(this, "ODefaultPasswordValidator is active");
+    logger.debug("ODefaultPasswordValidator is active");
   }
 
   // OSecurityComponent
@@ -70,7 +74,7 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
         hasUppercase = Pattern.compile((String) jsonConfig.field("uppercaseRegEx"));
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultPasswordValidator.config()", ex);
+      logger.error("ODefaultPasswordValidator.config()", ex);
     }
   }
 
@@ -91,46 +95,37 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
       if (ignoreUUID && isUUID(password)) return;
 
       if (password.length() < minLength) {
-        OLogManager.instance()
-            .debug(
-                this,
-                "ODefaultPasswordValidator.validatePassword() Password length (%d) is too short",
-                password.length());
+        logger.debug(
+            "ODefaultPasswordValidator.validatePassword() Password length (%d) is too short",
+            password.length());
         throw new OInvalidPasswordException(
             "Password length is too short.  Minimum password length is " + minLength);
       }
 
       if (hasNumber != null && !isValid(hasNumber, password)) {
-        OLogManager.instance()
-            .debug(
-                this,
-                "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of"
-                    + " numbers");
+        logger.debug(
+            "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of"
+                + " numbers");
         throw new OInvalidPasswordException("Password requires a minimum count of numbers");
       }
 
       if (hasSpecial != null && !isValid(hasSpecial, password)) {
-        OLogManager.instance()
-            .debug(
-                this,
-                "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of"
-                    + " special characters");
+        logger.debug(
+            "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of"
+                + " special characters");
         throw new OInvalidPasswordException(
             "Password requires a minimum count of special characters");
       }
 
       if (hasUppercase != null && !isValid(hasUppercase, password)) {
-        OLogManager.instance()
-            .debug(
-                this,
-                "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of"
-                    + " uppercase characters");
+        logger.debug(
+            "ODefaultPasswordValidator.validatePassword() Password requires a minimum count of"
+                + " uppercase characters");
         throw new OInvalidPasswordException(
             "Password requires a minimum count of uppercase characters");
       }
     } else {
-      OLogManager.instance()
-          .debug(this, "ODefaultPasswordValidator.validatePassword() Password is null or empty");
+      logger.debug("ODefaultPasswordValidator.validatePassword() Password is null or empty");
       throw new OInvalidPasswordException(
           "ODefaultPasswordValidator.validatePassword() Password is null or empty");
     }

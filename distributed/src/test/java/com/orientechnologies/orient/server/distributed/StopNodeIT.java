@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
@@ -38,6 +39,7 @@ import org.junit.Test;
  * </ul>
  */
 public class StopNodeIT extends AbstractServerClusterTxTest {
+  private static final OLogger logger = OLogManager.instance().logger(StopNodeIT.class);
   static final int SERVERS = 3;
   volatile boolean inserting = true;
   volatile int serverStarted = 0;
@@ -88,7 +90,7 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
                 public void onNodeLeft(String iNode) {
                   nodeReJoined.clear();
                   nodeLefts.incrementAndGet();
-                  OLogManager.instance().info(this, "NODE LEFT %s = %d", iNode, nodeLefts.get());
+                  logger.info("NODE LEFT %s = %d", iNode, nodeLefts.get());
                 }
 
                 @Override

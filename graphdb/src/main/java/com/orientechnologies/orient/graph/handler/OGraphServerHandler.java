@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.graph.handler;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -38,6 +39,7 @@ import javax.script.Bindings;
 import javax.script.ScriptEngine;
 
 public class OGraphServerHandler extends OServerPluginAbstract implements OScriptInjection {
+  private static final OLogger logger = OLogManager.instance().logger(OGraphServerHandler.class);
   private boolean enabled = true;
   private int graphPoolMax;
   private OServer server;
@@ -57,12 +59,9 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
 
     if (OGremlinHelper.isGremlinAvailable()) {
       enabled = true;
-      OLogManager.instance()
-          .info(
-              this,
-              "Installed GREMLIN language v.%s - graph.pool.max=%d",
-              OGremlinHelper.getEngineVersion(),
-              graphPoolMax);
+      logger.info(
+          "Installed GREMLIN language v.%s - graph.pool.max=%d",
+          OGremlinHelper.getEngineVersion(), graphPoolMax);
 
       OrientDBInternal.extract(server.getContext()).getScriptManager().registerInjection(this);
 

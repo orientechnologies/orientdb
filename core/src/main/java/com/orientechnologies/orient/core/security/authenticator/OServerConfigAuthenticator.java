@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 
@@ -29,10 +30,13 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
  * @author S. Colin Leister
  */
 public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerConfigAuthenticator.class);
+
   // OSecurityComponent
   // Called once the Server is running.
   public void active() {
-    OLogManager.instance().debug(this, "OServerConfigAuthenticator is active");
+    logger.debug("OServerConfigAuthenticator is active");
   }
 
   // OSecurityAuthenticator

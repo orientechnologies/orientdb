@@ -15,6 +15,7 @@
 package com.orientechnologies.spatial.engine;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.builder.OLuceneIndexType;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
@@ -49,6 +50,8 @@ import org.locationtech.spatial4j.shape.Shape;
 /** Created by Enrico Risa on 26/09/15. */
 public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngineAbstract
     implements OLuceneSpatialIndexContainer {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneSpatialIndexEngineAbstract.class);
 
   protected final OShapeBuilder factory;
   protected SpatialContext ctx;
@@ -79,7 +82,7 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
   public IndexWriter createIndexWriter(Directory directory) throws IOException {
     OLuceneIndexWriterFactory fc = new OLuceneIndexWriterFactory();
 
-    OLogManager.instance().debug(this, "Creating Lucene index in '%s'...", directory);
+    logger.debug("Creating Lucene index in '%s'...", directory);
 
     return fc.createIndexWriter(directory, metadata, indexAnalyzer());
   }

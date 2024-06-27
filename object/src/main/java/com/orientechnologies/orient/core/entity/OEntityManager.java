@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.entity;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -36,12 +37,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class OEntityManager {
+  private static final OLogger logger = OLogManager.instance().logger(OEntityManager.class);
   private static Map<String, OEntityManager> databaseInstances =
       new HashMap<String, OEntityManager>();
   private OEntityManagerClassHandler classHandler = new OEntityManagerClassHandler();
 
   protected OEntityManager() {
-    OLogManager.instance().debug(this, "Registering entity manager");
+    logger.debug("Registering entity manager");
 
     classHandler.registerEntityClass(OUser.class);
     classHandler.registerEntityClass(ORole.class);
@@ -117,8 +119,7 @@ public class OEntityManager {
    */
   public synchronized void deregisterEntityClasses(
       final String iPackageName, final ClassLoader iClassLoader) {
-    OLogManager.instance()
-        .debug(this, "Discovering entity classes inside package: %s", iPackageName);
+    logger.debug("Discovering entity classes inside package: %s", iPackageName);
 
     List<Class<?>> classes = null;
     try {
@@ -131,10 +132,9 @@ public class OEntityManager {
       deregisterEntityClass(c);
     }
 
-    if (OLogManager.instance().isDebugEnabled()) {
+    if (logger.isDebugEnabled()) {
       for (Entry<String, Class<?>> entry : classHandler.getClassesEntrySet()) {
-        OLogManager.instance()
-            .debug(this, "Unloaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
+        logger.debug("Unloaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
       }
     }
   }
@@ -164,8 +164,7 @@ public class OEntityManager {
    */
   public synchronized void registerEntityClasses(
       final Collection<String> iClassNames, final ClassLoader iClassLoader) {
-    OLogManager.instance()
-        .debug(this, "Discovering entity classes for class names: %s", iClassNames);
+    logger.debug("Discovering entity classes for class names: %s", iClassNames);
 
     try {
       registerEntityClasses(OReflectionHelper.getClassesFor(iClassNames, iClassLoader));
@@ -193,8 +192,7 @@ public class OEntityManager {
    */
   public synchronized void registerEntityClasses(
       final String iPackageName, final ClassLoader iClassLoader) {
-    OLogManager.instance()
-        .debug(this, "Discovering entity classes inside package: %s", iPackageName);
+    logger.debug("Discovering entity classes inside package: %s", iPackageName);
 
     try {
       registerEntityClasses(OReflectionHelper.getClassesFor(iPackageName, iClassLoader));
@@ -207,18 +205,16 @@ public class OEntityManager {
     for (Class<?> c : classes) {
       if (!classHandler.containsEntityClass(c)) {
         if (c.isAnonymousClass()) {
-          OLogManager.instance()
-              .debug(this, "Skip registration of anonymous class '%s'", c.getName());
+          logger.debug("Skip registration of anonymous class '%s'", c.getName());
           continue;
         }
         classHandler.registerEntityClass(c);
       }
     }
 
-    if (OLogManager.instance().isDebugEnabled()) {
+    if (logger.isDebugEnabled()) {
       for (Entry<String, Class<?>> entry : classHandler.getClassesEntrySet()) {
-        OLogManager.instance()
-            .debug(this, "Loaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
+        logger.debug("Loaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
       }
     }
   }

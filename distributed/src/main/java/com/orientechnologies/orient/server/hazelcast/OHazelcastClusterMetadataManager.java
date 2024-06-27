@@ -19,6 +19,7 @@ import com.hazelcast.core.MembershipListener;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
@@ -62,6 +63,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class OHazelcastClusterMetadataManager
     implements MembershipListener, EntryListener<String, Object>, LifecycleListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OHazelcastClusterMetadataManager.class);
 
   public static final String CONFIG_DATABASE_PREFIX = "database.";
   public static final String CONFIG_NODE_PREFIX = "node.";
@@ -135,17 +138,13 @@ public class OHazelcastClusterMetadataManager
     final LifecycleService lifecycleService = hazelcastInstance.getLifecycleService();
     lifecycleService.addLifecycleListener(this);
 
-    OLogManager.instance()
-        .info(this, "Starting distributed server '%s' (hzID=%s)...", localNodeName, nodeUuid);
+    logger.info("Starting distributed server '%s' (hzID=%s)...", localNodeName, nodeUuid);
 
     final long clusterTime = getClusterTime();
     final long deltaTime = System.currentTimeMillis() - clusterTime;
-    OLogManager.instance()
-        .info(
-            this,
-            "Distributed cluster time=%s (delta from local node=%d)...",
-            new Date(clusterTime),
-            deltaTime);
+    logger.info(
+        "Distributed cluster time=%s (delta from local node=%d)...",
+        new Date(clusterTime), deltaTime);
 
     activeNodes.put(localNodeName, hazelcastInstance.getCluster().getLocalMember());
     activeNodesNamesByUuid.put(nodeUuid, localNodeName);
@@ -522,7 +521,7 @@ public class OHazelcastClusterMetadataManager
       try {
         hazelcastInstance.shutdown();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on shutting down Hazelcast instance", e);
+        logger.error("Error on shutting down Hazelcast instance", e);
       } finally {
         hazelcastInstance = null;
       }
@@ -722,7 +721,7 @@ public class OHazelcastClusterMetadataManager
         }
       }
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running", e);
+      logger.error("Hazelcast is not running", e);
     }
   }
 
@@ -788,7 +787,7 @@ public class OHazelcastClusterMetadataManager
       }
 
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running", e);
+      logger.error("Hazelcast is not running", e);
     }
   }
 
@@ -829,7 +828,7 @@ public class OHazelcastClusterMetadataManager
             nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
       }
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running", e);
+      logger.error("Hazelcast is not running", e);
     }
   }
 

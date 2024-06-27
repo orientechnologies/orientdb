@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.security;
 import com.orientechnologies.common.collection.OLRUCache;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -36,6 +37,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 public class OSecurityManager {
+  private static final OLogger logger = OLogManager.instance().logger(OSecurityManager.class);
   public static final String HASH_ALGORITHM = "SHA-256";
   public static final String HASH_ALGORITHM_PREFIX = "{" + HASH_ALGORITHM + "}";
 
@@ -161,7 +163,7 @@ public class OSecurityManager {
     } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
       final String message =
           "The requested encoding is not supported: cannot execute security checks";
-      OLogManager.instance().error(OSecuritySystem.class, message, e);
+      logger.error(message, e);
 
       throw OException.wrapException(new OConfigurationException(message), e);
     }
@@ -198,12 +200,7 @@ public class OSecurityManager {
       final String iPassword, final String iHash, final String algorithm) {
 
     if (!isAlgorithmSupported(algorithm)) {
-      OLogManager.instance()
-          .error(
-              OSecuritySystem.class,
-              "The password hash algorithm is not supported: %s",
-              null,
-              algorithm);
+      logger.error("The password hash algorithm is not supported: %s", null, algorithm);
       return false;
     }
 
@@ -279,12 +276,7 @@ public class OSecurityManager {
       // Downgrade it to PBKDF2_ALGORITHM.
       validAlgo = PBKDF2_ALGORITHM;
 
-      OLogManager.instance()
-          .debug(
-              OSecuritySystem.class,
-              "The %s algorithm is not supported, downgrading to %s",
-              iAlgorithm,
-              validAlgo);
+      logger.debug("The %s algorithm is not supported, downgrading to %s", iAlgorithm, validAlgo);
     }
 
     return validAlgo;
@@ -326,8 +318,7 @@ public class OSecurityManager {
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance()
-          .debug(this, "newCredentialInterceptor() Exception creating CredentialInterceptor", ex);
+      logger.debug("newCredentialInterceptor() Exception creating CredentialInterceptor", ex);
     }
 
     return ci;

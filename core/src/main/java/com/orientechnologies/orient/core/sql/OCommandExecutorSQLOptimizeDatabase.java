@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -39,6 +40,8 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLOptimizeDatabase extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCommandExecutorSQLOptimizeDatabase.class);
   public static final String KEYWORD_OPTIMIZE = "OPTIMIZE";
   public static final String KEYWORD_DATABASE = "DATABASE";
   public static final String KEYWORD_EDGE = "-LWEDGES";
@@ -167,14 +170,12 @@ public class OCommandExecutorSQLOptimizeDatabase extends OCommandExecutorSQLAbst
             if (verbose && (now - lastLapTime > 2000)) {
               final long elapsed = now - lastLapTime;
 
-              OLogManager.instance()
-                  .info(
-                      this,
-                      "Browsed %,d of %,d edges, transformed %,d so far (%,d edges/sec)",
-                      browsedEdges,
-                      totalEdges,
-                      transformed,
-                      (((browsedEdges - lastLapBrowsed) * 1000 / elapsed)));
+              logger.info(
+                  "Browsed %,d of %,d edges, transformed %,d so far (%,d edges/sec)",
+                  browsedEdges,
+                  totalEdges,
+                  transformed,
+                  (((browsedEdges - lastLapBrowsed) * 1000 / elapsed)));
 
               lastLapTime = System.currentTimeMillis();
               lastLapBrowsed = browsedEdges;

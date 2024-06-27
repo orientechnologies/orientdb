@@ -27,6 +27,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARN
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.Orient;
@@ -81,6 +82,7 @@ import org.apache.commons.lang.NullArgumentException;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBEmbedded implements OrientDBInternal {
+  private static final OLogger logger = OLogManager.instance().logger(OrientDBEmbedded.class);
 
   /** Keeps track of next possible storage id. */
   private static final AtomicInteger nextStorageId = new AtomicInteger();
@@ -122,11 +124,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
     if (directoryPath.length() != 0) {
       final File dirFile = new File(directoryPath);
       if (!dirFile.exists()) {
-        OLogManager.instance()
-            .infoNoDb(this, "Directory " + dirFile + " does not exist, try to create it.");
+        logger.infoNoDb("Directory " + dirFile + " does not exist, try to create it.");
 
         if (!dirFile.mkdirs()) {
-          OLogManager.instance().errorNoDb(this, "Can not create directory " + dirFile, null);
+          logger.errorNoDb("Can not create directory " + dirFile, null);
         }
       }
       this.basePath = dirFile.getAbsolutePath();
@@ -149,9 +150,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
               "Invalid configuration settings. Can not set maximum size of WAL segment");
         }
 
-        OLogManager.instance()
-            .infoNoDb(
-                this, "WAL maximum segment size is set to %,d MB", maxWALSegmentSize / 1024 / 1024);
+        logger.infoNoDb(
+            "WAL maximum segment size is set to %,d MB", maxWALSegmentSize / 1024 / 1024);
       } catch (IOException e) {
         throw OException.wrapException(
             new ODatabaseException("Cannot initialize OrientDB engine"), e);
@@ -233,12 +233,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private int excutorMaxSize(OGlobalConfiguration config) {
     int size = getIntConfig(config);
     if (size == 0) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Configuration "
-                  + config.getKey()
-                  + " has a value 0 using number of CPUs as base value");
+      logger.warn(
+          "Configuration " + config.getKey() + " has a value 0 using number of CPUs as base value");
       size = Runtime.getRuntime().availableProcessors();
     } else if (size <= -1) {
       size = Runtime.getRuntime().availableProcessors();
@@ -317,14 +313,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
                       return 0;
                     } catch (IOException | UncheckedIOException e) {
-                      OLogManager.instance()
-                          .error(this, "Error during calculation of free space for database", e);
+                      logger.error("Error during calculation of free space for database", e);
                       return 0;
                     }
                   })
               .sum();
     } catch (IOException | UncheckedIOException e) {
-      OLogManager.instance().error(this, "Error during calculation of free space for database", e);
+      logger.error("Error during calculation of free space for database", e);
 
       filesSize = 0;
     }
@@ -372,15 +367,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
                       return 0;
                     } catch (IOException | UncheckedIOException e) {
-                      OLogManager.instance()
-                          .error(this, "Error during calculation of free space for database", e);
+                      logger.error("Error during calculation of free space for database", e);
 
                       return 0;
                     }
                   })
               .sum();
     } catch (IOException | UncheckedIOException e) {
-      OLogManager.instance().error(this, "Error during calculation of free space for database", e);
+      logger.error("Error during calculation of free space for database", e);
 
       filesSize = 0;
     }
@@ -540,13 +534,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
             || ("reader".equals(user) && "reader".equals(password))
             || ("writer".equals(user) && "writer".equals(password)))
         && WARNING_DEFAULT_USERS.getValueAsBoolean()) {
-      OLogManager.instance()
-          .warnNoDb(
-              this,
-              String.format(
-                  "IMPORTANT! Using default password is unsafe, please change password for user"
-                      + " '%s' on database '%s'",
-                  user, database));
+      logger.warnNoDb(
+          String.format(
+              "IMPORTANT! Using default password is unsafe, please change password for user"
+                  + " '%s' on database '%s'",
+              user, database));
     }
   }
 
@@ -723,8 +715,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
           storage.delete();
         }
       } catch (Exception e1) {
-        OLogManager.instance()
-            .warn(this, "Error doing cleanups, should be safe do progress anyway", e1);
+        logger.warn("Error doing cleanups, should be safe do progress anyway", e1);
       }
       synchronized (this) {
         sharedContexts.remove(name);
@@ -965,7 +956,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     preClose();
     try {
       while (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
-        OLogManager.instance().warn(this, "Failed waiting background operations termination");
+        logger.warn("Failed waiting background operations termination");
         executor.shutdownNow();
       }
     } catch (InterruptedException e) {
@@ -980,7 +971,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       try {
         ioExecutor.shutdown();
         while (!ioExecutor.awaitTermination(1, TimeUnit.MINUTES)) {
-          OLogManager.instance().warn(this, "Failed waiting background io operations termination");
+          logger.warn("Failed waiting background io operations termination");
           ioExecutor.shutdownNow();
         }
       } catch (InterruptedException e) {
@@ -1009,13 +1000,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     for (OAbstractPaginatedStorage stg : storagesCopy) {
       try {
-        OLogManager.instance().info(this, "- shutdown storage: %s ...", stg.getName());
+        logger.info("- shutdown storage: %s ...", stg.getName());
         stg.shutdown();
       } catch (Exception e) {
-        OLogManager.instance().warn(this, "-- error on shutdown storage", e);
+        logger.warn("-- error on shutdown storage", e);
         storageException = e;
       } catch (Error e) {
-        OLogManager.instance().warn(this, "-- error on shutdown storage", e);
+        logger.warn("-- error on shutdown storage", e);
         throw e;
       }
     }
@@ -1163,8 +1154,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
               return task.call(session);
             }
           } else {
-            OLogManager.instance()
-                .warn(this, " Cancelled execution of task, OrientDB instance is closed");
+            logger.warn(" Cancelled execution of task, OrientDB instance is closed");
             return null;
           }
         });

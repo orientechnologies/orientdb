@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -38,7 +39,6 @@ import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask.RESULT_STRATEGY;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
@@ -52,6 +52,8 @@ import java.util.concurrent.TimeUnit;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OSyncDatabaseTask extends OAbstractRemoteTask {
+  private static final OLogger logger = OLogManager.instance().logger(OSyncDatabaseTask.class);
+
   public static final int FACTORYID = 14;
   protected long random;
   public static final String DEPLOYDB = "deploydb.";
@@ -150,11 +152,7 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
         }
 
         while (!backup.getStarted().await(1, TimeUnit.MINUTES)) {
-          OLogManager.instance()
-              .info(
-                  this,
-                  "Another backup running on database '%s' waiting it to finish",
-                  databaseName);
+          logger.info("Another backup running on database '%s' waiting it to finish", databaseName);
         }
 
         final ODistributedDatabaseChunk chunk =
@@ -241,7 +239,7 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
     if (iText.startsWith("\r\n")) iText = iText.substring(2);
     if (iText.startsWith("\n")) iText = iText.substring(1);
 
-    OLogManager.instance().info(this, iText);
+    logger.info(iText);
   }
 
   @Override

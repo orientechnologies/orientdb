@@ -1,15 +1,17 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class AsyncIndexIT extends BareBoneBase2ServerTest {
+  private static final OLogger logger = OLogManager.instance().logger(AsyncIndexIT.class);
 
   @Override
   protected String getDatabaseName() {
@@ -59,7 +61,7 @@ public class AsyncIndexIT extends BareBoneBase2ServerTest {
         exceptionInThread = e;
       }
     } finally {
-      OLogManager.instance().info(this, "Shutting down db1");
+      logger.info("Shutting down db1");
       graph.close();
     }
 
@@ -88,7 +90,7 @@ public class AsyncIndexIT extends BareBoneBase2ServerTest {
         exceptionInThread = e;
       }
     } finally {
-      OLogManager.instance().info(this, "Shutting down db2");
+      logger.info("Shutting down db2");
       graph2.close();
     }
   }

@@ -32,6 +32,7 @@ import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -89,7 +90,18 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.CRC32;
@@ -135,6 +147,7 @@ import net.jpountz.xxhash.XXHashFactory;
  */
 public final class OWOWCache extends OAbstractWriteCache
     implements OWriteCache, OCachePointer.WritersListener {
+  private static final OLogger logger = OLogManager.instance().logger(OWOWCache.class);
 
   private static final XXHashFactory XX_HASH_FACTORY = XXHashFactory.fastestInstance();
   private static final XXHash64 XX_HASH_64 = XX_HASH_FACTORY.hash64();
@@ -620,11 +633,7 @@ public final class OWOWCache extends OAbstractWriteCache
         try {
           listener.pageIsBroken(fileName, pageIndex);
         } catch (final Exception e) {
-          OLogManager.instance()
-              .error(
-                  this,
-                  "Error during notification of page is broken for storage " + storageName,
-                  e);
+          logger.error("Error during notification of page is broken for storage " + storageName, e);
         }
       }
     }
@@ -708,13 +717,11 @@ public final class OWOWCache extends OAbstractWriteCache
             "File with name " + fileName + " does not exist in storage " + storageName);
       } else {
         // REGISTER THE FILE
-        OLogManager.instance()
-            .debug(
-                this,
-                "File '"
-                    + fileName
-                    + "' is not registered in 'file name - id' map, but exists in file system."
-                    + " Registering it");
+        logger.debug(
+            "File '"
+                + fileName
+                + "' is not registered in 'file name - id' map, but exists in file system."
+                + " Registering it");
 
         openFile(fileClassic);
 
@@ -2173,12 +2180,8 @@ public final class OWOWCache extends OAbstractWriteCache
     }
 
     if (!fixedFiles.isEmpty()) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Removed files "
-                  + fixedFiles
-                  + " had duplicated ids. Problem is fixed automatically.");
+      logger.warn(
+          "Removed files " + fixedFiles + " had duplicated ids. Problem is fixed automatically.");
     }
   }
 
@@ -2251,15 +2254,10 @@ public final class OWOWCache extends OAbstractWriteCache
       final int recordLen = buffer.getInt();
 
       if (recordLen > MAX_FILE_RECORD_LEN) {
-        OLogManager.instance()
-            .errorNoDb(
-                this,
-                "Maximum record length in file registry can not exceed %d bytes. "
-                    + "But actual record length %d.  Storage name : %s",
-                null,
-                MAX_FILE_RECORD_LEN,
-                storageName,
-                recordLen);
+        logger.errorNoDb(
+            "Maximum record length in file registry can not exceed %d bytes. "
+                + "But actual record length %d.  Storage name : %s",
+            null, MAX_FILE_RECORD_LEN, storageName, recordLen);
         return null;
       }
 
@@ -2269,9 +2267,8 @@ public final class OWOWCache extends OAbstractWriteCache
 
       final long xxHash = XX_HASH_64.hash(buffer, 0, recordLen, XX_HASH_SEED);
       if (xxHash != storedXxHash) {
-        OLogManager.instance()
-            .errorNoDb(
-                this, "Hash of the file registry is broken. Storage name : %s", null, storageName);
+        logger.errorNoDb(
+            "Hash of the file registry is broken. Storage name : %s", null, storageName);
         return null;
       }
 
@@ -2446,7 +2443,7 @@ public final class OWOWCache extends OAbstractWriteCache
             + "` of `"
             + fileNameById(fileId)
             + "`.";
-    OLogManager.instance().error(this, "%s", null, message);
+    logger.error("%s", null, message);
 
     if (checksumMode == OChecksumMode.StoreAndThrow) {
       bufferPool.release(pointer);
@@ -2592,7 +2589,7 @@ public final class OWOWCache extends OAbstractWriteCache
     exception.printStackTrace(printWriter);
     printWriter.flush();
 
-    OLogManager.instance().error(this, stringWriter.toString(), null);
+    logger.error(stringWriter.toString(), null);
   }
 
   private void fsyncFiles() throws InterruptedException, IOException {
@@ -2658,12 +2655,9 @@ public final class OWOWCache extends OAbstractWriteCache
 
   public Long executeFindDirtySegment() {
     if (flushError != null) {
-      OLogManager.instance()
-          .errorNoDb(
-              this,
-              "Can not calculate minimum LSN because of issue during data write, %s",
-              null,
-              flushError.getMessage());
+      logger.errorNoDb(
+          "Can not calculate minimum LSN because of issue during data write, %s",
+          null, flushError.getMessage());
       return null;
     }
 
@@ -3204,12 +3198,9 @@ public final class OWOWCache extends OAbstractWriteCache
 
   public Void executeFileFlush(Set<Integer> fileIdSet) throws InterruptedException, IOException {
     if (flushError != null) {
-      OLogManager.instance()
-          .errorNoDb(
-              this,
-              "Can not flush file data because of issue during data write, %s",
-              null,
-              flushError.getMessage());
+      logger.errorNoDb(
+          "Can not flush file data because of issue during data write, %s",
+          null, flushError.getMessage());
       return null;
     }
 
@@ -3335,12 +3326,9 @@ public final class OWOWCache extends OAbstractWriteCache
 
     try {
       if (flushError != null) {
-        OLogManager.instance()
-            .errorNoDb(
-                this,
-                "Can not flush data because of issue during data write, %s",
-                null,
-                flushError.getMessage());
+        logger.errorNoDb(
+            "Can not flush data because of issue during data write, %s",
+            null, flushError.getMessage());
         return;
       }
 
@@ -3379,7 +3367,7 @@ public final class OWOWCache extends OAbstractWriteCache
           }
         }
       } catch (final Error | Exception t) {
-        OLogManager.instance().error(this, "Exception during data flush", t);
+        logger.error("Exception during data flush", t);
         OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
         flushError = t;
       }
@@ -3397,12 +3385,9 @@ public final class OWOWCache extends OAbstractWriteCache
 
     try {
       if (flushError != null) {
-        OLogManager.instance()
-            .errorNoDb(
-                this,
-                "Can not flush data because of issue during data write, %s",
-                null,
-                flushError.getMessage());
+        logger.errorNoDb(
+            "Can not flush data because of issue during data write, %s",
+            null, flushError.getMessage());
         return;
       }
 
@@ -3423,7 +3408,7 @@ public final class OWOWCache extends OAbstractWriteCache
       }
 
     } catch (final Error | Exception t) {
-      OLogManager.instance().error(this, "Exception during data flush", t);
+      logger.error("Exception during data flush", t);
       OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
       flushError = t;
     } finally {
@@ -3439,12 +3424,9 @@ public final class OWOWCache extends OAbstractWriteCache
 
   public Void executeFlushTillSegment(long segmentId) throws InterruptedException, IOException {
     if (flushError != null) {
-      OLogManager.instance()
-          .errorNoDb(
-              this,
-              "Can not flush data till provided segment because of issue during data write, %s",
-              null,
-              flushError.getMessage());
+      logger.errorNoDb(
+          "Can not flush data till provided segment because of issue during data write, %s",
+          null, flushError.getMessage());
       return null;
     }
 

@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -12,6 +13,7 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
 import java.util.Map;
 
 public class OHaStatusStatement extends OSimpleExecStatement {
+  private static final OLogger logger = OLogManager.instance().logger(OHaStatusStatement.class);
 
   public boolean servers = false;
   public boolean db = false;
@@ -88,7 +90,7 @@ public class OHaStatusStatement extends OSimpleExecStatement {
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     if (outputText) {
-      OLogManager.instance().info(this, "HA STATUS with text output is deprecated");
+      logger.info("HA STATUS with text output is deprecated");
     }
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
 

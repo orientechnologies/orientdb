@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -51,6 +52,7 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OClusterHealthChecker implements Runnable {
+  private static final OLogger logger = OLogManager.instance().logger(OClusterHealthChecker.class);
   private final ODistributedServerManager manager;
   private final long healthCheckerEveryMs;
   private long lastExecution = 0;
@@ -62,7 +64,7 @@ public class OClusterHealthChecker implements Runnable {
   }
 
   public synchronized void run() {
-    OLogManager.instance().debug(this, "Checking cluster health...");
+    logger.debug("Checking cluster health...");
 
     final long now = System.currentTimeMillis();
 
@@ -79,19 +81,16 @@ public class OClusterHealthChecker implements Runnable {
         // IGNORE IT
       } catch (Exception t) {
         if (manager.getServerInstance().isActive())
-          OLogManager.instance().error(this, "Error on checking cluster health", t);
+          logger.error("Error on checking cluster health", t);
         else
           // SHUTDOWN IN PROGRESS
-          OLogManager.instance().debug(this, "Error on checking cluster health", t);
+          logger.debug("Error on checking cluster health", t);
       } finally {
-        OLogManager.instance().debug(this, "Cluster health checking completed");
+        logger.debug("Cluster health checking completed");
       }
     } else
-      OLogManager.instance()
-          .debug(
-              this,
-              "Cluster health finished recently (%dms ago), skip this execution",
-              now - lastExecution);
+      logger.debug(
+          "Cluster health finished recently (%dms ago), skip this execution", now - lastExecution);
 
     lastExecution = now;
   }

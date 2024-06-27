@@ -21,6 +21,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -49,8 +50,8 @@ import java.util.Set;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
-@SuppressWarnings("unchecked")
 public class OrientEdge extends OrientElement implements Edge {
+  private static final OLogger logger = OLogManager.instance().logger(OrientEdge.class);
   private static final long serialVersionUID = 1L;
 
   protected OIdentifiable vOut;
@@ -537,13 +538,9 @@ public class OrientEdge extends OrientElement implements Edge {
       final Object iFieldValue) {
     if (iFieldValue == null) {
       // NO EDGE? WARN
-      OLogManager.instance()
-          .debug(
-              this,
-              "Edge not found in vertex's property %s.%s while removing the edge %s",
-              iVertex.getIdentity(),
-              iFieldName,
-              iEdge.getIdentity());
+      logger.debug(
+          "Edge not found in vertex's property %s.%s while removing the edge %s",
+          iVertex.getIdentity(), iFieldName, iEdge.getIdentity());
       return false;
 
     } else if (iFieldValue instanceof OIdentifiable) {
@@ -552,13 +549,9 @@ public class OrientEdge extends OrientElement implements Edge {
       if (iFieldValue.equals(iEdge)) iVertex.removeField(iFieldName);
       else {
         // NO EDGE? WARN
-        OLogManager.instance()
-            .warn(
-                this,
-                "Edge not found in vertex's property %s.%s link while removing the edge %s",
-                iVertex.getIdentity(),
-                iFieldName,
-                iEdge.getIdentity());
+        logger.warn(
+            "Edge not found in vertex's property %s.%s link while removing the edge %s",
+            iVertex.getIdentity(), iFieldName, iEdge.getIdentity());
         return false;
       }
 
@@ -571,13 +564,9 @@ public class OrientEdge extends OrientElement implements Edge {
       final Collection<Object> coll = (Collection<Object>) iFieldValue;
 
       if (!coll.remove(iEdge)) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Edge not found in vertex's property %s.%s set while removing the edge %s",
-                iVertex.getIdentity(),
-                iFieldName,
-                iEdge.getIdentity());
+        logger.warn(
+            "Edge not found in vertex's property %s.%s set while removing the edge %s",
+            iVertex.getIdentity(), iFieldName, iEdge.getIdentity());
         return false;
       }
 

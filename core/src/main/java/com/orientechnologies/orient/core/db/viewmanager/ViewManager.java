@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.db.viewmanager;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -54,6 +55,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ViewManager {
+
+  private static final OLogger logger = OLogManager.instance().logger(ViewManager.class);
+
   private final OrientDBInternal orientDB;
   private final String dbName;
   private boolean viewsExist = false;
@@ -169,7 +173,7 @@ public class ViewManager {
       } while (view != null && !closed);
 
     } catch (Exception e) {
-      OLogManager.instance().warn(this, "Failed to update views", e);
+      logger.warn("Failed to update views", e);
     }
   }
 
@@ -330,7 +334,7 @@ public class ViewManager {
         refreshing.add(viewName);
       }
 
-      OLogManager.instance().info(this, "Starting refresh of view '%s'", viewName);
+      logger.info("Starting refresh of view '%s'", viewName);
       long lastRefreshTime = System.currentTimeMillis();
       String clusterName = createNextClusterNameFor(view, db);
       int cluster = db.getClusterIdByName(clusterName);
@@ -358,23 +362,19 @@ public class ViewManager {
       }
       OViewRemovedMetadata oldMetadata =
           ((OViewImpl) view).replaceViewClusterAndIndex(cluster, indexes, lastRefreshTime);
-      OLogManager.instance()
-          .info(
-              this,
-              "Replaced for view '%s' clusters '%s' with '%s'",
-              viewName,
-              Arrays.stream(oldMetadata.getClusters())
-                  .mapToObj((i) -> i + " => " + db.getClusterNameById(i))
-                  .collect(Collectors.toList())
-                  .toString(),
-              cluster + " => " + db.getClusterNameById(cluster));
-      OLogManager.instance()
-          .info(
-              this,
-              "Replaced for view '%s' indexes '%s' with '%s'",
-              viewName,
-              oldMetadata.getIndexes().toString(),
-              indexes.stream().map((i) -> i.getName()).collect(Collectors.toList()).toString());
+      logger.info(
+          "Replaced for view '%s' clusters '%s' with '%s'",
+          viewName,
+          Arrays.stream(oldMetadata.getClusters())
+              .mapToObj((i) -> i + " => " + db.getClusterNameById(i))
+              .collect(Collectors.toList())
+              .toString(),
+          cluster + " => " + db.getClusterNameById(cluster));
+      logger.info(
+          "Replaced for view '%s' indexes '%s' with '%s'",
+          viewName,
+          oldMetadata.getIndexes().toString(),
+          indexes.stream().map((i) -> i.getName()).collect(Collectors.toList()).toString());
       for (int i : oldMetadata.getClusters()) {
         clustersToDrop.add(i);
         oldClustersPerViews.put(i, viewName);
@@ -386,7 +386,7 @@ public class ViewManager {
                 indexesToDrop.add(idx);
               });
 
-      OLogManager.instance().info(this, "Finished refresh of view '%s'", viewName);
+      logger.info("Finished refresh of view '%s'", viewName);
     } finally {
       refreshing.remove(viewName);
     }
@@ -536,7 +536,7 @@ public class ViewManager {
             if (listener != null) {
               listener.onError(name, e);
             }
-            OLogManager.instance().warn(this, "Failed to update views", e);
+            logger.warn("Failed to update views", e);
           }
           return null;
         });
@@ -687,7 +687,7 @@ public class ViewManager {
 
     @Override
     public void onError(ODatabaseDocument database, OException exception) {
-      OLogManager.instance().error(ViewManager.this, "Error updating view " + viewName, exception);
+      logger.error("Error updating view " + viewName, exception);
     }
 
     @Override

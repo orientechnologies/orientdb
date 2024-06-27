@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.stream.BreakingForEach;
 import com.orientechnologies.common.util.OPair;
@@ -76,7 +77,13 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.*;
+import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
@@ -126,6 +133,8 @@ import java.util.stream.Stream;
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstract
     implements OTemporaryRidGenerator {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCommandExecutorSQLSelect.class);
   public static final String KEYWORD_SELECT = "SELECT";
   public static final String KEYWORD_ASC = "ASC";
   public static final String KEYWORD_DESC = "DESC";
@@ -1169,7 +1178,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         final String p = OSQLPredicate.upperCase(projection);
         if (p.startsWith("FLATTEN(") || p.startsWith("EXPAND(")) {
           if (p.startsWith("FLATTEN("))
-            OLogManager.instance().debug(this, "FLATTEN() operator has been replaced by EXPAND()");
+            logger.debug("FLATTEN() operator has been replaced by EXPAND()");
 
           List<String> pars = OStringSerializerHelper.getParameters(projection);
           if (pars.size() != 1)
@@ -1713,12 +1722,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                 .getConfiguration()
                 .getValueAsLong(OGlobalConfiguration.QUERY_PARALLEL_MINIMUM_RECORDS)) {
           // ACTIVATE PARALLEL
-          OLogManager.instance()
-              .debug(
-                  this,
-                  "Activated parallel query. clusterIds=%d, totalRecords=%d",
-                  clusterIds.length,
-                  totalRecords);
+          logger.debug(
+              "Activated parallel query. clusterIds=%d, totalRecords=%d",
+              clusterIds.length, totalRecords);
           return true;
         }
       }
@@ -1781,8 +1787,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final boolean res = execParallelWithPool((ORecordIteratorClusters) iTarget, db);
 
-    if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "Parallel query '%s' completed", parserText);
+    if (logger.isDebugEnabled()) logger.debug("Parallel query '%s' completed", parserText);
 
     return res;
   }
@@ -1795,12 +1800,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final int jobNumbers = clusterIds.length;
     final List<Future<?>> jobs = new ArrayList<Future<?>>();
 
-    OLogManager.instance()
-        .debug(
-            this,
-            "Executing parallel query with strategy executors. clusterIds=%d, jobs=%d",
-            clusterIds.length,
-            jobNumbers);
+    logger.debug(
+        "Executing parallel query with strategy executors. clusterIds=%d, jobs=%d",
+        clusterIds.length, jobNumbers);
 
     final boolean[] results = new boolean[jobNumbers];
     final OCommandContext[] contexts = new OCommandContext[jobNumbers];
@@ -1847,7 +1849,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                 exceptions[current] = new RuntimeException(e);
               }
 
-              OLogManager.instance().error(this, "Error during command execution", e);
+              logger.error("Error during command execution", e);
             }
             ODatabaseRecordThreadLocal.instance().remove();
           };
@@ -1870,15 +1872,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         final int qSize = resultQueue.size();
 
         if (!tipProvided && qSize >= maxQueueSize) {
-          OLogManager.instance()
-              .debug(
-                  this,
-                  "Parallel query '%s' has result queue full (size=%d), this could reduce"
-                      + " concurrency level. Consider increasing queue size with setting:"
-                      + " %s=<size>",
-                  parserText,
-                  maxQueueSize + 1,
-                  OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE.getKey());
+          logger.debug(
+              "Parallel query '%s' has result queue full (size=%d), this could reduce"
+                  + " concurrency level. Consider increasing queue size with setting:"
+                  + " %s=<size>",
+              parserText,
+              maxQueueSize + 1,
+              OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE.getKey());
           tipProvided = true;
         }
 
@@ -1917,7 +1917,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         } catch (InterruptedException ignore) {
           break;
         } catch (final ExecutionException e) {
-          OLogManager.instance().error(this, "Error on executing parallel query", e);
+          logger.error("Error on executing parallel query", e);
           throw OException.wrapException(
               new OCommandExecutionException("Error on executing parallel query"), e);
         }
@@ -2187,14 +2187,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           } catch (OIndexEngineException e) {
             throw e;
           } catch (Exception e) {
-            OLogManager.instance()
-                .error(
-                    this,
-                    "Error on using index %s in query '%s'. Probably you need to rebuild indexes."
-                        + " Now executing query using cluster scan",
-                    e,
-                    index.getName(),
-                    request != null && request.getText() != null ? request.getText() : "");
+            logger.error(
+                "Error on using index %s in query '%s'. Probably you need to rebuild indexes."
+                    + " Now executing query using cluster scan",
+                e,
+                index.getName(),
+                request != null && request.getText() != null ? request.getText() : "");
 
             fullySortedByIndex = false;
             cursors.clear();
@@ -2350,14 +2348,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             } catch (OIndexEngineException e) {
               throw e;
             } catch (Exception e) {
-              OLogManager.instance()
-                  .error(
-                      this,
-                      "Error on using index %s in query '%s'. Probably you need to rebuild indexes."
-                          + " Now executing query using cluster scan",
-                      e,
-                      index.getName(),
-                      request != null && request.getText() != null ? request.getText() : "");
+              logger.error(
+                  "Error on using index %s in query '%s'. Probably you need to rebuild indexes."
+                      + " Now executing query using cluster scan",
+                  e,
+                  index.getName(),
+                  request != null && request.getText() != null ? request.getText() : "");
 
               fullySortedByIndex = false;
               streams.clear();

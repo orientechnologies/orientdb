@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.Serializable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -16,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * http://www.javaspecialists.eu/archive/Issue015.html.
  */
 public class OSoftRefsHashMap<K, V> extends AbstractMap<K, V> implements Serializable {
+  private static final OLogger logger = OLogManager.instance().logger(OSoftRefsHashMap.class);
   private final Map<K, SoftReference<V>> hashCodes = new ConcurrentHashMap<K, SoftReference<V>>();
   private final Map<SoftReference<V>, K> reverseLookup =
       new ConcurrentHashMap<SoftReference<V>, K>();
@@ -47,7 +49,7 @@ public class OSoftRefsHashMap<K, V> extends AbstractMap<K, V> implements Seriali
       }
     }
 
-    if (evicted > 0) OLogManager.instance().debug(this, "Evicted %d items", evicted);
+    if (evicted > 0) logger.debug("Evicted %d items", evicted);
   }
 
   public V put(final K key, final V value) {

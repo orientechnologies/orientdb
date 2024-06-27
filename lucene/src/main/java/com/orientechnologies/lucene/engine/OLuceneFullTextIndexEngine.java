@@ -20,6 +20,7 @@ import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_MET
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.builder.OLuceneDocumentBuilder;
 import com.orientechnologies.lucene.builder.OLuceneIndexType;
@@ -63,6 +64,8 @@ import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.store.Directory;
 
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneFullTextIndexEngine.class);
 
   private final OLuceneDocumentBuilder builder;
   private OLuceneQueryBuilder queryBuilder;
@@ -84,7 +87,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
     OLuceneIndexWriterFactory fc = new OLuceneIndexWriterFactory();
 
-    OLogManager.instance().debug(this, "Creating Lucene index in '%s'...", directory);
+    logger.debug("Creating Lucene index in '%s'...", directory);
 
     return fc.createIndexWriter(directory, metadata, indexAnalyzer());
   }

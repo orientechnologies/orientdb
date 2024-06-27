@@ -1,6 +1,7 @@
 package com.orientechnologies.common.collection.closabledictionary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.util.Iterator;
@@ -33,6 +34,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * @param <V> Value which may be in open/closed stated and associated with key.
  */
 public class OClosableLinkedContainer<K, V extends OClosableItem> {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OClosableLinkedContainer.class);
+
   /**
    * Design of container consist of several major parts.
    *
@@ -786,16 +790,11 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     }
 
     if (closedFiles > 0) {
-      OLogManager.instance()
-          .debug(
-              this,
-              "Reached maximum of opened files %d (max=%d), closed %d files. Consider to raise this"
-                  + " limit by increasing the global setting '%s' and the OS limit on opened files"
-                  + " per processor",
-              initialSize,
-              openLimit,
-              closedFiles,
-              OGlobalConfiguration.OPEN_FILES_LIMIT.getKey());
+      logger.debug(
+          "Reached maximum of opened files %d (max=%d), closed %d files. Consider to raise this"
+              + " limit by increasing the global setting '%s' and the OS limit on opened files"
+              + " per processor",
+          initialSize, openLimit, closedFiles, OGlobalConfiguration.OPEN_FILES_LIMIT.getKey());
     }
 
     Orient.instance()

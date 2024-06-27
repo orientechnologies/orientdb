@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
@@ -28,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 
 public class OPushManager implements OMetadataUpdateListener {
+  private static final OLogger logger = OLogManager.instance().logger(OPushManager.class);
 
   protected final Set<WeakReference<ONetworkProtocolBinary>> distributedConfigPush =
       new HashSet<>();
@@ -202,8 +204,7 @@ public class OPushManager implements OMetadataUpdateListener {
             }
           });
     } catch (RejectedExecutionException e) {
-      OLogManager.instance()
-          .info(this, "Cannot send push request to client for database '%s'", database);
+      logger.info("Cannot send push request to client for database '%s'", database);
     }
   }
 }

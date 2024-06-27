@@ -27,6 +27,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OInvalidBinaryChunkException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -88,6 +89,7 @@ import java.util.function.Function;
 import java.util.logging.Level;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
+  private static final OLogger logger = OLogManager.instance().logger(ONetworkProtocolBinary.class);
   protected final Level logClientExceptions;
   protected final boolean logClientFullStackTrace;
   protected OChannelBinary channel;
@@ -284,7 +286,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     long timer = 0;
 
     timer = Orient.instance().getProfiler().startChrono();
-    OLogManager.instance().debug(this, "Request id:" + clientTxId + " type:" + requestType);
+    logger.debug("Request id:" + clientTxId + " type:" + requestType);
 
     try {
       OBinaryRequest<? extends OBinaryResponse> request = factory.apply(requestType);
@@ -320,16 +322,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           if (connection != null) {
             connection.endOperation();
           }
-          OLogManager.instance()
-              .debug(
-                  this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
+          logger.debug("I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
           sendShutdown();
           return;
         } catch (Throwable e) {
           if (connection != null) {
             connection.endOperation();
           }
-          OLogManager.instance().error(this, "Error reading request", e);
+          logger.error("Error reading request", e);
           sendShutdown();
           return;
         }
@@ -374,9 +374,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             okSent = true;
             sendError(connection, clientTxId, exception);
           } catch (IOException e) {
-            OLogManager.instance()
-                .debug(
-                    this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
+            logger.debug("I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
             sendShutdown();
           } finally {
             afterOperationRequest(connection);
@@ -396,17 +394,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               }
             }
           } catch (OInvalidBinaryChunkException e) {
-            OLogManager.instance()
-                .warn(
-                    this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
+            logger.warn("I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
             sendShutdown();
           } catch (IOException e) {
-            OLogManager.instance()
-                .debug(
-                    this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
+            logger.debug("I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
             sendShutdown();
           } catch (Exception | Error e) {
-            OLogManager.instance().error(this, "Error while binary response serialization", e);
+            logger.error("Error while binary response serialization", e);
             sendShutdown();
             throw e;
           } finally {
@@ -415,7 +409,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         }
         if (connection != null) tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
       } else {
-        OLogManager.instance().error(this, "Request not supported. Code: " + requestType, null);
+        logger.error("Request not supported. Code: " + requestType, null);
         handleConnectionError(
             connection,
             new ONetworkProtocolException("Request not supported. Code: " + requestType));
@@ -489,7 +483,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       timer = Orient.instance().getProfiler().startChrono();
       byte[] tokenBytes = channel.readBytes();
       connection = onBeforeOperationalRequest(connection, tokenBytes);
-      OLogManager.instance().debug(this, "Request id:" + clientTxId + " type:" + requestType);
+      logger.debug("Request id:" + clientTxId + " type:" + requestType);
 
       try {
         switch (requestType) {
@@ -508,13 +502,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     } catch (Exception t) {
       // IN CASE OF DISTRIBUTED ANY EXCEPTION AT THIS POINT CAUSE THIS CONNECTION TO CLOSE
-      OLogManager.instance()
-          .warn(
-              this,
-              "I/O Error on distributed channel  clientId=%d reqType=%d",
-              t,
-              clientTxId,
-              requestType);
+      logger.warn(
+          "I/O Error on distributed channel  clientId=%d reqType=%d", t, clientTxId, requestType);
       sendShutdown();
     } finally {
       Orient.instance()
@@ -816,7 +805,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       }
     } catch (Exception e) {
       if (e instanceof SocketException) shutdown();
-      else OLogManager.instance().error(this, "Error during sending an error to client", e);
+      else logger.error("Error during sending an error to client", e);
     } finally {
       if (channel.getLockWrite().isHeldByCurrentThread())
         // NO EXCEPTION SO FAR: UNLOCK IT
@@ -869,9 +858,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     try {
       channel.flush();
     } catch (IOException e1) {
-      OLogManager.instance().debug(this, "Error during channel flush", e1);
+      logger.debug("Error during channel flush", e1);
     }
-    OLogManager.instance().error(this, "Error executing request", e);
+    logger.error("Error executing request", e);
     OServerPluginHelper.invokeHandlerCallbackOnClientError(server, connection, e);
   }
 

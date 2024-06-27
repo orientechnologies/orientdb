@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.proxy;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public class OProxyServer extends OServerPluginAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OProxyServer.class);
   protected String remoteHost = "localhost";
   protected Map<Integer, Integer> ports = new HashMap<Integer, Integer>();
   protected int bufferSize = 16384;
@@ -38,13 +40,9 @@ public class OProxyServer extends OServerPluginAbstract {
       final int localPort = ports.getKey();
       final int remotePort = ports.getValue();
 
-      OLogManager.instance()
-          .info(
-              this,
-              "Proxy server: configuring proxy connection from localhost:%d -> %s:%d...",
-              localPort,
-              remoteHost,
-              remotePort);
+      logger.info(
+          "Proxy server: configuring proxy connection from localhost:%d -> %s:%d...",
+          localPort, remoteHost, remotePort);
 
       try {
         final OProxyServerListener serverThread =

@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -46,6 +47,7 @@ import java.util.stream.Collectors;
  * @author S. Colin Leister
  */
 public class ODefaultSecuritySystem implements OSecuritySystem {
+  private static final OLogger logger = OLogManager.instance().logger(ODefaultSecuritySystem.class);
   private boolean enabled = false; // Defaults to not
   // enabled at
   // first.
@@ -196,7 +198,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         }
       }
     } catch (Exception th) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.getClass() Throwable: ", th);
+      logger.error("ODefaultServerSecurity.getClass() Throwable: ", th);
     }
 
     return cls;
@@ -220,7 +222,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         if (principal != null) return principal;
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
+      logger.error("ODefaultServerSecurity.authenticate()", ex);
     }
 
     return null; // Indicates authentication failed.
@@ -235,11 +237,8 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       // tickets.
       if (username != null && !username.isEmpty()) {
         if (debug)
-          OLogManager.instance()
-              .info(
-                  this,
-                  "ODefaultServerSecurity.authenticate() ** Authenticating username: %s",
-                  username);
+          logger.info(
+              "ODefaultServerSecurity.authenticate() ** Authenticating username: %s", username);
       }
 
       for (OSecurityAuthenticator sa : getEnabledAuthenticators()) {
@@ -249,7 +248,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       }
 
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
+      logger.error("ODefaultServerSecurity.authenticate()", ex);
     }
 
     return null; // Indicates authentication failed.
@@ -355,7 +354,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         jsonConfig.field("auditing", auditingDoc, OType.EMBEDDED);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.getConfig() Exception: %s", ex);
+      logger.error("ODefaultServerSecurity.getConfig() Exception: %s", ex);
     }
 
     return jsonConfig;
@@ -636,11 +635,9 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
           user,
           "The security configuration file has been reloaded");
     } else {
-      OLogManager.instance()
-          .warn(
-              this,
-              "ODefaultServerSecurity.reload(ODocument) The provided configuration document is"
-                  + " null");
+      logger.warn(
+          "ODefaultServerSecurity.reload(ODocument) The provided configuration document is"
+              + " null");
       throw new OSecuritySystemException(
           "ODefaultServerSecurity.reload(ODocument) The provided configuration document is null");
     }
@@ -709,34 +706,26 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
 
                   autheticators.add(authPlugin);
                 } else {
-                  OLogManager.instance()
-                      .error(
-                          this,
-                          "ODefaultServerSecurity.loadAuthenticators() class is not an"
-                              + " OSecurityAuthenticator",
-                          null);
+                  logger.error(
+                      "ODefaultServerSecurity.loadAuthenticators() class is not an"
+                          + " OSecurityAuthenticator",
+                      null);
                 }
               } else {
-                OLogManager.instance()
-                    .error(
-                        this,
-                        "ODefaultServerSecurity.loadAuthenticators() authentication class is null"
-                            + " for %s",
-                        null,
-                        name);
+                logger.error(
+                    "ODefaultServerSecurity.loadAuthenticators() authentication class is null"
+                        + " for %s",
+                    null, name);
               }
             }
           } else {
-            OLogManager.instance()
-                .error(
-                    this,
-                    "ODefaultServerSecurity.loadAuthenticators() authentication object is missing"
-                        + " name",
-                    null);
+            logger.error(
+                "ODefaultServerSecurity.loadAuthenticators() authentication object is missing"
+                    + " name",
+                null);
           }
         } catch (Exception ex) {
-          OLogManager.instance()
-              .error(this, "ODefaultServerSecurity.loadAuthenticators() Exception: ", ex);
+          logger.error("ODefaultServerSecurity.loadAuthenticators() Exception: ", ex);
         }
       }
       if (isDefaultAllowed()) {
@@ -763,7 +752,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       }
     } else {
       initDefultAuthenticators();
-      OLogManager.instance().debug(this, "onAfterDynamicPlugins() Configuration document is empty");
+      logger.debug("onAfterDynamicPlugins() Configuration document is empty");
     }
   }
 
@@ -804,15 +793,11 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
           sectionDoc = configDoc.field(section);
         }
       } else {
-        OLogManager.instance()
-            .error(
-                this,
-                "ODefaultServerSecurity.getSection(%s) Configuration document is null",
-                null,
-                section);
+        logger.error(
+            "ODefaultServerSecurity.getSection(%s) Configuration document is null", null, section);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.getSection(%s)", ex, section);
+      logger.error("ODefaultServerSecurity.getSection(%s)", ex, section);
     }
 
     return sectionDoc;
@@ -837,7 +822,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       }
     } catch (Exception ex) {
       configDoc.field(section, oldSection);
-      OLogManager.instance().error(this, "ODefaultServerSecurity.setSection(%s)", ex, section);
+      logger.error("ODefaultServerSecurity.setSection(%s)", ex, section);
     }
   }
 
@@ -867,18 +852,16 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
           }
         } else {
           if (file.exists()) {
-            OLogManager.instance()
-                .warn(this, "Could not read the security JSON file: %s", null, jsonFile);
+            logger.warn("Could not read the security JSON file: %s", null, jsonFile);
           } else {
             if (file.exists()) {
-              OLogManager.instance()
-                  .warn(this, "Security JSON file: %s do not exists", null, jsonFile);
+              logger.warn("Security JSON file: %s do not exists", null, jsonFile);
             }
           }
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "error loading security config", ex);
+      logger.error("error loading security config", ex);
     }
 
     return securityDoc;
@@ -892,7 +875,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         enabled = sectionDoc.field("enabled");
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.isEnabled()", ex);
+      logger.error("ODefaultServerSecurity.isEnabled()", ex);
     }
 
     return enabled;
@@ -911,11 +894,10 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
           debug = configDoc.field("debug");
         }
       } else {
-        OLogManager.instance()
-            .debug(this, "ODefaultServerSecurity.loadSecurity() jsonConfig is null");
+        logger.debug("ODefaultServerSecurity.loadSecurity() jsonConfig is null");
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.loadSecurity()", ex);
+      logger.error("ODefaultServerSecurity.loadSecurity()", ex);
     }
   }
 
@@ -933,7 +915,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.loadServer()", ex);
+      logger.error("ODefaultServerSecurity.loadServer()", ex);
     }
   }
 
@@ -965,25 +947,21 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
               passwordValidator.config(passwdValDoc, this);
               passwordValidator.active();
             } else {
-              OLogManager.instance()
-                  .error(
-                      this,
-                      "ODefaultServerSecurity.reloadPasswordValidator() class is not an"
-                          + " OPasswordValidator",
-                      null);
+              logger.error(
+                  "ODefaultServerSecurity.reloadPasswordValidator() class is not an"
+                      + " OPasswordValidator",
+                  null);
             }
           } else {
-            OLogManager.instance()
-                .error(
-                    this,
-                    "ODefaultServerSecurity.reloadPasswordValidator() PasswordValidator class"
-                        + " property is missing",
-                    null);
+            logger.error(
+                "ODefaultServerSecurity.reloadPasswordValidator() PasswordValidator class"
+                    + " property is missing",
+                null);
           }
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.reloadPasswordValidator()", ex);
+      logger.error("ODefaultServerSecurity.reloadPasswordValidator()", ex);
     }
   }
 
@@ -1004,25 +982,21 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
               importLDAP.config(ldapImportDoc, this);
               importLDAP.active();
             } else {
-              OLogManager.instance()
-                  .error(
-                      this,
-                      "ODefaultServerSecurity.reloadImportLDAP() class is not an"
-                          + " OSecurityComponent",
-                      null);
+              logger.error(
+                  "ODefaultServerSecurity.reloadImportLDAP() class is not an"
+                      + " OSecurityComponent",
+                  null);
             }
           } else {
-            OLogManager.instance()
-                .error(
-                    this,
-                    "ODefaultServerSecurity.reloadImportLDAP() ImportLDAP class property is"
-                        + " missing",
-                    null);
+            logger.error(
+                "ODefaultServerSecurity.reloadImportLDAP() ImportLDAP class property is"
+                    + " missing",
+                null);
           }
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.reloadImportLDAP()", ex);
+      logger.error("ODefaultServerSecurity.reloadImportLDAP()", ex);
     }
   }
 
@@ -1043,25 +1017,21 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
               auditingService.config(auditingDoc, this);
               auditingService.active();
             } else {
-              OLogManager.instance()
-                  .error(
-                      this,
-                      "ODefaultServerSecurity.reloadAuditingService() class is not an"
-                          + " OAuditingService",
-                      null);
+              logger.error(
+                  "ODefaultServerSecurity.reloadAuditingService() class is not an"
+                      + " OAuditingService",
+                  null);
             }
           } else {
-            OLogManager.instance()
-                .error(
-                    this,
-                    "ODefaultServerSecurity.reloadAuditingService() Auditing class property is"
-                        + " missing",
-                    null);
+            logger.error(
+                "ODefaultServerSecurity.reloadAuditingService() Auditing class property is"
+                    + " missing",
+                null);
           }
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.reloadAuditingService()", ex);
+      logger.error("ODefaultServerSecurity.reloadAuditingService()", ex);
     }
   }
 

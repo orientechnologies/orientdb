@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -32,11 +33,13 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
  * @author S. Colin Leister
  */
 public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerConfigAuthenticator.class);
 
   // OSecurityComponent
   // Called once the Server is running.
   public void active() {
-    OLogManager.instance().debug(this, "OSystemUserAuthenticator is active");
+    logger.debug("OSystemUserAuthenticator is active");
   }
 
   // OSecurityComponent
@@ -59,7 +62,7 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "authenticate()", ex);
+      logger.error("authenticate()", ex);
     }
 
     return null;
@@ -94,7 +97,7 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "isAuthorized()", ex);
+      logger.error("isAuthorized()", ex);
     }
 
     return false;
@@ -109,7 +112,7 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
         userCfg = getSecurity().getSystemUser(username, null);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "getUser()", ex);
+      logger.error("getUser()", ex);
     }
 
     return userCfg;

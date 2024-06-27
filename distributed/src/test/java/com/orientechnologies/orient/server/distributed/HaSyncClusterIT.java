@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -44,6 +45,7 @@ import org.junit.Test;
  */
 @Ignore
 public class HaSyncClusterIT extends AbstractServerClusterTest {
+  private static final OLogger logger = OLogManager.instance().logger(HaSyncClusterIT.class);
   private static final int SERVERS = 2;
   public static final int NUM_RECORDS = 1000;
 
@@ -160,14 +162,10 @@ public class HaSyncClusterIT extends AbstractServerClusterTest {
                               messageService.getProcessedRequests() - gossip - deploy_cluster;
                           if (messageStats != null) {
 
-                            OLogManager.instance()
-                                .info(
-                                    this,
-                                    "Waiting for processed requests to be [%d], actual [%d] with"
-                                        + " stats [%s] ",
-                                    NUM_RECORDS,
-                                    processed,
-                                    messageStats.toJSON());
+                            logger.info(
+                                "Waiting for processed requests to be [%d], actual [%d] with"
+                                    + " stats [%s] ",
+                                NUM_RECORDS, processed, messageStats.toJSON());
                           }
 
                           return processed >= NUM_RECORDS;

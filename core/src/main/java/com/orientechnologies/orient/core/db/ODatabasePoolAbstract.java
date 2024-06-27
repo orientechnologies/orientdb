@@ -25,6 +25,7 @@ import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -41,7 +42,7 @@ import java.util.TimerTask;
 
 public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extends OAdaptiveLock
     implements OResourcePoolListener<String, DB>, OOrientListener {
-
+  private static final OLogger logger = OLogManager.instance().logger(ODatabasePoolAbstract.class);
   private final HashMap<String, OReentrantResourcePool<String, DB>> pools =
       new HashMap<String, OReentrantResourcePool<String, DB>>();
   protected Object owner;
@@ -63,7 +64,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     /** Run pool maintenance. Evict objects qualifying for eviction */
     @Override
     public void run() {
-      OLogManager.instance().debug(this, "Running Connection Pool Evictor Service...");
+      logger.debug("Running Connection Pool Evictor Service...");
       lock();
       try {
         for (Entry<String, Map<DB, Long>> pool : this.evictionMap.entrySet()) {
@@ -75,8 +76,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
 
               OReentrantResourcePool<String, DB> oResourcePool = pools.get(pool.getKey());
               if (oResourcePool != null) {
-                OLogManager.instance()
-                    .debug(this, "Closing idle pooled database '%s'...", db.getKey().getName());
+                logger.debug("Closing idle pooled database '%s'...", db.getKey().getName());
                 ((ODatabasePooled) db.getKey()).forceClose();
                 oResourcePool.remove(db.getKey());
                 iterator.remove();
@@ -274,11 +274,11 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
         for (DB db : pool.getValue().getResources()) {
           pool.getValue().close();
           try {
-            OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
+            logger.debug("Closing pooled database '%s'...", db.getName());
             ((ODatabasePooled) db).forceClose();
-            OLogManager.instance().debug(this, "OK", db.getName());
+            logger.debug("OK", db.getName());
           } catch (Exception e) {
-            OLogManager.instance().debug(this, "Error: %d", e.toString());
+            logger.debug("Error: %d", e.toString());
           }
         }
       }
@@ -303,12 +303,12 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
           final OStorage stg = db.getStorage();
           if (stg != null && stg.getStatus() == OStorage.STATUS.OPEN)
             try {
-              OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
+              logger.debug("Closing pooled database '%s'...", db.getName());
               db.activateOnCurrentThread();
               ((ODatabasePooled) db).forceClose();
-              OLogManager.instance().debug(this, "OK", db.getName());
+              logger.debug("OK", db.getName());
             } catch (Exception e) {
-              OLogManager.instance().debug(this, "Error: %d", e.toString());
+              logger.debug("Error: %d", e.toString());
             }
         }
         pool.close();

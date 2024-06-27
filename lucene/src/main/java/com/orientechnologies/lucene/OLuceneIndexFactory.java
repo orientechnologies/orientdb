@@ -19,6 +19,7 @@ package com.orientechnologies.lucene;
 import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.engine.OLuceneFullTextIndexEngine;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.Orient;
@@ -39,6 +40,7 @@ import java.util.Set;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
+  private static final OLogger logger = OLogManager.instance().logger(OLuceneIndexFactory.class);
   public static final String LUCENE_ALGORITHM = "LUCENE";
 
   private static final Set<String> TYPES;
@@ -109,17 +111,17 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   @Override
   public void onCreate(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onCreate");
+    logger.debug("onCreate");
   }
 
   @Override
   public void onOpen(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onOpen");
+    logger.debug("onOpen");
   }
 
   @Override
   public void onClose(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onClose");
+    logger.debug("onClose");
   }
 
   @Override
@@ -127,16 +129,16 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
     try {
       if (db.isClosed()) return;
 
-      OLogManager.instance().debug(this, "Dropping Lucene indexes...");
+      logger.debug("Dropping Lucene indexes...");
 
       final ODatabaseDocumentInternal internal = (ODatabaseDocumentInternal) db;
       internal.getMetadata().getIndexManagerInternal().getIndexes(internal).stream()
           .filter(idx -> idx.getInternal() instanceof OLuceneFullTextIndex)
-          .peek(idx -> OLogManager.instance().debug(this, "deleting index " + idx.getName()))
+          .peek(idx -> logger.debug("deleting index " + idx.getName()))
           .forEach(idx -> idx.delete());
 
     } catch (Exception e) {
-      OLogManager.instance().warn(this, "Error on dropping Lucene indexes", e);
+      logger.warn("Error on dropping Lucene indexes", e);
     }
   }
 

@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.graph.sql;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -30,6 +31,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(GraphIntersectLightweightEdges.class);
   private final int TOT = 1000;
 
   @Test
@@ -54,7 +57,7 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
       }
     }
 
-    OLogManager.instance().info(this, "Created root1 with " + TOT + " children");
+    logger.info("Created root1 with " + TOT + " children");
 
     // CREATE SUPER NODE2
     final OrientVertex root2 = graph.addVertex(null, "name", "root2");
@@ -69,7 +72,7 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
       }
     }
 
-    OLogManager.instance().info(this, "Created root2 with " + TOT + " children");
+    logger.info("Created root2 with " + TOT + " children");
 
     // CREATE THE VERTEX IN COMMON
     final OrientVertex common = graph.addVertex(null, "common", true);
@@ -79,14 +82,14 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
 
     graph.commit();
 
-    OLogManager.instance().info(this, "Intersecting...");
+    logger.info("Intersecting...");
 
     Iterable<OrientVertex> result =
         graph
             .command(new OCommandSQL("select intersect( out() ) from [?,?]"))
             .execute(root1.getIdentity(), root2.getIdentity());
 
-    OLogManager.instance().info(this, "Intersecting done");
+    logger.info("Intersecting done");
 
     Assert.assertTrue(result.iterator().hasNext());
     OrientVertex o = result.iterator().next();

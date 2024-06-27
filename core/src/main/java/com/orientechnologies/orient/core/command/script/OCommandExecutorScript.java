@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OContextVariableResolver;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -82,6 +83,7 @@ import javax.script.SimpleBindings;
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract
     implements OCommandDistributedReplicateRequest, OTemporaryRidGenerator {
+  private static final OLogger logger = OLogManager.instance().logger(OCommandExecutorScript.class);
   private static final int MAX_DELAY = 100;
   protected OCommandScript request;
   protected DISTRIBUTED_EXECUTION_MODE executionMode = DISTRIBUTED_EXECUTION_MODE.LOCAL;
@@ -143,13 +145,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
               parserText.getBytes(getDatabase().getStorageInfo().getConfiguration().getCharset());
         }
       } catch (UnsupportedEncodingException e) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Invalid charset for database "
-                    + getDatabase()
-                    + " "
-                    + getDatabase().getStorageInfo().getConfiguration().getCharset());
+        logger.warn(
+            "Invalid charset for database "
+                + getDatabase()
+                + " "
+                + getDatabase().getStorageInfo().getConfiguration().getCharset());
 
         bytes = parserText.getBytes();
       }
@@ -165,13 +165,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
           osql = new OrientSql(is, db.getStorageInfo().getConfiguration().getCharset());
         }
       } catch (UnsupportedEncodingException e) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Invalid charset for database "
-                    + getDatabase()
-                    + " "
-                    + getDatabase().getStorageInfo().getConfiguration().getCharset());
+        logger.warn(
+            "Invalid charset for database "
+                + getDatabase()
+                + " "
+                + getDatabase().getStorageInfo().getConfiguration().getCharset());
         osql = new OrientSql(is);
       }
       List<OStatement> statements = osql.parseScript();
@@ -544,7 +542,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
     try {
       Thread.sleep(new Random().nextInt(MAX_DELAY - 1) + 1);
     } catch (InterruptedException e) {
-      OLogManager.instance().error(this, "Wait was interrupted", e);
+      logger.error("Wait was interrupted", e);
     }
   }
 
@@ -645,13 +643,13 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
     try {
       Thread.sleep(Integer.parseInt(sleepTimeInMs));
     } catch (InterruptedException e) {
-      OLogManager.instance().debug(this, "Sleep was interrupted in SQL batch", e);
+      logger.debug("Sleep was interrupted in SQL batch", e);
     }
   }
 
   private void executeConsoleLog(final String lastCommand, final ODatabaseDocument db) {
     final String value = lastCommand.substring("console.log ".length()).trim();
-    OLogManager.instance().info(this, "%s", getValue(OIOUtils.wrapStringContent(value, '\''), db));
+    logger.info("%s", getValue(OIOUtils.wrapStringContent(value, '\''), db));
   }
 
   private void executeConsoleOutput(final String lastCommand, final ODatabaseDocument db) {

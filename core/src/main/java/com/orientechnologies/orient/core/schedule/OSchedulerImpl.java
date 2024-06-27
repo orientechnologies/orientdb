@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.schedule;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -43,6 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since Mar 28, 2013
  */
 public class OSchedulerImpl {
+  private static final OLogger logger = OLogManager.instance().logger(OSchedulerImpl.class);
   private ConcurrentHashMap<String, OScheduledEvent> events =
       new ConcurrentHashMap<String, OScheduledEvent>();
 
@@ -73,7 +75,7 @@ public class OSchedulerImpl {
   }
 
   public void removeEvent(final String eventName) {
-    OLogManager.instance().debug(this, "Removing scheduled event '%s'...", eventName);
+    logger.debug("Removing scheduled event '%s'...", eventName);
 
     final OScheduledEvent event = removeEventInternal(eventName);
 
@@ -91,12 +93,9 @@ public class OSchedulerImpl {
           new OCallable<Object, Integer>() {
             @Override
             public Object call(Integer iArgument) {
-              OLogManager.instance()
-                  .debug(
-                      this,
-                      "Deleting scheduled event '%s' rid=%s...",
-                      event,
-                      event.getDocument().getIdentity());
+              logger.debug(
+                  "Deleting scheduled event '%s' rid=%s...",
+                  event, event.getDocument().getIdentity());
               event.getDocument().delete();
               return null;
             }
@@ -111,12 +110,8 @@ public class OSchedulerImpl {
     final OScheduledEvent oldEvent = events.remove(event.getName());
     if (oldEvent != null) oldEvent.interrupt();
     scheduleEvent(event);
-    OLogManager.instance()
-        .debug(
-            this,
-            "Updated scheduled event '%s' rid=%s...",
-            event,
-            event.getDocument().getIdentity());
+    logger.debug(
+        "Updated scheduled event '%s' rid=%s...", event, event.getDocument().getIdentity());
   }
 
   public Map<String, OScheduledEvent> getEvents() {
@@ -202,7 +197,7 @@ public class OSchedulerImpl {
       }
 
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "Error on updating scheduled event", ex);
+      logger.error("Error on updating scheduled event", ex);
     }
   }
 }

@@ -23,6 +23,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
@@ -40,6 +41,7 @@ import org.apache.commons.configuration.Configuration;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public class OrientGraphNoTx extends OrientBaseGraph {
+  private static final OLogger logger = OLogManager.instance().logger(OrientGraphNoTx.class);
   private final Features features = new Features();
 
   /**
@@ -343,13 +345,11 @@ public class OrientGraphNoTx extends OrientBaseGraph {
                     outFieldName,
                     outVertexRecord.field(outFieldName));
           } else
-            OLogManager.instance()
-                .debug(
-                    graph,
-                    "Found broken link to outgoing vertex "
-                        + outVertex.getIdentity()
-                        + " while removing edge "
-                        + edge.getId());
+            logger.debug(
+                "Found broken link to outgoing vertex "
+                    + outVertex.getIdentity()
+                    + " while removing edge "
+                    + edge.getId());
         }
 
         // IN VERTEX
@@ -370,13 +370,11 @@ public class OrientGraphNoTx extends OrientBaseGraph {
                 edge.dropEdgeFromVertex(
                     outVertexEdge, inVertexRecord, inFieldName, inVertexRecord.field(inFieldName));
           } else
-            OLogManager.instance()
-                .debug(
-                    graph,
-                    "Found broken link to incoming vertex "
-                        + inVertex.getIdentity()
-                        + " while removing edge "
-                        + edge.getId());
+            logger.debug(
+                "Found broken link to incoming vertex "
+                    + inVertex.getIdentity()
+                    + " while removing edge "
+                    + edge.getId());
         }
 
         if (outVertexChanged) outVertexRecord.save();

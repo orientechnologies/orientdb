@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
@@ -40,6 +41,8 @@ import org.junit.Assert;
 
 /** Test distributed TX */
 public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistributedWriteTest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(AbstractDistributedConcurrentTxTest.class);
   //  protected ODatabasePool pool;
   protected ORID v;
   protected AtomicLong lockExceptions = new AtomicLong(0l);
@@ -78,17 +81,16 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
             try {
               updateVertex(localVertex);
               graph.commit();
-              OLogManager.instance().info(this, "Success count %d retry %d", i, retry);
+              logger.info("Success count %d retry %d", i, retry);
               success = true;
               break;
 
             } catch (ODistributedRecordLockedException e) {
               lockExceptions.incrementAndGet();
-              OLogManager.instance()
-                  .info(this, "increment lockExceptions %d", lockExceptions.get());
+              logger.info("increment lockExceptions %d", lockExceptions.get());
 
             } catch (ONeedRetryException e) {
-              OLogManager.instance().debug(this, "Concurrent Exceptions " + e);
+              logger.debug("Concurrent Exceptions " + e);
 
             } catch (Exception e) {
               graph.rollback();
@@ -99,12 +101,8 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
 
             localVertex.reload();
 
-            OLogManager.instance()
-                .info(
-                    this,
-                    "Retry %d with reloaded vertex v=%d",
-                    retry,
-                    localVertex.getRecord().getVersion());
+            logger.info(
+                "Retry %d with reloaded vertex v=%d", retry, localVertex.getRecord().getVersion());
           }
 
           Assert.assertTrue(

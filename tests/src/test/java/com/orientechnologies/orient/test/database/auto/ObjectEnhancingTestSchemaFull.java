@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,6 +36,8 @@ import org.testng.annotations.Test;
     groups = {"object", "enhancingSchemaFull"},
     dependsOnGroups = "detachingSchemaFull")
 public class ObjectEnhancingTestSchemaFull extends ObjectDBBaseTest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ObjectEnhancingTestSchemaFull.class);
 
   @Parameters(value = "url")
   public ObjectEnhancingTestSchemaFull(@Optional String url) {
@@ -104,7 +107,7 @@ public class ObjectEnhancingTestSchemaFull extends ObjectDBBaseTest {
   @AfterClass
   public void end() throws IOException {
     String prefix = url.substring(0, url.indexOf(':') + 1);
-    OLogManager.instance().info(this, "deleting database " + url);
+    logger.info("deleting database " + url);
     ODatabaseHelper.dropDatabase(
         OObjectDatabasePool.global().acquire(url, "admin", "admin"), prefix);
   }

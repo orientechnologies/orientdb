@@ -21,6 +21,7 @@
 package com.orientechnologies.common.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 
 /**
  * Resolve entity class and descriptors using the paths configured.
@@ -28,6 +29,8 @@ import com.orientechnologies.common.log.OLogManager;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (luca.garulli--at--assetdata.it)
  */
 public class OVariableParser {
+  private static final OLogger logger = OLogManager.instance().logger(OVariableParser.class);
+
   public static Object resolveVariables(
       final String iText,
       final String iBegin,
@@ -59,8 +62,7 @@ public class OVariableParser {
 
     if (resolved == null) {
       if (iDefaultValue == null)
-        OLogManager.instance()
-            .info(null, "[OVariableParser.resolveVariables] Property not found: %s", var);
+        logger.info("[OVariableParser.resolveVariables] Property not found: %s", var);
       else resolved = iDefaultValue;
     }
 

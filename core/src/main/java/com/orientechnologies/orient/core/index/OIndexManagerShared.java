@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -73,6 +74,7 @@ import java.util.stream.Stream;
  * @author Artem Orobets added composite index managemement
  */
 public class OIndexManagerShared implements OIndexManagerAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OIndexManagerShared.class);
   private transient volatile Thread recreateIndexesThread = null;
   volatile boolean rebuildCompleted = false;
   final OStorage storage;
@@ -864,13 +866,13 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     if (recreateIndexesThread != null && recreateIndexesThread.isAlive()) {
       if (Thread.currentThread().equals(recreateIndexesThread)) return;
 
-      OLogManager.instance().info(this, "Wait till indexes restore after crash was finished.");
+      logger.info("Wait till indexes restore after crash was finished.");
       while (recreateIndexesThread.isAlive())
         try {
           recreateIndexesThread.join();
-          OLogManager.instance().info(this, "Indexes restore after crash was finished.");
+          logger.info("Indexes restore after crash was finished.");
         } catch (InterruptedException e) {
-          OLogManager.instance().info(this, "Index rebuild task was interrupted.", e);
+          logger.info("Index rebuild task was interrupted.", e);
         }
     }
   }
@@ -937,22 +939,18 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
           } catch (RuntimeException e) {
             indexConfigurationIterator.remove();
             configUpdated = true;
-            OLogManager.instance().error(this, "Error on loading index by configuration: %s", e, d);
+            logger.error("Error on loading index by configuration: %s", e, d);
           }
         }
 
         for (OIndex oldIndex : oldIndexes.values())
           try {
-            OLogManager.instance()
-                .warn(
-                    this,
-                    "Index '%s' was not found after reload and will be removed",
-                    oldIndex.getName());
+            logger.warn(
+                "Index '%s' was not found after reload and will be removed", oldIndex.getName());
 
             oldIndex.delete();
           } catch (Exception e) {
-            OLogManager.instance()
-                .error(this, "Error on deletion of index '%s'", e, oldIndex.getName());
+            logger.error("Error on deletion of index '%s'", e, oldIndex.getName());
           }
 
         if (configUpdated) {
@@ -1049,12 +1047,10 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         break;
 
       } catch (OConcurrentModificationException e) {
-        OLogManager.instance()
-            .debug(this, "concurrent modification while saving index manager configuration", e);
+        logger.debug("concurrent modification while saving index manager configuration", e);
       }
 
     if (!saved)
-      OLogManager.instance()
-          .error(this, "failed to save the index manager configuration after 10 retries", null);
+      logger.error("failed to save the index manager configuration after 10 retries", null);
   }
 }

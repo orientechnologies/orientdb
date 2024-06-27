@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
@@ -45,6 +46,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPOutputStream;
 
 public class OServerCommandGetStaticContent extends OServerCommandConfigurableAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerCommandGetStaticContent.class);
   private static final String[] DEF_PATTERN = {
     "GET|www",
     "GET|studio/",
@@ -181,14 +184,14 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
       }
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on loading resource %s", e, iRequest.getUrl());
+      logger.error("Error on loading resource %s", e, iRequest.getUrl());
 
     } finally {
       if (staticContent != null && staticContent.is != null)
         try {
           staticContent.is.close();
         } catch (IOException e) {
-          OLogManager.instance().warn(this, "Error on closing file", e);
+          logger.warn("Error on closing file", e);
         }
     }
     return false;
@@ -250,12 +253,10 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
       // GET GLOBAL CONFIG
       rootPath = iRequest.getConfiguration().getValueAsString("orientdb.www.path", "src/site");
       if (rootPath == null) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "No path configured. Specify the 'root.path', 'file.path' or the global"
-                    + " 'orientdb.www.path' variable",
-                rootPath);
+        logger.warn(
+            "No path configured. Specify the 'root.path', 'file.path' or the global"
+                + " 'orientdb.www.path' variable",
+            rootPath);
         return;
       }
     }
@@ -264,11 +265,9 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
       // CHECK DIRECTORY
       final File wwwPathDirectory = new File(rootPath);
       if (!wwwPathDirectory.exists())
-        OLogManager.instance()
-            .warn(this, "path variable points to '%s' but it doesn't exists", rootPath);
+        logger.warn("path variable points to '%s' but it doesn't exists", rootPath);
       if (!wwwPathDirectory.isDirectory())
-        OLogManager.instance()
-            .warn(this, "path variable points to '%s' but it isn't a directory", rootPath);
+        logger.warn("path variable points to '%s' but it isn't a directory", rootPath);
     }
 
     String path;
@@ -303,7 +302,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
     if (staticContent.is == null) {
       File inputFile = new File(path);
       if (!inputFile.exists()) {
-        OLogManager.instance().debug(this, "Static resource not found: %s", path);
+        logger.debug("Static resource not found: %s", path);
 
         iResponse.sendStream(404, "File not found", null, null, 0);
         return;

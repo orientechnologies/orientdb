@@ -24,6 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
@@ -65,6 +66,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OAutomaticBackup extends OServerPluginAbstract implements OServerPluginConfigurable {
+  private static final OLogger logger = OLogManager.instance().logger(OAutomaticBackup.class);
 
   private ODocument configuration;
 
@@ -152,20 +154,16 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
         // CREATE BACKUP FOLDER(S) IF ANY
         filePath.mkdirs();
 
-      OLogManager.instance()
-          .info(
-              this,
-              "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s,"
-                  + " targetDirectory=%s",
-              delay,
-              firstTime,
-              targetDirectory);
+      logger.info(
+          "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s,"
+              + " targetDirectory=%s",
+          delay, firstTime, targetDirectory);
 
       final Runnable timerTask =
           new Runnable() {
             @Override
             public void run() {
-              OLogManager.instance().info(this, "Scanning databases to backup...");
+              logger.info("Scanning databases to backup...");
 
               int ok = 0;
               int errors = 0;
@@ -193,41 +191,35 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
                       case FULL_BACKUP:
                         fullBackupDatabase(dbURL, targetDirectory + getFileName(database), db);
 
-                        OLogManager.instance()
-                            .info(
-                                this,
-                                "Full Backup of database '"
-                                    + dbURL
-                                    + "' completed in "
-                                    + (System.currentTimeMillis() - begin)
-                                    + "ms");
+                        logger.info(
+                            "Full Backup of database '"
+                                + dbURL
+                                + "' completed in "
+                                + (System.currentTimeMillis() - begin)
+                                + "ms");
 
                         break;
 
                       case INCREMENTAL_BACKUP:
                         incrementalBackupDatabase(dbURL, targetDirectory, db);
 
-                        OLogManager.instance()
-                            .info(
-                                this,
-                                "Incremental Backup of database '"
-                                    + dbURL
-                                    + "' completed in "
-                                    + (System.currentTimeMillis() - begin)
-                                    + "ms");
+                        logger.info(
+                            "Incremental Backup of database '"
+                                + dbURL
+                                + "' completed in "
+                                + (System.currentTimeMillis() - begin)
+                                + "ms");
                         break;
 
                       case EXPORT:
                         exportDatabase(dbURL, targetDirectory + getFileName(database), db);
 
-                        OLogManager.instance()
-                            .info(
-                                this,
-                                "Export of database '"
-                                    + dbURL
-                                    + "' completed in "
-                                    + (System.currentTimeMillis() - begin)
-                                    + "ms");
+                        logger.info(
+                            "Export of database '"
+                                + dbURL
+                                + "' completed in "
+                                + (System.currentTimeMillis() - begin)
+                                + "ms");
                         break;
                     }
 
@@ -237,29 +229,25 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
                         listener.onBackupCompleted(dbName);
                       }
                     } catch (Exception e) {
-                      OLogManager.instance()
-                          .error(this, "Error on listener for database '" + dbURL, e);
+                      logger.error("Error on listener for database '" + dbURL, e);
                     }
                     ok++;
 
                   } catch (Exception e) {
 
-                    OLogManager.instance()
-                        .error(
-                            this,
-                            "Error on backup of database '"
-                                + dbURL
-                                + "' to directory: "
-                                + targetDirectory,
-                            e);
+                    logger.error(
+                        "Error on backup of database '"
+                            + dbURL
+                            + "' to directory: "
+                            + targetDirectory,
+                        e);
 
                     try {
                       for (OAutomaticBackupListener listener : listeners) {
                         listener.onBackupError(dbName, e);
                       }
                     } catch (Exception l) {
-                      OLogManager.instance()
-                          .error(this, "Error on listener for database '" + dbURL, l);
+                      logger.error("Error on listener for database '" + dbURL, l);
                     }
                     errors++;
 
@@ -268,8 +256,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
                   }
                 }
               }
-              OLogManager.instance()
-                  .info(this, "Automatic Backup finished: %d ok, %d errors", ok, errors);
+              logger.info("Automatic Backup finished: %d ok, %d errors", ok, errors);
             }
           };
 
@@ -287,7 +274,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
         Orient.instance().scheduleTask(task, firstTime, delay);
       }
     } else {
-      OLogManager.instance().info(this, "Automatic Backup plugin is disabled");
+      logger.info("Automatic Backup plugin is disabled");
     }
   }
 
@@ -314,8 +301,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
         f.createNewFile();
         OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
 
-        OLogManager.instance()
-            .info(this, "Automatic Backup: migrated configuration to file '%s'", f);
+        logger.info("Automatic Backup: migrated configuration to file '%s'", f);
       } catch (IOException e) {
         throw OException.wrapException(
             new OConfigurationException(
@@ -399,12 +385,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     if (!iPath.endsWith("/")) iPath += "/";
     iPath += db.getName();
 
-    OLogManager.instance()
-        .info(
-            this,
-            "AutomaticBackup: executing incremental backup of database '%s' to %s",
-            dbURL,
-            iPath);
+    logger.info(
+        "AutomaticBackup: executing incremental backup of database '%s' to %s", dbURL, iPath);
 
     db.incrementalBackup(iPath);
   }
@@ -412,8 +394,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   protected void fullBackupDatabase(
       final String dbURL, final String iPath, final ODatabaseDocumentInternal db)
       throws IOException {
-    OLogManager.instance()
-        .info(this, "AutomaticBackup: executing full backup of database '%s' to %s", dbURL, iPath);
+    logger.info("AutomaticBackup: executing full backup of database '%s' to %s", dbURL, iPath);
 
     final Path filePath = Paths.get(iPath);
     OFileUtils.prepareForFileCreationOrReplacement(filePath, this, "backing up");
@@ -431,7 +412,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
             new OCommandOutputListener() {
               @Override
               public void onMessage(String iText) {
-                OLogManager.instance().info(this, iText);
+                logger.info(iText);
               }
             },
             compressionLevel,
@@ -440,9 +421,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
 
       OFileUtils.atomicMoveWithFallback(tempFilePath, filePath, this);
     } catch (Exception e) {
-      OLogManager.instance()
-          .errorNoDb(
-              this, "Error during backup processing, file %s will be deleted\n", e, tempFileName);
+      logger.errorNoDb(
+          "Error during backup processing, file %s will be deleted\n", e, tempFileName);
       Files.deleteIfExists(tempFilePath);
       throw e;
     }
@@ -452,8 +432,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
       final String dbURL, final String iPath, final ODatabaseDocumentInternal db)
       throws IOException {
 
-    OLogManager.instance()
-        .info(this, "AutomaticBackup: executing export of database '%s' to %s", dbURL, iPath);
+    logger.info("AutomaticBackup: executing export of database '%s' to %s", dbURL, iPath);
 
     final ODatabaseExport exp =
         new ODatabaseExport(
@@ -462,7 +441,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
             new OCommandOutputListener() {
               @Override
               public void onMessage(String iText) {
-                OLogManager.instance().info(this, iText);
+                logger.info(iText);
               }
             });
 

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.proxy;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.ServerSocket;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OProxyServerListener extends Thread {
+  private static final OLogger logger = OLogManager.instance().logger(OProxyServerListener.class);
   private final OProxyServer server;
   private final int localPort;
   private final int remotePort;
@@ -29,13 +31,9 @@ public class OProxyServerListener extends Thread {
     // WAIT THE REMOTE SOCKET IS AVAILABLE FIRST. IN THIS WAY THE LOCAL SOCKET IS CREATED ONLY AFTER
     // THE REMOTE SOCKET IS
     // AVAILABLE. THIS ALLOWS TO RETURN A CONNECTION REFUSED TO THE CLIENT
-    OLogManager.instance()
-        .info(
-            this,
-            "Proxy server: local port %d is waiting for the remote port %s:%d to be available...",
-            localPort,
-            server.getRemoteHost(),
-            remotePort);
+    logger.info(
+        "Proxy server: local port %d is waiting for the remote port %s:%d to be available...",
+        localPort, server.getRemoteHost(), remotePort);
 
     if (server.isWaitUntilRemotePortsAreOpen()) {
       while (running) {
@@ -54,24 +52,16 @@ public class OProxyServerListener extends Thread {
       }
     }
 
-    OLogManager.instance()
-        .info(
-            this,
-            "Proxy server: remote port %s:%d is available, creating the channel...",
-            server.getRemoteHost(),
-            remotePort);
+    logger.info(
+        "Proxy server: remote port %s:%d is available, creating the channel...",
+        server.getRemoteHost(), remotePort);
 
     try {
       localSocket = new ServerSocket(localPort);
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Proxy server: error on creating local socket for proxy channel %d->%s:%d",
-              e,
-              localPort,
-              server.getRemoteHost(),
-              remotePort);
+      logger.error(
+          "Proxy server: error on creating local socket for proxy channel %d->%s:%d",
+          e, localPort, server.getRemoteHost(), remotePort);
     }
 
     while (running && !localSocket.isClosed())
@@ -83,28 +73,17 @@ public class OProxyServerListener extends Thread {
         channel.start();
 
       } catch (BindException e) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Proxy server: error on listening port %d->%s:%d",
-                e,
-                localPort,
-                server.getRemoteHost(),
-                remotePort);
+        logger.error(
+            "Proxy server: error on listening port %d->%s:%d",
+            e, localPort, server.getRemoteHost(), remotePort);
         break;
       } catch (SocketException e) {
-        OLogManager.instance()
-            .debug(this, "Proxy server: listening port %d is closed", e, localPort);
+        logger.debug("Proxy server: listening port %d is closed", e, localPort);
         break;
       } catch (Exception e) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Proxy server: closing proxy server %d->%s:%d",
-                e,
-                localPort,
-                server.getRemoteHost(),
-                remotePort);
+        logger.error(
+            "Proxy server: closing proxy server %d->%s:%d",
+            e, localPort, server.getRemoteHost(), remotePort);
         break;
       }
 

@@ -22,6 +22,7 @@ import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.Analy
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.builder.OLuceneIndexType;
@@ -81,6 +82,8 @@ import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
 public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneIndexEngineAbstract.class);
 
   public static final String RID = "RID";
   public static final String KEY = "KEY";
@@ -132,8 +135,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
 
       reopenToken = indexWriter.addDocument(doc);
     } catch (IOException e) {
-      OLogManager.instance()
-          .error(this, "Error on adding new document '%s' to Lucene index", e, doc);
+      logger.error("Error on adding new document '%s' to Lucene index", e, doc);
     }
   }
 
@@ -184,7 +186,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
                       }
                       if (!closed.get()) {
 
-                        OLogManager.instance().debug(this, "Flushing index: " + indexName());
+                        logger.debug("Flushing index: " + indexName());
                         flush();
                       }
                     });
@@ -277,7 +279,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
       }
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error while retrieving index metadata", e);
+      logger.error("Error while retrieving index metadata", e);
     } finally {
       release(searcher);
     }
@@ -323,7 +325,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
     try {
       if (!closed.get() && indexWriter != null && indexWriter.isOpen()) indexWriter.commit();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on flushing Lucene index", e);
+      logger.error("Error on flushing Lucene index", e);
     }
   }
 
@@ -422,7 +424,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
       deleteDocument(query);
       return true;
     } catch (org.apache.lucene.queryparser.classic.ParseException e) {
-      OLogManager.instance().error(this, "Lucene parsing exception", e);
+      logger.error("Lucene parsing exception", e);
     }
     return false;
   }
@@ -431,16 +433,12 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
     try {
       reopenToken = indexWriter.deleteDocuments(query);
       if (!indexWriter.hasDeletions()) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Error on deleting document by query '%s' to Lucene index",
-                new OIndexException("Error deleting document"),
-                query);
+        logger.error(
+            "Error on deleting document by query '%s' to Lucene index",
+            new OIndexException("Error deleting document"), query);
       }
     } catch (IOException e) {
-      OLogManager.instance()
-          .error(this, "Error on deleting document by query '%s' to Lucene index", e, query);
+      logger.error("Error on deleting document by query '%s' to Lucene index", e, query);
     }
   }
 
@@ -457,7 +455,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
       try {
         reOpen(storage);
       } catch (final IOException e) {
-        OLogManager.instance().error(this, "error while opening closed index:: " + indexName(), e);
+        logger.error("error while opening closed index:: " + indexName(), e);
       }
     }
   }
@@ -479,7 +477,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
       nrt.waitForGeneration(reopenToken);
       return searcherManager.acquire();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on get searcher from Lucene index", e);
+      logger.error("Error on get searcher from Lucene index", e);
       throw OException.wrapException(
           new OLuceneIndexException("Error on get searcher from Lucene index"), e);
     }
@@ -531,7 +529,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
     try {
       reopenToken = indexWriter.deleteAll();
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on clearing Lucene index", e);
+      logger.error("Error on clearing Lucene index", e);
     }
   }
 
@@ -554,7 +552,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
 
       if (!onDelete) directory.getDirectory().close();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on closing Lucene index", e);
+      logger.error("Error on closing Lucene index", e);
     }
   }
 
@@ -585,7 +583,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
     try {
       searcherManager.release(searcher);
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on releasing index searcher  of Lucene index", e);
+      logger.error("Error on releasing index searcher  of Lucene index", e);
     }
   }
 
@@ -611,7 +609,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
       cancelCommitTask();
       commitAndCloseWriter();
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on freezing Lucene index:: " + indexName(), e);
+      logger.error("Error on freezing Lucene index:: " + indexName(), e);
     }
   }
 
@@ -621,7 +619,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
       close();
       reOpen(getDatabase().getStorage());
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on releasing Lucene index:: " + indexName(), e);
+      logger.error("Error on releasing Lucene index:: " + indexName(), e);
     }
   }
 }

@@ -16,6 +16,7 @@
 package com.orientechnologies.security.auditing;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
@@ -34,13 +35,22 @@ import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Created by Enrico Risa on 10/04/15. */
 public class ODefaultAuditing
     implements OAuditingService, ODatabaseLifecycleListener, ODistributedLifecycleListener {
+  private static final OLogger logger = OLogManager.instance().logger(ODefaultAuditing.class);
   public static final String AUDITING_LOG_CLASSNAME = "OAuditingLog";
 
   private boolean enabled = true;
@@ -137,8 +147,7 @@ public class ODefaultAuditing
       final InputStream resourceAsStream =
           this.getClass().getClassLoader().getResourceAsStream(DEFAULT_FILE_AUDITING_DB_CONFIG);
       try {
-        if (resourceAsStream == null)
-          OLogManager.instance().error(this, "defaultHook() resourceAsStream is null", null);
+        if (resourceAsStream == null) logger.error("defaultHook() resourceAsStream is null", null);
 
         content = getString(resourceAsStream);
         if (auditingFileConfig != null) {
@@ -155,14 +164,14 @@ public class ODefaultAuditing
             }
           } catch (IOException e) {
             content = "{}";
-            OLogManager.instance().error(this, "Cannot save auditing file configuration", e);
+            logger.error("Cannot save auditing file configuration", e);
           }
         }
       } finally {
         try {
           if (resourceAsStream != null) resourceAsStream.close();
         } catch (IOException e) {
-          OLogManager.instance().error(this, "Cannot read auditing file configuration", e);
+          logger.error("Cannot read auditing file configuration", e);
         }
       }
     }
@@ -182,13 +191,13 @@ public class ODefaultAuditing
 
     } catch (Exception e) {
       content = "{}";
-      OLogManager.instance().error(this, "Cannot get auditing file configuration", e);
+      logger.error("Cannot get auditing file configuration", e);
     } finally {
       if (f != null) {
         try {
           f.close();
         } catch (IOException e) {
-          OLogManager.instance().error(this, "Cannot get auditing file configuration", e);
+          logger.error("Cannot get auditing file configuration", e);
         }
       }
     }
@@ -203,7 +212,7 @@ public class ODefaultAuditing
       while ((ch = is.read()) != -1) sb.append((char) ch);
       return sb.toString();
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Cannot get default auditing file configuration", e);
+      logger.error("Cannot get default auditing file configuration", e);
       return "{}";
     }
   }
@@ -245,8 +254,7 @@ public class ODefaultAuditing
 
     File f = getConfigFile(iDatabase.getName());
     if (f != null && f.exists()) {
-      OLogManager.instance()
-          .info(this, "Removing Auditing config for db : %s", iDatabase.getName());
+      logger.info("Removing Auditing config for db : %s", iDatabase.getName());
       f.delete();
     }
   }
@@ -383,15 +391,9 @@ public class ODefaultAuditing
       String userName = null;
       if (user != null) userName = user.getName();
       if (globalHook == null)
-        OLogManager.instance()
-            .error(
-                this,
-                "Default Auditing is disabled, cannot log: op=%s db='%s' user=%s message='%s'",
-                null,
-                operation,
-                dbName,
-                userName,
-                message);
+        logger.error(
+            "Default Auditing is disabled, cannot log: op=%s db='%s' user=%s message='%s'",
+            null, operation, dbName, userName, message);
       else globalHook.log(operation, dbName, user, message);
     }
   }
@@ -419,7 +421,7 @@ public class ODefaultAuditing
         cls.createProperty("database", OType.STRING);
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Creating auditing class exception", e);
+      logger.error("Creating auditing class exception", e);
     } finally {
       if (sysdb != null) sysdb.close();
 
@@ -505,7 +507,7 @@ public class ODefaultAuditing
         systemDbImporter = new OSystemDBImporter(context, sysImport);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "config()", ex);
+      logger.error("config()", ex);
     }
   }
 

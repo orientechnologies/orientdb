@@ -24,6 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.client.remote.message.OError37Response;
@@ -50,6 +51,8 @@ import java.net.SocketException;
 import java.util.Map;
 
 public class OChannelBinaryAsynchClient extends OChannelBinary {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OChannelBinaryAsynchClient.class);
   private int socketTimeout; // IN MS
   protected final short srvProtocolVersion;
   private String serverURL;
@@ -108,15 +111,13 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       }
 
       if (srvProtocolVersion != iProtocolVersion) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "The Client driver version is different than Server version: client="
-                    + iProtocolVersion
-                    + ", server="
-                    + srvProtocolVersion
-                    + ". You could not use the full features of the newer version. Assure to have"
-                    + " the same versions on both");
+        logger.warn(
+            "The Client driver version is different than Server version: client="
+                + iProtocolVersion
+                + ", server="
+                + srvProtocolVersion
+                + ". You could not use the full features of the newer version. Assure to have"
+                + " the same versions on both");
       }
 
     } catch (RuntimeException e) {
@@ -185,13 +186,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         currentSessionId = readInt();
 
         if (debug)
-          OLogManager.instance()
-              .debug(
-                  this,
-                  "%s - Read response: %d-%d",
-                  socket.getLocalAddress(),
-                  (int) currentStatus,
-                  currentSessionId);
+          logger.debug(
+              "%s - Read response: %d-%d",
+              socket.getLocalAddress(), (int) currentStatus, currentSessionId);
 
       } finally {
         setReadResponseTimeout();
@@ -200,8 +197,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       assert (currentSessionId == iRequesterId);
 
       if (debug)
-        OLogManager.instance()
-            .debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
+        logger.debug("%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
       byte[] tokenBytes;
       if (token) tokenBytes = this.readBytes();
       else tokenBytes = null;
@@ -212,7 +208,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     } catch (OLockException e) {
       Thread.currentThread().interrupt();
       // NEVER HAPPENS?
-      OLogManager.instance().error(this, "Unexpected error on reading response from channel", e);
+      logger.error("Unexpected error on reading response from channel", e);
     }
     return null;
   }
@@ -223,8 +219,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       releaseReadLock();
     } catch (IllegalMonitorStateException e) {
       // IGNORE IT
-      OLogManager.instance()
-          .debug(this, "Error on unlocking network channel after reading response");
+      logger.debug("Error on unlocking network channel after reading response");
     }
   }
 
@@ -339,7 +334,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     try {
       throwable = objectInputStream.readObject();
     } catch (ClassNotFoundException e) {
-      OLogManager.instance().error(this, "Error during exception deserialization", e);
+      logger.error("Error during exception deserialization", e);
       throw new IOException("Error during exception deserialization: " + e.toString(), e);
     }
 
@@ -361,7 +356,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           | InvocationTargetException
           | InstantiationException
           | IllegalAccessException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
+        logger.error("Error during exception deserialization", e);
       }
     }
 
@@ -374,13 +369,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     } else {
       // WRAP IT
       String exceptionType = throwable != null ? throwable.getClass().getName() : "null";
-      OLogManager.instance()
-          .error(
-              this,
-              "Error during exception serialization, serialized exception is not Throwable,"
-                  + " exception type is "
-                  + exceptionType,
-              null);
+      logger.error(
+          "Error during exception serialization, serialized exception is not Throwable,"
+              + " exception type is "
+              + exceptionType,
+          null);
     }
   }
 

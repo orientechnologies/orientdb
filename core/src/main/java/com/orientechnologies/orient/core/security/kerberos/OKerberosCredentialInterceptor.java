@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.security.kerberos;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
@@ -45,6 +46,8 @@ import org.ietf.jgss.Oid;
  * @author S. Colin Leister
  */
 public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OKerberosCredentialInterceptor.class);
   private String principal;
   private String serviceTicket;
 
@@ -132,7 +135,7 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
       lc = new LoginContext("ignore", null, null, cfg);
       lc.login();
     } catch (LoginException lie) {
-      OLogManager.instance().debug(this, "intercept() LoginException", lie);
+      logger.debug("intercept() LoginException", lie);
 
       throw OException.wrapException(
           new OSecurityException("OKerberosCredentialInterceptor Client Validation Exception!"),
@@ -152,7 +155,7 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
     try {
       lc.logout();
     } catch (LoginException loe) {
-      OLogManager.instance().debug(this, "intercept() LogoutException", loe);
+      logger.debug("intercept() LogoutException", loe);
     }
 
     if (this.serviceTicket == null)
@@ -193,7 +196,7 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
         boolean useNativeJgss = Boolean.getBoolean("sun.security.jgss.native");
 
         if (useNativeJgss) {
-          OLogManager.instance().info(this, "getServiceTicket() Using Native JGSS");
+          logger.info("getServiceTicket() Using Native JGSS");
 
           try {
             GSSName clientName = manager.createName(principal, GSSName.NT_USER_NAME);
@@ -205,8 +208,7 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
 
             subject.getPrivateCredentials().add(cred);
           } catch (GSSException gssEx) {
-            OLogManager.instance()
-                .error(this, "getServiceTicket() Use Native JGSS GSSException", gssEx);
+            logger.error("getServiceTicket() Use Native JGSS GSSException", gssEx);
           }
         }
 
@@ -224,8 +226,7 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
                       context.requestCredDeleg(false);
                       return context.initSecContext(token, 0, token.length);
                     } catch (Exception inner) {
-                      OLogManager.instance()
-                          .debug(this, "getServiceTicket() doAs() Exception", inner);
+                      logger.debug("getServiceTicket() doAs() Exception", inner);
                     }
 
                     return null;
@@ -236,10 +237,10 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
 
         context.dispose();
       } else {
-        OLogManager.instance().debug(this, "getServiceTicket() GSSContext is null!");
+        logger.debug("getServiceTicket() GSSContext is null!");
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "getServiceTicket() Exception", ex);
+      logger.error("getServiceTicket() Exception", ex);
     }
 
     return null;

@@ -2,17 +2,18 @@ package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.server.OServer;
 import java.io.File;
 
 public class BareBonesServer {
-
+  private static final OLogger logger = OLogManager.instance().logger(BareBonesServer.class);
   private OServer server;
 
   public void createDB(String databaseName) {
-    OLogManager.instance().info(this, "creating the database:" + databaseName);
+    logger.info("creating the database:" + databaseName);
     if (!server.getContext().exists(databaseName)) {
       server
           .getContext()
@@ -34,7 +35,7 @@ public class BareBonesServer {
   }
 
   public void start(String configFileDir, String configFileName) {
-    OLogManager.instance().info(this, "starting the database based on: " + configFileName);
+    logger.info("starting the database based on: " + configFileName);
     try {
       server = new OServer(false);
       server.startup(new File(configFileDir, configFileName));
@@ -42,17 +43,17 @@ public class BareBonesServer {
       if (server.getDistributedManager() != null)
         server.getDistributedManager().waitUntilNodeOnline();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "start", e);
+      logger.error("start", e);
     }
   }
 
   public void stop() {
-    OLogManager.instance().info(this, "stopping the database");
+    logger.info("stopping the database");
     server.shutdown();
   }
 
   public void deleteRecursively(final File iRootFile) {
-    OLogManager.instance().info(this, "deleting recursively: " + iRootFile.getAbsolutePath());
+    logger.info("deleting recursively: " + iRootFile.getAbsolutePath());
     OFileUtils.deleteRecursively(iRootFile);
   }
 

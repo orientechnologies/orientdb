@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,6 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OResourcePool<K, V> {
+  private static final OLogger logger = OLogManager.instance().logger(OResourcePool.class);
   protected final Semaphore sem;
   protected final Queue<V> resources = new ConcurrentLinkedQueue<V>();
   protected final Queue<V> resourcesOut = new ConcurrentLinkedQueue<V>();
@@ -106,25 +108,16 @@ public class OResourcePool<K, V> {
       if (res == null) {
         res = listener.createNewResource(key, additionalArgs);
         created.incrementAndGet();
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance()
-              .debug(
-                  this,
-                  "pool:'%s' created new resource '%s', new resource count '%d'",
-                  this,
-                  res,
-                  created.get());
+        if (logger.isDebugEnabled())
+          logger.debug(
+              "pool:'%s' created new resource '%s', new resource count '%d'",
+              this, res, created.get());
       }
       resourcesOut.add(res);
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance()
-            .debug(
-                this,
-                "pool:'%s' acquired resource '%s' available %d out %d ",
-                this,
-                res,
-                sem.availablePermits(),
-                resourcesOut.size());
+      if (logger.isDebugEnabled())
+        logger.debug(
+            "pool:'%s' acquired resource '%s' available %d out %d ",
+            this, res, sem.availablePermits(), resourcesOut.size());
       return res;
     } catch (RuntimeException e) {
       sem.release();
@@ -154,15 +147,10 @@ public class OResourcePool<K, V> {
     if (resourcesOut.remove(res)) {
       resources.add(res);
       sem.release();
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance()
-            .debug(
-                this,
-                "pool:'%s' returned resource '%s' available %d out %d",
-                this,
-                res,
-                sem.availablePermits(),
-                resourcesOut.size());
+      if (logger.isDebugEnabled())
+        logger.debug(
+            "pool:'%s' returned resource '%s' available %d out %d",
+            this, res, sem.availablePermits(), resourcesOut.size());
     }
     return true;
   }
@@ -185,15 +173,10 @@ public class OResourcePool<K, V> {
     if (resourcesOut.remove(res)) {
       this.resources.remove(res);
       sem.release();
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance()
-            .debug(
-                this,
-                "pool:'%s' removed resource '%s' available %d out %d",
-                this,
-                res,
-                sem.availablePermits(),
-                resourcesOut.size());
+      if (logger.isDebugEnabled())
+        logger.debug(
+            "pool:'%s' removed resource '%s' available %d out %d",
+            this, res, sem.availablePermits(), resourcesOut.size());
     }
   }
 

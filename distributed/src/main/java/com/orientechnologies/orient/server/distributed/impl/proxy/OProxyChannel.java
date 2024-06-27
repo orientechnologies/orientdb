@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.proxy;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -10,6 +11,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 
 public class OProxyChannel extends Thread {
+  private static final OLogger logger = OLogManager.instance().logger(OProxyChannel.class);
   private final OProxyServerListener listener;
   private final Socket sourceSocket;
   private final int localPort;
@@ -40,15 +42,13 @@ public class OProxyChannel extends Thread {
     this.remotePort = remotePort;
     this.sourceAddress = ((InetSocketAddress) sourceSocket.getRemoteSocketAddress());
 
-    OLogManager.instance()
-        .info(
-            this,
-            "Proxy server: created channel %s:%d->[localhost:%d]->%s:%d",
-            sourceAddress.getHostName(),
-            sourceAddress.getPort(),
-            localPort,
-            listener.getServer().getRemoteHost(),
-            remotePort);
+    logger.info(
+        "Proxy server: created channel %s:%d->[localhost:%d]->%s:%d",
+        sourceAddress.getHostName(),
+        sourceAddress.getPort(),
+        localPort,
+        listener.getServer().getRemoteHost(),
+        remotePort);
   }
 
   @Override
@@ -70,13 +70,9 @@ public class OProxyChannel extends Thread {
         targetOutput = targetSocket.getOutputStream();
 
       } catch (IOException e) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Proxy server: error on connecting to the remote server %s:%d",
-                e,
-                remoteHost,
-                remotePort);
+        logger.error(
+            "Proxy server: error on connecting to the remote server %s:%d",
+            e, remoteHost, remotePort);
         return;
       }
 
@@ -101,22 +97,19 @@ public class OProxyChannel extends Thread {
           targetOutput.flush();
 
           if (!listener.getServer().tracing.equalsIgnoreCase("none"))
-            OLogManager.instance()
-                .info(
-                    this,
-                    "Proxy channel: REQUEST(%d) %s:%d->[localhost:%d]->%s:%d = %d[%s]",
-                    requestCount,
-                    sourceAddress.getHostName(),
-                    sourceAddress.getPort(),
-                    localPort,
-                    remoteHost,
-                    remotePort,
-                    bytesRead,
-                    formatBytes(request, bytesRead));
+            logger.info(
+                "Proxy channel: REQUEST(%d) %s:%d->[localhost:%d]->%s:%d = %d[%s]",
+                requestCount,
+                sourceAddress.getHostName(),
+                sourceAddress.getPort(),
+                localPort,
+                remoteHost,
+                remotePort,
+                bytesRead,
+                formatBytes(request, bytesRead));
         }
       } catch (IOException e) {
-        OLogManager.instance()
-            .error(this, "Proxy channel: error on reading request from port %d", e, localPort);
+        logger.error("Proxy channel: error on reading request from port %d", e, localPort);
       }
 
     } finally {
@@ -206,27 +199,21 @@ public class OProxyChannel extends Thread {
                 sourceOutput.flush();
 
                 if (!listener.getServer().tracing.equalsIgnoreCase("none"))
-                  OLogManager.instance()
-                      .info(
-                          this,
-                          "Proxy channel: RESPONSE(%d) %s:%d->[localhost:%d]->%s:%d = %d[%s]",
-                          responseCount,
-                          remoteHost,
-                          remotePort,
-                          localPort,
-                          sourceAddress.getHostName(),
-                          sourceAddress.getPort(),
-                          bytesRead,
-                          formatBytes(response, bytesRead));
+                  logger.info(
+                      "Proxy channel: RESPONSE(%d) %s:%d->[localhost:%d]->%s:%d = %d[%s]",
+                      responseCount,
+                      remoteHost,
+                      remotePort,
+                      localPort,
+                      sourceAddress.getHostName(),
+                      sourceAddress.getPort(),
+                      bytesRead,
+                      formatBytes(response, bytesRead));
               }
             } catch (IOException e) {
-              OLogManager.instance()
-                  .error(
-                      this,
-                      "Proxy channel: error on reading request from port %s:%d",
-                      e,
-                      remoteHost,
-                      remotePort);
+              logger.error(
+                  "Proxy channel: error on reading request from port %s:%d",
+                  e, remoteHost, remotePort);
               running = false;
             }
           }

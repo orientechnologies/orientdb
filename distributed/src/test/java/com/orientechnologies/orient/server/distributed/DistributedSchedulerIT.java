@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -35,6 +36,8 @@ import org.junit.Test;
 
 /** Tests the behavior of the schedule rin case of distributed execution. */
 public class DistributedSchedulerIT extends AbstractServerClusterTest {
+  private static final OLogger logger = OLogManager.instance().logger(DistributedSchedulerIT.class);
+
   private static final int SERVERS = 2;
 
   @Test
@@ -115,7 +118,7 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
 
       db.getLocalCache().invalidate();
 
-      OLogManager.instance().info(this, "UPDATING EVENT FROM 1 TO 2 SECONDS...");
+      logger.info("UPDATING EVENT FROM 1 TO 2 SECONDS...");
 
       // UPDATE
       db.command("update oschedule set rule = \"0/2 * * * * ?\" where name = 'test'").close();

@@ -5,6 +5,7 @@ import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -12,6 +13,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 /** Created by tglman on 01/10/15. */
 public class ORemoteConnectionPool
     implements OResourcePoolListener<String, OChannelBinaryAsynchClient> {
+  private static final OLogger logger = OLogManager.instance().logger(ORemoteConnectionPool.class);
 
   private OResourcePool<String, OChannelBinaryAsynchClient> pool;
 
@@ -25,7 +27,7 @@ public class ORemoteConnectionPool
 
     // TRY WITH CURRENT URL IF ANY
     try {
-      OLogManager.instance().debug(this, "Trying to connect to the remote host %s...", serverURL);
+      logger.debug("Trying to connect to the remote host %s...", serverURL);
 
       int sepPos = serverURL.indexOf(":");
       final String remoteHost = serverURL.substring(0, sepPos);
@@ -44,7 +46,7 @@ public class ORemoteConnectionPool
       // RE-THROW IT
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().debug(this, "Error on connecting to %s", e, serverURL);
+      logger.debug("Error on connecting to %s", e, serverURL);
       throw OException.wrapException(new OIOException("Error on connecting to " + serverURL), e);
     }
   }

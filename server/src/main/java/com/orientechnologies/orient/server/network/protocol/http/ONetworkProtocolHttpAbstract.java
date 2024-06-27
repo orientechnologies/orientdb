@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -103,6 +104,8 @@ import java.util.zip.GZIPInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
     implements ONetworkHttpExecutor {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ONetworkProtocolHttpAbstract.class);
   private static final String COMMAND_SEPARATOR = "|";
   private static final Charset utf8 = Charset.forName("utf8");
   private static int requestMaxContentLength; // MAX = 10Kb
@@ -249,15 +252,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
         }
       else {
         try {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "->"
-                      + channel.socket.getInetAddress().getHostAddress()
-                      + ": Command not found: "
-                      + request.getHttpMethod()
-                      + "."
-                      + URLDecoder.decode(command, "UTF-8"));
+          logger.warn(
+              "->"
+                  + channel.socket.getInetAddress().getHostAddress()
+                  + ": Command not found: "
+                  + request.getHttpMethod()
+                  + "."
+                  + URLDecoder.decode(command, "UTF-8"));
 
           sendError(
               OHttpUtils.STATUS_INVALIDMETHOD_CODE,
@@ -324,8 +325,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
     } finally {
       server.getClientConnectionManager().disconnect(connection.getId());
       OServerPluginHelper.invokeHandlerCallbackOnSocketDestroyed(server, this);
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Connection closed");
+      if (logger.isDebugEnabled()) logger.debug("Connection closed");
     }
   }
 
@@ -367,8 +367,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
   }
 
   protected void handleError(Throwable e, OHttpRequest iRequest) {
-    if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "Caught exception", e);
+    if (logger.isDebugEnabled()) logger.debug("Caught exception", e);
 
     int errorCode = 500;
     String errorReason = null;
@@ -449,9 +448,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
     if (errorReason == null) {
       errorReason = OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION;
       if (e instanceof NullPointerException) {
-        OLogManager.instance().error(this, "Internal server error:\n", e);
+        logger.error("Internal server error:\n", e);
       } else {
-        OLogManager.instance().debug(this, "Internal server error:\n", e);
+        logger.debug("Internal server error:\n", e);
       }
     }
 
@@ -620,15 +619,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
             contentLength =
                 Integer.parseInt(line.substring(OHttpUtils.HEADER_CONTENT_LENGTH.length()));
             if (contentLength > requestMaxContentLength)
-              OLogManager.instance()
-                  .warn(
-                      this,
-                      "->"
-                          + channel.socket.getInetAddress().getHostAddress()
-                          + ": Error on content size "
-                          + contentLength
-                          + ": the maximum allowed is "
-                          + requestMaxContentLength);
+              logger.warn(
+                  "->"
+                      + channel.socket.getInetAddress().getHostAddress()
+                      + ": Error on content size "
+                      + contentLength
+                      + ": the maximum allowed is "
+                      + requestMaxContentLength);
 
           } else if (OStringSerializerHelper.startsWithIgnoreCase(
               line, OHttpUtils.HEADER_CONTENT_TYPE)) {
@@ -705,13 +702,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
       } else request.append(currChar);
     }
 
-    if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance()
-          .debug(
-              this,
-              "Error on parsing HTTP content from client %s:\n%s",
-              channel.socket.getInetAddress().getHostAddress(),
-              request);
+    if (logger.isDebugEnabled())
+      logger.debug(
+          "Error on parsing HTTP content from client %s:\n%s",
+          channel.socket.getInetAddress().getHostAddress(), request);
 
     return;
   }
@@ -755,13 +749,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
         if (c == '\r') {
           final String[] words = requestContent.toString().split(" ");
           if (words.length < 3) {
-            OLogManager.instance()
-                .warn(
-                    this,
-                    "->"
-                        + channel.socket.getInetAddress().getHostAddress()
-                        + ": Error on invalid content:\n"
-                        + requestContent);
+            logger.warn(
+                "->"
+                    + channel.socket.getInetAddress().getHostAddress()
+                    + ": Error on invalid content:\n"
+                    + requestContent);
             while (channel.inStream.available() > 0) {
               channel.read();
             }
@@ -789,13 +781,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
               && request.getContentType().equals(OHttpUtils.CONTENT_TYPE_URLENCODED))
             request.setContent(URLDecoder.decode(request.getContent(), "UTF-8").trim());
 
-          if (OLogManager.instance().isDebugEnabled())
-            OLogManager.instance()
-                .debug(
-                    this,
-                    "[ONetworkProtocolHttpAbstract.execute] Requested: %s %s",
-                    request.getHttpMethod(),
-                    request.getUrl());
+          if (logger.isDebugEnabled())
+            logger.debug(
+                "[ONetworkProtocolHttpAbstract.execute] Requested: %s %s",
+                request.getHttpMethod(), request.getUrl());
 
           service();
           return;
@@ -814,14 +803,12 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
         }
       }
 
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance()
-            .debug(
-                this,
-                "Parsing request from client "
-                    + channel.socket.getInetAddress().getHostAddress()
-                    + ":\n"
-                    + requestContent);
+      if (logger.isDebugEnabled())
+        logger.debug(
+            "Parsing request from client "
+                + channel.socket.getInetAddress().getHostAddress()
+                + ":\n"
+                + requestContent);
 
     } catch (SocketException e) {
       connectionError();
@@ -886,7 +873,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
       String newstr = new String(baos.toByteArray(), "UTF-8");
       return newstr;
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "Error on decompressing HTTP response", ex);
+      logger.error("Error on decompressing HTTP response", ex);
     } finally {
       try {
         if (gzip != null) gzip.close();
@@ -987,8 +974,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
       try {
         cmdManager.registerCommand(OServerNetworkListener.createCommand(server, c));
       } catch (Exception e) {
-        OLogManager.instance()
-            .error(caller, "Error on creating stateful command '%s'", e, c.implementation);
+        logger.error("Error on creating stateful command '%s'", e, c.implementation);
       }
 
     for (OServerCommand c : iListener.getStatelessCommands()) cmdManager.registerCommand(c);

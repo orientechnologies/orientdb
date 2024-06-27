@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.query.live;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +28,8 @@ import java.util.concurrent.BlockingQueue;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OLiveQueryQueueThreadV2 extends Thread {
-
-  private static final OLogManager logger = OLogManager.instance();
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLiveQueryQueueThreadV2.class);
 
   private final OLiveQueryHookV2.OLiveQueryOps ops;
   private volatile boolean stopped = false;
@@ -69,16 +70,12 @@ public class OLiveQueryQueueThreadV2 extends Thread {
         try {
           listener.onLiveResults(items);
         } catch (Exception e) {
-          OLogManager.instance().warn(this, "Error executing live query subscriber.", e);
+          logger.warn("Error executing live query subscriber.", e);
         }
 
         totalEventsServed++;
         if (totalEventsServed > 0 && totalEventsServed % 100_000 == 0) {
-          logger.info(
-              this.getClass(),
-              "LiveQuery events: %d served, %d in queue",
-              totalEventsServed,
-              queue.size());
+          logger.info("LiveQuery events: %d served, %d in queue", totalEventsServed, queue.size());
         }
       }
     }

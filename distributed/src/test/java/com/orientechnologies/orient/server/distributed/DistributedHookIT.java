@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -37,6 +38,7 @@ import org.junit.Test;
 
 /** Tests the behavior of hooks in distributed configuration. */
 public class DistributedHookIT extends AbstractServerClusterTest {
+  private static final OLogger logger = OLogManager.instance().logger(DistributedHookIT.class);
   private static final int SERVERS = 2;
 
   private final AtomicLong beforeCreate = new AtomicLong();
@@ -58,53 +60,53 @@ public class DistributedHookIT extends AbstractServerClusterTest {
     @Override
     public RESULT onRecordBeforeCreate(ORecord iRecord) {
       beforeCreate.incrementAndGet();
-      OLogManager.instance().info(this, "TestHookSourceNode onRecordBeforeCreate");
+      logger.info("TestHookSourceNode onRecordBeforeCreate");
       return super.onRecordBeforeCreate(iRecord);
     }
 
     @Override
     public void onRecordAfterCreate(ORecord iRecord) {
       afterCreate.incrementAndGet();
-      OLogManager.instance().info(this, "TestHookSourceNode onRecordAfterCreate");
+      logger.info("TestHookSourceNode onRecordAfterCreate");
     }
 
     @Override
     public RESULT onRecordBeforeRead(ORecord iRecord) {
       beforeRead.incrementAndGet();
-      OLogManager.instance().info(this, "TestHookSourceNode onRecordBeforeRead");
+      logger.info("TestHookSourceNode onRecordBeforeRead");
       return super.onRecordBeforeRead(iRecord);
     }
 
     @Override
     public void onRecordAfterRead(ORecord iRecord) {
       afterRead.incrementAndGet();
-      OLogManager.instance().info(this, "TestHookSourceNode onRecordAfterRead");
+      logger.info("TestHookSourceNode onRecordAfterRead");
     }
 
     @Override
     public RESULT onRecordBeforeUpdate(ORecord iRecord) {
       beforeUpdate.incrementAndGet();
-      OLogManager.instance().info(this, "TestHookSourceNode onRecordBeforeUpdate");
+      logger.info("TestHookSourceNode onRecordBeforeUpdate");
       return super.onRecordBeforeUpdate(iRecord);
     }
 
     @Override
     public void onRecordAfterUpdate(ORecord iRecord) {
       afterUpdate.incrementAndGet();
-      OLogManager.instance().info(this, "TestHookSourceNode onRecordAfterUpdate");
+      logger.info("TestHookSourceNode onRecordAfterUpdate");
     }
 
     @Override
     public RESULT onRecordBeforeDelete(ORecord iRecord) {
       beforeDelete.incrementAndGet();
-      OLogManager.instance().info(this, "TestHookSourceNode onRecordBeforeDelete");
+      logger.info("TestHookSourceNode onRecordBeforeDelete");
       return super.onRecordBeforeDelete(iRecord);
     }
 
     @Override
     public void onRecordAfterDelete(ORecord iRecord) {
       afterDelete.incrementAndGet();
-      OLogManager.instance().info(this, "TestHookSourceNode onRecordAfterDelete");
+      logger.info("TestHookSourceNode onRecordAfterDelete");
     }
   }
 

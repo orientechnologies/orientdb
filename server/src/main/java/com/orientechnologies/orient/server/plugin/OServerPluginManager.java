@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.plugin;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OService;
@@ -55,6 +56,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OServerPluginManager implements OService {
+  private static final OLogger logger = OLogManager.instance().logger(OServerPluginManager.class);
+
   private static final int CHECK_DELAY = 5000;
   private OServer server;
   private ConcurrentHashMap<String, OServerPluginInfo> activePlugins =
@@ -128,7 +131,7 @@ public class OServerPluginManager implements OService {
   public void uninstallPluginByFile(final String iFileName) {
     final String pluginName = loadedPlugins.remove(iFileName);
     if (pluginName != null) {
-      OLogManager.instance().info(this, "Uninstalling dynamic plugin '%s'...", iFileName);
+      logger.info("Uninstalling dynamic plugin '%s'...", iFileName);
 
       final OServerPluginInfo removedPlugin = activePlugins.remove(pluginName);
       if (removedPlugin != null) {
@@ -141,16 +144,16 @@ public class OServerPluginManager implements OService {
 
   @Override
   public void shutdown() {
-    OLogManager.instance().info(this, "Shutting down plugins:");
+    logger.info("Shutting down plugins:");
     for (Entry<String, OServerPluginInfo> pluginInfoEntry : activePlugins.entrySet()) {
-      OLogManager.instance().info(this, "- %s", pluginInfoEntry.getKey());
+      logger.info("- %s", pluginInfoEntry.getKey());
       final OServerPluginInfo plugin = pluginInfoEntry.getValue();
       try {
         callListenerBeforeShutdown(plugin.getInstance());
         plugin.shutdown(false);
         callListenerAfterShutdown(plugin.getInstance());
       } catch (Exception t) {
-        OLogManager.instance().error(this, "Error during server plugin %s shutdown", t, plugin);
+        logger.error("Error during server plugin %s shutdown", t, plugin);
       }
     }
 
@@ -192,8 +195,7 @@ public class OServerPluginManager implements OService {
 
       } catch (Exception e) {
         // IGNORE EXCEPTIONS
-        OLogManager.instance()
-            .debug(this, "Error on shutdowning plugin '%s'...", e, pluginFileName);
+        logger.debug("Error on shutdowning plugin '%s'...", e, pluginFileName);
       }
     }
 
@@ -317,7 +319,7 @@ public class OServerPluginManager implements OService {
     String pluginName = pluginFile.getName();
 
     final OServerPluginInfo currentPluginData;
-    OLogManager.instance().info(this, "Installing dynamic plugin '%s'...", pluginName);
+    logger.info("Installing dynamic plugin '%s'...", pluginName);
 
     URLClassLoader pluginClassLoader = null;
     try {
@@ -328,12 +330,9 @@ public class OServerPluginManager implements OService {
       // LOAD PLUGIN.JSON FILE
       final URL r = pluginClassLoader.findResource("plugin.json");
       if (r == null) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'",
-                null,
-                pluginName);
+        logger.error(
+            "Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'",
+            null, pluginName);
         throw new IllegalArgumentException(
             String.format(
                 "Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'",
@@ -344,12 +343,8 @@ public class OServerPluginManager implements OService {
 
       try {
         if (pluginConfigFile == null || pluginConfigFile.available() == 0) {
-          OLogManager.instance()
-              .error(
-                  this,
-                  "Error on loading 'plugin.json' file for dynamic plugin '%s'",
-                  null,
-                  pluginName);
+          logger.error(
+              "Error on loading 'plugin.json' file for dynamic plugin '%s'", null, pluginName);
           throw new IllegalArgumentException(
               String.format(
                   "Error on loading 'plugin.json' file for dynamic plugin '%s'", pluginName));
@@ -405,7 +400,7 @@ public class OServerPluginManager implements OService {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on installing dynamic plugin '%s'", e, pluginName);
+      logger.error("Error on installing dynamic plugin '%s'", e, pluginName);
     }
   }
 
@@ -426,7 +421,7 @@ public class OServerPluginManager implements OService {
       try {
         l.onBeforeConfig(plugin, cfg);
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "callListenerBeforeConfig() ", ex);
+        logger.error("callListenerBeforeConfig() ", ex);
       }
     }
   }
@@ -437,7 +432,7 @@ public class OServerPluginManager implements OService {
       try {
         l.onAfterConfig(plugin, cfg);
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "callListenerAfterConfig() ", ex);
+        logger.error("callListenerAfterConfig() ", ex);
       }
     }
   }
@@ -447,7 +442,7 @@ public class OServerPluginManager implements OService {
       try {
         l.onBeforeStartup(plugin);
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "callListenerBeforeStartup() ", ex);
+        logger.error("callListenerBeforeStartup() ", ex);
       }
     }
   }
@@ -457,7 +452,7 @@ public class OServerPluginManager implements OService {
       try {
         l.onAfterStartup(plugin);
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "callListenerAfterStartup()", ex);
+        logger.error("callListenerAfterStartup()", ex);
       }
     }
   }
@@ -467,7 +462,7 @@ public class OServerPluginManager implements OService {
       try {
         l.onBeforeShutdown(plugin);
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "callListenerBeforeShutdown()", ex);
+        logger.error("callListenerBeforeShutdown()", ex);
       }
     }
   }
@@ -477,7 +472,7 @@ public class OServerPluginManager implements OService {
       try {
         l.onAfterShutdown(plugin);
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "callListenerAfterShutdown()", ex);
+        logger.error("callListenerAfterShutdown()", ex);
       }
     }
   }

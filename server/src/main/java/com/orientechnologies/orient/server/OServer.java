@@ -25,6 +25,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
@@ -32,7 +33,13 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OSystemDatabase;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -42,7 +49,16 @@ import com.orientechnologies.orient.core.metadata.security.auth.OTokenAuthInfo;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
-import com.orientechnologies.orient.server.config.*;
+import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.server.config.OServerConfigurationManager;
+import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
+import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
+import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
+import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
+import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
@@ -61,12 +77,19 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
+  private static final OLogger logger = OLogManager.instance().logger(OServer.class);
   private static final String ROOT_PASSWORD_VAR = "ORIENTDB_ROOT_PASSWORD";
   private static ThreadGroup threadGroup;
   private static final Map<String, OServer> distributedServers =
@@ -110,11 +133,9 @@ public class OServer {
     final boolean insideWebContainer = Orient.instance().isInsideWebContainer();
 
     if (insideWebContainer && shutdownEngineOnExit) {
-      OLogManager.instance()
-          .warnNoDb(
-              this,
-              "OrientDB instance is running inside of web application, it is highly unrecommended"
-                  + " to force to shutdown OrientDB engine on server shutdown");
+      logger.warnNoDb(
+          "OrientDB instance is running inside of web application, it is highly unrecommended"
+              + " to force to shutdown OrientDB engine on server shutdown");
     }
 
     this.shutdownEngineOnExit = shutdownEngineOnExit;
@@ -300,7 +321,7 @@ public class OServer {
     } catch (IOException e) {
       final String message =
           "Error on reading server configuration from file: " + iConfigurationFile;
-      OLogManager.instance().error(this, message, e);
+      logger.error(message, e);
       throw OException.wrapException(new OConfigurationException(message), e);
     }
   }
@@ -325,8 +346,7 @@ public class OServer {
   }
 
   public OServer startupFromConfiguration() throws IOException {
-    OLogManager.instance()
-        .info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
+    logger.info("OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
     Orient.instance();
 
@@ -400,8 +420,7 @@ public class OServer {
 
     context = databases.newOrientDB();
 
-    OLogManager.instance()
-        .info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
+    logger.info("Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
     Orient.instance()
         .getProfiler()
@@ -452,7 +471,7 @@ public class OServer {
               factory.config(f.name, f.parameters);
               networkSocketFactories.put(f.name, factory);
             } catch (OConfigurationException e) {
-              OLogManager.instance().error(this, "Error creating socket factory", e);
+              logger.error("Error creating socket factory", e);
             }
           }
         }
@@ -475,7 +494,7 @@ public class OServer {
                   l.parameters,
                   l.commands));
 
-      } else OLogManager.instance().warn(this, "Network configuration was not found");
+      } else logger.warn("Network configuration was not found");
 
       try {
         loadStorages();
@@ -483,7 +502,7 @@ public class OServer {
         loadDatabases();
       } catch (IOException e) {
         final String message = "Error on reading server configuration";
-        OLogManager.instance().error(this, message, e);
+        logger.error(message, e);
 
         throw OException.wrapException(new OConfigurationException(message), e);
       }
@@ -509,16 +528,10 @@ public class OServer {
         proto = "http";
       }
 
-      OLogManager.instance()
-          .info(
-              this,
-              "OrientDB Studio available at $ANSI{blue %s://%s/studio/index.html}",
-              proto,
-              httpAddress);
-      OLogManager.instance()
-          .info(
-              this,
-              "$ANSI{green:italic OrientDB Server is active} v" + OConstants.getVersion() + ".");
+      logger.info(
+          "OrientDB Studio available at $ANSI{blue %s://%s/studio/index.html}", proto, httpAddress);
+      logger.info(
+          "$ANSI{green:italic OrientDB Server is active} v" + OConstants.getVersion() + ".");
     } catch (ClassNotFoundException
         | InstantiationException
         | IllegalAccessException
@@ -568,7 +581,7 @@ public class OServer {
     try {
       running = false;
 
-      OLogManager.instance().info(this, "OrientDB Server is shutting down...");
+      logger.info("OrientDB Server is shutting down...");
 
       if (shutdownHook != null) shutdownHook.cancel();
 
@@ -580,21 +593,21 @@ public class OServer {
       try {
         if (networkListeners.size() > 0) {
           // SHUTDOWN LISTENERS
-          OLogManager.instance().info(this, "Shutting down listeners:");
+          logger.info("Shutting down listeners:");
           // SHUTDOWN LISTENERS
           for (OServerNetworkListener l : networkListeners) {
-            OLogManager.instance().info(this, "- %s", l);
+            logger.info("- %s", l);
             try {
               l.shutdown();
             } catch (Exception e) {
-              OLogManager.instance().error(this, "Error during shutdown of listener %s.", e, l);
+              logger.error("Error during shutdown of listener %s.", e, l);
             }
           }
         }
 
         if (networkProtocols.size() > 0) {
           // PROTOCOL SHUTDOWN
-          OLogManager.instance().info(this, "Shutting down protocols");
+          logger.info("Shutting down protocols");
           networkProtocols.clear();
         }
 
@@ -602,8 +615,7 @@ public class OServer {
           try {
             l.onAfterDeactivate();
           } catch (Exception e) {
-            OLogManager.instance()
-                .error(this, "Error during deactivation of server lifecycle listener %s", e, l);
+            logger.error("Error during deactivation of server lifecycle listener %s", e, l);
           }
 
         rejectRequests = true;
@@ -620,10 +632,10 @@ public class OServer {
 
       if (shutdownEngineOnExit && !Orient.isRegisterDatabaseByPath())
         try {
-          OLogManager.instance().info(this, "Shutting down databases:");
+          logger.info("Shutting down databases:");
           Orient.instance().shutdown();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
+          logger.error("Error during OrientDB shutdown", e);
         }
       if (!getContextConfiguration()
               .getValueAsBoolean(OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY)
@@ -632,7 +644,7 @@ public class OServer {
         databases = null;
       }
     } finally {
-      OLogManager.instance().info(this, "OrientDB Server shutdown complete\n");
+      logger.info("OrientDB Server shutdown complete\n");
       OLogManager.instance().flush();
     }
 
@@ -647,7 +659,7 @@ public class OServer {
     try {
       if (shutdownLatch != null) shutdownLatch.await();
     } catch (InterruptedException e) {
-      OLogManager.instance().error(this, "Error during waiting for OrientDB shutdown", e);
+      logger.error("Error during waiting for OrientDB shutdown", e);
     }
   }
 
@@ -1050,11 +1062,9 @@ public class OServer {
       } while (rootPassword != null);
 
     } else
-      OLogManager.instance()
-          .info(
-              this,
-              "Found ORIENTDB_ROOT_PASSWORD variable, using this value as root's password",
-              rootPassword);
+      logger.info(
+          "Found ORIENTDB_ROOT_PASSWORD variable, using this value as root's password",
+          rootPassword);
 
     if (!existsRoot) {
       context.execute(

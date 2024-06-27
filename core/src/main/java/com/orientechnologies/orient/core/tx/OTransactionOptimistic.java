@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -58,6 +59,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OTransactionOptimistic.class);
   private static final AtomicInteger txSerial = new AtomicInteger();
   protected boolean changed = true;
   private boolean alreadyCleared = false;
@@ -79,14 +81,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     txStartCounter++;
 
     if (txStartCounter > 1) {
-      OLogManager.instance()
-          .debug(
-              this,
-              "Transaction with ID "
-                  + getId()
-                  + " was already started "
-                  + txStartCounter
-                  + " times, and will be reused.");
+      logger.debug(
+          "Transaction with ID "
+              + getId()
+              + " was already started "
+              + txStartCounter
+              + " times, and will be reused.");
     }
   }
 
@@ -115,8 +115,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     if (txStartCounter == 0) {
       doCommit();
     } else if (txStartCounter > 0) {
-      OLogManager.instance()
-          .debug(this, "Nested transaction was closed but transaction itself was not committed.");
+      logger.debug("Nested transaction was closed but transaction itself was not committed.");
     } else {
       throw new OTransactionException("Transaction was committed more times than it was started.");
     }
@@ -143,8 +142,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       close();
       status = TXSTATUS.COMPLETED;
     } else if (txStartCounter > 0) {
-      OLogManager.instance()
-          .debug(this, "Nested transaction was closed but transaction itself was not committed.");
+      logger.debug("Nested transaction was closed but transaction itself was not committed.");
     } else {
       throw new OTransactionException("Transaction was committed more times than it was started.");
     }
@@ -183,10 +181,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.ROLLBACKING;
 
     if (!force && txStartCounter > 0) {
-      OLogManager.instance()
-          .debug(
-              this,
-              "Nested transaction was closed but transaction itself was scheduled for rollback.");
+      logger.debug(
+          "Nested transaction was closed but transaction itself was scheduled for rollback.");
       return;
     }
 
@@ -230,14 +226,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     if (txRecord != null) {
       if (iRecord != null && txRecord != iRecord) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Found record in transaction with the same RID %s but different instance. Probably"
-                    + " the record has been loaded from another transaction and reused on the"
-                    + " current one: reload it from current transaction before to update or delete"
-                    + " it.",
-                iRecord.getIdentity());
+        logger.warn(
+            "Found record in transaction with the same RID %s but different instance. Probably"
+                + " the record has been loaded from another transaction and reused on the"
+                + " current one: reload it from current transaction before to update or delete"
+                + " it.",
+            iRecord.getIdentity());
       }
       return txRecord;
     }
@@ -327,14 +321,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     if (txRecord != null) {
       if (passedRecord != null && txRecord != passedRecord) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Found record in transaction with the same RID %s but different instance. Probably"
-                    + " the record has been loaded from another transaction and reused on the"
-                    + " current one: reload it from current transaction before to update or delete"
-                    + " it",
-                passedRecord.getIdentity());
+        logger.warn(
+            "Found record in transaction with the same RID %s but different instance. Probably"
+                + " the record has been loaded from another transaction and reused on the"
+                + " current one: reload it from current transaction before to update or delete"
+                + " it",
+            passedRecord.getIdentity());
       }
       return txRecord;
     }

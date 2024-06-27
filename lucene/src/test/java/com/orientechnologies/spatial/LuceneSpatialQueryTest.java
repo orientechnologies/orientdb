@@ -18,6 +18,7 @@ package com.orientechnologies.spatial;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -39,6 +40,7 @@ import org.junit.Test;
 
 /** Created by enricorisa on 02/10/14. */
 public class LuceneSpatialQueryTest extends BaseLuceneTest {
+  private static final OLogger logger = OLogManager.instance().logger(LuceneSpatialQueryTest.class);
 
   @Before
   public void init() {
@@ -73,14 +75,12 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
                     long maxMemory = runtime.maxMemory();
                     long allocatedMemory = runtime.totalMemory();
                     long freeMemory = runtime.freeMemory();
-                    OLogManager.instance()
-                        .info(
-                            this,
-                            "Memory Stats: free [%d], allocated [%d], max [%d] total free [%d]",
-                            freeMemory / 1024,
-                            allocatedMemory / 1024,
-                            maxMemory / 1024,
-                            (freeMemory + (maxMemory - allocatedMemory)) / 1024);
+                    logger.info(
+                        "Memory Stats: free [%d], allocated [%d], max [%d] total free [%d]",
+                        freeMemory / 1024,
+                        allocatedMemory / 1024,
+                        maxMemory / 1024,
+                        (freeMemory + (maxMemory - allocatedMemory)) / 1024);
                   }
                 },
                 10000,
@@ -109,7 +109,7 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
 
             doc.save();
             if (i % 100000 == 0) {
-              OLogManager.instance().info(this, "Imported: [%d] records", i);
+              logger.info("Imported: [%d] records", i);
               db.commit();
               db.begin();
             }

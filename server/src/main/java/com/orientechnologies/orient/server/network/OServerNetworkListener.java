@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.network;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -45,6 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OServerNetworkListener extends Thread {
+  private static final OLogger logger = OLogManager.instance().logger(OServerNetworkListener.class);
   private OServerSocketFactory socketFactory;
   private ServerSocket serverSocket;
   private InetSocketAddress inboundAddr;
@@ -80,7 +82,7 @@ public class OServerNetworkListener extends Thread {
       protocolVersion = iProtocol.getConstructor(OServer.class).newInstance(server).getVersion();
     } catch (Exception e) {
       final String message = "Error on reading protocol version for " + iProtocol;
-      OLogManager.instance().error(this, message, e);
+      logger.error(message, e);
 
       throw OException.wrapException(new ONetworkProtocolException(message), e);
     }
@@ -220,14 +222,10 @@ public class OServerNetworkListener extends Thread {
             conns = server.getClientConnectionManager().getTotal();
             if (conns >= max) {
               // MAXIMUM OF CONNECTIONS EXCEEDED
-              OLogManager.instance()
-                  .warn(
-                      this,
-                      "Reached maximum number of concurrent connections (max=%d, current=%d),"
-                          + " reject incoming connection from %s",
-                      max,
-                      conns,
-                      socket.getRemoteSocketAddress());
+              logger.warn(
+                  "Reached maximum number of concurrent connections (max=%d, current=%d),"
+                      + " reject incoming connection from %s",
+                  max, conns, socket.getRemoteSocketAddress());
               socket.close();
 
               // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
@@ -249,12 +247,11 @@ public class OServerNetworkListener extends Thread {
           protocol.config(this, server, socket, configuration);
 
         } catch (Exception e) {
-          if (active) OLogManager.instance().error(this, "Error on client connection", e);
+          if (active) logger.error("Error on client connection", e);
         }
       }
     } catch (NoSuchMethodException e) {
-      OLogManager.instance()
-          .error(this, "error finding the protocol constructor with the server as parameter", e);
+      logger.error("error finding the protocol constructor with the server as parameter", e);
     } finally {
       try {
         if (serverSocket != null && !serverSocket.isClosed()) serverSocket.close();
@@ -283,7 +280,7 @@ public class OServerNetworkListener extends Thread {
         try {
           address = InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
-          OLogManager.instance().warn(this, "Error resolving current host address", e);
+          logger.warn("Error resolving current host address", e);
         }
       }
     }
@@ -357,43 +354,36 @@ public class OServerNetworkListener extends Thread {
         serverSocket = socketFactory.createServerSocket(port, 0, InetAddress.getByName(iHostName));
 
         if (serverSocket.isBound()) {
-          OLogManager.instance()
-              .info(
-                  this,
-                  "Listening $ANSI{green "
-                      + iProtocolName
-                      + "} connections on $ANSI{green "
-                      + inboundAddr.getAddress().getHostAddress()
-                      + ":"
-                      + inboundAddr.getPort()
-                      + "} (protocol v."
-                      + protocolVersion
-                      + ", socket="
-                      + socketFactory.getName()
-                      + ")");
+          logger.info(
+              "Listening $ANSI{green "
+                  + iProtocolName
+                  + "} connections on $ANSI{green "
+                  + inboundAddr.getAddress().getHostAddress()
+                  + ":"
+                  + inboundAddr.getPort()
+                  + "} (protocol v."
+                  + protocolVersion
+                  + ", socket="
+                  + socketFactory.getName()
+                  + ")");
 
           return;
         }
       } catch (BindException be) {
-        OLogManager.instance()
-            .warn(this, "Port %s:%d busy, trying the next available...", iHostName, port);
+        logger.warn("Port %s:%d busy, trying the next available...", iHostName, port);
       } catch (SocketException se) {
-        OLogManager.instance().error(this, "Unable to create socket", se);
+        logger.error("Unable to create socket", se);
         throw new RuntimeException(se);
       } catch (IOException ioe) {
-        OLogManager.instance().error(this, "Unable to read data from an open socket", ioe);
+        logger.error("Unable to read data from an open socket", ioe);
         System.err.println("Unable to read data from an open socket.");
         throw new RuntimeException(ioe);
       }
     }
 
-    OLogManager.instance()
-        .error(
-            this,
-            "Unable to listen for connections using the configured ports '%s' on host '%s'",
-            null,
-            iHostPortRange,
-            iHostName);
+    logger.error(
+        "Unable to listen for connections using the configured ports '%s' on host '%s'",
+        null, iHostPortRange, iHostName);
     throw new OSystemException(
         String.format(
             "Unable to listen for connections using the configured ports '%s' on host '%s'",

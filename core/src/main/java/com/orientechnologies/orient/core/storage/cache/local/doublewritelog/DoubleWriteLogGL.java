@@ -6,6 +6,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intentio
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import java.io.IOException;
@@ -28,6 +29,7 @@ import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 
 public class DoubleWriteLogGL implements DoubleWriteLog {
+  private static final OLogger logger = OLogManager.instance().logger(DoubleWriteLogGL.class);
 
   /** Stands for "double write log" */
   public static final String EXTENSION = ".dwl";
@@ -152,13 +154,9 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
       blockMask = blockSize - 1;
 
-      OLogManager.instance()
-          .info(
-              this,
-              "DWL:%s: block size = %d bytes, maximum segment size = %d MB",
-              storageName,
-              blockSize,
-              maxSegSize / 1024 / 1024);
+      logger.info(
+          "DWL:%s: block size = %d bytes, maximum segment size = %d MB",
+          storageName, blockSize, maxSegSize / 1024 / 1024);
     }
   }
 
@@ -318,13 +316,9 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
                   final Path segmentPath = storagePath.resolve(segment);
                   Files.delete(segmentPath);
                 } catch (final IOException e) {
-                  OLogManager.instance()
-                      .errorNoDb(
-                          this,
-                          "Can not delete segment of double write log - %s in storage %s",
-                          e,
-                          segment,
-                          storageName);
+                  logger.errorNoDb(
+                      "Can not delete segment of double write log - %s in storage %s",
+                      e, segment, storageName);
                 }
               });
 
@@ -542,12 +536,10 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   }
 
   private void printSegmentIsBroken(Path segment) {
-    OLogManager.instance()
-        .warnNoDb(
-            this,
-            "DWL Segment "
-                + segment
-                + " is broken and only part of its content will be used during data restore");
+    logger.warnNoDb(
+        "DWL Segment "
+            + segment
+            + " is broken and only part of its content will be used during data restore");
   }
 
   @Override

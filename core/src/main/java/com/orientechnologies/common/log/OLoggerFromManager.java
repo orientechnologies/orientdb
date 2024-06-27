@@ -21,6 +21,16 @@ public class OLoggerFromManager implements OLogger {
         this.cl, translateLevel(level), message, exception, extractDatabase, null, additionalArgs);
   }
 
+  @Override
+  public boolean isDebugEnabled() {
+    return manager.isDebugEnabled();
+  }
+
+  @Override
+  public boolean isWarnEnabled() {
+    return manager.isWarnEnabled();
+  }
+
   private java.util.logging.Level translateLevel(Level level) {
     switch (level) {
       case TRACE:

@@ -16,6 +16,7 @@
 package com.orientechnologies.security.kerberos;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -45,6 +46,8 @@ import javax.security.auth.login.LoginContext;
  * @author S. Colin Leister
  */
 public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OKerberosAuthenticator.class);
+
   private final String kerberosPluginVersion = "0.15";
   private final long ticketRelayExpiration = 600000L; // 10 minutes, do not change
   private final ConcurrentHashMap<String, TicketItem> ticketRelayMap =
@@ -83,8 +86,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
         clientPeriod * 1000 * 60,
         clientPeriod * 1000 * 60); // Wait 30 seconds before starting
 
-    OLogManager.instance()
-        .debug(this, "OrientDB Kerberos Authenticator Is Active Version: " + kerberosPluginVersion);
+    logger.debug("OrientDB Kerberos Authenticator Is Active Version: " + kerberosPluginVersion);
   }
 
   // OSecurityAuthenticator
@@ -97,12 +99,12 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
 
     try {
       if (isDebug()) {
-        OLogManager.instance().info(this, "** Authenticating username: %s", username);
+        logger.info("** Authenticating username: %s", username);
 
         if (OKerberosLibrary.isServiceTicket(password))
-          OLogManager.instance().info(this, "** Authenticating password: SERVICE TICKET");
+          logger.info("** Authenticating password: SERVICE TICKET");
         else {
-          OLogManager.instance().info(this, "** Authenticating password: %s", password);
+          logger.info("** Authenticating password: %s", password);
         }
       }
 
@@ -123,17 +125,12 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
 
           if (ti != null && ti.getHashCode() == password.hashCode()) {
             if (isDebug())
-              OLogManager.instance()
-                  .info(
-                      this,
-                      "OKerberosAuthenticator.authenticate() TicketHash and password Hash are"
-                          + " equal, return principal: "
-                          + ti.getPrincipal());
+              logger.info(
+                  "OKerberosAuthenticator.authenticate() TicketHash and password Hash are"
+                      + " equal, return principal: "
+                      + ti.getPrincipal());
             if (isDebug())
-              OLogManager.instance()
-                  .info(
-                      this,
-                      "OKerberosAuthenticator.authenticate() principal: " + ti.getPrincipal());
+              logger.info("OKerberosAuthenticator.authenticate() principal: " + ti.getPrincipal());
 
             principal = ti.getPrincipal();
           } else {
@@ -158,19 +155,16 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
                 }
               }
             } catch (Exception e) {
-              OLogManager.instance()
-                  .error(this, "OKerberosAuthenticator.authenticate() Exception: ", e);
+              logger.error("OKerberosAuthenticator.authenticate() Exception: ", e);
             }
 
             if (isDebug())
-              OLogManager.instance()
-                  .info(
-                      this,
-                      "OKerberosAuthenticator.authenticate() OKerberosLibrary.authenticate()"
-                          + " returned "
-                          + principal);
+              logger.info(
+                  "OKerberosAuthenticator.authenticate() OKerberosLibrary.authenticate()"
+                      + " returned "
+                      + principal);
 
-            //							OLogManager.instance().info(this, "OKerberosAuthenticator.authenticate()
+            //							logger.info( "OKerberosAuthenticator.authenticate()
             // addTicket hashCode: " + password.hashCode());
 
             // null is an acceptable principal to store so that subsequent calls using the same
@@ -180,7 +174,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().debug(this, "OKerberosAuthenticator.authenticate() Exception: ", ex);
+      logger.debug("OKerberosAuthenticator.authenticate() Exception: ", ex);
     }
 
     return new OImmutableUser(principal, OSecurityUser.SERVER_USER_TYPE);
@@ -194,7 +188,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
       krb5Config =
           OSystemVariableResolver.resolveSystemVariables((String) kerbConfig.field("krb5_config"));
 
-      OLogManager.instance().info(this, "Krb5Config = " + krb5Config);
+      logger.info("Krb5Config = " + krb5Config);
     }
 
     // service
@@ -205,13 +199,13 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
         serviceKTName =
             OSystemVariableResolver.resolveSystemVariables((String) serviceDoc.field("ktname"));
 
-        OLogManager.instance().info(this, "Svc ktname = " + serviceKTName);
+        logger.info("Svc ktname = " + serviceKTName);
       }
 
       if (serviceDoc.containsField("principal")) {
         servicePrincipal = serviceDoc.field("principal");
 
-        OLogManager.instance().info(this, "Svc princ = " + servicePrincipal);
+        logger.info("Svc princ = " + servicePrincipal);
       }
     }
 
@@ -223,13 +217,13 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
         spnegoKTName =
             OSystemVariableResolver.resolveSystemVariables((String) spnegoDoc.field("ktname"));
 
-        OLogManager.instance().info(this, "SPNEGO ktname = " + spnegoKTName);
+        logger.info("SPNEGO ktname = " + spnegoKTName);
       }
 
       if (spnegoDoc.containsField("principal")) {
         spnegoPrincipal = spnegoDoc.field("principal");
 
-        OLogManager.instance().info(this, "SPNEGO princ = " + spnegoPrincipal);
+        logger.info("SPNEGO princ = " + spnegoPrincipal);
       }
     }
 
@@ -240,27 +234,27 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
       if (clientDoc.containsField("useTicketCache")) {
         clientUseTicketCache = (Boolean) clientDoc.field("useTicketCache", OType.BOOLEAN);
 
-        OLogManager.instance().info(this, "Client useTicketCache = " + clientUseTicketCache);
+        logger.info("Client useTicketCache = " + clientUseTicketCache);
       }
 
       if (clientDoc.containsField("principal")) {
         clientPrincipal = clientDoc.field("principal");
 
-        OLogManager.instance().info(this, "Client princ = " + clientPrincipal);
+        logger.info("Client princ = " + clientPrincipal);
       }
 
       if (clientDoc.containsField("ccname")) {
         clientCCName =
             OSystemVariableResolver.resolveSystemVariables((String) clientDoc.field("ccname"));
 
-        OLogManager.instance().info(this, "Client ccname = " + clientCCName);
+        logger.info("Client ccname = " + clientCCName);
       }
 
       if (clientDoc.containsField("ktname")) {
         clientKTName =
             OSystemVariableResolver.resolveSystemVariables((String) clientDoc.field("ktname"));
 
-        OLogManager.instance().info(this, "Client ktname = " + clientKTName);
+        logger.info("Client ktname = " + clientKTName);
       }
 
       if (clientDoc.containsField("renewalPeriod")) {
@@ -351,8 +345,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
     try {
       Configuration cfg = new OKrb5LoginModuleConfig(servicePrincipal, serviceKTName);
 
-      OLogManager.instance()
-          .info(this, "createServiceSubject() Service Principal: " + servicePrincipal);
+      logger.info("createServiceSubject() Service Principal: " + servicePrincipal);
 
       LoginContext lc = new LoginContext("ignore", null, null, cfg);
       lc.login();
@@ -362,10 +355,10 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
       if (serviceSubject != null) {
         OKerberosLibrary.checkNativeJGSS(serviceSubject, servicePrincipal, false);
 
-        OLogManager.instance().info(this, "** Created Kerberos Service Subject **");
+        logger.info("** Created Kerberos Service Subject **");
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "createServiceSubject() Exception: ", ex);
+      logger.error("createServiceSubject() Exception: ", ex);
     }
 
     if (serviceSubject == null)
@@ -384,8 +377,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
     try {
       Configuration cfg = new OKrb5LoginModuleConfig(spnegoPrincipal, spnegoKTName);
 
-      OLogManager.instance()
-          .info(this, "createSpnegoSubject() SPNEGO Principal: " + spnegoPrincipal);
+      logger.info("createSpnegoSubject() SPNEGO Principal: " + spnegoPrincipal);
 
       LoginContext lc = new LoginContext("ignore", null, null, cfg);
       lc.login();
@@ -395,10 +387,10 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
       if (spnegoSubject != null) {
         OKerberosLibrary.checkNativeJGSS(spnegoSubject, spnegoPrincipal, false);
 
-        OLogManager.instance().info(this, "** Created Kerberos SPNEGO Subject **");
+        logger.info("** Created Kerberos SPNEGO Subject **");
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "createSpnegoSubject() Exception: ", ex);
+      logger.error("createSpnegoSubject() Exception: ", ex);
     }
 
     if (spnegoSubject == null)
@@ -424,8 +416,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
           new OKrb5ClientLoginModuleConfig(
               clientPrincipal, clientUseTicketCache, clientCCName, clientKTName);
 
-      OLogManager.instance()
-          .info(this, "createClientSubject() Client Principal: " + clientPrincipal);
+      logger.info("createClientSubject() Client Principal: " + clientPrincipal);
 
       LoginContext lc = new LoginContext("ignore", null, null, cfg);
       lc.login();
@@ -435,10 +426,10 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
       if (clientSubject != null) {
         OKerberosLibrary.checkNativeJGSS(clientSubject, clientPrincipal, true);
 
-        OLogManager.instance().info(this, "** Created Kerberos Client Subject **");
+        logger.info("** Created Kerberos Client Subject **");
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "createClientSubject() Exception: ", ex);
+      logger.error("createClientSubject() Exception: ", ex);
     }
 
     if (clientSubject == null)
@@ -477,7 +468,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
 
       for (Map.Entry<String, TicketItem> entry : ticketRelayMap.entrySet()) {
         if (entry.getValue().hasExpired(currTime)) {
-          //					OLogManager.instance().info(this, "~~~~~~~~ checkTicketExpirations() Ticket has
+          //					logger.info( "~~~~~~~~ checkTicketExpirations() Ticket has
           // expired: " + entry.getValue().getHashCode() + "\n");
 
           ticketRelayMap.remove(entry.getKey());

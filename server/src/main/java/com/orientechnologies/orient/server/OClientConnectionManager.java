@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
@@ -53,6 +54,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLSocket;
 
 public class OClientConnectionManager {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OClientConnectionManager.class);
   private static final long TIMEOUT_PUSH = 3000;
 
   protected final ConcurrentMap<Integer, OClientConnection> connections =
@@ -73,7 +76,7 @@ public class OClientConnectionManager {
                   try {
                     cleanExpiredConnections();
                   } catch (Exception e) {
-                    OLogManager.instance().debug(this, "Error on client connection purge task", e);
+                    logger.debug("Error on client connection purge task", e);
                   }
                 },
                 delay,
@@ -107,12 +110,9 @@ public class OClientConnectionManager {
           else socket = entry.getValue().getProtocol().getChannel().socket;
 
           if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-            OLogManager.instance()
-                .debug(
-                    this,
-                    "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
-                    entry.getKey(),
-                    socket);
+            logger.debug(
+                "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
+                entry.getKey(), socket);
             try {
               OCommandRequestText command = entry.getValue().getData().command;
               if (command != null && command.isIdempotent()) {
@@ -123,8 +123,7 @@ public class OClientConnectionManager {
               entry.getValue().close();
 
             } catch (Exception e) {
-              OLogManager.instance()
-                  .error(this, "Error during close of connection for close channel", e);
+              logger.error("Error during close of connection for close channel", e);
             }
             iterator.remove();
           } else if (Boolean.TRUE.equals(entry.getValue().getTokenBased())) {
@@ -158,7 +157,7 @@ public class OClientConnectionManager {
     connection = new OClientConnection(connectionSerial.incrementAndGet(), iProtocol);
 
     connections.put(connection.getId(), connection);
-    OLogManager.instance().config(this, "Remote client connected from: " + connection);
+    logger.info("Remote client connected from: " + connection);
     OServerPluginHelper.invokeHandlerCallbackOnClientConnection(iProtocol.getServer(), connection);
     return connection;
   }
@@ -190,7 +189,7 @@ public class OClientConnectionManager {
     }
     connection.setToken(parsedToken, tokenBytes);
     session.addConnection(connection);
-    OLogManager.instance().config(this, "Remote client connected from: " + connection);
+    logger.info("Remote client connected from: " + connection);
     OServerPluginHelper.invokeHandlerCallbackOnClientConnection(iProtocol.getServer(), connection);
     return connection;
   }
@@ -274,7 +273,7 @@ public class OClientConnectionManager {
         // INTERRUPT THE NEWTORK MANAGER TOO
         protocol.interrupt();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during interruption of binary protocol", e);
+        logger.error("Error during interruption of binary protocol", e);
       }
 
       disconnect(connection);
@@ -310,7 +309,7 @@ public class OClientConnectionManager {
    * @return true if was last one, otherwise false
    */
   public boolean disconnect(final int iChannelId) {
-    OLogManager.instance().debug(this, "Disconnecting connection with id=%d", iChannelId);
+    logger.debug("Disconnecting connection with id=%d", iChannelId);
 
     final OClientConnection connection = connections.remove(iChannelId);
 
@@ -322,24 +321,19 @@ public class OClientConnectionManager {
       // CHECK IF THERE ARE OTHER CONNECTIONS
       for (Entry<Integer, OClientConnection> entry : connections.entrySet()) {
         if (entry.getValue().getProtocol().equals(connection.getProtocol())) {
-          OLogManager.instance()
-              .debug(
-                  this,
-                  "Disconnected connection with id=%d but are present other active channels",
-                  iChannelId);
+          logger.debug(
+              "Disconnected connection with id=%d but are present other active channels",
+              iChannelId);
           return false;
         }
       }
 
-      OLogManager.instance()
-          .debug(
-              this,
-              "Disconnected connection with id=%d, no other active channels found",
-              iChannelId);
+      logger.debug(
+          "Disconnected connection with id=%d, no other active channels found", iChannelId);
       return true;
     }
 
-    OLogManager.instance().debug(this, "Cannot find connection with id=%d", iChannelId);
+    logger.debug("Cannot find connection with id=%d", iChannelId);
     return false;
   }
 
@@ -360,7 +354,7 @@ public class OClientConnectionManager {
   }
 
   public void disconnect(final OClientConnection iConnection) {
-    OLogManager.instance().debug(this, "Disconnecting connection %s...", iConnection);
+    logger.debug("Disconnecting connection %s...", iConnection);
     OServerPluginHelper.invokeHandlerCallbackOnClientDisconnection(server, iConnection);
     removeConnectionFromSession(iConnection);
     iConnection.close();
@@ -375,8 +369,7 @@ public class OClientConnectionManager {
       }
     }
 
-    OLogManager.instance()
-        .debug(this, "Disconnected connection %s found %d channels", iConnection, totalRemoved);
+    logger.debug("Disconnected connection %s found %d channels", iConnection, totalRemoved);
   }
 
   public List<OClientConnection> getConnections() {
@@ -430,29 +423,19 @@ public class OClientConnectionManager {
             channel.flush();
 
             pushed.add(c.getRemoteAddress());
-            OLogManager.instance()
-                .debug(
-                    this,
-                    "Sent updated cluster configuration to the remote client %s",
-                    c.getRemoteAddress());
+            logger.debug(
+                "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
 
           } finally {
             channel.releaseWriteLock();
           }
         } else {
-          OLogManager.instance()
-              .info(
-                  this,
-                  "Timeout on sending updated cluster configuration to the remote client %s",
-                  c.getRemoteAddress());
+          logger.info(
+              "Timeout on sending updated cluster configuration to the remote client %s",
+              c.getRemoteAddress());
         }
       } catch (Exception e) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Cannot push cluster configuration to the client %s",
-                e,
-                c.getRemoteAddress());
+        logger.warn("Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
       }
     }
   }
@@ -470,7 +453,7 @@ public class OClientConnectionManager {
 
       if (protocol != null) protocol.sendShutdown();
 
-      OLogManager.instance().debug(this, "Sending shutdown to thread %s", protocol);
+      logger.debug("Sending shutdown to thread %s", protocol);
 
       OCommandRequestText command = entry.getValue().getData().command;
       if (command != null && command.isIdempotent()) {
@@ -488,29 +471,26 @@ public class OClientConnectionManager {
 
         if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
           try {
-            OLogManager.instance().debug(this, "Closing input socket of thread %s", protocol);
+            logger.debug("Closing input socket of thread %s", protocol);
             if (!(socket
                 instanceof SSLSocket)) // An SSLSocket will throw an UnsupportedOperationException.
             socket.shutdownInput();
           } catch (IOException e) {
-            OLogManager.instance()
-                .debug(
-                    this,
-                    "Error on closing connection of %s client during shutdown",
-                    e,
-                    entry.getValue().getRemoteAddress());
+            logger.debug(
+                "Error on closing connection of %s client during shutdown",
+                e, entry.getValue().getRemoteAddress());
           }
         }
         if (protocol.isAlive()) {
           if (protocol instanceof ONetworkProtocolBinary
               && ((ONetworkProtocolBinary) protocol).getRequestType() == -1) {
             try {
-              OLogManager.instance().debug(this, "Closing socket of thread %s", protocol);
+              logger.debug("Closing socket of thread %s", protocol);
               protocol.getChannel().close();
             } catch (Exception e) {
-              OLogManager.instance().debug(this, "Error during chanel close at shutdown", e);
+              logger.debug("Error during chanel close at shutdown", e);
             }
-            OLogManager.instance().debug(this, "Sending interrupt signal to thread %s", protocol);
+            logger.debug("Sending interrupt signal to thread %s", protocol);
             protocol.interrupt();
           }
           toWait.add(protocol);
@@ -552,12 +532,8 @@ public class OClientConnectionManager {
         }
 
       } catch (Exception e) {
-        OLogManager.instance()
-            .debug(
-                this,
-                "Error on killing connection to %s client",
-                e,
-                entry.getValue().getRemoteAddress());
+        logger.debug(
+            "Error on killing connection to %s client", e, entry.getValue().getRemoteAddress());
       }
     }
   }

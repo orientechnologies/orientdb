@@ -25,6 +25,7 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;
@@ -196,6 +197,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /** This object is bound to each remote ODatabase instances. */
 public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStorage {
+  private static final OLogger logger = OLogManager.instance().logger(OStorageRemote.class);
   @Deprecated public static final String PARAM_CONNECTION_STRATEGY = "connectionStrategy";
 
   public static final String DRIVER_NAME = "OrientDB Java";
@@ -393,10 +395,10 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
                     connectionManager.release(network);
                   } catch (Exception e) {
                     connectionManager.remove(network);
-                    OLogManager.instance().error(this, "Exception on async query", e);
+                    logger.error("Exception on async query", e);
                   } catch (Error e) {
                     connectionManager.remove(network);
-                    OLogManager.instance().error(this, "Exception on async query", e);
+                    logger.error("Exception on async query", e);
                     throw e;
                   }
                 });
@@ -423,7 +425,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
             }
           } catch (IOException e) {
             if (network.isConnected()) {
-              OLogManager.instance().warn(this, "Error Writing request on the network", e);
+              logger.warn("Error Writing request on the network", e);
             }
             throw new ONotSendRequestException("Cannot send request on this channel");
           }
@@ -504,14 +506,9 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
         serverUrl = null;
       } catch (ODistributedRedirectException e) {
         connectionManager.release(network);
-        OLogManager.instance()
-            .debug(
-                this,
-                "Redirecting the request from server '%s' to the server '%s' because %s",
-                e,
-                e.getFromServer(),
-                e.toString(),
-                e.getMessage());
+        logger.debug(
+            "Redirecting the request from server '%s' to the server '%s' because %s",
+            e, e.getFromServer(), e.toString(), e.getMessage());
 
         // RECONNECT TO THE SERVER SUGGESTED IN THE EXCEPTION
         serverUrl = e.getToServerAddress();
@@ -538,21 +535,17 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
         }
         serverUrl = null;
       } catch (IOException | OIOException e) {
-        OLogManager.instance()
-            .info(
-                this,
-                "Caught Network I/O errors on %s, trying an automatic reconnection... (error: %s)",
-                network.getServerURL(),
-                e.getMessage());
-        OLogManager.instance().debug(this, "I/O error stack: ", e);
+        logger.info(
+            "Caught Network I/O errors on %s, trying an automatic reconnection... (error: %s)",
+            network.getServerURL(), e.getMessage());
+        logger.debug("I/O error stack: ", e);
         connectionManager.remove(network);
         if (--retry <= 0) throw OException.wrapException(new OIOException(e.getMessage()), e);
         else {
           try {
             Thread.sleep(connectionRetryDelay);
           } catch (InterruptedException e1) {
-            OLogManager.instance()
-                .error(this, "Exception was suppressed, original exception is ", e);
+            logger.error("Exception was suppressed, original exception is ", e);
             throw OException.wrapException(new OInterruptedException(e1.getMessage()), e1);
           }
         }
@@ -1684,12 +1677,9 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
               } else {
                 nodeSession.setSession(response.getSessionId(), nodeSession.getToken());
               }
-              OLogManager.instance()
-                  .debug(
-                      this,
-                      "Client connected to %s with session id=%d",
-                      network.getServerURL(),
-                      response.getSessionId());
+              logger.debug(
+                  "Client connected to %s with session id=%d",
+                  network.getServerURL(), response.getSessionId());
               return currentURL;
             } finally {
               endResponse(network);
@@ -1702,16 +1692,16 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
             connectionManager.remove(network);
           }
 
-          OLogManager.instance().error(this, "Cannot open database with url " + currentURL, e);
+          logger.error("Cannot open database with url " + currentURL, e);
         } catch (OOfflineNodeException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             connectionManager.remove(network);
           }
 
-          OLogManager.instance().debug(this, "Cannot open database with url " + currentURL, e);
+          logger.debug("Cannot open database with url " + currentURL, e);
         } catch (OSecurityException ex) {
-          OLogManager.instance().debug(this, "Invalidate token for url=%s", ex, currentURL);
+          logger.debug("Invalidate token for url=%s", ex, currentURL);
           OStorageRemoteSession session = getCurrentSession();
           session.removeServerSession(currentURL);
 
@@ -1721,8 +1711,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
               connectionManager.remove(network);
             } catch (Exception e) {
               // IGNORE ANY EXCEPTION
-              OLogManager.instance()
-                  .debug(this, "Cannot remove connection or database url=" + currentURL, e);
+              logger.debug("Cannot remove connection or database url=" + currentURL, e);
             }
           }
         } catch (OException e) {
@@ -1731,15 +1720,14 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
           throw e;
 
         } catch (Exception e) {
-          OLogManager.instance().debug(this, "Cannot open database with url " + currentURL, e);
+          logger.debug("Cannot open database with url " + currentURL, e);
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             try {
               connectionManager.remove(network);
             } catch (Exception ex) {
               // IGNORE ANY EXCEPTION
-              OLogManager.instance()
-                  .debug(this, "Cannot remove connection or database url=" + currentURL, e);
+              logger.debug("Cannot remove connection or database url=" + currentURL, e);
             }
           }
         }
@@ -1793,9 +1781,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
 
     nodeSession.setSession(sessionId, token);
 
-    OLogManager.instance()
-        .debug(
-            this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
+    logger.debug("Client connected to %s with session id=%d", network.getServerURL(), sessionId);
 
     // READ CLUSTER CONFIGURATION
     // updateClusterConfiguration(network.getServerURL(),
@@ -1886,7 +1872,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
             connectionManager.remove(network);
           }
 
-          OLogManager.instance().debug(this, "Cannot open database with url " + currentURL, e);
+          logger.debug("Cannot open database with url " + currentURL, e);
 
         } catch (OException e) {
           connectionManager.release(network);
@@ -1989,13 +1975,9 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       }
       if (!network.tryLock()) {
         // CANNOT LOCK IT, MAYBE HASN'T BE CORRECTLY UNLOCKED BY PREVIOUS USER?
-        OLogManager.instance()
-            .error(
-                OStorageRemote.class,
-                "Removing locked network channel '%s' (connected=%s)...",
-                null,
-                iCurrentURL,
-                network.isConnected());
+        logger.error(
+            "Removing locked network channel '%s' (connected=%s)...",
+            null, iCurrentURL, network.isConnected());
         connectionManager.remove(network);
         network = null;
       }
@@ -2015,13 +1997,10 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   private boolean handleDBFreeze() {
 
     boolean retry;
-    OLogManager.instance()
-        .warn(
-            this,
-            "DB is frozen will wait for "
-                + getClientConfiguration()
-                    .getValue(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT)
-                + " ms. and then retry.");
+    logger.warn(
+        "DB is frozen will wait for "
+            + getClientConfiguration().getValue(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT)
+            + " ms. and then retry.");
     retry = true;
     try {
       Thread.sleep(
@@ -2114,7 +2093,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       dest.activateOnCurrentThread();
       openRemoteDatabase();
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error during database open", e);
+      logger.error("Error during database open", e);
     } finally {
       ODatabaseRecordThreadLocal.instance().set(origin);
     }
@@ -2336,12 +2315,10 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       subscribeDistributedConfiguration(aValidSession);
       subscribeStorageConfiguration(aValidSession);
     } else {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Cannot find a valid session for subscribe for event to host '%s' forward the"
-                  + " subscribe for the next session open ",
-              host);
+      logger.warn(
+          "Cannot find a valid session for subscribe for event to host '%s' forward the"
+              + " subscribe for the next session open ",
+          host);
       OStorageRemotePushThread old;
       stateLock.writeLock().lock();
       try {

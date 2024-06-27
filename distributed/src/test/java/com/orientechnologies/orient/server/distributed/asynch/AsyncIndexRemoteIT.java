@@ -1,15 +1,17 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
+  private static final OLogger logger = OLogManager.instance().logger(AsyncIndexRemoteIT.class);
 
   @Override
   protected String getDatabaseName() {
@@ -54,7 +56,7 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
         exceptionInThread = e;
       }
     } finally {
-      OLogManager.instance().info(this, "Shutting down db1");
+      logger.info("Shutting down db1");
       graph.close();
       orientDB.close();
     }
@@ -84,7 +86,7 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
         exceptionInThread = e;
       }
     } finally {
-      OLogManager.instance().info(this, "Shutting down db2");
+      logger.info("Shutting down db2");
       graph2.close();
       orientDB2.close();
     }
@@ -113,7 +115,7 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
         exceptionInThread = e;
       }
     } finally {
-      OLogManager.instance().info(this, "Shutting down db3");
+      logger.info("Shutting down db3");
       graph3.close();
       orientDB3.close();
     }

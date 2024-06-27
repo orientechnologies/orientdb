@@ -1,12 +1,14 @@
 package com.orientechnologies.orient.test.server;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.server.OServer;
 import java.io.File;
 import org.testng.annotations.Test;
 
 public class OServerTest {
+  private static final OLogger logger = OLogManager.instance().logger(OServerTest.class);
 
   /** Test for https://github.com/orientechnologies/orientdb/issues/1667 */
   @Test
@@ -16,11 +18,11 @@ public class OServerTest {
     System.setProperty(
         "ORIENTDB_HOME", buildDirectory + File.separator + OServerTest.class.getSimpleName());
 
-    OLogManager.instance().info(this, "ORIENTDB_HOME: " + System.getProperty("ORIENTDB_HOME"));
+    logger.info("ORIENTDB_HOME: " + System.getProperty("ORIENTDB_HOME"));
 
     // loop for start & stop server
     for (int i = 0; i < 5; i++) {
-      OLogManager.instance().info(this, "Iteration " + i);
+      logger.info("Iteration " + i);
       OServer server = new OServer(false).activate();
       // create database if does not exist
       OObjectDatabaseTx database =

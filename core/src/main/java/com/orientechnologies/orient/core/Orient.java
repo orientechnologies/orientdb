@@ -24,6 +24,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -67,6 +68,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
+  private static final OLogger logger = OLogManager.instance().logger(Orient.class);
   public static final String ORIENTDB_HOME = "ORIENTDB_HOME";
   public static final String URL_SYNTAX =
       "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
@@ -269,7 +271,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         try {
           if (l != null) l.onStartup();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on startup", e);
+          logger.error("Error on startup", e);
         }
 
       purgeWeakStartupListeners();
@@ -281,7 +283,7 @@ public class Orient extends OListenerManger<OOrientListener> {
           }
 
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on startup", e);
+          logger.error("Error on startup", e);
         }
 
       initShutdownQueue();
@@ -336,8 +338,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         engine = engines.next();
         registerEngine(engine);
       } catch (IllegalArgumentException e) {
-        if (engine != null)
-          OLogManager.instance().debug(this, "Failed to replace engine " + engine.getName(), e);
+        if (engine != null) logger.debug("Failed to replace engine " + engine.getName(), e);
       }
     }
   }
@@ -349,27 +350,26 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       active = false;
 
-      OLogManager.instance().info(this, "Orient Engine is shutting down...");
+      logger.info("Orient Engine is shutting down...");
       for (OShutdownHandler handler : shutdownHandlers) {
         try {
-          OLogManager.instance().debug(this, "Shutdown handler %s is going to be called", handler);
+          logger.debug("Shutdown handler %s is going to be called", handler);
           handler.shutdown();
-          OLogManager.instance().debug(this, "Shutdown handler %s completed", handler);
+          logger.debug("Shutdown handler %s completed", handler);
         } catch (Exception e) {
-          OLogManager.instance()
-              .error(this, "Exception during calling of shutdown handler %s", e, handler);
+          logger.error("Exception during calling of shutdown handler %s", e, handler);
         }
       }
 
       shutdownHandlers.clear();
 
-      OLogManager.instance().info(this, "Clearing byte buffer pool");
+      logger.info("Clearing byte buffer pool");
       OByteBufferPool.instance(null).clear();
 
       OByteBufferPool.instance(null).checkMemoryLeaks();
       ODirectMemoryAllocator.instance().checkMemoryLeaks();
 
-      OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
+      logger.info("OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
     } finally {
       try {
@@ -396,17 +396,11 @@ public class Orient extends OListenerManger<OOrientListener> {
               try {
                 task.run();
               } catch (Exception e) {
-                OLogManager.instance()
-                    .error(
-                        this,
-                        "Error during execution of task " + task.getClass().getSimpleName(),
-                        e);
+                logger.error(
+                    "Error during execution of task " + task.getClass().getSimpleName(), e);
               } catch (Error e) {
-                OLogManager.instance()
-                    .error(
-                        this,
-                        "Error during execution of task " + task.getClass().getSimpleName(),
-                        e);
+                logger.error(
+                    "Error during execution of task " + task.getClass().getSimpleName(), e);
                 throw e;
               }
             }
@@ -419,7 +413,7 @@ public class Orient extends OListenerManger<OOrientListener> {
           timer.schedule(timerTask, delay);
         }
       } else {
-        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+        logger.warn("OrientDB engine is down. Task will not be scheduled.");
       }
 
       return timerTask;
@@ -438,17 +432,11 @@ public class Orient extends OListenerManger<OOrientListener> {
               try {
                 task.run();
               } catch (Exception e) {
-                OLogManager.instance()
-                    .error(
-                        this,
-                        "Error during execution of task " + task.getClass().getSimpleName(),
-                        e);
+                logger.error(
+                    "Error during execution of task " + task.getClass().getSimpleName(), e);
               } catch (Error e) {
-                OLogManager.instance()
-                    .error(
-                        this,
-                        "Error during execution of task " + task.getClass().getSimpleName(),
-                        e);
+                logger.error(
+                    "Error during execution of task " + task.getClass().getSimpleName(), e);
                 throw e;
               }
             }
@@ -461,7 +449,7 @@ public class Orient extends OListenerManger<OOrientListener> {
           timer.schedule(timerTask, firstTime);
         }
       } else {
-        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+        logger.warn("OrientDB engine is down. Task will not be scheduled.");
       }
 
       return timerTask;
@@ -731,14 +719,12 @@ public class Orient extends OListenerManger<OOrientListener> {
       engine.startup();
       return true;
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(
-              this, "Error during initialization of engine '%s', engine will be removed", e, name);
+      logger.error("Error during initialization of engine '%s', engine will be removed", e, name);
 
       try {
         engine.shutdown();
       } catch (Exception se) {
-        OLogManager.instance().error(this, "Error during engine shutdown", se);
+        logger.error("Error during engine shutdown", se);
       }
 
       engines.remove(name);
@@ -837,7 +823,7 @@ public class Orient extends OListenerManger<OOrientListener> {
           }
 
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during orient shutdown", e);
+          logger.error("Error during orient shutdown", e);
         }
 
       // CALL THE SHUTDOWN ON ALL THE LISTENERS
@@ -846,7 +832,7 @@ public class Orient extends OListenerManger<OOrientListener> {
           try {
             l.onShutdown();
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error during orient shutdown", e);
+            logger.error("Error during orient shutdown", e);
           }
       }
 

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -9,6 +10,7 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 
 public class RemoteDeleteIT extends BareBoneBase1ClientTest {
+  private static final OLogger logger = OLogManager.instance().logger(RemoteDeleteIT.class);
 
   @Override
   protected void dbClient1(BareBonesServer[] servers) {
@@ -49,7 +51,7 @@ public class RemoteDeleteIT extends BareBoneBase1ClientTest {
         exceptionInThread = e;
       }
     } finally {
-      OLogManager.instance().info(this, "Shutting down");
+      logger.info("Shutting down");
       graph.close();
     }
   }

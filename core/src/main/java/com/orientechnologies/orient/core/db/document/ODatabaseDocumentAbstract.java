@@ -25,6 +25,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -124,6 +125,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener>
     implements ODatabaseDocumentInternal {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ODatabaseDocumentAbstract.class);
   protected final Map<String, Object> properties = new HashMap<String, Object>();
   protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
   protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
@@ -208,7 +211,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       try {
         listener.onOpen(getDatabaseOwner());
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during call of database listener", e);
+        logger.error("Error during call of database listener", e);
       }
     }
   }
@@ -225,7 +228,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       try {
         listener.onClose(getDatabaseOwner());
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during call of database listener", e);
+        logger.error("Error during call of database listener", e);
       }
     }
   }
@@ -240,7 +243,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         activateOnCurrentThread();
         listener.onDelete(getDatabaseOwner());
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during call of database listener", e);
+        logger.error("Error during call of database listener", e);
       }
     }
   }
@@ -859,7 +862,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       } catch (Exception e) {
         final String message = "Error before the transaction begin";
 
-        OLogManager.instance().error(this, message, e);
+        logger.error(message, e);
         throw OException.wrapException(new OTransactionBlockedException(message), e);
       }
 
@@ -994,7 +997,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       try {
         listener.onBeforeTxBegin(this);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error before tx begin", e);
+        logger.error("Error before tx begin", e);
       }
 
     switch (iType) {
@@ -1602,8 +1605,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       try {
         rollback(force);
       } catch (Exception re) {
-        OLogManager.instance()
-            .error(this, "Exception during rollback `%08X`", re, System.identityHashCode(re));
+        logger.error("Exception during rollback `%08X`", re, System.identityHashCode(re));
       }
       throw e;
     }
@@ -1612,11 +1614,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     } catch (RuntimeException e) {
 
       if ((e instanceof OHighLevelException) || (e instanceof ONeedRetryException))
-        OLogManager.instance()
-            .debug(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
-      else
-        OLogManager.instance()
-            .error(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
+        logger.debug("Error on transaction commit `%08X`", e, System.identityHashCode(e));
+      else logger.error("Error on transaction commit `%08X`", e, System.identityHashCode(e));
 
       // WAKE UP ROLLBACK LISTENERS
       beforeRollbackOperations();
@@ -1625,9 +1624,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         // ROLLBACK TX AT DB LEVEL
         ((OTransactionAbstract) currentTx).internalRollback();
       } catch (Exception re) {
-        OLogManager.instance()
-            .error(
-                this, "Error during transaction rollback `%08X`", re, System.identityHashCode(re));
+        logger.error("Error during transaction rollback `%08X`", re, System.identityHashCode(re));
       }
 
       // WAKE UP ROLLBACK LISTENERS
@@ -1646,14 +1643,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       try {
         listener.onBeforeTxCommit(this);
       } catch (Exception e) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Cannot commit the transaction: caught exception on execution of"
-                    + " %s.onBeforeTxCommit() `%08X`",
-                e,
-                listener.getClass().getName(),
-                System.identityHashCode(e));
+        logger.error(
+            "Cannot commit the transaction: caught exception on execution of"
+                + " %s.onBeforeTxCommit() `%08X`",
+            e, listener.getClass().getName(), System.identityHashCode(e));
         throw OException.wrapException(
             new OTransactionException(
                 "Cannot commit the transaction: caught exception on execution of "
@@ -1674,7 +1667,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
                 + listener.getClass()
                 + ".onAfterTxCommit() `%08X`";
 
-        OLogManager.instance().error(this, message, e, System.identityHashCode(e));
+        logger.error(message, e, System.identityHashCode(e));
 
         throw OException.wrapException(new OTransactionBlockedException(message), e);
       }
@@ -1685,8 +1678,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       try {
         listener.onBeforeTxRollback(this);
       } catch (Exception t) {
-        OLogManager.instance()
-            .error(this, "Error before transaction rollback `%08X`", t, System.identityHashCode(t));
+        logger.error("Error before transaction rollback `%08X`", t, System.identityHashCode(t));
       }
   }
 
@@ -1695,8 +1687,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       try {
         listener.onAfterTxRollback(this);
       } catch (Exception t) {
-        OLogManager.instance()
-            .error(this, "Error after transaction rollback `%08X`", t, System.identityHashCode(t));
+        logger.error("Error after transaction rollback `%08X`", t, System.identityHashCode(t));
       }
   }
 
@@ -2001,12 +1992,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       msg.append(
           " open command/query result sets, please make sure you close them with"
               + " OResultSet.close()");
-      OLogManager.instance().warn(this, msg.toString(), null);
-      if (OLogManager.instance().isDebugEnabled()) {
+      logger.warn(msg.toString(), null);
+      if (logger.isDebugEnabled()) {
         activeQueries.values().stream()
             .map(pendingQuery -> pendingQuery.getResultSet().getExecutionPlan())
             .filter(plan -> plan != null)
-            .forEach(plan -> OLogManager.instance().debug(this, plan.toString()));
+            .forEach(plan -> logger.debug(plan.toString()));
       }
     }
     this.activeQueries.put(id, state);

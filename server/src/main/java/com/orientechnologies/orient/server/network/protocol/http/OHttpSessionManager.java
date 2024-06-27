@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.OServer;
@@ -37,6 +38,7 @@ import java.util.Random;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OHttpSessionManager extends OSharedResourceAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OHttpSessionManager.class);
   private Map<String, OHttpSession> sessions = new HashMap<String, OHttpSession>();
   private int expirationTime;
   private Random random = new SecureRandom();
@@ -54,8 +56,7 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
               @Override
               public void run() {
                 final int expired = checkSessionsValidity();
-                if (expired > 0)
-                  OLogManager.instance().debug(this, "Removed %d session because expired", expired);
+                if (expired > 0) logger.debug("Removed %d session because expired", expired);
               }
             },
             expirationTime,

@@ -28,6 +28,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
@@ -46,6 +47,7 @@ import java.util.List;
  * @since 28.03.13
  */
 public class OEngineLocalPaginated extends OEngineAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OEngineLocalPaginated.class);
   public static final String NAME = "plocal";
 
   private volatile OReadCache readCache;
@@ -57,11 +59,9 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   private static int getOpenFilesLimit() {
     if (OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger() > 0) {
-      OLogManager.instance()
-          .infoNoDb(
-              OEngineLocalPaginated.class,
-              "Limit of open files for disk cache will be set to %d.",
-              OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger());
+      logger.infoNoDb(
+          "Limit of open files for disk cache will be set to %d.",
+          OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger());
       return OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger();
     }
 
@@ -74,15 +74,12 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   @Override
   public void startup() {
     final String userName = System.getProperty("user.name", "unknown");
-    OLogManager.instance()
-        .infoNoDb(this, "System is started under an effective user : `%s`", userName);
+    logger.infoNoDb("System is started under an effective user : `%s`", userName);
     if (ONative.instance().isOsRoot()) {
-      OLogManager.instance()
-          .warnNoDb(
-              this,
-              "You are running under the \"root\" user privileges that introduces security risks."
-                  + " Please consider to run under a user dedicated to be used to run current"
-                  + " server instance.");
+      logger.warnNoDb(
+          "You are running under the \"root\" user privileges that introduces security risks."
+              + " Please consider to run under a user dedicated to be used to run current"
+              + " server instance.");
     }
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
@@ -95,7 +92,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
     if (OGlobalConfiguration.DIRECT_MEMORY_PREALLOCATE.getValueAsBoolean()) {
       final int pageCount = (int) (diskCacheSize / pageSize);
-      OLogManager.instance().info(this, "Allocation of " + pageCount + " pages.");
+      logger.info("Allocation of " + pageCount + " pages.");
 
       final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
       final List<OPointer> pages = new ArrayList<>(pageCount);
@@ -154,7 +151,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
               + dbName
               + ". Current location is: "
               + new java.io.File(".").getAbsolutePath();
-      OLogManager.instance().error(this, message, e);
+      logger.error(message, e);
 
       throw OException.wrapException(new ODatabaseException(message), e);
     }

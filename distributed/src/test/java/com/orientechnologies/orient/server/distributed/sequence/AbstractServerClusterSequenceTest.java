@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -28,6 +29,8 @@ import org.junit.Assert;
  * @since 3/2/2015
  */
 public abstract class AbstractServerClusterSequenceTest extends AbstractServerClusterTest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(AbstractServerClusterSequenceTest.class);
   private static final boolean RUN_PARALLEL_SYNC_TEST = true;
   private static final int SEQ_RUN_COUNT = 20;
 
@@ -171,7 +174,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
                 try {
                   long value = seq.next();
 
-                  OLogManager.instance().info(this, "Thread %d step %d value %d", id, j, value);
+                  logger.info("Thread %d step %d value %d", id, j, value);
 
                   res.add(value);
                 } catch (OConcurrentModificationException ex) {

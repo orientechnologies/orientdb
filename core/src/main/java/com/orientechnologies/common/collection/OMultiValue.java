@@ -20,6 +20,7 @@
 package com.orientechnologies.common.collection;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
@@ -49,6 +50,7 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class OMultiValue {
+  private static final OLogger logger = OLogManager.instance().logger(OMultiValue.class);
 
   /**
    * Checks if a class is a multi-value type.
@@ -132,9 +134,7 @@ public class OMultiValue {
       else if (iObject.getClass().isArray()) return Array.get(iObject, 0);
     } catch (RuntimeException e) {
       // IGNORE IT
-      OLogManager.instance()
-          .debug(
-              iObject, "Error on reading the first item of the Multi-value field '%s'", iObject, e);
+      logger.debug("Error on reading the first item of the Multi-value field '%s'", iObject, e);
     }
 
     return null;
@@ -166,9 +166,7 @@ public class OMultiValue {
         return Array.get(iObject, Array.getLength(iObject) - 1);
     } catch (RuntimeException e) {
       // IGNORE IT
-      OLogManager.instance()
-          .debug(
-              iObject, "Error on reading the last item of the Multi-value field '%s'", iObject, e);
+      logger.debug("Error on reading the last item of the Multi-value field '%s'", iObject, e);
     }
 
     return null;
@@ -223,9 +221,7 @@ public class OMultiValue {
       }
     } catch (RuntimeException e) {
       // IGNORE IT
-      OLogManager.instance()
-          .debug(
-              iObject, "Error on reading the first item of the Multi-value field '%s'", iObject, e);
+      logger.debug("Error on reading the first item of the Multi-value field '%s'", iObject, e);
     }
     return null;
   }

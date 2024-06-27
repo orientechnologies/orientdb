@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.config;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
@@ -32,6 +33,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class OServerConfigurationLoaderXml {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerConfigurationLoaderXml.class);
   private final Class<? extends OServerConfiguration> rootClass;
   private JAXBContext context;
   private InputStream inputStream;
@@ -58,9 +61,9 @@ public class OServerConfigurationLoaderXml {
         String path = OFileUtils.getPath(file.getAbsolutePath());
         String current = OFileUtils.getPath(new File("").getAbsolutePath());
         if (path.startsWith(current)) path = path.substring(current.length() + 1);
-        OLogManager.instance().info(this, "Loading configuration from: %s...", path);
+        logger.info("Loading configuration from: %s...", path);
       } else {
-        OLogManager.instance().info(this, "Loading configuration from input stream");
+        logger.info("Loading configuration from input stream");
       }
 
       context = JAXBContext.newInstance(rootClass);
@@ -72,7 +75,7 @@ public class OServerConfigurationLoaderXml {
       if (file != null) {
         if (file.exists()) obj = rootClass.cast(unmarshaller.unmarshal(file));
         else {
-          OLogManager.instance().error(this, "Server configuration file not found: %s", null, file);
+          logger.error("Server configuration file not found: %s", null, file);
           return rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
         }
         obj.location = file.getAbsolutePath();
@@ -97,8 +100,7 @@ public class OServerConfigurationLoaderXml {
       return obj;
     } catch (Exception e) {
       // SYNTAX ERROR? PRINT AN EXAMPLE
-      OLogManager.instance()
-          .error(this, "Invalid syntax. Below an example of how it should be:", e);
+      logger.error("Invalid syntax. Below an example of how it should be:", e);
 
       try {
         context = JAXBContext.newInstance(rootClass);

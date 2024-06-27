@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
@@ -38,6 +39,8 @@ import org.junit.Test;
 /** Tests the behavior of hooks in distributed configuration. */
 public class DistributedLifecycleListenerIT extends AbstractServerClusterTest
     implements ODistributedLifecycleListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(DistributedLifecycleListenerIT.class);
   private static final int SERVERS = 2;
 
   private final AtomicLong beforeNodeJoin = new AtomicLong();
@@ -70,8 +73,7 @@ public class DistributedLifecycleListenerIT extends AbstractServerClusterTest
   @Override
   public void onDatabaseChangeStatus(
       String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
-    OLogManager.instance()
-        .info(this, "CHANGE OF STATUS node=%s db=%s status-%s", iNode, iDatabaseName, iNewStatus);
+    logger.info("CHANGE OF STATUS node=%s db=%s status-%s", iNode, iDatabaseName, iNewStatus);
     changeStatus.add(
         new OPair<String, ODistributedServerManager.DB_STATUS>(
             iNode + "." + iDatabaseName, iNewStatus));

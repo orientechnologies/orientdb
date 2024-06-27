@@ -23,6 +23,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -99,6 +100,7 @@ import java.util.zip.GZIPInputStream;
 
 /** Import data from a file into a database. */
 public class ODatabaseImport extends ODatabaseImpExpAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(ODatabaseImport.class);
   public static final String EXPORT_IMPORT_CLASS_NAME = "___exportImportRIDMap";
   public static final String EXPORT_IMPORT_INDEX_NAME = EXPORT_IMPORT_CLASS_NAME + "Index";
 
@@ -835,7 +837,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       jsonReader.readNext(OJSONReader.END_OBJECT);
       jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
     } catch (final Exception e) {
-      OLogManager.instance().error(this, "Error on importing schema", e);
+      logger.error("Error on importing schema", e);
       listener.onMessage("ERROR (" + classImported + " entries): " + e);
     }
   }
@@ -1217,7 +1219,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       // Incorrect record format, skip this record
       if (record == null || record.getIdentity() == null) {
-        OLogManager.instance().warn(this, "Broken record was detected and will be skipped");
+        logger.warn("Broken record was detected and will be skipped");
         return null;
       }
 
@@ -1356,17 +1358,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
     } catch (Exception t) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Error importing record "
-                  + ". Source line "
-                  + jsonReader.getLineNumber()
-                  + ", column "
-                  + jsonReader.getColumnNumber()
-                  + " content "
-                  + value,
-              t);
+      logger.error(
+          "Error importing record "
+              + ". Source line "
+              + jsonReader.getLineNumber()
+              + ", column "
+              + jsonReader.getColumnNumber()
+              + " content "
+              + value,
+          t);
 
       listener.onMessage(
           "Error importing record: '" + t.getMessage() + "' content:'" + value + "' \n");
@@ -1415,7 +1415,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     long last = begin;
     Set<String> involvedClusters = new HashSet<>();
 
-    OLogManager.instance().debug(this, "Detected exporter version " + exporterVersion + ".");
+    logger.debug("Detected exporter version " + exporterVersion + ".");
     while (jsonReader.lastChar() != ']') {
       // TODO: add special handling for `exporterVersion` / `ODatabaseExport.EXPORTER_VERSION` >= 13
       rid = importRecord(recordsBeforeImport);

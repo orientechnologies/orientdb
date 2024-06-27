@@ -18,6 +18,7 @@ package com.orientechnologies.orient.object.metadata.schema;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -48,6 +49,7 @@ import javassist.util.proxy.Proxy;
 
 /** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OSchemaProxyObject implements OSchemaObject {
+  private static final OLogger logger = OLogManager.instance().logger(OSchemaProxyObject.class);
 
   protected OSchema underlying;
 
@@ -277,7 +279,7 @@ public class OSchemaProxyObject implements OSchemaObject {
    */
   public synchronized void generateSchema(
       final String iPackageName, final ClassLoader iClassLoader) {
-    OLogManager.instance().debug(this, "Generating schema inside package: %s", iPackageName);
+    logger.debug("Generating schema inside package: %s", iPackageName);
 
     List<Class<?>> classes = null;
     try {

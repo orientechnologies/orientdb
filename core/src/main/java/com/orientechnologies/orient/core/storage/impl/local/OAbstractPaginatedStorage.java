@@ -34,6 +34,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.ModifiableLongProfileHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -264,6 +265,8 @@ public abstract class OAbstractPaginatedStorage
   protected static final String TRANSFORMATION = "AES/CTR/NoPadding";
   protected static final String ENCRYPTION_IV = "encryption.iv";
   protected static final String IV_EXT = ".iv";
+  private static final OLogger logger =
+      OLogManager.instance().logger(OAbstractPaginatedStorage.class);
 
   @SuppressWarnings("WeakerAccess")
   protected static final String IV_NAME = "data" + IV_EXT;
@@ -507,7 +510,7 @@ public abstract class OAbstractPaginatedStorage
       doShutdown();
     } catch (final IOException e) {
       final String message = "Error on closing of storage '" + name;
-      OLogManager.instance().error(this, message, e);
+      logger.error(message, e);
 
       throw OException.wrapException(new OStorageException(message), e);
     } finally {
@@ -759,12 +762,9 @@ public abstract class OAbstractPaginatedStorage
       }
     }
 
-    OLogManager.instance()
-        .infoNoDb(
-            this,
-            "Storage '%s' is opened under OrientDB distribution : %s",
-            getURL(),
-            OConstants.getVersion());
+    logger.infoNoDb(
+        "Storage '%s' is opened under OrientDB distribution : %s",
+        getURL(), OConstants.getVersion());
   }
 
   protected abstract void readIv() throws IOException;
@@ -844,17 +844,15 @@ public abstract class OAbstractPaginatedStorage
             clusters.get(pos).open(atomicOperation);
           }
         } catch (final FileNotFoundException e) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Error on loading cluster '"
-                      + configurationClusters.get(i).getName()
-                      + "' ("
-                      + i
-                      + "): file not found. It will be excluded from current database '"
-                      + getName()
-                      + "'.",
-                  e);
+          logger.warn(
+              "Error on loading cluster '"
+                  + configurationClusters.get(i).getName()
+                  + "' ("
+                  + i
+                  + "): file not found. It will be excluded from current database '"
+                  + getName()
+                  + "'.",
+              e);
 
           clusterMap.remove(configurationClusters.get(i).getName().toLowerCase());
 
@@ -873,11 +871,7 @@ public abstract class OAbstractPaginatedStorage
         final int clusterId = cluster.getId();
 
         if (!sbTreeCollectionManager.isComponentPresent(operation, clusterId)) {
-          OLogManager.instance()
-              .info(
-                  this,
-                  "Cluster with id %d does not have associated rid bag, fixing ...",
-                  clusterId);
+          logger.info("Cluster with id %d does not have associated rid bag, fixing ...", clusterId);
           sbTreeCollectionManager.createComponent(operation, clusterId);
         }
       }
@@ -912,12 +906,9 @@ public abstract class OAbstractPaginatedStorage
       throw logAndPrepareForRethrow(t);
     }
 
-    OLogManager.instance()
-        .infoNoDb(
-            this,
-            "Storage '%s' is created under OrientDB distribution : %s",
-            getURL(),
-            OConstants.getVersion());
+    logger.infoNoDb(
+        "Storage '%s' is created under OrientDB distribution : %s",
+        getURL(), OConstants.getVersion());
   }
 
   protected void doCreate(OContextConfiguration contextConfiguration)
@@ -1990,8 +1981,7 @@ public abstract class OAbstractPaginatedStorage
 
         return new ORecordMetadata(rid, ppos.recordVersion);
       } catch (final IOException ioe) {
-        OLogManager.instance()
-            .error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
+        logger.error("Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
       } finally {
         stateLock.readLock().unlock();
       }
@@ -2024,8 +2014,7 @@ public abstract class OAbstractPaginatedStorage
         return cluster.isDeleted(new OPhysicalPosition(rid.getClusterPosition()));
 
       } catch (final IOException ioe) {
-        OLogManager.instance()
-            .error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
+        logger.error("Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
       } finally {
         stateLock.readLock().unlock();
       }
@@ -2641,15 +2630,10 @@ public abstract class OAbstractPaginatedStorage
         }
       }
 
-      if (OLogManager.instance().isDebugEnabled()) {
-        OLogManager.instance()
-            .debug(
-                this,
-                "%d Committed transaction %d on database '%s' (result=%s)",
-                Thread.currentThread().getId(),
-                transaction.getId(),
-                database.getName(),
-                result);
+      if (logger.isDebugEnabled()) {
+        logger.debug(
+            "%d Committed transaction %d on database '%s' (result=%s)",
+            Thread.currentThread().getId(), transaction.getId(), database.getName(), result);
       }
       return result;
     } catch (final RuntimeException ee) {
@@ -2835,11 +2819,9 @@ public abstract class OAbstractPaginatedStorage
             atomicOperation -> {
               if (indexEngineNameMap.containsKey(indexMetadata.getName())) {
                 // OLD INDEX FILE ARE PRESENT: THIS IS THE CASE OF PARTIAL/BROKEN INDEX
-                OLogManager.instance()
-                    .warn(
-                        this,
-                        "Index with name '%s' already exists, removing it and re-create the index",
-                        indexMetadata.getName());
+                logger.warn(
+                    "Index with name '%s' already exists, removing it and re-create the index",
+                    indexMetadata.getName());
                 final OBaseIndexEngine engine = indexEngineNameMap.remove(indexMetadata.getName());
                 if (engine != null) {
                   indexEngines.set(engine.getId(), null);
@@ -3933,24 +3915,18 @@ public abstract class OAbstractPaginatedStorage
                   indexEngine.flush();
                 }
               } catch (final Throwable t) {
-                OLogManager.instance()
-                    .error(
-                        this,
-                        "Error while flushing index via index engine of class %s.",
-                        t,
-                        indexEngine.getClass().getSimpleName());
+                logger.error(
+                    "Error while flushing index via index engine of class %s.",
+                    t, indexEngine.getClass().getSimpleName());
               }
             }
 
             flushAllData();
 
           } else {
-            OLogManager.instance()
-                .errorNoDb(
-                    this,
-                    "Sync can not be performed because of internal error in storage %s",
-                    null,
-                    this.name);
+            logger.errorNoDb(
+                "Sync can not be performed because of internal error in storage %s",
+                null, this.name);
           }
 
         } finally {
@@ -4754,33 +4730,28 @@ public abstract class OAbstractPaginatedStorage
         fuzzySegment = minAtomicOperationSegment;
       }
 
-      OLogManager.instance()
-          .debugNoDb(
-              this,
-              "Before fuzzy checkpoint: min LSN segment is "
-                  + minLSNSegment
-                  + ", WAL begin is "
-                  + beginLSN
-                  + ", WAL end is "
-                  + endLSN
-                  + ", fuzzy segment is "
-                  + fuzzySegment,
-              null);
+      logger.debugNoDb(
+          "Before fuzzy checkpoint: min LSN segment is "
+              + minLSNSegment
+              + ", WAL begin is "
+              + beginLSN
+              + ", WAL end is "
+              + endLSN
+              + ", fuzzy segment is "
+              + fuzzySegment,
+          null);
 
       if (fuzzySegment > beginLSN.getSegment() && beginLSN.getSegment() < endLSN.getSegment()) {
-        OLogManager.instance().debugNoDb(this, "Making fuzzy checkpoint", null);
+        logger.debugNoDb("Making fuzzy checkpoint", null);
         writeCache.syncDataFiles(fuzzySegment, lastMetadata);
 
         beginLSN = writeAheadLog.begin();
         endLSN = writeAheadLog.end();
 
-        OLogManager.instance()
-            .debugNoDb(
-                this,
-                "After fuzzy checkpoint: WAL begin is " + beginLSN + " WAL end is " + endLSN,
-                null);
+        logger.debugNoDb(
+            "After fuzzy checkpoint: WAL begin is " + beginLSN + " WAL end is " + endLSN, null);
       } else {
-        OLogManager.instance().debugNoDb(this, "No reason to make fuzzy checkpoint", null);
+        logger.debugNoDb("No reason to make fuzzy checkpoint", null);
       }
     } catch (final IOException ioe) {
       throw OException.wrapException(new OIOException("Error during fuzzy checkpoint"), ioe);
@@ -4812,7 +4783,7 @@ public abstract class OAbstractPaginatedStorage
       makeStorageDirty();
       sbTreeCollectionManager.delete(atomicOperation, collectionPointer);
     } catch (final Exception e) {
-      OLogManager.instance().errorNoDb(this, "Error during deletion of rid bag", e);
+      logger.errorNoDb("Error during deletion of rid bag", e);
       throw OException.wrapException(new OStorageException("Error during deletion of ridbag"), e);
     }
 
@@ -5047,12 +5018,10 @@ public abstract class OAbstractPaginatedStorage
 
   private void recoverIfNeeded() throws Exception {
     if (isDirty()) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Storage '"
-                  + name
-                  + "' was not closed properly. Will try to recover from write ahead log");
+      logger.warn(
+          "Storage '"
+              + name
+              + "' was not closed properly. Will try to recover from write ahead log");
       try {
         final String openedAtVersion = getOpenedAtVersion();
 
@@ -5074,11 +5043,11 @@ public abstract class OAbstractPaginatedStorage
 
         flushAllData();
       } catch (final Exception e) {
-        OLogManager.instance().error(this, "Exception during storage data restore", e);
+        logger.error("Exception during storage data restore", e);
         throw e;
       }
 
-      OLogManager.instance().info(this, "Storage data recover was completed");
+      logger.info("Storage data recover was completed");
     }
   }
 
@@ -5111,7 +5080,7 @@ public abstract class OAbstractPaginatedStorage
         context.executeOperations(atomicOperation, this);
       }
     } catch (final Exception e) {
-      OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, e);
+      logger.error("Error on creating record in cluster: " + cluster, e);
       throw ODatabaseException.wrapException(
           new OStorageException("Error during creation of record"), e);
     }
@@ -5120,9 +5089,8 @@ public abstract class OAbstractPaginatedStorage
       callback.call(rid, ppos.clusterPosition);
     }
 
-    if (OLogManager.instance().isDebugEnabled()) {
-      OLogManager.instance()
-          .debug(this, "Created record %s v.%s size=%d bytes", rid, recordVersion, content.length);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Created record %s v.%s size=%d bytes", rid, recordVersion, content.length);
     }
 
     recordCreated.increment();
@@ -5197,9 +5165,8 @@ public abstract class OAbstractPaginatedStorage
         callback.call(rid, newRecordVersion);
       }
 
-      if (OLogManager.instance().isDebugEnabled()) {
-        OLogManager.instance()
-            .debug(this, "Updated record %s v.%s size=%d", rid, newRecordVersion, content.length);
+      if (logger.isDebugEnabled()) {
+        logger.debug("Updated record %s v.%s size=%d", rid, newRecordVersion, content.length);
       }
 
       recordUpdated.increment();
@@ -5255,8 +5222,8 @@ public abstract class OAbstractPaginatedStorage
         context.executeOperations(atomicOperation, this);
       }
 
-      if (OLogManager.instance().isDebugEnabled()) {
-        OLogManager.instance().debug(this, "Deleted record %s v.%s", rid, version);
+      if (logger.isDebugEnabled()) {
+        logger.debug("Deleted record %s v.%s", rid, version);
       }
 
       recordDeleted.increment();
@@ -5276,14 +5243,10 @@ public abstract class OAbstractPaginatedStorage
 
       final ORawBuffer buff = clusterSegment.readRecord(rid.getClusterPosition(), prefetchRecords);
 
-      if (buff != null && OLogManager.instance().isDebugEnabled()) {
-        OLogManager.instance()
-            .debug(
-                this,
-                "Read record %s v.%s size=%d bytes",
-                rid,
-                buff.version,
-                buff.buffer != null ? buff.buffer.length : 0);
+      if (buff != null && logger.isDebugEnabled()) {
+        logger.debug(
+            "Read record %s v.%s size=%d bytes",
+            rid, buff.version, buff.buffer != null ? buff.buffer.length : 0);
       }
 
       recordRead.increment();
@@ -5573,11 +5536,8 @@ public abstract class OAbstractPaginatedStorage
 
         writeAheadLog.close();
       } else {
-        OLogManager.instance()
-            .errorNoDb(
-                this,
-                "Because of JVM error happened inside of storage it can not be properly closed",
-                null);
+        logger.errorNoDb(
+            "Because of JVM error happened inside of storage it can not be properly closed", null);
       }
 
       postCloseSteps(false, isInError(), idGen.getLastId());
@@ -5642,11 +5602,8 @@ public abstract class OAbstractPaginatedStorage
 
         writeAheadLog.delete();
       } else {
-        OLogManager.instance()
-            .errorNoDb(
-                this,
-                "Because of JVM error happened inside of storage it can not be properly closed",
-                null);
+        logger.errorNoDb(
+            "Because of JVM error happened inside of storage it can not be properly closed", null);
       }
       postCloseSteps(true, isInError(), idGen.getLastId());
       transaction = null;
@@ -5655,7 +5612,7 @@ public abstract class OAbstractPaginatedStorage
       status = STATUS.CLOSED;
     } catch (final IOException e) {
       final String message = "Error on closing of storage '" + name;
-      OLogManager.instance().error(this, message, e);
+      logger.error(message, e);
 
       throw OException.wrapException(new OStorageException(message), e);
     }
@@ -5680,8 +5637,7 @@ public abstract class OAbstractPaginatedStorage
           try {
             engine.delete(atomicOperation);
           } catch (final IOException e) {
-            OLogManager.instance()
-                .error(this, "Can not delete index engine " + engine.getName(), e);
+            logger.error("Can not delete index engine " + engine.getName(), e);
           }
         } else {
           engine.close();
@@ -5880,12 +5836,11 @@ public abstract class OAbstractPaginatedStorage
   private void restoreFromWAL() throws IOException {
     final OLogSequenceNumber begin = writeAheadLog.begin();
     if (begin == null) {
-      OLogManager.instance()
-          .error(this, "Restore is not possible because write ahead log is empty.", null);
+      logger.error("Restore is not possible because write ahead log is empty.", null);
       return;
     }
 
-    OLogManager.instance().info(this, "Looking for last checkpoint...");
+    logger.info("Looking for last checkpoint...");
 
     writeAheadLog.addCutTillLimit(begin);
     try {
@@ -6047,7 +6002,7 @@ public abstract class OAbstractPaginatedStorage
             }
             zipOutputStream.flush();
           } catch (IOException e) {
-            OLogManager.instance().warn(this, "Failed to flush resource " + zipOutputStream);
+            logger.warn("Failed to flush resource " + zipOutputStream);
           }
         }
       } finally {
@@ -6502,7 +6457,7 @@ public abstract class OAbstractPaginatedStorage
   }
 
   private void restoreFromBeginning() throws IOException {
-    OLogManager.instance().info(this, "Data restore procedure is started.");
+    logger.info("Data restore procedure is started.");
 
     final OLogSequenceNumber lsn = writeAheadLog.begin();
 
@@ -6570,9 +6525,7 @@ public abstract class OAbstractPaginatedStorage
                 operationUnits.get(operationUnitRecord.getOperationUnitId());
 
             if (operationList == null || operationList.isEmpty()) {
-              OLogManager.instance()
-                  .errorNoDb(
-                      this, "'Start transaction' record is absent for atomic operation", null);
+              logger.errorNoDb("'Start transaction' record is absent for atomic operation", null);
 
               if (operationList == null) {
                 operationList = new ArrayList<>(1024);
@@ -6583,19 +6536,16 @@ public abstract class OAbstractPaginatedStorage
             operationList.add(operationUnitRecord);
           } else if (walRecord instanceof ONonTxOperationPerformedWALRecord ignored) {
             if (!wereNonTxOperationsPerformedInPreviousOpen) {
-              OLogManager.instance()
-                  .warnNoDb(
-                      this,
-                      "Non tx operation was used during data modification we will need index"
-                          + " rebuild.");
+              logger.warnNoDb(
+                  "Non tx operation was used during data modification we will need index"
+                      + " rebuild.");
               wereNonTxOperationsPerformedInPreviousOpen = true;
             }
           } else if (walRecord instanceof MetaDataRecord metaDataRecord) {
             this.lastMetadata = metaDataRecord.getMetadata();
             lastUpdatedLSN = walRecord.getLsn();
           } else {
-            OLogManager.instance()
-                .warnNoDb(this, "Record %s will be skipped during data restore", walRecord);
+            logger.warnNoDb("Record %s will be skipped during data restore", walRecord);
           }
 
           recordsProcessed++;
@@ -6603,13 +6553,9 @@ public abstract class OAbstractPaginatedStorage
           final long currentTime = System.currentTimeMillis();
           if (reportBatchSize > 0 && recordsProcessed % reportBatchSize == 0
               || currentTime - lastReportTime > WAL_RESTORE_REPORT_INTERVAL) {
-            OLogManager.instance()
-                .infoNoDb(
-                    this,
-                    "%d operations were processed, current LSN is %s last LSN is %s",
-                    recordsProcessed,
-                    lsn,
-                    writeAheadLog.end());
+            logger.infoNoDb(
+                "%d operations were processed, current LSN is %s last LSN is %s",
+                recordsProcessed, lsn, writeAheadLog.end());
             lastReportTime = currentTime;
           }
         }
@@ -6617,19 +6563,15 @@ public abstract class OAbstractPaginatedStorage
         records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
       }
     } catch (final OWALPageBrokenException e) {
-      OLogManager.instance()
-          .errorNoDb(
-              this,
-              "Data restore was paused because broken WAL page was found. The rest of changes will"
-                  + " be rolled back.",
-              e);
+      logger.errorNoDb(
+          "Data restore was paused because broken WAL page was found. The rest of changes will"
+              + " be rolled back.",
+          e);
     } catch (final RuntimeException e) {
-      OLogManager.instance()
-          .errorNoDb(
-              this,
-              "Data restore was paused because of exception. The rest of changes will be rolled"
-                  + " back.",
-              e);
+      logger.errorNoDb(
+          "Data restore was paused because of exception. The rest of changes will be rolled"
+              + " back.",
+          e);
     }
 
     return lastUpdatedLSN;
@@ -6723,12 +6665,10 @@ public abstract class OAbstractPaginatedStorage
         }
       }
 
-      OLogManager.instance()
-          .warn(
-              this,
-              "Transaction can be restored only partially for storage "
-                  + this.name
-                  + ", restore process is aborted.");
+      logger.warn(
+          "Transaction can be restored only partially for storage "
+              + this.name
+              + ", restore process is aborted.");
       return false;
     }
 
@@ -6755,12 +6695,10 @@ public abstract class OAbstractPaginatedStorage
                     + fileId
                     + " was deleted from storage, the rest of operations can not be restored");
           } else {
-            OLogManager.instance()
-                .warn(
-                    this,
-                    "Previously deleted file with name "
-                        + fileName
-                        + " was deleted but new empty file was added to continue restore process");
+            logger.warn(
+                "Previously deleted file with name "
+                    + fileName
+                    + " was deleted but new empty file was added to continue restore process");
           }
         }
 
@@ -6800,12 +6738,9 @@ public abstract class OAbstractPaginatedStorage
         continue;
       } else {
         assert walRecord != null;
-        OLogManager.instance()
-            .error(
-                this,
-                "Invalid WAL record type was passed %s. Given record will be skipped.",
-                null,
-                walRecord.getClass());
+        logger.error(
+            "Invalid WAL record type was passed %s. Given record will be skipped.",
+            null, walRecord.getClass());
 
         assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
       }
@@ -7542,9 +7477,7 @@ public abstract class OAbstractPaginatedStorage
 
       writeCache.syncDataFiles(minDirtySegment, lastMetadata);
     } catch (final Exception e) {
-      OLogManager.instance()
-          .error(
-              this, "Error during flushing of data for fuzzy checkpoint, in storage %s", e, name);
+      logger.error("Error during flushing of data for fuzzy checkpoint, in storage %s", e, name);
     } finally {
       stateLock.readLock().unlock();
       walVacuumInProgress.set(false);

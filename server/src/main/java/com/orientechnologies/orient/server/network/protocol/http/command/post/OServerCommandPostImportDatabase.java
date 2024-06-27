@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -35,6 +36,8 @@ import java.util.Map;
 /** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OServerCommandPostImportDatabase
     extends OHttpMultipartRequestCommand<String, InputStream> implements OCommandOutputListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerCommandPostImportDatabase.class);
 
   protected static final String[] NAMES = {"POST|import/*"};
   protected StringWriter buffer;
@@ -160,6 +163,6 @@ public class OServerCommandPostImportDatabase
   @Override
   public void onMessage(String iText) {
     final String msg = iText.startsWith("\n") ? iText.substring(1) : iText;
-    OLogManager.instance().info(this, msg, OCommonConst.EMPTY_OBJECT_ARRAY);
+    logger.info(msg, OCommonConst.EMPTY_OBJECT_ARRAY);
   }
 }

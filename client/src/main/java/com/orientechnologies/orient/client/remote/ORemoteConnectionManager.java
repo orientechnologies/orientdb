@@ -24,6 +24,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIE
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_LOCK_TIMEOUT;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -45,6 +46,8 @@ import java.util.concurrent.TimeUnit;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORemoteConnectionManager {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ORemoteConnectionManager.class);
   public static final String PARAM_MAX_POOL = "maxpool";
 
   protected final ConcurrentMap<String, ORemoteConnectionPool> connections;
@@ -121,8 +124,7 @@ public class ORemoteConnectionManager {
       throw e;
     } catch (Exception e) {
       // ERROR ON RETRIEVING THE INSTANCE FROM THE POOL
-      OLogManager.instance()
-          .debug(this, "Error on retrieving the connection from pool: " + iServerURL, e);
+      logger.debug("Error on retrieving the connection from pool: " + iServerURL, e);
     }
     return null;
   }
@@ -134,10 +136,8 @@ public class ORemoteConnectionManager {
     final ORemoteConnectionPool pool = connections.get(conn.getServerURL());
     if (pool != null) {
       if (!conn.isConnected()) {
-        OLogManager.instance()
-            .debug(
-                this,
-                "Network connection pool is receiving a closed connection to reuse: discard it");
+        logger.debug(
+            "Network connection pool is receiving a closed connection to reuse: discard it");
         remove(conn);
       } else {
         pool.getPool().returnResource(conn);
@@ -158,13 +158,13 @@ public class ORemoteConnectionManager {
     try {
       conn.unlock();
     } catch (Exception e) {
-      OLogManager.instance().debug(this, "Cannot unlock connection lock", e);
+      logger.debug("Cannot unlock connection lock", e);
     }
 
     try {
       conn.close();
     } catch (Exception e) {
-      OLogManager.instance().debug(this, "Cannot close connection", e);
+      logger.debug("Cannot close connection", e);
     }
   }
 
@@ -218,7 +218,7 @@ public class ORemoteConnectionManager {
         // Unregister the listener that make the connection return to the closing pool.
         c.close();
       } catch (Exception e) {
-        OLogManager.instance().debug(this, "Cannot close binary channel", e);
+        logger.debug("Cannot close binary channel", e);
       }
     pool.getPool().close();
   }

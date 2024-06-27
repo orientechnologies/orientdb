@@ -59,4 +59,8 @@ public interface OLogger {
       Throwable exception,
       boolean extractDatabase,
       Object... additionalArgs);
+
+  public boolean isDebugEnabled();
+
+  public boolean isWarnEnabled();
 }

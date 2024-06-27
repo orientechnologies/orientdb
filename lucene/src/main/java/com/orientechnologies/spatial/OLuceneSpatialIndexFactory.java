@@ -18,6 +18,7 @@ package com.orientechnologies.spatial;
 import static com.orientechnologies.lucene.OLuceneIndexFactory.LUCENE_ALGORITHM;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.IndexEngineData;
@@ -43,6 +44,8 @@ import java.util.Set;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneSpatialIndexFactory.class);
 
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
@@ -143,17 +146,17 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
     try {
       if (db.isClosed()) return;
 
-      OLogManager.instance().debug(this, "Dropping spatial indexes...");
+      logger.debug("Dropping spatial indexes...");
       final ODatabaseDocumentInternal internalDb = (ODatabaseDocumentInternal) db;
       for (OIndex idx : internalDb.getMetadata().getIndexManagerInternal().getIndexes(internalDb)) {
 
         if (idx.getInternal() instanceof OLuceneSpatialIndex) {
-          OLogManager.instance().debug(this, "- index '%s'", idx.getName());
+          logger.debug("- index '%s'", idx.getName());
           internalDb.getMetadata().getIndexManager().dropIndex(idx.getName());
         }
       }
     } catch (Exception e) {
-      OLogManager.instance().warn(this, "Error on dropping spatial indexes", e);
+      logger.warn("Error on dropping spatial indexes", e);
     }
   }
 

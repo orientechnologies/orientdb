@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListenerAbstract;
@@ -33,6 +34,8 @@ import org.junit.Test;
  * network (using a proxy) and then it re-merges the cluster again.
  */
 public class SplitBraiNetworkTestTempIT extends AbstractHARemoveNode {
+  private static final OLogger logger =
+      OLogManager.instance().logger(SplitBraiNetworkTestTempIT.class);
   static final int SERVERS = 3;
 
   private OProxyServer hzProxy;
@@ -174,12 +177,7 @@ public class SplitBraiNetworkTestTempIT extends AbstractHARemoveNode {
                           if (!invalid) {
                             // OK
                             OIntegerSerializer.INSTANCE.serialize(port + 1000, buffer, start);
-                            OLogManager.instance()
-                                .info(
-                                    this,
-                                    "ProxyChannel: patching port %d to %d",
-                                    port,
-                                    port + 1000);
+                            logger.info("ProxyChannel: patching port %d to %d", port, port + 1000);
                           }
                         }
                       }

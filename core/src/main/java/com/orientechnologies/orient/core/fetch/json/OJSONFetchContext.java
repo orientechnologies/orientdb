@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.fetch.json;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -39,6 +40,7 @@ import java.util.Stack;
 
 /** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OJSONFetchContext implements OFetchContext {
+  private static final OLogger logger = OLogManager.instance().logger(OJSONFetchContext.class);
 
   protected final OJSONWriter jsonWriter;
   protected final FormatSettings settings;
@@ -272,13 +274,9 @@ public class OJSONFetchContext implements OFetchContext {
     // TODO: avoid `EmptyStackException`, but check root cause
     if (typesStack.empty()) {
       typesStack.push(new StringBuilder());
-      OLogManager.instance()
-          .debug(
-              OJSONFetchContext.class,
-              "Type stack in `manageTypes` null for `field` %s, `value` %s, and `type` %s.",
-              fieldName,
-              fieldValue,
-              fieldType);
+      logger.debug(
+          "Type stack in `manageTypes` null for `field` %s, `value` %s, and `type` %s.",
+          fieldName, fieldValue, fieldType);
     }
     if (settings.keepTypes) {
       if (fieldValue instanceof Long) appendType(typesStack.peek(), fieldName, 'l');

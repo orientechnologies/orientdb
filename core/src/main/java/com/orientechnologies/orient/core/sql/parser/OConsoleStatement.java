@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -11,6 +12,7 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
 import java.util.Map;
 
 public class OConsoleStatement extends OSimpleExecStatement {
+  private static final OLogger logger = OLogManager.instance().logger(OConsoleStatement.class);
   protected OIdentifier logLevel;
   protected OExpression message;
 
@@ -28,16 +30,16 @@ public class OConsoleStatement extends OSimpleExecStatement {
     Object msg = "" + message.execute((OIdentifiable) null, ctx);
 
     if (logLevel.getStringValue().equalsIgnoreCase("log")) {
-      OLogManager.instance().info(this, "%s", msg);
+      logger.info("%s", msg);
     } else if (logLevel.getStringValue().equalsIgnoreCase("output")) {
       System.out.println(msg);
     } else if (logLevel.getStringValue().equalsIgnoreCase("error")) {
       System.err.println(msg);
-      OLogManager.instance().error(this, "%s", null, msg);
+      logger.error("%s", null, msg);
     } else if (logLevel.getStringValue().equalsIgnoreCase("warn")) {
-      OLogManager.instance().warn(this, "%s", msg);
+      logger.warn("%s", msg);
     } else if (logLevel.getStringValue().equalsIgnoreCase("debug")) {
-      OLogManager.instance().debug(this, "%s", msg);
+      logger.debug("%s", msg);
     } else {
       throw new OCommandExecutionException("Unsupported log level: " + logLevel);
     }

@@ -25,6 +25,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETW
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OStorageRemote.CONNECTION_STRATEGY;
@@ -99,6 +100,7 @@ import java.util.concurrent.TimeUnit;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBRemote implements OrientDBInternal {
+  private static final OLogger logger = OLogManager.instance().logger(OrientDBRemote.class);
   protected final Map<String, OSharedContext> sharedContexts = new HashMap<>();
   private final Map<String, OStorageRemote> storages = new HashMap<>();
   private final Set<ODatabasePoolInternal> pools = new HashSet<>();
@@ -205,7 +207,7 @@ public class OrientDBRemote implements OrientDBInternal {
 
     if (name == null || name.length() <= 0 || name.contains("`")) {
       final String message = "Cannot create unnamed remote storage. Check your syntax";
-      OLogManager.instance().error(this, message, null);
+      logger.error(message, null);
       throw new OStorageException(message);
     }
     String create = String.format("CREATE DATABASE `%s` %s ", name, databaseType.name());
@@ -270,8 +272,7 @@ public class OrientDBRemote implements OrientDBInternal {
     ODistributedStatusRequest request = new ODistributedStatusRequest();
     ODistributedStatusResponse response = connectAndSend(null, username, password, request);
 
-    OLogManager.instance()
-        .debug(this, "Cluster status %s", response.getClusterConfig().toJSON("prettyPrint"));
+    logger.debug("Cluster status %s", response.getClusterConfig().toJSON("prettyPrint"));
     return response.getClusterConfig();
   }
 
@@ -346,7 +347,7 @@ public class OrientDBRemote implements OrientDBInternal {
       OrientDBConfig config) {
     if (name == null || name.length() <= 0) {
       final String message = "Cannot create unnamed remote storage. Check your syntax";
-      OLogManager.instance().error(this, message, null);
+      logger.error(message, null);
       throw new OStorageException(message);
     }
 
@@ -424,12 +425,12 @@ public class OrientDBRemote implements OrientDBInternal {
 
     for (OStorageRemote stg : storagesCopy) {
       try {
-        OLogManager.instance().info(this, "- shutdown storage: %s ...", stg.getName());
+        logger.info("- shutdown storage: %s ...", stg.getName());
         stg.shutdown();
       } catch (Exception e) {
-        OLogManager.instance().warn(this, "-- error on shutdown storage", e);
+        logger.warn("-- error on shutdown storage", e);
       } catch (Error e) {
-        OLogManager.instance().warn(this, "-- error on shutdown storage", e);
+        logger.warn("-- error on shutdown storage", e);
         throw e;
       }
     }

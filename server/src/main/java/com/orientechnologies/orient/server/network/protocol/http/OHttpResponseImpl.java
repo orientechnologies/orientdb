@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -9,6 +10,7 @@ import java.net.Socket;
 import java.util.Map;
 
 public class OHttpResponseImpl extends OHttpResponseAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OHttpResponseImpl.class);
 
   public OHttpResponseImpl(
       OutputStream iOutStream,
@@ -218,12 +220,9 @@ public class OHttpResponseImpl extends OHttpResponseAbstract {
       socket = null;
     else socket = getConnection().getProtocol().getChannel().socket;
     if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-      OLogManager.instance()
-          .debug(
-              this,
-              "[OHttpResponse] found and removed pending closed channel %d (%s)",
-              getConnection(),
-              socket);
+      logger.debug(
+          "[OHttpResponse] found and removed pending closed channel %d (%s)",
+          getConnection(), socket);
       throw new IOException("Connection is closed");
     }
   }

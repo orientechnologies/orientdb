@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -18,6 +19,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OOptimizeDatabaseStatement.class);
 
   protected List<OCommandLineOption> options = new ArrayList<OCommandLineOption>();
   private int batch = 1000;
@@ -148,14 +151,12 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
             if (verbose() && (now - lastLapTime > 2000)) {
               final long elapsed = now - lastLapTime;
 
-              OLogManager.instance()
-                  .info(
-                      this,
-                      "Browsed %,d of %,d edges, transformed %,d so far (%,d edges/sec)",
-                      browsedEdges,
-                      totalEdges,
-                      transformed,
-                      (((browsedEdges - lastLapBrowsed) * 1000 / elapsed)));
+              logger.info(
+                  "Browsed %,d of %,d edges, transformed %,d so far (%,d edges/sec)",
+                  browsedEdges,
+                  totalEdges,
+                  transformed,
+                  (((browsedEdges - lastLapBrowsed) * 1000 / elapsed)));
 
               lastLapTime = System.currentTimeMillis();
               lastLapBrowsed = browsedEdges;

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -19,6 +20,8 @@ import java.util.Set;
 
 /** Created by tglman on 14/06/17. */
 public class OPropertyEmbedded extends OPropertyImpl {
+  private static final OLogger logger = OLogManager.instance().logger(OPropertyEmbedded.class);
+
   protected OPropertyEmbedded(OClassImpl owner) {
     super(owner);
   }
@@ -160,11 +163,8 @@ public class OPropertyEmbedded extends OPropertyImpl {
         }
 
         if (!indexesToRecreate.isEmpty()) {
-          OLogManager.instance()
-              .info(
-                  this,
-                  "Collate value was changed, following indexes will be rebuilt %s",
-                  indexesToRecreate);
+          logger.info(
+              "Collate value was changed, following indexes will be rebuilt %s", indexesToRecreate);
 
           final ODatabaseDocumentInternal database = getDatabase();
           final OIndexManagerAbstract indexManager =

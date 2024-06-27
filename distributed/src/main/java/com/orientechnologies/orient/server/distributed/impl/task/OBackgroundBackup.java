@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -27,6 +29,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OBackgroundBackup implements Runnable, OSyncSource {
+  private static final OLogger logger = OLogManager.instance().logger(OVariableParser.class);
+
   private final String syncTarget;
   private final String localNodeName;
   private final ODatabaseDocumentInternal database;
@@ -104,8 +108,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
             wal.removeCutTillLimit(lsn);
           }
           finished.countDown();
-          OLogManager.instance()
-              .info(this, "Sending Enterprise backup (" + database.getName() + ") for node sync");
+          logger.info("Sending Enterprise backup (" + database.getName() + ") for node sync");
 
         } else {
           try {

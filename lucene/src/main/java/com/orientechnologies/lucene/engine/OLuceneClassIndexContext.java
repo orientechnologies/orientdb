@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 public class OLuceneClassIndexContext {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneClassIndexContext.class);
 
   protected final OIndexDefinition definition;
   protected final String name;
@@ -30,7 +33,7 @@ public class OLuceneClassIndexContext {
     this.automatic = automatic;
     this.metadata = metadata;
 
-    OLogManager.instance().info(this, "index definition:: " + definition);
+    logger.info("index definition:: " + definition);
 
     indexClass = schema.getClass(definition.getClassName());
 

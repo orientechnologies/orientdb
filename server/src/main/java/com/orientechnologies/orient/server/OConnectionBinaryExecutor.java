@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
@@ -18,7 +19,12 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -67,20 +73,37 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
-import com.orientechnologies.orient.server.network.protocol.binary.*;
+import com.orientechnologies.orient.server.network.protocol.binary.HandshakeInfo;
+import com.orientechnologies.orient.server.network.protocol.binary.OAbstractCommandResultListener;
+import com.orientechnologies.orient.server.network.protocol.binary.OAsyncCommandResultListener;
+import com.orientechnologies.orient.server.network.protocol.binary.OLiveCommandResultListener;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+import com.orientechnologies.orient.server.network.protocol.binary.OSyncCommandResultListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OConnectionBinaryExecutor.class);
 
   private final OClientConnection connection;
   private final OServer server;
@@ -164,12 +187,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
           ODatabaseType.valueOf(request.getStorageMode().toUpperCase(Locale.ENGLISH)),
           null);
     }
-    OLogManager.instance()
-        .info(
-            this,
-            "Created database '%s' of type '%s'",
-            request.getDatabaseName(),
-            request.getStorageMode());
+    logger.info(
+        "Created database '%s' of type '%s'", request.getDatabaseName(), request.getStorageMode());
 
     // TODO: it should be here an additional check for open with the right user
     connection.setDatabase(
@@ -196,7 +215,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeDropDatabase(ODropDatabaseRequest request) {
 
     server.dropDatabase(request.getDatabaseName());
-    OLogManager.instance().info(this, "Dropped database '%s'", request.getDatabaseName());
+    logger.info("Dropped database '%s'", request.getDatabaseName());
     connection.close();
     return new ODropDatabaseResponse();
   }
@@ -827,7 +846,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
             .openNoAuthenticate(request.getName(), connection.getServerUser().getName());
     connection.setDatabase(database);
 
-    OLogManager.instance().info(this, "Freezing database '%s'", connection.getDatabase().getURL());
+    logger.info("Freezing database '%s'", connection.getDatabase().getURL());
 
     connection.getDatabase().freeze(true);
     return new OFreezeDatabaseResponse();
@@ -842,7 +861,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     connection.setDatabase(database);
 
-    OLogManager.instance().info(this, "Realising database '%s'", connection.getDatabase().getURL());
+    logger.info("Realising database '%s'", connection.getDatabase().getURL());
 
     connection.getDatabase().release();
     return new OReleaseDatabaseResponse();
@@ -980,7 +999,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeImport(OImportRequest request) {
     List<String> result = new ArrayList<>();
-    OLogManager.instance().info(this, "Starting database import");
+    logger.info("Starting database import");
     ODatabaseImport imp;
     try {
       imp =
@@ -988,7 +1007,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
               connection.getDatabase(),
               request.getImporPath(),
               iText -> {
-                OLogManager.instance().debug(OConnectionBinaryExecutor.this, iText);
+                logger.debug(iText);
                 if (iText != null) result.add(iText);
               });
       imp.setOptions(request.getOptions());
@@ -1021,11 +1040,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     if (!request.isTokenBased()
         && !OGlobalConfiguration.NETWORK_BINARY_ALLOW_NO_TOKEN.getValueAsBoolean()) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Session open with token flag false is not supported anymore please use token based"
-                  + " sessions");
+      logger.warn(
+          "Session open with token flag false is not supported anymore please use token based"
+              + " sessions");
       throw new OConfigurationException(
           "Session open with token flag false is not supported anymore please use token based"
               + " sessions");
@@ -1095,11 +1112,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().setSerializationImpl(request.getRecordFormat());
     if (!request.isUseToken()
         && !OGlobalConfiguration.NETWORK_BINARY_ALLOW_NO_TOKEN.getValueAsBoolean()) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Session open with token flag false is not supported anymore please use token based"
-                  + " sessions");
+      logger.warn(
+          "Session open with token flag false is not supported anymore please use token based"
+              + " sessions");
       throw new OConfigurationException(
           "Session open with token flag false is not supported anymore please use token based"
               + " sessions");
@@ -1221,22 +1236,20 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeShutdown(OShutdownRequest request) {
 
-    OLogManager.instance().info(this, "Received shutdown command from the remote client ");
+    logger.info("Received shutdown command from the remote client ");
 
     final String user = request.getRootUser();
     final String passwd = request.getRootPassword();
 
     if (server.authenticate(user, passwd, "server.shutdown")) {
-      OLogManager.instance()
-          .info(this, "Remote client authenticated. Starting shutdown of server...");
+      logger.info("Remote client authenticated. Starting shutdown of server...");
 
       runShutdownInNonDaemonThread();
 
       return new OShutdownResponse();
     }
 
-    OLogManager.instance()
-        .error(this, "Authentication error of remote client: shutdown is aborted.", null);
+    logger.error("Authentication error of remote client: shutdown is aborted.", null);
 
     throw new OSecurityAccessException("Invalid user/password to shutdown the server");
   }
@@ -1747,12 +1760,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
             request.getDistributedProtocolVersion(),
             ORemoteServerController.CURRENT_PROTOCOL_VERSION);
     if (chosenProtocolVersion < ORemoteServerController.MIN_SUPPORTED_PROTOCOL_VERSION) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Rejected distributed connection from '%s' too old not supported",
-              null,
-              connection.getRemoteAddress());
+      logger.error(
+          "Rejected distributed connection from '%s' too old not supported",
+          null, connection.getRemoteAddress());
       throw new ODatabaseException("protocol version too old rejected connection");
     } else {
       connection.setServerUser(serverUser);

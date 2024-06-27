@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -53,6 +54,7 @@ import java.util.concurrent.TimeUnit;
  * @email <gabriele.ponzi--at--gmail.com>
  */
 public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTest {
+  private static final OLogger logger = OLogManager.instance().logger(AbstractScenarioTest.class);
 
   protected static final int SERVERS = 3;
   protected static final ODocument MISSING_DOCUMENT = new ODocument();
@@ -416,28 +418,18 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
               ODocument document = retrieveRecordOrReturnMissing(server, recordId);
               final String storedValue = document.field(fieldName);
 
-              OLogManager.instance()
-                  .debug(
-                      this,
-                      "Read record [%s] from server%s - %s: %s ",
-                      recordId,
-                      server.getServerId(),
-                      fieldName,
-                      storedValue);
+              logger.debug(
+                  "Read record [%s] from server%s - %s: %s ",
+                  recordId, server.getServerId(), fieldName, storedValue);
 
               if (document == MISSING_DOCUMENT) {
                 return false;
               }
 
-              OLogManager.instance()
-                  .info(
-                      this,
-                      "Waiting for updated document propagation on record %s. Found %s=%s, expected"
-                          + " %s",
-                      recordId,
-                      fieldName,
-                      storedValue,
-                      expectedFieldValue);
+              logger.info(
+                  "Waiting for updated document propagation on record %s. Found %s=%s, expected"
+                      + " %s",
+                  recordId, fieldName, storedValue, expectedFieldValue);
 
               if (storedValue != null && !storedValue.equals(expectedFieldValue)
                   || storedValue == null && expectedFieldValue != null) return false;
@@ -741,47 +733,33 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     public AfterRecordLockDelayer(String serverName, long delay) {
       this.serverName = serverName;
       this.delay = delay;
-      OLogManager.instance()
-          .info(
-              this,
-              "Thread [%s-%d] delayer created with " + delay + "ms of delay",
-              serverName,
-              Thread.currentThread().getId());
+      logger.info(
+          "Thread [%s-%d] delayer created with " + delay + "ms of delay",
+          serverName,
+          Thread.currentThread().getId());
     }
 
     public AfterRecordLockDelayer(String serverName) {
       this.serverName = serverName;
       this.delay = DOCUMENT_WRITE_TIMEOUT;
-      OLogManager.instance()
-          .info(
-              this,
-              "Thread [%s-%d] delayer created with " + delay + "ms of delay",
-              serverName,
-              Thread.currentThread().getId());
+      logger.info(
+          "Thread [%s-%d] delayer created with " + delay + "ms of delay",
+          serverName,
+          Thread.currentThread().getId());
     }
 
     @Override
     public void onAfterRecordLock(ORecordId rid) {
       if (delay > 0)
         try {
-          OLogManager.instance()
-              .info(
-                  this,
-                  "Thread [%s-%d] waiting for %dms with locked record [%s]",
-                  serverName,
-                  Thread.currentThread().getId(),
-                  delay,
-                  rid.toString());
+          logger.info(
+              "Thread [%s-%d] waiting for %dms with locked record [%s]",
+              serverName, Thread.currentThread().getId(), delay, rid.toString());
           Thread.sleep(delay);
 
-          OLogManager.instance()
-              .info(
-                  this,
-                  "Thread [%s-%d] finished waiting for %dms with locked record [%s]",
-                  serverName,
-                  Thread.currentThread().getId(),
-                  delay,
-                  rid.toString());
+          logger.info(
+              "Thread [%s-%d] finished waiting for %dms with locked record [%s]",
+              serverName, Thread.currentThread().getId(), delay, rid.toString());
 
           // RESET THE DELAY FOR FURTHER TIMES
           delay = 0;

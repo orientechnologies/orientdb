@@ -15,6 +15,7 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -110,6 +111,8 @@ import java.util.stream.Stream;
 
 /** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ODatabaseDocumentDistributed.class);
 
   private final ODistributedPlugin distributedManager;
 
@@ -504,13 +507,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
 
-    if (!txsWithBrokenPromises.isEmpty() && OLogManager.instance().isDebugEnabled()) {
-      OLogManager.instance()
-          .debug(
-              this,
-              "Tx '%s' forcefully took over promises from transactions '%s'.",
-              txContext.getTransactionId(),
-              txsWithBrokenPromises.toString());
+    if (!txsWithBrokenPromises.isEmpty() && logger.isDebugEnabled()) {
+      logger.debug(
+          "Tx '%s' forcefully took over promises from transactions '%s'.",
+          txContext.getTransactionId(), txsWithBrokenPromises.toString());
     }
   }
 
@@ -533,13 +533,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           && retryCount
               < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
-          OLogManager.instance()
-              .debug(
-                  this,
-                  "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue"
-                      + " request",
-                  ex.getExpectedRid(),
-                  ex.getActualRid());
+          logger.debug(
+              "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue"
+                  + " request",
+              ex.getExpectedRid(), ex.getActualRid());
           txContext.releasePromises();
           return false;
         }
@@ -552,14 +549,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           && retryCount
               < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getEnhancedRecordVersion() > ex.getEnhancedDatabaseVersion()) {
-          OLogManager.instance()
-              .info(
-                  this,
-                  "Persistent version not match, record:%s expected:%s actual:%s waiting for"
-                      + " re-enqueue request",
-                  ex.getRid(),
-                  ex.getEnhancedRecordVersion(),
-                  ex.getEnhancedDatabaseVersion());
+          logger.info(
+              "Persistent version not match, record:%s expected:%s actual:%s waiting for"
+                  + " re-enqueue request",
+              ex.getRid(), ex.getEnhancedRecordVersion(), ex.getEnhancedDatabaseVersion());
           txContext.releasePromises();
           return false;
         }
@@ -709,20 +702,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
             // Just retry
           } catch (ODistributedTxPromiseRequestIsOldException ex) {
-            OLogManager.instance()
-                .warn(
-                    ODatabaseDocumentDistributed.this,
-                    "Error committing transaction %s ",
-                    ex,
-                    transactionId);
+            logger.warn("Error committing transaction %s ", ex, transactionId);
             return true;
           } catch (Exception ex) {
-            OLogManager.instance()
-                .warn(
-                    ODatabaseDocumentDistributed.this,
-                    "Error beginning timed out transaction: %s ",
-                    ex,
-                    transactionId);
+            logger.warn("Error beginning timed out transaction: %s ", ex, transactionId);
             break;
           }
         }
@@ -754,11 +737,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               .getOrientDB()
               .execute(
                   () -> {
-                    OLogManager.instance()
-                        .warn(
-                            ODatabaseDocumentDistributed.this,
-                            "Reached limit of retry for commit tx:%s forcing database re-install",
-                            transactionId);
+                    logger.warn(
+                        "Reached limit of retry for commit tx:%s forcing database re-install",
+                        transactionId);
                     forceRsync();
                   });
           return true;
@@ -1054,8 +1035,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
         for (OTransactionResultPayload result : responseManager.getAllResponses()) {
           if (result.getResponseType() == OTxException.ID) {
-            OLogManager.instance()
-                .warn(this, "One node on error", ((OTxException) result).getException());
+            logger.warn("One node on error", ((OTxException) result).getException());
           }
         }
       } else {
@@ -1071,8 +1051,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               break;
             case OTxException.ID:
               exceptions.add(((OTxException) result).getException());
-              OLogManager.instance()
-                  .debug(this, "distributed exception", ((OTxException) result).getException());
+              logger.debug("distributed exception", ((OTxException) result).getException());
               messages.add(
                   String.format(
                       "exception (node " + node + "): '%s'",
@@ -1277,7 +1256,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         throw (OException) e.getCause().getCause();
     }
 
-    OLogManager.instance().error(this, iMessage, e, iParams);
+    logger.error(iMessage, e, iParams);
     throw OException.wrapException(new OStorageException(String.format(iMessage, iParams)), e);
   }
 
@@ -1385,12 +1364,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               break;
             }
           } catch (Exception ex) {
-            OLogManager.instance()
-                .warn(
-                    ODatabaseDocumentDistributed.this,
-                    "Error beginning timed out transaction: %s ",
-                    ex,
-                    context.getReqId());
+            logger.warn("Error beginning timed out transaction: %s ", ex, context.getReqId());
             break;
           }
         }
@@ -1413,11 +1387,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               .getOrientDB()
               .execute(
                   () -> {
-                    OLogManager.instance()
-                        .warn(
-                            ODatabaseDocumentDistributed.this,
-                            "Reached limit of retry for commit tx:%s forcing database re-install",
-                            id);
+                    logger.warn(
+                        "Reached limit of retry for commit tx:%s forcing database re-install", id);
                     forceRsync();
                   });
         }

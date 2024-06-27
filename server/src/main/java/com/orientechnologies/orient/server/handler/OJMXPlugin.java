@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -33,6 +34,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 public class OJMXPlugin extends OServerPluginAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OJMXPlugin.class);
   private ObjectName onProfiler;
   private boolean profilerManaged;
 
@@ -49,8 +51,7 @@ public class OJMXPlugin extends OServerPluginAbstract {
         profilerManaged = Boolean.parseBoolean(param.value);
     }
 
-    OLogManager.instance()
-        .info(this, "JMX plugin installed and active: profilerManaged=%s", profilerManaged);
+    logger.info("JMX plugin installed and active: profilerManaged=%s", profilerManaged);
 
     final MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
@@ -81,8 +82,7 @@ public class OJMXPlugin extends OServerPluginAbstract {
         if (mBeanServer.isRegistered(onProfiler)) mBeanServer.unregisterMBean(onProfiler);
 
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(this, "OrientDB Server v" + OConstants.getVersion() + " unregisterMBean error", e);
+      logger.error("OrientDB Server v" + OConstants.getVersion() + " unregisterMBean error", e);
     }
   }
 
