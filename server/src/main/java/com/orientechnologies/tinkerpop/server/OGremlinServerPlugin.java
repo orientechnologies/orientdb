@@ -1,6 +1,7 @@
 package com.orientechnologies.tinkerpop.server;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
@@ -9,7 +10,11 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginConfigurable;
 import com.orientechnologies.tinkerpop.server.config.OGraphConfig;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.CompletableFuture;
 import javax.script.Bindings;
 import org.apache.commons.configuration2.BaseConfiguration;
@@ -23,6 +28,7 @@ import org.apache.tinkerpop.gremlin.server.util.ServerGremlinExecutor;
 /** Created by Enrico Risa on 06/09/2017. */
 public class OGremlinServerPlugin extends OServerPluginAbstract
     implements OServerPluginConfigurable, OServerLifecycleListener {
+  private static final OLogger logger = OLogManager.instance().logger(OGremlinServerPlugin.class);
 
   protected GremlinServer gremlinServer;
   protected OServer oServer;
@@ -75,7 +81,7 @@ public class OGremlinServerPlugin extends OServerPluginAbstract
     Settings settings;
     InputStream cfg = null;
     try {
-      OLogManager.instance().info(this, "Gremlin Server is starting up...");
+      logger.info("Gremlin Server is starting up...");
       cfg = getServerConfig();
       settings = Settings.read(cfg);
       gremlinServer = new GremlinServer(settings);
@@ -84,9 +90,9 @@ public class OGremlinServerPlugin extends OServerPluginAbstract
       this.executor = start.join();
       this.graphManager = (OrientGremlinGraphManager) executor.getGraphManager();
 
-      OLogManager.instance().info(this, "Gremlin started correctly");
+      logger.info("Gremlin started correctly");
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on Gremlin Server startup", e);
+      logger.error("Error on Gremlin Server startup", e);
     } finally {
       if (cfg != null) {
         try {
@@ -101,9 +107,9 @@ public class OGremlinServerPlugin extends OServerPluginAbstract
   @Override
   public void onBeforeDeactivate() {
 
-    OLogManager.instance().info(this, "Gremlin Server is shutting down.");
+    logger.info("Gremlin Server is shutting down.");
     gremlinServer.stop().join();
-    OLogManager.instance().info(this, "Gremlin Server shutting down completed.");
+    logger.info("Gremlin Server shutting down completed.");
   }
 
   @Override

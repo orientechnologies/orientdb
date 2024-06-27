@@ -5,6 +5,7 @@ import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -63,6 +64,8 @@ import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 @Graph.OptIn(Graph.OptIn.SUITE_PROCESS_COMPUTER)
 @Graph.OptIn("org.apache.tinkerpop.gremlin.orientdb.gremlintest.suite.OrientDBDebugSuite")
 public final class OrientGraph implements OGraph {
+  private static final OLogger logger = OLogManager.instance().logger(OrientGraph.class);
+
   static {
     TraversalStrategies.GlobalCache.registerStrategies(
         OrientGraph.class,
@@ -592,7 +595,7 @@ public final class OrientGraph implements OGraph {
           }
         }
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during context close for db " + url, e);
+        logger.error("Error during context close for db " + url, e);
       }
     }
   }
@@ -646,8 +649,7 @@ public final class OrientGraph implements OGraph {
       } catch (OException e) {
         throw new IllegalArgumentException(e);
       }
-      OLogManager.instance()
-          .info(this, "created class '" + className + "' as subclass of '" + superClass + "'");
+      logger.info("created class '" + className + "' as subclass of '" + superClass + "'");
     } else {
       if (!cls.isSubClassOf(superClass)) {
         throw new IllegalArgumentException(
@@ -746,13 +748,13 @@ public final class OrientGraph implements OGraph {
       throws RuntimeException {
     makeActive();
 
-    if (OLogManager.instance().isWarnEnabled() && iOperationStrings.length > 0) {
+    if (logger.isWarnEnabled() && iOperationStrings.length > 0) {
       // COMPOSE THE MESSAGE
       final StringBuilder msg = new StringBuilder(256);
       for (String s : iOperationStrings) msg.append(s);
 
       // ASSURE PENDING TX IF ANY IS COMMITTED
-      OLogManager.instance().warn(this, msg.toString());
+      logger.warn(msg.toString());
     }
     return iCallable.call(this);
   }
