@@ -464,4 +464,8 @@ public class OLogManager {
       return true;
     }
   }
+
+  public OLogger logger(Class<?> cl) {
+    return new OLoggerFromManager(cl, this);
+  }
 }
