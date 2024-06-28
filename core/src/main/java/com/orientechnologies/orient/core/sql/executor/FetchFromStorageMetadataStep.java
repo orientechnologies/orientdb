@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
@@ -21,6 +22,8 @@ import java.util.List;
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
  */
 public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
+  private static final OLogger logger =
+      OLogManager.instance().logger(FetchFromStorageMetadataStep.class);
 
   public FetchFromStorageMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -102,7 +105,7 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
         try {
           item.setProperty("encryption", cluster.encryption());
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Can not set value of encryption parameter", e);
+          logger.error("Can not set value of encryption parameter", e);
         }
         result.add(item);
       }

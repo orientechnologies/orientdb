@@ -23,6 +23,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUER
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -36,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Created by luigidellaquila on 16/03/15. */
 public class OLiveQueryHook {
+  private static final OLogger logger = OLogManager.instance().logger(OLiveQueryHook.class);
 
   public static class OLiveQueryOps implements OCloseable {
 
@@ -67,12 +69,10 @@ public class OLiveQueryHook {
   public static Integer subscribe(
       Integer token, OLiveQueryListener iListener, ODatabaseInternal db) {
     if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
-      OLogManager.instance()
-          .warn(
-              db,
-              "Live query support is disabled impossible to subscribe a listener, set '%s' to true"
-                  + " for enable the live query support",
-              QUERY_LIVE_SUPPORT.getKey());
+      logger.warn(
+          "Live query support is disabled impossible to subscribe a listener, set '%s' to true"
+              + " for enable the live query support",
+          QUERY_LIVE_SUPPORT.getKey());
       return -1;
     }
     OLiveQueryOps ops = getOpsReference(db);
@@ -88,12 +88,10 @@ public class OLiveQueryHook {
 
   public static void unsubscribe(Integer id, ODatabaseInternal db) {
     if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
-      OLogManager.instance()
-          .warn(
-              db,
-              "Live query support is disabled impossible to unsubscribe a listener, set '%s' to"
-                  + " true for enable the live query support",
-              QUERY_LIVE_SUPPORT.getKey());
+      logger.warn(
+          "Live query support is disabled impossible to unsubscribe a listener, set '%s' to"
+              + " true for enable the live query support",
+          QUERY_LIVE_SUPPORT.getKey());
       return;
     }
     try {
@@ -102,7 +100,7 @@ public class OLiveQueryHook {
         ops.queueThread.unsubscribe(id);
       }
     } catch (Exception e) {
-      OLogManager.instance().warn(OLiveQueryHook.class, "Error on unsubscribing client", e);
+      logger.warn("Error on unsubscribing client", e);
     }
   }
 
@@ -138,7 +136,7 @@ public class OLiveQueryHook {
       }
     } catch (ODatabaseException ex) {
       // This catch and log the exception because in some case is suppressing the real exception
-      OLogManager.instance().error(iDatabase, "Error cleaning the live query resources", ex);
+      logger.error("Error cleaning the live query resources", ex);
     }
   }
 

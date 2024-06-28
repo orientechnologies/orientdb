@@ -22,6 +22,7 @@ package com.orientechnologies.common.concur.lock;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -38,6 +39,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OAdaptiveLock extends OAbstractLock {
+  private static final OLogger logger = OLogManager.instance().logger(OAdaptiveLock.class);
+
   private final ReentrantLock lock = new ReentrantLock();
   private final boolean concurrent;
   private final int timeout;
@@ -135,7 +138,7 @@ public class OAdaptiveLock extends OAbstractLock {
     try {
       if (lock.isLocked()) lock.unlock();
     } catch (Exception e) {
-      OLogManager.instance().debug(this, "Cannot unlock a lock", e);
+      logger.debug("Cannot unlock a lock", e);
     }
   }
 

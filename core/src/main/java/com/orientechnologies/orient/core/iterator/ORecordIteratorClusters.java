@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.iterator;
 
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
@@ -39,6 +40,8 @@ import java.util.NoSuchElementException;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableIterator<REC> {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ORecordIteratorClusters.class);
   protected int[] clusterIds;
   protected int currentClusterIdx;
   protected ORecord currentRecord;
@@ -162,7 +165,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
           if ((e instanceof RuntimeException) && (e instanceof OHighLevelException))
             throw (RuntimeException) e;
 
-          OLogManager.instance().error(this, "Error during read of record", e);
+          logger.error("Error during read of record", e);
 
           currentRecord = null;
         }

@@ -18,6 +18,7 @@
 package com.orientechnologies.orient.core.schedule;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Calendar;
@@ -184,6 +185,7 @@ import java.util.TreeSet;
  * @author Refactoring from CronTrigger to CronExpression by Aaron Craven
  */
 public final class OCronExpression implements Serializable, Cloneable {
+  private static final OLogger logger = OLogManager.instance().logger(OCronExpression.class);
 
   private static final long serialVersionUID = 12423409423L;
 
@@ -504,7 +506,7 @@ public final class OCronExpression implements Serializable, Cloneable {
     } catch (ParseException pe) {
       throw pe;
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+      logger.error("Exception is suppressed, original exception is ", e);
 
       //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw new ParseException("Illegal cron expression format (" + e.toString() + ")", 0);
@@ -565,8 +567,7 @@ public final class OCronExpression implements Serializable, Cloneable {
                 throw new Exception();
               }
             } catch (Exception e) {
-              OLogManager.instance()
-                  .error(this, "Exception is suppressed, original exception is ", e);
+              logger.error("Exception is suppressed, original exception is ", e);
               //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
               throw new ParseException(
                   "A numeric value between 1 and 5 must follow the '#' option", i);
@@ -749,7 +750,7 @@ public final class OCronExpression implements Serializable, Cloneable {
           throw new Exception();
         }
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+        logger.error("Exception is suppressed, original exception is ", e);
         //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
         throw new ParseException("A numeric value between 1 and 5 must follow the '#' option", i);
       }

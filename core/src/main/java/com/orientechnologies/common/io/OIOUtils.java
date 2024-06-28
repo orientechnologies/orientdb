@@ -20,6 +20,7 @@
 package com.orientechnologies.common.io;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPatternConst;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -45,7 +46,7 @@ import java.util.Date;
 import java.util.Locale;
 
 public class OIOUtils {
-
+  private static final OLogger logger = OLogManager.instance().logger(OIOUtils.class);
   public static final long SECOND = 1000;
   public static final long MINUTE = SECOND * 60;
   public static final long HOUR = MINUTE * 60;
@@ -471,12 +472,9 @@ public class OIOUtils {
       var fileStore = Files.getFileStore(path);
       return (int) fileStore.getBlockSize();
     } catch (IOException | UnsupportedOperationException e) {
-      OLogManager.instance()
-          .errorNoDb(
-              OIOUtils.class,
-              "Error during calculation file system "
-                  + "block size, falling back to default one - 4K",
-              e);
+      logger.errorNoDb(
+          "Error during calculation file system " + "block size, falling back to default one - 4K",
+          e);
       return 4 * 1024;
     }
   }

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 /** Created by luigidellaquila on 06/02/15. */
 public class OOrderByItem {
+  private static final OLogger logger = OLogManager.instance().logger(OOrderByItem.class);
   public static final String ASC = "ASC";
   public static final String DESC = "DESC";
   protected String alias;
@@ -163,7 +165,7 @@ public class OOrderByItem {
         try {
           result = ((Comparable) aVal).compareTo(bVal);
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during comparision", e);
+          logger.error("Error during comparision", e);
           result = 0;
         }
       }

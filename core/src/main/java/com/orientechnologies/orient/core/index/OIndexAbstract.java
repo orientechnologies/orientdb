@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -74,6 +75,7 @@ import java.util.stream.Stream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OIndexAbstract implements OIndexInternal {
+  private static final OLogger logger = OLogManager.instance().logger(OIndexAbstract.class);
 
   private static final OAlwaysLessKey ALWAYS_LESS_KEY = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
@@ -216,7 +218,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
           removeValuesContainer();
         }
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during deletion of index '%s'", e, im.getName());
+        logger.error("Error during deletion of index '%s'", e, im.getName());
       }
       Map<String, String> engineProperties = new HashMap<>();
       // this property is used for autosharded index
@@ -238,7 +240,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
       updateConfiguration();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Exception during index '%s' creation", e, im.getName());
+      logger.error("Exception during index '%s' creation", e, im.getName());
       // index is created inside of storage
       if (indexId >= 0) {
         doDelete();
@@ -293,28 +295,21 @@ public abstract class OIndexAbstract implements OIndexInternal {
         onIndexEngineChange(indexId);
 
       } catch (Exception e) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Error during load of index '%s'",
-                e,
-                Optional.ofNullable(im.getName()).orElse("null"));
+        logger.error(
+            "Error during load of index '%s'", e, Optional.ofNullable(im.getName()).orElse("null"));
 
         if (isAutomatic()) {
           // AUTOMATIC REBUILD IT
-          OLogManager.instance()
-              .warn(this, "Cannot load index '%s' rebuilt it from scratch", im.getName());
+          logger.warn("Cannot load index '%s' rebuilt it from scratch", im.getName());
           try {
             rebuild();
           } catch (Exception t) {
-            OLogManager.instance()
-                .error(
-                    this,
-                    "Cannot rebuild index '%s' because '"
-                        + t
-                        + "'. The index will be removed in configuration",
-                    e,
-                    im.getName());
+            logger.error(
+                "Cannot rebuild index '%s' because '"
+                    + t
+                    + "'. The index will be removed in configuration",
+                e,
+                im.getName());
             // REMOVE IT
             return false;
           }
@@ -473,7 +468,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
           doDelete();
         }
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during index '%s' delete", e, im.getName());
+        logger.error("Error during index '%s' delete", e, im.getName());
       }
 
       OIndexMetadata indexMetadata = this.loadMetadata(updateConfiguration());
@@ -492,7 +487,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
       try {
         if (indexId >= 0) storage.clearIndex(indexId);
       } catch (Exception e2) {
-        OLogManager.instance().error(this, "Error during index rebuild", e2);
+        logger.error("Error during index rebuild", e2);
         // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN
         // ERROR
       }
@@ -507,11 +502,11 @@ public abstract class OIndexAbstract implements OIndexInternal {
     try {
       documentIndexed = fillIndex(iProgressListener, true);
     } catch (final Exception e) {
-      OLogManager.instance().error(this, "Error during index rebuild", e);
+      logger.error("Error during index rebuild", e);
       try {
         if (indexId >= 0) storage.clearIndex(indexId);
       } catch (Exception e2) {
-        OLogManager.instance().error(this, "Error during index rebuild", e2);
+        logger.error("Error during index rebuild", e2);
         // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN
         // ERROR
       }
@@ -653,7 +648,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         } catch (OIndexEngineException e) {
           throw e;
         } catch (RuntimeException e) {
-          OLogManager.instance().error(this, "Error Dropping Index %s", e, getName());
+          logger.error("Error Dropping Index %s", e, getName());
           // Just log errors of removing keys while dropping and keep dropping
         }
 
@@ -664,7 +659,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         } catch (OIndexEngineException e) {
           throw e;
         } catch (RuntimeException e) {
-          OLogManager.instance().error(this, "Error Dropping Index %s", e, getName());
+          logger.error("Error Dropping Index %s", e, getName());
           // Just log errors of removing keys while dropping and keep dropping
         }
 
@@ -1008,7 +1003,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
             readCache.deleteFile(fileId, writeCache);
           }
         } catch (IOException e) {
-          OLogManager.instance().error(this, "Cannot delete file for value containers", e);
+          logger.error("Cannot delete file for value containers", e);
         }
       } else {
         try {
@@ -1018,7 +1013,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
             atomicOperation.deleteFile(fileId);
           }
         } catch (IOException e) {
-          OLogManager.instance().error(this, "Cannot delete file for value containers", e);
+          logger.error("Cannot delete file for value containers", e);
         }
       }
     }
@@ -1050,14 +1045,12 @@ public abstract class OIndexAbstract implements OIndexInternal {
     }
 
     if (OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES_WARNING.getValueAsBoolean()) {
-      OLogManager.instance()
-          .warn(
-              OIndexAbstract.class,
-              "Seems you use manual indexes. Manual indexes are deprecated, not supported any more"
-                  + " and will be removed in next versions if you do not want to see warning,"
-                  + " please set global property `"
-                  + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES_WARNING.getKey()
-                  + "` to `false`");
+      logger.warn(
+          "Seems you use manual indexes. Manual indexes are deprecated, not supported any more"
+              + " and will be removed in next versions if you do not want to see warning,"
+              + " please set global property `"
+              + OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES_WARNING.getKey()
+              + "` to `false`");
     }
   }
 

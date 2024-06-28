@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -43,6 +44,8 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLo
 import java.util.*;
 
 public class ODistributedTxCoordinator {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ODistributedTxCoordinator.class);
   public static final String LOCAL_RESULT_SUCCESS = "OK";
 
   private final ODistributedServerManager dManager;
@@ -335,8 +338,7 @@ public class ODistributedTxCoordinator {
 
       for (OTransactionResultPayload txResult : responseManager.getAllResponses()) {
         if (txResult.getResponseType() == OTxException.ID) {
-          OLogManager.instance()
-              .warn(this, "One node on error", ((OTxException) txResult).getException());
+          logger.warn("One node on error", ((OTxException) txResult).getException());
         }
       }
     } else {
@@ -380,8 +382,7 @@ public class ODistributedTxCoordinator {
                 iTx.getRecordEntry(recordId).getType());
           case OTxException.ID:
             exceptions.add(((OTxException) result).getException());
-            OLogManager.instance()
-                .debug(this, "distributed exception", ((OTxException) result).getException());
+            logger.debug("distributed exception", ((OTxException) result).getException());
             messages.add(
                 String.format(
                     "exception (node " + node + "): '%s'",

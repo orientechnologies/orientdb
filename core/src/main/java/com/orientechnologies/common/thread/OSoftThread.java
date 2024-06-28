@@ -21,10 +21,12 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OService;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 
 public abstract class OSoftThread extends Thread implements OService {
+  private static final OLogger logger = OLogManager.instance().logger(OSoftThread.class);
   private volatile boolean shutdownFlag;
 
   private boolean dumpExceptions = true;
@@ -68,9 +70,9 @@ public abstract class OSoftThread extends Thread implements OService {
         execute();
         afterExecution();
       } catch (Exception e) {
-        if (dumpExceptions) OLogManager.instance().error(this, "Error during thread execution", e);
+        if (dumpExceptions) logger.error("Error during thread execution", e);
       } catch (Error e) {
-        if (dumpExceptions) OLogManager.instance().error(this, "Error during thread execution", e);
+        if (dumpExceptions) logger.error("Error during thread execution", e);
         shutdown();
         throw e;
       }

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -55,6 +56,8 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCommandExecutorSQLTraverse.class);
   public static final String KEYWORD_WHILE = "WHILE";
   public static final String KEYWORD_TRAVERSE = "TRAVERSE";
   public static final String KEYWORD_STRATEGY = "STRATEGY";
@@ -218,12 +221,10 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
   }
 
   protected void warnDeprecatedWhere() {
-    OLogManager.instance()
-        .warn(
-            this,
-            "Keyword WHERE in traverse has been replaced by WHILE. Please change your query to"
-                + " support WHILE instead of WHERE because now it's only deprecated, but in future"
-                + " it will be removed the back-ward compatibility.");
+    logger.warn(
+        "Keyword WHERE in traverse has been replaced by WHILE. Please change your query to"
+            + " support WHILE instead of WHERE because now it's only deprecated, but in future"
+            + " it will be removed the back-ward compatibility.");
   }
 
   @Override

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
@@ -58,6 +59,8 @@ import java.util.stream.Stream;
 /** @author Artem Orobets (enisher-at-gmail.com) */
 public final class OSBTreeCollectionManagerShared
     implements OSBTreeCollectionManager, OOrientStartupListener, OOrientShutdownListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OSBTreeCollectionManagerShared.class);
   public static final String FILE_EXTENSION = ".grb";
   public static final String FILE_NAME_PREFIX = "global_collection_";
 
@@ -108,13 +111,11 @@ public final class OSBTreeCollectionManagerShared
     }
 
     if (!filesToMigrate.isEmpty()) {
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "There are found %d RidBags (containers for edges which are going to be migrated)."
-                  + " PLEASE DO NOT SHUTDOWN YOUR DATABASE DURING MIGRATION BECAUSE THAT RISKS TO"
-                  + " DAMAGE YOUR DATA !!!",
-              filesToMigrate.size());
+      logger.infoNoDb(
+          "There are found %d RidBags (containers for edges which are going to be migrated)."
+              + " PLEASE DO NOT SHUTDOWN YOUR DATABASE DURING MIGRATION BECAUSE THAT RISKS TO"
+              + " DAMAGE YOUR DATA !!!",
+          filesToMigrate.size());
     } else {
       return;
     }
@@ -125,12 +126,9 @@ public final class OSBTreeCollectionManagerShared
           fileName.substring("collections_".length(), fileName.length() - ".sbc".length());
       final int clusterId = Integer.parseInt(clusterIdStr);
 
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "Migration of RidBag for cluster #%s is started ... "
-                  + "PLEASE WAIT FOR COMPLETION !",
-              clusterIdStr);
+      logger.infoNoDb(
+          "Migration of RidBag for cluster #%s is started ... " + "PLEASE WAIT FOR COMPLETION !",
+          clusterIdStr);
       final BTree bTree = new BTree(storage, FILE_NAME_PREFIX + clusterId, FILE_EXTENSION);
       atomicOperationsManager.executeInsideAtomicOperation(null, bTree::create);
 
@@ -166,16 +164,12 @@ public final class OSBTreeCollectionManagerShared
       }
 
       migrationCounter++;
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "%d RidBags out of %d are migrated ... PLEASE WAIT FOR COMPLETION !",
-              migrationCounter,
-              filesToMigrate.size());
+      logger.infoNoDb(
+          "%d RidBags out of %d are migrated ... PLEASE WAIT FOR COMPLETION !",
+          migrationCounter, filesToMigrate.size());
     }
 
-    OLogManager.instance()
-        .infoNoDb(this, "All RidBags are going to be flushed out ... PLEASE WAIT FOR COMPLETION !");
+    logger.infoNoDb("All RidBags are going to be flushed out ... PLEASE WAIT FOR COMPLETION !");
     final OReadCache readCache = storage.getReadCache();
 
     int flushCounter = 0;
@@ -197,12 +191,9 @@ public final class OSBTreeCollectionManagerShared
       writeCache.replaceFileId(fileId, newFileId);
       flushCounter++;
 
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "%d RidBags are flushed out of %d ... PLEASE WAIT FOR COMPLETION !",
-              flushCounter,
-              filesToMigrate.size());
+      logger.infoNoDb(
+          "%d RidBags are flushed out of %d ... PLEASE WAIT FOR COMPLETION !",
+          flushCounter, filesToMigrate.size());
     }
 
     for (final String fileName : filesToMigrate) {
@@ -216,7 +207,7 @@ public final class OSBTreeCollectionManagerShared
       fileIdBTreeMap.put(OWOWCache.extractFileId(bTree.getFileId()), bTree);
     }
 
-    OLogManager.instance().infoNoDb(this, "All RidBags are migrated.");
+    logger.infoNoDb("All RidBags are migrated.");
   }
 
   @Override

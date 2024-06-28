@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -33,6 +34,8 @@ import java.util.Map;
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCommandExecutorSQLLiveUnsubscribe extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCommandExecutorSQLLiveUnsubscribe.class);
   public static final String KEYWORD_LIVE_UNSUBSCRIBE = "LIVE UNSUBSCRIBE";
 
   protected String unsubscribeToken;
@@ -50,15 +53,13 @@ public class OCommandExecutorSQLLiveUnsubscribe extends OCommandExecutorSQLAbstr
 
       return result;
     } catch (Exception e) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "error unsubscribing token "
-                  + unsubscribeToken
-                  + ": "
-                  + e.getClass().getName()
-                  + " - "
-                  + e.getMessage());
+      logger.warn(
+          "error unsubscribing token "
+              + unsubscribeToken
+              + ": "
+              + e.getClass().getName()
+              + " - "
+              + e.getMessage());
       ODocument result = new ODocument();
       result.field("error-unsubscribe", unsubscribeToken);
       result.field("error-description", e.getMessage());

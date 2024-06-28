@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl.source;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -33,6 +34,7 @@ import java.util.logging.Level;
 
 /** Extracts data from HTTP endpoint. */
 public class OETLHttpSource extends OETLAbstractSource {
+  private static final OLogger logger = OLogManager.instance().logger(OETLHttpSource.class);
   protected BufferedReader reader;
   protected String url;
   protected String method = "GET";
@@ -96,7 +98,7 @@ public class OETLHttpSource extends OETLAbstractSource {
       try {
         reader.close();
       } catch (IOException e) {
-        OLogManager.instance().error(this, "Error during close of reader", e);
+        logger.error("Error during close of reader", e);
       }
 
     if (conn != null) conn.disconnect();

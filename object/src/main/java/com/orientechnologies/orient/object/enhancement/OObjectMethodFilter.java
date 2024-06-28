@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.object.enhancement;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -29,6 +30,7 @@ import javassist.util.proxy.MethodFilter;
  * @author Janos Haber Scala binding
  */
 public class OObjectMethodFilter implements MethodFilter {
+  private static final OLogger logger = OLogManager.instance().logger(OObjectMethodFilter.class);
 
   private Map<Method, String> fieldNameCache = new HashMap<Method, String>();
   private Map<Method, Boolean> isSetterCache = new HashMap<Method, Boolean>();
@@ -43,16 +45,12 @@ public class OObjectMethodFilter implements MethodFilter {
       if (!OObjectEntitySerializer.isClassField(m.getDeclaringClass(), fieldName)) return false;
       return (isSetterMethod(m) || isGetterMethod(m));
     } catch (NoSuchFieldException nsfe) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Error handling the method %s in class %s",
-              nsfe,
-              m.getName(),
-              m.getDeclaringClass().getName());
+      logger.warn(
+          "Error handling the method %s in class %s",
+          nsfe, m.getName(), m.getDeclaringClass().getName());
       return false;
     } catch (SecurityException se) {
-      OLogManager.instance().warn(this, "", se, m.getName(), m.getDeclaringClass().getName());
+      logger.warn("", se, m.getName(), m.getDeclaringClass().getName());
       return false;
     }
   }
@@ -110,18 +108,16 @@ public class OObjectMethodFilter implements MethodFilter {
     Class<?>[] parameters = m.getParameterTypes();
     Field f = OObjectEntitySerializer.getField(getFieldName(m), m.getDeclaringClass());
     if (!f.getType().isAssignableFrom(parameters[0])) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Setter method "
-                  + m.toString()
-                  + " for field "
-                  + f.getName()
-                  + " in class "
-                  + m.getDeclaringClass().toString()
-                  + " cannot be bound to proxied instance: parameter class don't match with field"
-                  + " type "
-                  + f.getType().toString());
+      logger.warn(
+          "Setter method "
+              + m.toString()
+              + " for field "
+              + f.getName()
+              + " in class "
+              + m.getDeclaringClass().toString()
+              + " cannot be bound to proxied instance: parameter class don't match with field"
+              + " type "
+              + f.getType().toString());
       isSetterCache.put(m, false);
       return false;
     }

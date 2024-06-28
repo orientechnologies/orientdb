@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
@@ -83,6 +84,8 @@ import org.testng.annotations.Test;
     groups = {"crud", "object", "schemafull", "physicalSchemaFull"},
     dependsOnGroups = "inheritanceSchemaFull")
 public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(CRUDObjectPhysicalTestSchemaFull.class);
   protected static final int TOT_RECORDS = 100;
   protected long startRecordNumber;
   private City rome = new City(new Country("Italy"), "Rome");
@@ -2075,7 +2078,7 @@ public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
       }
     } catch (IOException ioe) {
       Assert.assertTrue(false);
-      OLogManager.instance().error(this, "Error reading byte[]", ioe);
+      logger.error("Error reading byte[]", ioe);
     }
     Assert.assertTrue(loaded.getDocument() instanceof ODocument);
     Assert.assertEquals("testValue", loaded.getDocument().field("testField"));
@@ -2115,7 +2118,7 @@ public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
       }
     } catch (IOException ioe) {
       Assert.assertTrue(false);
-      OLogManager.instance().error(this, "Error reading byte[]", ioe);
+      logger.error("Error reading byte[]", ioe);
     }
     rid = database.getIdentity(p);
 
@@ -2142,7 +2145,7 @@ public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
       }
     } catch (IOException ioe) {
       Assert.assertTrue(false);
-      OLogManager.instance().error(this, "Error reading byte[]", ioe);
+      logger.error("Error reading byte[]", ioe);
     }
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
@@ -2173,7 +2176,7 @@ public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
       }
     } catch (IOException ioe) {
       Assert.assertTrue(false);
-      OLogManager.instance().error(this, "Error reading byte[]", ioe);
+      logger.error("Error reading byte[]", ioe);
     }
     rid = database.getIdentity(p);
 
@@ -2200,7 +2203,7 @@ public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
       }
     } catch (IOException ioe) {
       Assert.assertTrue(false);
-      OLogManager.instance().error(this, "Error reading byte[]", ioe);
+      logger.error("Error reading byte[]", ioe);
     }
   }
 

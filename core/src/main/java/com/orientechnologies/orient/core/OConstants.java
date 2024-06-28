@@ -1,11 +1,13 @@
 package com.orientechnologies.orient.core;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 public class OConstants {
+  private static final OLogger logger = OLogManager.instance().logger(OConstants.class);
   public static final String ORIENT_URL = "https://www.orientdb.com";
   public static final String COPYRIGHT = "Copyrights (c) 2017 OrientDB LTD";
 
@@ -18,7 +20,7 @@ public class OConstants {
         properties.load(inputStream);
       }
     } catch (IOException e) {
-      OLogManager.instance().errorNoDb(OConstants.class, "Failed to load OrientDB properties", e);
+      logger.errorNoDb("Failed to load OrientDB properties", e);
     }
   }
 
@@ -26,17 +28,14 @@ public class OConstants {
   public static int getVersionMajor() {
     final String[] versions = properties.getProperty("version").split("\\.");
     if (versions.length == 0) {
-      OLogManager.instance()
-          .errorNoDb(OConstants.class, "Can not retrieve version information for this build", null);
+      logger.errorNoDb("Can not retrieve version information for this build", null);
       return -1;
     }
 
     try {
       return Integer.parseInt(versions[0]);
     } catch (NumberFormatException nfe) {
-      OLogManager.instance()
-          .errorNoDb(
-              OConstants.class, "Can not retrieve major version information for this build", nfe);
+      logger.errorNoDb("Can not retrieve major version information for this build", nfe);
       return -1;
     }
   }
@@ -45,18 +44,14 @@ public class OConstants {
   public static int getVersionMinor() {
     final String[] versions = properties.getProperty("version").split("\\.");
     if (versions.length < 2) {
-      OLogManager.instance()
-          .errorNoDb(
-              OConstants.class, "Can not retrieve minor version information for this build", null);
+      logger.errorNoDb("Can not retrieve minor version information for this build", null);
       return -1;
     }
 
     try {
       return Integer.parseInt(versions[1]);
     } catch (NumberFormatException nfe) {
-      OLogManager.instance()
-          .errorNoDb(
-              OConstants.class, "Can not retrieve minor version information for this build", nfe);
+      logger.errorNoDb("Can not retrieve minor version information for this build", nfe);
       return -1;
     }
   }
@@ -79,9 +74,7 @@ public class OConstants {
 
       return Integer.parseInt(hotfix);
     } catch (NumberFormatException nfe) {
-      OLogManager.instance()
-          .errorNoDb(
-              OConstants.class, "Can not retrieve hotfix version information for this build", nfe);
+      logger.errorNoDb("Can not retrieve hotfix version information for this build", nfe);
       return -1;
     }
   }

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.query;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -13,6 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /** Created by luigidellaquila on 18/03/15. */
 public class OLiveLegacyResultSet<T> extends OConcurrentLegacyResultSet<T> {
+  private static final OLogger logger = OLogManager.instance().logger(OLiveLegacyResultSet.class);
 
   private final BlockingQueue<T> queue = new LinkedBlockingQueue<T>();
 
@@ -205,7 +207,7 @@ public class OLiveLegacyResultSet<T> extends OConcurrentLegacyResultSet<T> {
         try {
           waitForCompletion.wait();
         } catch (InterruptedException e) {
-          OLogManager.instance().error(this, "Thread was interrupted", e);
+          logger.error("Thread was interrupted", e);
         }
     }
   }
@@ -215,7 +217,7 @@ public class OLiveLegacyResultSet<T> extends OConcurrentLegacyResultSet<T> {
       try {
         waitForNextItem.wait();
       } catch (InterruptedException e) {
-        OLogManager.instance().error(this, "Thread was interrupted", e);
+        logger.error("Thread was interrupted", e);
       }
     }
   }

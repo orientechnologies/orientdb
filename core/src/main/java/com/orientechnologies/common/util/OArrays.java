@@ -21,10 +21,12 @@
 package com.orientechnologies.common.util;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.lang.reflect.Array;
 
-@SuppressWarnings("unchecked")
 public class OArrays {
+  private static final OLogger logger = OLogManager.instance().logger(OArrays.class);
+
   public static <T> T[] copyOf(final T[] iSource, final int iNewSize) {
     return (T[]) copyOf(iSource, iNewSize, iSource.getClass());
   }
@@ -69,7 +71,7 @@ public class OArrays {
       System.arraycopy(iSource, iBegin, copy, 0, Math.min(iSource.length - iBegin, newLength));
       return copy;
     } catch (OutOfMemoryError e) {
-      OLogManager.instance().error(null, "Error on copying buffer of size %d bytes", e, newLength);
+      logger.error("Error on copying buffer of size %d bytes", e, newLength);
       throw e;
     }
   }

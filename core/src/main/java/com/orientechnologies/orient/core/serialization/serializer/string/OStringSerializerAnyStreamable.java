@@ -21,12 +21,15 @@ package com.orientechnologies.orient.core.serialization.serializer.string;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import java.util.Base64;
 
 public class OStringSerializerAnyStreamable implements OStringSerializer {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OStringSerializerAnyStreamable.class);
   public static final OStringSerializerAnyStreamable INSTANCE =
       new OStringSerializerAnyStreamable();
   public static final String NAME = "st";
@@ -54,7 +57,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
         instance = (OSerializableStream) clazz.newInstance();
       } catch (Exception e) {
         final String message = "Error on unmarshalling content. Class: " + className;
-        OLogManager.instance().error(this, message, e);
+        logger.error(message, e);
         throw OException.wrapException(new OSerializationException(message), e);
       }
     }

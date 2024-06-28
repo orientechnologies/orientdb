@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.server.network.protocol.binary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
@@ -44,6 +45,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OAsyncCommandResultListener extends OAbstractCommandResultListener {
+
+  private static final OLogger logger =
+      OLogManager.instance().logger(OAsyncCommandResultListener.class);
 
   private final ONetworkProtocolBinary protocol;
   private final AtomicBoolean empty = new AtomicBoolean(true);
@@ -75,7 +79,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
                   protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
                   protocol.writeIdentifiable(protocol.channel, connection, iLinked);
                 } catch (IOException e) {
-                  OLogManager.instance().error(this, "Cannot write against channel", e);
+                  logger.error("Cannot write against channel", e);
                 }
               }
             }
@@ -113,7 +117,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
                 protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
                 protocol.writeIdentifiable(protocol.channel, connection, iLinked);
               } catch (IOException e) {
-                OLogManager.instance().error(this, "Cannot write against channel", e);
+                logger.error("Cannot write against channel", e);
               }
             }
           }

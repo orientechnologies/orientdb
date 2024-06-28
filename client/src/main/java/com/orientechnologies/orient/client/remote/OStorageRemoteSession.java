@@ -21,6 +21,7 @@ package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.OCloseRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -36,6 +37,7 @@ import java.util.WeakHashMap;
 
 /** Created by tglman on 31/03/16. */
 public class OStorageRemoteSession {
+  private static final OLogger logger = OLogManager.instance().logger(OStorageRemoteSession.class);
   public boolean commandExecuting = false;
   protected int serverURLIndex = -1;
   protected String connectionUserName = null;
@@ -144,13 +146,11 @@ public class OStorageRemoteSession {
         connectionManager.release(network);
       } catch (OIOException ex) {
         // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
-        OLogManager.instance()
-            .debug(this, "Impossible to comunicate to the server for close: %s", ex);
+        logger.debug("Impossible to comunicate to the server for close: %s", ex);
         connectionManager.remove(network);
       } catch (IOException ex) {
         // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
-        OLogManager.instance()
-            .debug(this, "Impossible to comunicate to the server for close: %s", ex);
+        logger.debug("Impossible to comunicate to the server for close: %s", ex);
         connectionManager.remove(network);
       }
     }

@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.sql.functions.conversion;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -29,6 +30,7 @@ import java.util.Locale;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodConvert extends OAbstractSQLMethod {
+  private static final OLogger logger = OLogManager.instance().logger(OSQLMethodConvert.class);
 
   public static final String NAME = "convert";
 
@@ -58,7 +60,7 @@ public class OSQLMethodConvert extends OAbstractSQLMethod {
       try {
         return OType.convert(iThis, Class.forName(destType));
       } catch (ClassNotFoundException e) {
-        OLogManager.instance().error(this, "Class for destination type was not found", e);
+        logger.error("Class for destination type was not found", e);
       }
     } else {
       final OType orientType = OType.valueOf(destType.toUpperCase(Locale.ENGLISH));

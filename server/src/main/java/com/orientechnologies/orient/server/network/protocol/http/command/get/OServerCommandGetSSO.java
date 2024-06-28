@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -9,6 +10,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import java.io.StringWriter;
 
 public class OServerCommandGetSSO extends OServerCommandAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OServerCommandGetSSO.class);
   private static final String[] NAMES = {"GET|sso"};
 
   @Override
@@ -44,7 +46,7 @@ public class OServerCommandGetSSO extends OServerCommandAbstract {
           buffer.toString(),
           null);
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OServerCommandGetSSO.getJSON() Exception: %s", ex);
+      logger.error("OServerCommandGetSSO.getJSON() Exception: %s", ex);
     }
   }
 }

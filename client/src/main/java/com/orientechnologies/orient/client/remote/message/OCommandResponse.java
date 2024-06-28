@@ -21,6 +21,7 @@ package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OFetchPlanResults;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
@@ -47,6 +48,7 @@ import java.io.IOException;
 import java.util.*;
 
 public final class OCommandResponse implements OBinaryResponse {
+  private static final OLogger logger = OLogManager.instance().logger(OCommandResponse.class);
   private final boolean asynch;
   private final OCommandResultListener listener;
   private final ODatabaseDocumentInternal database;
@@ -153,7 +155,7 @@ public final class OCommandResponse implements OBinaryResponse {
 
           OMessageHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
         } catch (Exception e) {
-          OLogManager.instance().warn(this, "Cannot serialize record: " + o);
+          logger.warn("Cannot serialize record: " + o);
           OMessageHelper.writeIdentifiable(channel, null, recordSerializer);
           // WRITE NULL RECORD TO AVOID BREAKING PROTOCOL
         }
@@ -169,7 +171,7 @@ public final class OCommandResponse implements OBinaryResponse {
             channel.writeByte((byte) 1); // ONE MORE RECORD
             OMessageHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
           } catch (Exception e) {
-            OLogManager.instance().warn(this, "Cannot serialize record: " + o);
+            logger.warn("Cannot serialize record: " + o);
           }
         }
         channel.writeByte((byte) 0); // NO MORE RECORD
@@ -185,7 +187,7 @@ public final class OCommandResponse implements OBinaryResponse {
 
             OMessageHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
           } catch (Exception e) {
-            OLogManager.instance().warn(this, "Cannot serialize record: " + o);
+            logger.warn("Cannot serialize record: " + o);
           }
         }
       }
@@ -372,7 +374,7 @@ public final class OCommandResponse implements OBinaryResponse {
         break;
 
       default:
-        OLogManager.instance().warn(this, "Received unexpected result from query: %d", type);
+        logger.warn("Received unexpected result from query: %d", type);
         result = null;
     }
 

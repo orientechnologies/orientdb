@@ -27,6 +27,7 @@ import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEG
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.remote.OLiveQueryClientListener;
 import com.orientechnologies.orient.client.remote.ORemoteQueryResult;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -113,6 +114,8 @@ import java.util.concurrent.TimeUnit;
 
 /** Created by tglman on 30/06/16. */
 public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ODatabaseDocumentRemote.class);
 
   protected OStorageRemoteSession sessionMetadata;
   private OrientDBConfig config;
@@ -325,9 +328,9 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       try {
         listener.onBeforeTxBegin(this);
       } catch (Exception t) {
-        OLogManager.instance().error(this, "Error before tx begin", t);
+        logger.error("Error before tx begin", t);
       } catch (Error e) {
-        OLogManager.instance().error(this, "Error before tx begin", e);
+        logger.error("Error before tx begin", e);
         throw e;
       }
 
@@ -715,19 +718,15 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) record.reload();
 
         if (lockingStrategy == KEEP_SHARED_LOCK) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                      + lockingStrategy);
+          logger.warn(
+              "You use deprecated record locking strategy: %s it may lead to deadlocks "
+                  + lockingStrategy);
           record.lock(false);
 
         } else if (lockingStrategy == KEEP_EXCLUSIVE_LOCK) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                      + lockingStrategy);
+          logger.warn(
+              "You use deprecated record locking strategy: %s it may lead to deadlocks "
+                  + lockingStrategy);
           record.lock(true);
         }
 
@@ -1099,12 +1098,10 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public void freeze(final boolean throwException) {
     checkOpenness();
-    OLogManager.instance()
-        .error(
-            this,
-            "Only local paginated storage supports freeze. If you are using remote client please"
-                + " use OrientDB instance instead",
-            null);
+    logger.error(
+        "Only local paginated storage supports freeze. If you are using remote client please"
+            + " use OrientDB instance instead",
+        null);
 
     return;
   }
@@ -1119,12 +1116,10 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public void release() {
     checkOpenness();
-    OLogManager.instance()
-        .error(
-            this,
-            "Only local paginated storage supports release. If you are using remote client please"
-                + " use OrientDB instance instead",
-            null);
+    logger.error(
+        "Only local paginated storage supports release. If you are using remote client please"
+            + " use OrientDB instance instead",
+        null);
     return;
   }
 
@@ -1195,7 +1190,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       try {
         rollback(true);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Exception during rollback of active transaction", e);
+        logger.error("Exception during rollback of active transaction", e);
       }
 
       callOnCloseListeners();

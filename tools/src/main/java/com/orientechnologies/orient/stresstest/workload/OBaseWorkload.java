@@ -21,6 +21,7 @@ package com.orientechnologies.orient.stresstest.workload;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -39,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OBaseWorkload implements OWorkload {
+  private static final OLogger logger = OLogManager.instance().logger(OBaseWorkload.class);
   protected OStorageRemote.CONNECTION_STRATEGY connectionStrategy =
       OStorageRemote.CONNECTION_STRATEGY.STICKY;
 
@@ -198,9 +200,7 @@ public abstract class OBaseWorkload implements OWorkload {
                               } catch (Exception e) {
                                 errors.add(e.toString());
                                 if (errors.size() > MAX_ERRORS) {
-                                  OLogManager.instance()
-                                      .error(
-                                          this, "Error during execution of database operation", e);
+                                  logger.error("Error during execution of database operation", e);
                                   return null;
                                 }
                               } finally {

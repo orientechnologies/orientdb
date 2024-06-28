@@ -18,6 +18,7 @@ package com.orientechnologies.orient.object.enhancement;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -70,6 +71,8 @@ import javassist.util.proxy.ProxyObject;
 
 /** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OObjectProxyMethodHandler implements MethodHandler {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OObjectProxyMethodHandler.class);
 
   protected final Map<String, Integer> loadedFields;
   protected final Set<ORID> orphans = new HashSet<ORID>();
@@ -996,14 +999,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       loadedFields.put(fieldName, doc.getVersion());
       setDirty();
     } else {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Setting property '%s' in proxied class '%s' with an anonymous class '%s'. The"
-                  + " document won't have this property.",
-              fieldName,
-              self.getClass().getName(),
-              valueToSet.getClass().getName());
+      logger.warn(
+          "Setting property '%s' in proxied class '%s' with an anonymous class '%s'. The"
+              + " document won't have this property.",
+          fieldName, self.getClass().getName(), valueToSet.getClass().getName());
     }
     return valueToSet;
   }

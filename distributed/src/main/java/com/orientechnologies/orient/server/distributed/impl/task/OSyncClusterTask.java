@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -39,7 +40,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask.RESULT_STRATEGY;
 import java.io.BufferedOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -57,6 +57,7 @@ import java.util.UUID;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OSyncClusterTask extends OAbstractRemoteTask {
+  private static final OLogger logger = OLogManager.instance().logger(OSyncClusterTask.class);
   public static final int CHUNK_MAX_SIZE = 4194304; // 4MB
   public static final String DEPLOYCLUSTER = "deploycluster.";
   public static final int FACTORYID = 12;
@@ -167,13 +168,9 @@ public class OSyncClusterTask extends OAbstractRemoteTask {
                               outputStream.close();
                             }
                           } catch (IOException e) {
-                            OLogManager.instance()
-                                .error(
-                                    this,
-                                    "Cannot execute backup of cluster '%s.%s' for deploy cluster",
-                                    e,
-                                    databaseName,
-                                    clusterName);
+                            logger.error(
+                                "Cannot execute backup of cluster '%s.%s' for deploy cluster",
+                                e, databaseName, clusterName);
                           } finally {
                             database.release();
                           }
@@ -186,12 +183,8 @@ public class OSyncClusterTask extends OAbstractRemoteTask {
                           try {
                             completedFile.createNewFile();
                           } catch (IOException e) {
-                            OLogManager.instance()
-                                .error(
-                                    this,
-                                    "Cannot create file of backup completed: %s",
-                                    e,
-                                    completedFile);
+                            logger.error(
+                                "Cannot create file of backup completed: %s", e, completedFile);
                           }
                         }
                       }

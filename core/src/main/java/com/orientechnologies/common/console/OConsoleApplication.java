@@ -22,6 +22,7 @@ package com.orientechnologies.common.console;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
 import java.io.BufferedReader;
@@ -50,6 +51,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OConsoleApplication {
+  private static final OLogger logger = OLogManager.instance().logger(OConsoleApplication.class);
 
   public static final String PARAM_DISABLE_HISTORY = "--disable-history";
 
@@ -145,7 +147,7 @@ public class OConsoleApplication {
         } catch (Exception e) {
           result = 1;
           out.print("Error on reading console input: " + e.getMessage());
-          OLogManager.instance().error(this, "Error on reading console input: %s", e, consoleInput);
+          logger.error("Error on reading console input: %s", e, consoleInput);
         }
       }
     } else {

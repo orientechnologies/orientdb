@@ -21,6 +21,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -38,6 +39,7 @@ import java.util.Iterator;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
+  private static final OLogger logger = OLogManager.instance().logger(OrientEdgeIterator.class);
   private final OrientVertex sourceVertex;
   private final OrientVertex targetVertex;
   private final OPair<Direction, String> connection;
@@ -66,28 +68,26 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
     if (rec == null) {
       // SKIP IT
-      OLogManager.instance().warn(this, "Record (%s) is null", iObject);
+      logger.warn("Record (%s) is null", iObject);
       return null;
     }
 
     final ORecord record = rec.getRecord();
     if (record == null) {
       // SKIP IT
-      OLogManager.instance().warn(this, "Record (%s) is null", rec);
+      logger.warn("Record (%s) is null", rec);
       return null;
     }
 
     if (!(record instanceof ODocument)) {
       // SKIP IT
-      OLogManager.instance()
-          .warn(
-              this,
-              "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s,"
-                  + " Database : %s",
-              rec,
-              sourceVertex != null ? sourceVertex.getIdentity() : null,
-              targetVertex != null ? targetVertex.getIdentity() : null,
-              record.getDatabase().getURL());
+      logger.warn(
+          "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s,"
+              + " Database : %s",
+          rec,
+          sourceVertex != null ? sourceVertex.getIdentity() : null,
+          targetVertex != null ? targetVertex.getIdentity() : null,
+          record.getDatabase().getURL());
       return null;
     }
 

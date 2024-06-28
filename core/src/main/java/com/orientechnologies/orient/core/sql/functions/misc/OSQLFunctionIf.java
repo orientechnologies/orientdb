@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions.misc;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
@@ -65,6 +66,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLFunctionIf extends OSQLFunctionAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OSQLFunctionIf.class);
 
   public static final String NAME = "if";
 
@@ -92,7 +94,7 @@ public class OSQLFunctionIf extends OSQLFunctionAbstract {
       return result ? iParams[1] : iParams[2];
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error during if execution", e);
+      logger.error("Error during if execution", e);
 
       return null;
     }

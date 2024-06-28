@@ -20,6 +20,7 @@ package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineUtils;
@@ -56,6 +57,7 @@ import org.apache.lucene.search.highlight.TokenSources;
 
 /** Created by Enrico Risa on 16/09/15. */
 public class OLuceneResultSet implements Set<OIdentifiable> {
+  private static final OLogger logger = OLogManager.instance().logger(OLuceneResultSet.class);
 
   private static Integer PAGE_SIZE = 10000;
   private Query query;
@@ -110,8 +112,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
         topDocs = searcher.search(query, PAGE_SIZE, queryContext.getSort());
       }
     } catch (final IOException e) {
-      OLogManager.instance()
-          .error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
+      logger.error("Error on fetching document by query '%s' to Lucene index", e, query);
     }
   }
 
@@ -243,7 +244,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
       try {
         return queryContext.getSearcher().doc(score.doc);
       } catch (final IOException e) {
-        OLogManager.instance().error(this, "Error during conversion to document", e);
+        logger.error("Error during conversion to document", e);
         return null;
       }
     }
@@ -289,8 +290,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
         }
         scoreDocs = topDocs.scoreDocs;
       } catch (final IOException e) {
-        OLogManager.instance()
-            .error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
+        logger.error("Error on fetching document by query '%s' to Lucene index", e, query);
       }
     }
 

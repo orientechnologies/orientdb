@@ -4,9 +4,11 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETW
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.OLDEST_SUPPORTED_PROTOCOL_VERSION;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 public class OBinaryProtocolHelper {
+  private static final OLogger logger = OLogManager.instance().logger(OBinaryProtocolHelper.class);
 
   public static void checkProtocolVersion(Object caller, int protocolVersion) {
 
@@ -15,7 +17,7 @@ public class OBinaryProtocolHelper {
           String.format(
               "Backward compatibility support available from to version %d your version is %d",
               OLDEST_SUPPORTED_PROTOCOL_VERSION, protocolVersion);
-      OLogManager.instance().error(caller, message, null);
+      logger.error(message, null);
       throw new ODatabaseException(message);
     }
 
@@ -27,7 +29,7 @@ public class OBinaryProtocolHelper {
               NETWORK_BINARY_MIN_PROTOCOL_VERSION.getValueAsInteger(),
               protocolVersion,
               NETWORK_BINARY_MIN_PROTOCOL_VERSION.getKey());
-      OLogManager.instance().error(caller, message, null);
+      logger.error(message, null);
       throw new ODatabaseException(message);
     }
   }

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -39,6 +40,7 @@ import javassist.util.proxy.ProxyObject;
  */
 @SuppressWarnings({"unchecked"})
 public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
+  private static final OLogger logger = OLogManager.instance().logger(OObjectLazyIterator.class);
   private static final long serialVersionUID = -4012483076050044405L;
 
   private final ProxyObject sourceRecord;
@@ -76,12 +78,10 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
       ORecord record =
           ((ODatabaseDocument) database.getUnderlying()).load((ORID) value, iFetchPlan);
       if (record == null) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Record "
-                    + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
-                    + " references a deleted instance");
+        logger.warn(
+            "Record "
+                + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
+                + " references a deleted instance");
         return null;
       }
       TYPE o = (TYPE) database.getUserObjectByRecord(record, iFetchPlan);

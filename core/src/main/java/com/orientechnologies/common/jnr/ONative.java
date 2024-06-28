@@ -21,7 +21,7 @@ package com.orientechnologies.common.jnr;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OMemory;
+import com.orientechnologies.common.log.OLogger;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,6 +46,7 @@ import jnr.posix.RLimit;
 public class ONative {
   private static final String DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/cgroup/memory";
 
+  private static final OLogger logger = OLogManager.instance().logger(ONative.class);
   private static volatile ONative instance = null;
   private static final Lock initLock = new ReentrantLock();
 
@@ -91,47 +92,39 @@ public class ONative {
         final RLimit rLimit = posix.getrlimit(ONative.RLIMIT_NOFILE);
         if (rLimit.rlimCur() > 0) {
           if (verbose) {
-            OLogManager.instance()
-                .infoNoDb(
-                    this,
-                    "Detected limit of amount of simultaneously open files is %d, "
-                        + " limit of open files for disk cache will be set to %d",
-                    rLimit.rlimCur(),
-                    rLimit.rlimCur() / 2 - 512);
+            logger.infoNoDb(
+                "Detected limit of amount of simultaneously open files is %d, "
+                    + " limit of open files for disk cache will be set to %d",
+                rLimit.rlimCur(), rLimit.rlimCur() / 2 - 512);
           }
           if (rLimit.rlimCur() < recommended) {
-            OLogManager.instance()
-                .warnNoDb(
-                    this,
-                    "Value of limit of simultaneously open files is too small, recommended value is"
-                        + " %d",
-                    recommended);
+            logger.warnNoDb(
+                "Value of limit of simultaneously open files is too small, recommended value is"
+                    + " %d",
+                recommended);
           }
           return (int) rLimit.rlimCur() / 2 - 512;
         } else {
           if (verbose) {
-            OLogManager.instance().infoNoDb(this, "Can not detect value of limit of open files.");
+            logger.infoNoDb("Can not detect value of limit of open files.");
           }
         }
       } catch (final Exception e) {
         if (verbose) {
-          OLogManager.instance().infoNoDb(this, "Can not detect value of limit of open files.", e);
+          logger.infoNoDb("Can not detect value of limit of open files.", e);
         }
       }
     } else if (OIOUtils.isOsWindows()) {
       if (verbose) {
-        OLogManager.instance()
-            .infoNoDb(
-                this,
-                "Windows OS is detected, %d limit of open files will be set for the disk cache.",
-                recommended);
+        logger.infoNoDb(
+            "Windows OS is detected, %d limit of open files will be set for the disk cache.",
+            recommended);
       }
       return recommended;
     }
 
     if (verbose) {
-      OLogManager.instance()
-          .infoNoDb(this, "Default limit of open files (%d) will be used.", defLimit);
+      logger.infoNoDb("Default limit of open files (%d) will be used.", defLimit);
     }
     return defLimit;
   }
@@ -155,69 +148,51 @@ public class ONative {
     boolean insideContainer = false;
 
     if (printSteps) {
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "%d B/%d MB/%d GB of physical memory were detected on machine",
-              memoryLimit,
-              convertToMB(memoryLimit),
-              convertToGB(memoryLimit));
+      logger.infoNoDb(
+          "%d B/%d MB/%d GB of physical memory were detected on machine",
+          memoryLimit, convertToMB(memoryLimit), convertToGB(memoryLimit));
     }
 
     if (OIOUtils.isOsLinux()) {
       try {
         final RLimit rLimit = posix.getrlimit(ONative.RLIMIT_AS);
         if (printSteps) {
-          OLogManager.instance()
-              .infoNoDb(
-                  this,
-                  "Soft memory limit for this process is set to %d B/%d MB/%d GB",
-                  rLimit.rlimCur(),
-                  convertToMB(rLimit.rlimCur()),
-                  convertToGB(rLimit.rlimCur()));
+          logger.infoNoDb(
+              "Soft memory limit for this process is set to %d B/%d MB/%d GB",
+              rLimit.rlimCur(), convertToMB(rLimit.rlimCur()), convertToGB(rLimit.rlimCur()));
         }
         memoryLimit = updateMemoryLimit(memoryLimit, rLimit.rlimCur());
 
         if (printSteps) {
-          OLogManager.instance()
-              .infoNoDb(
-                  this,
-                  "Hard memory limit for this process is set to %d B/%d MB/%d GB",
-                  rLimit.rlimMax(),
-                  convertToMB(rLimit.rlimMax()),
-                  convertToGB(rLimit.rlimMax()));
+          logger.infoNoDb(
+              "Hard memory limit for this process is set to %d B/%d MB/%d GB",
+              rLimit.rlimMax(), convertToMB(rLimit.rlimMax()), convertToGB(rLimit.rlimMax()));
         }
         memoryLimit = updateMemoryLimit(memoryLimit, rLimit.rlimMax());
       } catch (final Exception e) {
         if (printSteps) {
-          OLogManager.instance().infoNoDb(this, "Can not detect memory limit value.", e);
+          logger.infoNoDb("Can not detect memory limit value.", e);
         }
       }
 
       final String memoryCGroupPath = findMemoryGCGroupPath();
       if (memoryCGroupPath != null) {
         if (printSteps) {
-          OLogManager.instance()
-              .infoNoDb(this, "Path to 'memory' cgroup is '%s'", memoryCGroupPath);
+          logger.infoNoDb("Path to 'memory' cgroup is '%s'", memoryCGroupPath);
         }
         final String memoryCGroupRoot = findMemoryGCRoot();
 
         if (printSteps) {
-          OLogManager.instance()
-              .infoNoDb(
-                  this, "Mounting path for memory cgroup controller is '%s'", memoryCGroupRoot);
+          logger.infoNoDb("Mounting path for memory cgroup controller is '%s'", memoryCGroupRoot);
         }
 
         File memoryCGroup = new File(memoryCGroupRoot, memoryCGroupPath);
         if (!memoryCGroup.exists()) {
           if (printSteps) {
-            OLogManager.instance()
-                .infoNoDb(
-                    this,
-                    "Can not find '%s' path for memory cgroup, it is supposed that process is"
-                        + " running in container, will try to read root '%s' memory cgroup data",
-                    memoryCGroup,
-                    memoryCGroupRoot);
+            logger.infoNoDb(
+                "Can not find '%s' path for memory cgroup, it is supposed that process is"
+                    + " running in container, will try to read root '%s' memory cgroup data",
+                memoryCGroup, memoryCGroupRoot);
           }
           memoryCGroup = new File(memoryCGroupRoot);
           insideContainer = true;
@@ -233,14 +208,10 @@ public class ONative {
 
     if (printSteps) {
       if (memoryLimit > 0)
-        OLogManager.instance()
-            .infoNoDb(
-                this,
-                "Detected memory limit for current process is %d B/%d MB/%d GB",
-                memoryLimit,
-                convertToMB(memoryLimit),
-                convertToGB(memoryLimit));
-      else OLogManager.instance().infoNoDb(this, "Memory limit for current process is not set");
+        logger.infoNoDb(
+            "Detected memory limit for current process is %d B/%d MB/%d GB",
+            memoryLimit, convertToMB(memoryLimit), convertToGB(memoryLimit));
+      else logger.infoNoDb("Memory limit for current process is not set");
     }
     if (memoryLimit <= 0) {
       return null;
@@ -281,43 +252,35 @@ public class ONative {
               final long cgroupMemoryLimitValue = Long.parseLong(cgroupMemoryLimitValueStr);
 
               if (printSteps)
-                OLogManager.instance()
-                    .infoNoDb(
-                        this,
-                        "cgroup soft memory limit is %d B/%d MB/%d GB",
-                        cgroupMemoryLimitValue,
-                        convertToMB(cgroupMemoryLimitValue),
-                        convertToGB(cgroupMemoryLimitValue));
+                logger.infoNoDb(
+                    "cgroup soft memory limit is %d B/%d MB/%d GB",
+                    cgroupMemoryLimitValue,
+                    convertToMB(cgroupMemoryLimitValue),
+                    convertToGB(cgroupMemoryLimitValue));
 
               return cgroupMemoryLimitValue;
             } catch (final NumberFormatException nfe) {
               if (cgroupMemoryLimitValueStr.matches("\\d+")) {
                 if (printSteps) {
-                  OLogManager.instance().infoNoDb(this, "cgroup soft memory limit is not set");
+                  logger.infoNoDb("cgroup soft memory limit is not set");
                 }
               } else {
-                OLogManager.instance()
-                    .errorNoDb(
-                        this, "Can not read memory soft limit for cgroup '%s'", nfe, memoryCGroup);
+                logger.errorNoDb(
+                    "Can not read memory soft limit for cgroup '%s'", nfe, memoryCGroup);
               }
             }
           } catch (final IOException ioe) {
-            OLogManager.instance()
-                .errorNoDb(
-                    this, "Can not read memory soft limit for cgroup '%s'", ioe, memoryCGroup);
+            logger.errorNoDb("Can not read memory soft limit for cgroup '%s'", ioe, memoryCGroup);
           }
         } catch (final IOException e) {
-          OLogManager.instance()
-              .errorNoDb(this, "Error on closing the reader of soft memory limit", e);
+          logger.errorNoDb("Error on closing the reader of soft memory limit", e);
         }
       } catch (final FileNotFoundException fnfe) {
-        OLogManager.instance()
-            .errorNoDb(this, "Can not read memory soft limit for cgroup '%s'", fnfe, memoryCGroup);
+        logger.errorNoDb("Can not read memory soft limit for cgroup '%s'", fnfe, memoryCGroup);
       }
     } else {
       if (printSteps)
-        OLogManager.instance()
-            .infoNoDb(this, "Can not read memory soft limit for cgroup '%s'", memoryCGroup);
+        logger.infoNoDb("Can not read memory soft limit for cgroup '%s'", memoryCGroup);
     }
 
     return -1;
@@ -337,43 +300,35 @@ public class ONative {
               final long cgroupMemoryLimitValue = Long.parseLong(cgroupMemoryLimitValueStr);
 
               if (printSteps)
-                OLogManager.instance()
-                    .infoNoDb(
-                        this,
-                        "cgroup hard memory limit is %d B/%d MB/%d GB",
-                        cgroupMemoryLimitValue,
-                        convertToMB(cgroupMemoryLimitValue),
-                        convertToGB(cgroupMemoryLimitValue));
+                logger.infoNoDb(
+                    "cgroup hard memory limit is %d B/%d MB/%d GB",
+                    cgroupMemoryLimitValue,
+                    convertToMB(cgroupMemoryLimitValue),
+                    convertToGB(cgroupMemoryLimitValue));
 
               return cgroupMemoryLimitValue;
             } catch (final NumberFormatException nfe) {
               if (cgroupMemoryLimitValueStr.matches("\\d+")) {
                 if (printSteps) {
-                  OLogManager.instance().infoNoDb(this, "cgroup hard memory limit is not set");
+                  logger.infoNoDb("cgroup hard memory limit is not set");
                 }
               } else {
-                OLogManager.instance()
-                    .errorNoDb(
-                        this, "Can not read memory hard limit for cgroup '%s'", nfe, memoryCGroup);
+                logger.errorNoDb(
+                    "Can not read memory hard limit for cgroup '%s'", nfe, memoryCGroup);
               }
             }
           } catch (final IOException ioe) {
-            OLogManager.instance()
-                .errorNoDb(
-                    this, "Can not read memory hard limit for cgroup '%s'", ioe, memoryCGroup);
+            logger.errorNoDb("Can not read memory hard limit for cgroup '%s'", ioe, memoryCGroup);
           }
         } catch (final IOException e) {
-          OLogManager.instance()
-              .errorNoDb(this, "Error on closing the reader of hard memory limit", e);
+          logger.errorNoDb("Error on closing the reader of hard memory limit", e);
         }
       } catch (final FileNotFoundException fnfe) {
-        OLogManager.instance()
-            .errorNoDb(this, "Can not read memory hard limit for cgroup '%s'", fnfe, memoryCGroup);
+        logger.errorNoDb("Can not read memory hard limit for cgroup '%s'", fnfe, memoryCGroup);
       }
     } else {
       if (printSteps) {
-        OLogManager.instance()
-            .infoNoDb(this, "Can not read memory hard limit for cgroup '%s'", memoryCGroup);
+        logger.infoNoDb("Can not read memory hard limit for cgroup '%s'", memoryCGroup);
       }
     }
 
@@ -400,29 +355,23 @@ public class ONative {
               }
             }
           } catch (final IOException ioe) {
-            OLogManager.instance()
-                .errorNoDb(
-                    this,
-                    "Error during reading of details of list of cgroups for the current process, "
-                        + "no restrictions applied by cgroups will be taken into account",
-                    ioe);
+            logger.errorNoDb(
+                "Error during reading of details of list of cgroups for the current process, "
+                    + "no restrictions applied by cgroups will be taken into account",
+                ioe);
             memoryCGroupPath = null;
           }
 
         } catch (final IOException e) {
-          OLogManager.instance()
-              .errorNoDb(
-                  this,
-                  "Error during closing of reader which reads details of list of cgroups for the"
-                      + " current process",
-                  e);
+          logger.errorNoDb(
+              "Error during closing of reader which reads details of list of cgroups for the"
+                  + " current process",
+              e);
         }
       } catch (final FileNotFoundException fnfe) {
-        OLogManager.instance()
-            .warnNoDb(
-                this,
-                "Can not retrieve list of cgroups to which process belongs, "
-                    + "no restrictions applied by cgroups will be taken into account");
+        logger.warnNoDb(
+            "Can not retrieve list of cgroups to which process belongs, "
+                + "no restrictions applied by cgroups will be taken into account");
       }
     }
 
@@ -459,8 +408,7 @@ public class ONative {
             }
           }
         } catch (final IOException e) {
-          OLogManager.instance()
-              .errorNoDb(this, "Error during reading a list of mounted file systems", e);
+          logger.errorNoDb("Error during reading a list of mounted file systems", e);
           memoryCGroupRoot = DEFAULT_MEMORY_CGROUP_PATH;
         }
 
@@ -499,33 +447,25 @@ public class ONative {
           try {
             osMemory = Long.parseLong(attribute.toString());
           } catch (final NumberFormatException e) {
-            if (!OLogManager.instance().isDebugEnabled())
-              OLogManager.instance()
-                  .warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.");
-            else
-              OLogManager.instance()
-                  .debugNoDb(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+            if (!logger.isDebugEnabled())
+              logger.warnNoDb("Unable to determine the amount of installed RAM.");
+            else logger.debugNoDb("Unable to determine the amount of installed RAM.", e);
           }
         }
       } else {
-        if (!OLogManager.instance().isDebugEnabled())
-          OLogManager.instance()
-              .warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.");
+        if (!logger.isDebugEnabled())
+          logger.warnNoDb("Unable to determine the amount of installed RAM.");
       }
     } catch (MalformedObjectNameException
         | AttributeNotFoundException
         | InstanceNotFoundException
         | MBeanException
         | ReflectionException e) {
-      if (!OLogManager.instance().isDebugEnabled())
-        OLogManager.instance()
-            .warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.");
-      else
-        OLogManager.instance()
-            .debugNoDb(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+      if (!logger.isDebugEnabled())
+        logger.warnNoDb("Unable to determine the amount of installed RAM.");
+      else logger.debugNoDb("Unable to determine the amount of installed RAM.", e);
     } catch (final RuntimeException e) {
-      OLogManager.instance()
-          .warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+      logger.warnNoDb("Unable to determine the amount of installed RAM.", e);
     }
 
     return osMemory;
@@ -558,7 +498,7 @@ public class ONative {
     try (RandomAccessFile file = new RandomAccessFile(path, "r")) {
       return posix.fstat(file.getFD()).blockSize();
     } catch (Exception e) {
-      OLogManager.instance().warn(this, "Error detecting block size ignoring", e);
+      logger.warn("Error detecting block size ignoring", e);
       return 4096;
     }
   }

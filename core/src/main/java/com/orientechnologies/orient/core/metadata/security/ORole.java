@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -44,6 +45,7 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class ORole extends OIdentity implements OSecurityRole {
+  private static final OLogger logger = OLogManager.instance().logger(ORole.class);
   public static final String ADMIN = "admin";
   public static final String CLASS_NAME = "ORole";
   public static final int PERMISSION_NONE = 0;
@@ -157,7 +159,7 @@ public class ORole extends OIdentity implements OSecurityRole {
       }
 
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "illegal mode " + ex.getMessage(), ex);
+      logger.error("illegal mode " + ex.getMessage(), ex);
       mode = ALLOW_MODES.DENY_ALL_BUT;
     }
 

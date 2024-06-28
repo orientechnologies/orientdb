@@ -23,6 +23,7 @@ package com.orientechnologies.common.directmemory;
 import com.kenai.jffi.MemoryIO;
 import com.orientechnologies.common.exception.ODirectMemoryAllocationFailedException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -31,7 +32,12 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -44,6 +50,7 @@ import sun.misc.Unsafe;
  * @see OGlobalConfiguration#DIRECT_MEMORY_POOL_LIMIT
  */
 public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
+  private static final OLogger logger = OLogManager.instance().logger(ODirectMemoryAllocator.class);
 
   private static final Unsafe unsafe;
 
@@ -317,12 +324,9 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     if (TRACK) {
       synchronized (this) {
         for (TrackedPointerReference reference : trackedReferences)
-          OLogManager.instance()
-              .errorNoDb(
-                  this,
-                  "DIRECT-TRACK: unreleased direct memory pointer `%X` detected.",
-                  reference.stackTrace,
-                  reference.id);
+          logger.errorNoDb(
+              "DIRECT-TRACK: unreleased direct memory pointer `%X` detected.",
+              reference.stackTrace, reference.id);
 
         checkTrackedPointerLeaks();
 
@@ -331,12 +335,10 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
       final long memCons = memoryConsumption.longValue();
 
       if (memCons > 0) {
-        OLogManager.instance()
-            .warnNoDb(
-                this,
-                "DIRECT-TRACK: memory consumption is not zero (%d bytes), it may indicate presence"
-                    + " of memory leaks",
-                memCons);
+        logger.warnNoDb(
+            "DIRECT-TRACK: memory consumption is not zero (%d bytes), it may indicate presence"
+                + " of memory leaks",
+            memCons);
 
         assert false;
       }
@@ -367,12 +369,9 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     TrackedPointerReference reference;
     while ((reference = (TrackedPointerReference) trackedPointersQueue.poll()) != null) {
       if (trackedReferences.remove(reference)) {
-        OLogManager.instance()
-            .errorNoDb(
-                this,
-                "DIRECT-TRACK: unreleased direct memory pointer `%X` detected.",
-                reference.stackTrace,
-                reference.id);
+        logger.errorNoDb(
+            "DIRECT-TRACK: unreleased direct memory pointer `%X` detected.",
+            reference.stackTrace, reference.id);
         leaked = true;
       }
     }
@@ -393,12 +392,9 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
 
         final TrackedPointerReference reference = trackedBuffers.remove(trackedBufferKey);
         if (reference == null) {
-          OLogManager.instance()
-              .errorNoDb(
-                  this,
-                  "DIRECT-TRACK: untracked direct memory pointer `%X` detected.",
-                  new Exception(),
-                  id(pointer));
+          logger.errorNoDb(
+              "DIRECT-TRACK: untracked direct memory pointer `%X` detected.",
+              new Exception(), id(pointer));
 
           assert false;
         } else {
@@ -502,7 +498,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
       }
 
       final String memoryStat = printMemoryStatistics(accumulator);
-      OLogManager.instance().infoNoDb(this, memoryStat);
+      logger.infoNoDb(memoryStat);
     }
   }
 

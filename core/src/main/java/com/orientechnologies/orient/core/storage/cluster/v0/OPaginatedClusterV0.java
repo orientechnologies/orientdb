@@ -21,6 +21,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGI
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -62,6 +63,7 @@ import java.util.Optional;
  * @since 10/7/13
  */
 public final class OPaginatedClusterV0 extends OPaginatedCluster {
+  private static final OLogger logger = OLogManager.instance().logger(OPaginatedClusterV0.class);
   private static final int BINARY_VERSION = 0;
   private static final int DISK_PAGE_SIZE = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
   private static final int LOWEST_FREELIST_BOUNDARY =
@@ -1562,13 +1564,10 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
           }
 
           if (realFreePageIndex != freePageIndex) {
-            OLogManager.instance()
-                .warn(
-                    this,
-                    "Page in file %s with index %d was placed in wrong free list, this error will"
-                        + " be fixed automatically",
-                    getFullName(),
-                    pageIndex);
+            logger.warn(
+                "Page in file %s with index %d was placed in wrong free list, this error will"
+                    + " be fixed automatically",
+                getFullName(), pageIndex);
 
             updateFreePagesIndex(freePageIndex, pageIndex, atomicOperation);
             continue;

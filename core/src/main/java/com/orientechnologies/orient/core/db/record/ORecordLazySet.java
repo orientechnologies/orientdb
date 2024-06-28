@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -63,6 +64,8 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
         ORecordElement,
         ORecordLazyMultiValue,
         OIdentityChangeListener {
+
+  private static final OLogger logger = OLogManager.instance().logger(ORecordLazySet.class);
 
   protected boolean autoConvertToRecord = true;
   protected final ORecordElement sourceRecord;
@@ -322,7 +325,7 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
                 }
                 last = entry;
               } catch (Exception e) {
-                OLogManager.instance().error(this, "Error on iterating record collection", e);
+                logger.error("Error on iterating record collection", e);
                 entry = null;
               }
             }

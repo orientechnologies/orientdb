@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -33,6 +34,9 @@ import java.util.Map;
  * @see OCommandScript
  */
 public class OCommandExecutorUtility {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCommandExecutorUtility.class);
+
   private static final Method java8MethodIsArray;
 
   static {
@@ -78,7 +82,7 @@ public class OCommandExecutorUtility {
         return mapResult;
       }
     } catch (Exception e) {
-      OLogManager.instance().error(OCommandExecutorUtility.class, "", e);
+      logger.error("", e);
     }
 
     return result;

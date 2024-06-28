@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class OBackgroundNewDelta implements Runnable, OSyncSource {
+  private static final OLogger logger = OLogManager.instance().logger(OBackgroundNewDelta.class);
   public static final int CHUNK_MAX_SIZE = 8388608; // 8MB
   private List<OTransactionData> transactions;
   private PipedOutputStream outputStream;
@@ -38,7 +40,7 @@ public class OBackgroundNewDelta implements Runnable, OSyncSource {
       output.writeBoolean(false);
       outputStream.close();
     } catch (IOException e) {
-      OLogManager.instance().debug(this, "Error on network delta serialization", e);
+      logger.debug("Error on network delta serialization", e);
     } finally {
       finished.countDown();
     }

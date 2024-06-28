@@ -26,6 +26,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.function.TxConsumer;
 import com.orientechnologies.common.function.TxFunction;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -46,6 +47,8 @@ import java.util.Objects;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OAtomicOperationsManager.class);
   private final ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
 
   private final OAbstractPaginatedStorage storage;
@@ -305,7 +308,7 @@ public class OAtomicOperationsManager {
     final OAtomicOperation operation = currentOperation.get();
 
     if (operation == null) {
-      OLogManager.instance().error(this, "There is no atomic operation active", null);
+      logger.error("There is no atomic operation active", null);
       throw new ODatabaseException("There is no atomic operation active");
     }
 

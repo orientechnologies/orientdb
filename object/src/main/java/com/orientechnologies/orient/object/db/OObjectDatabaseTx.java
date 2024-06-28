@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
@@ -101,6 +102,7 @@ import javassist.util.proxy.ProxyObject;
 @SuppressWarnings("unchecked")
 public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumentInternal, Object>
     implements ODatabaseObject {
+  private static final OLogger logger = OLogManager.instance().logger(OObjectDatabaseTx.class);
 
   public static final String TYPE = "object";
   protected ODictionary<Object> dictionary;
@@ -247,7 +249,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
       }
     } catch (Exception e) {
       final String message = "Error on creating object of class " + iClassName;
-      OLogManager.instance().error(this, message, e);
+      logger.error(message, e);
 
       throw OException.wrapException(new ODatabaseException(message), e);
     }
@@ -285,7 +287,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
       }
     } catch (Exception e) {
       final String message = "Error on creating object of class " + iClassName;
-      OLogManager.instance().error(this, message, e);
+      logger.error(message, e);
 
       throw OException.wrapException(new ODatabaseException(message), e);
     }

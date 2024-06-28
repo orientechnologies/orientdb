@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -53,6 +54,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class OIndexManagerRemote implements OIndexManagerAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OIndexManagerRemote.class);
   private final AtomicBoolean skipPush = new AtomicBoolean(false);
   private static final String QUERY_DROP = "drop index `%s` if exists";
   private final OStorageInfo storage;
@@ -555,8 +557,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
                     d.field(OIndexAbstract.CONFIG_MAP_RID),
                     d));
           } catch (Exception e) {
-            OLogManager.instance()
-                .error(this, "Error on loading of index by configuration: %s", e, d);
+            logger.error("Error on loading of index by configuration: %s", e, d);
           }
         }
       }

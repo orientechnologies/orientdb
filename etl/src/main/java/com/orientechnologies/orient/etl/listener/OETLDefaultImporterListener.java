@@ -19,12 +19,15 @@
 package com.orientechnologies.orient.etl.listener;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OETLDefaultImporterListener implements OETLImporterListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OETLDefaultImporterListener.class);
 
   @Override
   public void onBeforeFile(final ODatabaseDocument db, final OCommandContext iContext) {}
@@ -50,13 +53,9 @@ public class OETLDefaultImporterListener implements OETLImporterListener {
       final OIndex iIndex,
       final Object iKey) {
     iContext.setVariable("joinNotFound", ((Integer) iContext.getVariable("joinNotFound", 0)) + 1);
-    OLogManager.instance()
-        .warn(
-            this,
-            "     + %d line: join record not found in index '%s' for key='%s'",
-            iContext.getVariable("currentLine"),
-            iIndex,
-            iKey);
+    logger.warn(
+        "     + %d line: join record not found in index '%s' for key='%s'",
+        iContext.getVariable("currentLine"), iIndex, iKey);
   }
 
   @Override

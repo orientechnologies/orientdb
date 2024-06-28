@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -53,6 +54,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class OServerCommandGetDatabase extends OServerCommandGetConnect {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerCommandGetDatabase.class);
   private static final String[] NAMES = {"GET|database/*"};
 
   public static void exportClass(
@@ -228,7 +231,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
           try {
             exportClass(db, json, cls);
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error on exporting class '" + cls + "'", e);
+            logger.error("Error on exporting class '" + cls + "'", e);
           }
         }
         json.endCollection();
@@ -276,7 +279,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
           // Exclude index size because it's too costly
           // json.writeAttribute("size", index.getSize());
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Cannot serialize index configuration", e);
+          logger.error("Cannot serialize index configuration", e);
         }
         json.endObject();
       }

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -20,6 +21,8 @@ import java.util.Map;
  */
 public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCommandExecutorSQLCreateSequence.class);
   public static final String KEYWORD_CREATE = "CREATE";
   public static final String KEYWORD_SEQUENCE = "SEQUENCE";
   public static final String KEYWORD_TYPE = "TYPE";
@@ -104,7 +107,7 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
           .createSequence(this.sequenceName, this.sequenceType, this.params);
     } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
-      OLogManager.instance().error(this, message, exc, (Object) null);
+      logger.error(message, exc, (Object) null);
       throw new OCommandExecutionException(message);
     }
 

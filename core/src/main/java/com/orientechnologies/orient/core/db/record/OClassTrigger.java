@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -48,6 +49,7 @@ import javax.script.ScriptException;
  * beforeDelete - afterDelete
  */
 public class OClassTrigger {
+  private static final OLogger logger = OLogManager.instance().logger(OClassTrigger.class);
   public static final String CLASSNAME = "OTriggered";
   public static final String METHOD_SEPARATOR = ".";
 
@@ -187,7 +189,7 @@ public class OClassTrigger {
                         .getFunction((String) funcDoc.field("name"));
               }
             } catch (Exception ex) {
-              OLogManager.instance().error(OClassTrigger.class, "illegal record id : ", ex);
+              logger.error("illegal record id : ", ex);
             }
           }
         }
@@ -221,9 +223,7 @@ public class OClassTrigger {
       Method method = clz.getMethod(methodName, ODocument.class);
       return new Object[] {clz, method};
     } catch (Exception ex) {
-      OLogManager.instance()
-          .error(
-              OClassTrigger.class, "illegal class or method : " + clzName + "/" + methodName, ex);
+      logger.error("illegal class or method : " + clzName + "/" + methodName, ex);
       return null;
     }
   }

@@ -19,6 +19,7 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
 
 import com.orientechnologies.common.factory.OConfigurableStatefulFactory;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.lang.reflect.Method;
 import java.util.Iterator;
 
@@ -29,6 +30,9 @@ import java.util.Iterator;
  */
 public class OClusterSelectionFactory
     extends OConfigurableStatefulFactory<String, OClusterSelectionStrategy> {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OClusterSelectionFactory.class);
+
   public OClusterSelectionFactory() {
     setDefaultClass(ORoundRobinClusterSelectionStrategy.class);
     this.registerStrategy();
@@ -47,9 +51,9 @@ public class OClusterSelectionFactory
         if (method != null) {
           String key = (String) method.invoke(clz.newInstance());
           register(key, clz);
-        } else OLogManager.instance().error(this, "getName() funciton missing", null);
+        } else logger.error("getName() funciton missing", null);
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "failed to register class - " + clz.getName(), ex);
+        logger.error("failed to register class - " + clz.getName(), ex);
       }
     }
   }

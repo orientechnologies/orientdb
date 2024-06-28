@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.query;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -37,6 +38,8 @@ import java.util.NoSuchElementException;
  * @see OSQLAsynchQuery
  */
 public class OConcurrentLegacyResultSet<T> implements OLegacyResultSet<T> {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OConcurrentLegacyResultSet.class);
   protected final transient Object waitForNextItem = new Object();
   protected final transient Object waitForCompletion = new Object();
   protected final transient OBasicLegacyResultSet<T> wrapped;
@@ -358,7 +361,7 @@ public class OConcurrentLegacyResultSet<T> implements OLegacyResultSet<T> {
         try {
           waitForCompletion.wait();
         } catch (InterruptedException e) {
-          OLogManager.instance().error(this, "Thread was interrupted", e);
+          logger.error("Thread was interrupted", e);
         }
     }
   }
@@ -369,7 +372,7 @@ public class OConcurrentLegacyResultSet<T> implements OLegacyResultSet<T> {
         try {
           waitForNextItem.wait();
         } catch (InterruptedException e) {
-          OLogManager.instance().error(this, "Thread was interrupted", e);
+          logger.error("Thread was interrupted", e);
         }
     }
   }

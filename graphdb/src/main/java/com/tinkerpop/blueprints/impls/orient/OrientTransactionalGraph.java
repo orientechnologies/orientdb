@@ -21,6 +21,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -36,6 +37,8 @@ import org.apache.commons.configuration.Configuration;
  */
 public abstract class OrientTransactionalGraph extends OrientBaseGraph
     implements TransactionalGraph {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OrientTransactionalGraph.class);
 
   /**
    * Constructs a new object using an existent database instance.
@@ -149,12 +152,10 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph
     super.setAutoStartTx(autoStartTx);
 
     if (showWarning)
-      OLogManager.instance()
-          .warn(
-              this,
-              "Auto Transaction for graphs setting has been turned off, but a transaction was"
-                  + " already started. Commit it manually or consider disabling auto transactions"
-                  + " while creating the graph.");
+      logger.warn(
+          "Auto Transaction for graphs setting has been turned off, but a transaction was"
+              + " already started. Commit it manually or consider disabling auto transactions"
+              + " while creating the graph.");
   }
 
   /**

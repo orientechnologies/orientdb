@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -64,6 +65,8 @@ import java.util.Map;
  */
 public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCommandExecutorSQLUpdate.class);
   public static final String KEYWORD_UPDATE = "UPDATE";
   private static final String KEYWORD_ADD = "ADD";
   private static final String KEYWORD_PUT = "PUT";
@@ -191,7 +194,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
         else if (word.equals(KEYWORD_UPSERT)) upsertMode = true;
         else if (word.equals(KEYWORD_RETURN)) parseReturn();
         else if (word.equals(KEYWORD_RETRY)) {
-          OLogManager.instance().warn(this, "RETRY keyword will be ignored in " + originalQuery);
+          logger.warn("RETRY keyword will be ignored in " + originalQuery);
           parseRetry();
         } else break;
 

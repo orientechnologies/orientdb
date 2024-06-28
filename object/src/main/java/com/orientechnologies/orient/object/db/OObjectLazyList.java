@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.OLazyObjectListInterface;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
@@ -46,6 +47,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
     implements OLazyObjectListInterface<TYPE>,
         OObjectLazyMultivalueElement<List<TYPE>>,
         Serializable {
+  private static final OLogger logger = OLogManager.instance().logger(OObjectLazyList.class);
   private static final long serialVersionUID = -1665952780303555865L;
   private ProxyObject sourceRecord;
   private final List<OIdentifiable> recordList;
@@ -166,12 +168,10 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
     if (o == null) {
       OIdentifiable record = (OIdentifiable) recordList.get(index);
       if (record == null || record.getRecord() == null) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Record "
-                    + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
-                    + " references a deleted instance");
+        logger.warn(
+            "Record "
+                + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
+                + " references a deleted instance");
         return null;
       }
       o =
@@ -452,12 +452,10 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
         doc = (ODocument) o;
       }
       if (o == null) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Record "
-                    + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
-                    + " references a deleted instance");
+        logger.warn(
+            "Record "
+                + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
+                + " references a deleted instance");
         return;
       }
       super.set(
@@ -508,12 +506,10 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
         doc = (ODocument) o;
       }
       if (o == null) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Record "
-                    + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
-                    + " references a deleted instance");
+        logger.warn(
+            "Record "
+                + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
+                + " references a deleted instance");
         return;
       }
       o =

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.fetch;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -53,6 +54,7 @@ import java.util.Set;
  * @author Claudio Tesoriero (giastfader @ github)
  */
 public class OFetchHelper {
+  private static final OLogger logger = OLogManager.instance().logger(OFetchHelper.class);
   public static final String DEFAULT = "*:0";
   public static final OFetchPlan DEFAULT_FETCHPLAN = new OFetchPlan(DEFAULT);
 
@@ -87,8 +89,7 @@ public class OFetchHelper {
             record, userObject, fetchPlan, 0, 0, -1, parsedRecords, "", listener, context, format);
       }
     } catch (final Exception e) {
-      OLogManager.instance()
-          .error(null, "Fetching error on record %s", e, rootRecord.getIdentity());
+      logger.error("Fetching error on record %s", e, rootRecord.getIdentity());
     }
   }
 
@@ -205,8 +206,7 @@ public class OFetchHelper {
               fieldPath,
               iContext);
         } catch (Exception e) {
-          OLogManager.instance()
-              .error(null, "Fetching error on record %s", e, record.getIdentity());
+          logger.error("Fetching error on record %s", e, record.getIdentity());
         }
       }
     }
@@ -615,7 +615,7 @@ public class OFetchHelper {
               settings);
         }
       } catch (final Exception e) {
-        OLogManager.instance().error(null, "Fetching error on record %s", e, record.getIdentity());
+        logger.error("Fetching error on record %s", e, record.getIdentity());
       }
     }
   }
@@ -652,7 +652,7 @@ public class OFetchHelper {
                     && (((ODocument) f).isEmbedded()
                         || !((ODocument) f).getIdentity().isPersistent()));
       } catch (Exception e) {
-        OLogManager.instance().error(OFetchHelper.class, "", e);
+        logger.error("", e);
         // IGNORE IT
       }
     }

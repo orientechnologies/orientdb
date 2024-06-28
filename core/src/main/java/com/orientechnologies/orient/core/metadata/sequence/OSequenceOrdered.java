@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.concurrent.Callable;
@@ -32,6 +33,8 @@ import java.util.concurrent.Callable;
  *     still be no holes. However, as a result, it is slower.
  */
 public class OSequenceOrdered extends OSequence {
+  private static final OLogger logger = OLogManager.instance().logger(OSequenceOrdered.class);
+
   public OSequenceOrdered() {
     super();
   }
@@ -103,7 +106,7 @@ public class OSequenceOrdered extends OSequence {
                             + limitValue
                             + " with step: "
                             + increment;
-                    OLogManager.instance().warn(this, warningMessage);
+                    logger.warn(warningMessage);
                   }
                 }
 

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.operation;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 public class NodeOperationTask implements ORemoteTask {
+  private static final OLogger logger = OLogManager.instance().logger(NodeOperationTask.class);
   public static final int FACTORYID = 55;
   private NodeOperation task;
   private String nodeSource;
@@ -155,7 +157,7 @@ public class NodeOperationTask implements ORemoteTask {
       try {
         return factory.request.call();
       } catch (Exception e) {
-        OLogManager.instance().warn(null, "Cannot create node operation from id %d", messageId);
+        logger.warn("Cannot create node operation from id %d", messageId);
         return null;
       }
     } else {
@@ -188,8 +190,7 @@ public class NodeOperationTask implements ORemoteTask {
       try {
         return factory.response.call();
       } catch (Exception e) {
-        OLogManager.instance()
-            .warn(null, "Cannot create node operation response from id %d", messageId);
+        logger.warn("Cannot create node operation response from id %d", messageId);
         return null;
       }
     } else {

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -49,6 +50,7 @@ import java.util.Set;
  * @author Luca Molino
  */
 public class OFindReferenceHelper {
+  private static final OLogger logger = OLogManager.instance().logger(OFindReferenceHelper.class);
 
   public static List<ODocument> findReferences(final Set<ORID> iRecordIds, final String classList) {
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
@@ -102,7 +104,7 @@ public class OFindReferenceHelper {
             checkObject(iSourceRIDs, map, value, (ODocument) record);
           }
         } catch (Exception e) {
-          OLogManager.instance().debug(null, "Error reading record " + record.getIdentity(), e);
+          logger.debug("Error reading record " + record.getIdentity(), e);
         }
       }
     }

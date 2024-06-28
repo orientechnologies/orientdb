@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -22,6 +23,9 @@ import java.util.Map;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OServerCommandPostAuthToken extends OServerCommandAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerCommandPostAuthToken.class);
+
   private static final String[] NAMES = {"POST|token/*"};
   private static final String RESPONSE_FORMAT = "indent:-1,attribSameRow";
   private volatile OTokenHandler tokenHandler;
@@ -89,8 +93,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
         } catch (OSecurityAccessException e) {
           // WRONG USER/PASSWD
         } catch (OLockException e) {
-          OLogManager.instance()
-              .error(this, "Cannot access to the database '" + iRequest.getDatabaseName() + "'", e);
+          logger.error("Cannot access to the database '" + iRequest.getDatabaseName() + "'", e);
         } finally {
           if (db != null) {
             db.close();
@@ -127,8 +130,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     } catch (OSecurityAccessException e) {
       // WRONG USER/PASSWD
     } catch (OLockException e) {
-      OLogManager.instance()
-          .error(this, "Cannot access to the database '" + iDatabaseName + "'", e);
+      logger.error("Cannot access to the database '" + iDatabaseName + "'", e);
     } finally {
       if (db != null) {
         db.close();

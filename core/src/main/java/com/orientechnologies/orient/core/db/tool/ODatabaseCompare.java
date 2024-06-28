@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db.tool;
 import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -54,6 +55,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(ODatabaseCompare.class);
   private final ODatabaseDocumentInternal databaseOne;
   private final ODatabaseDocumentInternal databaseTwo;
 
@@ -169,13 +171,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         return false;
       }
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Error on comparing database '%s' against '%s'",
-              e,
-              databaseOne.getName(),
-              databaseTwo.getName());
+      logger.error(
+          "Error on comparing database '%s' against '%s'",
+          e, databaseOne.getName(), databaseTwo.getName());
       throw new ODatabaseExportException(
           "Error on comparing database '"
               + databaseOne.getName()
@@ -1059,8 +1057,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               }
             }
           } catch (RuntimeException e) {
-            OLogManager.instance()
-                .error(this, "Error during data comparison of records with rid " + rid, e);
+            logger.error("Error during data comparison of records with rid " + rid, e);
             throw e;
           }
         }

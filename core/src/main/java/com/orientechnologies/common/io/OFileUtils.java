@@ -20,6 +20,7 @@
 package com.orientechnologies.common.io;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -39,6 +40,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Locale;
 
 public class OFileUtils {
+  private static final OLogger logger = OLogManager.instance().logger(OFileUtils.class);
   public static final int KILOBYTE = 1024;
   public static final int MEGABYTE = 1048576;
   public static final int GIGABYTE = 1073741824;
@@ -233,8 +235,7 @@ public class OFileUtils {
    */
   public static void prepareForFileCreationOrReplacement(
       Path path, Object requester, String operation) throws IOException {
-    if (Files.deleteIfExists(path))
-      OLogManager.instance().warn(requester, "'%s' deleted while %s", path, operation);
+    if (Files.deleteIfExists(path)) logger.warn("'%s' deleted while %s", path, operation);
 
     final Path parent = path.getParent();
     if (parent != null) Files.createDirectories(parent);
@@ -256,13 +257,10 @@ public class OFileUtils {
     try {
       Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
     } catch (AtomicMoveNotSupportedException ignore) {
-      OLogManager.instance()
-          .warn(
-              requester,
-              "atomic file move is not possible, falling back to regular move (moving '%s' to"
-                  + " '%s')",
-              source,
-              target);
+      logger.warn(
+          "atomic file move is not possible, falling back to regular move (moving '%s' to"
+              + " '%s')",
+          source, target);
       Files.move(source, target);
     }
   }

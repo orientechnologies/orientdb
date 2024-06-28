@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -14,6 +15,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class OCreateSequenceStatement extends OSimpleExecStatement {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCreateSequenceStatement.class);
   public static final int TYPE_CACHED = 0;
   public static final int TYPE_ORDERED = 1;
 
@@ -60,7 +63,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       executeInternal(ctx, result);
     } catch (ExecutionException | InterruptedException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
-      OLogManager.instance().error(this, message, exc, (Object) null);
+      logger.error(message, exc, (Object) null);
       throw new OCommandExecutionException(message);
     }
 

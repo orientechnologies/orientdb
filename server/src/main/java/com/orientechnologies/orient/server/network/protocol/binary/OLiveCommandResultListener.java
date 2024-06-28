@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -56,6 +57,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class OLiveCommandResultListener extends OAbstractCommandResultListener
     implements OLiveResultListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLiveCommandResultListener.class);
 
   private OClientConnection connection;
   private final AtomicBoolean empty = new AtomicBoolean(true);
@@ -105,7 +108,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener
                   protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
                   protocol.writeIdentifiable(protocol.channel, connection, iLinked);
                 } catch (IOException e) {
-                  OLogManager.instance().error(this, "Cannot write against channel", e);
+                  logger.error("Cannot write against channel", e);
                 }
               }
             }
@@ -132,12 +135,10 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener
       if (connections.size() == 0) {
         try {
           ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-          OLogManager.instance()
-              .warn(this, "Unsubscribing live query for connection " + connection);
+          logger.warn("Unsubscribing live query for connection " + connection);
           OLiveQueryHook.unsubscribe(iToken, db);
         } catch (Exception e) {
-          OLogManager.instance()
-              .warn(this, "Unsubscribing live query for connection " + connection, e);
+          logger.warn("Unsubscribing live query for connection " + connection, e);
         }
         break;
       }
@@ -178,12 +179,8 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener
           break;
         }
       } catch (Exception e) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Cannot push cluster configuration to the client %s",
-                e,
-                protocol.getRemoteAddress());
+        logger.warn(
+            "Cannot push cluster configuration to the client %s", e, protocol.getRemoteAddress());
         protocol.getServer().getClientConnectionManager().disconnect(connection);
         OLiveQueryHook.unsubscribe(iToken, connection.getDatabase());
         break;
@@ -231,12 +228,8 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener
           break;
         }
       } catch (Exception e) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Cannot push cluster configuration to the client %s",
-                e,
-                protocol.getRemoteAddress());
+        logger.warn(
+            "Cannot push cluster configuration to the client %s", e, protocol.getRemoteAddress());
         protocol.getServer().getClientConnectionManager().disconnect(connection);
         break;
       }

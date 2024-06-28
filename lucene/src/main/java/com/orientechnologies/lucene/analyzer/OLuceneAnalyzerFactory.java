@@ -2,6 +2,7 @@ package com.orientechnologies.lucene.analyzer;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -15,6 +16,8 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 /** Created by frank on 30/10/2015. */
 public class OLuceneAnalyzerFactory {
+  private static final OLogger logger = OLogManager.instance().logger(OLuceneAnalyzerFactory.class);
+
   public Analyzer createAnalyzer(
       final OIndexDefinition index, final AnalyzerKind kind, final ODocument metadata) {
     if (index == null) {
@@ -95,18 +98,15 @@ public class OLuceneAnalyzerFactory {
         classAnalyzer = Class.forName(analyzerFQN);
         return (Analyzer) classAnalyzer.newInstance();
       } catch (Exception e1) {
-        OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+        logger.error("Exception is suppressed, original exception is ", e);
         //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
         throw OException.wrapException(
             new OIndexException("Couldn't instantiate analyzer:  public constructor  not found"),
             e1);
       }
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Error on getting analyzer for Lucene index (continuing with StandardAnalyzer)",
-              e);
+      logger.error(
+          "Error on getting analyzer for Lucene index (continuing with StandardAnalyzer)", e);
       return new StandardAnalyzer();
     }
   }
@@ -123,11 +123,8 @@ public class OLuceneAnalyzerFactory {
       throw OException.wrapException(
           new OIndexException("Couldn't instantiate analyzer: public constructor not found"), e);
     } catch (final Exception e) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Error on getting analyzer for Lucene index (continuing with StandardAnalyzer)",
-              e);
+      logger.error(
+          "Error on getting analyzer for Lucene index (continuing with StandardAnalyzer)", e);
       return new StandardAnalyzer();
     }
   }

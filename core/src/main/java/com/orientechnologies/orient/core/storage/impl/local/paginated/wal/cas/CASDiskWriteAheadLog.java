@@ -6,6 +6,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intentio
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
@@ -18,8 +19,18 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartMetadataRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.CASWALPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.MilestoneWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.StartWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.deque.Cursor;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.deque.MPSCFAAArrayDequeue;
 import java.io.File;
@@ -32,20 +43,49 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import javax.crypto.*;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 
 public final class CASDiskWriteAheadLog implements OWriteAheadLog {
+  private static final OLogger logger = OLogManager.instance().logger(CASDiskWriteAheadLog.class);
   private static final String ALGORITHM_NAME = "AES";
   private static final String TRANSFORMATION = "AES/CTR/NoPadding";
 
@@ -228,12 +268,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     pageSize = CASWALPage.DEFAULT_PAGE_SIZE;
     maxRecordSize = CASWALPage.DEFAULT_MAX_RECORD_SIZE;
 
-    OLogManager.instance()
-        .infoNoDb(
-            this,
-            "Page size for WAL located in %s is set to %d bytes.",
-            walLocation.toString(),
-            pageSize);
+    logger.infoNoDb(
+        "Page size for WAL located in %s is set to %d bytes.", walLocation.toString(), pageSize);
 
     this.maxCacheSize =
         multiplyIntsWithOverflowDefault(maxPagesCacheSize, pageSize, DEFAULT_MAX_CACHE_SIZE);
@@ -457,7 +493,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
         try {
           flushLatch.get().await();
         } catch (final InterruptedException e) {
-          OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
+          logger.errorNoDb("WAL write was interrupted", e);
         }
 
         writtenLSN = this.writtenUpTo.get().getLsn();
@@ -560,13 +596,9 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
               pagesRead++;
 
               if (checkPageIsBrokenAndDecrypt(buffer, segment, pageIndex, pageSize)) {
-                OLogManager.instance()
-                    .errorNoDb(
-                        this,
-                        "WAL page %d of segment %s is broken, read of records will be stopped",
-                        null,
-                        pageIndex,
-                        segmentName);
+                logger.errorNoDb(
+                    "WAL page %d of segment %s is broken, read of records will be stopped",
+                    null, pageIndex, segmentName);
                 return result;
               }
 
@@ -734,7 +766,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
         try {
           flushLatch.get().await();
         } catch (final InterruptedException e) {
-          OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
+          logger.errorNoDb("WAL write was interrupted", e);
         }
 
         writtenLSN = this.writtenUpTo.get().getLsn();
@@ -950,7 +982,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
           threadsWaitingSum.add(endTs - startTs);
         }
       } catch (final InterruptedException e) {
-        OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
+        logger.errorNoDb("WAL write was interrupted", e);
       }
 
       qsize = queueSize.get();
@@ -1327,7 +1359,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     try {
       future.get();
     } catch (final Exception e) {
-      OLogManager.instance().errorNoDb(this, "Exception during WAL flush", e);
+      logger.errorNoDb("Exception during WAL flush", e);
       throw new IllegalStateException(e);
     }
   }
@@ -1397,7 +1429,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
       final Cursor<OWALRecord> nextCursor = MPSCFAAArrayDequeue.prev(cursor);
       if (nextCursor == null && record.getLsn().getPosition() < 0) {
-        OLogManager.instance().warn(this, cursor.toString());
+        logger.warn(cursor.toString());
         throw new IllegalStateException("Invalid last record");
       }
 
@@ -1712,7 +1744,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
                       writeFuture.get();
                     }
                   } catch (final InterruptedException e) {
-                    OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
+                    logger.errorNoDb("WAL write was interrupted", e);
                   }
 
                   assert walFile.position() == currentPosition;
@@ -1864,7 +1896,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
               writeFuture.get();
             }
           } catch (final InterruptedException e) {
-            OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
+            logger.errorNoDb("WAL write was interrupted", e);
           }
 
           assert walFile == null || walFile.position() == currentPosition;
@@ -1881,10 +1913,10 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
         }
       }
     } catch (final IOException | ExecutionException e) {
-      OLogManager.instance().errorNoDb(this, "Error during WAL writing", e);
+      logger.errorNoDb("Error during WAL writing", e);
       throw new IllegalStateException(e);
     } catch (final RuntimeException | Error e) {
-      OLogManager.instance().errorNoDb(this, "Error during WAL writing", e);
+      logger.errorNoDb("Error during WAL writing", e);
       throw e;
     } finally {
       recordsWriterLock.unlock();
@@ -1940,7 +1972,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
         fsyncCount++;
       }
     } catch (final IOException e) {
-      OLogManager.instance().errorNoDb(this, "Error during FSync of WAL data", e);
+      logger.errorNoDb("Error during FSync of WAL data", e);
       throw e;
     }
   }
@@ -2001,9 +2033,9 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
         writeFuture.get();
       }
     } catch (final InterruptedException e) {
-      OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
+      logger.errorNoDb("WAL write was interrupted", e);
     } catch (final Exception e) {
-      OLogManager.instance().errorNoDb(this, "Error during WAL write", e);
+      logger.errorNoDb("Error during WAL write", e);
       throw OException.wrapException(new OStorageException("Error during WAL data write"), e);
     }
 
@@ -2081,7 +2113,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
         bytesWrittenTime += (endTs - startTs);
       }
     } catch (final IOException e) {
-      OLogManager.instance().errorNoDb(this, "Error during WAL data write", e);
+      logger.errorNoDb("Error during WAL data write", e);
       throw e;
     }
   }
@@ -2107,18 +2139,16 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       final long threadsWaitingCount = CASDiskWriteAheadLog.this.threadsWaitingCount.sum();
       final long threadsWaitingSum = CASDiskWriteAheadLog.this.threadsWaitingSum.sum();
 
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "WAL stat:%s: %d KB was written, write speed is %d KB/s. FSync count %d. Avg. fsync"
-                  + " time %d ms. %d times threads were waiting for WAL. Avg wait interval %d ms.",
-              storageName,
-              bytesWritten / 1024,
-              writtenTime > 0 ? 1_000_000_000L * bytesWritten / writtenTime / 1024 : -1,
-              fsyncCount,
-              fsyncCount > 0 ? fsyncTime / fsyncCount / 1_000_000 : -1,
-              threadsWaitingCount,
-              threadsWaitingCount > 0 ? threadsWaitingSum / threadsWaitingCount / 1_000_000 : -1);
+      logger.infoNoDb(
+          "WAL stat:%s: %d KB was written, write speed is %d KB/s. FSync count %d. Avg. fsync"
+              + " time %d ms. %d times threads were waiting for WAL. Avg wait interval %d ms.",
+          storageName,
+          bytesWritten / 1024,
+          writtenTime > 0 ? 1_000_000_000L * bytesWritten / writtenTime / 1024 : -1,
+          fsyncCount,
+          fsyncCount > 0 ? fsyncTime / fsyncCount / 1_000_000 : -1,
+          threadsWaitingCount,
+          threadsWaitingCount > 0 ? threadsWaitingSum / threadsWaitingCount / 1_000_000 : -1);
 
       //noinspection NonAtomicOperationOnVolatileField
       CASDiskWriteAheadLog.this.bytesWrittenSum -= bytesWritten;

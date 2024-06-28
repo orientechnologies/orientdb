@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
@@ -1413,6 +1414,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       true),
   ;
 
+  private static final OLogger logger = OLogManager.instance().logger(OGlobalConfiguration.class);
+
   static {
     readConfiguration();
   }
@@ -1618,7 +1621,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
         changeCallback.change(
             oldValue == nullValue ? null : oldValue, value == nullValue ? null : value);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during call of 'change callback'", e);
+        logger.error("Error during call of 'change callback'", e);
       }
     }
   }

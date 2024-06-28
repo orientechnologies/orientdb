@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import java.io.IOException;
@@ -47,6 +48,7 @@ import net.jpountz.xxhash.XXHashFactory;
  * @since 5/6/14
  */
 public class StorageStartupMetadata {
+  private static final OLogger logger = OLogManager.instance().logger(StorageStartupMetadata.class);
   private static final long XX_HASH_SEED = 0xADF678FE45L;
   private static final XXHash64 XX_HASH_64;
 
@@ -148,7 +150,7 @@ public class StorageStartupMetadata {
     try {
       fileLock = channel.tryLock();
     } catch (OverlappingFileLockException e) {
-      OLogManager.instance().warn(this, "File is already locked by other thread", e);
+      logger.warn("File is already locked by other thread", e);
     }
 
     if (fileLock == null)
@@ -177,8 +179,7 @@ public class StorageStartupMetadata {
               Files.move(backupPath, filePath);
             }
           } else {
-            OLogManager.instance()
-                .infoNoDb(this, "File with startup metadata does not exist, creating new one");
+            logger.infoNoDb("File with startup metadata does not exist, creating new one");
             create(createdAtVersion);
             return;
           }
@@ -216,22 +217,18 @@ public class StorageStartupMetadata {
           final long xxHash = XX_HASH_64.hash(buffer, 8, buffer.capacity() - 8, XX_HASH_SEED);
           if (xxHash != buffer.getLong(0)) {
             if (!Files.exists(backupPath)) {
-              OLogManager.instance()
-                  .error(
-                      this,
-                      "File with startup metadata is broken and can not be used, "
-                          + "creation of new one",
-                      null);
+              logger.error(
+                  "File with startup metadata is broken and can not be used, "
+                      + "creation of new one",
+                  null);
               channel.close();
               create(createdAtVersion);
               return;
             } else {
-              OLogManager.instance()
-                  .error(
-                      this,
-                      "File with startup metadata is broken and can not be used, "
-                          + "will try to use backup version",
-                      null);
+              logger.error(
+                  "File with startup metadata is broken and can not be used, "
+                      + "will try to use backup version",
+                  null);
             }
 
             channel.close();

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionData;
@@ -13,6 +14,8 @@ import java.io.InputStream;
 import java.util.concurrent.Callable;
 
 public class ONewDeltaSyncImporter {
+  private static final OLogger logger = OLogManager.instance().logger(ONewDeltaSyncImporter.class);
+
   public boolean importDelta(
       OServer serverInstance, String databaseName, InputStream in, String targetNode) {
     final String nodeName = serverInstance.getDistributedManager().getLocalNodeName();
@@ -41,7 +44,7 @@ public class ONewDeltaSyncImporter {
           });
       return true;
     } catch (OException e) {
-      OLogManager.instance().error(this, "Error running delta sync import", e);
+      logger.error("Error running delta sync import", e);
       return false;
     }
   }

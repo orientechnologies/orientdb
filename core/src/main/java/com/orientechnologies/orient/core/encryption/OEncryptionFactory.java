@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.encryption;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.encryption.impl.OAESEncryption;
 import com.orientechnologies.orient.core.encryption.impl.OAESGCMEncryption;
 import com.orientechnologies.orient.core.encryption.impl.ODESEncryption;
@@ -37,6 +38,7 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OEncryptionFactory {
+  private static final OLogger logger = OLogManager.instance().logger(OEncryptionFactory.class);
   public static final OEncryptionFactory INSTANCE = new OEncryptionFactory();
 
   private final Map<String, OEncryption> instances = new HashMap<String, OEncryption>();
@@ -93,8 +95,7 @@ public class OEncryptionFactory {
 
       instances.put(name, iEncryption);
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(this, "Cannot register storage encryption algorithm '%s'", e, iEncryption);
+      logger.error("Cannot register storage encryption algorithm '%s'", e, iEncryption);
     }
   }
 
@@ -119,8 +120,7 @@ public class OEncryptionFactory {
 
       classes.put(name, iEncryption);
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(this, "Cannot register storage encryption algorithm '%s'", e, iEncryption);
+      logger.error("Cannot register storage encryption algorithm '%s'", e, iEncryption);
     }
   }
 

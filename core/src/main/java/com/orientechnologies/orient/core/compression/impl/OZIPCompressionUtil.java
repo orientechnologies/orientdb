@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.compression.impl;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -47,6 +48,8 @@ import java.util.zip.ZipOutputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OZIPCompressionUtil {
+  private static final OLogger logger = OLogManager.instance().logger(OZIPCompressionUtil.class);
+
   public static List<String> compressDirectory(
       final String sourceFolderName,
       final ZipOutputStream zos,
@@ -228,8 +231,7 @@ public class OZIPCompressionUtil {
     } catch (IOException e) {
       if (iOutput != null) iOutput.onMessage("error: " + e);
 
-      OLogManager.instance()
-          .error(OZIPCompressionUtil.class, "Cannot compress file: %s", e, folderName);
+      logger.error("Cannot compress file: %s", e, folderName);
       throw e;
     } finally {
       zos.closeEntry();

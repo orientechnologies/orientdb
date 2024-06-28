@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db.tool;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -67,6 +68,7 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(ODatabaseExport.class);
   public static final int EXPORTER_VERSION = 13;
 
   protected OJSONWriter writer;
@@ -146,8 +148,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       writer.flush();
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(this, "Error on exporting database '%s' to: %s", e, database.getName(), fileName);
+      logger.error("Error on exporting database '%s' to: %s", e, database.getName(), fileName);
       throw new ODatabaseExportException(
           "Error on exporting database '" + database.getName() + "' to: " + fileName, e);
     } finally {
@@ -249,31 +250,23 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
           brokenRids.addAll(it.getBrokenRIDs());
         } catch (OIOException e) {
-          OLogManager.instance()
-              .error(
-                  this,
-                  "\nError on exporting record %s because of I/O problems",
-                  e,
-                  rec == null ? null : rec.getIdentity());
+          logger.error(
+              "\nError on exporting record %s because of I/O problems",
+              e, rec == null ? null : rec.getIdentity());
           // RE-THROW THE EXCEPTION UP
           throw e;
         } catch (Exception t) {
           if (rec != null) {
             final byte[] buffer = rec.toStream();
 
-            OLogManager.instance()
-                .error(
-                    this,
-                    "\n"
-                        + "Error on exporting record %s. It seems corrupted; size: %d bytes, raw"
-                        + " content (as string):\n"
-                        + "==========\n"
-                        + "%s\n"
-                        + "==========",
-                    t,
-                    rec.getIdentity(),
-                    buffer.length,
-                    new String(buffer));
+            logger.error(
+                "\n"
+                    + "Error on exporting record %s. It seems corrupted; size: %d bytes, raw"
+                    + " content (as string):\n"
+                    + "==========\n"
+                    + "%s\n"
+                    + "==========",
+                t, rec.getIdentity(), buffer.length, new String(buffer));
           }
         }
       }
@@ -320,8 +313,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       writer.close();
       writer = null;
     } catch (IOException e) {
-      OLogManager.instance()
-          .error(this, "Error on exporting database '%s' to: %s", e, database.getName(), fileName);
+      logger.error("Error on exporting database '%s' to: %s", e, database.getName(), fileName);
       throw new ODatabaseExportException(
           "Error on exporting database '" + database.getName() + "' to: " + fileName, e);
     }
@@ -330,9 +322,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     try {
         OFileUtils.atomicMoveWithFallback(Paths.get(tempFileName), Paths.get(fileName), this);
       } catch (IOException e) {
-        OLogManager.instance()
-            .error(
-                this, "Error on exporting database '%s' to: %s", e, database.getName(), fileName);
+        logger.error("Error on exporting database '%s' to: %s", e, database.getName(), fileName);
         throw new ODatabaseExportException(
             "Error on exporting database '" + database.getName() + "' to: " + fileName, e);
       }
@@ -662,19 +652,14 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
           final byte[] buffer = rec.toStream();
 
-          OLogManager.instance()
-              .error(
-                  this,
-                  "\n"
-                      + "Error on exporting record %s. It seems corrupted; size: %d bytes, raw"
-                      + " content (as string):\n"
-                      + "==========\n"
-                      + "%s\n"
-                      + "==========",
-                  t,
-                  rec.getIdentity(),
-                  buffer.length,
-                  new String(buffer));
+          logger.error(
+              "\n"
+                  + "Error on exporting record %s. It seems corrupted; size: %d bytes, raw"
+                  + " content (as string):\n"
+                  + "==========\n"
+                  + "%s\n"
+                  + "==========",
+              t, rec.getIdentity(), buffer.length, new String(buffer));
         }
       }
 

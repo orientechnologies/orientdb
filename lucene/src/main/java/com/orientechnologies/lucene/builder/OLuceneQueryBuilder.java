@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.builder;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.parser.OLuceneMultiFieldQueryParser;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -36,6 +37,7 @@ import org.apache.lucene.search.Query;
 
 /** Created by Enrico Risa on 02/09/15. */
 public class OLuceneQueryBuilder {
+  private static final OLogger logger = OLogManager.instance().logger(OLuceneQueryBuilder.class);
   public static final ODocument EMPTY_METADATA = new ODocument();
 
   private final boolean allowLeadingWildcard;
@@ -144,7 +146,7 @@ public class OLuceneQueryBuilder {
       return queryParser.parse(query);
     } catch (final org.apache.lucene.queryparser.classic.ParseException e) {
       final Throwable cause = prepareParseError(e, metadata);
-      OLogManager.instance().error(this, "Exception is suppressed, original exception is ", cause);
+      logger.error("Exception is suppressed, original exception is ", cause);
       //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw new ParseException(cause.getMessage());
     }

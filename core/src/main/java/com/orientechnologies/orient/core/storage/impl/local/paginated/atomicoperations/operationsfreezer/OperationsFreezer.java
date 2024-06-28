@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.types.OModifiableInteger;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 
 public final class OperationsFreezer {
+  private static final OLogger logger = OLogManager.instance().logger(OperationsFreezer.class);
   private final LongAdder operationsCount = new LongAdder();
   private final AtomicInteger freezeRequests = new AtomicInteger();
 
@@ -122,13 +124,11 @@ public final class OperationsFreezer {
             | NoSuchMethodException
             | SecurityException
             | InvocationTargetException ie) {
-          OLogManager.instance()
-              .error(
-                  this,
-                  "Can not create instance of exception "
-                      + freezeParameters.exceptionClass
-                      + " with message will try empty constructor instead",
-                  ie);
+          logger.error(
+              "Can not create instance of exception "
+                  + freezeParameters.exceptionClass
+                  + " with message will try empty constructor instead",
+              ie);
           throwFreezeExceptionWithoutMessage(freezeParameters);
         }
       } else {
@@ -142,13 +142,11 @@ public final class OperationsFreezer {
       //noinspection deprecation
       throw freezeParameters.exceptionClass.newInstance();
     } catch (InstantiationException | IllegalAccessException ie) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Can not create instance of exception "
-                  + freezeParameters.exceptionClass
-                  + " will park thread instead of throwing of exception",
-              ie);
+      logger.error(
+          "Can not create instance of exception "
+              + freezeParameters.exceptionClass
+              + " will park thread instead of throwing of exception",
+          ie);
     }
   }
 

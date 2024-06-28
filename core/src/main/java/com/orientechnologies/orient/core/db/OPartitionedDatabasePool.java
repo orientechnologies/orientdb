@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -73,6 +74,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 06/11/14
  */
 public class OPartitionedDatabasePool extends OOrientListenerAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OPartitionedDatabasePool.class);
+
   private static final int HASH_INCREMENT = 0x61c88647;
   private static final int MIN_POOL_SIZE = 2;
   private static final AtomicInteger nextHashCode = new AtomicInteger();
@@ -293,11 +297,8 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         try {
           db.create();
         } catch (OStorageExistsException ex) {
-          OLogManager.instance()
-              .debug(
-                  this,
-                  "Can not create storage " + db.getStorage() + " because it already exists.",
-                  ex);
+          logger.debug(
+              "Can not create storage " + db.getStorage() + " because it already exists.", ex);
           db.internalOpen();
         }
       } else {
@@ -473,13 +474,9 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
           try {
             super.close();
           } catch (Exception e) {
-            OLogManager.instance()
-                .error(
-                    this,
-                    "Error during closing of database % when storage %s was already closed",
-                    e,
-                    getUrl(),
-                    storage.getName());
+            logger.error(
+                "Error during closing of database % when storage %s was already closed",
+                e, getUrl(), storage.getName());
           }
 
           data.acquiredDatabase = null;

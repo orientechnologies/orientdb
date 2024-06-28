@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.sharding.auto;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.ORawPair;
@@ -63,6 +64,8 @@ import java.util.stream.StreamSupport;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public final class OAutoShardingIndexEngine implements OIndexEngine {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OAutoShardingIndexEngine.class);
   public static final int VERSION = 1;
   private static final String SUBINDEX_METADATA_FILE_EXTENSION = ".asm";
   private static final String SUBINDEX_TREE_FILE_EXTENSION = ".ast";
@@ -122,9 +125,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       try {
         this.partitionSize = Integer.parseInt(partitionsProperty);
       } catch (NumberFormatException e) {
-        OLogManager.instance()
-            .error(
-                this, "Invalid value of 'partitions' property : `" + partitionsProperty + "`", e);
+        logger.error("Invalid value of 'partitions' property : `" + partitionsProperty + "`", e);
       }
       engineProperties = new HashMap<>();
       engineProperties.put("partitions", String.valueOf(partitionSize));

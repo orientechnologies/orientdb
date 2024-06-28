@@ -3,6 +3,7 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
@@ -17,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 
 /** Created by tglman on 11/01/17. */
 public class OStorageRemotePushThread extends Thread {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OStorageRemotePushThread.class);
 
   private final ORemotePushHandler pushHandler;
   private final String host;
@@ -80,7 +83,7 @@ public class OStorageRemotePushThread extends Thread {
               }
             }
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error executing push request", e);
+            logger.error("Error executing push request", e);
           }
         }
       } catch (IOException | OException e) {
@@ -129,7 +132,7 @@ public class OStorageRemotePushThread extends Thread {
         throw (RuntimeException) poll;
       }
     } catch (IOException e) {
-      OLogManager.instance().warn(this, "Exception on subscribe", e);
+      logger.warn("Exception on subscribe", e);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }

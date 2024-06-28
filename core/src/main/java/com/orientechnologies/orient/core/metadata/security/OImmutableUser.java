@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -16,6 +17,7 @@ import java.util.Set;
  * @since 03/11/14
  */
 public class OImmutableUser implements OSecurityUser {
+  private static final OLogger logger = OLogManager.instance().logger(OImmutableUser.class);
   private static final long serialVersionUID = 1L;
   private final long version;
 
@@ -93,12 +95,10 @@ public class OImmutableUser implements OSecurityUser {
       final int iOperation) {
     for (OImmutableRole r : roles) {
       if (r == null)
-        OLogManager.instance()
-            .warn(
-                this,
-                "User '%s' has a null role, ignoring it.  Consider fixing this user's roles before"
-                    + " continuing",
-                getName());
+        logger.warn(
+            "User '%s' has a null role, ignoring it.  Consider fixing this user's roles before"
+                + " continuing",
+            getName());
       else if (r.allow(resourceGeneric, resourceSpecific, iOperation)) return r;
     }
 
@@ -109,12 +109,10 @@ public class OImmutableUser implements OSecurityUser {
       final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
     for (OImmutableRole r : roles)
       if (r == null)
-        OLogManager.instance()
-            .warn(
-                this,
-                "UseOSecurityAuthenticatorr '%s' has a null role, ignoring it.  Consider fixing"
-                    + " this user's roles before continuing",
-                getName());
+        logger.warn(
+            "UseOSecurityAuthenticatorr '%s' has a null role, ignoring it.  Consider fixing"
+                + " this user's roles before continuing",
+            getName());
       else if (r.hasRule(resourceGeneric, resourceSpecific)) return true;
 
     return false;

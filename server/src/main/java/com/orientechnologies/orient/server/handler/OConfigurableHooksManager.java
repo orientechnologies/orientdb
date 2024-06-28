@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -48,6 +49,9 @@ import java.util.List;
  * OServerParameterConfiguration[] iParams)
  */
 public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
+
+  private static final OLogger logger =
+      OLogManager.instance().logger(OConfigurableHooksManager.class);
 
   private List<OServerHookConfiguration> configuredHooks;
 
@@ -103,23 +107,17 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
                           "config", new Class[] {OServerParameterConfiguration[].class});
               m.invoke(h, new Object[] {hook.parameters});
             } catch (Exception e) {
-              OLogManager.instance()
-                  .warn(
-                      this,
-                      "[configure] Failed to configure hook '%s'. Parameters specified but hook don"
-                          + " support parameters. Should have a method config with parameters"
-                          + " OServerParameterConfiguration[] ",
-                      hook.clazz);
+              logger.warn(
+                  "[configure] Failed to configure hook '%s'. Parameters specified but hook don"
+                      + " support parameters. Should have a method config with parameters"
+                      + " OServerParameterConfiguration[] ",
+                  hook.clazz);
             }
           db.registerHook(h, pos);
         } catch (Exception e) {
-          OLogManager.instance()
-              .error(
-                  this,
-                  "[configure] Failed to configure hook '%s' due to the an error : ",
-                  e,
-                  hook.clazz,
-                  e.getMessage());
+          logger.error(
+              "[configure] Failed to configure hook '%s' due to the an error : ",
+              e, hook.clazz, e.getMessage());
         }
       }
     }

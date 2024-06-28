@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import java.io.EOFException;
@@ -27,7 +28,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class AsyncFile implements OFile {
-
+  private static final OLogger logger = OLogManager.instance().logger(AsyncFile.class);
   private final ScalableRWLock lock = new ScalableRWLock();
   private volatile Path osFile;
 
@@ -101,14 +102,12 @@ public final class AsyncFile implements OFile {
       currentSize = (currentSize / pageSize) * pageSize;
       fileChannel.truncate(currentSize + HEADER_SIZE);
 
-      OLogManager.instance()
-          .warnNoDb(
-              this,
-              "Data page in file {} was partially written and will be truncated, "
-                  + "initial size {}, truncated size {}",
-              osFile,
-              initialSize,
-              currentSize);
+      logger.warnNoDb(
+          "Data page in file {} was partially written and will be truncated, "
+              + "initial size {}, truncated size {}",
+          osFile,
+          initialSize,
+          currentSize);
     }
 
     if (size.get() < 0) {
@@ -308,12 +307,9 @@ public final class AsyncFile implements OFile {
           try {
             fileChannel.force(true);
           } catch (final IOException e) {
-            OLogManager.instance()
-                .warn(
-                    this,
-                    "Error during flush of file %s. Data may be lost in case of power failure",
-                    e,
-                    getName());
+            logger.warn(
+                "Error during flush of file %s. Data may be lost in case of power failure",
+                e, getName());
           }
 
           dirtyCounter.addAndGet(-dirtyCounterValue);
@@ -352,7 +348,7 @@ public final class AsyncFile implements OFile {
     try {
       doClose();
 
-      OLogManager.instance().debugNoDb(this, "File " + osFile + " has been deleted.", null);
+      logger.debugNoDb("File " + osFile + " has been deleted.", null);
       Files.delete(osFile);
     } finally {
       lock.exclusiveUnlock();
@@ -442,7 +438,7 @@ public final class AsyncFile implements OFile {
     @Override
     public void failed(Throwable exc, CountDownLatch attachment) {
       ioResult.exc = exc;
-      OLogManager.instance().error(this, "Error during write operation to the file " + osFile, exc);
+      logger.error("Error during write operation to the file " + osFile, exc);
 
       dirtyCounter.incrementAndGet();
       attachment.countDown();

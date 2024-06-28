@@ -32,6 +32,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.remote.ODatabaseImportRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -121,6 +122,7 @@ import java.util.stream.Collectors;
 
 public class OConsoleDatabaseApp extends OConsoleApplication
     implements OCommandOutputListener, OProgressListener, OTableFormatter.OTableOutput {
+  private static final OLogger logger = OLogManager.instance().logger(OConsoleDatabaseApp.class);
   protected ODatabaseDocumentInternal currentDatabase;
   protected String currentDatabaseName;
   protected ORecord currentRecord;
@@ -3484,7 +3486,7 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       for (String o : opts) {
         final int sep = o.indexOf('=');
         if (sep == -1) {
-          OLogManager.instance().warn(this, "Unrecognized option %s, skipped", o);
+          logger.warn("Unrecognized option %s, skipped", o);
           continue;
         }
 

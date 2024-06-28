@@ -19,6 +19,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -45,6 +46,8 @@ import org.junit.Assert;
  * in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(AbstractServerClusterTest.class);
   protected int delayServerStartup = 0;
   protected int delayServerAlign = 0;
   protected boolean startupNodesInSequence = true;
@@ -170,21 +173,17 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void banner(final String iMessage) {
-    OLogManager.instance()
-        .error(
-            this,
-            "**********************************************************************************************************",
-            null);
-    OLogManager.instance().error(this, iMessage, null);
-    OLogManager.instance()
-        .error(
-            this,
-            "**********************************************************************************************************",
-            null);
+    logger.error(
+        "**********************************************************************************************************",
+        null);
+    logger.error(iMessage, null);
+    logger.error(
+        "**********************************************************************************************************",
+        null);
   }
 
   protected void log(final String iMessage) {
-    OLogManager.instance().info(this, iMessage);
+    logger.info(iMessage);
   }
 
   protected void onServerStarting(ServerRun server) {}
@@ -387,8 +386,7 @@ public abstract class AbstractServerClusterTest {
         != status) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance()
-            .error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
+        logger.error("TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
         break;
       }
 
@@ -410,8 +408,7 @@ public abstract class AbstractServerClusterTest {
         .isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance()
-            .error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
+        logger.error("TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
         break;
       }
 
@@ -433,11 +430,8 @@ public abstract class AbstractServerClusterTest {
         .isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance()
-            .error(
-                this,
-                "TIMEOUT on waitForDatabaseIsOnline condition (timeout=" + timeout + ")",
-                null);
+        logger.error(
+            "TIMEOUT on waitForDatabaseIsOnline condition (timeout=" + timeout + ")", null);
         break;
       }
 
@@ -465,8 +459,7 @@ public abstract class AbstractServerClusterTest {
           }
 
           if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-            OLogManager.instance()
-                .error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
+            logger.error("TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
             break;
           }
 

@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
@@ -43,6 +44,9 @@ import org.apache.lucene.search.TermQuery;
 /** Created by frank on 15/01/2017. */
 public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
     implements OIndexableSQLFunction {
+
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneSearchMoreLikeThisFunction.class);
 
   public static final String NAME = "search_more";
 
@@ -244,8 +248,7 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
                               queryBuilder.add(fieldQuery, Occur.SHOULD);
                           } catch (IOException e) {
                             // FIXME handle me!
-                            OLogManager.instance()
-                                .error(this, "Error during Lucene query generation", e);
+                            logger.error("Error during Lucene query generation", e);
                           }
                         }));
   }

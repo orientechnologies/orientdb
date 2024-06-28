@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.compression;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.compression.impl.OGZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.OHighZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.OLowZIPCompression;
@@ -38,6 +39,7 @@ import java.util.Set;
  * @since 05.06.13
  */
 public class OCompressionFactory {
+  private static final OLogger logger = OLogManager.instance().logger(OCompressionFactory.class);
   public static final OCompressionFactory INSTANCE = new OCompressionFactory();
 
   private final Map<String, OCompression> compressions = new HashMap<String, OCompression>();
@@ -95,8 +97,7 @@ public class OCompressionFactory {
 
       compressions.put(name, compression);
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(this, "Cannot register storage compression algorithm '%s'", e, compression);
+      logger.error("Cannot register storage compression algorithm '%s'", e, compression);
     }
   }
 
@@ -121,8 +122,7 @@ public class OCompressionFactory {
 
       compressionClasses.put(name, compression);
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(this, "Cannot register storage compression algorithm '%s'", e, compression);
+      logger.error("Cannot register storage compression algorithm '%s'", e, compression);
     }
   }
 

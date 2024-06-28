@@ -2,6 +2,7 @@ package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImpExpAbstract;
@@ -13,6 +14,7 @@ import java.io.FileNotFoundException;
 
 /** Created by tglman on 19/07/16. */
 public class ODatabaseImportRemote extends ODatabaseImpExpAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(ODatabaseImportRemote.class);
 
   private String options;
 
@@ -26,7 +28,7 @@ public class ODatabaseImportRemote extends ODatabaseImpExpAbstract {
     try {
       importDatabase();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error during database import", e);
+      logger.error("Error during database import", e);
     }
   }
 

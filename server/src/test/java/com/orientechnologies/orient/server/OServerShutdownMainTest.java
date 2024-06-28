@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -15,7 +14,6 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +29,6 @@ public class OServerShutdownMainTest {
   @Before
   public void startupOServer() throws Exception {
 
-    OLogManager.instance().setConsoleLevel(Level.OFF.getName());
     prevPassword = System.setProperty("ORIENTDB_ROOT_PASSWORD", "rootPassword");
     prevOrientHome = System.setProperty("ORIENTDB_HOME", "./target/testhome");
 

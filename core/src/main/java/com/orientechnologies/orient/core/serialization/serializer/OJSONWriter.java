@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -45,6 +46,7 @@ import java.util.Map.Entry;
 
 @SuppressWarnings("unchecked")
 public class OJSONWriter {
+  private static final OLogger logger = OLogManager.instance().logger(OJSONWriter.class);
   private static final String DEF_FORMAT =
       "rid,type,version,class,attribSameRow,indent:2,dateAsLong"; // TODO: added
   private final String format;
@@ -247,8 +249,7 @@ public class OJSONWriter {
 
                 buffer.append(objectJson);
               } catch (Exception e) {
-                OLogManager.instance()
-                    .error(json, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+                logger.error("Error transforming record " + rec.getIdentity() + " to JSON", e);
               }
           }
         }

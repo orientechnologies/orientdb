@@ -21,6 +21,7 @@ package com.orientechnologies.orient.enterprise.channel;
 
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
@@ -40,6 +41,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OChannel {
+  private static final OLogger logger = OLogManager.instance().logger(OChannel.class);
+
   private static final OProfiler PROFILER = Orient.instance().getProfiler();
   private static final AtomicLong metricGlobalTransmittedBytes = new AtomicLong();
   private static final AtomicLong metricGlobalReceivedBytes = new AtomicLong();
@@ -159,7 +162,7 @@ public abstract class OChannel {
         socket = null;
       }
     } catch (Exception e) {
-      OLogManager.instance().debug(this, "Error during socket close", e);
+      logger.debug("Error during socket close", e);
     }
 
     try {
@@ -168,7 +171,7 @@ public abstract class OChannel {
         inStream = null;
       }
     } catch (Exception e) {
-      OLogManager.instance().debug(this, "Error during closing of input stream", e);
+      logger.debug("Error during closing of input stream", e);
     }
 
     try {
@@ -177,7 +180,7 @@ public abstract class OChannel {
         outStream = null;
       }
     } catch (Exception e) {
-      OLogManager.instance().debug(this, "Error during closing of output stream", e);
+      logger.debug("Error during closing of output stream", e);
     }
 
     lockRead.close();

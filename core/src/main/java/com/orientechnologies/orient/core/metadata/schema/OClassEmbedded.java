@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -22,6 +23,8 @@ import java.util.concurrent.Callable;
 
 /** Created by tglman on 14/06/17. */
 public class OClassEmbedded extends OClassImpl {
+  private static final OLogger logger = OLogManager.instance().logger(OClassEmbedded.class);
+
   protected OClassEmbedded(OSchemaShared iOwner, String iName) {
     super(iOwner, iName);
   }
@@ -743,8 +746,7 @@ public class OClassEmbedded extends OClassImpl {
           if (clazz instanceof OClassImpl) {
             addPolymorphicClusterIds((OClassImpl) clazz);
           } else {
-            OLogManager.instance()
-                .warn(this, "Warning: cannot set polymorphic cluster IDs for class " + name);
+            logger.warn("Warning: cannot set polymorphic cluster IDs for class " + name);
           }
         }
       }

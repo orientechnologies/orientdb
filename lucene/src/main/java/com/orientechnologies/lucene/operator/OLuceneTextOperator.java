@@ -17,6 +17,7 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
@@ -48,7 +49,7 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
 public class OLuceneTextOperator extends OQueryTargetOperator {
-
+  private static final OLogger logger = OLogManager.instance().logger(OLuceneTextOperator.class);
   public static final String MEMORY_INDEX = "_memoryIndex";
 
   public OLuceneTextOperator() {
@@ -146,10 +147,10 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
       }
 
     } catch (ParseException e) {
-      OLogManager.instance().error(this, "error occurred while building query", e);
+      logger.error("error occurred while building query", e);
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "error occurred while building memory index", e);
+      logger.error("error occurred while building memory index", e);
     }
     return null;
   }

@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -35,6 +36,7 @@ import java.util.Iterator;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OResettable {
+  private static final OLogger logger = OLogManager.instance().logger(OLazyRecordIterator.class);
   private final ORecordElement sourceRecord;
   private final Iterable<? extends OIdentifiable> source;
   private Iterator<? extends OIdentifiable> underlying;
@@ -82,7 +84,7 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
           ((OLazyIterator<OIdentifiable>) underlying).update(rec);
         value = rec;
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on iterating record collection", e);
+        logger.error("Error on iterating record collection", e);
         value = null;
       }
     }

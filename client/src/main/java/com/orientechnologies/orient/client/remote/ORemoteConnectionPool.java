@@ -66,7 +66,7 @@ public class ORemoteConnectionPool
       try {
         iValue.close();
       } catch (Exception e) {
-        OLogManager.instance().debug(this, "Error on closing socket connection", e);
+        logger.debug("Error on closing socket connection", e);
       }
     iValue.markInUse();
     return canReuse;

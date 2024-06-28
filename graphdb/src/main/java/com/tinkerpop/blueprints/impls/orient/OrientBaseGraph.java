@@ -25,6 +25,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
@@ -101,6 +102,7 @@ import org.apache.commons.configuration.Configuration;
  */
 public abstract class OrientBaseGraph extends OrientConfigurableGraph
     implements OrientExtendedGraph, OStorageRecoverListener {
+  private static final OLogger logger = OLogManager.instance().logger(OrientBaseGraph.class);
   public static final String CONNECTION_OUT = "out";
   public static final String CONNECTION_IN = "in";
   public static final String CLASS_PREFIX = "class:";
@@ -376,8 +378,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     try {
       return URLEncoder.encode(iClassName, "UTF-8").replaceAll("\\.", "%2E"); // encode invalid '.'
     } catch (UnsupportedEncodingException e) {
-      OLogManager.instance()
-          .error(null, "Error on encoding class name using encoding '%s'", e, "UTF-8");
+      logger.error("Error on encoding class name using encoding '%s'", e, "UTF-8");
       return iClassName;
     }
   }
@@ -391,8 +392,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     try {
       return URLDecoder.decode(iClassName, "UTF-8");
     } catch (UnsupportedEncodingException e) {
-      OLogManager.instance()
-          .error(null, "Error on decoding class name using encoding '%s'", e, "UTF-8");
+      logger.error("Error on decoding class name using encoding '%s'", e, "UTF-8");
       return iClassName;
     }
   }
@@ -1130,10 +1130,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     } catch (ONeedRetryException e) {
       throw e;
     } catch (RuntimeException e) {
-      OLogManager.instance().error(this, "Error during context close for db " + url, e);
+      logger.error("Error during context close for db " + url, e);
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error during context close for db " + url, e);
+      logger.error("Error during context close for db " + url, e);
       throw OException.wrapException(
           new ODatabaseException("Error during context close for db " + url), e);
     } finally {
@@ -1146,7 +1146,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
         }
         pollGraphFromStack(closeDb);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during context close for db " + url, e);
+        logger.error("Error during context close for db " + url, e);
       }
     }
 
@@ -1841,21 +1841,17 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     final int committed;
     final ODatabaseDocument raw = getRawGraph();
     if (raw.getTransaction().isActive()) {
-      if (isWarnOnForceClosingTx()
-          && OLogManager.instance().isWarnEnabled()
-          && iOperationStrings.length > 0) {
+      if (isWarnOnForceClosingTx() && logger.isWarnEnabled() && iOperationStrings.length > 0) {
         // COMPOSE THE MESSAGE
         final StringBuilder msg = new StringBuilder(256);
         for (String s : iOperationStrings) msg.append(s);
 
         // ASSURE PENDING TX IF ANY IS COMMITTED
-        OLogManager.instance()
-            .warn(
-                this,
-                "Requested command '%s' must be executed outside active transaction: the"
-                    + " transaction will be committed and reopen right after it. To avoid this"
-                    + " behavior execute it outside a transaction",
-                msg.toString());
+        logger.warn(
+            "Requested command '%s' must be executed outside active transaction: the"
+                + " transaction will be committed and reopen right after it. To avoid this"
+                + " behavior execute it outside a transaction",
+            msg.toString());
       }
       committed = raw.getTransaction().amountOfNestedTxs();
       raw.commit(true);
@@ -2281,7 +2277,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
       graph.getDatabase().getMetadata().reload();
       klass = graph.getDatabase().getMetadata().getSchema().getClass(inverseFieldName);
       if (klass == null) {
-        OLogManager.instance().warn(null, "Removing edge, schema class not found for " + r);
+        logger.warn(null, "Removing edge, schema class not found for " + r);
         return;
       }
     }

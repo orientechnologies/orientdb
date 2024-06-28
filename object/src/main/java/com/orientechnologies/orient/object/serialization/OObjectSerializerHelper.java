@@ -22,6 +22,7 @@ package com.orientechnologies.orient.object.serialization;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.OAccess;
@@ -83,6 +84,9 @@ import java.util.Set;
  * @author Jacques Desodt
  */
 public class OObjectSerializerHelper {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OObjectSerializerHelper.class);
+
   public static final Class<?>[] callbackAnnotationClasses =
       new Class[] {
         OBeforeDeserialization.class,
@@ -263,12 +267,10 @@ public class OObjectSerializerHelper {
         setFieldValue(iPojo, idFieldName, iIdentity != null ? iIdentity.toString() : null);
       else if (fieldType.equals(Object.class)) setFieldValue(iPojo, idFieldName, iIdentity);
       else
-        OLogManager.instance()
-            .warn(
-                OObjectSerializerHelper.class,
-                "@Id field has been declared as %s while the supported are: ORID, Number, String,"
-                    + " Object",
-                fieldType);
+        logger.warn(
+            "@Id field has been declared as %s while the supported are: ORID, Number, String,"
+                + " Object",
+            fieldType);
       return idFieldName;
     }
     return null;
@@ -333,12 +335,10 @@ public class OObjectSerializerHelper {
       } else if (fieldType.equals(String.class))
         setFieldValue(iPojo, vFieldName, String.valueOf(iVersion));
       else
-        OLogManager.instance()
-            .warn(
-                OObjectSerializerHelper.class,
-                "@Version field has been declared as %s while the supported are: Number, String,"
-                    + " Object",
-                fieldType);
+        logger.warn(
+            "@Version field has been declared as %s while the supported are: Number, String,"
+                + " Object",
+            fieldType);
       return vFieldName;
     }
     return null;
@@ -365,12 +365,10 @@ public class OObjectSerializerHelper {
       } else if (ver instanceof String) {
         return Integer.parseInt((String) ver);
       } else
-        OLogManager.instance()
-            .warn(
-                OObjectSerializerHelper.class,
-                "@Version field has been declared as %s while the supported are: Number, String,"
-                    + " Object",
-                ver.getClass());
+        logger.warn(
+            "@Version field has been declared as %s while the supported are: Number, String,"
+                + " Object",
+            ver.getClass());
     }
     return -1;
   }
@@ -438,12 +436,10 @@ public class OObjectSerializerHelper {
         else if (id.getClass().equals(Object.class))
           ORecordInternal.setIdentity(iRecord, (ORecordId) id);
         else
-          OLogManager.instance()
-              .warn(
-                  OObjectSerializerHelper.class,
-                  "@Id field has been declared as %s while the supported are: ORID, Number, String,"
-                      + " Object",
-                  id.getClass());
+          logger.warn(
+              "@Id field has been declared as %s while the supported are: ORID, Number, String,"
+                  + " Object",
+              id.getClass());
       }
     }
 
@@ -863,21 +859,12 @@ public class OObjectSerializerHelper {
         if (idFound) {
           // CHECK FOR TYPE
           if (fieldType.isPrimitive())
-            OLogManager.instance()
-                .warn(
-                    OObjectSerializerHelper.class,
-                    "Field '%s' cannot be a literal to manage the Record Id",
-                    f.toString());
+            logger.warn("Field '%s' cannot be a literal to manage the Record Id", f.toString());
           else if (!ORID.class.isAssignableFrom(fieldType)
               && fieldType != String.class
               && fieldType != Object.class
               && !Number.class.isAssignableFrom(fieldType))
-            OLogManager.instance()
-                .warn(
-                    OObjectSerializerHelper.class,
-                    "Field '%s' cannot be managed as type: %s",
-                    f.toString(),
-                    fieldType);
+            logger.warn("Field '%s' cannot be managed as type: %s", f.toString(), fieldType);
         }
 
         boolean vFound = false;
@@ -894,20 +881,11 @@ public class OObjectSerializerHelper {
         if (vFound) {
           // CHECK FOR TYPE
           if (fieldType.isPrimitive())
-            OLogManager.instance()
-                .warn(
-                    OObjectSerializerHelper.class,
-                    "Field '%s' cannot be a literal to manage the Version",
-                    f.toString());
+            logger.warn("Field '%s' cannot be a literal to manage the Version", f.toString());
           else if (fieldType != String.class
               && fieldType != Object.class
               && !Number.class.isAssignableFrom(fieldType))
-            OLogManager.instance()
-                .warn(
-                    OObjectSerializerHelper.class,
-                    "Field '%s' cannot be managed as type: %s",
-                    f.toString(),
-                    fieldType);
+            logger.warn("Field '%s' cannot be managed as type: %s", f.toString(), fieldType);
         }
 
         // JPA 1+ AVAILABLE?
@@ -996,7 +974,7 @@ public class OObjectSerializerHelper {
         OObjectSerializerHelper.setFieldFromDocument(oDocument, pojo, aField);
       }
     } catch (Exception e) {
-      OLogManager.instance().error(null, "Error on converting document in object", e);
+      logger.error("Error on converting document in object", e);
     }
     return pojo;
   }
@@ -1055,7 +1033,7 @@ public class OObjectSerializerHelper {
         }
       }
     } catch (Exception e) {
-      OLogManager.instance().error(null, "Error on convertInObject()", e);
+      logger.error("Error on convertInObject()", e);
     }
     return aSubList;
   }

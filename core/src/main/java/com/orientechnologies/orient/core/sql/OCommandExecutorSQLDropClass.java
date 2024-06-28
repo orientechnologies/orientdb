@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -39,6 +40,8 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCommandExecutorSQLDropClass.class);
   public static final String KEYWORD_DROP = "DROP";
   public static final String KEYWORD_CLASS = "CLASS";
   public static final String KEYWORD_UNSAFE = "UNSAFE";
@@ -165,22 +168,16 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract
       if (cls.isSubClassOf("V")) {
         // FOUND VERTICES
         if (unsafe)
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Dropped class '%s' containing %d vertices using UNSAFE mode. Database could"
-                      + " contain broken edges",
-                  className,
-                  records);
+          logger.warn(
+              "Dropped class '%s' containing %d vertices using UNSAFE mode. Database could"
+                  + " contain broken edges",
+              className, records);
       } else if (cls.isSubClassOf("E")) {
         // FOUND EDGES
-        OLogManager.instance()
-            .warn(
-                this,
-                "Dropped class '%s' containing %d edges using UNSAFE mode. Database could contain"
-                    + " broken vertices",
-                className,
-                records);
+        logger.warn(
+            "Dropped class '%s' containing %d edges using UNSAFE mode. Database could contain"
+                + " broken vertices",
+            className, records);
       }
     }
 

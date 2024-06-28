@@ -22,6 +22,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
@@ -64,6 +65,8 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class OrientVertex extends OrientElement implements OrientExtendedVertex {
+  private static final OLogger logger = OLogManager.instance().logger(OrientVertex.class);
+
   public static final String CONNECTION_OUT_PREFIX = OrientBaseGraph.CONNECTION_OUT + "_";
   public static final String CONNECTION_IN_PREFIX = OrientBaseGraph.CONNECTION_IN + "_";
 
@@ -1184,14 +1187,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
           vertexDoc = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());
 
           if (vertexDoc == null) {
-            OLogManager.instance()
-                .warn(
-                    this,
-                    "Cannot load edge "
-                        + fieldRecord
-                        + " to get the "
-                        + connection.getKey().opposite()
-                        + " vertex");
+            logger.warn(
+                "Cannot load edge "
+                    + fieldRecord
+                    + " to get the "
+                    + connection.getKey().opposite()
+                    + " vertex");
             return;
           }
         }

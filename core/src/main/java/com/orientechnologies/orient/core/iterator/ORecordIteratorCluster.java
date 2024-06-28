@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.iterator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
@@ -34,6 +35,7 @@ import java.util.Iterator;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIterator<REC> {
+  private static final OLogger logger = OLogManager.instance().logger(ORecordIteratorCluster.class);
   private ORecord currentRecord;
 
   public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final int iClusterId) {
@@ -151,7 +153,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       try {
         currentRecord = readCurrentRecord(record, +1);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during read of record", e);
+        logger.error("Error during read of record", e);
 
         final ORID recordRid = record == null ? null : record.getIdentity();
 

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.method.misc;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -35,6 +36,7 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodField extends OAbstractSQLMethod {
+  private static final OLogger logger = OLogManager.instance().logger(OSQLMethodField.class);
 
   public static final String NAME = "field";
 
@@ -64,7 +66,7 @@ public class OSQLMethodField extends OAbstractSQLMethod {
         try {
           ioResult = new ODocument(new ORecordId((String) ioResult));
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on reading rid with value '%s'", e, ioResult);
+          logger.error("Error on reading rid with value '%s'", e, ioResult);
           ioResult = null;
         }
       } else if (ioResult instanceof OIdentifiable) {

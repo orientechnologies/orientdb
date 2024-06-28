@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -58,6 +59,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 @SuppressWarnings("unchecked")
 public abstract class OSchemaShared implements OCloseable {
+  private static final OLogger logger = OLogManager.instance().logger(OSchemaShared.class);
   private static final int NOT_EXISTENT_CLUSTER_ID = -1;
   public static final int CURRENT_VERSION_NUMBER = 4;
   public static final int VERSION_NUMBER_V4 = 4;
@@ -525,12 +527,10 @@ public abstract class OSchemaShared implements OCloseable {
       // READ CURRENT SCHEMA VERSION
       final Integer schemaVersion = (Integer) document.field("schemaVersion");
       if (schemaVersion == null) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Database's schema is empty! Recreating the system classes and allow the opening of"
-                    + " the database but double check the integrity of the database",
-                null);
+        logger.error(
+            "Database's schema is empty! Recreating the system classes and allow the opening of"
+                + " the database but double check the integrity of the database",
+            null);
         return;
       } else if (schemaVersion != CURRENT_VERSION_NUMBER && VERSION_NUMBER_V5 != schemaVersion) {
         // VERSION_NUMBER_V5 is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no

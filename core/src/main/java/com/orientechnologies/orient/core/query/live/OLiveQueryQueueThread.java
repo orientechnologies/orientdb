@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.query.live;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,6 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OLiveQueryQueueThread extends Thread {
+  private static final OLogger logger = OLogManager.instance().logger(OLiveQueryQueueThread.class);
 
   private final BlockingQueue<ORecordOperation> queue;
   private final ConcurrentMap<Integer, OLiveQueryListener> subscribers;
@@ -69,7 +71,7 @@ public class OLiveQueryQueueThread extends Thread {
         try {
           listener.onLiveResult(next);
         } catch (Exception e) {
-          OLogManager.instance().warn(this, "Error executing live query subscriber.", e);
+          logger.warn("Error executing live query subscriber.", e);
         }
       }
     }

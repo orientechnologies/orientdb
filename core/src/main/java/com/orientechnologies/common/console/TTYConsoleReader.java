@@ -22,6 +22,7 @@ package com.orientechnologies.common.console;
 
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -45,6 +46,7 @@ import sun.misc.SignalHandler;
 
 /** Custom implementation of TTY reader. Supports arrow keys + history. */
 public class TTYConsoleReader implements OConsoleReader {
+  private static final OLogger logger = OLogManager.instance().logger(TTYConsoleReader.class);
   public static final int HORIZONTAL_TAB_CHAR = 9;
   public static final int NEW_LINE_CHAR = 10;
   public static final int VERTICAL_TAB_CHAR = 11;
@@ -116,9 +118,9 @@ public class TTYConsoleReader implements OConsoleReader {
         outStream = System.out;
       }
     } catch (FileNotFoundException fnfe) {
-      OLogManager.instance().error(this, "History file not found", fnfe);
+      logger.error("History file not found", fnfe);
     } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error reading history file", ioe);
+      logger.error("Error reading history file", ioe);
     }
 
     if (inStream == null)
@@ -568,7 +570,7 @@ public class TTYConsoleReader implements OConsoleReader {
     try {
       Files.createDirectories(orientDBDir);
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error creating OrientDB directory", e);
+      logger.error("Error creating OrientDB directory", e);
     }
 
     Path history = orientDBDir.resolve(HISTORY_FILE_NAME);
@@ -580,7 +582,7 @@ public class TTYConsoleReader implements OConsoleReader {
 
       return Files.createFile(history).toFile();
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error creating history file", e);
+      logger.error("Error creating history file", e);
     }
 
     return history.toFile();

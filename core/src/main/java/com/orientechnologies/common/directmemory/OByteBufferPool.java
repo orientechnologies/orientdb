@@ -21,6 +21,7 @@ package com.orientechnologies.common.directmemory;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.nio.ByteBuffer;
@@ -39,6 +40,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * @see ODirectMemoryAllocator
  */
 public final class OByteBufferPool implements OByteBufferPoolMXBean {
+  private static final OLogger logger = OLogManager.instance().logger(OByteBufferPool.class);
+
   /** Whether we should track memory leaks during application execution */
   private static final boolean TRACK =
       OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
@@ -182,12 +185,9 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
     boolean detected = false;
     if (TRACK) {
       for (Map.Entry<OPointer, PointerTracker> entry : pointerMapping.entrySet()) {
-        OLogManager.instance()
-            .errorNoDb(
-                this,
-                "DIRECT-TRACK: unreleased direct memory pointer `%X` detected.",
-                entry.getValue().allocation,
-                System.identityHashCode(entry.getKey()));
+        logger.errorNoDb(
+            "DIRECT-TRACK: unreleased direct memory pointer `%X` detected.",
+            entry.getValue().allocation, System.identityHashCode(entry.getKey()));
         detected = true;
       }
     }

@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -78,6 +79,9 @@ import java.util.stream.Collectors;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerCommandPostBatch.class);
+
   private static final String[] NAMES = {"POST|batch/*"};
 
   @Override
@@ -98,11 +102,9 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
       if (db.getTransaction().isActive()) {
         // TEMPORARY PATCH TO UNDERSTAND WHY UNDER HIGH LOAD TX IS NOT COMMITTED AFTER BATCH. MAYBE
         // A PENDING TRANSACTION?
-        OLogManager.instance()
-            .warn(
-                this,
-                "Found database instance from the pool with a pending transaction. Forcing rollback"
-                    + " before using it");
+        logger.warn(
+            "Found database instance from the pool with a pending transaction. Forcing rollback"
+                + " before using it");
         db.rollback(true);
       }
 
@@ -224,12 +226,9 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
       try {
         iResponse.writeResult(lastResult);
       } catch (RuntimeException e) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Error (%s) on serializing result of batch command:\n%s",
-                e,
-                batch.toJSON("prettyPrint"));
+        logger.error(
+            "Error (%s) on serializing result of batch command:\n%s",
+            e, batch.toJSON("prettyPrint"));
         throw e;
       }
 

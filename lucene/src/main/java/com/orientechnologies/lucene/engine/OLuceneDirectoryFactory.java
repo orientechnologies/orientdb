@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -14,6 +15,8 @@ import org.apache.lucene.store.RAMDirectory;
 
 /** Created by frank on 03/03/2016. */
 public class OLuceneDirectoryFactory {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneDirectoryFactory.class);
 
   public static final String OLUCENE_BASE_DIR = "luceneIndexes";
 
@@ -61,10 +64,9 @@ public class OLuceneDirectoryFactory {
       }
       return new OLuceneDirectory(dir, luceneIndexPath.toString());
     } catch (final IOException e) {
-      OLogManager.instance()
-          .error(this, "unable to create Lucene Directory with type " + luceneType, e);
+      logger.error("unable to create Lucene Directory with type " + luceneType, e);
     }
-    OLogManager.instance().warn(this, "unable to create Lucene Directory, FALL BACK to ramDir");
+    logger.warn("unable to create Lucene Directory, FALL BACK to ramDir");
     return new OLuceneDirectory(new RAMDirectory(), null);
   }
 }

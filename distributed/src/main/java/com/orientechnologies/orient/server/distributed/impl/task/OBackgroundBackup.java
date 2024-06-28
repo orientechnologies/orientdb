@@ -120,7 +120,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
                     public void onMessage(String iText) {
                       if (iText.startsWith("\n")) iText = iText.substring(1);
 
-                      OLogManager.instance().debug(this, iText);
+                      logger.debug(iText);
                     }
                   };
             }
@@ -138,7 +138,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
             try {
               dest.close();
             } catch (IOException e2) {
-              OLogManager.instance().debug(this, "Error performing backup ", e2);
+              logger.debug("Error performing backup ", e2);
             }
             finished.countDown();
             this.timerTask.cancel();
@@ -155,28 +155,20 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
             requestId);
 
       } catch (Exception e) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Cannot execute backup of database '%s' for deploy database",
-                e,
-                database.getName());
+        logger.error(
+            "Cannot execute backup of database '%s' for deploy database", e, database.getName());
         throw e;
       } finally {
         finished.countDown();
         this.timerTask.cancel();
       }
     } catch (Exception e) {
-      OLogManager.instance()
-          .errorNoDb(
-              this,
-              "Error during backup processing, file %s will be deleted\n",
-              e,
-              resultedBackupFile);
+      logger.errorNoDb(
+          "Error during backup processing, file %s will be deleted\n", e, resultedBackupFile);
       try {
         Files.deleteIfExists(Paths.get(resultedBackupFile.getAbsolutePath()));
       } catch (IOException ioe) {
-        OLogManager.instance().errorNoDb(this, "Can not delete file %s\n", ioe, resultedBackupFile);
+        logger.errorNoDb("Can not delete file %s\n", ioe, resultedBackupFile);
       }
     }
   }

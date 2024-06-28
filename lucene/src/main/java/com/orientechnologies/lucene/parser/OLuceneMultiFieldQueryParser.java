@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.builder.OLuceneDateTools;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.Map;
@@ -17,6 +18,8 @@ import org.apache.lucene.search.Query;
 
 /** Created by frank on 13/12/2016. */
 public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneMultiFieldQueryParser.class);
   private final Map<String, OType> types;
 
   public OLuceneMultiFieldQueryParser(
@@ -115,8 +118,7 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
                     Math.addExact(OLuceneDateTools.stringToTime(part2), end)));
 
           } catch (final java.text.ParseException e) {
-            OLogManager.instance()
-                .error(this, "Exception is suppressed, original exception exception is ", e);
+            logger.error("Exception is suppressed, original exception exception is ", e);
             //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
             throw new ParseException(e.getMessage());
           }

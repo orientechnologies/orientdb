@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
@@ -37,7 +38,8 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
  */
 @SuppressWarnings("unchecked")
 public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatabasePooled {
-
+  private static final OLogger logger =
+      OLogManager.instance().logger(OObjectDatabaseTxPooled.class);
   private OObjectDatabasePool ownerPool;
   private final String userName;
 
@@ -62,7 +64,7 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
       underlying.callOnOpenListeners();
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on reusing database '%s' in pool", e, getName());
+      logger.error("Error on reusing database '%s' in pool", e, getName());
     }
   }
 
@@ -113,13 +115,13 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
     try {
       commit(true);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
+      logger.error("Error on releasing database '%s' in pool", e, getName());
     }
 
     try {
       underlying.callOnCloseListeners();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
+      logger.error("Error on releasing database '%s' in pool", e, getName());
     }
 
     getLocalCache().clear();

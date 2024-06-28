@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -81,6 +82,8 @@ import java.util.TimeZone;
 import java.util.UUID;
 
 public class ORecordSerializerNetworkV37 implements ORecordSerializer {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ORecordSerializerNetworkV37.class);
 
   public static final String NAME = "onet_ser_v37";
   private static final String CHARSET_UTF_8 = "UTF-8";
@@ -874,12 +877,9 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
         deserializePartial((ODocument) iRecord, container, iFields);
       else deserialize((ODocument) iRecord, container);
     } catch (RuntimeException e) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Error deserializing record with id %s send this data for debugging: %s ",
-              iRecord.getIdentity().toString(),
-              Base64.getEncoder().encodeToString(iSource));
+      logger.warn(
+          "Error deserializing record with id %s send this data for debugging: %s ",
+          iRecord.getIdentity().toString(), Base64.getEncoder().encodeToString(iSource));
       throw e;
     }
     return iRecord;
@@ -930,11 +930,9 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     try {
       return getFieldNames(reference, container);
     } catch (RuntimeException e) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Error deserializing record to get field-names, send this data for debugging: %s ",
-              Base64.getEncoder().encodeToString(iSource));
+      logger.warn(
+          "Error deserializing record to get field-names, send this data for debugging: %s ",
+          Base64.getEncoder().encodeToString(iSource));
       throw e;
     }
   }

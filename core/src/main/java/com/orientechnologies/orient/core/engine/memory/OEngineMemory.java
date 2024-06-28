@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.engine.memory;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.memory.ODirectMemoryStorage;
 
 public class OEngineMemory extends OEngineAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OEngineMemory.class);
   public static final String NAME = "memory";
 
   public OEngineMemory() {}
@@ -44,7 +46,7 @@ public class OEngineMemory extends OEngineAbstract {
       return new ODirectMemoryStorage(url, url, storageId, context);
     } catch (Exception e) {
       final String message = "Error on opening in memory storage: " + url;
-      OLogManager.instance().error(this, message, e);
+      logger.error(message, e);
 
       throw OException.wrapException(new ODatabaseException(message), e);
     }

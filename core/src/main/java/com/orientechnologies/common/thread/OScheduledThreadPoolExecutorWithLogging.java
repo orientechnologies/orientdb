@@ -1,6 +1,7 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -13,6 +14,9 @@ import java.util.concurrent.ThreadFactory;
  * inside of the tasks which caused tasks to stop.
  */
 public class OScheduledThreadPoolExecutorWithLogging extends ScheduledThreadPoolExecutor {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OScheduledThreadPoolExecutorWithLogging.class);
+
   public OScheduledThreadPoolExecutorWithLogging(int corePoolSize, ThreadFactory threadFactory) {
     super(corePoolSize, threadFactory);
   }
@@ -45,7 +49,7 @@ public class OScheduledThreadPoolExecutorWithLogging extends ScheduledThreadPool
 
     if (t != null) {
       final Thread thread = Thread.currentThread();
-      OLogManager.instance().errorNoDb(this, "Exception in thread '%s'", t, thread.getName());
+      logger.errorNoDb("Exception in thread '%s'", t, thread.getName());
     }
   }
 }

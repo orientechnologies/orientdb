@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.OShutdownRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -36,6 +37,7 @@ import java.util.Arrays;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OServerShutdownMain {
+  private static final OLogger logger = OLogManager.instance().logger(OServerShutdownMain.class);
   public String networkAddress;
   public int[] networkPort;
   public OChannelBinaryAsynchClient channel;
@@ -70,7 +72,7 @@ public class OServerShutdownMain {
                 OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
         break;
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on connecting to %s:%d", e, networkAddress, port);
+        logger.error("Error on connecting to %s:%d", e, networkAddress, port);
       }
 
     if (channel == null)

@@ -25,6 +25,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -124,6 +125,8 @@ public class ODocument extends ORecordAbstract
         ODetachable,
         Externalizable,
         OElement {
+
+  private static final OLogger logger = OLogManager.instance().logger(ODocument.class);
 
   public static final byte RECORD_TYPE = 'd';
   protected static final String[] EMPTY_STRINGS = new String[] {};
@@ -547,13 +550,9 @@ public class ODocument extends ORecordAbstract
             }
           }
         } catch (Exception e) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Error on checking the value of property %s against the record %s",
-                  e,
-                  iPropetyName,
-                  getIdentity());
+          logger.warn(
+              "Error on checking the value of property %s against the record %s",
+              e, iPropetyName, getIdentity());
         }
       }
 
@@ -1694,13 +1693,9 @@ public class ODocument extends ORecordAbstract
             return this;
           }
         } catch (Exception e) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Error on checking the value of property %s against the record %s",
-                  e,
-                  iFieldName,
-                  getIdentity());
+          logger.warn(
+              "Error on checking the value of property %s against the record %s",
+              e, iFieldName, getIdentity());
         }
       }
 

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -42,6 +43,8 @@ import java.util.zip.CRC32;
 
 /** Handles the database configuration in one big record. */
 public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OStorageConfigurationSegment.class);
   private static final int VERSION_OFFSET = 48;
 
   // This class uses "double write" pattern.
@@ -132,45 +135,35 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
           return this;
         }
 
-        OLogManager.instance()
-            .warnNoDb(
-                this,
-                "Main storage configuration file %s is broken in storage %s, try to read from"
-                    + " backup file %s",
-                file,
-                storageName,
-                backupFile);
+        logger.warnNoDb(
+            "Main storage configuration file %s is broken in storage %s, try to read from"
+                + " backup file %s",
+            file, storageName, backupFile);
 
         if (Files.exists(backupFile)) {
           if (readData(backupFile)) {
             return this;
           }
 
-          OLogManager.instance()
-              .errorNoDb(this, "Backup configuration file %s is broken too", null);
+          logger.errorNoDb("Backup configuration file %s is broken too", null);
           throw new OStorageException(
               "Invalid format for configuration file " + file + " for storage" + storageName);
         } else {
-          OLogManager.instance()
-              .errorNoDb(this, "Backup configuration file %s does not exist", null, backupFile);
+          logger.errorNoDb("Backup configuration file %s does not exist", null, backupFile);
           throw new OStorageException(
               "Invalid format for configuration file " + file + " for storage" + storageName);
         }
       } else if (Files.exists(backupFile)) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Seems like previous update to the storage '%s' configuration was finished"
-                    + " incorrectly, main configuration file %s is absent, reading from backup",
-                backupFile,
-                file);
+        logger.warn(
+            "Seems like previous update to the storage '%s' configuration was finished"
+                + " incorrectly, main configuration file %s is absent, reading from backup",
+            backupFile, file);
 
         if (readData(backupFile)) {
           return this;
         }
 
-        OLogManager.instance()
-            .errorNoDb(this, "Backup configuration file %s is broken", null, backupFile);
+        logger.errorNoDb("Backup configuration file %s is broken", null, backupFile);
         throw new OStorageException(
             "Invalid format for configuration file " + backupFile + " for storage" + storageName);
       } else {
@@ -323,13 +316,8 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
             try {
               fromStream(buffer, 0, buffer.length, streamEncoding);
             } catch (Exception e) {
-              OLogManager.instance()
-                  .errorNoDb(
-                      this,
-                      "Error during reading of configuration %s of storage %s",
-                      e,
-                      file,
-                      storageName);
+              logger.errorNoDb(
+                  "Error during reading of configuration %s of storage %s", e, file, storageName);
               return false;
             }
 
@@ -340,13 +328,8 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
           try {
             fromStream(buffer, 0, buffer.length, Charset.defaultCharset());
           } catch (Exception e) {
-            OLogManager.instance()
-                .errorNoDb(
-                    this,
-                    "Error during reading of configuration %s of storage %s",
-                    e,
-                    file,
-                    storageName);
+            logger.errorNoDb(
+                "Error during reading of configuration %s of storage %s", e, file, storageName);
             return false;
           }
         }
@@ -354,13 +337,8 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
         try {
           fromStream(buffer, 0, buffer.length, Charset.defaultCharset());
         } catch (Exception e) {
-          OLogManager.instance()
-              .errorNoDb(
-                  this,
-                  "Error during reading of configuration %s of storage %s",
-                  e,
-                  file,
-                  storageName);
+          logger.errorNoDb(
+              "Error during reading of configuration %s of storage %s", e, file, storageName);
           return false;
         }
       }
@@ -375,13 +353,8 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
       try {
         fromStream(buffer, 0, buffer.length, Charset.forName("UTF-8"));
       } catch (Exception e) {
-        OLogManager.instance()
-            .errorNoDb(
-                this,
-                "Error during reading of configuration %s of storage %s",
-                e,
-                file,
-                storageName);
+        logger.errorNoDb(
+            "Error during reading of configuration %s of storage %s", e, file, storageName);
         return false;
       }
     }

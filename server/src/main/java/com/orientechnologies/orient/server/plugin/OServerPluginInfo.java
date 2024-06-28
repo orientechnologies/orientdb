@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.plugin;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OServerPluginInfo {
+  private static final OLogger logger = OLogManager.instance().logger(OServerPluginInfo.class);
   private final String name;
   private final String version;
   private final String description;
@@ -74,7 +76,7 @@ public class OServerPluginInfo {
         if (m != null) m.invoke(pluginClassLoader);
       } catch (NoSuchMethodException e) {
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on closing plugin classloader", e);
+        logger.error("Error on closing plugin classloader", e);
       }
     }
   }

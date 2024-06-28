@@ -21,6 +21,7 @@ package com.orientechnologies.common.util;
 
 import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
@@ -29,6 +30,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * @author Sergey Sitnikov
  */
 public class OMemory {
+  private static final OLogger logger = OLogManager.instance().logger(OMemory.class);
+
   /**
    * @param unlimitedCap the upper limit on reported memory, if JVM reports unlimited memory.
    * @return same as {@link Runtime#maxMemory()} except that {@code unlimitedCap} limit is applied
@@ -59,21 +62,19 @@ public class OMemory {
     if (maxHeapSize != Long.MAX_VALUE
         && physicalMemory != null
         && maxHeapSize + maxCacheSize > physicalMemory.memoryLimit)
-      OLogManager.instance()
-          .warnNoDb(
-              OMemory.class,
-              "The sum of the configured JVM maximum heap size ("
-                  + maxHeapSize
-                  + " bytes) "
-                  + "and the OrientDB maximum cache size ("
-                  + maxCacheSize
-                  + " bytes) is larger than the available physical memory size "
-                  + "("
-                  + physicalMemory.memoryLimit
-                  + " bytes). That may cause out of memory errors, please tune the configuration"
-                  + " up. Use the -Xmx JVM option to lower the JVM maximum heap memory size or"
-                  + " storage.diskCache.bufferSize OrientDB option to lower memory requirements of"
-                  + " the cache.");
+      logger.warnNoDb(
+          "The sum of the configured JVM maximum heap size ("
+              + maxHeapSize
+              + " bytes) "
+              + "and the OrientDB maximum cache size ("
+              + maxCacheSize
+              + " bytes) is larger than the available physical memory size "
+              + "("
+              + physicalMemory.memoryLimit
+              + " bytes). That may cause out of memory errors, please tune the configuration"
+              + " up. Use the -Xmx JVM option to lower the JVM maximum heap memory size or"
+              + " storage.diskCache.bufferSize OrientDB option to lower memory requirements of"
+              + " the cache.");
   }
 
   /**
@@ -89,12 +90,9 @@ public class OMemory {
 
     final int max32BitCacheSize = 512;
     if (getJavaBitWidth() == 32 && diskCacheSize > max32BitCacheSize) {
-      OLogManager.instance()
-          .infoNoDb(
-              OGlobalConfiguration.class,
-              "32 bit JVM is detected. Lowering disk cache size from %,dMB to %,dMB.",
-              diskCacheSize,
-              max32BitCacheSize);
+      logger.infoNoDb(
+          "32 bit JVM is detected. Lowering disk cache size from %,dMB to %,dMB.",
+          diskCacheSize, max32BitCacheSize);
       OGlobalConfiguration.DISK_CACHE_SIZE.setValue(max32BitCacheSize);
     }
   }

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -35,6 +36,7 @@ import java.util.Iterator;
 
 /** @author Luigi Dell'Aquila */
 public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
+  private static final OLogger logger = OLogManager.instance().logger(OEdgeIterator.class);
 
   private final OVertex sourceVertex;
   private final OVertex targetVertex;
@@ -80,21 +82,19 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
     final ORecord record = rec.getRecord();
     if (record == null) {
       // SKIP IT
-      OLogManager.instance().warn(this, "Record (%s) is null", rec);
+      logger.warn("Record (%s) is null", rec);
       return null;
     }
 
     if (!(record instanceof OElement)) {
       // SKIP IT
-      OLogManager.instance()
-          .warn(
-              this,
-              "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s,"
-                  + " Database : %s",
-              rec,
-              sourceVertex != null ? sourceVertex.getIdentity() : null,
-              targetVertex != null ? targetVertex.getIdentity() : null,
-              record.getDatabase().getURL());
+      logger.warn(
+          "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s,"
+              + " Database : %s",
+          rec,
+          sourceVertex != null ? sourceVertex.getIdentity() : null,
+          targetVertex != null ? targetVertex.getIdentity() : null,
+          record.getDatabase().getURL());
       return null;
     }
 

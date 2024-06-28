@@ -17,6 +17,7 @@
 package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -27,7 +28,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 public class OLuceneMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> {
-
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneMapEntryIterator.class);
   private final OIndexDefinition definition;
   private final IndexReader reader;
 
@@ -77,7 +79,7 @@ public class OLuceneMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
         }
       };
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on iterating Lucene result", e);
+      logger.error("Error on iterating Lucene result", e);
     }
     return null;
   }

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
@@ -34,6 +35,8 @@ import java.util.Collection;
  * @author Luca Garulli
  */
 public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ORemoteTaskFactoryManagerImpl.class);
   private final ODistributedServerManager dManager;
   private ORemoteTaskFactory[] factories = new ORemoteTaskFactory[1];
 
@@ -83,14 +86,12 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
       return getFactoryByVersion(ORemoteServerController.CURRENT_PROTOCOL_VERSION);
 
     } catch (IOException e) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Cannot determine protocol version for server "
-                  + serverName
-                  + " error: "
-                  + e.getMessage(),
-              e);
+      logger.warn(
+          "Cannot determine protocol version for server "
+              + serverName
+              + " error: "
+              + e.getMessage(),
+          e);
       dManager.removeServer(serverName, true);
       return null;
     }

@@ -21,6 +21,7 @@ import com.cloudbees.syslog.Severity;
 import com.cloudbees.syslog.SyslogMessage;
 import com.cloudbees.syslog.sender.UdpSyslogMessageSender;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.security.OSyslog;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -32,6 +33,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  * @author S. Colin Leister
  */
 public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
+  private static final OLogger logger = OLogManager.instance().logger(ODefaultSyslog.class);
   private boolean debug = false;
   private String hostname = "localhost";
   private int port = 514; // Default syslog UDP port.
@@ -55,7 +57,7 @@ public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
         messageSender.setMessageFormat(MessageFormat.RFC_3164); // optional, default is RFC 3164
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultSyslog.active()", ex);
+      logger.error("ODefaultSyslog.active()", ex);
     }
   }
 
@@ -146,7 +148,7 @@ public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
         messageSender.sendMessage(sysMsg);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultSyslog.log()", ex);
+      logger.error("ODefaultSyslog.log()", ex);
     }
   }
 

@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
@@ -72,6 +73,7 @@ import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(ORecordSerializerJSON.class);
   public static final String NAME = "json";
   public static final ORecordSerializerJSON INSTANCE = new ORecordSerializerJSON();
   public static final char[] PARAMETER_SEPARATOR = new char[] {':', ','};
@@ -616,8 +618,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
               // TRY TO PARSE AS DATE
               return ODateHelper.getDateFormatInstance().parseObject(iFieldValueAsString);
             } catch (ParseException ex) {
-              OLogManager.instance()
-                  .error(this, "Exception is suppressed, original exception is ", e);
+              logger.error("Exception is suppressed, original exception is ", e);
               throw OException.wrapException(
                   new OSerializationException(
                       "Unable to unmarshall date (format="
@@ -637,8 +638,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
               // TRY TO PARSE AS DATETIME
               return ODateHelper.getDateTimeFormatInstance().parseObject(iFieldValueAsString);
             } catch (ParseException ex) {
-              OLogManager.instance()
-                  .error(this, "Exception is suppressed, original exception is ", e);
+              logger.error("Exception is suppressed, original exception is ", e);
               throw OException.wrapException(
                   new OSerializationException(
                       "Unable to unmarshall datetime (format="

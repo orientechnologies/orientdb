@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -21,6 +22,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class ReinstallDatabaseTestIT {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ReinstallDatabaseTestIT.class);
   public static final String DATABASE_NAME = "ReinstallDatabaseTestIT";
   // Relies on direct access to OServer to install DB and can run only on local setup.
   private LocalTestSetup setup;
@@ -79,7 +82,7 @@ public class ReinstallDatabaseTestIT {
                     .getDistributedManager()
                     .installDatabase(false, DATABASE_NAME, true, true);
               } catch (RuntimeException e) {
-                OLogManager.instance().error(this, " error on install database", e);
+                logger.error(" error on install database", e);
               }
               try {
                 Thread.sleep(2000);

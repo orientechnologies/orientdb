@@ -21,6 +21,7 @@
 package com.orientechnologies.common.reflection;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -47,6 +48,7 @@ import java.util.jar.JarFile;
  * @author Antony Stubbs
  */
 public class OReflectionHelper {
+  private static final OLogger logger = OLogManager.instance().logger(OReflectionHelper.class);
   private static final String CLASS_EXTENSION = ".class";
 
   public static List<Class<?>> getClassesFor(
@@ -181,7 +183,7 @@ public class OReflectionHelper {
         }
       }
     } catch (ClassNotFoundException ex) {
-      OLogManager.instance().error(null, "Error finding classes", ex);
+      logger.error("Error finding classes", ex);
     }
 
     return classList;

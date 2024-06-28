@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -31,11 +32,25 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OClientConnection;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -44,6 +59,8 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OHttpResponseAbstract implements OHttpResponse {
+  private static final OLogger logger = OLogManager.instance().logger(OHttpResponseAbstract.class);
+
   public static final char[] URL_SEPARATOR = {'/'};
   protected static final Charset utf8 = StandardCharsets.UTF_8;
 
@@ -337,7 +354,7 @@ public abstract class OHttpResponseAbstract implements OHttpResponse {
                 iArgument.flush();
 
               } catch (IOException e) {
-                OLogManager.instance().error(this, "HTTP response: error on writing records", e);
+                logger.error("HTTP response: error on writing records", e);
               }
 
               return null;
@@ -360,8 +377,7 @@ public abstract class OHttpResponseAbstract implements OHttpResponse {
                 writeRecordsOnStream(iFetchPlan, sendFormat, iAdditionalProperties, it, writer);
                 writer.flush();
               } catch (IOException e) {
-                OLogManager.instance()
-                    .error(this, "Error during writing of records to the HTTP response", e);
+                logger.error("Error during writing of records to the HTTP response", e);
               }
               return null;
             });
@@ -437,8 +453,7 @@ public abstract class OHttpResponseAbstract implements OHttpResponse {
 
                 buffer.append(objectJson);
               } catch (Exception e) {
-                OLogManager.instance()
-                    .error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+                logger.error("Error transforming record " + rec.getIdentity() + " to JSON", e);
               }
             }
           } else if (OMultiValue.isMultiValue(entry)) {
@@ -528,7 +543,7 @@ public abstract class OHttpResponseAbstract implements OHttpResponse {
       gout.finish();
       return baos.toByteArray();
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "Error on compressing HTTP response", ex);
+      logger.error("Error on compressing HTTP response", ex);
     } finally {
       try {
         if (gout != null) {

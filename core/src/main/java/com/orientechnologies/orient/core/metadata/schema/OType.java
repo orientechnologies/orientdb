@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -134,6 +135,7 @@ public enum OType {
         EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, CUSTOM, EMBEDDED, STRING, DATETIME
       };
 
+  private static final OLogger logger = OLogManager.instance().logger(OType.class);
   protected static final OType[] TYPES_BY_ID = new OType[24];
   // Values previosly stored in javaTypes
   protected static final Map<Class<?>, OType> TYPES_BY_CLASS = new HashMap<Class<?>, OType>();
@@ -212,7 +214,7 @@ public enum OType {
    */
   public static OType getById(final byte iId) {
     if (iId >= 0 && iId < TYPES_BY_ID.length) return TYPES_BY_ID[iId];
-    OLogManager.instance().warn(OType.class, "Invalid type index: " + iId, (Object[]) null);
+    logger.warn("Invalid type index: " + iId, (Object[]) null);
     return null;
   }
 
@@ -475,13 +477,8 @@ public enum OType {
               try {
                 result.add(new ORecordId(iValue.toString()));
               } catch (Exception e) {
-                OLogManager.instance()
-                    .debug(
-                        OType.class,
-                        "Error in conversion of value '%s' to type '%s'",
-                        e,
-                        iValue,
-                        iTargetClass);
+                logger.debug(
+                    "Error in conversion of value '%s' to type '%s'", e, iValue, iTargetClass);
               }
             }
           }
@@ -490,13 +487,7 @@ public enum OType {
           try {
             return new ORecordId((String) iValue);
           } catch (Exception e) {
-            OLogManager.instance()
-                .debug(
-                    OType.class,
-                    "Error in conversion of value '%s' to type '%s'",
-                    e,
-                    iValue,
-                    iTargetClass);
+            logger.debug("Error in conversion of value '%s' to type '%s'", e, iValue, iTargetClass);
           }
         }
       }
@@ -526,13 +517,7 @@ public enum OType {
             iTargetClass);
       }
 
-      OLogManager.instance()
-          .debug(
-              OType.class,
-              "Error in conversion of value '%s' to type '%s'",
-              e,
-              iValue,
-              iTargetClass);
+      logger.debug("Error in conversion of value '%s' to type '%s'", e, iValue, iTargetClass);
       return null;
     }
 

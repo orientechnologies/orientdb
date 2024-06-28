@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSerializer;
 import java.io.ByteArrayInputStream;
@@ -8,6 +9,8 @@ import java.io.IOException;
 
 /** Created by tglman on 12/04/16. */
 public class OStorageRemoteNodeSession {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OStorageRemoteNodeSession.class);
   private final String serverURL;
   private Integer sessionId = -1;
   private byte[] token = null;
@@ -38,7 +41,7 @@ public class OStorageRemoteNodeSession {
       try {
         this.tokenInstance = binarySerializer.deserialize(new ByteArrayInputStream(token));
       } catch (IOException e) {
-        OLogManager.instance().debug(this, "Error deserializing binary token", e);
+        logger.debug("Error deserializing binary token", e);
       }
     }
   }

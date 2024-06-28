@@ -20,8 +20,10 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 
 public class OServerMain {
+  private static final OLogger logger = OLogManager.instance().logger(OServerMain.class);
   private static OServer instance;
 
   public static OServer create() throws Exception {
@@ -49,7 +51,7 @@ public class OServerMain {
               instance.startup().activate();
               instance.waitForShutdown();
             } catch (Exception e) {
-              OLogManager.instance().error(this, "Error during server execution", e);
+              logger.error("Error during server execution", e);
             }
           }
         };

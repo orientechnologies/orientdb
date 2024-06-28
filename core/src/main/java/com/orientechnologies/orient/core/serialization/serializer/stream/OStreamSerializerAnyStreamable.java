@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -34,6 +35,8 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class OStreamSerializerAnyStreamable {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OStreamSerializerAnyStreamable.class);
   private static final String SCRIPT_COMMAND_CLASS = "s";
   private static final byte[] SCRIPT_COMMAND_CLASS_ASBYTES = SCRIPT_COMMAND_CLASS.getBytes();
   private static final String SQL_COMMAND_CLASS = "c";
@@ -60,7 +63,7 @@ public class OStreamSerializerAnyStreamable {
     if (classNameSize <= 0) {
       final String message =
           "Class signature not found in ANY element: " + Arrays.toString(iStream);
-      OLogManager.instance().error(this, message, null);
+      logger.error(message, null);
 
       throw new OSerializationException(message);
     }
@@ -88,7 +91,7 @@ public class OStreamSerializerAnyStreamable {
 
     } catch (Exception e) {
       final String message = "Error on unmarshalling content. Class: " + className;
-      OLogManager.instance().error(this, message, e);
+      logger.error(message, e);
       throw OException.wrapException(new OSerializationException(message), e);
     }
   }

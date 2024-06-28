@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.sql.filter;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -63,6 +64,7 @@ import java.util.regex.Pattern;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLFilterCondition {
+  private static final OLogger logger = OLogManager.instance().logger(OSQLFilterCondition.class);
   private static final String NULL_VALUE = "null";
   protected Object left;
   protected OQueryOperator operator;
@@ -187,8 +189,8 @@ public class OSQLFilterCondition {
     } catch (OCommandExecutionException e) {
       throw e;
     } catch (Exception e) {
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Error on evaluating expression (%s)", e, toString());
+      if (logger.isDebugEnabled())
+        logger.debug("Error on evaluating expression (%s)", e, toString());
       result = Boolean.FALSE;
     }
 

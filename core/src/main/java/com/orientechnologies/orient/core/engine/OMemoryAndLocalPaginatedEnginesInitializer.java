@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.engine;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
@@ -35,6 +36,8 @@ import java.util.Locale;
  * @author Sergey Sitnikov
  */
 public class OMemoryAndLocalPaginatedEnginesInitializer {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OMemoryAndLocalPaginatedEnginesInitializer.class);
 
   /** Shared initializer instance. */
   public static final OMemoryAndLocalPaginatedEnginesInitializer INSTANCE =
@@ -76,27 +79,22 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   private void configureDefaultDiskCacheSize() {
     final ONative.MemoryLimitResult osMemory = ONative.instance().getMemoryLimit(true);
     if (osMemory == null) {
-      OLogManager.instance()
-          .warnNoDb(
-              this,
-              "Can not determine amount of memory installed on machine, default size of disk cache"
-                  + " will be used");
+      logger.warnNoDb(
+          "Can not determine amount of memory installed on machine, default size of disk cache"
+              + " will be used");
       return;
     }
 
     final long jvmMaxMemory = OMemory.getCappedRuntimeMaxMemory(2L * 1024 * 1024 * 1024 /* 2GB */);
-    OLogManager.instance()
-        .infoNoDb(this, "JVM can use maximum %dMB of heap memory", jvmMaxMemory / (1024 * 1024));
+    logger.infoNoDb("JVM can use maximum %dMB of heap memory", jvmMaxMemory / (1024 * 1024));
 
     long diskCacheInMB;
     if (osMemory.insideContainer) {
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "Because OrientDB is running inside a container %s of memory will be left unallocated"
-                  + " according to the setting '%s' not taking into account heap memory",
-              OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getValueAsString(),
-              OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey());
+      logger.infoNoDb(
+          "Because OrientDB is running inside a container %s of memory will be left unallocated"
+              + " according to the setting '%s' not taking into account heap memory",
+          OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getValueAsString(),
+          OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey());
 
       diskCacheInMB =
           (calculateMemoryLeft(
@@ -106,13 +104,11 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
                   - jvmMaxMemory)
               / (1024 * 1024);
     } else {
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "Because OrientDB is running outside a container %s of memory will be left "
-                  + "unallocated according to the setting '%s' not taking into account heap memory",
-              OGlobalConfiguration.MEMORY_LEFT_TO_OS.getValueAsString(),
-              OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey());
+      logger.infoNoDb(
+          "Because OrientDB is running outside a container %s of memory will be left "
+              + "unallocated according to the setting '%s' not taking into account heap memory",
+          OGlobalConfiguration.MEMORY_LEFT_TO_OS.getValueAsString(),
+          OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey());
 
       diskCacheInMB =
           (calculateMemoryLeft(
@@ -124,37 +120,27 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
     }
 
     if (diskCacheInMB > 0) {
-      OLogManager.instance()
-          .infoNoDb(
-              null,
-              "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)",
-              diskCacheInMB,
-              jvmMaxMemory / 1024 / 1024,
-              osMemory.memoryLimit / 1024 / 1024);
+      logger.infoNoDb(
+          "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)",
+          diskCacheInMB, jvmMaxMemory / 1024 / 1024, osMemory.memoryLimit / 1024 / 1024);
 
       OGlobalConfiguration.DISK_CACHE_SIZE.setValue(diskCacheInMB);
     } else {
       // LOW MEMORY: SET IT TO 256MB ONLY
       diskCacheInMB = OReadCache.MIN_CACHE_SIZE;
-      OLogManager.instance()
-          .warnNoDb(
-              null,
-              "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower"
-                  + " Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with"
-                  + " DISKCACHE="
-                  + diskCacheInMB
-                  + "MB",
-              osMemory.memoryLimit / 1024 / 1024,
-              jvmMaxMemory / 1024 / 1024);
+      logger.warnNoDb(
+          "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower"
+              + " Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with"
+              + " DISKCACHE="
+              + diskCacheInMB
+              + "MB",
+          osMemory.memoryLimit / 1024 / 1024,
+          jvmMaxMemory / 1024 / 1024);
       OGlobalConfiguration.DISK_CACHE_SIZE.setValue(diskCacheInMB);
 
-      OLogManager.instance()
-          .infoNoDb(
-              null,
-              "OrientDB config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)",
-              diskCacheInMB,
-              jvmMaxMemory / 1024 / 1024,
-              osMemory.memoryLimit / 1024 / 1024);
+      logger.infoNoDb(
+          "OrientDB config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)",
+          diskCacheInMB, jvmMaxMemory / 1024 / 1024, osMemory.memoryLimit / 1024 / 1024);
     }
   }
 
@@ -262,11 +248,8 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   }
 
   private void warningInvalidMemoryLeftValue(String parameter, String memoryLeft) {
-    OLogManager.instance()
-        .warnNoDb(
-            this,
-            "Invalid value of '%s' parameter ('%s') memory limit will not be decreased",
-            memoryLeft,
-            parameter);
+    logger.warnNoDb(
+        "Invalid value of '%s' parameter ('%s') memory limit will not be decreased",
+        memoryLeft, parameter);
   }
 }

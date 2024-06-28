@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -65,6 +66,7 @@ import java.util.stream.Collectors;
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci--at--gmail.com)
  */
 public class OrientJdbcResultSet implements ResultSet {
+  private static final OLogger logger = OLogManager.instance().logger(OrientJdbcResultSet.class);
   private final OrientJdbcResultSetMetaData resultSetMetaData;
   private final List<String> fieldNames;
   private List<OResult> records;
@@ -164,13 +166,11 @@ public class OrientJdbcResultSet implements ResultSet {
                     db.getStorageInfo().getConfiguration().getCharset());
           }
         } catch (UnsupportedEncodingException e) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Invalid charset for database "
-                      + db
-                      + " "
-                      + db.getStorageInfo().getConfiguration().getCharset());
+          logger.warn(
+              "Invalid charset for database "
+                  + db
+                  + " "
+                  + db.getStorageInfo().getConfiguration().getCharset());
           osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
         } catch (Exception e) {
           throw new RuntimeException(e);

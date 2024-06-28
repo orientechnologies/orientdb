@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +29,7 @@ import org.junit.Test;
  * restart.
  */
 public class DistributedListenerIT extends AbstractServerClusterTxTest {
+  private static final OLogger logger = OLogManager.instance().logger(DistributedListenerIT.class);
   private static final int SERVERS = 2;
   private volatile boolean restartExecuted = false;
   private final Set<String> afterRestartdbOnline = new HashSet<>();
@@ -68,8 +70,7 @@ public class DistributedListenerIT extends AbstractServerClusterTxTest {
                   String iNode,
                   String iDatabaseName,
                   ODistributedServerManager.DB_STATUS iNewStatus) {
-                OLogManager.instance()
-                    .info(this, "Node %s DB %s Status %s", null, iNode, iDatabaseName, iNewStatus);
+                logger.info("Node %s DB %s Status %s", null, iNode, iDatabaseName, iNewStatus);
 
                 if (iNewStatus == ODistributedServerManager.DB_STATUS.ONLINE) {
                   final String dbName = iNode + ":" + iDatabaseName;

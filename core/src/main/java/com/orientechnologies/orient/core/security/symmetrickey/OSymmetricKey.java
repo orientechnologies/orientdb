@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.security.symmetrickey;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -60,6 +61,7 @@ import javax.crypto.spec.SecretKeySpec;
  * @author S. Colin Leister
  */
 public class OSymmetricKey {
+  private static final OLogger logger = OLogManager.instance().logger(OSymmetricKey.class);
   // These are just defaults.
   private String seedAlgorithm = "PBKDF2WithHmacSHA1";
   private String seedPhrase = UUID.randomUUID().toString();
@@ -352,7 +354,7 @@ public class OSymmetricKey {
     try {
       result = Base64.getEncoder().encodeToString(bytes);
     } catch (Exception ex) {
-      OLogManager.instance().error(null, "convertToBase64()", ex);
+      logger.error("convertToBase64()", ex);
     }
 
     return result;
@@ -366,7 +368,7 @@ public class OSymmetricKey {
         result = Base64.getDecoder().decode(base64.getBytes("UTF8"));
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(null, "convertFromBase64()", ex);
+      logger.error("convertFromBase64()", ex);
     }
 
     return result;
@@ -489,7 +491,7 @@ public class OSymmetricKey {
       encodedJSON = convertToBase64(sb.toString().getBytes("UTF8"));
 
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "Convert to Base64 exception", ex);
+      logger.error("Convert to Base64 exception", ex);
     }
 
     return encodedJSON;

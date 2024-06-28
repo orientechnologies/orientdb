@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.googlecode.concurrentlinkedhashmap.EvictionListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import java.util.Collection;
@@ -40,6 +41,8 @@ import java.util.Iterator;
  * @since 06/11/14
  */
 public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OPartitionedDatabasePoolFactory.class);
   private volatile int maxPoolSize = 64;
   private boolean closed = false;
 
@@ -90,7 +93,7 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
         try {
           pool.close();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during pool close", e);
+          logger.error("Error during pool close", e);
         }
 
         poolIterator.remove();

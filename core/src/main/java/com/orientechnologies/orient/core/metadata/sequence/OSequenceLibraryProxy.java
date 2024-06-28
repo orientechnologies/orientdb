@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -32,6 +33,7 @@ import java.util.concurrent.ExecutionException;
  * @since 3/2/2015
  */
 public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OSequenceLibraryProxy.class);
   private static final int replicationProtocolVersion =
       OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
 
@@ -78,7 +80,7 @@ public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
         String sequenceName = database.sendSequenceAction(action);
         return delegate.getSequence(database, sequenceName);
       } catch (InterruptedException | ExecutionException exc) {
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
+        logger.error(exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     } else {
@@ -101,7 +103,7 @@ public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
       try {
         database.sendSequenceAction(action);
       } catch (InterruptedException | ExecutionException exc) {
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
+        logger.error(exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     } else {

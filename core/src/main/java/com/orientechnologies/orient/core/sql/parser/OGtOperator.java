@@ -3,12 +3,16 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.Map;
 
 public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
+
+  private static final OLogger logger = OLogManager.instance().logger(OGtOperator.class);
+
   public OGtOperator(int id) {
     super(id);
   }
@@ -34,8 +38,7 @@ public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
       } catch (RuntimeException e) {
         iRight = null;
         // Can't convert to the target value do nothing will return false
-        OLogManager.instance()
-            .warn(this, "Issue converting value to target type, ignoring value", e);
+        logger.warn("Issue converting value to target type, ignoring value", e);
       }
     }
     if (iRight == null) return false;

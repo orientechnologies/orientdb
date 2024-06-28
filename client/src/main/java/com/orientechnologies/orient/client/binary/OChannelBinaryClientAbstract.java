@@ -22,6 +22,7 @@ package com.orientechnologies.orient.client.binary;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -49,6 +50,8 @@ import java.util.List;
 
 /** Abstract implementation of binary channel. */
 public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OChannelBinaryClientAbstract.class);
   protected final int socketTimeout; // IN MS
   protected final short srvProtocolVersion;
   protected String serverURL;
@@ -114,15 +117,13 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
       }
 
       if (srvProtocolVersion != protocolVersion) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "The Client driver version is different than Server version: client="
-                    + protocolVersion
-                    + ", server="
-                    + srvProtocolVersion
-                    + ". You could not use the full features of the newer version. Assure to have"
-                    + " the same versions on both");
+        logger.warn(
+            "The Client driver version is different than Server version: client="
+                + protocolVersion
+                + ", server="
+                + srvProtocolVersion
+                + ". You could not use the full features of the newer version. Assure to have"
+                + " the same versions on both");
       }
 
     } catch (RuntimeException e) {
@@ -263,7 +264,7 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
     try {
       throwable = objectInputStream.readObject();
     } catch (ClassNotFoundException e) {
-      OLogManager.instance().error(this, "Error during exception deserialization", e);
+      logger.error("Error during exception deserialization", e);
       throw new IOException("Error during exception deserialization: " + e.toString(), e);
     }
 
@@ -279,13 +280,13 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
         throw proxyInstance;
 
       } catch (NoSuchMethodException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
+        logger.error("Error during exception deserialization", e);
       } catch (InvocationTargetException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
+        logger.error("Error during exception deserialization", e);
       } catch (InstantiationException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
+        logger.error("Error during exception deserialization", e);
       } catch (IllegalAccessException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
+        logger.error("Error during exception deserialization", e);
       }
     }
 
@@ -295,13 +296,11 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
     } else {
       // WRAP IT
       String exceptionType = throwable != null ? throwable.getClass().getName() : "null";
-      OLogManager.instance()
-          .error(
-              this,
-              "Error during exception serialization, serialized exception is not Throwable,"
-                  + " exception type is "
-                  + exceptionType,
-              null);
+      logger.error(
+          "Error during exception serialization, serialized exception is not Throwable,"
+              + " exception type is "
+              + exceptionType,
+          null);
     }
   }
 }

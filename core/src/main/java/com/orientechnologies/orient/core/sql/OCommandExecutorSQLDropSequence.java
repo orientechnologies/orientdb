@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -16,6 +17,8 @@ import java.util.Map;
  */
 public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCommandExecutorSQLDropSequence.class);
   public static final String KEYWORD_DROP = "DROP";
   public static final String KEYWORD_SEQUENCE = "SEQUENCE";
 
@@ -58,7 +61,7 @@ public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
       database.getMetadata().getSequenceLibrary().dropSequence(this.sequenceName);
     } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
-      OLogManager.instance().error(this, message, exc, (Object) null);
+      logger.error(message, exc, (Object) null);
       throw new OCommandExecutionException(message);
     }
     return true;

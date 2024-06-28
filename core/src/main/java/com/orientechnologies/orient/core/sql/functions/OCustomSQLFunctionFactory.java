@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.functions;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLStaticReflectiveFunction;
 import java.lang.reflect.Method;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
  * @author Fabrizio Fortino
  */
 public class OCustomSQLFunctionFactory implements OSQLFunctionFactory {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCustomSQLFunctionFactory.class);
   private static final Map<String, Object> FUNCTIONS = new HashMap<>();
 
   static {
@@ -35,8 +38,7 @@ public class OCustomSQLFunctionFactory implements OSQLFunctionFactory {
     for (Map.Entry<String, List<Method>> entry : methodsMap.entrySet()) {
       final String name = prefix + entry.getKey();
       if (FUNCTIONS.containsKey(name)) {
-        OLogManager.instance()
-            .warn(null, "Unable to register reflective function with name " + name);
+        logger.warn(null, "Unable to register reflective function with name " + name);
       } else {
         List<Method> methodsList = methodsMap.get(entry.getKey());
         Method[] methods = new Method[methodsList.size()];

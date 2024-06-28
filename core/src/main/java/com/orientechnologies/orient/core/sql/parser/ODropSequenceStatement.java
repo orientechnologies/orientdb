@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -13,6 +14,7 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
 import java.util.Map;
 
 public class ODropSequenceStatement extends ODDLStatement {
+  private static final OLogger logger = OLogManager.instance().logger(ODropSequenceStatement.class);
   OIdentifier name;
 
   boolean ifExists = false;
@@ -42,7 +44,7 @@ public class ODropSequenceStatement extends ODDLStatement {
       database.getMetadata().getSequenceLibrary().dropSequence(name.getStringValue());
     } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
-      OLogManager.instance().error(this, message, exc, (Object) null);
+      logger.error(message, exc, (Object) null);
       throw new OCommandExecutionException(message);
     }
 

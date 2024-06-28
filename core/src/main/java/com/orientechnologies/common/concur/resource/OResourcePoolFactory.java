@@ -3,6 +3,7 @@ package com.orientechnologies.common.concur.resource;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.googlecode.concurrentlinkedhashmap.EvictionListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import java.util.Collection;
@@ -10,6 +11,7 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public class OResourcePoolFactory<K, T> extends OOrientListenerAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OResourcePoolFactory.class);
   private volatile int maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
   private volatile int maxPoolSize = 64;
   private boolean closed = false;
@@ -97,7 +99,7 @@ public class OResourcePoolFactory<K, T> extends OOrientListenerAbstract {
         try {
           pool.close();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during pool close", e);
+          logger.error("Error during pool close", e);
         }
 
         poolIterator.remove();

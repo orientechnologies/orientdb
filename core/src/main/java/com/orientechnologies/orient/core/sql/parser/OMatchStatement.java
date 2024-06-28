@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -55,7 +56,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OMatchStatement extends OStatement implements OCommandExecutor, OIterableRecordSource {
-
+  private static final OLogger logger = OLogManager.instance().logger(OMatchStatement.class);
   static final String DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
 
   private OSQLAsynchQuery<ODocument> request;
@@ -260,13 +261,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         osql = new OrientSql(is, db.getStorageInfo().getConfiguration().getCharset());
       }
     } catch (UnsupportedEncodingException e) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "Invalid charset for database "
-                  + getDatabase()
-                  + " "
-                  + getDatabase().getStorageInfo().getConfiguration().getCharset());
+      logger.warn(
+          "Invalid charset for database "
+              + getDatabase()
+              + " "
+              + getDatabase().getStorageInfo().getConfiguration().getCharset());
       osql = new OrientSql(is);
     }
 

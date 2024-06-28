@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.sql.method.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -31,6 +32,7 @@ import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodNext extends OAbstractSQLMethod {
+  private static final OLogger logger = OLogManager.instance().logger(OSQLMethodNext.class);
 
   public static final String NAME = "next";
 
@@ -64,7 +66,7 @@ public class OSQLMethodNext extends OAbstractSQLMethod {
       return ((OSequence) iThis).next();
     } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
-      OLogManager.instance().error(this, message, exc, (Object) null);
+      logger.error(message, exc, (Object) null);
       throw new OCommandExecutionException(message);
     }
   }

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -72,6 +73,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 @SuppressWarnings("serial")
 public class OStorageConfigurationImpl implements OSerializableStream, OStorageConfiguration {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OStorageConfigurationImpl.class);
+
   private static final ORecordId CONFIG_RID = new OImmutableRecordId(0, 0);
 
   protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -352,12 +356,9 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
           localeInstance = new Locale(localeLanguage, localeCountry);
         } catch (RuntimeException e) {
           localeInstance = Locale.getDefault();
-          OLogManager.instance()
-              .errorNoDb(
-                  this,
-                  "Error during initialization of locale, default one %s will be used",
-                  e,
-                  localeInstance);
+          logger.errorNoDb(
+              "Error during initialization of locale, default one %s will be used",
+              e, localeInstance);
         }
       }
 
@@ -420,22 +421,18 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
         final Locale locale = Locale.getDefault();
 
         if (localeLanguage == null)
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Information about storage locale is undefined (language is undefined) default"
-                      + " locale "
-                      + locale
-                      + " will be used");
+          logger.warn(
+              "Information about storage locale is undefined (language is undefined) default"
+                  + " locale "
+                  + locale
+                  + " will be used");
 
         if (localeCountry == null)
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Information about storage locale is undefined (country is undefined) default"
-                      + " locale "
-                      + locale
-                      + " will be used");
+          logger.warn(
+              "Information about storage locale is undefined (country is undefined) default"
+                  + " locale "
+                  + locale
+                  + " will be used");
       }
 
       dateFormat = read(values[index++]);
@@ -557,8 +554,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
         if (cfg != null) {
           if (value != null) configuration.setValue(key, OType.convert(value, cfg.getType()));
         } else
-          OLogManager.instance()
-              .warn(this, "Ignored storage configuration because not supported: %s=%s", key, value);
+          logger.warn("Ignored storage configuration because not supported: %s=%s", key, value);
       }
 
       if (version > 15) {
@@ -774,12 +770,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
             write(buffer, cfg.isHidden() ? null : configuration.getValueAsString(cfg));
           } else {
             write(buffer, null);
-            OLogManager.instance()
-                .warn(
-                    this,
-                    "Storing configuration for property:'"
-                        + k
-                        + "' not existing in current version");
+            logger.warn(
+                "Storing configuration for property:'" + k + "' not existing in current version");
           }
         }
       }
@@ -912,12 +904,10 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
       final IndexEngineData oldEngine = indexEngines.putIfAbsent(name, engineData);
 
       if (oldEngine != null)
-        OLogManager.instance()
-            .warn(
-                this,
-                "Index engine with name '"
-                    + engineData.getName()
-                    + "' already contained in database configuration");
+        logger.warn(
+            "Index engine with name '"
+                + engineData.getName()
+                + "' already contained in database configuration");
 
       update();
     } finally {

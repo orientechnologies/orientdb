@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
@@ -42,6 +43,8 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ODistributedConfiguration {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ODistributedConfiguration.class);
   public static final String NEW_NODE_TAG = "<NEW_NODE>";
   public static final String ALL_WILDCARD = "*";
 
@@ -155,12 +158,9 @@ public class ODistributedConfiguration {
     if (value == null) {
       value = configuration.field(READ_YOUR_WRITES);
       if (value == null) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "%s setting not found for cluster=%s in distributed-config.json",
-                READ_YOUR_WRITES,
-                iClusterName);
+        logger.warn(
+            "%s setting not found for cluster=%s in distributed-config.json",
+            READ_YOUR_WRITES, iClusterName);
         return true;
       }
     }
@@ -747,8 +747,7 @@ public class ODistributedConfiguration {
       final String server) {
     Object value = configuration.field(quorumSetting);
     if (value == null) {
-      OLogManager.instance()
-          .warn(this, "%s setting not found in distributed-config.json", quorumSetting);
+      logger.warn("%s setting not found in distributed-config.json", quorumSetting);
       value = defaultValue;
     }
 

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.etl.http;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLPlugin;
 import com.orientechnologies.orient.etl.context.OETLContext;
@@ -15,6 +16,7 @@ import java.io.UnsupportedEncodingException;
 
 /** Created by gabriele on 27/02/17. */
 public class OETLJob implements Runnable {
+  private static final OLogger logger = OLogManager.instance().logger(OETLJob.class);
 
   private final ODocument cfg;
   private OETLListener listener;
@@ -72,7 +74,7 @@ public class OETLJob implements Runnable {
       String finalJsonConfig = jsonConfig.toJSON("prettyPrint");
       etlPlugin.executeJob(finalJsonConfig, outDBConfigPath, messageHandler);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error during execution of job", e);
+      logger.error("Error during execution of job", e);
     }
 
     synchronized (listener) {
@@ -123,7 +125,7 @@ public class OETLJob implements Runnable {
       try {
         lastBatchLog = baos.toString("UTF-8");
       } catch (UnsupportedEncodingException e) {
-        OLogManager.instance().error(this, "UTF-8 encoding is not supported", e);
+        logger.error("UTF-8 encoding is not supported", e);
       }
       int baosFinalSize = baos.size();
       if (baosFinalSize - baosInitSize > 0) {

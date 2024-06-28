@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -34,6 +35,7 @@ import java.util.concurrent.ExecutionException;
  * @since 3/3/2015
  */
 public class OSequenceCached extends OSequence {
+  private static final OLogger logger = OLogManager.instance().logger(OSequenceCached.class);
   private static final String FIELD_CACHE = "cache";
   private long cacheStart;
   private long cacheEnd;
@@ -145,7 +147,7 @@ public class OSequenceCached extends OSequence {
       try {
         return sendSequenceActionSetAndNext(currentValue);
       } catch (InterruptedException | ExecutionException exc) {
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
+        logger.error(exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     }
@@ -249,7 +251,7 @@ public class OSequenceCached extends OSequence {
                               + limitValue
                               + " with step: "
                               + increment;
-                      OLogManager.instance().warn(this, warningMessage);
+                      logger.warn(warningMessage);
                     }
                   }
 

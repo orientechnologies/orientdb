@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -42,6 +43,7 @@ import java.util.concurrent.ExecutionException;
  * @since 3/2/2015
  */
 public abstract class OSequence {
+  private static final OLogger logger = OLogManager.instance().logger(OSequence.class);
   public static final long DEFAULT_START = 0;
   public static final int DEFAULT_INCREMENT = 1;
   public static final int DEFAULT_CACHE = 20;
@@ -308,7 +310,7 @@ public abstract class OSequence {
       try {
         return sendSequenceActionOverCluster(OSequenceAction.UPDATE, params);
       } catch (InterruptedException | ExecutionException exc) {
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
+        logger.error(exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     }
@@ -485,7 +487,7 @@ public abstract class OSequence {
       try {
         retVal = sendSequenceActionOverCluster(OSequenceAction.NEXT, null);
       } catch (InterruptedException | ExecutionException exc) {
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
+        logger.error(exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     } else {
@@ -512,7 +514,7 @@ public abstract class OSequence {
       try {
         retVal = sendSequenceActionOverCluster(OSequenceAction.CURRENT, null);
       } catch (InterruptedException | ExecutionException exc) {
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
+        logger.error(exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     } else {
@@ -537,7 +539,7 @@ public abstract class OSequence {
       try {
         retVal = sendSequenceActionOverCluster(OSequenceAction.RESET, null);
       } catch (InterruptedException | ExecutionException exc) {
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
+        logger.error(exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     } else {

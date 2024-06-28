@@ -51,7 +51,7 @@ public class OProxyServer extends OServerPluginAbstract {
         serverThreads.add(serverThread);
 
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Proxy server: error on starting proxy server", e);
+        logger.error("Proxy server: error on starting proxy server", e);
       }
     }
   }
@@ -78,7 +78,7 @@ public class OProxyServer extends OServerPluginAbstract {
         if (!"none".equalsIgnoreCase(param.value)
             && !"byte".equalsIgnoreCase(param.value)
             && !"hex".equalsIgnoreCase(param.value))
-          OLogManager.instance().error(this, "Invalid tracing value: %s", null, param.value);
+          logger.error("Invalid tracing value: %s", null, param.value);
         else tracing = param.value;
 
       } else if (param.name.equalsIgnoreCase("ports")) {

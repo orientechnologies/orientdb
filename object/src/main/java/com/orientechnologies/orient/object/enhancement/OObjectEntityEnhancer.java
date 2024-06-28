@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.object.enhancement;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.entity.OEntityManager;
@@ -43,6 +44,7 @@ import javassist.util.proxy.ProxyObject;
 
 /** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OObjectEntityEnhancer {
+  private static final OLogger logger = OLogManager.instance().logger(OObjectEntityEnhancer.class);
 
   private static final OObjectEntityEnhancer instance = new OObjectEntityEnhancer();
   private final Map<Class<?>, OObjectMethodFilter> customMethodFilters =
@@ -172,23 +174,17 @@ public class OObjectEntityEnhancer {
       OObjectEntitySerializer.setVersionField(iClass, newEntity, doc.getVersion());
       return newEntity;
     } catch (InstantiationException ie) {
-      OLogManager.instance()
-          .error(this, "Error creating proxied instance for class " + iClass.getName(), ie);
+      logger.error("Error creating proxied instance for class " + iClass.getName(), ie);
     } catch (IllegalAccessException iae) {
-      OLogManager.instance()
-          .error(this, "Error creating proxied instance for class " + iClass.getName(), iae);
+      logger.error("Error creating proxied instance for class " + iClass.getName(), iae);
     } catch (IllegalArgumentException iae) {
-      OLogManager.instance()
-          .error(this, "Error creating proxied instance for class " + iClass.getName(), iae);
+      logger.error("Error creating proxied instance for class " + iClass.getName(), iae);
     } catch (SecurityException se) {
-      OLogManager.instance()
-          .error(this, "Error creating proxied instance for class " + iClass.getName(), se);
+      logger.error("Error creating proxied instance for class " + iClass.getName(), se);
     } catch (InvocationTargetException ite) {
-      OLogManager.instance()
-          .error(this, "Error creating proxied instance for class " + iClass.getName(), ite);
+      logger.error("Error creating proxied instance for class " + iClass.getName(), ite);
     } catch (NoSuchMethodException nsme) {
-      OLogManager.instance()
-          .error(this, "Error creating proxied instance for class " + iClass.getName(), nsme);
+      logger.error("Error creating proxied instance for class " + iClass.getName(), nsme);
     }
     return null;
   }
@@ -302,9 +298,7 @@ public class OObjectEntityEnhancer {
       try {
         instanceToReturn = iProxiedClass.newInstance();
       } catch (InstantiationException e) {
-        OLogManager.instance()
-            .error(
-                this, "Cannot create an instance of the enclosing class '%s'", e, iOriginalClass);
+        logger.error("Cannot create an instance of the enclosing class '%s'", e, iOriginalClass);
         throw e;
       }
     }

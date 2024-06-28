@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
@@ -43,6 +44,7 @@ import java.util.Set;
  * </ul>
  */
 public class ODefaultIndexFactory implements OIndexFactory {
+  private static final OLogger logger = OLogManager.instance().logger(ODefaultIndexFactory.class);
 
   private static final String SBTREE_ALGORITHM = "SBTREE";
   public static final String SBTREE_BONSAI_VALUE_CONTAINER = "SBTREEBONSAISET";
@@ -115,11 +117,9 @@ public class ODefaultIndexFactory implements OIndexFactory {
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
       return new OIndexNotUnique(im, storage);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      OLogManager.instance()
-          .warnNoDb(
-              ODefaultIndexFactory.class,
-              "You are creating native full text index instance. That is unsafe because this type"
-                  + " of index is deprecated and will be removed in future.");
+      logger.warnNoDb(
+          "You are creating native full text index instance. That is unsafe because this type"
+              + " of index is deprecated and will be removed in future.");
       return new OIndexFullText(im, storage);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
       return new OIndexDictionary(im, storage);

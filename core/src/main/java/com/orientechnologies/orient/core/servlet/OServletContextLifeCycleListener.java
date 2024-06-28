@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.servlet;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import javax.servlet.ServletContextEvent;
@@ -33,13 +34,15 @@ import javax.servlet.annotation.WebListener;
 @SuppressWarnings("unused")
 @WebListener
 public class OServletContextLifeCycleListener implements ServletContextListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServletContextLifeCycleListener.class);
+
   @Override
   public void contextInitialized(ServletContextEvent sce) {
     if (OGlobalConfiguration.INIT_IN_SERVLET_CONTEXT_LISTENER.getValueAsBoolean()) {
-      OLogManager.instance()
-          .infoNoDb(this, "Start web application is detected, OrientDB engine is staring up...");
+      logger.infoNoDb("Start web application is detected, OrientDB engine is staring up...");
       Orient.startUp(true);
-      OLogManager.instance().infoNoDb(this, "OrientDB engine is started");
+      logger.infoNoDb("OrientDB engine is started");
     }
   }
 
@@ -48,10 +51,8 @@ public class OServletContextLifeCycleListener implements ServletContextListener 
     if (OGlobalConfiguration.INIT_IN_SERVLET_CONTEXT_LISTENER.getValueAsBoolean()) {
       final Orient orient = Orient.instance();
       if (orient != null) {
-        OLogManager.instance()
-            .infoNoDb(
-                this,
-                "Shutting down of OrientDB engine because web application is going to be stopped");
+        logger.infoNoDb(
+            "Shutting down of OrientDB engine because web application is going to be stopped");
         orient.shutdown();
         OLogManager.instance().shutdown();
       }

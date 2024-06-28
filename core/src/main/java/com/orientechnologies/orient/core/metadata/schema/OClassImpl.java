@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -67,6 +68,7 @@ import java.util.TreeSet;
  */
 @SuppressWarnings("unchecked")
 public abstract class OClassImpl implements OClass {
+  private static final OLogger logger = OLogManager.instance().logger(OClassImpl.class);
   private static final long serialVersionUID = 1L;
   protected static final int NOT_EXISTENT_CLUSTER_ID = -1;
   protected final OSchemaShared owner;
@@ -1649,13 +1651,8 @@ public abstract class OClassImpl implements OClass {
         try {
           addClusterIdToIndexes(clusterId);
         } catch (RuntimeException e) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Error adding clusterId '%d' to index of class '%s'",
-                  e,
-                  clusterId,
-                  getName());
+          logger.warn(
+              "Error adding clusterId '%d' to index of class '%s'", e, clusterId, getName());
           clusters.remove(clusterId);
         }
       }

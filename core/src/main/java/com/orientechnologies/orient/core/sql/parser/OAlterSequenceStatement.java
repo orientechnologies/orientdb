@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -16,6 +17,8 @@ import java.util.Map;
 import java.util.Objects;
 
 public class OAlterSequenceStatement extends ODDLStatement {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OAlterSequenceStatement.class);
   OIdentifier name;
   OExpression start;
   OExpression increment;
@@ -94,7 +97,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
       sequence.updateParams(params);
     } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
-      OLogManager.instance().error(this, message, exc, (Object) null);
+      logger.error(message, exc, (Object) null);
       throw new OCommandExecutionException(message);
     }
     sequence.save(database);

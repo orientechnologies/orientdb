@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OScriptInterceptor;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -40,6 +41,8 @@ import java.util.Set;
  * @author Luca
  */
 public class OServerSideScriptInterpreter extends OServerPluginAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerSideScriptInterpreter.class);
   protected Set<String> allowedLanguages = new HashSet<String>();
 
   protected OScriptInterceptor interceptor;
@@ -100,12 +103,10 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
         .getScriptExecutors()
         .entrySet()
         .forEach(e -> e.getValue().registerInterceptor(interceptor));
-    OLogManager.instance()
-        .warn(
-            this,
-            "Authenticated clients can execute any kind of code into the server by using the"
-                + " following allowed languages: "
-                + allowedLanguages);
+    logger.warn(
+        "Authenticated clients can execute any kind of code into the server by using the"
+            + " following allowed languages: "
+            + allowedLanguages);
   }
 
   @Override

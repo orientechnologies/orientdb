@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -55,6 +56,8 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OServerCommandAuthenticatedDbAbstract extends OServerCommandAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerCommandAuthenticatedDbAbstract.class);
 
   public static final char DBNAME_DIR_SEPARATOR = '$';
   public static final String SESSIONID_UNAUTHORIZED = "-";
@@ -81,7 +84,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
             tokenHandler.parseOnlyWebToken(iRequest.getBearerTokenRaw().getBytes()));
       } catch (Exception e) {
         // TODO: Catch all expected exceptions correctly!
-        OLogManager.instance().warn(this, "Bearer token parsing failed", e);
+        logger.warn("Bearer token parsing failed", e);
       }
 
       if (iRequest.getBearerToken() == null
@@ -96,12 +99,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       if (iRequest.getBearerToken().getToken().getIsValid() == false) {
 
         // SECURITY PROBLEM: CROSS DATABASE REQUEST!
-        OLogManager.instance()
-            .warn(
-                this,
-                "Token '%s' is not valid for database '%s'",
-                iRequest.getBearerTokenRaw(),
-                iRequest.getDatabaseName());
+        logger.warn(
+            "Token '%s' is not valid for database '%s'",
+            iRequest.getBearerTokenRaw(), iRequest.getDatabaseName());
         sendAuthorizationRequest(iRequest, iResponse, iRequest.getDatabaseName());
         return false;
       }
@@ -140,14 +140,12 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
         if (!currentSession.getDatabaseName().equals(iRequest.getDatabaseName())) {
 
           // SECURITY PROBLEM: CROSS DATABASE REQUEST!
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Session %s is trying to access to the database '%s', but has been authenticated"
-                      + " against the database '%s'",
-                  iRequest.getSessionId(),
-                  iRequest.getDatabaseName(),
-                  currentSession.getDatabaseName());
+          logger.warn(
+              "Session %s is trying to access to the database '%s', but has been authenticated"
+                  + " against the database '%s'",
+              iRequest.getSessionId(),
+              iRequest.getDatabaseName(),
+              currentSession.getDatabaseName());
           server.getHttpSessionManager().removeSession(iRequest.getSessionId());
           sendAuthorizationRequest(iRequest, iResponse, iRequest.getDatabaseName());
           return false;
@@ -156,15 +154,13 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
             && !currentSession.getUserName().equals(authenticationParts.get(0))) {
 
           // SECURITY PROBLEM: CROSS DATABASE REQUEST!
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Session %s is trying to access to the database '%s' with user '%s', but has been"
-                      + " authenticated with user '%s'",
-                  iRequest.getSessionId(),
-                  iRequest.getDatabaseName(),
-                  authenticationParts.get(0),
-                  currentSession.getUserName());
+          logger.warn(
+              "Session %s is trying to access to the database '%s' with user '%s', but has been"
+                  + " authenticated with user '%s'",
+              iRequest.getSessionId(),
+              iRequest.getDatabaseName(),
+              authenticationParts.get(0),
+              currentSession.getUserName());
           server.getHttpSessionManager().removeSession(iRequest.getSessionId());
           sendAuthorizationRequest(iRequest, iResponse, iRequest.getDatabaseName());
           return false;
@@ -215,8 +211,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     } catch (OSecurityAccessException e) {
       // WRONG USER/PASSWD
     } catch (OLockException e) {
-      OLogManager.instance()
-          .error(this, "Cannot access to the database '" + iDatabaseName + "'", e);
+      logger.error("Cannot access to the database '" + iDatabaseName + "'", e);
     } finally {
       if (db == null) {
         // WRONG USER/PASSWD

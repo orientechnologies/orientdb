@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.security;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.security.OToken;
@@ -17,6 +18,7 @@ import java.util.Map;
 import javax.crypto.Mac;
 
 public class OTokenSignImpl implements OTokenSign {
+  private static final OLogger logger = OLogManager.instance().logger(OTokenSignImpl.class);
 
   public static final String ENCRYPTION_ALGORITHM_DEFAULT = "HmacSHA256";
 
@@ -93,11 +95,7 @@ public class OTokenSignImpl implements OTokenSign {
       final byte[] calculatedSignature = mac.doFinal();
       boolean valid = MessageDigest.isEqual(calculatedSignature, signature);
       if (!valid) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Token signature failure: %s",
-                Base64.getEncoder().encodeToString(tokenBytes));
+        logger.warn("Token signature failure: %s", Base64.getEncoder().encodeToString(tokenBytes));
       }
       return valid;
 

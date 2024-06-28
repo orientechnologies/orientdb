@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions.math;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -33,6 +34,8 @@ import java.util.List;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OSQLFunctionEval.class);
+
   public static final String NAME = "eval";
 
   private OSQLPredicate predicate;
@@ -58,11 +61,11 @@ public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
       return predicate.evaluate(
           iRecord != null ? iRecord.getRecord() : null, currentResult, iContext);
     } catch (ArithmeticException e) {
-      OLogManager.instance().error(this, "Division by 0", e);
+      logger.error("Division by 0", e);
       // DIVISION BY 0
       return 0;
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error during division", e);
+      logger.error("Error during division", e);
       return null;
     }
   }

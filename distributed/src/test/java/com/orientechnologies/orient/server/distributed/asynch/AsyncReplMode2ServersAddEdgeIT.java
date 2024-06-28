@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -11,6 +12,8 @@ import org.junit.Ignore;
 
 @Ignore
 public class AsyncReplMode2ServersAddEdgeIT extends BareBoneBase2ServerTest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(AsyncReplMode2ServersAddEdgeIT.class);
 
   private static final int NUM_OF_LOOP_ITERATIONS = 100;
 
@@ -53,14 +56,9 @@ public class AsyncReplMode2ServersAddEdgeIT extends BareBoneBase2ServerTest {
           graph.commit();
           graph.begin();
 
-          OLogManager.instance()
-              .error(
-                  this,
-                  "parentV1 %s v%d should be v%d",
-                  null,
-                  parentV1.getIdentity(),
-                  parentV1.getRecord().getVersion(),
-                  i + 2);
+          logger.error(
+              "parentV1 %s v%d should be v%d",
+              null, parentV1.getIdentity(), parentV1.getRecord().getVersion(), i + 2);
 
           assertEquals(i + 2, parentV1.getVersion());
           assertEquals(2, childV.getVersion());
@@ -68,7 +66,7 @@ public class AsyncReplMode2ServersAddEdgeIT extends BareBoneBase2ServerTest {
 
         pause();
       } catch (Throwable e) {
-        OLogManager.instance().error(this, "Exception", e);
+        logger.error("Exception", e);
         if (exceptionInThread == null) {
           exceptionInThread = e;
         }

@@ -16,6 +16,7 @@
 package com.orientechnologies.security;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
@@ -25,6 +26,7 @@ import com.orientechnologies.security.ldap.OLDAPImporter;
 import com.orientechnologies.security.password.ODefaultPasswordValidator;
 
 public class OSecurityPlugin extends OServerPluginAbstract {
+  private static final OLogger logger = OLogManager.instance().logger(OSecurityPlugin.class);
   private OServer server;
 
   @Override
@@ -59,7 +61,7 @@ public class OSecurityPlugin extends OServerPluginAbstract {
         server.getSecurity().registerSecurityClass(OLDAPImporter.class);
       }
     } catch (Throwable th) {
-      OLogManager.instance().error(this, "registerSecurityComponents() ", th);
+      logger.error("registerSecurityComponents() ", th);
     }
   }
 
@@ -72,7 +74,7 @@ public class OSecurityPlugin extends OServerPluginAbstract {
         server.getSecurity().unregisterSecurityClass(OLDAPImporter.class);
       }
     } catch (Throwable th) {
-      OLogManager.instance().error(this, "unregisterSecurityComponents()", th);
+      logger.error("unregisterSecurityComponents()", th);
     }
   }
 }

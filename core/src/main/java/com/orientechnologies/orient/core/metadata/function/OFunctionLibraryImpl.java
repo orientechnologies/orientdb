@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.function;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -49,6 +50,7 @@ import java.util.regex.Pattern;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OFunctionLibraryImpl {
+  private static final OLogger logger = OLogManager.instance().logger(OFunctionLibraryImpl.class);
   public static final String CLASSNAME = "OFunction";
   protected final Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
   private AtomicBoolean needReload = new AtomicBoolean(false);
@@ -128,7 +130,7 @@ public class OFunctionLibraryImpl {
     try {
       f.save();
     } catch (ORecordDuplicatedException ex) {
-      OLogManager.instance().error(this, "Exception is suppressed, original exception is ", ex);
+      logger.error("Exception is suppressed, original exception is ", ex);
 
       //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw OException.wrapException(

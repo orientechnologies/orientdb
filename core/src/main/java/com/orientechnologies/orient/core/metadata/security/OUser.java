@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -34,7 +35,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Contains the user settings about security and permissions. Each user has one or more roles
+ * Contains the user settings about securit
  * associated. Roles contains the permission rules that define what the user can access and what he
  * cannot.
  *
@@ -42,6 +43,7 @@ import java.util.Set;
  * @see ORole
  */
 public class OUser extends OIdentity implements OSecurityUser {
+  private static final OLogger logger = OLogManager.instance().logger(OUser.class);
   public static final String ADMIN = "admin";
   public static final String CLASS_NAME = "OUser";
   public static final String PASSWORD_FIELD = "password";
@@ -113,12 +115,10 @@ public class OUser extends OIdentity implements OSecurityUser {
           ORole role = createRole(d);
           if (role != null) roles.add(role);
         } else
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "User '%s' is declared to have a role that does not exist in the database. "
-                      + " Ignoring it.",
-                  getName());
+          logger.warn(
+              "User '%s' is declared to have a role that does not exist in the database. "
+                  + " Ignoring it.",
+              getName());
       }
   }
 
@@ -181,12 +181,10 @@ public class OUser extends OIdentity implements OSecurityUser {
       final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
     for (ORole r : roles) {
       if (r == null)
-        OLogManager.instance()
-            .warn(
-                this,
-                "User '%s' has a null role, ignoring it. Consider fixing this user's roles before"
-                    + " continuing",
-                getName());
+        logger.warn(
+            "User '%s' has a null role, ignoring it. Consider fixing this user's roles before"
+                + " continuing",
+            getName());
       else if (r.allow(resourceGeneric, resourceSpecific, iOperation)) return r;
     }
 
@@ -241,12 +239,10 @@ public class OUser extends OIdentity implements OSecurityUser {
       final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
     for (ORole r : roles)
       if (r == null)
-        OLogManager.instance()
-            .warn(
-                this,
-                "User '%s' has a null role, bypass it. Consider to fix this user roles before to"
-                    + " continue",
-                getName());
+        logger.warn(
+            "User '%s' has a null role, bypass it. Consider to fix this user roles before to"
+                + " continue",
+            getName());
       else if (r.hasRule(resourceGeneric, resourceSpecific)) return true;
 
     return false;

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 public class OVertexDocument extends ODocument implements OVertex {
-
+  private static final OLogger logger = OLogManager.instance().logger(OVertexDocument.class);
   private static final String CONNECTION_OUT_PREFIX = "out_";
   private static final String CONNECTION_IN_PREFIX = "in_";
 
@@ -644,11 +645,9 @@ public class OVertexDocument extends ODocument implements OVertex {
         || edge.isLightweight()) {
       vertex.removeProperty(edgeField);
     } else {
-      OLogManager.instance()
-          .warn(
-              vertex,
-              "Error detaching edge: the vertex collection field is of type "
-                  + (edgeProp == null ? "null" : edgeProp.getClass()));
+      logger.warn(
+          "Error detaching edge: the vertex collection field is of type "
+              + (edgeProp == null ? "null" : edgeProp.getClass()));
     }
   }
 

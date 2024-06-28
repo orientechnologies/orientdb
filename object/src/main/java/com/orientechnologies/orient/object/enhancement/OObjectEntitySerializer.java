@@ -18,6 +18,7 @@ package com.orientechnologies.orient.object.enhancement;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.OAccess;
@@ -87,6 +88,8 @@ import javax.persistence.OneToOne;
 
 /** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OObjectEntitySerializer {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OObjectEntitySerializer.class);
 
   public static final String SIMPLE_NAME = OObjectEntitySerializedSchema.class.getSimpleName();
 
@@ -619,21 +622,12 @@ public class OObjectEntitySerializer {
           if (idFound) {
             // CHECK FOR TYPE
             if (fieldType.isPrimitive())
-              OLogManager.instance()
-                  .warn(
-                      OObjectSerializerHelper.class,
-                      "Field '%s' cannot be a literal to manage the Record Id",
-                      f.toString());
+              logger.warn("Field '%s' cannot be a literal to manage the Record Id", f.toString());
             else if (!ORID.class.isAssignableFrom(fieldType)
                 && fieldType != String.class
                 && fieldType != Object.class
                 && !Number.class.isAssignableFrom(fieldType))
-              OLogManager.instance()
-                  .warn(
-                      OObjectSerializerHelper.class,
-                      "Field '%s' cannot be managed as type: %s",
-                      f.toString(),
-                      fieldType);
+              logger.warn("Field '%s' cannot be managed as type: %s", f.toString(), fieldType);
           }
 
           boolean vFound = false;
@@ -651,20 +645,11 @@ public class OObjectEntitySerializer {
           if (vFound) {
             // CHECK FOR TYPE
             if (fieldType.isPrimitive())
-              OLogManager.instance()
-                  .warn(
-                      OObjectSerializerHelper.class,
-                      "Field '%s' cannot be a literal to manage the Version",
-                      f.toString());
+              logger.warn("Field '%s' cannot be a literal to manage the Version", f.toString());
             else if (fieldType != String.class
                 && fieldType != Object.class
                 && !Number.class.isAssignableFrom(fieldType))
-              OLogManager.instance()
-                  .warn(
-                      OObjectSerializerHelper.class,
-                      "Field '%s' cannot be managed as type: %s",
-                      f.toString(),
-                      fieldType);
+              logger.warn("Field '%s' cannot be managed as type: %s", f.toString(), fieldType);
           }
 
           // JPA 1+ AVAILABLE?
@@ -1165,17 +1150,9 @@ public class OObjectEntitySerializer {
     try {
       return ((Class<T>) iObject.getClass().getSuperclass()).newInstance();
     } catch (InstantiationException ie) {
-      OLogManager.instance()
-          .error(
-              iObject,
-              "Error creating instance for class " + iObject.getClass().getSuperclass(),
-              ie);
+      logger.error("Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
     } catch (IllegalAccessException ie) {
-      OLogManager.instance()
-          .error(
-              iObject,
-              "Error creating instance for class " + iObject.getClass().getSuperclass(),
-              ie);
+      logger.error("Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
     }
     return null;
   }
@@ -1231,12 +1208,10 @@ public class OObjectEntitySerializer {
         else if (id.getClass().equals(Object.class))
           ORecordInternal.setIdentity(iRecord, (ORecordId) id);
         else
-          OLogManager.instance()
-              .warn(
-                  OObjectSerializerHelper.class,
-                  "@Id field has been declared as %s while the supported are: ORID, Number, String,"
-                      + " Object",
-                  id.getClass());
+          logger.warn(
+              "@Id field has been declared as %s while the supported are: ORID, Number, String,"
+                  + " Object",
+              id.getClass());
       }
       if (iRecord.getIdentity().isValid() && iRecord.getIdentity().isPersistent()) iRecord.reload();
     }
@@ -1255,11 +1230,9 @@ public class OObjectEntitySerializer {
           version = ((Number) ver).intValue();
         } else if (ver instanceof String) version = Integer.parseInt((String) ver);
         else
-          OLogManager.instance()
-              .warn(
-                  OObjectSerializerHelper.class,
-                  "@Version field has been declared as %s while the supported are: Number, String",
-                  ver.getClass());
+          logger.warn(
+              "@Version field has been declared as %s while the supported are: Number, String",
+              ver.getClass());
 
         ORecordInternal.setVersion(iRecord, version);
       }

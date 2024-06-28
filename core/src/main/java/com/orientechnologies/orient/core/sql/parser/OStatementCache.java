@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -19,6 +20,7 @@ import java.util.Map;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OStatementCache {
+  private static final OLogger logger = OLogManager.instance().logger(OStatementCache.class);
 
   private Map<String, OStatement> map;
   private int mapSize;
@@ -126,13 +128,11 @@ public class OStatementCache {
               new ByteArrayInputStream(
                   statement.getBytes(db.getStorageInfo().getConfiguration().getCharset()));
         } catch (UnsupportedEncodingException e2) {
-          OLogManager.instance()
-              .warn(
-                  null,
-                  "Unsupported charset for database "
-                      + db
-                      + " "
-                      + db.getStorageInfo().getConfiguration().getCharset());
+          logger.warn(
+              "Unsupported charset for database "
+                  + db
+                  + " "
+                  + db.getStorageInfo().getConfiguration().getCharset());
           is = new ByteArrayInputStream(statement.getBytes());
         }
       }
@@ -144,13 +144,11 @@ public class OStatementCache {
         try {
           osql = new OrientSql(is, db.getStorageInfo().getConfiguration().getCharset());
         } catch (UnsupportedEncodingException e2) {
-          OLogManager.instance()
-              .warn(
-                  null,
-                  "Unsupported charset for database "
-                      + db
-                      + " "
-                      + db.getStorageInfo().getConfiguration().getCharset());
+          logger.warn(
+              "Unsupported charset for database "
+                  + db
+                  + " "
+                  + db.getStorageInfo().getConfiguration().getCharset());
           osql = new OrientSql(is);
         }
       }

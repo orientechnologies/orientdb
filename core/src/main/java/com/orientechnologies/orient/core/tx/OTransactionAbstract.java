@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class OTransactionAbstract implements OTransaction {
+  private static final OLogger logger = OLogManager.instance().logger(OTransactionAbstract.class);
   protected ODatabaseDocumentInternal database;
   protected TXSTATUS status = TXSTATUS.INVALID;
   protected ISOLATION_LEVEL isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
@@ -128,8 +130,7 @@ public abstract class OTransactionAbstract implements OTransaction {
           ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseReadLock(lock.getKey());
         }
       } catch (Exception e) {
-        OLogManager.instance()
-            .debug(this, "Error on releasing lock against record " + lock.getKey(), e);
+        logger.debug("Error on releasing lock against record " + lock.getKey(), e);
       }
     }
     locks.clear();

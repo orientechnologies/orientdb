@@ -18,10 +18,8 @@
 
 package com.orientechnologies.lucene.tests;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import java.io.InputStream;
-import java.util.logging.Level;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -31,7 +29,6 @@ public class OLuceneDropClusterTest extends OLuceneBaseTest {
 
   @Test
   public void shouldRemoveCluster() throws Exception {
-    OLogManager.instance().setConsoleLevel(Level.FINE.getName());
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
     db.execute("sql", getScriptFromStream(stream));

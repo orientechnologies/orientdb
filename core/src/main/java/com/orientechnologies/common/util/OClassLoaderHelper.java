@@ -22,11 +22,13 @@ package com.orientechnologies.common.util;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
 public class OClassLoaderHelper {
+  private static final OLogger logger = OLogManager.instance().logger(OClassLoaderHelper.class);
 
   /**
    * Switch to the OrientDb classloader before lookups on ServiceRegistry for implementation of the
@@ -50,7 +52,7 @@ public class OClassLoaderHelper {
     try {
       return ServiceLoader.load(clazz).iterator();
     } catch (Exception e) {
-      OLogManager.instance().warn(null, "Cannot lookup in service registry", e);
+      logger.warn("Cannot lookup in service registry", e);
       throw OException.wrapException(
           new OConfigurationException("Cannot lookup in service registry"), e);
     } finally {

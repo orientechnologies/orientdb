@@ -21,6 +21,7 @@ package com.orientechnologies.orient.graph.gremlin;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -50,6 +51,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
 public class OGremlinHelper {
+  private static final OLogger logger = OLogManager.instance().logger(OGremlinHelper.class);
   private static final String PARAM_OUTPUT = "output";
   private static GremlinGroovyScriptEngineFactory factory;
   private static OGremlinHelper instance = new OGremlinHelper();
@@ -64,7 +66,7 @@ public class OGremlinHelper {
     try {
       factory = new GremlinGroovyScriptEngineFactory();
     } catch (java.lang.NoClassDefFoundError e) {
-      OLogManager.instance().warn(this, "GREMLIN language not available (not in classpath)");
+      logger.warn("GREMLIN language not available (not in classpath)");
     }
   }
 
@@ -306,13 +308,9 @@ public class OGremlinHelper {
           // 4. Impossible to clone
           // ***************************************************************************************************************************************
         } catch (Exception e2) {
-          OLogManager.instance()
-              .error(
-                  null,
-                  "[GremlinHelper] error on cloning object %s, previous %s",
-                  e2,
-                  objectToClone,
-                  previousClone);
+          logger.error(
+              "[GremlinHelper] error on cloning object %s, previous %s",
+              e2, objectToClone, previousClone);
           return null;
         }
       }

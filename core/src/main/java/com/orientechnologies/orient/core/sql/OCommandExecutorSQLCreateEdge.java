@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -50,6 +51,8 @@ import java.util.Set;
  */
 public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware
     implements OCommandDistributedReplicateRequest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCommandExecutorSQLCreateEdge.class);
   public static final String NAME = "CREATE EDGE";
   private static final String KEYWORD_BATCH = "BATCH";
 
@@ -114,14 +117,12 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware
           if (clazz == null) {
             final int committed;
             if (database.getTransaction().isActive()) {
-              OLogManager.instance()
-                  .warn(
-                      this,
-                      "Requested command '"
-                          + this.toString()
-                          + "' must be executed outside active transaction: the transaction will be"
-                          + " committed and reopen right after it. To avoid this behavior execute"
-                          + " it outside a transaction");
+              logger.warn(
+                  "Requested command '"
+                      + this.toString()
+                      + "' must be executed outside active transaction: the transaction will be"
+                      + " committed and reopen right after it. To avoid this behavior execute"
+                      + " it outside a transaction");
               committed = database.getTransaction().amountOfNestedTxs();
               database.commit(true);
             } else committed = 0;

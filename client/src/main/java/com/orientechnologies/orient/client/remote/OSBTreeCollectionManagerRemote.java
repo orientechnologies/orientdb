@@ -22,6 +22,7 @@ package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
@@ -43,6 +44,8 @@ public class OSBTreeCollectionManagerRemote
         OSBTreeCollectionManager,
         OOrientStartupListener,
         OOrientShutdownListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OSBTreeCollectionManagerRemote.class);
 
   private volatile ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections =
       new PendingCollectionsThreadLocal();
@@ -88,8 +91,7 @@ public class OSBTreeCollectionManagerRemote
   public void updateCollectionPointer(UUID uuid, OBonsaiCollectionPointer pointer) {
     final WeakReference<ORidBag> reference = pendingCollections.get().get(uuid);
     if (reference == null) {
-      OLogManager.instance()
-          .warn(this, "Update of collection pointer is received but collection is not registered");
+      logger.warn("Update of collection pointer is received but collection is not registered");
       return;
     }
 

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.validation.ValidationBinaryComparable;
@@ -41,6 +42,7 @@ import java.util.Set;
  * @since 10/21/14
  */
 public class OImmutableProperty implements OProperty {
+  private static final OLogger logger = OLogManager.instance().logger(OImmutableProperty.class);
   private final String name;
   private final String fullName;
   private final OType type;
@@ -203,8 +205,7 @@ public class OImmutableProperty implements OProperty {
     try {
       mc = (T) OType.convert(value, target);
     } catch (RuntimeException e) {
-      OLogManager.instance()
-          .error(this, "Error initializing %s value check on property %s", e, type, fullName);
+      logger.error("Error initializing %s value check on property %s", e, type, fullName);
       mc = null;
     }
     return mc;

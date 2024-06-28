@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.config;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
@@ -47,6 +48,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class OClusterBasedStorageConfiguration implements OStorageConfiguration {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OClusterBasedStorageConfiguration.class);
   public static final String MAP_FILE_EXTENSION = ".ccm";
   public static final String FREE_MAP_FILE_EXTENSION = ".fcm";
   public static final String DATA_FILE_EXTENSION = ".cd";
@@ -441,12 +444,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
             write(buffer, cfg.isHidden() ? null : configuration.getValueAsString(cfg));
           } else {
             write(buffer, null);
-            OLogManager.instance()
-                .warn(
-                    this,
-                    "Storing configuration for property:'"
-                        + k
-                        + "' not existing in current version");
+            logger.warn(
+                "Storing configuration for property:'" + k + "' not existing in current version");
           }
         }
       }
@@ -906,10 +905,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         totalSize += value.length;
         entries.add(value);
 
-        OLogManager.instance()
-            .warn(
-                this,
-                "Storing configuration for property:'" + k + "' not existing in current version");
+        logger.warn(
+            "Storing configuration for property:'" + k + "' not existing in current version");
       }
     }
 
@@ -943,8 +940,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
           configuration.setValue(key, OType.convert(value, cfg.getType()));
         }
       } else {
-        OLogManager.instance()
-            .warn(this, "Ignored storage configuration because not supported: %s=%s", key, value);
+        logger.warn("Ignored storage configuration because not supported: %s=%s", key, value);
       }
     }
   }
@@ -1212,12 +1208,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     try {
       final ORID identifiable = btree.get(ENGINE_PREFIX_PROPERTY + name);
       if (identifiable != null) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "Index engine with name '"
-                    + engineData.getName()
-                    + "' already contained in database configuration");
+        logger.warn(
+            "Index engine with name '"
+                + engineData.getName()
+                + "' already contained in database configuration");
       } else {
         storeProperty(
             atomicOperation,

@@ -20,6 +20,7 @@ package com.orientechnologies.lucene.tx;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import java.io.IOException;
@@ -31,6 +32,8 @@ import org.apache.lucene.search.TopDocs;
 
 /** Created by Enrico Risa on 28/09/15. */
 public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneTxChangesAbstract.class);
   public static final String TMP = "_tmp_rid";
 
   protected final OLuceneIndexEngine engine;
@@ -49,7 +52,7 @@ public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
     try {
       return new IndexSearcher(DirectoryReader.open(writer, true, true));
     } catch (IOException e) {
-      //      OLogManager.instance().error(this, "Error during searcher index instantiation on new
+      //      logger.error("Error during searcher index instantiation on new
       // documents", e);
       throw OException.wrapException(
           new OLuceneIndexException("Error during searcher index instantiation on new documents"),
@@ -65,8 +68,7 @@ public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
       final TopDocs search = indexSearcher.search(query, Integer.MAX_VALUE);
       return search.totalHits;
     } catch (IOException e) {
-      OLogManager.instance()
-          .error(this, "Error during searcher index instantiation on deleted documents ", e);
+      logger.error("Error during searcher index instantiation on deleted documents ", e);
     }
     return 0;
   }

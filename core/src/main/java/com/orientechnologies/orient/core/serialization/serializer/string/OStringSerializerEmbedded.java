@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.serialization.serializer.string;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentEmbedded;
@@ -30,6 +31,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import java.io.UnsupportedEncodingException;
 
 public class OStringSerializerEmbedded implements OStringSerializer {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OStringSerializerEmbedded.class);
   public static final OStringSerializerEmbedded INSTANCE = new OStringSerializerEmbedded();
   public static final String NAME = "em";
   public static final String SEPARATOR = "|";
@@ -59,11 +62,7 @@ public class OStringSerializerEmbedded implements OStringSerializer {
     try {
       clazz = Class.forName(className);
     } catch (ClassNotFoundException e) {
-      OLogManager.instance()
-          .debug(
-              this,
-              "Class name provided in embedded document " + className + " does not exist.",
-              e);
+      logger.debug("Class name provided in embedded document " + className + " does not exist.", e);
     }
 
     if (clazz == null) return instance;

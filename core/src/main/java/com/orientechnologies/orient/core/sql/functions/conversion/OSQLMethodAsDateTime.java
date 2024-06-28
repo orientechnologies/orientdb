@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.sql.functions.conversion;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -32,6 +33,7 @@ import java.util.Date;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodAsDateTime extends OAbstractSQLMethod {
+  private static final OLogger logger = OLogManager.instance().logger(OSQLMethodAsDateTime.class);
 
   public static final String NAME = "asdatetime";
 
@@ -61,7 +63,7 @@ public class OSQLMethodAsDateTime extends OAbstractSQLMethod {
           return ODateHelper.getDateTimeFormatInstance(ODatabaseRecordThreadLocal.instance().get())
               .parse(iThis.toString());
         } catch (ParseException e) {
-          OLogManager.instance().error(this, "Error during %s execution", e, NAME);
+          logger.error("Error during %s execution", e, NAME);
           // IGNORE IT: RETURN NULL
         }
       }

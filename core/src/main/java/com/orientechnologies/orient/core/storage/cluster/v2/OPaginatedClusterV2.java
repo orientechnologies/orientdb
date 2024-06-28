@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.storage.cluster.v2;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -60,6 +61,7 @@ import java.util.function.Function;
  * @since 10/7/13
  */
 public final class OPaginatedClusterV2 extends OPaginatedCluster {
+  private static final OLogger logger = OLogManager.instance().logger(OPaginatedClusterV2.class);
   // max chunk size - nex page pointer - first record flag
   private static final int MAX_ENTRY_SIZE =
       OClusterPage.MAX_RECORD_SIZE - OByteSerializer.BYTE_SIZE - OLongSerializer.LONG_SIZE;
@@ -203,19 +205,13 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
             if (freeSpaceMap.exists(atomicOperation)) {
               freeSpaceMap.open(atomicOperation);
             } else {
-              OLogManager.instance()
-                  .infoNoDb(
-                      this,
-                      "Free space map is absent inside of %s cluster of storage %s . Information"
-                          + " about free space present inside of each page will be recovered.",
-                      getName(),
-                      storageName);
-              OLogManager.instance()
-                  .infoNoDb(
-                      this,
-                      "Scanning of free space for cluster %s in storage %s started ...",
-                      getName(),
-                      storageName);
+              logger.infoNoDb(
+                  "Free space map is absent inside of %s cluster of storage %s . Information"
+                      + " about free space present inside of each page will be recovered.",
+                  getName(), storageName);
+              logger.infoNoDb(
+                  "Scanning of free space for cluster %s in storage %s started ...",
+                  getName(), storageName);
 
               freeSpaceMap.create(atomicOperation);
               final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
@@ -229,19 +225,13 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
                 }
 
                 if (pageIndex > 0 && pageIndex % 1_000 == 0) {
-                  OLogManager.instance()
-                      .infoNoDb(
-                          this,
-                          "%d pages out of %d (%d %) were processed in cluster %s ...",
-                          pageIndex + 1,
-                          filledUpTo,
-                          100 * (pageIndex + 1) / filledUpTo,
-                          getName());
+                  logger.infoNoDb(
+                      "%d pages out of %d (%d %) were processed in cluster %s ...",
+                      pageIndex + 1, filledUpTo, 100 * (pageIndex + 1) / filledUpTo, getName());
                 }
               }
 
-              OLogManager.instance()
-                  .infoNoDb(this, "Page scan for cluster %s " + "is completed.", getName());
+              logger.infoNoDb("Page scan for cluster %s " + "is completed.", getName());
             }
           } finally {
             releaseExclusiveLock();

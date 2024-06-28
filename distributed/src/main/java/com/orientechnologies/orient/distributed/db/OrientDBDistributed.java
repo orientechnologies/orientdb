@@ -7,6 +7,7 @@ import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentEmbeddedPooled;
@@ -57,7 +58,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
-
+  private static final OLogger logger = OLogManager.instance().logger(OrientDBDistributed.class);
   private volatile OServer server;
   private volatile ODistributedPlugin plugin;
   protected final ConcurrentHashMap<String, ODistributedDatabaseImpl> databases =
@@ -92,8 +93,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         try {
           openNoAuthorization(databaseName).close();
         } catch (Exception e) {
-          OLogManager.instance()
-              .warn(this, " Exception on first inizialization of database '%s'", e, databaseName);
+          logger.warn(" Exception on first inizialization of database '%s'", e, databaseName);
         }
       }
     }
@@ -219,8 +219,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storage.delete();
         }
       } catch (Exception e1) {
-        OLogManager.instance()
-            .warn(this, "Error doing cleanups, should be safe do progress anyway", e1);
+        logger.warn("Error doing cleanups, should be safe do progress anyway", e1);
       }
       synchronized (this) {
         sharedContexts.remove(dbName);

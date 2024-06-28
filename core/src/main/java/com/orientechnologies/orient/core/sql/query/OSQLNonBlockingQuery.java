@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.query;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -47,6 +48,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T>
     implements OCommandRequestAsynch {
+  private static final OLogger logger = OLogManager.instance().logger(OSQLNonBlockingQuery.class);
   private static final long serialVersionUID = 1L;
 
   public class ONonBlockingQueryFuture implements Future, List<Future> {
@@ -294,7 +296,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T>
                     try {
                       db.close();
                     } catch (Exception e) {
-                      OLogManager.instance().error(this, "Error during database close", e);
+                      logger.error("Error during database close", e);
                     }
                   }
                   try {
@@ -303,7 +305,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T>
                       future.notifyAll();
                     }
                   } catch (Exception e) {
-                    OLogManager.instance().error(this, "", e);
+                    logger.error("", e);
                   }
                 }
               });

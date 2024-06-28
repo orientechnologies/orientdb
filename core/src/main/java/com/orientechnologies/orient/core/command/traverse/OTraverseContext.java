@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command.traverse;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -37,6 +38,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 public class OTraverseContext extends OBasicCommandContext {
+  private static final OLogger logger = OLogManager.instance().logger(OTraverseContext.class);
   private Memory memory = new StackMemory();
   private Set<ORID> history = new HashSet<ORID>();
 
@@ -80,8 +82,7 @@ public class OTraverseContext extends OBasicCommandContext {
   public void pop(final OIdentifiable currentRecord) {
     if (currentRecord != null) {
       final ORID rid = currentRecord.getIdentity();
-      if (!history.remove(rid))
-        OLogManager.instance().warn(this, "Element '" + rid + "' not found in traverse history");
+      if (!history.remove(rid)) logger.warn("Element '" + rid + "' not found in traverse history");
     }
 
     try {

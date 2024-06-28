@@ -2,6 +2,7 @@ package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -26,6 +27,8 @@ import org.apache.lucene.search.TopDocs;
 
 /** Created by frank on 04/05/2017. */
 public class OLuceneIndexEngineUtils {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneIndexEngineUtils.class);
 
   public static void sendTotalHits(String indexName, OCommandContext context, long totalHits) {
     if (context != null) {
@@ -79,7 +82,7 @@ public class OLuceneIndexEngineUtils {
       final Document metaDoc = searcher.doc(topDocs.scoreDocs[0].doc);
       return metaDoc;
     } catch (IOException e) {
-      //      OLogManager.instance().error(OLuceneIndexEngineAbstract.class, "Error while retrieving
+      //      logger.error(OLuceneIndexEngineAbstract.class, "Error while retrieving
       // index metadata", e);
       throw OException.wrapException(
           new OLuceneIndexException("unable to retrieve metadata document from index"), e);
@@ -88,8 +91,7 @@ public class OLuceneIndexEngineUtils {
         try {
           reader.close();
         } catch (IOException e) {
-          OLogManager.instance()
-              .error(OLuceneIndexEngineAbstract.class, "Error while retrieving index metadata", e);
+          logger.error("Error while retrieving index metadata", e);
         }
     }
   }

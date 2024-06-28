@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.db.record.ridbag.embedded;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OResettable;
@@ -48,6 +49,7 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 public class OEmbeddedRidBag implements ORidBagDelegate {
+  private static final OLogger logger = OLogManager.instance().logger(OEmbeddedRidBag.class);
   private boolean contentWasChanged = false;
 
   private Object[] entries = OCommonConst.EMPTY_OBJECT_ARRAY;
@@ -480,8 +482,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       if (identifiable == null) identifiable = rid;
 
       if (identifiable == null)
-        OLogManager.instance()
-            .warn(this, "Found null reference during ridbag deserialization (rid=%s)", rid);
+        logger.warn("Found null reference during ridbag deserialization (rid=%s)", rid);
       else addInternal(identifiable);
     }
 

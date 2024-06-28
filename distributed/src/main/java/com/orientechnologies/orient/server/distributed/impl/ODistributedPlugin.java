@@ -34,6 +34,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCallable;
@@ -141,6 +142,7 @@ import sun.misc.Signal;
  */
 public class ODistributedPlugin extends OServerPluginAbstract
     implements ODistributedServerManager, ODatabaseLifecycleListener, OCommandOutputListener {
+  private static final OLogger logger = OLogManager.instance().logger(ODistributedPlugin.class);
   public static final String REPLICATOR_USER = "_CrossServerTempUser";
 
   protected static final String PAR_DEF_DISTRIB_DB_CONFIG = "configuration.db.default";
@@ -367,7 +369,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     OSignalHandler signalHandler = Orient.instance().getSignalHandler();
     if (signalHandler != null) signalHandler.unregisterListener(signalListener);
 
-    OLogManager.instance().warn(this, "Shutting down node '%s'...", nodeName);
+    logger.warn("Shutting down node '%s'...", nodeName);
     setNodeStatus(NODE_STATUS.SHUTTINGDOWN);
 
     clusterManager.prepareHazelcastPluginShutdown();
@@ -1011,8 +1013,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   public void onCreateView(final ODatabaseInternal iDatabase, final OView view) {
     // TODO implement this!
-    OLogManager.instance()
-        .error(this, "Implement ODistributedAbstractPlugin.onCreateView()!!!", null);
+    logger.error("Implement ODistributedAbstractPlugin.onCreateView()!!!", null);
   }
 
   @SuppressWarnings("unchecked")
@@ -1519,7 +1520,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
         // DATABASE INSTALLED CORRECTLY
 
       } catch (OException | InterruptedException e) {
-        OLogManager.instance().error(this, "Error installing database from network", e);
+        logger.error("Error installing database from network", e);
         databaseInstalledCorrectly = false;
       }
     } else if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.FULL_SYNC) {
@@ -1582,7 +1583,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
             installDatabaseFromNetwork(
                 dbPath, databaseName, r.getKey(), (ODistributedDatabaseChunk) value);
           } catch (OException e) {
-            OLogManager.instance().error(this, "Error installing database from network", e);
+            logger.error("Error installing database from network", e);
             continue;
           }
 
@@ -1673,11 +1674,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
             Files.move(
                 oldDirectory.toPath(), backupFullPath.toPath(), StandardCopyOption.ATOMIC_MOVE);
           } catch (AtomicMoveNotSupportedException e) {
-            OLogManager.instance()
-                .errorNoDb(
-                    this,
-                    "Atomic moves not supported during database backup, will try not atomic move",
-                    null);
+            logger.errorNoDb(
+                "Atomic moves not supported during database backup, will try not atomic move",
+                null);
             if (backupFullPath.exists()) {
               OFileUtils.deleteRecursively(backupFullPath);
             }
@@ -1686,11 +1685,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
             Files.move(oldDirectory.toPath(), backupPath.resolve(oldDirectory.getName()));
           }
         } catch (DirectoryNotEmptyException e) {
-          OLogManager.instance()
-              .errorNoDb(
-                  this,
-                  "File rename not supported during database backup, will try coping files",
-                  null);
+          logger.errorNoDb(
+              "File rename not supported during database backup, will try coping files", null);
           if (backupFullPath.exists()) {
             OFileUtils.deleteRecursively(backupFullPath);
           }
@@ -1700,7 +1696,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
                 oldDirectory, backupPath.resolve(oldDirectory.getName()).toFile());
             OFileUtils.deleteRecursively(backupFullPath);
           } catch (IOException ioe) {
-            OLogManager.instance().errorNoDb(this, "Error moving old database removing it", ioe);
+            logger.errorNoDb("Error moving old database removing it", ioe);
             OFileUtils.deleteRecursively(backupFullPath);
           }
         }
@@ -2035,7 +2031,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       // GENERATE NODE NAME
       this.nodeName = "node" + System.currentTimeMillis();
 
-    OLogManager.instance().warn(this, "Assigning distributed node name: %s", this.nodeName);
+    logger.warn("Assigning distributed node name: %s", this.nodeName);
 
     // SALVE THE NODE NAME IN CONFIGURATION
     boolean found = false;
@@ -2143,7 +2139,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     if (iText.startsWith("\r\n")) iText = iText.substring(2);
     else if (iText.startsWith("\n")) iText = iText.substring(1);
 
-    OLogManager.instance().debug(this, iText);
+    logger.debug(iText);
   }
 
   public void stopNode(final String iNode) throws IOException {
@@ -2612,8 +2608,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
         installDatabase(false, databaseName, false, true);
       } catch (ODistributedLockException lock) {
         setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
-        OLogManager.instance()
-            .warn(this, " Failing to acquire lock install database '%s' will retry later ", lock);
+        logger.warn(" Failing to acquire lock install database '%s' will retry later ", lock);
       }
     }
   }

@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.HashMap;
@@ -42,6 +43,9 @@ import org.junit.Test;
  * reached the write quorum and propagates the new value to all the servers in the cluster
  */
 public class TwoClientsRecordUpdateTxOnThreeServersScenarioIT extends AbstractScenarioTest {
+
+  private static final OLogger logger =
+      OLogManager.instance().logger(TwoClientsRecordUpdateTxOnThreeServersScenarioIT.class);
 
   private final String RECORD_ID = "R001";
   private Map<String, Object> hanFields =
@@ -100,7 +104,7 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioIT extends AbstractSc
 
       // gets the actual version of the record
       int actualVersion = recordServer0.getVersion();
-      OLogManager.instance().error(this, "Actual version: " + actualVersion, null);
+      logger.error("Actual version: " + actualVersion, null);
 
       // sets a delay for operations on distributed storage of server0 and server1
 
@@ -117,11 +121,11 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioIT extends AbstractSc
       //    recordServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
       //    recordServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), RECORD_ID);
       //
-      //    OLogManager.instance().error(this, "server0: " + recordServer0.toString() + " v" +
+      //    logger.error( "server0: " + recordServer0.toString() + " v" +
       // recordServer0.getVersion());
-      //    OLogManager.instance().error(this, "server1: " + recordServer1.toString() + " v" +
+      //    logger.error( "server1: " + recordServer1.toString() + " v" +
       // recordServer1.getVersion());
-      //    OLogManager.instance().error(this, "server2: " + recordServer2.toString() + " v" +
+      //    logger.error( "server2: " + recordServer2.toString() + " v" +
       // recordServer2.getVersion());
 
       // checks that record on server0 is the one which wins over the others

@@ -24,6 +24,7 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -47,7 +48,13 @@ import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.OOrBlock;
+import com.orientechnologies.orient.core.sql.parser.OSecurityResourceSegment;
+import com.orientechnologies.orient.core.sql.parser.OServerStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatementCache;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -62,7 +69,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class OSQLEngine {
-
+  private static final OLogger logger = OLogManager.instance().logger(OSQLEngine.class);
   protected static final OSQLEngine INSTANCE = new OSQLEngine();
   private static volatile List<OSQLFunctionFactory> FUNCTION_FACTORIES = null;
   private static List<OSQLMethodFactory> METHOD_FACTORIES = null;
@@ -248,11 +255,8 @@ public class OSQLEngine {
             try {
               factories.add(ite.next());
             } catch (Exception e) {
-              OLogManager.instance()
-                  .warn(
-                      null,
-                      "Cannot load OCommandExecutorSQLFactory instance from service registry",
-                      e);
+              logger.warn(
+                  "Cannot load OCommandExecutorSQLFactory instance from service registry", e);
             }
           }
 
