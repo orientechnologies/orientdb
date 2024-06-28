@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -39,6 +40,7 @@ import java.util.concurrent.Future;
 
 /** Abstract class for all test cases about the incremental backup. */
 public abstract class AbstractBackupTest {
+  private static final OLogger logger = OLogManager.instance().logger(AbstractBackupTest.class);
 
   protected final int numberOfThreads = 5;
   protected volatile int[] incrementalVerticesIdForThread;
@@ -116,7 +118,7 @@ public abstract class AbstractBackupTest {
                       + graph.getRawGraph().getURL()
                       + ")");
 
-              if (retry >= maxRetries) OLogManager.instance().error(this, "max retries reached", e);
+              if (retry >= maxRetries) logger.error("max retries reached", e);
 
               break;
             } catch (ODistributedException e) {
@@ -140,7 +142,7 @@ public abstract class AbstractBackupTest {
 
         System.out.println("\nWriter " + name + " END");
       } catch (Exception e) {
-        OLogManager.instance().error(this, "", e);
+        logger.error("", e);
       }
       return null;
     }
@@ -230,7 +232,7 @@ public abstract class AbstractBackupTest {
       System.out.println("All writer threads have finished, shutting down readers");
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "", e);
+      logger.error("", e);
     }
   }
 

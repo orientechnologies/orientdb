@@ -3,6 +3,7 @@ package com.orientechnologies.agent.profiler.source;
 import com.codahale.metrics.*;
 import com.opencsv.CSVWriter;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.server.OClientConnectionStats;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
@@ -19,6 +20,7 @@ import java.util.stream.Stream;
 
 /** Created by Enrico Risa on 25/10/2018. */
 public class CSVAggregateReporter {
+  private static final OLogger logger = OLogManager.instance().logger(CSVAggregateReporter.class);
 
   private static final String DEFAULT_SEPARATOR = ",";
   private final OEnterpriseServer server;
@@ -361,12 +363,12 @@ public class CSVAggregateReporter {
           try {
             writer.close();
           } catch (IOException e) {
-            OLogManager.instance().warn(this, "Failed to close resource " + writer);
+            logger.warn("Failed to close resource " + writer);
           }
         }
       }
     } catch (IOException e) {
-      OLogManager.instance().warn(this, "Error writing to {}", name, e);
+      logger.warn("Error writing to {}", name, e);
     }
   }
 }

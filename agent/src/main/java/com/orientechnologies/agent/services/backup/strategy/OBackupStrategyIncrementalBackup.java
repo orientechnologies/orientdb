@@ -22,6 +22,7 @@ import com.orientechnologies.agent.services.backup.OBackupConfig;
 import com.orientechnologies.agent.services.backup.OBackupListener;
 import com.orientechnologies.agent.services.backup.log.*;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,6 +36,7 @@ import java.util.Date;
 
 /** Created by Enrico Risa on 25/03/16. */
 public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
+  private static final OLogger log = OLogManager.instance().logger(OBackupStrategyFullBackup.class);
 
   public OBackupStrategyIncrementalBackup(ODocument cfg, OBackupLogger logger) {
     super(cfg, logger);
@@ -51,7 +53,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
     try {
       last = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
     } catch (Exception e) {
-      OLogManager.instance().warn(this, "Error getting last backup log: " + e.getMessage(), e);
+      log.warn("Error getting last backup log: " + e.getMessage(), e);
     }
 
     if (last != null && !Boolean.TRUE.equals(last.getPrevChange())) {
@@ -63,7 +65,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
           return last.getPath();
         }
       } catch (IOException e) {
-        OLogManager.instance().warn(this, "Error checking backup compatibility", e);
+        log.warn("Error checking backup compatibility", e);
         return last.getPath();
       }
     }
@@ -75,7 +77,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
         begin = lastScheduled.getUnitId();
       }
     } catch (IOException e) {
-      OLogManager.instance().warn(this, "Error getting last backup log: " + e.getMessage(), e);
+      log.warn("Error getting last backup log: " + e.getMessage(), e);
     }
     String basePath = cfg.field(OBackupConfig.DIRECTORY);
     String dbName = cfg.field(OBackupConfig.DBNAME);
@@ -103,7 +105,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
             unitId = lastCompleted.getUnitId();
           }
         } catch (Exception e) {
-          OLogManager.instance().warn(this, "Error getting last backup log: " + e.getMessage(), e);
+          log.warn("Error getting last backup log: " + e.getMessage(), e);
         }
         OBackupScheduledLog log =
             new OBackupScheduledLog(
@@ -113,7 +115,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
         listener.onEvent(cfg, log);
         return nextExecution;
       } catch (ParseException e) {
-        OLogManager.instance().warn(this, "Parse error: " + e.getMessage(), e);
+        log.warn("Parse error: " + e.getMessage(), e);
       }
 
     } else {

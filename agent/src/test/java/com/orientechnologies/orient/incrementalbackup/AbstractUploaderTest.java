@@ -20,6 +20,7 @@ package com.orientechnologies.orient.incrementalbackup;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -31,6 +32,7 @@ import org.junit.Before;
 
 /** It test the behaviour of a LocalBackupUploader. */
 public abstract class AbstractUploaderTest extends AbstractBackupTest {
+  private static final OLogger logger = OLogManager.instance().logger(AbstractUploaderTest.class);
 
   protected OrientBaseGraph graph;
   //  protected final String dbPath =  "target/db_upload";
@@ -70,7 +72,7 @@ public abstract class AbstractUploaderTest extends AbstractBackupTest {
       executeWrites(this.dbURL, 1000);
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "", e);
+      logger.error("", e);
       // cleaning all the directories
       this.cleanDirectories();
     } finally {

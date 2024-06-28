@@ -23,6 +23,7 @@ import com.orientechnologies.agent.services.backup.OBackupListener;
 import com.orientechnologies.agent.services.backup.log.OBackupLogger;
 import com.orientechnologies.agent.services.backup.log.OBackupScheduledLog;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
@@ -33,6 +34,8 @@ import java.util.Date;
 
 /** Created by Enrico Risa on 25/03/16. */
 public class OBackupStrategyFullBackup extends OBackupStrategy {
+  private static final OLogger log = OLogManager.instance().logger(OBackupStrategyFullBackup.class);
+
   public OBackupStrategyFullBackup(final ODocument cfg, final OBackupLogger logger) {
     super(cfg, logger);
   }
@@ -68,7 +71,7 @@ public class OBackupStrategyFullBackup extends OBackupStrategy {
         listener.onEvent(cfg, log);
         return nextExecution;
       } catch (ParseException e) {
-        OLogManager.instance().warn(this, "Parse exception: " + e.getMessage(), e);
+        log.warn("Parse exception: " + e.getMessage(), e);
       }
     } else {
       return new Date(last.nextExecution);

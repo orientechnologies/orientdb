@@ -3,6 +3,7 @@ package com.orientechnologies.security.auditing;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -34,6 +35,7 @@ import org.junit.Test;
  *     auditing mechanisms time to execute
  */
 public class SystemDbAuditingTest extends AbstractSecurityTest {
+  private static final OLogger logger = OLogManager.instance().logger(SystemDbAuditingTest.class);
 
   private static final String TESTDB = "SystemDbAuditingTestDB";
 
@@ -103,7 +105,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
       Thread.sleep(
           1000); // let auditing log happen (remove this and make auditing more reliable!!!)
     } catch (InterruptedException e) {
-      OLogManager.instance().warn(this, "Thread interrputed", e);
+      logger.warn("Thread interrputed", e);
     }
     String query = "select from OAuditingLog where database = ? and note = ?";
 
@@ -128,7 +130,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
       Thread.sleep(
           1000); // let auditing log happen (remove this and make auditing more reliable!!!)
     } catch (InterruptedException e) {
-      OLogManager.instance().warn(this, "Thread interrupted", e);
+      logger.warn("Thread interrupted", e);
     }
     result =
         (List<OResult>)

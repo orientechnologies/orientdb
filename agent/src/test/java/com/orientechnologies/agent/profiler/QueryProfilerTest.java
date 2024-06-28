@@ -1,6 +1,7 @@
 package com.orientechnologies.agent.profiler;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -19,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class QueryProfilerTest {
+  private static final OLogger logger = OLogManager.instance().logger(QueryProfilerTest.class);
 
   private OServer server;
 
@@ -64,7 +66,7 @@ public class QueryProfilerTest {
                 endLatch.await();
                 result.close();
               } catch (InterruptedException e) {
-                OLogManager.instance().warn(this, "Thread interrupted: " + e.getMessage(), e);
+                logger.warn("Thread interrupted: " + e.getMessage(), e);
               }
             })
         .start();
@@ -86,7 +88,7 @@ public class QueryProfilerTest {
                 endLatch.await();
                 result.close();
               } catch (InterruptedException e) {
-                OLogManager.instance().warn(this, "Thread interrupted: " + e.getMessage(), e);
+                logger.warn("Thread interrupted: " + e.getMessage(), e);
               }
             })
         .start();

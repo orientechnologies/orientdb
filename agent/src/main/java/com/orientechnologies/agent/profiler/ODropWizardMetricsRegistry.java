@@ -37,6 +37,7 @@ import com.orientechnologies.agent.services.metrics.reporters.CSVReporter;
 import com.orientechnologies.agent.services.metrics.reporters.ConsoleReporterConfig;
 import com.orientechnologies.agent.services.metrics.reporters.JMXReporter;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import io.prometheus.client.CollectorRegistry;
@@ -59,6 +60,8 @@ import java.util.function.Supplier;
 
 /** Created by Enrico Risa on 09/07/2018. */
 public class ODropWizardMetricsRegistry implements OMetricsRegistry {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ODropWizardMetricsRegistry.class);
 
   private final MetricRegistry registry;
   private Map<String, OMetric> metrics;
@@ -175,8 +178,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
       File outputDir = new File(directory);
       if (!outputDir.exists()) {
         if (!outputDir.mkdirs()) {
-          OLogManager.instance()
-              .warn(this, "Failed to create CSV Aggregates metrics dir {}", outputDir);
+          logger.warn("Failed to create CSV Aggregates metrics dir {}", outputDir);
         }
       }
 
@@ -201,7 +203,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
       File outputDir = new File(directory);
       if (!outputDir.exists()) {
         if (!outputDir.mkdirs()) {
-          OLogManager.instance().warn(this, "Failed to create CSV metrics dir {}", outputDir);
+          logger.warn("Failed to create CSV metrics dir {}", outputDir);
         }
       }
 

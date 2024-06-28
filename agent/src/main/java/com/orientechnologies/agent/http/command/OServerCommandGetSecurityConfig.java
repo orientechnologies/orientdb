@@ -19,6 +19,7 @@ package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -28,6 +29,8 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import java.io.IOException;
 
 public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticatedServerAbstract {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerCommandGetSecurityConfig.class);
   private static final String[] NAMES = {"GET|security/config"};
 
   private OSecuritySystem serverSecurity;
@@ -95,7 +98,7 @@ public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticated
   protected void writeError(
       final OHttpResponse iResponse, final String method, final String reason) {
     try {
-      OLogManager.instance().error(this, "%s %s", null, method, reason);
+      logger.error("%s %s", null, method, reason);
 
       final StringBuilder json = new StringBuilder();
 
@@ -110,7 +113,7 @@ public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticated
           json.toString(),
           null);
     } catch (IOException ex) {
-      OLogManager.instance().error(this, "OServerCommandGetSecurityConfig.writeJSON() ", ex);
+      logger.error("OServerCommandGetSecurityConfig.writeJSON() ", ex);
     }
   }
 
@@ -118,7 +121,7 @@ public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticated
     try {
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, json, null);
     } catch (IOException ex) {
-      OLogManager.instance().error(this, "OServerCommandGetSecurityConfig.writeJSON()", ex);
+      logger.error("OServerCommandGetSecurityConfig.writeJSON()", ex);
     }
   }
 }

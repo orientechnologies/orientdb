@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -29,6 +30,7 @@ import org.junit.Test;
 
 /** @author Luca Garulli */
 public class HaSetTest extends AbstractServerClusterTest {
+  private static final OLogger logger = OLogManager.instance().logger(HaSetTest.class);
   private static final int SERVERS = 2;
 
   public String getDatabaseName() {
@@ -90,7 +92,7 @@ public class HaSetTest extends AbstractServerClusterTest {
           distributedManager.getDatabaseConfiguration(getDatabaseName()).getClusterOwner("*"));
 
     } catch (InterruptedException e) {
-      OLogManager.instance().error(this, "", e);
+      logger.error("", e);
     }
   }
 

@@ -3,8 +3,12 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
@@ -16,7 +20,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,6 +34,9 @@ import org.junit.Test;
  * @since 9/17/2015
  */
 public class StorageBackupMTIT {
+
+  private static final OLogger logger = OLogManager.instance().logger(StorageBackupMTIT.class);
+
   private final CountDownLatch latch = new CountDownLatch(1);
   private volatile boolean stop = false;
   private OrientDB orientDB;
@@ -115,13 +127,13 @@ public class StorageBackupMTIT {
       try {
         ODatabaseDocumentTx.closeAll();
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "", ex);
+        logger.error("", ex);
       }
       if (orientDB.isOpen()) {
         try {
           orientDB.close();
         } catch (Exception ex) {
-          OLogManager.instance().error(this, "", ex);
+          logger.error("", ex);
         }
       }
       try {
@@ -133,7 +145,7 @@ public class StorageBackupMTIT {
 
         OFileUtils.deleteRecursively(backupDir);
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "", ex);
+        logger.error("", ex);
       }
     }
   }
@@ -223,13 +235,13 @@ public class StorageBackupMTIT {
         ODatabaseDocumentTx.closeAll();
         OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue(null);
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "", ex);
+        logger.error("", ex);
       }
       if (orientDB.isOpen()) {
         try {
           orientDB.close();
         } catch (Exception ex) {
-          OLogManager.instance().error(this, "", ex);
+          logger.error("", ex);
         }
       }
       try {
@@ -241,7 +253,7 @@ public class StorageBackupMTIT {
 
         OFileUtils.deleteRecursively(backupDir);
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "", ex);
+        logger.error("", ex);
       }
     }
   }
@@ -271,7 +283,7 @@ public class StorageBackupMTIT {
             System.out.println("Modification prohibited ... wait ...");
             Thread.sleep(1000);
           } catch (Exception | Error e) {
-            OLogManager.instance().error(this, "", e);
+            logger.error("", e);
             throw e;
           }
         }
@@ -307,13 +319,13 @@ public class StorageBackupMTIT {
           System.out.println(Thread.currentThread() + " done inc backup");
         }
       } catch (RuntimeException e) {
-        OLogManager.instance().error(this, "", e);
+        logger.error("", e);
         throw e;
       } catch (Exception e) {
-        OLogManager.instance().error(this, "", e);
+        logger.error("", e);
         throw e;
       } catch (Error e) {
-        OLogManager.instance().error(this, "", e);
+        logger.error("", e);
         throw e;
       } finally {
         db.close();

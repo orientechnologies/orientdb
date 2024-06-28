@@ -19,6 +19,7 @@
 package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 
 /** Created by Enrico Risa on 30/03/16. */
 public class OBackupDBLogger implements OBackupLogger {
+  private static final OLogger logger = OLogManager.instance().logger(OBackupDBLogger.class);
 
   private final OEnterpriseServer server;
   OBackupLogFactory factory;
@@ -307,7 +309,7 @@ public class OBackupDBLogger implements OBackupLogger {
                 try {
                   deleteByUUIDAndUnitId(uuid, unit);
                 } catch (IOException e) {
-                  OLogManager.instance().error(this, "Error deleting backup unit " + uuid, e);
+                  logger.error("Error deleting backup unit " + uuid, e);
                 }
               }
               return null;
@@ -424,14 +426,14 @@ public class OBackupDBLogger implements OBackupLogger {
       File f = new File(path);
       boolean deleted = f.delete();
       if (!deleted) {
-        OLogManager.instance().warn(this, "Error deleting file: " + f.getName());
+        logger.warn("Error deleting file: " + f.getName());
       }
       File dir = new File(directory);
       if (dir.isDirectory()) {
         if (dir.listFiles().length == 0) {
           deleted = dir.delete();
           if (!deleted) {
-            OLogManager.instance().warn(this, "Error deleting file: " + f.getName());
+            logger.warn("Error deleting file: " + f.getName());
           }
         }
       }

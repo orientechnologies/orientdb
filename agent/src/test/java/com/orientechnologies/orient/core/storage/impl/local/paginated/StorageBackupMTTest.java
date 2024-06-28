@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -34,6 +35,7 @@ import org.junit.Test;
  * @since 9/17/2015
  */
 public class StorageBackupMTTest {
+  private static final OLogger logger = OLogManager.instance().logger(StorageBackupMTTest.class);
   private final CountDownLatch started = new CountDownLatch(1);
   private final Stack<CountDownLatch> backupIterationRecordCount = new Stack<>();
   private final CountDownLatch finished = new CountDownLatch(1);
@@ -338,13 +340,13 @@ public class StorageBackupMTTest {
           System.out.println(Thread.currentThread() + " done inc backup");
         }
       } catch (RuntimeException e) {
-        OLogManager.instance().error(this, "", e);
+        logger.error("", e);
         throw e;
       } catch (Exception e) {
-        OLogManager.instance().error(this, "", e);
+        logger.error("", e);
         throw e;
       } catch (Error e) {
-        OLogManager.instance().error(this, "", e);
+        logger.error("", e);
         throw e;
       } finally {
         db.close();

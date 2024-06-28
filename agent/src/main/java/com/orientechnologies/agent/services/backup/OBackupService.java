@@ -25,14 +25,20 @@ import com.orientechnologies.agent.services.backup.log.OBackupLog;
 import com.orientechnologies.agent.services.backup.log.OBackupLogger;
 import com.orientechnologies.agent.services.backup.strategy.OBackupStrategy;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Created by Enrico Risa on 22/03/16. */
 public class OBackupService implements OEnterpriseService {
+  private static final OLogger log = OLogManager.instance().logger(OBackupService.class);
   private OEnterpriseServer server;
   private OBackupConfig config;
   private OBackupLogger logger;
@@ -104,7 +110,7 @@ public class OBackupService implements OEnterpriseService {
       }
       history.field("logs", docs);
     } catch (final IOException e) {
-      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
+      log.error("Error " + e.getMessage(), e);
     }
     return history;
   }
@@ -114,7 +120,7 @@ public class OBackupService implements OEnterpriseService {
     try {
       return logger.findByUUID(uuid, page, pageSize, params);
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Cannot find logs", e);
+      log.error("Cannot find logs", e);
       return Collections.emptyList();
     }
   }
@@ -124,7 +130,7 @@ public class OBackupService implements OEnterpriseService {
     try {
       return logger.findByUUIDAndUnitId(uuid, unitId, page, pageSize, params);
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Cannot find logs", e);
+      log.error("Cannot find logs", e);
       return Collections.emptyList();
     }
   }
@@ -140,7 +146,7 @@ public class OBackupService implements OEnterpriseService {
       }
       history.field("logs", docs);
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error " + e.getMessage(), e);
+      log.error("Error " + e.getMessage(), e);
     }
     return history;
   }

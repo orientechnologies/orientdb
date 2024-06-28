@@ -21,11 +21,17 @@ package com.orientechnologies.agent.profiler;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,6 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @copyrights Orient Technologies.com
  */
 public class OProfilerData {
+  private static final OLogger logger = OLogManager.instance().logger(OProfilerData.class);
   private final ConcurrentLinkedHashMap<String, Long> counters =
       new ConcurrentLinkedHashMap.Builder()
           .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger())
@@ -159,12 +166,9 @@ public class OProfilerData {
                   entry.getKey(),
                   (OProfilerEntry) entry.getValue().value);
         else
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Profiler value '%s' of type '%s' is not of type 'chrono'",
-                  entry.getKey(),
-                  OProfiler.METRIC_TYPE.CHRONO);
+          logger.warn(
+              "Profiler value '%s' of type '%s' is not of type 'chrono'",
+              entry.getKey(), OProfiler.METRIC_TYPE.CHRONO);
       }
     }
 
@@ -197,12 +201,9 @@ public class OProfilerData {
               numberValueToJSON(
                   buffer, iFilter, firstItem, entry.getKey(), ((Number) v).longValue());
         else
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Profiler value '%s' of type '%s' is not of type LONG",
-                  entry.getKey(),
-                  OProfiler.METRIC_TYPE.COUNTER);
+          logger.warn(
+              "Profiler value '%s' of type '%s' is not of type LONG",
+              entry.getKey(), OProfiler.METRIC_TYPE.COUNTER);
       }
     }
     buffer.append("}");
@@ -220,12 +221,9 @@ public class OProfilerData {
               numberValueToJSON(
                   buffer, iFilter, firstItem, entry.getKey(), ((Number) v).longValue());
         else
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Profiler value '%s' of type '%s' is not of type LONG",
-                  entry.getKey(),
-                  OProfiler.METRIC_TYPE.SIZE);
+          logger.warn(
+              "Profiler value '%s' of type '%s' is not of type LONG",
+              entry.getKey(), OProfiler.METRIC_TYPE.SIZE);
       }
     }
     buffer.append("}");
@@ -241,12 +239,9 @@ public class OProfilerData {
         if (v instanceof String)
           firstItem = stringToJSON(buffer, iFilter, firstItem, entry.getKey(), (String) v);
         else
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "Profiler value '%s' of type '%s' is not of type STRING",
-                  entry.getKey(),
-                  OProfiler.METRIC_TYPE.TEXT);
+          logger.warn(
+              "Profiler value '%s' of type '%s' is not of type STRING",
+              entry.getKey(), OProfiler.METRIC_TYPE.TEXT);
       }
     }
     buffer.append("}");

@@ -20,6 +20,7 @@ package com.orientechnologies.backup.uploader;
 
 import com.orientechnologies.agent.services.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Optional;
 
@@ -28,7 +29,7 @@ import java.util.Optional;
  * strategy.
  */
 public class OLocalBackupUploader {
-
+  private static final OLogger logger = OLogManager.instance().logger(OLocalBackupUploader.class);
   private OUploadingStrategy uploadingStrategy;
   private static final OUploadingStrategyFactory FACTORY = new OUploadingStrategyFactory();
 
@@ -42,15 +43,14 @@ public class OLocalBackupUploader {
     }
     String uploadStrategy = cfg.field("strategy");
     if (uploadStrategy == null) {
-      OLogManager.instance()
-          .warn(null, "Cannot configure the cloud uploader, strategy parameters is missing", null);
+      logger.warn("Cannot configure the cloud uploader, strategy parameters is missing", null);
       return Optional.empty();
     }
     OLocalBackupUploader uploader = new OLocalBackupUploader(uploadStrategy);
     try {
       uploader.config(cfg);
     } catch (Exception e) {
-      OLogManager.instance().warn(uploader, "Cannot configure the cloud uploader", e);
+      logger.warn("Cannot configure the cloud uploader", e);
       return Optional.empty();
     }
     return Optional.of(uploader);

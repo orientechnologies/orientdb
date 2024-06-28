@@ -20,6 +20,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spi.properties.GroupProperty;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -42,6 +43,8 @@ import org.junit.Assert;
  * in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(AbstractServerClusterTest.class);
   protected int delayServerStartup = 0;
   protected int delayServerAlign = 0;
   protected boolean startupNodesInSequence = true;
@@ -126,7 +129,7 @@ public abstract class AbstractServerClusterTest {
                         server.startServer(getDistributedServerConfiguration(server));
                         onServerStarted(server);
                       } catch (Exception e) {
-                        OLogManager.instance().error(this, "", e);
+                        logger.error("", e);
                       }
                     }
                   });
@@ -160,7 +163,7 @@ public abstract class AbstractServerClusterTest {
       }
     } catch (Exception e) {
       System.out.println("ERROR: ");
-      OLogManager.instance().error(this, "", e);
+      logger.error("", e);
       OLogManager.instance().flush();
       throw e;
     } finally {
@@ -213,28 +216,24 @@ public abstract class AbstractServerClusterTest {
       try {
         threads[s].join();
       } catch (InterruptedException e) {
-        OLogManager.instance().error(this, "", e);
+        logger.error("", e);
       }
     }
   }
 
   protected void banner(final String iMessage) {
-    OLogManager.instance()
-        .error(
-            this,
-            "\n"
-                + "**********************************************************************************************************",
-            null);
-    OLogManager.instance().error(this, iMessage, null);
-    OLogManager.instance()
-        .error(
-            this,
-            "**********************************************************************************************************\n",
-            null);
+    logger.error(
+        "\n"
+            + "**********************************************************************************************************",
+        null);
+    logger.error(iMessage, null);
+    logger.error(
+        "**********************************************************************************************************\n",
+        null);
   }
 
   protected void log(final String iMessage) {
-    OLogManager.instance().info(this, iMessage);
+    logger.info(iMessage);
   }
 
   protected void onServerStarting(ServerRun server) {}
@@ -378,11 +377,8 @@ public abstract class AbstractServerClusterTest {
         .isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance()
-            .error(
-                this,
-                "TIMEOUT on waitForDatabaseIsOffline condition (timeout=" + timeout + ")",
-                null);
+        logger.error(
+            "TIMEOUT on waitForDatabaseIsOffline condition (timeout=" + timeout + ")", null);
         break;
       }
 
@@ -404,8 +400,7 @@ public abstract class AbstractServerClusterTest {
         .isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance()
-            .error(this, "TIMEOUT on waitForDatabaseIsOnLine (timeout=" + timeout + ")", null);
+        logger.error("TIMEOUT on waitForDatabaseIsOnLine (timeout=" + timeout + ")", null);
         break;
       }
 
@@ -435,8 +430,7 @@ public abstract class AbstractServerClusterTest {
           }
 
           if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-            OLogManager.instance()
-                .error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
+            logger.error("TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
             break;
           }
 

@@ -5,11 +5,13 @@ import com.orientechnologies.agent.http.command.OServerCommandGetSecurityConfig;
 import com.orientechnologies.agent.http.command.OServerCommandPostSecurityReload;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 
 /** Created by Enrico Risa on 18/09/2018. */
 public class OSecurityService implements OEnterpriseService {
+  private static final OLogger logger = OLogManager.instance().logger(OSecurityService.class);
 
   private OEnterpriseServer server;
 
@@ -56,7 +58,7 @@ public class OSecurityService implements OEnterpriseService {
 
       }
     } catch (Throwable th) {
-      OLogManager.instance().error(this, "registerSecurityComponents()", th);
+      logger.error("registerSecurityComponents()", th);
     }
   }
 
@@ -73,7 +75,7 @@ public class OSecurityService implements OEnterpriseService {
                 com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth.class);
       }
     } catch (Throwable th) {
-      OLogManager.instance().error(this, "unregisterSecurityComponents()", th);
+      logger.error("unregisterSecurityComponents()", th);
     }
   }
 }

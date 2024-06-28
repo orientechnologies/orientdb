@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.remote.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -22,6 +23,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 public class ConnectionStrategiesEEIT {
+  private static final OLogger logger =
+      OLogManager.instance().logger(ConnectionStrategiesEEIT.class);
 
   private OServer server0;
   private OServer server1;
@@ -231,7 +234,7 @@ public class ConnectionStrategiesEEIT {
     Thread.sleep(20000);
 
     for (int i = 0; i < 1000; i++) {
-      OLogManager.instance().error(this, "phase 3 opening session " + i, null);
+      logger.error("phase 3 opening session " + i, null);
       ODatabaseSession session2 =
           remote1.open(ConnectionStrategiesEEIT.class.getSimpleName(), "admin", "admin");
       try (OResultSet res = session2.query("select count(*) as count from V")) {

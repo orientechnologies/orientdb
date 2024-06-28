@@ -11,6 +11,7 @@ import com.orientechnologies.agent.profiler.OMetricsRegistry;
 import com.orientechnologies.agent.profiler.metrics.OMetric;
 import com.orientechnologies.agent.profiler.metrics.OMetricSet;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
@@ -25,12 +26,19 @@ import io.prometheus.client.exporter.common.TextFormat;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Created by Enrico Risa on 06/08/2018. */
 public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbstract {
-
+  private static final OLogger logger = OLogManager.instance().logger(OrientDBMetricsCommand.class);
   private static final String[] NAMES = {
     "GET|metrics", "GET|metrics/*", "POST|metrics/config", "POST|metrics/config"
   };
@@ -116,7 +124,7 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
 
         Set<String> databases = manager.getServerInstance().listDatabases();
         if (databases.isEmpty()) {
-          OLogManager.instance().warn(this, "Cannot load stats, no databases on this server");
+          logger.warn("Cannot load stats, no databases on this server");
 
         } else {
 
@@ -179,7 +187,7 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
               try {
                 writer.close();
               } catch (Exception e) {
-                OLogManager.instance().warn(this, "Failed to close resource " + writer);
+                logger.warn("Failed to close resource " + writer);
               }
             }
           }
