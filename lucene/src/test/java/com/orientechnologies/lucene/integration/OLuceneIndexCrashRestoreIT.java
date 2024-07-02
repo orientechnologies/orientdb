@@ -71,7 +71,6 @@ public class OLuceneIndexCrashRestoreIT {
   }
 
   public void spawnServer() throws Exception {
-    OLogManager.instance().installCustomFormatter();
     OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(1000000);
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
     OGlobalConfiguration.FILE_LOCK.setValue(false);

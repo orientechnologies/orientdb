@@ -19,6 +19,7 @@ import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSch
 import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import java.io.File;
@@ -33,6 +34,8 @@ import org.junit.rules.TestName;
 
 public abstract class OrientJdbcDbPerMethodTemplateTest {
 
+  private static final OLogger logger =
+      OLogManager.instance().logger(OrientJdbcDbPerMethodTemplateTest.class);
   @Rule public TestName name = new TestName();
 
   protected OrientJdbcConnection conn;
@@ -63,7 +66,7 @@ public abstract class OrientJdbcDbPerMethodTemplateTest {
     createSchemaDB(db);
 
     if (!new File("./src/test/resources/file.pdf").exists())
-      OLogManager.instance().warn(this, "attachment will be not loaded!");
+      logger.warn("attachment will be not loaded!");
 
     loadDB(db, 20);
 

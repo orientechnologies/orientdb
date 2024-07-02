@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -31,6 +32,8 @@ import sun.misc.SignalHandler;
 
 @SuppressWarnings("restriction")
 public class OSignalHandler implements SignalHandler {
+  private static final OLogger logger = OLogManager.instance().logger(OSignalHandler.class);
+
   private Hashtable<Signal, SignalHandler> redefinedHandlers = new Hashtable(4);
   private List<OSignalListener> listeners = new ArrayList<OSignalListener>();
 
@@ -57,7 +60,7 @@ public class OSignalHandler implements SignalHandler {
   }
 
   public void handle(final Signal signal) {
-    OLogManager.instance().warn(this, "Received signal: %s", signal);
+    logger.warn("Received signal: %s", signal);
 
     final String s = signal.toString().trim();
 
@@ -117,8 +120,7 @@ public class OSignalHandler implements SignalHandler {
         // re-install the original handler we replaced
         Signal.handle(entry.getKey(), entry.getValue());
       } catch (IllegalStateException e) {
-        OLogManager.instance()
-            .error(this, "Error during reverting signal handlers to default ones", e);
+        logger.error("Error during reverting signal handlers to default ones", e);
         // not expected as we were able to redefine it earlier, but just in case
       }
     }

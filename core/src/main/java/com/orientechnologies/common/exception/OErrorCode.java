@@ -1,6 +1,7 @@
 package com.orientechnologies.common.exception;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.exception.OBackupInProgressException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -37,6 +38,7 @@ public enum OErrorCode {
   GENERIC_ERROR(OErrorCategory.SQL_GENERIC, 5, "Generic Error", OException.class);
 
   private static OErrorCode[] codes = new OErrorCode[6];
+  private static final OLogger logger = OLogManager.instance().logger(OErrorCode.class);
 
   static {
     for (OErrorCode code : OErrorCode.values()) {
@@ -90,7 +92,7 @@ public enum OErrorCode {
         | IllegalAccessException
         | NoSuchMethodException
         | InvocationTargetException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass);
+      logger.warn("Cannot instantiate exception " + exceptionClass);
     }
     return null;
   }

@@ -24,6 +24,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -59,6 +60,9 @@ import java.util.Set;
 
 @SuppressWarnings({"unchecked", "serial"})
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
+
+  private static final OLogger logger =
+      OLogManager.instance().logger(ORecordSerializerCSVAbstract.class);
   public static final char FIELD_VALUE_SEPARATOR = ':';
 
   /**
@@ -198,14 +202,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           try {
             return new ORecordId(linkAsString);
           } catch (IllegalArgumentException e) {
-            OLogManager.instance()
-                .error(
-                    this,
-                    "Error on unmarshalling field '%s' of record '%s': value '%s' is not a link",
-                    e,
-                    iName,
-                    iSourceRecord,
-                    linkAsString);
+            logger.error(
+                "Error on unmarshalling field '%s' of record '%s': value '%s' is not a link",
+                e, iName, iSourceRecord, linkAsString);
             return new ORecordId();
           }
         } else return null;

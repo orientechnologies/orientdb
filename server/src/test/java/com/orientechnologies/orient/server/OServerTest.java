@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -12,7 +11,6 @@ import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.logging.Level;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +26,6 @@ public class OServerTest {
 
   @Before
   public void setUp() throws Exception {
-    OLogManager.instance().setConsoleLevel(Level.OFF.getName());
     prevPassword = System.setProperty("ORIENTDB_ROOT_PASSWORD", "rootPassword");
     prevOrientHome = System.setProperty("ORIENTDB_HOME", "./target/testhome");
 

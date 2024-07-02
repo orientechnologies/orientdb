@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.command.script;
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -68,7 +69,7 @@ import javax.script.ScriptException;
  * @see OCommandScript
  */
 public class OScriptManager {
-
+  private static final OLogger logger = OLogManager.instance().logger(OScriptManager.class);
   protected static final Object[] EMPTY_PARAMS = new Object[] {};
   protected static final int LINES_AROUND_ERROR = 5;
   protected static final String DEF_LANGUAGE = "javascript";
@@ -116,8 +117,7 @@ public class OScriptManager {
         defEngine = scriptEngineManager.getEngineByName(DEF_LANGUAGE);
       }
       if (defEngine == null) {
-        OLogManager.instance()
-            .warnNoDb(this, "Cannot find default script language for %s", DEF_LANGUAGE);
+        logger.warnNoDb("Cannot find default script language for %s", DEF_LANGUAGE);
       } else {
         // GET DIRECTLY THE LANGUAGE BY NAME (DON'T KNOW WHY SOMETIMES DOESN'T RETURN IT WITH
         // getEngineFactories() ABOVE!

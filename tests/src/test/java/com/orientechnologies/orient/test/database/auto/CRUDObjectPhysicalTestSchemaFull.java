@@ -1947,7 +1947,6 @@ public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
   @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = "testNoGenericCollections")
   public void testNoGenericCollectionsWrongAdding() {
-    OLogManager.instance().setErrorEnabled(false);
 
     JavaNoGenericCollectionsTestClass p =
         database.newInstance(JavaNoGenericCollectionsTestClass.class);
@@ -2026,7 +2025,6 @@ public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
         throwedEx = true;
     }
     Assert.assertTrue(throwedEx);
-    OLogManager.instance().setErrorEnabled(true);
   }
 
   @Test(dependsOnMethods = "testNoGenericCollectionsWrongAdding")

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -35,6 +36,8 @@ import org.testng.annotations.Test;
 // FIXME: let exporter version exports be 13 and check whether new stream processing is used.
 @Test(groups = {"db", "import-export"})
 public class DbImportStreamExportTest extends DocumentDBBaseTest implements OCommandOutputListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(DbImportStreamExportTest.class);
   public static final String EXPORT_FILE_PATH = "target/db.export.gz";
   public static final String NEW_DB_PATH = "target/test-import";
   public static final String NEW_DB_URL = "target/test-import";
@@ -125,7 +128,7 @@ public class DbImportStreamExportTest extends DocumentDBBaseTest implements OCom
       dumpMode = true;
     }
     if (dumpMode) {
-      OLogManager.instance().error(this, iText, null);
+      logger.error(iText, null);
     }
   }
 }

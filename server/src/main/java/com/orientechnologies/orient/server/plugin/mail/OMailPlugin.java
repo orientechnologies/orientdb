@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.plugin.mail;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -38,6 +39,7 @@ import javax.script.ScriptEngine;
 
 public class OMailPlugin extends OServerPluginAbstract
     implements OScriptInjection, OServerPluginConfigurable {
+  private static final OLogger logger = OLogManager.instance().logger(OMailPlugin.class);
   private static final String CONFIG_PROFILE_PREFIX = "profile.";
   private static final String CONFIG_MAIL_PREFIX = "mail.";
 
@@ -65,7 +67,7 @@ public class OMailPlugin extends OServerPluginAbstract
    * @throws ParseException
    */
   public void send(final Map<String, Object> iMessage) {
-    OLogManager.instance().warn(this, "Mail send is non available in this OrientDB version");
+    logger.warn("Mail send is non available in this OrientDB version");
   }
 
   @Override

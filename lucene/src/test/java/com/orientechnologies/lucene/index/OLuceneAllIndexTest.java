@@ -3,11 +3,9 @@ package com.orientechnologies.lucene.index;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.IOException;
-import java.util.logging.Level;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Before;
@@ -19,8 +17,6 @@ public class OLuceneAllIndexTest extends BaseLuceneTest {
 
   @Before
   public void init() throws IOException {
-    OLogManager.instance().installCustomFormatter();
-    OLogManager.instance().setConsoleLevel(Level.INFO.getName());
 
     System.setProperty("orientdb.test.env", "ci");
 

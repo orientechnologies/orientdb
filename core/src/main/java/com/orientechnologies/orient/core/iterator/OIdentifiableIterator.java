@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.iterator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -48,6 +49,7 @@ import java.util.Set;
  */
 public abstract class OIdentifiableIterator<REC extends OIdentifiable>
     implements Iterator<REC>, Iterable<REC> {
+  private static final OLogger logger = OLogManager.instance().logger(OIdentifiableIterator.class);
   protected final ODatabaseDocumentInternal database;
   protected final ORecordId current = new ORecordId();
   private final OStorage dbStorage;
@@ -288,9 +290,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable>
 
         brokenRIDs.add(current.copy());
 
-        OLogManager.instance()
-            .error(
-                this, "Error on fetching record during browsing. The record has been skipped", e);
+        logger.error("Error on fetching record during browsing. The record has been skipped", e);
       }
 
       if (iRecord != null) {

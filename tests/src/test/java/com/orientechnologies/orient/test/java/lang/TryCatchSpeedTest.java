@@ -16,11 +16,13 @@
 package com.orientechnologies.orient.test.java.lang;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import java.io.IOException;
 import org.testng.annotations.Test;
 
 public class TryCatchSpeedTest extends SpeedTestMonoThread {
+  private static final OLogger logger = OLogManager.instance().logger(TryCatchSpeedTest.class);
 
   public TryCatchSpeedTest() {
     super(1000000);
@@ -31,7 +33,7 @@ public class TryCatchSpeedTest extends SpeedTestMonoThread {
   public void cycle() throws IOException {
     try {
     } catch (Throwable t) {
-      OLogManager.instance().error(this, "test", t);
+      logger.error("test", t);
     } finally {
     }
   }

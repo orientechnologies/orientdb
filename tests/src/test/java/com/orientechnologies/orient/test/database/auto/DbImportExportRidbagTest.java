@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -33,6 +34,8 @@ import org.testng.annotations.Test;
 
 @Test(groups = {"db", "import-export"})
 public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCommandOutputListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(DbImportExportRidbagTest.class);
   public static final String EXPORT_FILE_PATH = "target/db.export-ridbag.gz";
   public static final String NEW_DB_PATH = "target/test-import-ridbag";
   public static final String NEW_DB_URL = "target/test-import-ridbag";
@@ -126,6 +129,6 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
       // ACTIVATE DUMP MODE
       dumpMode = true;
 
-    if (dumpMode) OLogManager.instance().error(this, iText, null);
+    if (dumpMode) logger.error(iText, null);
   }
 }

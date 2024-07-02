@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -49,6 +50,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = {"db", "import-export"})
 public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOutputListener {
+  private static final OLogger logger = OLogManager.instance().logger(DbImportExportTest.class);
   public static final String EXPORT_FILE_PATH = "target/db.export.gz";
   public static final String NEW_DB_PATH = "target/test-import";
   public static final String NEW_DB_URL = "target/test-import";
@@ -225,7 +227,7 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
       dumpMode = true;
     }
     if (dumpMode) {
-      OLogManager.instance().error(this, iText, null);
+      logger.error(iText, null);
     }
   }
 }

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -59,6 +60,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCommandExecutorSQLInsert.class);
   public static final String KEYWORD_INSERT = "INSERT";
   protected static final String KEYWORD_RETURN = "RETURN";
   private static final String KEYWORD_VALUES = "VALUES";
@@ -319,12 +322,10 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
       OElement doc = (OElement) rec;
 
       if (oldClass != null && oldClass.isSubClassOf("V")) {
-        OLogManager.instance()
-            .warn(
-                this,
-                "WARNING: copying vertex record "
-                    + doc
-                    + " with INSERT/SELECT, the edge pointers won't be copied");
+        logger.warn(
+            "WARNING: copying vertex record "
+                + doc
+                + " with INSERT/SELECT, the edge pointers won't be copied");
         String[] fields = ((ODocument) rec).fieldNames();
         for (String field : fields) {
           if (field.startsWith("out_") || field.startsWith("in_")) {

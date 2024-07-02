@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -14,6 +15,7 @@ import java.nio.ByteBuffer;
  */
 public final class OWALPageChangesPortion implements OWALChanges {
 
+  private static final OLogger logger = OLogManager.instance().logger(OWALPageChangesPortion.class);
   private static final int PAGE_SIZE =
       OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
@@ -316,20 +318,18 @@ public final class OWALPageChangesPortion implements OWALChanges {
         try {
           System.arraycopy(chunk, chunkOffset, data, read, rl);
         } catch (Exception e) {
-          OLogManager.instance()
-              .error(
-                  this,
-                  "System.arraycopy error: chunk.length = "
-                      + chunk.length
-                      + ", chunkOffset = "
-                      + chunkOffset
-                      + ", data.length = "
-                      + data.length
-                      + ", read = "
-                      + read
-                      + ", rl = "
-                      + rl,
-                  e);
+          logger.error(
+              "System.arraycopy error: chunk.length = "
+                  + chunk.length
+                  + ", chunkOffset = "
+                  + chunkOffset
+                  + ", data.length = "
+                  + data.length
+                  + ", read = "
+                  + read
+                  + ", rl = "
+                  + rl,
+              e);
           throw e;
         }
       }

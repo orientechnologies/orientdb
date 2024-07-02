@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -16,7 +15,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.logging.Level;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
@@ -42,7 +40,6 @@ public class OServerDatabaseOperationsTest {
           InvocationTargetException,
           IllegalAccessException,
           InstantiationException {
-    OLogManager.instance().setConsoleLevel(Level.OFF.getName());
     OServerConfiguration conf = new OServerConfiguration();
 
     conf.handlers = new ArrayList<OServerHandlerConfiguration>();

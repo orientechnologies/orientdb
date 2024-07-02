@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.binary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
@@ -58,6 +59,8 @@ import java.util.concurrent.ConcurrentMap;
  * @author Evgeniy Degtiarenko (gmandnepr-at-gmail.com)
  */
 public class OBinarySerializerFactory {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OBinarySerializerFactory.class);
 
   /** Size of the type identifier block size */
   public static final int TYPE_IDENTIFIER_SIZE = 1;
@@ -147,12 +150,8 @@ public class OBinarySerializerFactory {
         try {
           impl = cls.newInstance();
         } catch (Exception e) {
-          OLogManager.instance()
-              .error(
-                  this,
-                  "Cannot create an instance of class %s invoking the empty constructor",
-                  e,
-                  cls);
+          logger.error(
+              "Cannot create an instance of class %s invoking the empty constructor", e, cls);
         }
     }
     return impl;
