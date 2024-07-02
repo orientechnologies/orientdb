@@ -35,6 +35,10 @@ public class ODistributedServerLog {
     BOTH
   }
 
+  public static OLoggerDistributed logger(Class<?> cl) {
+    return OLoggerDistributed.from(OLogManager.instance().logger(cl));
+  }
+
   public static boolean isDebugEnabled() {
     return OLogManager.instance().isDebugEnabled();
   }
