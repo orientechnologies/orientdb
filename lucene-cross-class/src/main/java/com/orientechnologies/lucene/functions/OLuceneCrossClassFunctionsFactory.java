@@ -22,5 +22,4 @@ public class OLuceneCrossClassFunctionsFactory extends OSQLFunctionFactoryTempla
   public OLuceneCrossClassFunctionsFactory() {
     register(new OLuceneCrossClassSearchFunction());
   }
-
 }
