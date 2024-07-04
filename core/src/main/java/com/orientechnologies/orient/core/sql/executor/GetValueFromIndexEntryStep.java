@@ -23,6 +23,7 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
       OCommandContext ctx, int[] filterClusterIds, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.filterClusterIds = filterClusterIds;
+    Arrays.sort(this.filterClusterIds);
   }
 
   @Override
@@ -42,14 +43,8 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
         return null;
       }
       ORID rid = ((OIdentifiable) finalVal).getIdentity();
-      boolean found = false;
-      for (int filterClusterId : filterClusterIds) {
-        if (rid.getClusterId() < 0 || filterClusterId == rid.getClusterId()) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
+      if (rid.getClusterId() >= 0
+          && Arrays.binarySearch(filterClusterIds, rid.getClusterId()) < 0) {
         return null;
       }
     }
