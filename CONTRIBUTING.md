@@ -38,7 +38,7 @@ Maven 3.5 or later is needed.
 - Format the code with standard format used by OrientDB
 
     ```bash
-    mvn com.coveo:fmt-maven-plugin:format
+    mvn spotless:apply 
     ```
 
 ## Produce Community Distribution
