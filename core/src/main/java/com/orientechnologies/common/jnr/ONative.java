@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -38,7 +37,6 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
-import jnr.constants.platform.Sysconf;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 import jnr.posix.RLimit;
@@ -217,10 +215,6 @@ public class ONative {
       return null;
     }
     return new MemoryLimitResult(memoryLimit, insideContainer);
-  }
-
-  public int getpagesize() throws LastErrorException {
-    return (int) posix.sysconf(Sysconf._SC_PAGE_SIZE);
   }
 
   private long updateMemoryLimit(long memoryLimit, final long newMemoryLimit) {
@@ -490,16 +484,6 @@ public class ONative {
     MemoryLimitResult(final long memoryLimit, final boolean insideContainer) {
       this.memoryLimit = memoryLimit;
       this.insideContainer = insideContainer;
-    }
-  }
-
-  public long blockSize(String path) {
-    // TODO:When upgrading to java 11 use FileStore.getBlockSize()
-    try (RandomAccessFile file = new RandomAccessFile(path, "r")) {
-      return posix.fstat(file.getFD()).blockSize();
-    } catch (Exception e) {
-      logger.warn("Error detecting block size ignoring", e);
-      return 4096;
     }
   }
 
