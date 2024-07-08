@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.storage.memory;
 
+import com.orientechnologies.common.directmemory.MemTrace;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
@@ -50,7 +50,7 @@ public final class MemoryFile {
 
         final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
         final OPointer pointer =
-            bufferPool.acquireDirect(true, Intention.ADD_NEW_PAGE_IN_MEMORY_STORAGE);
+            bufferPool.acquireDirect(true, MemTrace.ADD_NEW_PAGE_IN_MEMORY_STORAGE);
 
         final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, id, (int) index);
         cachePointer.incrementReferrer();

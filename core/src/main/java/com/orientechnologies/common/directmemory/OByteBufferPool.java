@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.common.directmemory;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -130,7 +129,7 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
    * @param intention Why this memory is allocated. This parameter is used for memory profiling.
    * @return Direct memory buffer instance.
    */
-  public final OPointer acquireDirect(boolean clear, Intention intention) {
+  public final OPointer acquireDirect(boolean clear, MemTrace intention) {
     OPointer pointer;
 
     pointer = pointersPool.poll();

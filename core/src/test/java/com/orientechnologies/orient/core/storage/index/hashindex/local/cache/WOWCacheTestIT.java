@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local.cache;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
+import com.orientechnologies.common.directmemory.MemTrace;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -355,7 +355,7 @@ public class WOWCacheTestIT {
     for (int i = 0; i < 2048; i++) {
       wowCache.allocateNewPage(fileId);
 
-      final OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+      final OPointer pointer = bufferPool.acquireDirect(true, MemTrace.TEST);
       final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, fileId, i);
 
       cachePointer.incrementReadersReferrer();

@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.storage.index.sbtree.local.v2;
 
+import com.orientechnologies.common.directmemory.MemTrace;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -18,7 +18,7 @@ public class OSBTreeNullBucketV2Test {
   @Test
   public void testEmptyBucket() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true, MemTrace.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -38,7 +38,7 @@ public class OSBTreeNullBucketV2Test {
   @Test
   public void testAddGetValue() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true, MemTrace.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -63,7 +63,7 @@ public class OSBTreeNullBucketV2Test {
   @Test
   public void testAddRemoveValue() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true, MemTrace.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -89,7 +89,7 @@ public class OSBTreeNullBucketV2Test {
   @Test
   public void testAddRemoveAddValue() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true, MemTrace.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();

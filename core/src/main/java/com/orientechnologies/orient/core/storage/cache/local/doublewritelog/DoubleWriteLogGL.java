@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.storage.cache.local.doublewritelog;
 
+import com.orientechnologies.common.directmemory.MemTrace;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -208,7 +208,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       sizeToAllocate += buffers.length * RECORD_METADATA_SIZE;
       sizeToAllocate = (sizeToAllocate + blockMask) & ~blockMask;
       final OPointer pageContainer =
-          ALLOCATOR.allocate(sizeToAllocate, false, Intention.DWL_ALLOCATE_CHUNK);
+          ALLOCATOR.allocate(sizeToAllocate, false, MemTrace.DWL_ALLOCATE_CHUNK);
 
       try {
         final ByteBuffer containerBuffer;
@@ -223,7 +223,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
           final int maxCompressedLength = LZ_4_COMPRESSOR.maxCompressedLength(buffer.limit());
           final OPointer compressedPointer =
               ALLOCATOR.allocate(
-                  maxCompressedLength, false, Intention.DWL_ALLOCATE_COMPRESSED_CHUNK);
+                  maxCompressedLength, false, MemTrace.DWL_ALLOCATE_COMPRESSED_CHUNK);
           try {
             final ByteBuffer compressedBuffer = compressedPointer.getNativeByteBuffer();
             LZ_4_COMPRESSOR.compress(buffer, compressedBuffer);
@@ -401,7 +401,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
                 pagesBuffer.position(pagePosition);
                 pagesBuffer.limit(pagePosition + pageSize);
 
-                final OPointer pointer = bufferPool.acquireDirect(false, Intention.LOAD_WAL_PAGE);
+                final OPointer pointer = bufferPool.acquireDirect(false, MemTrace.LOAD_WAL_PAGE);
                 final ByteBuffer pageBuffer = pointer.getNativeByteBuffer();
                 assert pageBuffer.position() == 0;
                 pageBuffer.put(pagesBuffer);

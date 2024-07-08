@@ -1,7 +1,6 @@
 package com.orientechnologies.common.directmemory;
 
 import com.kenai.jffi.MemoryIO;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -10,12 +9,12 @@ public final class OPointer {
 
   private final long pointer;
   private final int size;
-  private final Intention intention;
+  private final MemTrace intention;
 
   private SoftReference<ByteBuffer> byteBuffer;
   private int hash = 0;
 
-  OPointer(long pointer, int size, Intention intention) {
+  OPointer(long pointer, int size, MemTrace intention) {
     this.pointer = pointer;
     this.size = size;
     this.intention = intention;
@@ -49,7 +48,7 @@ public final class OPointer {
     return size;
   }
 
-  Intention getIntention() {
+  MemTrace getIntention() {
     return intention;
   }
 

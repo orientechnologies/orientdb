@@ -21,8 +21,8 @@
 package com.orientechnologies.orient.core.engine.local;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
+import com.orientechnologies.common.directmemory.MemTrace;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -98,7 +98,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
       final List<OPointer> pages = new ArrayList<>(pageCount);
 
       for (int i = 0; i < pageCount; i++) {
-        pages.add(bufferPool.acquireDirect(true, Intention.PAGE_PRE_ALLOCATION));
+        pages.add(bufferPool.acquireDirect(true, MemTrace.PAGE_PRE_ALLOCATION));
       }
 
       for (final OPointer pointer : pages) {

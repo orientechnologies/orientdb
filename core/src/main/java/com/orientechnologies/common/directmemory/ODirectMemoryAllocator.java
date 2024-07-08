@@ -28,7 +28,6 @@ import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -112,8 +111,8 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
   /** Amount of direct memory consumed by using this allocator. */
   private final LongAdder memoryConsumption = new LongAdder();
 
-  private final ThreadLocal<EnumMap<Intention, OModifiableLong>> memoryConsumptionByIntention =
-      ThreadLocal.withInitial(() -> new EnumMap<>(Intention.class));
+  private final ThreadLocal<EnumMap<MemTrace, OModifiableLong>> memoryConsumptionByIntention =
+      ThreadLocal.withInitial(() -> new EnumMap<>(MemTrace.class));
 
   private final Set<ConsumptionMapEvictionIndicator> consumptionMaps =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -143,7 +142,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     if (PROFILE_MEMORY) {
       final long printInterval = (long) MEMORY_STATISTICS_PRINTING_INTERVAL * 60 * 1_000;
       Orient.instance()
-          .scheduleTask(new MemoryStatPrinter(consumptionMaps), printInterval, printInterval);
+          .scheduleTask(new OMemoryStatPrinter(consumptionMaps), printInterval, printInterval);
     }
   }
 
@@ -157,7 +156,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
    * @throws ODirectMemoryAllocationFailedException if it is impossible to allocate amount of direct
    *     memory of given size
    */
-  public OPointer allocate(int size, boolean clear, Intention intention) {
+  public OPointer allocate(int size, boolean clear, MemTrace intention) {
     if (size <= 0) {
       throw new IllegalArgumentException("Size of allocated memory can not be less or equal to 0");
     }
@@ -183,7 +182,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
 
     memoryConsumption.add(size);
     if (PROFILE_MEMORY) {
-      final EnumMap<Intention, OModifiableLong> consumptionMap = memoryConsumptionByIntention.get();
+      final EnumMap<MemTrace, OModifiableLong> consumptionMap = memoryConsumptionByIntention.get();
 
       if (consumptionMap.isEmpty()) {
         consumptionMaps.add(
@@ -208,13 +207,12 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     return track(ptr);
   }
 
-  private void accumulateEvictedConsumptionMaps(
-      EnumMap<Intention, OModifiableLong> consumptionMap) {
+  private void accumulateEvictedConsumptionMaps(EnumMap<MemTrace, OModifiableLong> consumptionMap) {
     ConsumptionMapEvictionIndicator evictionIndicator =
         (ConsumptionMapEvictionIndicator) consumptionMapEvictionQueue.poll();
     while (evictionIndicator != null) {
       consumptionMaps.remove(evictionIndicator);
-      accumulateConsumptionStatistics(consumptionMap, evictionIndicator);
+      evictionIndicator.accumulateConsumptionStatistics(consumptionMap);
 
       evictionIndicator = (ConsumptionMapEvictionIndicator) consumptionMapEvictionQueue.poll();
     }
@@ -238,7 +236,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
       memoryConsumption.add(-pointer.getSize());
 
       if (PROFILE_MEMORY) {
-        final EnumMap<Intention, OModifiableLong> consumptionMap =
+        final EnumMap<MemTrace, OModifiableLong> consumptionMap =
             memoryConsumptionByIntention.get();
 
         final boolean wasEmpty = consumptionMap.isEmpty();
@@ -265,52 +263,6 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
 
       untrack(pointer);
     }
-  }
-
-  private static String printMemoryStatistics(
-      final EnumMap<Intention, OModifiableLong> memoryConsumptionByIntention) {
-    long total = 0;
-    final StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append(
-        "\r\n-----------------------------------------------------------------------------\r\n");
-    stringBuilder.append("Memory profiling results for OrientDB direct memory allocation\r\n");
-    stringBuilder.append("Amount of memory consumed by category in bytes/Kb/Mb/Gb\r\n");
-    stringBuilder.append("\r\n");
-
-    for (final Intention intention : Intention.values()) {
-      final OModifiableLong consumedMemory = memoryConsumptionByIntention.get(intention);
-      stringBuilder.append(intention.name()).append(" : ");
-      if (consumedMemory != null) {
-        total += consumedMemory.value;
-
-        stringBuilder
-            .append(consumedMemory.value)
-            .append("/")
-            .append(consumedMemory.value / 1024)
-            .append("/")
-            .append(consumedMemory.value / (1024 * 1024))
-            .append("/")
-            .append(consumedMemory.value / (1024 * 1024 * 1024));
-      } else {
-        stringBuilder.append("0/0/0/0");
-      }
-      stringBuilder.append("\r\n");
-    }
-
-    stringBuilder.append("\r\n");
-
-    stringBuilder
-        .append("Total : ")
-        .append(total)
-        .append("/")
-        .append(total / 1024)
-        .append("/")
-        .append(total / (1024 * 1024))
-        .append("/")
-        .append(total / (1024 * 1024 * 1024));
-    stringBuilder.append(
-        "\r\n-----------------------------------------------------------------------------\r\n");
-    return stringBuilder.toString();
   }
 
   /** @inheritDoc */
@@ -405,118 +357,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     }
   }
 
-  public enum Intention {
-    TEST,
-    PAGE_PRE_ALLOCATION,
-    ADD_NEW_PAGE_IN_DISK_CACHE,
-    CHECK_FILE_STORAGE,
-    LOAD_PAGE_FROM_DISK,
-    COPY_PAGE_DURING_FLUSH,
-    COPY_PAGE_DURING_EXCLUSIVE_PAGE_FLUSH,
-    FILE_FLUSH,
-    LOAD_WAL_PAGE,
-    ADD_NEW_PAGE_IN_MEMORY_STORAGE,
-    ALLOCATE_CHUNK_TO_WRITE_DATA_IN_BATCH,
-    DWL_ALLOCATE_CHUNK,
-    DWL_ALLOCATE_COMPRESSED_CHUNK,
-    ALLOCATE_FIRST_WAL_BUFFER,
-    ALLOCATE_SECOND_WAL_BUFFER,
-  }
-
-  /**
-   * WeakReference to the direct memory pointer which tracks stack trace of allocation of direct
-   * memory associated with this pointer.
-   */
-  private static class TrackedPointerReference extends WeakReference<OPointer> {
-
-    public final int id;
-    private final Exception stackTrace;
-
-    TrackedPointerReference(OPointer referent, ReferenceQueue<? super OPointer> q) {
-      super(referent, q);
-
-      this.id = id(referent);
-      this.stackTrace = new Exception();
-    }
-  }
-
-  /**
-   * WeakReference key which wraps direct memory pointer and can be used as key for the {@link Map}.
-   */
-  private static class TrackedPointerKey extends WeakReference<OPointer> {
-
-    private final int hashCode;
-
-    TrackedPointerKey(OPointer referent) {
-      super(referent);
-      hashCode = System.identityHashCode(referent);
-    }
-
-    @Override
-    public int hashCode() {
-      return hashCode;
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object obj) {
-      final OPointer pointer = get();
-      return pointer != null && pointer == ((TrackedPointerKey) obj).get();
-    }
-  }
-
-  private static int id(Object object) {
+  public static int id(Object object) {
     return System.identityHashCode(object);
-  }
-
-  private static final class ConsumptionMapEvictionIndicator extends WeakReference<Thread> {
-    private final EnumMap<Intention, OModifiableLong> consumptionMap;
-
-    public ConsumptionMapEvictionIndicator(
-        Thread referent,
-        ReferenceQueue<? super Thread> q,
-        EnumMap<Intention, OModifiableLong> consumptionMap) {
-      super(referent, q);
-
-      this.consumptionMap = consumptionMap;
-    }
-  }
-
-  private static final class MemoryStatPrinter implements Runnable {
-    private final Set<ConsumptionMapEvictionIndicator> consumptionMaps;
-
-    private MemoryStatPrinter(Set<ConsumptionMapEvictionIndicator> consumptionMaps) {
-      this.consumptionMaps = consumptionMaps;
-    }
-
-    @Override
-    public void run() {
-      final EnumMap<Intention, OModifiableLong> accumulator = new EnumMap<>(Intention.class);
-
-      for (final ConsumptionMapEvictionIndicator consumptionMap : consumptionMaps) {
-        accumulateConsumptionStatistics(accumulator, consumptionMap);
-      }
-
-      final String memoryStat = printMemoryStatistics(accumulator);
-      logger.infoNoDb(memoryStat);
-    }
-  }
-
-  private static void accumulateConsumptionStatistics(
-      EnumMap<Intention, OModifiableLong> accumulator,
-      ConsumptionMapEvictionIndicator consumptionMap) {
-    for (final Map.Entry<Intention, OModifiableLong> entry :
-        consumptionMap.consumptionMap.entrySet()) {
-      accumulator.compute(
-          entry.getKey(),
-          (k, v) -> {
-            if (v == null) {
-              v = new OModifiableLong();
-            }
-
-            v.value += entry.getValue().value;
-            return v;
-          });
-    }
   }
 }
