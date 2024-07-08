@@ -20,6 +20,7 @@ package com.orientechnologies.agent.http.command;
 import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -51,7 +52,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class OServerCommandDistributedManager extends OServerCommandDistributedScope {
-
+  private static final OLogger logger =
+      OLogManager.instance().logger(OServerCommandDistributedManager.class);
   private static final String[] NAMES = {
     "GET|distributed/*", "PUT|distributed/*", "POST|distributed/*"
   };
@@ -277,7 +279,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     Set<String> databases = manager.getServerInstance().listDatabases();
     if (databases.isEmpty()) {
-      OLogManager.instance().warn(this, "Cannot load stats, no databases on this server");
+      logger.warn("Cannot load stats, no databases on this server");
       return doc;
     }
 

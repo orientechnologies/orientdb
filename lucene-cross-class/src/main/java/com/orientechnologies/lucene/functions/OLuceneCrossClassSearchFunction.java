@@ -3,6 +3,7 @@ package com.orientechnologies.lucene.functions;
 import static com.orientechnologies.lucene.OLuceneCrossClassIndexFactory.LUCENE_CROSS_CLASS;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
@@ -19,7 +20,11 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +35,8 @@ import java.util.stream.Stream;
  */
 public class OLuceneCrossClassSearchFunction extends OSQLFunctionAbstract
     implements OIndexableSQLFunction {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneCrossClassSearchFunction.class);
 
   public static final String NAME = "SEARCH_CROSS";
 
@@ -168,7 +175,7 @@ public class OLuceneCrossClassSearchFunction extends OSQLFunctionAbstract
 
   @Override
   public String getSyntax() {
-    OLogManager.instance().info(this, "syntax");
+    logger.debug("syntax");
     return "SEARCH_CROSS('<lucene query>', {metadata})";
   }
 }

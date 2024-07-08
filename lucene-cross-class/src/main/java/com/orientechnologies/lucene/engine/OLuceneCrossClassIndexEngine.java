@@ -3,6 +3,7 @@ package com.orientechnologies.lucene.engine;
 import static com.orientechnologies.lucene.OLuceneIndexFactory.LUCENE_ALGORITHM;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
@@ -56,7 +57,8 @@ import org.apache.lucene.search.highlight.TextFragment;
  * Created by frank on 03/11/2016.
  */
 public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
-
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneCrossClassIndexEngine.class);
   private final OStorage storage;
   private final String indexName;
   private final AtomicLong bonsayFileId = new AtomicLong(0);
@@ -187,9 +189,9 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
       OLuceneQueryContext ctx = new OLuceneQueryContext(null, searcher, query, fields);
       return new OLuceneResultSet(this, ctx, metadata);
     } catch (IOException e) {
-      OLogManager.instance().error(this, "unable to create multi-reader", e);
+      logger.error("unable to create multi-reader", e);
     } catch (ParseException e) {
-      OLogManager.instance().error(this, "unable to parse query", e);
+      logger.error("unable to parse query", e);
     }
 
     return null;

@@ -19,6 +19,7 @@ package com.orientechnologies.lucene;
 import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.engine.OLuceneCrossClassIndexEngine;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.Orient;
@@ -42,6 +43,9 @@ import java.util.Set;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
+
+  private static final OLogger logger =
+      OLogManager.instance().logger(OLuceneCrossClassIndexFactory.class);
 
   public static final String LUCENE_CROSS_CLASS = "LUCENE_CROSS_CLASS";
 
@@ -130,7 +134,7 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
 
   @Override
   public void onClose(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onClose");
+    logger.debug("onClose");
   }
 
   @Override
@@ -138,17 +142,17 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
     try {
       if (db.isClosed()) return;
 
-      OLogManager.instance().debug(this, "Dropping Lucene indexes...");
+      logger.debug("Dropping Lucene indexes...");
 
       for (OIndex idx : db.getMetadata().getIndexManager().getIndexes()) {
         if (idx instanceof OLuceneCrossClassIndexEngine) {
-          OLogManager.instance().debug(this, "deleting index " + idx.getName());
+          logger.debug("deleting index " + idx.getName());
           idx.delete();
         }
       }
 
     } catch (Exception e) {
-      OLogManager.instance().warn(this, "Error on dropping Lucene indexes", e);
+      logger.warn("Error on dropping Lucene indexes", e);
     }
   }
 
@@ -168,7 +172,7 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
     ODatabaseDocument dbd = (ODatabaseDocument) db;
     if (!indexManager.existsIndex("CrossClassSearchIndex")) {
 
-      OLogManager.instance().info(this, "creating cross class Lucene index");
+      logger.info("creating cross class Lucene index");
 
       dbd.command("CREATE INDEX CrossClassSearchIndex FULLTEXT ENGINE LUCENE_CROSS_CLASS").close();
     }
