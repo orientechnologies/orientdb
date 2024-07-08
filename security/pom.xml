@@ -61,6 +61,11 @@
             <version>${project.parent.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.cloudbees</groupId>
+            <artifactId>syslog-java-client</artifactId>
+            <version>${cloudbees.syslog.version}</version>
+        </dependency>
     </dependencies>
     <profiles>
         <profile>

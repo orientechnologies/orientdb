@@ -168,6 +168,7 @@
         <jaxb.api.version>2.3.0</jaxb.api.version>
         <project.rootdir>${project.basedir}/</project.rootdir>
         <graalvm.version>23.0.4</graalvm.version>
+        <cloudbees.syslog.version>1.1.7</cloudbees.syslog.version>
     </properties>
 
     <build>
