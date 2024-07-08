@@ -298,7 +298,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>animal-sniffer-maven-plugin</artifactId>
-                    <version>1.23</version>
+                    <version>1.24</version>
                     <configuration>
                         <!--
                         Keep aligned with the maven-compiler-plugins source/target, ATM this is 1.6,
