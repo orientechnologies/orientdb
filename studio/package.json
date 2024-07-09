@@ -1,6 +1,6 @@
 {
   "name": "orientdbstudio",
-  "version": "2.2.15-snapshot",
+  "version": "4.4.0-snapshot",
   "dependencies": {
     "@angular/common": "^4.4.7",
     "@angular/compiler": "^4.4.7",
