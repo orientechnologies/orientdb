@@ -60,9 +60,6 @@ module.exports = function (options) {
         "window.CodeMirror": "codemirror",
         CodeMirror: "codemirror"
 
-      }),
-      new webpack.optimize.UglifyJsPlugin({
-        minimize: true
       })
     ],
     module: {
