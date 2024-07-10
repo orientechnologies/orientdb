@@ -36,6 +36,17 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
         formatMessage(localNode, remoteNode, direction, message), exception, additionalArgs);
   }
 
+  @Override
+  public void debug(String localNode, String message, Object... additionalArgs) {
+    logger.debug(formatMessage(localNode, message), additionalArgs);
+  }
+
+  @Override
+  public void debug(
+      String localNode, String message, Throwable exception, Object... additionalArgs) {
+    logger.debug(formatMessage(localNode, message), exception, additionalArgs);
+  }
+
   public void info(
       String localNode,
       String remoteNode,
@@ -54,6 +65,17 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
       Object... additionalArgs) {
     logger.info(
         formatMessage(localNode, remoteNode, direction, message), exception, additionalArgs);
+  }
+
+  @Override
+  public void info(String localNode, String message, Object... additionalArgs) {
+    logger.info(formatMessage(localNode, message), additionalArgs);
+  }
+
+  @Override
+  public void info(
+      String localNode, String message, Throwable exception, Object... additionalArgs) {
+    logger.info(formatMessage(localNode, message), exception, additionalArgs);
   }
 
   public void warn(
@@ -76,6 +98,17 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
         formatMessage(localNode, remoteNode, direction, message), exception, additionalArgs);
   }
 
+  @Override
+  public void warn(String localNode, String message, Object... additionalArgs) {
+    logger.warn(formatMessage(localNode, message), additionalArgs);
+  }
+
+  @Override
+  public void warn(
+      String localNode, String message, Throwable exception, Object... additionalArgs) {
+    logger.warn(formatMessage(localNode, message), exception, additionalArgs);
+  }
+
   public void error(
       String localNode,
       String remoteNode,
@@ -94,6 +127,32 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
       Object... additionalArgs) {
     logger.error(
         formatMessage(localNode, remoteNode, direction, message), exception, additionalArgs);
+  }
+
+  @Override
+  public void error(String localNode, String message, Object... additionalArgs) {
+    logger.error(formatMessage(localNode, message), null, additionalArgs);
+  }
+
+  @Override
+  public void error(
+      String localNode, String message, Throwable exception, Object... additionalArgs) {
+    logger.error(formatMessage(localNode, message), exception, additionalArgs);
+  }
+
+  protected static String formatMessage(final String localNode, final String message) {
+    final StringBuilder formatted = new StringBuilder(256);
+
+    if (localNode != null) {
+      formatted.append('[');
+      formatted.append(localNode);
+      formatted.append(']');
+    }
+
+    formatted.append(' ');
+    formatted.append(message);
+
+    return formatted.toString();
   }
 
   protected static String formatMessage(
@@ -134,5 +193,20 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
     formatted.append(message);
 
     return formatted.toString();
+  }
+
+  @Override
+  public void log(
+      Level iLevel,
+      String message,
+      Throwable exception,
+      boolean extractDatabase,
+      Object... additionalArgs) {
+    logger.log(iLevel, message, exception, extractDatabase, additionalArgs);
+  }
+
+  @Override
+  public boolean isWarnEnabled() {
+    return logger.isWarnEnabled();
   }
 }
