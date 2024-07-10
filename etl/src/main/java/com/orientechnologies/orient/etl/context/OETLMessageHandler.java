@@ -55,56 +55,56 @@ public class OETLMessageHandler implements OPluginMessageHandler {
 
   @Override
   public synchronized void debug(Object requester, String message) {
-    OLogManager.instance().debug(requester, message);
+    OLogManager.instance().logger(requester.getClass()).debug(message);
     message += "\n";
     this.outputManager.debug(message);
   }
 
   @Override
   public synchronized void debug(Object requester, String format, Object... args) {
-    OLogManager.instance().debug(requester, format, args);
+    OLogManager.instance().logger(requester.getClass()).debug(format, args);
     format += "\n";
     this.outputManager.debug(format, args);
   }
 
   @Override
   public synchronized void info(Object requester, String message) {
-    OLogManager.instance().info(requester, message);
+    OLogManager.instance().logger(requester.getClass()).info(message);
     message += "\n";
     this.outputManager.info(message);
   }
 
   @Override
   public synchronized void info(Object requester, String format, Object... args) {
-    OLogManager.instance().info(requester, format, args);
+    OLogManager.instance().logger(requester.getClass()).info(format, args);
     format += "\n";
     this.outputManager.info(format, args);
   }
 
   @Override
   public synchronized void warn(Object requester, String message) {
-    OLogManager.instance().warn(requester, message);
+    OLogManager.instance().logger(requester.getClass()).warn(message);
     message += "\n";
     this.outputManager.warn(message);
   }
 
   @Override
   public synchronized void warn(Object requester, String format, Object... args) {
-    OLogManager.instance().warn(requester, format, args);
+    OLogManager.instance().logger(requester.getClass()).warn(format, args);
     format += "\n";
     this.outputManager.warn(format, args);
   }
 
   @Override
   public synchronized void error(Object requester, String message) {
-    OLogManager.instance().error(requester, message, null);
+    OLogManager.instance().logger(requester.getClass()).error(message, null);
     message += "\n";
     this.outputManager.error(message);
   }
 
   @Override
   public synchronized void error(Object requester, String format, Object... args) {
-    OLogManager.instance().error(requester, format, null, args);
+    OLogManager.instance().logger(requester.getClass()).error(format, null, args);
     format += "\n";
     this.outputManager.error(format, args);
   }

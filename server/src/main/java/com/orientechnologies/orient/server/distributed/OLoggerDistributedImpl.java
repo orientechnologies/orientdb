@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 
 public class OLoggerDistributedImpl implements OLoggerDistributed {
@@ -12,7 +11,7 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
   }
 
   public boolean isDebugEnabled() {
-    return OLogManager.instance().isDebugEnabled();
+    return logger.isDebugEnabled();
   }
 
   @Override
