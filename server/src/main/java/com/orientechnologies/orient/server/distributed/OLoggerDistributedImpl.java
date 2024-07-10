@@ -16,128 +16,169 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
     return OLogManager.instance().isDebugEnabled();
   }
 
-  public void debug(
-      String localNode,
-      String remoteNode,
-      DIRECTION direction,
-      String message,
-      Object... additionalArgs) {
-    logger.debug(formatMessage(localNode, remoteNode, direction, message), additionalArgs);
-  }
-
-  public void debug(
-      String localNode,
-      String remoteNode,
-      DIRECTION direction,
-      String message,
-      Throwable exception,
-      Object... additionalArgs) {
-    logger.debug(
-        formatMessage(localNode, remoteNode, direction, message), exception, additionalArgs);
-  }
-
   @Override
-  public void debug(String localNode, String message, Object... additionalArgs) {
+  public void debugNode(String localNode, String message, Object... additionalArgs) {
     logger.debug(formatMessage(localNode, message), additionalArgs);
   }
 
   @Override
-  public void debug(
+  public void debugNode(
       String localNode, String message, Throwable exception, Object... additionalArgs) {
     logger.debug(formatMessage(localNode, message), exception, additionalArgs);
   }
 
-  public void info(
-      String localNode,
-      String remoteNode,
-      DIRECTION direction,
-      String message,
-      Object... additionalArgs) {
-    logger.info(formatMessage(localNode, remoteNode, direction, message), additionalArgs);
-  }
-
-  public void info(
-      String localNode,
-      String remoteNode,
-      DIRECTION direction,
-      String message,
-      Throwable exception,
-      Object... additionalArgs) {
-    logger.info(
-        formatMessage(localNode, remoteNode, direction, message), exception, additionalArgs);
-  }
-
   @Override
-  public void info(String localNode, String message, Object... additionalArgs) {
+  public void infoNode(String localNode, String message, Object... additionalArgs) {
     logger.info(formatMessage(localNode, message), additionalArgs);
   }
 
   @Override
-  public void info(
+  public void infoNode(
       String localNode, String message, Throwable exception, Object... additionalArgs) {
     logger.info(formatMessage(localNode, message), exception, additionalArgs);
   }
 
-  public void warn(
-      String localNode,
-      String remoteNode,
-      DIRECTION direction,
-      String message,
-      Object... additionalArgs) {
-    logger.warn(formatMessage(localNode, remoteNode, direction, message), additionalArgs);
-  }
-
-  public void warn(
-      String localNode,
-      String remoteNode,
-      DIRECTION direction,
-      String message,
-      Throwable exception,
-      Object... additionalArgs) {
-    logger.warn(
-        formatMessage(localNode, remoteNode, direction, message), exception, additionalArgs);
-  }
-
   @Override
-  public void warn(String localNode, String message, Object... additionalArgs) {
+  public void warnNode(String localNode, String message, Object... additionalArgs) {
     logger.warn(formatMessage(localNode, message), additionalArgs);
   }
 
   @Override
-  public void warn(
+  public void warnNode(
       String localNode, String message, Throwable exception, Object... additionalArgs) {
     logger.warn(formatMessage(localNode, message), exception, additionalArgs);
   }
 
-  public void error(
-      String localNode,
-      String remoteNode,
-      DIRECTION direction,
-      String message,
-      Object... additionalArgs) {
-    logger.error(formatMessage(localNode, remoteNode, direction, message), null, additionalArgs);
-  }
-
-  public void error(
-      String localNode,
-      String remoteNode,
-      DIRECTION direction,
-      String message,
-      Throwable exception,
-      Object... additionalArgs) {
-    logger.error(
-        formatMessage(localNode, remoteNode, direction, message), exception, additionalArgs);
-  }
-
   @Override
-  public void error(String localNode, String message, Object... additionalArgs) {
+  public void errorNode(String localNode, String message, Object... additionalArgs) {
     logger.error(formatMessage(localNode, message), null, additionalArgs);
   }
 
   @Override
-  public void error(
+  public void errorNode(
       String localNode, String message, Throwable exception, Object... additionalArgs) {
     logger.error(formatMessage(localNode, message), exception, additionalArgs);
+  }
+
+  public void debugOut(
+      String localNode, String remoteNode, String message, Object... additionalArgs) {
+    logger.debug(formatMessage(localNode, remoteNode, DIRECTION.OUT, message), additionalArgs);
+  }
+
+  public void debugOut(
+      String localNode,
+      String remoteNode,
+      String message,
+      Throwable exception,
+      Object... additionalArgs) {
+    logger.debug(
+        formatMessage(localNode, remoteNode, DIRECTION.OUT, message), exception, additionalArgs);
+  }
+
+  public void infoOut(
+      String localNode, String remoteNode, String message, Object... additionalArgs) {
+    logger.info(formatMessage(localNode, remoteNode, DIRECTION.OUT, message), additionalArgs);
+  }
+
+  public void infoOut(
+      String localNode,
+      String remoteNode,
+      String message,
+      Throwable exception,
+      Object... additionalArgs) {
+    logger.info(
+        formatMessage(localNode, remoteNode, DIRECTION.OUT, message), exception, additionalArgs);
+  }
+
+  public void warnOut(
+      String localNode, String remoteNode, String message, Object... additionalArgs) {
+    logger.warn(formatMessage(localNode, remoteNode, DIRECTION.OUT, message), additionalArgs);
+  }
+
+  public void warnOut(
+      String localNode,
+      String remoteNode,
+      String message,
+      Throwable exception,
+      Object... additionalArgs) {
+    logger.warn(
+        formatMessage(localNode, remoteNode, DIRECTION.OUT, message), exception, additionalArgs);
+  }
+
+  public void errorOut(
+      String localNode, String remoteNode, String message, Object... additionalArgs) {
+    logger.error(
+        formatMessage(localNode, remoteNode, DIRECTION.OUT, message), null, additionalArgs);
+  }
+
+  public void errorOut(
+      String localNode,
+      String remoteNode,
+      String message,
+      Throwable exception,
+      Object... additionalArgs) {
+    logger.error(
+        formatMessage(localNode, remoteNode, DIRECTION.OUT, message), exception, additionalArgs);
+  }
+
+  public void debugIn(
+      String localNode, String remoteNode, String message, Object... additionalArgs) {
+    logger.debug(formatMessage(localNode, remoteNode, DIRECTION.IN, message), additionalArgs);
+  }
+
+  public void debugIn(
+      String localNode,
+      String remoteNode,
+      String message,
+      Throwable exception,
+      Object... additionalArgs) {
+    logger.debug(
+        formatMessage(localNode, remoteNode, DIRECTION.IN, message), exception, additionalArgs);
+  }
+
+  public void infoIn(
+      String localNode, String remoteNode, String message, Object... additionalArgs) {
+    logger.info(formatMessage(localNode, remoteNode, DIRECTION.IN, message), additionalArgs);
+  }
+
+  public void infoIn(
+      String localNode,
+      String remoteNode,
+      String message,
+      Throwable exception,
+      Object... additionalArgs) {
+    logger.info(
+        formatMessage(localNode, remoteNode, DIRECTION.IN, message), exception, additionalArgs);
+  }
+
+  public void warnIn(
+      String localNode, String remoteNode, String message, Object... additionalArgs) {
+    logger.warn(formatMessage(localNode, remoteNode, DIRECTION.IN, message), additionalArgs);
+  }
+
+  public void warnIn(
+      String localNode,
+      String remoteNode,
+      String message,
+      Throwable exception,
+      Object... additionalArgs) {
+    logger.warn(
+        formatMessage(localNode, remoteNode, DIRECTION.IN, message), exception, additionalArgs);
+  }
+
+  public void errorIn(
+      String localNode, String remoteNode, String message, Object... additionalArgs) {
+    logger.error(formatMessage(localNode, remoteNode, DIRECTION.IN, message), null, additionalArgs);
+  }
+
+  public void errorIn(
+      String localNode,
+      String remoteNode,
+      String message,
+      Throwable exception,
+      Object... additionalArgs) {
+    logger.error(
+        formatMessage(localNode, remoteNode, DIRECTION.IN, message), exception, additionalArgs);
   }
 
   protected static String formatMessage(final String localNode, final String message) {
