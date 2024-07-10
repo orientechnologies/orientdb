@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 
 public class OLoggerDistributedImpl implements OLoggerDistributed {
 
@@ -62,7 +61,7 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
 
   public void debugOut(
       String localNode, String remoteNode, String message, Object... additionalArgs) {
-    logger.debug(formatMessage(localNode, remoteNode, DIRECTION.OUT, message), additionalArgs);
+    logger.debug(formatMessageOut(localNode, remoteNode, message), additionalArgs);
   }
 
   public void debugOut(
@@ -71,13 +70,12 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
       String message,
       Throwable exception,
       Object... additionalArgs) {
-    logger.debug(
-        formatMessage(localNode, remoteNode, DIRECTION.OUT, message), exception, additionalArgs);
+    logger.debug(formatMessageOut(localNode, remoteNode, message), exception, additionalArgs);
   }
 
   public void infoOut(
       String localNode, String remoteNode, String message, Object... additionalArgs) {
-    logger.info(formatMessage(localNode, remoteNode, DIRECTION.OUT, message), additionalArgs);
+    logger.info(formatMessageOut(localNode, remoteNode, message), additionalArgs);
   }
 
   public void infoOut(
@@ -86,13 +84,12 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
       String message,
       Throwable exception,
       Object... additionalArgs) {
-    logger.info(
-        formatMessage(localNode, remoteNode, DIRECTION.OUT, message), exception, additionalArgs);
+    logger.info(formatMessageOut(localNode, remoteNode, message), exception, additionalArgs);
   }
 
   public void warnOut(
       String localNode, String remoteNode, String message, Object... additionalArgs) {
-    logger.warn(formatMessage(localNode, remoteNode, DIRECTION.OUT, message), additionalArgs);
+    logger.warn(formatMessageOut(localNode, remoteNode, message), additionalArgs);
   }
 
   public void warnOut(
@@ -101,14 +98,12 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
       String message,
       Throwable exception,
       Object... additionalArgs) {
-    logger.warn(
-        formatMessage(localNode, remoteNode, DIRECTION.OUT, message), exception, additionalArgs);
+    logger.warn(formatMessageOut(localNode, remoteNode, message), exception, additionalArgs);
   }
 
   public void errorOut(
       String localNode, String remoteNode, String message, Object... additionalArgs) {
-    logger.error(
-        formatMessage(localNode, remoteNode, DIRECTION.OUT, message), null, additionalArgs);
+    logger.error(formatMessageOut(localNode, remoteNode, message), null, additionalArgs);
   }
 
   public void errorOut(
@@ -117,13 +112,12 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
       String message,
       Throwable exception,
       Object... additionalArgs) {
-    logger.error(
-        formatMessage(localNode, remoteNode, DIRECTION.OUT, message), exception, additionalArgs);
+    logger.error(formatMessageOut(localNode, remoteNode, message), exception, additionalArgs);
   }
 
   public void debugIn(
       String localNode, String remoteNode, String message, Object... additionalArgs) {
-    logger.debug(formatMessage(localNode, remoteNode, DIRECTION.IN, message), additionalArgs);
+    logger.debug(formatMessageIn(localNode, remoteNode, message), additionalArgs);
   }
 
   public void debugIn(
@@ -132,13 +126,12 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
       String message,
       Throwable exception,
       Object... additionalArgs) {
-    logger.debug(
-        formatMessage(localNode, remoteNode, DIRECTION.IN, message), exception, additionalArgs);
+    logger.debug(formatMessageIn(localNode, remoteNode, message), exception, additionalArgs);
   }
 
   public void infoIn(
       String localNode, String remoteNode, String message, Object... additionalArgs) {
-    logger.info(formatMessage(localNode, remoteNode, DIRECTION.IN, message), additionalArgs);
+    logger.info(formatMessageIn(localNode, remoteNode, message), additionalArgs);
   }
 
   public void infoIn(
@@ -147,13 +140,12 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
       String message,
       Throwable exception,
       Object... additionalArgs) {
-    logger.info(
-        formatMessage(localNode, remoteNode, DIRECTION.IN, message), exception, additionalArgs);
+    logger.info(formatMessageIn(localNode, remoteNode, message), exception, additionalArgs);
   }
 
   public void warnIn(
       String localNode, String remoteNode, String message, Object... additionalArgs) {
-    logger.warn(formatMessage(localNode, remoteNode, DIRECTION.IN, message), additionalArgs);
+    logger.warn(formatMessageIn(localNode, remoteNode, message), additionalArgs);
   }
 
   public void warnIn(
@@ -162,13 +154,12 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
       String message,
       Throwable exception,
       Object... additionalArgs) {
-    logger.warn(
-        formatMessage(localNode, remoteNode, DIRECTION.IN, message), exception, additionalArgs);
+    logger.warn(formatMessageIn(localNode, remoteNode, message), exception, additionalArgs);
   }
 
   public void errorIn(
       String localNode, String remoteNode, String message, Object... additionalArgs) {
-    logger.error(formatMessage(localNode, remoteNode, DIRECTION.IN, message), null, additionalArgs);
+    logger.error(formatMessageIn(localNode, remoteNode, message), null, additionalArgs);
   }
 
   public void errorIn(
@@ -177,8 +168,7 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
       String message,
       Throwable exception,
       Object... additionalArgs) {
-    logger.error(
-        formatMessage(localNode, remoteNode, DIRECTION.IN, message), exception, additionalArgs);
+    logger.error(formatMessageIn(localNode, remoteNode, message), exception, additionalArgs);
   }
 
   protected static String formatMessage(final String localNode, final String message) {
@@ -196,11 +186,8 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
     return formatted.toString();
   }
 
-  protected static String formatMessage(
-      final String localNode,
-      final String remoteNode,
-      final DIRECTION direction,
-      final String message) {
+  protected static String formatMessageIn(
+      final String localNode, final String remoteNode, final String message) {
     final StringBuilder formatted = new StringBuilder(256);
 
     if (localNode != null) {
@@ -210,21 +197,30 @@ public class OLoggerDistributedImpl implements OLoggerDistributed {
     }
 
     if (remoteNode != null && !remoteNode.equals(localNode)) {
-      switch (direction) {
-        case IN:
-          formatted.append("<-");
-          break;
-        case OUT:
-          formatted.append("->");
-          break;
-        case BOTH:
-          formatted.append("<>");
-          break;
-        case NONE:
-          formatted.append("--");
-          break;
-      }
+      formatted.append("<-");
+      formatted.append('[');
+      formatted.append(remoteNode);
+      formatted.append(']');
+    }
 
+    formatted.append(' ');
+    formatted.append(message);
+
+    return formatted.toString();
+  }
+
+  protected static String formatMessageOut(
+      final String localNode, final String remoteNode, final String message) {
+    final StringBuilder formatted = new StringBuilder(256);
+
+    if (localNode != null) {
+      formatted.append('[');
+      formatted.append(localNode);
+      formatted.append(']');
+    }
+
+    if (remoteNode != null && !remoteNode.equals(localNode)) {
+      formatted.append("->");
       formatted.append('[');
       formatted.append(remoteNode);
       formatted.append(']');
