@@ -21,8 +21,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -32,9 +30,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
@@ -52,7 +49,8 @@ import java.util.concurrent.TimeUnit;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OSyncDatabaseTask extends OAbstractRemoteTask {
-  private static final OLogger logger = OLogManager.instance().logger(OSyncDatabaseTask.class);
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OSyncDatabaseTask.class);
 
   public static final int FACTORYID = 14;
   protected long random;
@@ -83,13 +81,8 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
         iManager.setDatabaseStatus(
             getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-        ODistributedServerLog.info(
-            this,
-            iManager.getLocalNodeName(),
-            getNodeSource(),
-            DIRECTION.OUT,
-            "Deploying database %s...",
-            databaseName);
+        logger.infoOut(
+            iManager.getLocalNodeName(), getNodeSource(), "Deploying database %s...", databaseName);
 
         OBackgroundBackup backup = null;
         OSyncSource last = dDatabase.getLastValidBackup();
@@ -119,11 +112,9 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
           final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
           if (completedFile.exists()) completedFile.delete();
 
-          ODistributedServerLog.info(
-              this,
+          logger.infoOut(
               iManager.getLocalNodeName(),
               getNodeSource(),
-              DIRECTION.OUT,
               "Creating backup of database '%s' (compressionRate=%d) in directory: %s...",
               databaseName,
               compressionRate,
@@ -141,11 +132,9 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
           dDatabase.setLastValidBackup(backup);
         } else {
           backup.makeStreamFromFile();
-          ODistributedServerLog.info(
-              this,
+          logger.infoOut(
               iManager.getLocalNodeName(),
               getNodeSource(),
-              DIRECTION.OUT,
               "Reusing last backup of database '%s' in directory: %s...",
               databaseName,
               backup.getResultedBackupFile().getAbsolutePath());
@@ -158,11 +147,9 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
         final ODistributedDatabaseChunk chunk =
             new ODistributedDatabaseChunk(backup, OSyncDatabaseTask.CHUNK_MAX_SIZE);
 
-        ODistributedServerLog.info(
-            this,
+        logger.infoOut(
             iManager.getLocalNodeName(),
             getNodeSource(),
-            ODistributedServerLog.DIRECTION.OUT,
             "- transferring chunk #%d offset=%d size=%s...",
             1,
             0,
@@ -179,21 +166,15 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
         return chunk;
 
       } catch (OLockException e) {
-        ODistributedServerLog.debug(
-            this,
+        logger.debugOut(
             iManager.getLocalNodeName(),
             getNodeSource(),
-            DIRECTION.NONE,
             "Skip deploying database %s because another node is doing it",
             e,
             databaseName);
       } finally {
-        ODistributedServerLog.info(
-            this,
-            iManager.getLocalNodeName(),
-            getNodeSource(),
-            ODistributedServerLog.DIRECTION.OUT,
-            "Deploy database task completed");
+        logger.infoOut(
+            iManager.getLocalNodeName(), getNodeSource(), "Deploy database task completed");
       }
     }
 

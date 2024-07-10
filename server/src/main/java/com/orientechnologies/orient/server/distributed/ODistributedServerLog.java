@@ -28,15 +28,11 @@ import java.util.logging.Level;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ODistributedServerLog {
-  public enum DIRECTION {
+  public static enum DIRECTION {
     NONE,
     IN,
     OUT,
     BOTH
-  }
-
-  public static OLoggerDistributed logger(Class<?> cl) {
-    return OLoggerDistributed.from(OLogManager.instance().logger(cl));
   }
 
   public static boolean isDebugEnabled() {

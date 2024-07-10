@@ -29,7 +29,6 @@ public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
     super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory);
   }
 
-  @SuppressWarnings("unused")
   public OThreadPoolExecutorWithLogging(
       int corePoolSize,
       int maximumPoolSize,

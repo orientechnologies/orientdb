@@ -34,7 +34,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCallable;
@@ -81,11 +80,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManagerFactory;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManagerImpl;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
 import com.orientechnologies.orient.server.distributed.ODistributedStrategy;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
@@ -142,7 +140,8 @@ import sun.misc.Signal;
  */
 public class ODistributedPlugin extends OServerPluginAbstract
     implements ODistributedServerManager, ODatabaseLifecycleListener, OCommandOutputListener {
-  private static final OLogger logger = OLogManager.instance().logger(ODistributedPlugin.class);
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ODistributedPlugin.class);
   public static final String REPLICATOR_USER = "_CrossServerTempUser";
 
   protected static final String PAR_DEF_DISTRIB_DB_CONFIG = "configuration.db.default";
@@ -337,8 +336,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
           };
       Orient.instance().getSignalHandler().registerListener(signalListener);
     } catch (Exception e) {
-      ODistributedServerLog.error(
-          this, nodeName, null, DIRECTION.NONE, "Error on starting distributed plugin", e);
+      logger.errorNode(nodeName, "Error on starting distributed plugin", e);
       throw OException.wrapException(
           new ODistributedStartupException("Error on starting distributed plugin"), e);
     }
@@ -369,7 +367,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     OSignalHandler signalHandler = Orient.instance().getSignalHandler();
     if (signalHandler != null) signalHandler.unregisterListener(signalListener);
 
-    logger.warn("Shutting down node '%s'...", nodeName);
+    logger.warnNode("Shutting down node '%s'...", nodeName);
     setNodeStatus(NODE_STATUS.SHUTTINGDOWN);
 
     clusterManager.prepareHazelcastPluginShutdown();
@@ -527,14 +525,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
         new ODistributedRequest(this, getLocalNodeId(), reqId, iDatabaseName, iTask);
 
     if (iTargetNodes == null || iTargetNodes.isEmpty()) {
-      ODistributedServerLog.error(
-          this,
-          nodeName,
-          null,
-          DIRECTION.OUT,
-          "No nodes configured for partition '%s' request: %s",
-          iDatabaseName,
-          req);
+      logger.errorOut(
+          nodeName, null, "No nodes configured for partition '%s' request: %s", iDatabaseName, req);
       throw new ODistributedException(
           "No nodes configured '" + iDatabaseName + "' request: " + req);
     }
@@ -552,11 +544,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
     final ODistributedServerManager.NODE_STATUS srvStatus = getNodeStatus();
     if (srvStatus == ODistributedServerManager.NODE_STATUS.OFFLINE
         || srvStatus == ODistributedServerManager.NODE_STATUS.SHUTTINGDOWN) {
-      ODistributedServerLog.error(
-          this,
+      logger.errorOut(
           this.nodeName,
           null,
-          DIRECTION.OUT,
           "Local server is not online (status='%s'). Request %s will be ignored",
           srvStatus,
           iRequest);
@@ -581,11 +571,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final String databaseName = iRequest.getDatabaseName();
 
       if (iNodes.isEmpty()) {
-        ODistributedServerLog.error(
-            this,
+        logger.errorOut(
             this.nodeName,
             null,
-            DIRECTION.OUT,
             "No nodes configured for database '%s' request: %s",
             databaseName,
             iRequest);
@@ -702,22 +690,18 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
           if (!isNodeAvailable(node))
             // NODE IS NOT AVAILABLE
-            ODistributedServerLog.debug(
-                this,
+            logger.debugOut(
                 this.nodeName,
                 node,
-                DIRECTION.OUT,
                 "Error on sending distributed request %s. The target node is not available. Active"
                     + " nodes: %s",
                 e,
                 iRequest,
                 getAvailableNodeNames(databaseName));
           else
-            ODistributedServerLog.error(
-                this,
+            logger.errorOut(
                 this.nodeName,
                 node,
-                DIRECTION.OUT,
                 "Error on sending distributed request %s (err=%s). Active nodes: %s",
                 iRequest,
                 reason,
@@ -773,11 +757,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       if (elapsed > currentResponseMgr.getSynchTimeout()) {
 
-        ODistributedServerLog.warn(
-            this,
+        logger.warnIn(
             this.nodeName,
             null,
-            DIRECTION.IN,
             "Timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s"
                 + " request=(%s)",
             elapsed,
@@ -945,11 +927,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       if (result instanceof Throwable && !(result instanceof OException))
         // EXCEPTION
-        ODistributedServerLog.debug(
-            this,
+        logger.debugIn(
             nodeName,
             getNodeNameById(reqId.getNodeId()),
-            DIRECTION.IN,
             "Error on executing request %d (%s) on local node: ",
             (Throwable) result,
             reqId,
@@ -959,11 +939,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     } catch (InterruptedException e) {
       // IGNORE IT
-      ODistributedServerLog.debug(
-          this,
+      logger.debugIn(
           nodeName,
           getNodeNameById(reqId.getNodeId()),
-          DIRECTION.IN,
           "Interrupted execution on executing distributed request %s on local node: %s",
           e,
           reqId,
@@ -972,11 +950,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     } catch (Exception e) {
       if (!(e instanceof OException))
-        ODistributedServerLog.error(
-            this,
+        logger.errorIn(
             nodeName,
             getNodeNameById(reqId.getNodeId()),
-            DIRECTION.IN,
             "Error on executing distributed request %s on local node: %s",
             e,
             reqId,
@@ -1226,21 +1202,15 @@ public class ODistributedPlugin extends OServerPluginAbstract
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = nodesOnlineNotSelf(databaseName);
     if (nodes.size() == 0) {
-      ODistributedServerLog.error(
-          this,
+      logger.errorNode(
           nodeName,
-          null,
-          DIRECTION.NONE,
           "Cannot install database '%s' on local node, because no servers are available",
           databaseName);
       return false;
     }
 
-    ODistributedServerLog.info(
-        this,
+    logger.infoNode(
         nodeName,
-        null,
-        DIRECTION.NONE,
         "Current node is a %s for database '%s'",
         cfg.getServerRole(nodeName),
         databaseName);
@@ -1302,11 +1272,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
       // TO ASK FOR THE CURRENT DATABASE
       context.distributedSetOnline(databaseName);
 
-      ODistributedServerLog.info(
-          this,
+      logger.infoOut(
           nodeName,
           null,
-          DIRECTION.OUT,
           "Current copy of database '%s' is newer than the copy present in the cluster. Use the"
               + " local copy and force other nodes to download this",
           databaseName);
@@ -1336,11 +1304,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
     // GET LAST VERSION IN LOCK
     final List<String> foundPartition = lastCfg.addNewNodeInServerList(nodeName);
     if (foundPartition != null) {
-      ODistributedServerLog.info(
-          this,
+      logger.infoNode(
           nodeName,
-          null,
-          DIRECTION.NONE,
           "Adding node '%s' in partition: %s db=%s v=%d",
           nodeName,
           foundPartition,
@@ -1383,11 +1348,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
       return false;
     }
 
-    ODistributedServerLog.warn(
-        this,
+    logger.warnOut(
         nodeName,
         nodes.toString(),
-        DIRECTION.OUT,
         "requesting delta database sync for '%s' on local server...",
         databaseName);
 
@@ -1426,11 +1389,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
         // RE-THROW IT
         throw e;
       } catch (Exception e) {
-        ODistributedServerLog.error(
-            this,
+        logger.errorOut(
             nodeName,
             targetNode,
-            DIRECTION.OUT,
             "Error on asking delta backup of database '%s' (err=%s)",
             databaseName,
             e.getMessage());
@@ -1442,14 +1403,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
           reassignClustersOwnership(nodeName, databaseName, null, false);
         } catch (Exception e) {
           // HANDLE IT AS WARNING
-          ODistributedServerLog.warn(
-              this,
-              nodeName,
-              null,
-              DIRECTION.NONE,
-              "Error on re-balancing the cluster for database '%s'",
-              e,
-              databaseName);
+          logger.warnNode(
+              nodeName, "Error on re-balancing the cluster for database '%s'", e, databaseName);
           // NOT CRITICAL, CONTINUE
         }
         return true;
@@ -1460,13 +1415,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   protected boolean requestFullDatabase(final String databaseName, final boolean backupDatabase) {
-    ODistributedServerLog.info(
-        this,
-        nodeName,
-        null,
-        DIRECTION.NONE,
-        "Requesting full sync for database '%s'...",
-        databaseName);
+    logger.infoNode(nodeName, "Requesting full sync for database '%s'...", databaseName);
 
     for (int retry = 0; retry < DEPLOY_DB_MAX_RETRIES; ++retry) {
       // ASK DATABASE TO THE FIRST NODE, THE FIRST ATTEMPT, OTHERWISE ASK TO EVERYONE
@@ -1508,13 +1457,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
               new OIOException("Error on distributed sync of database"), e);
         }
         if (databaseInstalledCorrectly) {
-          ODistributedServerLog.info(
-              this,
-              nodeName,
-              targetNode,
-              DIRECTION.IN,
-              "Installed delta of database '%s'",
-              databaseName);
+          logger.infoIn(nodeName, targetNode, "Installed delta of database '%s'", databaseName);
         }
 
         // DATABASE INSTALLED CORRECTLY
@@ -1537,22 +1480,17 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final boolean backupDatabase, final String databaseName) {
     final Collection<String> nodes = nodesOnlineNotSelf(databaseName);
     if (nodes.isEmpty()) {
-      ODistributedServerLog.warn(
-          this,
+      logger.warnNode(
           nodeName,
-          null,
-          DIRECTION.NONE,
           "Cannot request full deploy of database '%s' because there are no nodes available with"
               + " such database",
           databaseName);
       return false;
     }
 
-    ODistributedServerLog.info(
-        this,
+    logger.infoOut(
         nodeName,
         nodes.toString(),
-        DIRECTION.OUT,
         "Requesting deploy of database '%s' on local server...",
         databaseName);
     for (String noteToSend : nodes) {
@@ -1560,11 +1498,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
       ODistributedResponse response = sendSingleRequest(databaseName, noteToSend, deployTask);
 
       if (response == null || response.getPayload() == null) {
-        ODistributedServerLog.error(
-            this,
+        logger.errorIn(
             nodeName,
             nodes.toString(),
-            DIRECTION.IN,
             "Timeout waiting the sync database please set the `distributed.deployDbTaskTimeout` to"
                 + " appropriate value");
         setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
@@ -1603,11 +1539,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
           throw (ODatabaseIsOldException) value;
 
         } else if (value instanceof Throwable) {
-          ODistributedServerLog.error(
-              this,
+          logger.errorIn(
               nodeName,
               r.getKey(),
-              DIRECTION.IN,
               "Error on installing database '%s' in %s",
               (Throwable) value,
               databaseName,
@@ -1650,11 +1584,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
       Files.createDirectories(backupFullPath.toPath());
 
       // move the database on current node
-      ODistributedServerLog.warn(
-          this,
+      logger.warnNode(
           nodeName,
-          null,
-          DIRECTION.NONE,
           "Moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote"
               + " node...",
           iDatabaseName,
@@ -1702,11 +1633,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
         }
       }
     } catch (IOException e) {
-      ODistributedServerLog.warn(
-          this,
+      logger.warnNode(
           nodeName,
-          null,
-          DIRECTION.NONE,
           "Error on moving existent database '%s' located in '%s' to '%s' (error=%s).",
           e,
           iDatabaseName,
@@ -1733,14 +1661,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
       reassignClustersOwnership(nodeName, databaseName, null, false);
     } catch (Exception e) {
       // HANDLE IT AS WARNING
-      ODistributedServerLog.warn(
-          this,
-          nodeName,
-          null,
-          DIRECTION.NONE,
-          "Error on re-balancing the cluster for database '%s'",
-          e,
-          databaseName);
+      logger.warnNode(
+          nodeName, "Error on re-balancing the cluster for database '%s'", e, databaseName);
       // NOT CRITICAL, CONTINUE
     }
   }
@@ -1813,11 +1735,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
       // CHECK OWNER AFTER RE-BALANCE AND CREATE NEW CLUSTERS IF NEEDED
       for (final String newClusterName : entry.getValue()) {
 
-        ODistributedServerLog.info(
-            this,
+        logger.infoNode(
             getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
             "Class '%s', creation of new local cluster '%s' (id=%d)",
             clazz,
             newClusterName,
@@ -1839,11 +1758,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
     } catch (Exception e) {
       if (!iDatabase.getClusterNames().contains(newClusterName)) {
         // NOT CREATED
-        ODistributedServerLog.error(
-            this,
+        logger.errorNode(
             getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
             "Error on creating cluster '%s' in class '%s': ",
             newClusterName,
             clazz,
@@ -1929,13 +1845,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
     ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try (ODatabaseDocumentInternal iDatabase = getServerInstance().openDatabase(databaseName)) {
 
-      ODistributedServerLog.info(
-          this,
-          nodeName,
-          null,
-          DIRECTION.NONE,
-          "Reassigning ownership of clusters for database %s...",
-          iDatabase.getName());
+      logger.infoNode(
+          nodeName, "Reassigning ownership of clusters for database %s...", iDatabase.getName());
 
       final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
 
@@ -1953,11 +1864,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       if (canCreateNewClusters) createClusters(iDatabase, cluster2CreateMap, cfg);
 
-      ODistributedServerLog.info(
-          this,
+      logger.infoNode(
           nodeName,
-          null,
-          DIRECTION.NONE,
           "Reassignment of clusters for database '%s' completed (classes=%d)",
           iDatabase.getName(),
           cluster2CreateMap.size());
@@ -2031,7 +1939,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       // GENERATE NODE NAME
       this.nodeName = "node" + System.currentTimeMillis();
 
-    logger.warn("Assigning distributed node name: %s", this.nodeName);
+    logger.warnNode("Assigning distributed node name: %s", this.nodeName);
 
     // SALVE THE NODE NAME IN CONFIGURATION
     boolean found = false;
@@ -2069,14 +1977,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final String iNode,
       boolean incremental,
       OSyncReceiver receiver) {
-    ODistributedServerLog.info(
-        this,
-        nodeName,
-        iNode,
-        DIRECTION.IN,
-        "Installing database '%s' to: %s...",
-        databaseName,
-        dbPath);
+    logger.infoIn(nodeName, iNode, "Installing database '%s' to: %s...", databaseName, dbPath);
 
     new File(dbPath).mkdirs();
     try {
@@ -2143,8 +2044,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   public void stopNode(final String iNode) throws IOException {
-    ODistributedServerLog.warn(
-        this, nodeName, null, DIRECTION.NONE, "Sending request of stopping node '%s'...", iNode);
+    logger.warnNode(nodeName, "Sending request of stopping node '%s'...", iNode);
 
     final ODistributedRequest request =
         new ODistributedRequest(
@@ -2160,8 +2060,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   public void restartNode(final String iNode) throws IOException {
-    ODistributedServerLog.warn(
-        this, nodeName, null, DIRECTION.NONE, "Sending request of restarting node '%s'...", iNode);
+    logger.warnNode(nodeName, "Sending request of restarting node '%s'...", iNode);
 
     final ODistributedRequest request =
         new ODistributedRequest(
@@ -2214,11 +2113,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
     if (!lastServerDump.equals(compactStatus)) {
       lastServerDump = compactStatus;
 
-      ODistributedServerLog.info(
-          this,
+      logger.infoNode(
           getLocalNodeName(),
-          null,
-          DIRECTION.NONE,
           "Distributed servers status (*=current):\n%s",
           ODistributedOutput.formatServerStatus(this, cfg));
     }
@@ -2345,11 +2241,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
           setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
         }
       } catch (Exception e) {
-        ODistributedServerLog.error(
-            this,
+        logger.errorNode(
             getLocalNodeName(),
-            null,
-            DIRECTION.IN,
             "Error on installing database '%s' on local node (error=%s)",
             e,
             databaseName,
@@ -2382,8 +2275,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       System.out.println(buffer);
 
     } catch (Exception e) {
-      ODistributedServerLog.error(
-          this, nodeName, null, DIRECTION.NONE, "Error on printing HA stats", e);
+      logger.errorNode(nodeName, "Error on printing HA stats", e);
     }
   }
 
@@ -2467,20 +2359,12 @@ public class ODistributedPlugin extends OServerPluginAbstract
     try {
       getRemoteServer(joinedNodeName);
     } catch (IOException e) {
-      ODistributedServerLog.error(
-          this,
-          nodeName,
-          joinedNodeName,
-          DIRECTION.OUT,
-          "Error on connecting to node %s",
-          joinedNodeName);
+      logger.errorOut(nodeName, joinedNodeName, "Error on connecting to node %s", joinedNodeName);
     }
 
-    ODistributedServerLog.info(
-        this,
+    logger.infoIn(
         nodeName,
         clusterManager.getNodeName(member, true),
-        DIRECTION.IN,
         "Added node configuration id=%s name=%s, now %d nodes are configured",
         member,
         clusterManager.getNodeName(member, true),
@@ -2520,14 +2404,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
           l.onNodeLeft(nodeLeftName);
         } catch (Exception e) {
           // IGNORE IT
-          ODistributedServerLog.debug(
-              this,
-              nodeName,
-              nodeLeftName,
-              DIRECTION.NONE,
-              "Error on calling onNodeLeft event on '%s'",
-              e,
-              l);
+          logger.debugIn(nodeName, nodeLeftName, "Error on calling onNodeLeft event on '%s'", e, l);
         }
 
       // UNLOCK ANY PENDING LOCKS
@@ -2548,11 +2425,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
           }
         } catch (Exception e) {
           // IGNORE IT
-          ODistributedServerLog.error(
-              this,
+          logger.errorNode(
               nodeName,
-              null,
-              DIRECTION.NONE,
               "Cannot re-balance the cluster for database '%s' because the Lock Manager is not"
                   + " available (err=%s)",
               databaseName,

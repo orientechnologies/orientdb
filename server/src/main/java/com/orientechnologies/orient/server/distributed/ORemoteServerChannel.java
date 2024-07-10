@@ -43,6 +43,9 @@ import java.util.concurrent.TimeUnit;
  * @author Luca Garulli
  */
 public class ORemoteServerChannel {
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ORemoteServerChannel.class);
+
   private final ORemoteServerAvailabilityCheck check;
   private final String url;
   private final String remoteHost;
@@ -330,11 +333,9 @@ public class ORemoteServerChannel {
     totalConsecutiveErrors++;
 
     if (totalConsecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-      ODistributedServerLog.warn(
-          this,
+      logger.warnOut(
           localNodeName,
           server,
-          ODistributedServerLog.DIRECTION.OUT,
           "Reached %d consecutive errors on connection, remove the server '%s' from the cluster",
           totalConsecutiveErrors,
           server);
@@ -342,13 +343,8 @@ public class ORemoteServerChannel {
       try {
         check.nodeDisconnected(server);
       } catch (Exception e) {
-        ODistributedServerLog.warn(
-            this,
-            localNodeName,
-            server,
-            ODistributedServerLog.DIRECTION.OUT,
-            "Error on removing server '%s' from the cluster",
-            server);
+        logger.warnOut(
+            localNodeName, server, "Error on removing server '%s' from the cluster", server);
       }
     }
   }

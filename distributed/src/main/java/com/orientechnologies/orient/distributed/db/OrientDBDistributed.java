@@ -6,8 +6,6 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentEmbeddedPooled;
@@ -30,10 +28,9 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
@@ -58,7 +55,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
-  private static final OLogger logger = OLogManager.instance().logger(OrientDBDistributed.class);
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OrientDBDistributed.class);
   private volatile OServer server;
   private volatile ODistributedPlugin plugin;
   protected final ConcurrentHashMap<String, ODistributedDatabaseImpl> databases =
@@ -83,13 +81,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     for (final String databaseName : dbs) {
       if (!OSystemDatabase.SYSTEM_DB_NAME.equals(databaseName)) {
         ODistributedServerManager dm = getDistributedManager();
-        ODistributedServerLog.info(
-            this,
-            dm != null ? dm.getLocalNodeName() : "",
-            null,
-            DIRECTION.NONE,
-            "Opening database '%s'...",
-            databaseName);
+        logger.infoNode(
+            dm != null ? dm.getLocalNodeName() : "", "Opening database '%s'...", databaseName);
         try {
           openNoAuthorization(databaseName).close();
         } catch (Exception e) {
@@ -428,8 +421,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     try {
       plugin.setDatabaseStatus(plugin.getLocalNodeName(), iDatabaseName, DB_STATUS.OFFLINE);
     } catch (Exception t) {
-      ODistributedServerLog.warn(
-          this, plugin.getLocalNodeName(), null, null, "error un-registering database", t);
+      logger.warnNode(plugin.getLocalNodeName(), "error un-registering database", t);
       // IGNORE IT
     }
 

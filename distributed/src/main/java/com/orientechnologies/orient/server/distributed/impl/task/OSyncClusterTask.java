@@ -21,8 +21,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -34,9 +32,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -57,7 +54,8 @@ import java.util.UUID;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OSyncClusterTask extends OAbstractRemoteTask {
-  private static final OLogger logger = OLogManager.instance().logger(OSyncClusterTask.class);
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OSyncClusterTask.class);
   public static final int CHUNK_MAX_SIZE = 4194304; // 4MB
   public static final String DEPLOYCLUSTER = "deploycluster.";
   public static final int FACTORYID = 12;
@@ -93,13 +91,8 @@ public class OSyncClusterTask extends OAbstractRemoteTask {
 
       try {
 
-        ODistributedServerLog.info(
-            this,
-            iManager.getLocalNodeName(),
-            getNodeSource(),
-            DIRECTION.OUT,
-            "deploying cluster %s...",
-            databaseName);
+        logger.infoOut(
+            iManager.getLocalNodeName(), getNodeSource(), "deploying cluster %s...", databaseName);
 
         final File backupFile =
             new File(Orient.getTempPath() + "/backup_" + databaseName + "_" + clusterName + ".zip");
@@ -107,11 +100,9 @@ public class OSyncClusterTask extends OAbstractRemoteTask {
         else backupFile.getParentFile().mkdirs();
         backupFile.createNewFile();
 
-        ODistributedServerLog.info(
-            this,
+        logger.infoOut(
             iManager.getLocalNodeName(),
             getNodeSource(),
-            DIRECTION.OUT,
             "Creating backup of cluster '%s' in directory: %s...",
             databaseName,
             backupFile.getAbsolutePath());
@@ -196,11 +187,9 @@ public class OSyncClusterTask extends OAbstractRemoteTask {
             // TODO: SUPPORT BACKUP ON CLUSTER
             final long fileSize = backupFile.length();
 
-            ODistributedServerLog.info(
-                this,
+            logger.infoOut(
                 iManager.getLocalNodeName(),
                 getNodeSource(),
-                DIRECTION.OUT,
                 "Sending the compressed cluster '%s.%s' over the NETWORK to node '%s', size=%s...",
                 databaseName,
                 clusterName,
@@ -210,11 +199,9 @@ public class OSyncClusterTask extends OAbstractRemoteTask {
             final ODistributedDatabaseChunk chunk =
                 new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, false, false);
 
-            ODistributedServerLog.info(
-                this,
+            logger.infoOut(
                 iManager.getLocalNodeName(),
                 getNodeSource(),
-                DIRECTION.OUT,
                 "- transferring chunk #%d offset=%d size=%s...",
                 1,
                 0,
@@ -224,21 +211,17 @@ public class OSyncClusterTask extends OAbstractRemoteTask {
         }
 
       } catch (OLockException e) {
-        ODistributedServerLog.debug(
-            this,
+        logger.debugOut(
             iManager.getLocalNodeName(),
             getNodeSource(),
-            DIRECTION.NONE,
             "Skip deploying cluster %s.%s because another node is doing it",
             e,
             databaseName,
             clusterName);
       } finally {
-        ODistributedServerLog.info(
-            this,
+        logger.infoOut(
             iManager.getLocalNodeName(),
             getNodeSource(),
-            ODistributedServerLog.DIRECTION.OUT,
             "Deploy cluster %s task completed",
             clusterName);
       }

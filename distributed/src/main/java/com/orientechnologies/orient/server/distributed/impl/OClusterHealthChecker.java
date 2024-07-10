@@ -20,8 +20,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -32,8 +30,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedConfiguration
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.task.OGossipTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORequestDatabaseConfigurationTask;
@@ -52,7 +50,8 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OClusterHealthChecker implements Runnable {
-  private static final OLogger logger = OLogManager.instance().logger(OClusterHealthChecker.class);
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OClusterHealthChecker.class);
   private final ODistributedServerManager manager;
   private final long healthCheckerEveryMs;
   private long lastExecution = 0;
@@ -154,11 +153,8 @@ public class OClusterHealthChecker implements Runnable {
     for (String server : activeServers) {
       int id = manager.getNodeIdByName(server);
       if (id == -1) {
-        ODistributedServerLog.info(
-            this,
+        logger.infoNode(
             manager.getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
             "Server '%s' was not found in the list of registered servers. Reloading configuration"
                 + " from cluster...",
             server);
@@ -168,21 +164,15 @@ public class OClusterHealthChecker implements Runnable {
         if (id == -1) {
           if (server.equals(manager.getLocalNodeName())) {
             // LOCAL NODE
-            ODistributedServerLog.warn(
-                this,
+            logger.warnNode(
                 manager.getLocalNodeName(),
-                null,
-                ODistributedServerLog.DIRECTION.NONE,
                 "Local server was not found in the list of registered servers after the update",
                 server);
 
           } else {
             // REMOTE NODE
-            ODistributedServerLog.warn(
-                this,
+            logger.warnNode(
                 manager.getLocalNodeName(),
-                null,
-                ODistributedServerLog.DIRECTION.NONE,
                 "Server '%s' was not found in the list of registered servers after the update,"
                     + " restarting the server...",
                 server);
@@ -190,11 +180,8 @@ public class OClusterHealthChecker implements Runnable {
             try {
               ((ODistributedPlugin) manager).restartNode(server);
             } catch (IOException e) {
-              ODistributedServerLog.warn(
-                  this,
+              logger.warnNode(
                   manager.getLocalNodeName(),
-                  null,
-                  ODistributedServerLog.DIRECTION.NONE,
                   "Error on restarting server '%s' (error=%s)",
                   server,
                   e);
@@ -229,11 +216,8 @@ public class OClusterHealthChecker implements Runnable {
       servers.remove(manager.getLocalNodeName());
 
       if (servers.isEmpty()) {
-        ODistributedServerLog.info(
-            this,
+        logger.infoNode(
             manager.getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
             "No server are ONLINE for database '%s'. Considering local copy of database as the good"
                 + " one. Setting status=ONLINE...",
             dbName);
@@ -241,11 +225,8 @@ public class OClusterHealthChecker implements Runnable {
         context.distributedSetOnline(dbName);
 
       } else {
-        ODistributedServerLog.info(
-            this,
+        logger.infoNode(
             manager.getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
             "Trying to recover current server for database '%s'...",
             dbName);
 
@@ -258,19 +239,11 @@ public class OClusterHealthChecker implements Runnable {
           final boolean result = manager.installDatabase(true, dbName, false, true);
 
           if (result)
-            ODistributedServerLog.info(
-                this,
-                manager.getLocalNodeName(),
-                null,
-                ODistributedServerLog.DIRECTION.NONE,
-                "Recover complete for database '%s'",
-                dbName);
+            logger.infoNode(
+                manager.getLocalNodeName(), "Recover complete for database '%s'", dbName);
           else
-            ODistributedServerLog.info(
-                this,
+            logger.infoNode(
                 manager.getLocalNodeName(),
-                null,
-                ODistributedServerLog.DIRECTION.NONE,
                 "Recover cannot be completed for database '%s'",
                 dbName);
         }
@@ -305,22 +278,12 @@ public class OClusterHealthChecker implements Runnable {
         }
       } catch (ODistributedException e) {
         // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
-        ODistributedServerLog.debug(
-            this,
-            manager.getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
-            "Error on sending request for cluster health check",
-            e);
+        logger.debugNode(
+            manager.getLocalNodeName(), "Error on sending request for cluster health check", e);
       } catch (ODistributedOperationException e) {
         // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
-        ODistributedServerLog.debug(
-            this,
-            manager.getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
-            "Error on sending request for cluster health check",
-            e);
+        logger.debugNode(
+            manager.getLocalNodeName(), "Error on sending request for cluster health check", e);
       }
 
       for (String server : servers) {
@@ -360,22 +323,12 @@ public class OClusterHealthChecker implements Runnable {
         }
       } catch (ODistributedException e) {
         // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
-        ODistributedServerLog.debug(
-            this,
-            manager.getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
-            "Error on sending request for cluster health check",
-            e);
+        logger.debugNode(
+            manager.getLocalNodeName(), "Error on sending request for cluster health check", e);
       } catch (ODistributedOperationException e) {
         // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
-        ODistributedServerLog.debug(
-            this,
-            manager.getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
-            "Error on sending request for cluster health check",
-            e);
+        logger.debugNode(
+            manager.getLocalNodeName(), "Error on sending request for cluster health check", e);
       }
     }
   }
@@ -385,11 +338,9 @@ public class OClusterHealthChecker implements Runnable {
       return;
 
     if (OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER.getValueAsBoolean()) {
-      ODistributedServerLog.warn(
-          this,
+      logger.warnOut(
           manager.getLocalNodeName(),
           server,
-          ODistributedServerLog.DIRECTION.OUT,
           "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms). Setting the"
               + " database as NOT_AVAILABLE",
           server,
@@ -400,11 +351,9 @@ public class OClusterHealthChecker implements Runnable {
 
     } else {
 
-      ODistributedServerLog.warn(
-          this,
+      logger.warnOut(
           manager.getLocalNodeName(),
           server,
-          ODistributedServerLog.DIRECTION.OUT,
           "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms), but cannot be"
               + " set OFFLINE by configuration",
           server,

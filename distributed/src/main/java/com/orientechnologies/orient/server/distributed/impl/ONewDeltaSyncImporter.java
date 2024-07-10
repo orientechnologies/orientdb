@@ -1,20 +1,19 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.InputStream;
 import java.util.concurrent.Callable;
 
 public class ONewDeltaSyncImporter {
-  private static final OLogger logger = OLogManager.instance().logger(ONewDeltaSyncImporter.class);
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ONewDeltaSyncImporter.class);
 
   public boolean importDelta(
       OServer serverInstance, String databaseName, InputStream in, String targetNode) {
@@ -25,11 +24,9 @@ public class ONewDeltaSyncImporter {
           new Callable<Object>() {
             @Override
             public Object call() throws Exception {
-              ODistributedServerLog.info(
-                  this,
+              logger.infoIn(
                   nodeName,
                   targetNode,
-                  ODistributedServerLog.DIRECTION.IN,
                   "Started import of delta for database '" + databaseName + "'");
               final ODatabaseDocumentInternal db = serverInstance.openDatabase(databaseName);
               ((ODatabaseDocumentDistributed) db).getDistributedShared().fillStatus();

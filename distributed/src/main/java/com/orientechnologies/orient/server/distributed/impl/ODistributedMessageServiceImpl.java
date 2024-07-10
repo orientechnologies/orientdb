@@ -29,8 +29,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedMessageServic
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -49,7 +48,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedMessageServiceImpl implements ODistributedMessageService {
-
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ODistributedMessageServiceImpl.class);
   private final ODistributedPlugin manager;
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask asynchMessageManager;
@@ -238,11 +238,9 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
         // EXPIRED REQUEST, FREE IT!
         final List<String> missingNodes = resp.getMissingNodes();
 
-        ODistributedServerLog.warn(
-            this,
+        logger.warnIn(
             manager.getLocalNodeName(),
             missingNodes.toString(),
-            DIRECTION.IN,
             "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms",
             missingNodes.size(),
             resp.getMessageId(),

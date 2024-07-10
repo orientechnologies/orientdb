@@ -17,8 +17,8 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import java.util.ArrayList;
@@ -29,7 +29,8 @@ import java.util.concurrent.Callable;
 
 /** Created by tglman on 22/06/17. */
 public class OClassDistributed extends OClassEmbedded {
-
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OClassDistributed.class);
   private volatile int[] bestClusterIds;
   private volatile int lastVersion;
 
@@ -525,11 +526,8 @@ public class OClassDistributed extends OClassEmbedded {
         // DISTRIBUTED CFG IS CHANGED: GET BEST CLUSTER AGAIN
         readConfiguration(db, manager);
 
-        ODistributedServerLog.info(
-            this,
+        logger.infoNode(
             manager.getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
             "New cluster list for class '%s': %s (dCfgVersion=%d)",
             getName(),
             Arrays.toString(bestClusterIds),
@@ -591,11 +589,8 @@ public class OClassDistributed extends OClassEmbedded {
           buffer.append(cfg.getServers(c, null));
         }
 
-        ODistributedServerLog.warn(
-            this,
+        logger.warnNode(
             manager.getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
             "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s"
                 + " (dCfgVersion=%d)",
             getName(),

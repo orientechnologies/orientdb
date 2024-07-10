@@ -5,7 +5,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,6 +14,7 @@ import java.io.PipedOutputStream;
 import java.util.concurrent.CountDownLatch;
 
 public class OSyncReceiver implements Runnable {
+  private static final OLoggerDistributed logger = OLoggerDistributed.logger(OSyncReceiver.class);
   private ODistributedPlugin distributed;
   private final String databaseName;
   private final ODistributedDatabaseChunk firstChunk;
@@ -44,14 +45,7 @@ public class OSyncReceiver implements Runnable {
       t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       t.start();
     } catch (Exception e) {
-      ODistributedServerLog.error(
-          this,
-          iNode,
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Error on transferring database '%s' ",
-          e,
-          databaseName);
+      logger.errorNode(iNode, "Error on transferring database '%s' ", e, databaseName);
       throw OException.wrapException(
           new ODistributedException("Error on transferring database"), e);
     }
@@ -90,11 +84,9 @@ public class OSyncReceiver implements Runnable {
             final Object result = response.getPayload();
             if (result instanceof Boolean) continue;
             else if (result instanceof Exception) {
-              ODistributedServerLog.error(
-                  this,
+              logger.errorIn(
                   distributed.getLocalNodeName(),
                   iNode,
-                  ODistributedServerLog.DIRECTION.IN,
                   "error on installing database %s in %s (chunk #%d)",
                   (Exception) result,
                   databaseName,
@@ -107,11 +99,8 @@ public class OSyncReceiver implements Runnable {
           }
         }
 
-        ODistributedServerLog.info(
-            this,
+        logger.infoNode(
             distributed.getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
             "Database copied correctly, size=%s",
             OFileUtils.getSizeAsString(fileSize));
 
@@ -121,25 +110,13 @@ public class OSyncReceiver implements Runnable {
           output.close();
           done.countDown();
         } catch (IOException e) {
-          ODistributedServerLog.warn(
-              this,
-              distributed.getLocalNodeName(),
-              null,
-              ODistributedServerLog.DIRECTION.NONE,
-              "Error on closing sync piped stream ",
-              e);
+          logger.warnNode(distributed.getLocalNodeName(), "Error on closing sync piped stream ", e);
         }
       }
 
     } catch (Exception e) {
-      ODistributedServerLog.error(
-          this,
-          distributed.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Error on transferring database '%s' ",
-          e,
-          databaseName);
+      logger.errorNode(
+          distributed.getLocalNodeName(), "Error on transferring database '%s' ", e, databaseName);
       throw OException.wrapException(
           new ODistributedException("Error on transferring database"), e);
     }
@@ -149,11 +126,8 @@ public class OSyncReceiver implements Runnable {
       final int iChunkId, final ODistributedDatabaseChunk chunk, final OutputStream out)
       throws IOException {
 
-    ODistributedServerLog.info(
-        this,
+    logger.infoNode(
         distributed.getLocalNodeName(),
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
         "- writing chunk #%d offset=%d size=%s",
         iChunkId,
         chunk.offset,

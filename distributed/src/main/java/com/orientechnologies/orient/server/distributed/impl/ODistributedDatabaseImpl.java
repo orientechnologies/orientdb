@@ -45,11 +45,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.lock.OFreezeGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
@@ -84,6 +83,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ODistributedDatabaseImpl.class);
   public static final String DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
   protected final ODistributedPlugin manager;
   protected final String databaseName;
@@ -200,11 +201,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       remoteSenderServer.sendResponse(response);
 
     } catch (Exception e) {
-      ODistributedServerLog.error(
-          current,
+      logger.errorOut(
           local,
           sender,
-          DIRECTION.OUT,
           "Error on sending response '%s' back (reqId=%s err=%s)",
           e,
           response,
@@ -402,11 +401,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public void setOnline() {
     fillStatus();
-    ODistributedServerLog.info(
-        this,
+    logger.infoNode(
         localNodeName,
-        null,
-        DIRECTION.NONE,
         "Publishing ONLINE status for database %s.%s...",
         localNodeName,
         databaseName);
@@ -439,11 +435,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           pReq.destroy();
         } catch (Exception | Error t) {
           // IGNORE IT
-          ODistributedServerLog.error(
-              this,
+          logger.errorNode(
               manager.getLocalNodeName(),
-              null,
-              DIRECTION.NONE,
               "Distributed transaction: error on rolling back transaction (req=%s)",
               pReq.getReqId());
         }
@@ -684,11 +677,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 manager.getMessageService().timeoutRequest(ctx.getReqId().getMessageId());
 
             } catch (Exception t) {
-              ODistributedServerLog.info(
-                  this,
+              logger.infoNode(
                   localNodeName,
-                  null,
-                  DIRECTION.NONE,
                   "Error on rolling back distributed transaction %s on database '%s' (err=%s)",
                   ctx.getReqId(),
                   databaseName,
@@ -702,11 +692,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     } catch (Exception t) {
       // CATCH EVERYTHING TO AVOID THE TIMER IS CANCELED
-      ODistributedServerLog.info(
-          this,
+      logger.infoNode(
           localNodeName,
-          null,
-          DIRECTION.NONE,
           "Error on checking for expired distributed transaction on database '%s'",
           databaseName);
     } finally {

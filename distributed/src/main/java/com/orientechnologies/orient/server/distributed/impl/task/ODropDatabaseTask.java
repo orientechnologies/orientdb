@@ -23,8 +23,8 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
@@ -33,6 +33,8 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ODropDatabaseTask extends OAbstractRemoteTask {
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ODropDatabaseTask.class);
   private static final long serialVersionUID = 1L;
   public static final int FACTORYID = 23;
 
@@ -47,20 +49,16 @@ public class ODropDatabaseTask extends OAbstractRemoteTask {
       throws Exception {
 
     if (database == null) {
-      ODistributedServerLog.warn(
-          this,
+      logger.warnIn(
           iManager.getLocalNodeName(),
           getNodeSource(),
-          ODistributedServerLog.DIRECTION.IN,
           "Cannot drop database because not existent");
       return true;
     }
 
-    ODistributedServerLog.warn(
-        this,
+    logger.warnIn(
         iManager.getLocalNodeName(),
         getNodeSource(),
-        ODistributedServerLog.DIRECTION.IN,
         "Dropping database %s...",
         database.getName());
     iServer.getDatabases().internalDrop(database.getName());

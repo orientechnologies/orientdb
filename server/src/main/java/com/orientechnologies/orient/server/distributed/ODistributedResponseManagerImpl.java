@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import java.util.ArrayList;
@@ -52,6 +51,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedResponseManagerImpl implements ODistributedResponseManager {
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ODistributedResponseManagerImpl.class);
+
   public static final int ADDITIONAL_TIMEOUT_CLUSTER_SHAPE = 10000;
   private static final String NO_RESPONSE = "waiting-for-response";
   private final ODistributedServerManager dManager;
@@ -118,11 +120,9 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     try {
       if (!executorNode.equals(dManager.getLocalNodeName())
           && !responses.containsKey(executorNode)) {
-        ODistributedServerLog.warn(
-            this,
+        logger.warnIn(
             senderNode,
             executorNode,
-            DIRECTION.IN,
             "Received response for request (%s) from unexpected node. Expected are: %s",
             request,
             getExpectedNodes());
@@ -284,11 +284,8 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
         if (Thread.currentThread().isInterrupted()) {
           // INTERRUPTED
-          ODistributedServerLog.warn(
-              this,
+          logger.warnNode(
               dManager.getLocalNodeName(),
-              null,
-              DIRECTION.NONE,
               "Thread has been interrupted wait for request (%s)",
               request);
           Thread.currentThread().interrupt();
@@ -744,11 +741,8 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
         details.append(" A=").append(aResponse);
         details.append(", B=").append(bResponse);
 
-        ODistributedServerLog.error(
-            this,
+        logger.errorNode(
             dManager.getLocalNodeName(),
-            null,
-            DIRECTION.NONE,
             "Detected possible split brain network where 2 groups of servers A%s and B%s have"
                 + " different contents. Cannot decide who is the winner even if the quorum (%d) has"
                 + " been reached. Request (%s) responses:%s",

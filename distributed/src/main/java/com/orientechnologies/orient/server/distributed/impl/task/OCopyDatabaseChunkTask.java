@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
@@ -43,6 +43,8 @@ import java.io.IOException;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OCopyDatabaseChunkTask extends OAbstractRemoteTask {
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OCopyDatabaseChunkTask.class);
   private static final long serialVersionUID = 1L;
   public static final int FACTORYID = 15;
 
@@ -81,11 +83,9 @@ public class OCopyDatabaseChunkTask extends OAbstractRemoteTask {
     final ODistributedDatabaseChunk result =
         new ODistributedDatabaseChunk(b, OSyncDatabaseTask.CHUNK_MAX_SIZE);
 
-    ODistributedServerLog.info(
-        this,
+    logger.infoOut(
         iManager.getLocalNodeName(),
         getNodeSource(),
-        ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...",
         chunkNum,
         result.offset,

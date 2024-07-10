@@ -18,8 +18,6 @@ import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
@@ -37,10 +35,10 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
@@ -63,8 +61,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class OHazelcastClusterMetadataManager
     implements MembershipListener, EntryListener<String, Object>, LifecycleListener {
-  private static final OLogger logger =
-      OLogManager.instance().logger(OHazelcastClusterMetadataManager.class);
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OHazelcastClusterMetadataManager.class);
 
   public static final String CONFIG_DATABASE_PREFIX = "database.";
   public static final String CONFIG_NODE_PREFIX = "node.";
@@ -201,35 +199,18 @@ public class OHazelcastClusterMetadataManager
         }
 
         if (!found)
-          ODistributedServerLog.warn(
-              this,
-              localNodeName,
-              null,
-              ODistributedServerLog.DIRECTION.NONE,
-              "Cannot find configuration for member: %s, uuid",
-              m,
-              m.getUuid());
+          logger.warnNode(
+              localNodeName, "Cannot find configuration for member: %s, uuid", m, m.getUuid());
       }
     }
 
-    ODistributedServerLog.info(
-        this,
-        localNodeName,
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
-        "Servers in cluster: %s",
-        activeNodes.keySet());
+    logger.infoNode(localNodeName, "Servers in cluster: %s", activeNodes.keySet());
 
     publishLocalNodeConfiguration();
 
     if (!configurationMap.existsNode(nodeUuid)) {
       // NODE NOT REGISTERED, FORCING SHUTTING DOWN
-      ODistributedServerLog.error(
-          this,
-          localNodeName,
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Error on registering local node on cluster");
+      logger.errorNode(localNodeName, "Error on registering local node on cluster");
       throw new ODistributedStartupException("Error on registering local node on cluster");
     }
 
@@ -304,13 +285,7 @@ public class OHazelcastClusterMetadataManager
           repairActiveServers();
       }
 
-      ODistributedServerLog.info(
-          this,
-          nodeName,
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Registered local server with nodeId=%d",
-          nodeId);
+      logger.infoNode(nodeName, "Registered local server with nodeId=%d", nodeId);
 
       registeredNodesFromCluster.field("ids", registeredNodeById, OType.EMBEDDEDLIST);
       registeredNodesFromCluster.field("names", registeredNodeByName, OType.EMBEDDEDMAP);
@@ -328,11 +303,8 @@ public class OHazelcastClusterMetadataManager
   }
 
   private void repairActiveServers() {
-    ODistributedServerLog.warn(
-        this,
+    logger.warnNode(
         nodeName,
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
         "Error on retrieving '%s' from cluster configuration. Repairing the configuration...",
         CONFIG_REGISTEREDNODES);
 
@@ -345,23 +317,10 @@ public class OHazelcastClusterMetadataManager
         final Integer mId = node.field("id");
 
         if (mId == null) {
-          ODistributedServerLog.warn(
-              this,
-              nodeName,
-              null,
-              ODistributedServerLog.DIRECTION.NONE,
-              "Found server '%s' with a NULL id",
-              mName);
+          logger.warnNode(nodeName, "Found server '%s' with a NULL id", mName);
           continue;
         } else if (mId < 0) {
-          ODistributedServerLog.warn(
-              this,
-              nodeName,
-              null,
-              ODistributedServerLog.DIRECTION.NONE,
-              "Found server '%s' with an invalid id %d",
-              mName,
-              mId);
+          logger.warnNode(nodeName, "Found server '%s' with an invalid id %d", mName, mId);
           continue;
         }
 
@@ -381,11 +340,8 @@ public class OHazelcastClusterMetadataManager
       }
     }
 
-    ODistributedServerLog.warn(
-        this,
+    logger.warnNode(
         nodeName,
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
         "Repairing of '%s' completed, registered %d servers",
         CONFIG_REGISTEREDNODES,
         members.size());
@@ -441,13 +397,7 @@ public class OHazelcastClusterMetadataManager
       ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentAbstract.getDefaultSerializer());
       configurationMap.putNodeConfig(nodeUuid, cfg);
     } catch (Exception e) {
-      ODistributedServerLog.error(
-          this,
-          nodeName,
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Error on publishing local server configuration",
-          e);
+      logger.errorNode(nodeName, "Error on publishing local server configuration", e);
     }
   }
 
@@ -630,11 +580,8 @@ public class OHazelcastClusterMetadataManager
   public void publishDistributedConfiguration(
       final String databaseName, final ODistributedConfiguration cfg) {
 
-    ODistributedServerLog.info(
-        this,
+    logger.infoNode(
         getLocalNodeName(),
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
         "Broadcasting new distributed configuration for database: %s (version=%d)\n",
         databaseName,
         cfg.getVersion());
@@ -672,11 +619,9 @@ public class OHazelcastClusterMetadataManager
           final String joinedNodeName = cfg.field("name");
 
           if (this.nodeName.equals(joinedNodeName)) {
-            ODistributedServerLog.error(
-                this,
+            logger.errorIn(
                 joinedNodeName,
                 eventNodeName,
-                ODistributedServerLog.DIRECTION.IN,
                 "Found a new node (%s) with the same name as current: '"
                     + joinedNodeName
                     + "'. The node has been excluded. Change the name in its"
@@ -697,14 +642,8 @@ public class OHazelcastClusterMetadataManager
 
       } else if (OHazelcastDistributedMap.isDatabaseStatus(key)) {
         String values = OHazelcastDistributedMap.getDatabaseStatusKeyValues(key);
-        ODistributedServerLog.info(
-            this,
-            nodeName,
-            eventNodeName,
-            ODistributedServerLog.DIRECTION.IN,
-            "Received new status %s=%s",
-            values,
-            iEvent.getValue());
+        logger.infoIn(
+            nodeName, eventNodeName, "Received new status %s=%s", values, iEvent.getValue());
 
         // REASSIGN HIS CLUSTER
         final String nodeName = values.substring(0, values.indexOf("."));
@@ -753,14 +692,8 @@ public class OHazelcastClusterMetadataManager
 
       } else if (OHazelcastDistributedMap.isDatabaseStatus(key)) {
         String values = OHazelcastDistributedMap.getDatabaseStatusKeyValues(key);
-        ODistributedServerLog.info(
-            this,
-            nodeName,
-            eventNodeName,
-            ODistributedServerLog.DIRECTION.IN,
-            "Received updated status %s=%s",
-            values,
-            iEvent.getValue());
+        logger.infoIn(
+            nodeName, eventNodeName, "Received updated status %s=%s", values, iEvent.getValue());
 
         // CALL DATABASE EVENT
         final String nodeName = values.substring(0, values.indexOf("."));
@@ -777,12 +710,7 @@ public class OHazelcastClusterMetadataManager
         }
 
       } else if (OHazelcastDistributedMap.isRegisteredNodes(key)) {
-        ODistributedServerLog.info(
-            this,
-            nodeName,
-            eventNodeName,
-            ODistributedServerLog.DIRECTION.IN,
-            "Received updated about registered nodes");
+        logger.infoIn(nodeName, eventNodeName, "Received updated about registered nodes");
         reloadRegisteredNodes();
       }
 
@@ -871,14 +799,8 @@ public class OHazelcastClusterMetadataManager
 
           updateLastClusterChange();
           final String addedNodeName = getNodeName(iEvent.getMember(), true);
-          ODistributedServerLog.info(
-              this,
-              nodeName,
-              null,
-              ODistributedServerLog.DIRECTION.NONE,
-              "Added new node id=%s name=%s",
-              iEvent.getMember(),
-              addedNodeName);
+          logger.infoNode(
+              nodeName, "Added new node id=%s name=%s", iEvent.getMember(), addedNodeName);
 
           registerNode(iEvent.getMember(), addedNodeName);
 
@@ -893,12 +815,7 @@ public class OHazelcastClusterMetadataManager
     if (state == LifecycleEvent.LifecycleState.MERGING)
       setNodeStatus(ODistributedServerManager.NODE_STATUS.MERGING);
     else if (state == LifecycleEvent.LifecycleState.MERGED) {
-      ODistributedServerLog.info(
-          this,
-          nodeName,
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Server merged the existent cluster, merging databases...");
+      logger.infoNode(nodeName, "Server merged the existent cluster, merging databases...");
 
       configurationMap.clearLocalCache();
 
@@ -906,14 +823,7 @@ public class OHazelcastClusterMetadataManager
       final String oldUuid = nodeUuid;
       nodeUuid = hazelcastInstance.getCluster().getLocalMember().getUuid();
 
-      ODistributedServerLog.info(
-          this,
-          nodeName,
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Replacing old UUID %s with the new %s",
-          oldUuid,
-          nodeUuid);
+      logger.infoNode(nodeName, "Replacing old UUID %s with the new %s", oldUuid, nodeUuid);
 
       activeNodesNamesByUuid.remove(oldUuid);
       configurationMap.removeNode(oldUuid);
@@ -946,8 +856,7 @@ public class OHazelcastClusterMetadataManager
                     });
               }
             } finally {
-              ODistributedServerLog.warn(
-                  this, nodeName, null, ODistributedServerLog.DIRECTION.NONE, "Network merged ...");
+              logger.warnNode(nodeName, "Network merged ...");
               setNodeStatus(ODistributedServerManager.NODE_STATUS.ONLINE);
             }
           });
@@ -964,13 +873,8 @@ public class OHazelcastClusterMetadataManager
     // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
     configurationMap.removeDatabaseConfiguration(dbName);
     configurationMap.remove(OSyncDatabaseTask.DEPLOYDB + dbName);
-    ODistributedServerLog.info(
-        this,
-        nodeName,
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
-        "Dropped last copy of database '%s', removing it from the cluster",
-        dbName);
+    logger.infoNode(
+        nodeName, "Dropped last copy of database '%s', removing it from the cluster", dbName);
   }
 
   // Remove the given distributed db from the current server's configuration and
@@ -1070,11 +974,8 @@ public class OHazelcastClusterMetadataManager
 
   public void removeNodeFromConfiguration(
       final String nodeLeftName, final boolean removeOnlyDynamicServers) {
-    ODistributedServerLog.info(
-        this,
+    logger.infoNode(
         nodeName,
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
         "Removing server '%s' from all the databases (removeOnlyDynamicServers=%s)...",
         nodeLeftName,
         removeOnlyDynamicServers);
@@ -1098,11 +999,8 @@ public class OHazelcastClusterMetadataManager
       // CHECK THE SERVER IS NOT REGISTERED STATICALLY
       final String dc = cfg.getDataCenterOfServer(nodeLeftName);
       if (dc != null) {
-        ODistributedServerLog.info(
-            this,
+        logger.infoNode(
             nodeName,
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
             "Cannot remove server '%s' because it is enlisted in data center '%s' configuration for"
                 + " database '%s'",
             nodeLeftName,
@@ -1114,11 +1012,8 @@ public class OHazelcastClusterMetadataManager
       // CHECK THE SERVER IS NOT REGISTERED IN SERVERS
       final Set<String> registeredServers = cfg.getRegisteredServers();
       if (registeredServers.contains(nodeLeftName)) {
-        ODistributedServerLog.info(
-            this,
+        logger.infoNode(
             nodeName,
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
             "Cannot remove server '%s' because it is enlisted in 'servers' of the distributed"
                 + " configuration for database '%s'",
             nodeLeftName,
@@ -1207,23 +1102,13 @@ public class OHazelcastClusterMetadataManager
             nodeLeftName, databaseName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
     }
 
-    ODistributedServerLog.warn(
-        this,
-        nodeName,
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
-        "Node removed id=%s name=%s",
-        member,
-        nodeLeftName);
+    logger.warnNode(nodeName, "Node removed id=%s name=%s", member, nodeLeftName);
 
     if (nodeLeftName.startsWith("ext:")) {
       final List<String> registeredNodes = getRegisteredNodes();
 
-      ODistributedServerLog.error(
-          this,
+      logger.errorNode(
           nodeName,
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
           "Removed node id=%s name=%s has not being recognized. Remove the node manually"
               + " (registeredNodes=%s)",
           member,
@@ -1248,11 +1133,9 @@ public class OHazelcastClusterMetadataManager
     if (activeNodes.putIfAbsent(joinedNodeName, member) == null) {
       if (!distributedPlugin.onNodeJoining(joinedNodeName)) {
         // DENY JOIN
-        ODistributedServerLog.info(
-            this,
+        logger.infoIn(
             nodeName,
             getNodeName(member, true),
-            ODistributedServerLog.DIRECTION.IN,
             "Denied node to join the cluster id=%s name=%s",
             member,
             getNodeName(member, true));
@@ -1480,13 +1363,7 @@ public class OHazelcastClusterMetadataManager
 
     status = iStatus;
 
-    ODistributedServerLog.info(
-        this,
-        nodeName,
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
-        "Updated node status to '%s'",
-        status);
+    logger.infoNode(nodeName, "Updated node status to '%s'", status);
   }
 
   public ODistributedServerManager.NODE_STATUS getNodeStatus() {

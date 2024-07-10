@@ -8,8 +8,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,7 +18,8 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 public class ODistributedConfigurationManager {
-
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ODistributedConfigurationManager.class);
   private final OrientDBDistributed context;
   private final ODistributedServerManager distributedManager;
   private volatile ODistributedConfiguration distributedConfiguration;
@@ -46,11 +47,8 @@ public class ODistributedConfigurationManager {
     ODocument doc = distributedManager.getOnlineDatabaseConfiguration(databaseName);
     if (doc != null) {
       // DISTRIBUTED CFG AVAILABLE: COPY IT TO THE LOCAL DIRECTORY
-      ODistributedServerLog.info(
-          this,
+      logger.infoNode(
           distributedManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
           "Downloaded configuration for database '%s' from the cluster",
           databaseName);
       setDistributedConfiguration(session, new OModifiableDistributedConfiguration(doc));
@@ -103,11 +101,8 @@ public class ODistributedConfigurationManager {
       this.distributedConfiguration =
           new ODistributedConfiguration(distributedConfiguration.getDocument().copy());
 
-      ODistributedServerLog.info(
-          this,
+      logger.infoNode(
           distributedManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
           "Setting new distributed configuration for database: %s (version=%d)\n",
           databaseName,
           distributedConfiguration.getVersion());
@@ -152,13 +147,8 @@ public class ODistributedConfigurationManager {
                 .get();
       }
     } catch (InterruptedException | ExecutionException e) {
-      ODistributedServerLog.error(
-          this,
-          distributedManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Error on loading distributed configuration",
-          e);
+      logger.errorNode(
+          distributedManager.getLocalNodeName(), "Error on loading distributed configuration", e);
     }
 
     return config;
@@ -191,11 +181,8 @@ public class ODistributedConfigurationManager {
   public ODocument loadConfigurationFromFile(final File file) {
     if (!file.exists() || file.length() == 0) return null;
 
-    ODistributedServerLog.info(
-        this,
+    logger.infoNode(
         distributedManager.getLocalNodeName(),
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
         "Loaded configuration for database '%s' from disk: %s",
         databaseName,
         file);
@@ -211,11 +198,8 @@ public class ODistributedConfigurationManager {
       return doc;
 
     } catch (Exception e) {
-      ODistributedServerLog.error(
-          this,
+      logger.errorNode(
           distributedManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
           "Error on loading distributed configuration file in: %s",
           e,
           file.getAbsolutePath());
@@ -244,11 +228,8 @@ public class ODistributedConfigurationManager {
       f.write(distributedConfiguration.getDocument().toJSON().getBytes());
       f.flush();
     } catch (Exception e) {
-      ODistributedServerLog.error(
-          this,
+      logger.errorNode(
           distributedManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
           "Error on saving distributed configuration file",
           e);
 

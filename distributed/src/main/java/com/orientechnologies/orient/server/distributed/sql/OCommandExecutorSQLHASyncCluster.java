@@ -43,7 +43,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
@@ -64,6 +64,8 @@ import java.util.Set;
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest {
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OCommandExecutorSQLHASyncCluster.class);
   public static final String NAME = "HA SYNC CLUSTER";
 
   private OHaSyncClusterStatement parsedStatement;
@@ -177,11 +179,9 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
         if (value instanceof Boolean) {
           continue;
         } else if (value instanceof Throwable) {
-          ODistributedServerLog.error(
-              null,
+          logger.errorIn(
               nodeName,
               r.getKey(),
-              ODistributedServerLog.DIRECTION.IN,
               "error on installing cluster %s in %s",
               (Exception) value,
               databaseName,
@@ -205,11 +205,9 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
             if (result instanceof Boolean) {
               continue;
             } else if (result instanceof Exception) {
-              ODistributedServerLog.error(
-                  null,
+              logger.errorIn(
                   nodeName,
                   r.getKey(),
-                  ODistributedServerLog.DIRECTION.IN,
                   "error on installing database %s in %s (chunk #%d)",
                   (Exception) result,
                   databaseName,
@@ -257,15 +255,8 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
       return String.format("Cluster correctly replaced, transferred %d bytes", fileSize);
 
     } catch (Exception e) {
-      ODistributedServerLog.error(
-          null,
-          nodeName,
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "error on transferring database '%s' to '%s'",
-          e,
-          databaseName,
-          tempFile);
+      logger.errorNode(
+          nodeName, "error on transferring database '%s' to '%s'", e, databaseName, tempFile);
       throw OException.wrapException(
           new ODistributedException("Error on transferring database"), e);
     } finally {
@@ -306,11 +297,8 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
       final FileOutputStream out)
       throws IOException {
 
-    ODistributedServerLog.warn(
-        null,
+    logger.warnNode(
         iNodeName,
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
         "- writing chunk #%d offset=%d size=%s",
         iChunkId,
         chunk.offset,

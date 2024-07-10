@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -11,8 +9,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,7 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OBackgroundBackup implements Runnable, OSyncSource {
-  private static final OLogger logger = OLogManager.instance().logger(OVariableParser.class);
+  private static final OLoggerDistributed logger = OLoggerDistributed.logger(OVariableParser.class);
 
   private final String syncTarget;
   private final String localNodeName;
@@ -69,11 +67,9 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
     try {
       try {
 
-        ODistributedServerLog.info(
-            this,
+        logger.infoOut(
             localNodeName,
             syncTarget,
-            ODistributedServerLog.DIRECTION.OUT,
             "Compressing database '%s' %d clusters %s...",
             database.getName(),
             database.getClusterNames().size(),
@@ -113,7 +109,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
         } else {
           try {
             OCommandOutputListener listener = null;
-            if (ODistributedServerLog.isDebugEnabled()) {
+            if (logger.isDebugEnabled()) {
               listener =
                   new OCommandOutputListener() {
                     @Override
@@ -145,11 +141,9 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
           }
         }
 
-        ODistributedServerLog.info(
-            this,
+        logger.infoOut(
             localNodeName,
             syncTarget,
-            ODistributedServerLog.DIRECTION.OUT,
             "Backup of database '%s' completed. lastOperationId=%s...",
             database.getName(),
             requestId);

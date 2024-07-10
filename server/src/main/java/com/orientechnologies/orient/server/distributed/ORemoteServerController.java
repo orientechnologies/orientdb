@@ -29,6 +29,8 @@ import java.io.IOException;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORemoteServerController {
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ORemoteServerController.class);
   private final ORemoteServerChannel[] requestChannels;
   private int requestChannelIndex = 0;
 
@@ -50,12 +52,7 @@ public class ORemoteServerController {
     if (user == null) throw new IllegalArgumentException("User is null");
     if (passwd == null) throw new IllegalArgumentException("Password is null");
 
-    ODistributedServerLog.debug(
-        this,
-        localNodeName,
-        iServer,
-        ODistributedServerLog.DIRECTION.OUT,
-        "Creating remote channel(s) to distributed server...");
+    logger.debugOut(localNodeName, iServer, "Creating remote channel(s) to distributed server...");
 
     requestChannels =
         new ORemoteServerChannel

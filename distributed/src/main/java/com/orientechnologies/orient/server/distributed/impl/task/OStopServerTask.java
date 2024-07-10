@@ -24,8 +24,8 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
@@ -34,6 +34,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OStopServerTask extends OAbstractRemoteTask {
+  private static final OLoggerDistributed logger = OLoggerDistributed.logger(OStopServerTask.class);
   private static final long serialVersionUID = 1L;
   public static final int FACTORYID = 9;
 
@@ -47,12 +48,7 @@ public class OStopServerTask extends OAbstractRemoteTask {
       final ODatabaseDocumentInternal database)
       throws Exception {
 
-    ODistributedServerLog.warn(
-        this,
-        iManager.getLocalNodeName(),
-        getNodeSource(),
-        ODistributedServerLog.DIRECTION.IN,
-        "Stopping current server...");
+    logger.warnIn(iManager.getLocalNodeName(), getNodeSource(), "Stopping current server...");
 
     Orient.instance()
         .scheduleTask(
@@ -62,11 +58,9 @@ public class OStopServerTask extends OAbstractRemoteTask {
                 try {
                   iServer.shutdown();
                 } catch (Exception e) {
-                  ODistributedServerLog.error(
-                      this,
+                  logger.errorIn(
                       iManager.getLocalNodeName(),
                       getNodeSource(),
-                      ODistributedServerLog.DIRECTION.IN,
                       "Error on stopping current server",
                       e);
                 }

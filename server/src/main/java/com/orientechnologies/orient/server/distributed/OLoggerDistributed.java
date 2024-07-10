@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 
 public interface OLoggerDistributed extends OLogger {
@@ -95,4 +96,8 @@ public interface OLoggerDistributed extends OLogger {
   void errorNode(String localNode, String message, Object... additionalArgs);
 
   void errorNode(String localNode, String message, Throwable exception, Object... additionalArgs);
+
+  static OLoggerDistributed logger(Class<?> cl) {
+    return from(OLogManager.instance().logger(cl));
+  }
 }
