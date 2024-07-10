@@ -73,8 +73,6 @@
         <developer>
             <id>e.tagliaferri</id>
             <name>Emanuale Tagliaferri</name>
-            <organization>SAP</organization>
-            <organizationUrl>https://sap.com</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
