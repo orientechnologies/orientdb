@@ -132,11 +132,10 @@ public abstract class OETLAbstractComponent implements OETLComponent {
               "[" + extractedNum + ":" + getName() + "]  " + iText,
               exception,
               true,
-              null,
               iArgs);
     } else {
       OLogManager.instance()
-          .log(this, iLevel, "[" + getName() + "] " + iText, exception, true, null, iArgs);
+          .log(this, iLevel, "[" + getName() + "] " + iText, exception, true, iArgs);
     }
   }
 

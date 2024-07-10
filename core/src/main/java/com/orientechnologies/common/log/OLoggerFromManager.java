@@ -18,7 +18,7 @@ public class OLoggerFromManager implements OLogger {
       boolean extractDatabase,
       Object... additionalArgs) {
     manager.log(
-        this.cl, translateLevel(level), message, exception, extractDatabase, null, additionalArgs);
+        this.cl, translateLevel(level), message, exception, extractDatabase, additionalArgs);
   }
 
   @Override

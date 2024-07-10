@@ -689,12 +689,9 @@ public abstract class OAbstractPaginatedStorage
         stateLock.readLock().lock();
         try {
           if (status != STATUS.MIGRATION) {
-            OLogManager.instance()
-                .errorStorage(
-                    this,
-                    "Unexpected storage status %s, process of creation of storage is aborted",
-                    null,
-                    status.name());
+            logger.error(
+                "Unexpected storage status %s, process of creation of storage is aborted",
+                null, status.name());
             return;
           }
 
@@ -706,12 +703,9 @@ public abstract class OAbstractPaginatedStorage
         stateLock.writeLock().lock();
         try {
           if (status != STATUS.MIGRATION) {
-            OLogManager.instance()
-                .errorStorage(
-                    this,
-                    "Unexpected storage status %s, process of creation of storage is aborted",
-                    null,
-                    status.name());
+            logger.error(
+                "Unexpected storage status %s, process of creation of storage is aborted",
+                null, status.name());
             return;
           }
 
@@ -1754,13 +1748,10 @@ public abstract class OAbstractPaginatedStorage
   @Override
   public final void onException(final Throwable e) {
 
-    OLogManager.instance()
-        .errorStorage(
-            this,
-            "Error in data flush background thread, for storage %s ,"
-                + "please restart database and send full stack trace inside of bug report",
-            e,
-            name);
+    logger.error(
+        "Error in data flush background thread, for storage %s ,"
+            + "please restart database and send full stack trace inside of bug report",
+        e, name);
 
     if (status == STATUS.CLOSED) {
       return;
@@ -4200,14 +4191,9 @@ public abstract class OAbstractPaginatedStorage
   /** @inheritDoc */
   @Override
   public final void pageIsBroken(final String fileName, final long pageIndex) {
-    OLogManager.instance()
-        .errorStorage(
-            this,
-            "In storage %s file with name '%s' has broken page under the index %d",
-            null,
-            name,
-            fileName,
-            pageIndex);
+    logger.error(
+        "In storage %s file with name '%s' has broken page under the index %d",
+        null, name, fileName, pageIndex);
 
     if (status == STATUS.CLOSED) {
       return;
@@ -6961,14 +6947,12 @@ public abstract class OAbstractPaginatedStorage
         || runtimeException instanceof ONeedRetryException
         || runtimeException instanceof OInternalErrorException
         || runtimeException instanceof IllegalArgumentException)) {
-      OLogManager.instance()
-          .errorStorage(
-              this,
-              "Exception `%08X` in storage `%s`: %s",
-              runtimeException,
-              System.identityHashCode(runtimeException),
-              getURL(),
-              OConstants.getVersion());
+      logger.error(
+          "Exception `%08X` in storage `%s`: %s",
+          runtimeException,
+          System.identityHashCode(runtimeException),
+          getURL(),
+          OConstants.getVersion());
     }
 
     return runtimeException;
@@ -6984,14 +6968,9 @@ public abstract class OAbstractPaginatedStorage
         setInError(error);
       }
 
-      OLogManager.instance()
-          .errorStorage(
-              this,
-              "Exception `%08X` in storage `%s`: %s",
-              error,
-              System.identityHashCode(error),
-              getURL(),
-              OConstants.getVersion());
+      logger.error(
+          "Exception `%08X` in storage `%s`: %s",
+          error, System.identityHashCode(error), getURL(), OConstants.getVersion());
     }
 
     return error;
@@ -7009,28 +6988,18 @@ public abstract class OAbstractPaginatedStorage
       if (putInReadOnlyMode) {
         setInError(throwable);
       }
-      OLogManager.instance()
-          .errorStorage(
-              this,
-              "Exception `%08X` in storage `%s`: %s",
-              throwable,
-              System.identityHashCode(throwable),
-              getURL(),
-              OConstants.getVersion());
+      logger.error(
+          "Exception `%08X` in storage `%s`: %s",
+          throwable, System.identityHashCode(throwable), getURL(), OConstants.getVersion());
     }
     return new RuntimeException(throwable);
   }
 
   private OInvalidIndexEngineIdException logAndPrepareForRethrow(
       final OInvalidIndexEngineIdException exception) {
-    OLogManager.instance()
-        .errorStorage(
-            this,
-            "Exception `%08X` in storage `%s` : %s",
-            exception,
-            System.identityHashCode(exception),
-            getURL(),
-            OConstants.getVersion());
+    logger.error(
+        "Exception `%08X` in storage `%s` : %s",
+        exception, System.identityHashCode(exception), getURL(), OConstants.getVersion());
     return exception;
   }
 

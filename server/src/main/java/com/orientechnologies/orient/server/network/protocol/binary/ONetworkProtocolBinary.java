@@ -788,7 +788,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
                   "Sent run-time exception to the client %s: %s",
                   t,
                   true,
-                  null,
                   channel.socket.getRemoteSocketAddress(),
                   t.toString());
         else
@@ -799,7 +798,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
                   "Sent run-time exception to the client %s: %s",
                   null,
                   true,
-                  null,
                   channel.socket.getRemoteSocketAddress(),
                   t.toString());
       }

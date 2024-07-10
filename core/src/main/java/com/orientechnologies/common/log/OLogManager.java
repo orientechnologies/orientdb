@@ -29,10 +29,8 @@ import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
-import java.util.logging.Filter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -56,16 +54,6 @@ public class OLogManager {
 
   private final AtomicBoolean shutdownFlag = new AtomicBoolean();
   private final ConcurrentMap<String, Logger> loggersCache = new ConcurrentHashMap<>();
-
-  private static final AtomicReference<StorageFilter> storageFilterHolder = new AtomicReference<>();
-
-  /**
-   * Labels are needed to filer different kind of messages, for example to filter exceptions which
-   * should be logged during the tests
-   */
-  private enum LogLabel {
-    STORAGE_LOGGING
-  }
 
   protected OLogManager() {}
 
@@ -115,27 +103,12 @@ public class OLogManager {
     setLevel(iLevel, FileHandler.class);
   }
 
-  /**
-   * Start filter out all messages which are logged using {@link #errorStorage(Object, String,
-   * Throwable, Object...)} method.
-   */
-  public void applyStorageFilter() {
-    final StorageFilter filter = new StorageFilter();
-
-    if (storageFilterHolder.compareAndSet(null, filter)) {
-      for (Logger logger : loggersCache.values()) {
-        logger.setFilter(filter);
-      }
-    }
-  }
-
   public void log(
       final Object iRequester,
       final Level iLevel,
       String iMessage,
       final Throwable iException,
       final boolean extractDatabase,
-      final LogLabel label,
       final Object... iAdditionalArgs) {
 
     if (shutdownFlag.get()) {
@@ -177,9 +150,6 @@ public class OLogManager {
 
           if (oldLogger != null) {
             log = oldLogger;
-          } else {
-            StorageFilter filter = storageFilterHolder.get();
-            log.setFilter(filter);
           }
         }
       }
@@ -203,10 +173,6 @@ public class OLogManager {
             record.setThrown(iException);
           }
 
-          if (label != null) {
-            record.setParameters(new Object[] {label});
-          }
-
           log.log(record);
         } catch (Exception e) {
           System.err.print(
@@ -219,7 +185,7 @@ public class OLogManager {
 
   public void debug(
       final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isDebugEnabled()) log(iRequester, Level.FINE, iMessage, null, true, null, iAdditionalArgs);
+    if (isDebugEnabled()) log(iRequester, Level.FINE, iMessage, null, true, iAdditionalArgs);
   }
 
   public void debug(
@@ -227,8 +193,7 @@ public class OLogManager {
       final String iMessage,
       final Throwable iException,
       final Object... iAdditionalArgs) {
-    if (isDebugEnabled())
-      log(iRequester, Level.FINE, iMessage, iException, true, null, iAdditionalArgs);
+    if (isDebugEnabled()) log(iRequester, Level.FINE, iMessage, iException, true, iAdditionalArgs);
   }
 
   public void debugNoDb(
@@ -236,18 +201,17 @@ public class OLogManager {
       final String iMessage,
       final Throwable iException,
       final Object... iAdditionalArgs) {
-    if (isDebugEnabled())
-      log(iRequester, Level.FINE, iMessage, iException, false, null, iAdditionalArgs);
+    if (isDebugEnabled()) log(iRequester, Level.FINE, iMessage, iException, false, iAdditionalArgs);
   }
 
   public void info(
       final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isInfoEnabled()) log(iRequester, Level.INFO, iMessage, null, true, null, iAdditionalArgs);
+    if (isInfoEnabled()) log(iRequester, Level.INFO, iMessage, null, true, iAdditionalArgs);
   }
 
   public void infoNoDb(
       final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isInfoEnabled()) log(iRequester, Level.INFO, iMessage, null, false, null, iAdditionalArgs);
+    if (isInfoEnabled()) log(iRequester, Level.INFO, iMessage, null, false, iAdditionalArgs);
   }
 
   public void info(
@@ -255,20 +219,17 @@ public class OLogManager {
       final String iMessage,
       final Throwable iException,
       final Object... iAdditionalArgs) {
-    if (isInfoEnabled())
-      log(iRequester, Level.INFO, iMessage, iException, true, null, iAdditionalArgs);
+    if (isInfoEnabled()) log(iRequester, Level.INFO, iMessage, iException, true, iAdditionalArgs);
   }
 
   public void warn(
       final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isWarnEnabled())
-      log(iRequester, Level.WARNING, iMessage, null, true, null, iAdditionalArgs);
+    if (isWarnEnabled()) log(iRequester, Level.WARNING, iMessage, null, true, iAdditionalArgs);
   }
 
   public void warnNoDb(
       final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isWarnEnabled())
-      log(iRequester, Level.WARNING, iMessage, null, false, null, iAdditionalArgs);
+    if (isWarnEnabled()) log(iRequester, Level.WARNING, iMessage, null, false, iAdditionalArgs);
   }
 
   public void warn(
@@ -277,12 +238,12 @@ public class OLogManager {
       final Throwable iException,
       final Object... iAdditionalArgs) {
     if (isWarnEnabled())
-      log(iRequester, Level.WARNING, iMessage, iException, true, null, iAdditionalArgs);
+      log(iRequester, Level.WARNING, iMessage, iException, true, iAdditionalArgs);
   }
 
   public void config(
       final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    log(iRequester, Level.CONFIG, iMessage, null, true, null, iAdditionalArgs);
+    log(iRequester, Level.CONFIG, iMessage, null, true, iAdditionalArgs);
   }
 
   public void error(
@@ -291,7 +252,7 @@ public class OLogManager {
       final Throwable iException,
       final Object... iAdditionalArgs) {
     if (isErrorEnabled())
-      log(iRequester, Level.SEVERE, iMessage, iException, true, null, iAdditionalArgs);
+      log(iRequester, Level.SEVERE, iMessage, iException, true, iAdditionalArgs);
   }
 
   public void errorNoDb(
@@ -300,23 +261,7 @@ public class OLogManager {
       final Throwable iException,
       final Object... iAdditionalArgs) {
     if (isErrorEnabled())
-      log(iRequester, Level.SEVERE, iMessage, iException, false, null, iAdditionalArgs);
-  }
-
-  public void errorStorage(
-      final Object iRequester,
-      final String iMessage,
-      final Throwable iException,
-      final Object... iAdditionalArgs) {
-    if (isErrorEnabled())
-      log(
-          iRequester,
-          Level.SEVERE,
-          iMessage,
-          iException,
-          false,
-          LogLabel.STORAGE_LOGGING,
-          iAdditionalArgs);
+      log(iRequester, Level.SEVERE, iMessage, iException, false, iAdditionalArgs);
   }
 
   public boolean isWarn() {
@@ -416,7 +361,7 @@ public class OLogManager {
     return new OCommandOutputListener() {
       @Override
       public void onMessage(String iText) {
-        log(iThis, iLevel, iText, null, true, null);
+        log(iThis, iLevel, iText, null, true);
       }
     };
   }
@@ -443,26 +388,6 @@ public class OLogManager {
    */
   public boolean isShutdown() {
     return shutdownFlag.get();
-  }
-
-  /**
-   * Removes all message which were issued by {@link OLogManager#errorStorage(Object, String,
-   * Throwable, Object...)} method.
-   */
-  private static class StorageFilter implements Filter {
-    @Override
-    public boolean isLoggable(LogRecord record) {
-      Object[] params = record.getParameters();
-      if (params != null) {
-        for (Object param : params) {
-          if (LogLabel.STORAGE_LOGGING == param) {
-            return false;
-          }
-        }
-      }
-
-      return true;
-    }
   }
 
   public OLogger logger(Class<?> cl) {

@@ -45,8 +45,6 @@ public class OJUnitTestListener extends RunListener {
   @Override
   public void testRunStarted(Description description) throws Exception {
     super.testRunStarted(description);
-
-    OLogManager.instance().applyStorageFilter();
   }
 
   @Override
