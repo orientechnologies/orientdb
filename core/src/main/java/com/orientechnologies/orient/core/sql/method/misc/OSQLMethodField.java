@@ -22,6 +22,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -64,13 +65,15 @@ public class OSQLMethodField extends OAbstractSQLMethod {
       }
       if (ioResult instanceof String) {
         try {
-          ioResult = new ODocument(new ORecordId((String) ioResult));
+          ioResult = iContext.getDatabase().load(new ORecordId((String) ioResult));
         } catch (Exception e) {
           logger.error("Error on reading rid with value '%s'", e, ioResult);
           ioResult = null;
         }
+      } else if (ioResult instanceof ORecord) {
+        ioResult = iContext.getDatabase().load((ORecord) ioResult);
       } else if (ioResult instanceof OIdentifiable) {
-        ioResult = ((OIdentifiable) ioResult).getRecord();
+        ioResult = iContext.getDatabase().load(((OIdentifiable) ioResult).getIdentity());
       } else if (ioResult instanceof Collection<?>
           || ioResult instanceof Iterator<?>
           || ioResult.getClass().isArray()) {

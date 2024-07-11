@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -69,7 +70,9 @@ public class OBasicCommandContext implements OCommandContext {
   private Map<OExecutionStep, OStepStats> stepStats = new IdentityHashMap<>();
   private LinkedList<OStepStats> currentStepStats = new LinkedList<>();
 
-  public OBasicCommandContext() {}
+  public OBasicCommandContext() {
+    this.database = ODatabaseRecordThreadLocal.instance().getIfDefined();
+  }
 
   public OBasicCommandContext(ODatabaseSession session) {
     this.database = session;
