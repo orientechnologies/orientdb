@@ -1,7 +1,13 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.common.log.OLogManager;
-import java.util.*;
+import com.orientechnologies.common.log.OLogger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.apache.tinkerpop.gremlin.process.traversal.Compare;
@@ -12,6 +18,8 @@ import org.apache.tinkerpop.gremlin.structure.T;
 
 /** Created by Enrico Risa on 08/08/2017. */
 public class OrientGraphQueryBuilder {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OrientGraphQueryBuilder.class);
 
   private final boolean vertexStep;
   private List<String> classes = new ArrayList<>();
@@ -73,7 +81,7 @@ public class OrientGraphQueryBuilder {
       }
       return Optional.of(new OrientGraphQuery(builder.toString(), parameters, classes.size()));
     } catch (UnsupportedOperationException e) {
-      OLogManager.instance().debug(this, "Cannot generate a query from the traversal", e);
+      logger.debug("Cannot generate a query from the traversal", e);
     }
     return Optional.empty();
   }

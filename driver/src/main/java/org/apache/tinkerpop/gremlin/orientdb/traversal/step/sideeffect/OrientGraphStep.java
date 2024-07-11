@@ -2,14 +2,25 @@ package org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideeffect;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import org.apache.tinkerpop.gremlin.orientdb.*;
+import org.apache.tinkerpop.gremlin.orientdb.OGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraphBaseQuery;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraphQueryBuilder;
+import org.apache.tinkerpop.gremlin.orientdb.OrientIndexQuery;
 import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResult;
 import org.apache.tinkerpop.gremlin.process.traversal.Compare;
 import org.apache.tinkerpop.gremlin.process.traversal.Contains;
@@ -28,6 +39,7 @@ import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 
 public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>
     implements HasContainerHolder {
+  private static final OLogger logger = OLogManager.instance().logger(OrientGraphStep.class);
 
   private static final long serialVersionUID = 8141248670294067626L;
 
@@ -193,14 +205,8 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>
                         // TODO: select best index if there are multiple options
                         indexedQueries.add(new OrientIndexQuery(keyIndexes.next(), values));
                       } else {
-                        OLogManager.instance()
-                            .warn(
-                                this,
-                                "no index found for class=["
-                                    + className
-                                    + "] and key=["
-                                    + key
-                                    + "]");
+                        logger.warn(
+                            "no index found for class=[" + className + "] and key=[" + key + "]");
                       }
                     });
               });

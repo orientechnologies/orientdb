@@ -3,6 +3,7 @@ package com.orientechnologies.tinkerpop.server.config;
 import static org.apache.tinkerpop.gremlin.orientdb.OrientGraph.CONFIG_TRANSACTIONAL;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -26,6 +27,7 @@ import org.apache.tinkerpop.gremlin.server.Settings;
 /** Created by Enrico Risa on 06/09/2017. */
 public class OGraphConfig {
 
+  private static final OLogger logger = OLogManager.instance().logger(OGraphConfig.class);
   private ODocument config;
 
   public OGraphConfig(ODocument config) {
@@ -99,12 +101,10 @@ public class OGraphConfig {
                   graphManager.putTraversalSource(traversalName, traversal);
                   bindings.put(traversalName, traversal);
                 } else {
-                  OLogManager.instance()
-                      .warn(this, "Cannot configure the graph %s since it's not protected", k);
+                  logger.warn("Cannot configure the graph %s since it's not protected", k);
                 }
               } else {
-                OLogManager.instance()
-                    .warn(this, "Cannot configure the graph %s invalid graph/traversal alias", k);
+                logger.warn("Cannot configure the graph %s invalid graph/traversal alias", k);
               }
             });
   }
