@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.OConstants;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -27,12 +28,13 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 public class OrientJdbcDriver implements java.sql.Driver {
+  private static final OLogger logger = OLogManager.instance().logger(OrientJdbcDriver.class);
 
   static {
     try {
       DriverManager.registerDriver(new OrientJdbcDriver());
     } catch (SQLException e) {
-      OLogManager.instance().error(null, "Error while registering the JDBC Driver", e);
+      logger.error("Error while registering the JDBC Driver", e);
     }
   }
 

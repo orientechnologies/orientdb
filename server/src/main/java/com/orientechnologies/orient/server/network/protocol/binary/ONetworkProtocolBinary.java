@@ -86,11 +86,10 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.function.Function;
-import java.util.logging.Level;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
   private static final OLogger logger = OLogManager.instance().logger(ONetworkProtocolBinary.class);
-  protected final Level logClientExceptions;
+  protected OLogger.Level logClientExceptions;
   protected final boolean logClientFullStackTrace;
   protected OChannelBinary channel;
   protected volatile int requestType;
@@ -112,11 +111,21 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   public ONetworkProtocolBinary(OServer server, final String iThreadName) {
     super(server.getThreadGroup(), iThreadName);
-    logClientExceptions =
-        Level.parse(
-            server
-                .getContextConfiguration()
-                .getValueAsString(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL));
+    String level =
+        server
+            .getContextConfiguration()
+            .getValueAsString(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL);
+    if (level != null) {
+      level = level.toUpperCase();
+      try {
+        logClientExceptions = OLogger.Level.valueOf(level);
+      } catch (Exception e) {
+        logger.warn("failing to read log level with value '%s'", e, level);
+        logClientExceptions = OLogger.Level.DEBUG;
+      }
+    } else {
+      logClientExceptions = OLogger.Level.DEBUG;
+    }
     logClientFullStackTrace =
         server
             .getContextConfiguration()
@@ -779,28 +788,22 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       error.write(channel, protocolVersion, serializationImpl);
       channel.flush();
 
-      if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
-        if (logClientFullStackTrace)
-          OLogManager.instance()
-              .log(
-                  this,
-                  logClientExceptions,
-                  "Sent run-time exception to the client %s: %s",
-                  t,
-                  true,
-                  channel.socket.getRemoteSocketAddress(),
-                  t.toString());
-        else
-          OLogManager.instance()
-              .log(
-                  this,
-                  logClientExceptions,
-                  "Sent run-time exception to the client %s: %s",
-                  null,
-                  true,
-                  channel.socket.getRemoteSocketAddress(),
-                  t.toString());
-      }
+      if (logClientFullStackTrace)
+        logger.log(
+            logClientExceptions,
+            "Sent run-time exception to the client %s: %s",
+            t,
+            true,
+            channel.socket.getRemoteSocketAddress(),
+            t.toString());
+      else
+        logger.log(
+            logClientExceptions,
+            "Sent run-time exception to the client %s: %s",
+            null,
+            true,
+            channel.socket.getRemoteSocketAddress(),
+            t.toString());
     } catch (Exception e) {
       if (e instanceof SocketException) shutdown();
       else logger.error("Error during sending an error to client", e);

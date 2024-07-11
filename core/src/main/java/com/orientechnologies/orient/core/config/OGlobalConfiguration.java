@@ -34,7 +34,6 @@ import java.io.PrintStream;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system
@@ -1031,10 +1030,10 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
       "server.log.dumpClientExceptionLevel",
-      "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF,"
-          + " FINE, CONFIG, INFO, WARNING, SEVERE",
+      "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: "
+          + " TRACE, DEBUG, INFO, WARN, ERROR",
       String.class,
-      Level.FINE.getName()),
+      OLogger.Level.DEBUG.name()),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE(
       "server.log.dumpClientExceptionFullStackTrace",
