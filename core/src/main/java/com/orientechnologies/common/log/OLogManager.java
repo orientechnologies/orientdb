@@ -103,7 +103,7 @@ public class OLogManager {
     setLevel(iLevel, FileHandler.class);
   }
 
-  public void log(
+  protected void log(
       final Object iRequester,
       final Level iLevel,
       String iMessage,

@@ -34,7 +34,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.logging.Level;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -155,7 +154,7 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
         }
       }
 
-      log(Level.INFO, "column types: %s", columnTypes);
+      info("column types: %s", columnTypes);
       csvFormat = csvFormat.withHeader(columnNames.toArray(new String[] {})).withSkipHeaderRecord();
     }
 
@@ -246,8 +245,7 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
           }
         } catch (Exception e) {
           processor.getStats().incrementErrors();
-          log(
-              Level.SEVERE,
+          error(
               "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s",
               csvRecord.getRecordNumber(),
               fieldName,
@@ -258,7 +256,7 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
       }
     }
 
-    log(Level.FINE, "document=%s", doc);
+    debug("document=%s", doc);
     current++;
     return new OETLExtractedItem(current, doc);
   }

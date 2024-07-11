@@ -31,7 +31,6 @@ import java.io.Reader;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.Charset;
-import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.input.BOMInputStream;
 
@@ -156,7 +155,7 @@ public class OETLFileSource extends OETLAbstractSource {
         getContext().getMessageHandler().error(this, "Error on locking file: %s", e, fileName);
       }
 
-    log(Level.INFO, "Reading from file " + path + " with encoding " + encoding.displayName());
+    info("Reading from file " + path + " with encoding " + encoding.displayName());
   }
 
   public boolean isClosed() {

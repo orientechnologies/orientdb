@@ -22,6 +22,7 @@ import static com.orientechnologies.common.parser.OSystemVariableResolver.VAR_BE
 import static com.orientechnologies.common.parser.OSystemVariableResolver.VAR_END;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -31,10 +32,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.etl.context.OETLContext;
-import java.util.logging.Level;
 
 /** ETL abstract component. */
 public abstract class OETLAbstractComponent implements OETLComponent {
+  private static OLogger logger = OLogManager.instance().logger(OETLAbstractComponent.class);
   protected OETLProcessor processor;
   protected OCommandContext context;
   protected String output;
@@ -96,7 +97,7 @@ public abstract class OETLAbstractComponent implements OETLComponent {
       final ODocument doc =
           input instanceof OIdentifiable ? (ODocument) ((OIdentifiable) input).getRecord() : null;
 
-      log(Level.FINE, "Evaluating conditional expression if=%s...", ifFilter);
+      debug("Evaluating conditional expression if=%s...", ifFilter);
 
       final Object result = ifFilter.evaluate(doc, null, context);
       if (!(result instanceof Boolean))
@@ -117,25 +118,32 @@ public abstract class OETLAbstractComponent implements OETLComponent {
     return null;
   }
 
-  protected void log(final Level iLevel, String iText, final Object... iArgs) {
-    log(iLevel, iText, null, iArgs);
+  protected void error(String iText, final Object... iArgs) {
+    logger.error(format(iText), null, iArgs);
   }
 
-  protected void log(final Level iLevel, String iText, Exception exception, final Object... iArgs) {
-    final Long extractedNum = context != null ? (Long) context.getVariable("extractedNum") : null;
+  protected void error(String iText, Throwable exception, final Object... iArgs) {
+    logger.error(format(iText), exception, iArgs);
+  }
 
+  protected void debug(String iText, final Object... iArgs) {
+    logger.debug(format(iText), null, iArgs);
+  }
+
+  protected void info(String iText, final Object... iArgs) {
+    logger.info(format(iText), null, iArgs);
+  }
+
+  protected void warn(String iText, final Object... iArgs) {
+    logger.warn(format(iText), null, iArgs);
+  }
+
+  protected String format(String iText) {
+    final Long extractedNum = context != null ? (Long) context.getVariable("extractedNum") : null;
     if (extractedNum != null) {
-      OLogManager.instance()
-          .log(
-              this,
-              iLevel,
-              "[" + extractedNum + ":" + getName() + "]  " + iText,
-              exception,
-              true,
-              iArgs);
+      return "[" + extractedNum + ":" + getName() + "]  " + iText;
     } else {
-      OLogManager.instance()
-          .log(this, iLevel, "[" + getName() + "] " + iText, exception, true, iArgs);
+      return "[" + getName() + "] " + iText;
     }
   }
 

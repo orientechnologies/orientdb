@@ -21,7 +21,6 @@ package com.orientechnologies.orient.etl.transformer;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.logging.Level;
 
 /** ETL Transformer that logs the input. */
 public class OETLLogTransformer extends OETLAbstractTransformer {
@@ -62,7 +61,7 @@ public class OETLLogTransformer extends OETLAbstractTransformer {
 
     if (postfix != null && !postfix.isEmpty()) buffer.append(resolve(postfix));
 
-    log(Level.INFO, buffer.toString());
+    info(buffer.toString());
 
     return input;
   }

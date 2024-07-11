@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
 
 /** Converts a JOIN in LINK */
 public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
@@ -77,8 +76,7 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
   @Override
   public Object executeTransform(ODatabaseDocument db, final Object input) {
     if (!(input instanceof OIdentifiable)) {
-      log(
-          Level.FINE,
+      debug(
           "skip because input value is not a record, but rather an instance of class: %s",
           input.getClass());
       return null;
@@ -100,7 +98,7 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
       result = singleJoinsResult;
     } else result = lookup((ODatabaseDocumentInternal) db, joinRuntimeValue, true);
 
-    log(Level.FINE, "joinRuntimeValue=%s, lookupResult=%s", joinRuntimeValue, result);
+    debug("joinRuntimeValue=%s, lookupResult=%s", joinRuntimeValue, result);
 
     if (result != null) {
       if (linkFieldType != null) {
@@ -135,7 +133,7 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
               linkedDoc.field(lookupParts[1], joinRuntimeValue);
               linkedDoc.save();
 
-              log(Level.FINE, "created new document=%s", linkedDoc.getRecord());
+              debug("created new document=%s", linkedDoc.getRecord());
 
               result = linkedDoc;
             } else
@@ -145,19 +143,11 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
             break;
           case ERROR:
             processor.getStats().incrementErrors();
-            log(
-                Level.SEVERE,
-                "%s: ERROR Cannot resolve join for value '%s'",
-                getName(),
-                joinRuntimeValue);
+            error("%s: ERROR Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
             break;
           case WARNING:
             processor.getStats().incrementWarnings();
-            log(
-                Level.INFO,
-                "%s: WARN Cannot resolve join for value '%s'",
-                getName(),
-                joinRuntimeValue);
+            info("%s: WARN Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
             break;
           case SKIP:
             return null;
@@ -171,7 +161,7 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
     // SET THE TRANSFORMED FIELD BACK
     doc.field(linkFieldName, result);
 
-    log(Level.FINE, "set %s=%s in document=%s", linkFieldName, result, input);
+    debug("set %s=%s in document=%s", linkFieldName, result, input);
 
     return input;
   }

@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import java.util.List;
-import java.util.logging.Level;
 
 public class OETLFieldTransformer extends OETLAbstractTransformer {
   private String fieldName;
@@ -102,23 +101,23 @@ public class OETLFieldTransformer extends OETLAbstractTransformer {
           // SET THE TRANSFORMED FIELD BACK
           doc.field(fieldName, newValue);
 
-          log(Level.FINE, "set %s=%s in document=%s", fieldName, newValue, doc);
+          debug("set %s=%s in document=%s", fieldName, newValue, doc);
         } else {
           if (fieldName != null) {
             final Object prev = doc.removeField(fieldName);
-            log(Level.FINE, "removed %s (value=%s) from document=%s", fieldName, prev, doc);
+            debug("removed %s (value=%s) from document=%s", fieldName, prev, doc);
           } else {
             for (String f : fieldNames) {
               final Object prev = doc.removeField(f);
-              log(Level.FINE, "removed %s (value=%s) from document=%s", f, prev, doc);
+              debug("removed %s (value=%s) from document=%s", f, prev, doc);
             }
           }
         }
 
         if (save) {
-          log(Level.FINE, "saving record %s", doc.toJSON());
+          debug("saving record %s", doc.toJSON());
           db.save(doc);
-          log(Level.FINE, "saved record %s", doc.toJSON());
+          debug("saved record %s", doc.toJSON());
         }
       }
     }

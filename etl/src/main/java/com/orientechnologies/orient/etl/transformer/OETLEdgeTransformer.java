@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
   private String edgeClass = "E";
@@ -143,7 +142,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
 
   private List<OEdge> createEdge(
       ODatabaseDocument db, final OVertex vertex, final Object joinCurrentValue, Object result) {
-    log(Level.FINE, "joinCurrentValue=%s, lookupResult=%s", joinCurrentValue, result);
+    debug("joinCurrentValue=%s, lookupResult=%s", joinCurrentValue, result);
 
     if (result == null) {
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
@@ -163,7 +162,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
 
               linkedV.save();
 
-              log(Level.FINE, "created new vertex=" + linkedV.getRecord());
+              debug("created new vertex=" + linkedV.getRecord());
 
               result = linkedV.getIdentity();
             } else {
@@ -175,19 +174,11 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
           break;
         case ERROR:
           processor.getStats().incrementErrors();
-          log(
-              Level.SEVERE,
-              "%s: ERROR Cannot resolve join for value '%s'",
-              getName(),
-              joinCurrentValue);
+          error("%s: ERROR Cannot resolve join for value '%s'", getName(), joinCurrentValue);
           break;
         case WARNING:
           processor.getStats().incrementWarnings();
-          log(
-              Level.INFO,
-              "%s: WARN Cannot resolve join for value '%s'",
-              getName(),
-              joinCurrentValue);
+          info("%s: WARN Cannot resolve join for value '%s'", getName(), joinCurrentValue);
           break;
         case SKIP:
           return null;
@@ -227,15 +218,13 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
           }
 
           edges.add(edge);
-          log(Level.FINE, "created new edge=%s", edge);
+          debug("created new edge=%s", edge);
         } catch (ORecordDuplicatedException e) {
           if (skipDuplicates) {
-            log(Level.FINE, "skipped creation of new edge because already exists");
+            debug("skipped creation of new edge because already exists");
             continue;
           } else {
-            log(
-                Level.SEVERE,
-                "error on creation of new edge because it already exists (skipDuplicates=false)");
+            error("error on creation of new edge because it already exists (skipDuplicates=false)");
             throw e;
           }
         }
