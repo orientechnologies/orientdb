@@ -183,91 +183,6 @@ public class OLogManager {
     }
   }
 
-  public void debug(
-      final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isDebugEnabled()) log(iRequester, Level.FINE, iMessage, null, true, iAdditionalArgs);
-  }
-
-  public void debug(
-      final Object iRequester,
-      final String iMessage,
-      final Throwable iException,
-      final Object... iAdditionalArgs) {
-    if (isDebugEnabled()) log(iRequester, Level.FINE, iMessage, iException, true, iAdditionalArgs);
-  }
-
-  public void debugNoDb(
-      final Object iRequester,
-      final String iMessage,
-      final Throwable iException,
-      final Object... iAdditionalArgs) {
-    if (isDebugEnabled()) log(iRequester, Level.FINE, iMessage, iException, false, iAdditionalArgs);
-  }
-
-  public void info(
-      final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isInfoEnabled()) log(iRequester, Level.INFO, iMessage, null, true, iAdditionalArgs);
-  }
-
-  public void infoNoDb(
-      final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isInfoEnabled()) log(iRequester, Level.INFO, iMessage, null, false, iAdditionalArgs);
-  }
-
-  public void info(
-      final Object iRequester,
-      final String iMessage,
-      final Throwable iException,
-      final Object... iAdditionalArgs) {
-    if (isInfoEnabled()) log(iRequester, Level.INFO, iMessage, iException, true, iAdditionalArgs);
-  }
-
-  public void warn(
-      final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isWarnEnabled()) log(iRequester, Level.WARNING, iMessage, null, true, iAdditionalArgs);
-  }
-
-  public void warnNoDb(
-      final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isWarnEnabled()) log(iRequester, Level.WARNING, iMessage, null, false, iAdditionalArgs);
-  }
-
-  public void warn(
-      final Object iRequester,
-      final String iMessage,
-      final Throwable iException,
-      final Object... iAdditionalArgs) {
-    if (isWarnEnabled())
-      log(iRequester, Level.WARNING, iMessage, iException, true, iAdditionalArgs);
-  }
-
-  public void config(
-      final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    log(iRequester, Level.CONFIG, iMessage, null, true, iAdditionalArgs);
-  }
-
-  public void error(
-      final Object iRequester,
-      final String iMessage,
-      final Throwable iException,
-      final Object... iAdditionalArgs) {
-    if (isErrorEnabled())
-      log(iRequester, Level.SEVERE, iMessage, iException, true, iAdditionalArgs);
-  }
-
-  public void errorNoDb(
-      final Object iRequester,
-      final String iMessage,
-      final Throwable iException,
-      final Object... iAdditionalArgs) {
-    if (isErrorEnabled())
-      log(iRequester, Level.SEVERE, iMessage, iException, false, iAdditionalArgs);
-  }
-
-  public boolean isWarn() {
-    return warn;
-  }
-
   public boolean isLevelEnabled(final Level level) {
     if (level.equals(Level.FINER) || level.equals(Level.FINE) || level.equals(Level.FINEST))
       return debug;
@@ -357,11 +272,13 @@ public class OLogManager {
     for (Handler h : Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).getHandlers()) h.flush();
   }
 
-  public OCommandOutputListener getCommandOutputListener(final Object iThis, final Level iLevel) {
+  public OCommandOutputListener getCommandOutputListener(
+      final Object iThis, final OLogger.Level iLevel) {
+    OLogger logger = logger(iThis.getClass());
     return new OCommandOutputListener() {
       @Override
       public void onMessage(String iText) {
-        log(iThis, iLevel, iText, null, true);
+        logger.log(iLevel, iText, null, true);
       }
     };
   }

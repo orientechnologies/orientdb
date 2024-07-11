@@ -90,7 +90,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.configuration.Configuration;
@@ -326,7 +325,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
       // WAIT FOR REPAIR TO COMPLETE
 
       new OGraphRepair()
-          .repair(this, OLogManager.instance().getCommandOutputListener(this, Level.INFO), null);
+          .repair(
+              this,
+              OLogManager.instance().getCommandOutputListener(this, OLogger.Level.INFO),
+              null);
 
     } else if ("notx_async_repair".equalsIgnoreCase(sqlGraphConsistencyMode)) {
       // RUNNING REPAIR IN BACKGROUND
@@ -341,7 +343,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
                   new OGraphRepair()
                       .repair(
                           g,
-                          OLogManager.instance().getCommandOutputListener(this, Level.INFO),
+                          OLogManager.instance().getCommandOutputListener(this, OLogger.Level.INFO),
                           null);
                 }
               });
