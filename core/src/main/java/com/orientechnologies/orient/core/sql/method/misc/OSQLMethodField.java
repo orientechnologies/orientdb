@@ -63,13 +63,17 @@ public class OSQLMethodField extends OAbstractSQLMethod {
       }
       if (ioResult instanceof String) {
         try {
-          ioResult = iContext.getDatabase().load(new ORecordId((String) ioResult));
+          ORecordId id = new ORecordId((String) ioResult);
+          ioResult = iContext.getDatabase().load(id);
+          if (ioResult == null) {
+            ioResult = new ODocument(id);
+          }
         } catch (Exception e) {
           OLogManager.instance().error(this, "Error on reading rid with value '%s'", e, ioResult);
           ioResult = null;
         }
       } else if (ioResult instanceof ORecord) {
-        ioResult = iContext.getDatabase().load((ORecord) ioResult);
+        ioResult = (ORecord) ioResult;
       } else if (ioResult instanceof OIdentifiable) {
         ioResult = iContext.getDatabase().load(((OIdentifiable) ioResult).getIdentity());
       } else if (ioResult instanceof Collection<?>
