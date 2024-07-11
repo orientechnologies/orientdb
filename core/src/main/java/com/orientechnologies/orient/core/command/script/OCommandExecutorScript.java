@@ -104,7 +104,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
-    if (context == null) context = new OBasicCommandContext();
+    if (context == null) context = new OBasicCommandContext(getDatabase());
     return executeInContext(context, iArgs);
   }
 

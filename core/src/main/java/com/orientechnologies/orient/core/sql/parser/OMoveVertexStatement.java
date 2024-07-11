@@ -41,11 +41,10 @@ public class OMoveVertexStatement extends OStatement {
   @Override
   public OResultSet execute(
       ODatabaseSession db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
-    OBasicCommandContext ctx = new OBasicCommandContext();
+    OBasicCommandContext ctx = new OBasicCommandContext(db);
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
-    ctx.setDatabase(db);
     ctx.setInputParameters(params);
     OUpdateExecutionPlan executionPlan;
     if (usePlanCache) {

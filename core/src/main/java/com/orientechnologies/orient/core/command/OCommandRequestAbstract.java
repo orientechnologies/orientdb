@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.command;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
@@ -183,7 +184,8 @@ public abstract class OCommandRequestAbstract
 
   @Override
   public OCommandContext getContext() {
-    if (context == null) context = new OBasicCommandContext();
+    if (context == null)
+      context = new OBasicCommandContext(ODatabaseRecordThreadLocal.instance().getIfDefined());
     return context;
   }
 

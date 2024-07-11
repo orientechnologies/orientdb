@@ -22,8 +22,7 @@ public class CountFromClassStepTest extends TestUtilsFixture {
 
     OIdentifier classIdentifier = new OIdentifier(className);
 
-    OBasicCommandContext context = new OBasicCommandContext();
-    context.setDatabase(db);
+    OBasicCommandContext context = new OBasicCommandContext(db);
     CountFromClassStep step = new CountFromClassStep(classIdentifier, ALIAS, context, false);
 
     OExecutionStream result = step.start(context);

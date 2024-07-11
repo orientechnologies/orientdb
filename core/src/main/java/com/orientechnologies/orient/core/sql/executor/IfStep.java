@@ -44,7 +44,7 @@ public class IfStep extends AbstractExecutionStep {
   }
 
   public OScriptExecutionPlan initPositivePlan(OCommandContext ctx) {
-    OBasicCommandContext subCtx1 = new OBasicCommandContext();
+    OBasicCommandContext subCtx1 = new OBasicCommandContext(ctx.getDatabase());
     subCtx1.setParent(ctx);
     OScriptExecutionPlan positivePlan = new OScriptExecutionPlan(subCtx1);
     for (OStatement stm : positiveStatements) {
@@ -56,7 +56,7 @@ public class IfStep extends AbstractExecutionStep {
   public OScriptExecutionPlan initNegativePlan(OCommandContext ctx) {
     if (negativeStatements != null) {
       if (negativeStatements.size() > 0) {
-        OBasicCommandContext subCtx2 = new OBasicCommandContext();
+        OBasicCommandContext subCtx2 = new OBasicCommandContext(ctx.getDatabase());
         subCtx2.setParent(ctx);
         OScriptExecutionPlan negativePlan = new OScriptExecutionPlan(subCtx2);
         for (OStatement stm : negativeStatements) {

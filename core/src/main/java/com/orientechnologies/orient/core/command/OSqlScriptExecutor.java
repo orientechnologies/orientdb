@@ -40,8 +40,7 @@ public class OSqlScriptExecutor extends OAbstractScriptExecutor {
     }
     List<OStatement> statements = OSQLEngine.parseScript(script, database);
 
-    OCommandContext scriptContext = new OBasicCommandContext();
-    ((OBasicCommandContext) scriptContext).setDatabase(database);
+    OCommandContext scriptContext = new OBasicCommandContext(database);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
       for (int i = 0; i < args.length; i++) {
@@ -60,8 +59,7 @@ public class OSqlScriptExecutor extends OAbstractScriptExecutor {
     }
     List<OStatement> statements = OSQLEngine.parseScript(script, database);
 
-    OCommandContext scriptContext = new OBasicCommandContext();
-    ((OBasicCommandContext) scriptContext).setDatabase(database);
+    OCommandContext scriptContext = new OBasicCommandContext(database);
 
     scriptContext.setInputParameters(params);
 

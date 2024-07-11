@@ -72,7 +72,10 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
     } else if (statement.getTarget().getItem().getRids() != null) {
       this.rids =
           statement.getTarget().getItem().getRids().stream()
-              .map(x -> x.toRecordId(new OResultInternal(), new OBasicCommandContext()))
+              .map(
+                  x ->
+                      x.toRecordId(
+                          new OResultInternal(), new OBasicCommandContext((ODatabaseSession) db)))
               .collect(Collectors.toList());
     }
     execInSeparateDatabase(
@@ -146,16 +149,19 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
         switch (iRecord.type) {
           case ORecordOperation.DELETED:
             record.setMetadata(BEFORE_METADATA_KEY, null);
-            clientListener.onDelete(execDb, applyProjections(record));
+            clientListener.onDelete(execDb, applyProjections((ODatabaseSession) execDb, record));
             break;
           case ORecordOperation.UPDATED:
             OResult before =
-                applyProjections((OResultInternal) record.getMetadata(BEFORE_METADATA_KEY));
+                applyProjections(
+                    (ODatabaseSession) execDb,
+                    (OResultInternal) record.getMetadata(BEFORE_METADATA_KEY));
             record.setMetadata(BEFORE_METADATA_KEY, null);
-            clientListener.onUpdate(execDb, before, applyProjections(record));
+            clientListener.onUpdate(
+                execDb, before, applyProjections((ODatabaseSession) execDb, record));
             break;
           case ORecordOperation.CREATED:
-            clientListener.onCreate(execDb, applyProjections(record));
+            clientListener.onCreate(execDb, applyProjections((ODatabaseSession) execDb, record));
             break;
         }
       }
@@ -165,11 +171,11 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
     }
   }
 
-  private OResultInternal applyProjections(OResultInternal record) {
+  private OResultInternal applyProjections(ODatabaseSession session, OResultInternal record) {
     if (statement.getProjection() != null) {
       OResultInternal result =
           (OResultInternal)
-              statement.getProjection().calculateSingle(new OBasicCommandContext(), record);
+              statement.getProjection().calculateSingle(new OBasicCommandContext(session), record);
       return result;
     }
     return record;
@@ -218,7 +224,7 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
     if (where == null) {
       return true;
     }
-    OBasicCommandContext ctx = new OBasicCommandContext();
+    OBasicCommandContext ctx = new OBasicCommandContext((ODatabaseSession) this.execDb);
     ctx.setInputParameters(params);
     return where.matchesFilters(record, ctx);
   }

@@ -46,7 +46,7 @@ public class WhileStep extends AbstractExecutionStep {
   }
 
   public OScriptExecutionPlan initPlan(OCommandContext ctx) {
-    OBasicCommandContext subCtx1 = new OBasicCommandContext();
+    OBasicCommandContext subCtx1 = new OBasicCommandContext(ctx.getDatabase());
     subCtx1.setParent(ctx);
     OScriptExecutionPlan plan = new OScriptExecutionPlan(subCtx1);
     for (OStatement stm : statements) {

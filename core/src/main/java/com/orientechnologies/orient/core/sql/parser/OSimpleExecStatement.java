@@ -31,11 +31,10 @@ public abstract class OSimpleExecStatement extends OStatement {
 
   public OResultSet execute(
       ODatabaseSession db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
-    OBasicCommandContext ctx = new OBasicCommandContext();
+    OBasicCommandContext ctx = new OBasicCommandContext(db);
     if (parentContext != null) {
       ctx.setParentWithoutOverridingChild(parentContext);
     }
-    ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
       for (int i = 0; i < args.length; i++) {
@@ -49,11 +48,10 @@ public abstract class OSimpleExecStatement extends OStatement {
 
   public OResultSet execute(
       ODatabaseSession db, Map params, OCommandContext parentContext, boolean usePlanCache) {
-    OBasicCommandContext ctx = new OBasicCommandContext();
+    OBasicCommandContext ctx = new OBasicCommandContext(db);
     if (parentContext != null) {
       ctx.setParentWithoutOverridingChild(parentContext);
     }
-    ctx.setDatabase(db);
     ctx.setInputParameters(params);
     OSingleOpExecutionPlan executionPlan = (OSingleOpExecutionPlan) createExecutionPlan(ctx, false);
     return new OExecutionResultSet(executionPlan.executeInternal(ctx), ctx, executionPlan);

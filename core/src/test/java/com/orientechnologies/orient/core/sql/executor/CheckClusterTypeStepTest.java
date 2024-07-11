@@ -28,8 +28,7 @@ public class CheckClusterTypeStepTest extends TestUtilsFixture {
   @Test(expected = OCommandExecutionException.class)
   public void shouldThrowExceptionWhenClusterIsWrong() {
     db.addCluster(CLUSTER_NAME);
-    OBasicCommandContext context = new OBasicCommandContext();
-    context.setDatabase(db);
+    OBasicCommandContext context = new OBasicCommandContext(db);
     CheckClusterTypeStep step =
         new CheckClusterTypeStep(CLUSTER_NAME, createClassInstance().getName(), context, false);
 

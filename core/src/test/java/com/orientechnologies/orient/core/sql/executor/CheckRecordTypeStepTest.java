@@ -17,7 +17,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
 
   @Test
   public void shouldCheckRecordsOfOneType() {
-    OCommandContext context = new OBasicCommandContext();
+    OCommandContext context = new OBasicCommandContext(db);
     String className = createClassInstance().getName();
     CheckRecordTypeStep step = new CheckRecordTypeStep(context, className, false);
     AbstractExecutionStep previous =
@@ -45,7 +45,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
 
   @Test
   public void shouldCheckRecordsOfSubclasses() {
-    OCommandContext context = new OBasicCommandContext();
+    OCommandContext context = new OBasicCommandContext(db);
     OClass parentClass = createClassInstance();
     OClass childClass = createChildClassInstance(parentClass);
     CheckRecordTypeStep step = new CheckRecordTypeStep(context, parentClass.getName(), false);
@@ -75,7 +75,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
 
   @Test(expected = OCommandExecutionException.class)
   public void shouldThrowExceptionWhenTypeIsDifferent() {
-    OCommandContext context = new OBasicCommandContext();
+    OCommandContext context = new OBasicCommandContext(db);
     String firstClassName = createClassInstance().getName();
     String secondClassName = createClassInstance().getName();
     CheckRecordTypeStep step = new CheckRecordTypeStep(context, firstClassName, false);

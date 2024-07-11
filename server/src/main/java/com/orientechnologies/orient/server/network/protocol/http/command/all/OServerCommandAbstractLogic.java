@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.all;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -63,7 +64,7 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
       for (int i = 3; i < parts.length; ++i) args[i - 3] = parts[i];
 
       // BIND CONTEXT VARIABLES
-      final OBasicCommandContext context = new OBasicCommandContext();
+      final OBasicCommandContext context = new OBasicCommandContext((ODatabaseSession) db);
       context.setVariable(
           "session", server.getHttpSessionManager().getSession(iRequest.getSessionId()));
       context.setVariable("request", new OHttpRequestWrapper(iRequest, (String[]) args));

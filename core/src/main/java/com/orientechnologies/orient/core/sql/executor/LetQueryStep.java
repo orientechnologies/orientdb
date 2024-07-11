@@ -25,8 +25,7 @@ public class LetQueryStep extends AbstractExecutionStep {
   }
 
   private OResultInternal calculate(OResultInternal result, OCommandContext ctx) {
-    OBasicCommandContext subCtx = new OBasicCommandContext();
-    subCtx.setDatabase(ctx.getDatabase());
+    OBasicCommandContext subCtx = new OBasicCommandContext(ctx.getDatabase());
     subCtx.setParentWithoutOverridingChild(ctx);
     OInternalExecutionPlan subExecutionPlan;
     if (query.toString().contains("?")) {

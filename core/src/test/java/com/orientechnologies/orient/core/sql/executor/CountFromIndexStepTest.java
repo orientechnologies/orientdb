@@ -63,8 +63,7 @@ public class CountFromIndexStepTest extends TestUtilsFixture {
     identifier.setIndexNameString(name.getValue());
     identifier.setType(identifierType);
 
-    OBasicCommandContext context = new OBasicCommandContext();
-    context.setDatabase(db);
+    OBasicCommandContext context = new OBasicCommandContext(db);
     CountFromIndexStep step = new CountFromIndexStep(identifier, ALIAS, context, false);
 
     OExecutionStream result = step.start(context);

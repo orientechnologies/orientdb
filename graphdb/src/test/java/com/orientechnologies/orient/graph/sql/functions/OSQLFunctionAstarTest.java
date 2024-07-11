@@ -22,6 +22,7 @@ package com.orientechnologies.orient.graph.sql.functions;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
@@ -391,7 +392,7 @@ public class OSQLFunctionAstarTest {
             null,
             null,
             new Object[] {v6, v1, "'weight'", options},
-            new OBasicCommandContext());
+            new OBasicCommandContext((ODatabaseSession) graph.getRawGraph()));
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(6, result.size());
     assertEquals(v6, result.get(0));

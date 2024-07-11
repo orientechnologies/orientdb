@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -59,7 +60,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
 
       OStatement stm = OServerCommandPostCommand.parseStatement("SQL", text, db);
       OResultSet result = db.query(text, new Object[] {});
-      limit = OServerCommandPostCommand.getLimitFromStatement(stm, limit);
+      limit = OServerCommandPostCommand.getLimitFromStatement((ODatabaseSession) db, stm, limit);
       String localFetchPlan = OServerCommandPostCommand.getFetchPlanFromStatement(stm);
       if (localFetchPlan != null) {
         fetchPlan = localFetchPlan;

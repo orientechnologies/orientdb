@@ -125,9 +125,8 @@ public class ODatabaseUserData extends SimpleNode {
   }
 
   public void executeCreate(ODatabaseDocumentInternal db, OCommandContext parentCtx) {
-    OBasicCommandContext ctx = new OBasicCommandContext();
+    OBasicCommandContext ctx = new OBasicCommandContext(db);
     ctx.setInputParameters(parentCtx.getInputParameters());
-    ctx.setDatabase(db);
     OCreateUserStatement stm = new OCreateUserStatement(-1);
     if (name != null) {
       stm.name = name.copy();

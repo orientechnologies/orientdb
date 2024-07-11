@@ -105,7 +105,9 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   }
 
   public OCommandContext getContext() {
-    if (context == null) context = new OBasicCommandContext();
+    if (context == null) {
+      context = new OBasicCommandContext(ODatabaseRecordThreadLocal.instance().getIfDefined());
+    }
     return context;
   }
 

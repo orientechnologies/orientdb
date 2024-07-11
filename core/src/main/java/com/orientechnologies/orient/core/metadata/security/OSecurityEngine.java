@@ -424,8 +424,7 @@ public class OSecurityEngine {
           .executeNoAuthorization(
               session.getName(),
               (db -> {
-                OBasicCommandContext ctx = new OBasicCommandContext();
-                ctx.setDatabase(db);
+                OBasicCommandContext ctx = new OBasicCommandContext(db);
                 ctx.setDynamicVariable(
                     "$currentUser",
                     (inContext) -> {
@@ -458,8 +457,7 @@ public class OSecurityEngine {
           .executeNoAuthorization(
               session.getName(),
               (db -> {
-                OBasicCommandContext ctx = new OBasicCommandContext();
-                ctx.setDatabase(db);
+                OBasicCommandContext ctx = new OBasicCommandContext(db);
                 ctx.setDynamicVariable(
                     "$currentUser",
                     (inContext) -> {

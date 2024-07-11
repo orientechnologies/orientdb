@@ -73,7 +73,7 @@ public class RetryStep extends AbstractExecutionStep {
   }
 
   public OScriptExecutionPlan initPlan(List<OStatement> body, OCommandContext ctx) {
-    OBasicCommandContext subCtx1 = new OBasicCommandContext();
+    OBasicCommandContext subCtx1 = new OBasicCommandContext(ctx.getDatabase());
     subCtx1.setParent(ctx);
     OScriptExecutionPlan plan = new OScriptExecutionPlan(subCtx1);
     for (OStatement stm : body) {

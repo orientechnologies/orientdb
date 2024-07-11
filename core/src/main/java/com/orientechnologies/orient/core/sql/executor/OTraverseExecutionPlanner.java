@@ -335,8 +335,7 @@ public class OTraverseExecutionPlanner {
       OStatement subQuery,
       OCommandContext ctx,
       boolean profilingEnabled) {
-    OBasicCommandContext subCtx = new OBasicCommandContext();
-    subCtx.setDatabase(ctx.getDatabase());
+    OBasicCommandContext subCtx = new OBasicCommandContext(ctx.getDatabase());
     subCtx.setParent(ctx);
     OInternalExecutionPlan subExecutionPlan =
         subQuery.createExecutionPlan(subCtx, profilingEnabled);

@@ -662,7 +662,7 @@ public class ViewManager {
           }
         } else {
           for (OProjectionItem oProjectionItem : projection.getItems()) {
-            Object value = oProjectionItem.execute(origin, new OBasicCommandContext());
+            Object value = oProjectionItem.execute(origin, new OBasicCommandContext(db));
             viewRow.setProperty(oProjectionItem.getProjectionAliasAsString(), value);
           }
         }

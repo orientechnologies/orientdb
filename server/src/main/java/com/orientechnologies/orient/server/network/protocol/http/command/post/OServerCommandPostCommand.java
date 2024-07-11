@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseStats;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -102,7 +103,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       ((ODatabaseInternal) db).resetRecordLoadStats();
       OStatement stm = parseStatement(language, text, db);
       OResultSet result = executeStatement(language, text, params, db);
-      limit = getLimitFromStatement(stm, limit);
+      limit = getLimitFromStatement((ODatabaseSession) db, stm, limit);
       String localFetchPlan = getFetchPlanFromStatement(stm);
       if (localFetchPlan != null) {
         fetchPlan = localFetchPlan;
@@ -190,7 +191,8 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     return null;
   }
 
-  public static int getLimitFromStatement(OStatement statement, int previousLimit) {
+  public static int getLimitFromStatement(
+      ODatabaseSession db, OStatement statement, int previousLimit) {
     try {
       OLimit limit = null;
       if (statement instanceof OSelectStatement) {
@@ -201,7 +203,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         limit = ((OTraverseStatement) statement).getLimit();
       }
       if (limit != null) {
-        return limit.getValue(new OBasicCommandContext());
+        return limit.getValue(new OBasicCommandContext(db));
       }
 
     } catch (Exception e) {

@@ -109,8 +109,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
 
     synchronized (map) {
       OInternalExecutionPlan internal = (OInternalExecutionPlan) plan;
-      OBasicCommandContext ctx = new OBasicCommandContext();
-      ctx.setDatabase(db);
+      OBasicCommandContext ctx = new OBasicCommandContext(db);
       internal = internal.copy(ctx);
       // this copy is never used, so it has to be closed to free resources
       internal.close();

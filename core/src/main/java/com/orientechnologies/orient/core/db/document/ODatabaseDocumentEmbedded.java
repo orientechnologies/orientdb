@@ -782,8 +782,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     getSharedContext().getOrientDB().startCommand(Optional.empty());
     try {
       preQueryStart();
-      OBasicCommandContext ctx = new OBasicCommandContext();
-      ctx.setDatabase(this);
+      OBasicCommandContext ctx = new OBasicCommandContext(this);
       ctx.setInputParameters(params);
 
       OLocalResultSet result = new OLocalResultSet((OInternalExecutionPlan) plan);

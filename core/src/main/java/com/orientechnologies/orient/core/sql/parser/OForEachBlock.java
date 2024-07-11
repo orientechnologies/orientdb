@@ -44,11 +44,10 @@ public class OForEachBlock extends OStatement {
   @Override
   public OResultSet execute(
       ODatabaseSession db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
-    OBasicCommandContext ctx = new OBasicCommandContext();
+    OBasicCommandContext ctx = new OBasicCommandContext(db);
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
-    ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
       for (int i = 0; i < args.length; i++) {
@@ -70,11 +69,10 @@ public class OForEachBlock extends OStatement {
   @Override
   public OResultSet execute(
       ODatabaseSession db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
-    OBasicCommandContext ctx = new OBasicCommandContext();
+    OBasicCommandContext ctx = new OBasicCommandContext(db);
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
-    ctx.setDatabase(db);
     ctx.setInputParameters(params);
 
     OUpdateExecutionPlan executionPlan;

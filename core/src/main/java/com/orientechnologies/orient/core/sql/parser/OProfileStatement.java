@@ -43,11 +43,10 @@ public class OProfileStatement extends OStatement {
   public OResultSet execute(
       ODatabaseSession db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     ((ODatabaseInternal) db).resetRecordLoadStats();
-    OBasicCommandContext ctx = new OBasicCommandContext();
+    OBasicCommandContext ctx = new OBasicCommandContext(db);
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
-    ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
       for (int i = 0; i < args.length; i++) params.put(i, args[i]);
@@ -85,11 +84,10 @@ public class OProfileStatement extends OStatement {
   public OResultSet execute(
       ODatabaseSession db, Map args, OCommandContext parentCtx, boolean usePlanCache) {
     ((ODatabaseInternal) db).resetRecordLoadStats();
-    OBasicCommandContext ctx = new OBasicCommandContext();
+    OBasicCommandContext ctx = new OBasicCommandContext(db);
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
     }
-    ctx.setDatabase(db);
     ctx.setInputParameters(args);
 
     OExecutionPlan executionPlan;

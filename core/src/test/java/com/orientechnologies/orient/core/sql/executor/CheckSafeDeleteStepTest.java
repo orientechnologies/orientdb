@@ -36,7 +36,7 @@ public class CheckSafeDeleteStepTest extends TestUtilsFixture {
 
   @Test(expected = OCommandExecutionException.class)
   public void shouldNotDeleteVertexAndEdge() {
-    OCommandContext context = new OBasicCommandContext();
+    OCommandContext context = new OBasicCommandContext(db);
     switch (className) {
       case VERTEX_CLASS_NAME:
         db.createVertexClass(VERTEX_CLASS_NAME);
@@ -75,7 +75,7 @@ public class CheckSafeDeleteStepTest extends TestUtilsFixture {
 
   @Test
   public void shouldSafelyDeleteRecord() {
-    OCommandContext context = new OBasicCommandContext();
+    OCommandContext context = new OBasicCommandContext(db);
     CheckSafeDeleteStep step = new CheckSafeDeleteStep(context, false);
     AbstractExecutionStep previous =
         new AbstractExecutionStep(context, false) {

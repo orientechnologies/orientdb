@@ -26,11 +26,10 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
     super(ctx, profilingEnabled);
     this.varName = varName;
 
-    OBasicCommandContext subCtx = new OBasicCommandContext();
+    OBasicCommandContext subCtx = new OBasicCommandContext(ctx.getDatabase());
     if (scriptVars != null) {
       scriptVars.forEach(x -> subCtx.declareScriptVariable(x));
     }
-    subCtx.setDatabase(ctx.getDatabase());
     subCtx.setParent(ctx);
     if (query.toString().contains("?")) {
       // with positional parameters, you cannot know if a parameter has the same ordinal as the one
