@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.FormatSettings;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -434,8 +434,7 @@ public class OFetchHelper {
     if (!fetchListener.requireFieldProcessing() && fetchPlan == OFetchHelper.DEFAULT_FETCHPLAN) {
       return;
     }
-    final ORecordSerializerJSON.FormatSettings settings =
-        new ORecordSerializerJSON.FormatSettings(format);
+    final FormatSettings settings = new FormatSettings(format);
 
     // Pre-process to gather fieldTypes
     fetchContext.onBeforeFetch(record);
@@ -549,8 +548,7 @@ public class OFetchHelper {
       final String format,
       final Set<String> toRemove,
       final String fieldName) {
-    final ORecordSerializerJSON.FormatSettings settings =
-        new ORecordSerializerJSON.FormatSettings(format);
+    final FormatSettings settings = new FormatSettings(format);
 
     Object fieldValue;
     final String fieldPath =
@@ -673,7 +671,7 @@ public class OFetchHelper {
       final String iFieldPathFromRoot,
       final OFetchListener iListener,
       final OFetchContext iContext,
-      final ORecordSerializerJSON.FormatSettings settings)
+      final FormatSettings settings)
       throws IOException {
     int currentLevel = iCurrentLevel + 1;
     int fieldDepthLevel = iFieldDepthLevel;
@@ -761,7 +759,7 @@ public class OFetchHelper {
       final String iFieldPathFromRoot,
       final OFetchListener iListener,
       final OFetchContext iContext,
-      final ORecordSerializerJSON.FormatSettings settings)
+      final FormatSettings settings)
       throws IOException {
     final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
     iContext.onBeforeMap(iRootRecord, fieldName, iUserObject);
@@ -859,7 +857,7 @@ public class OFetchHelper {
       final String iFieldPathFromRoot,
       final OFetchListener iListener,
       final OFetchContext context,
-      ORecordSerializerJSON.FormatSettings settings) {
+      FormatSettings settings) {
     if (fieldValue instanceof ODocument[]) {
       final ODocument[] linked = (ODocument[]) fieldValue;
       context.onBeforeArray(rootRecord, fieldName, iUserObject, linked);
@@ -911,7 +909,7 @@ public class OFetchHelper {
       final String iFieldPathFromRoot,
       final OFetchListener iListener,
       final OFetchContext context,
-      final ORecordSerializerJSON.FormatSettings settings)
+      final FormatSettings settings)
       throws IOException {
     final Iterable<?> linked;
     if (fieldValue instanceof Iterable<?> || fieldValue instanceof ORidBag) {
@@ -1038,7 +1036,7 @@ public class OFetchHelper {
       final String iFieldPathFromRoot,
       final OFetchListener iListener,
       final OFetchContext iContext,
-      final ORecordSerializerJSON.FormatSettings settings) {
+      final FormatSettings settings) {
     if (fieldValue instanceof ORID && !((ORID) fieldValue).isValid()) {
       // RID NULL: TREAT AS "NULL" VALUE
       iContext.onBeforeStandardField(fieldValue, fieldName, iRootRecord, null);
