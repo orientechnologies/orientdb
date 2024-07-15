@@ -4584,6 +4584,40 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testOutJson() {
+    db.command("create class SimpleV extends V ").close();
+    db.command("create vertex SimpleV set name = 'foo'").close();
+    db.command("create vertex SimpleV set name = 'foo1'").close();
+    db.command(
+            "create edge e from (select from SimpleV where name='foo') to (select from SimpleV where name='foo1')")
+        .close();
+    try (OResultSet rs =
+        db.query(
+            "select name, outs.tojson() as json from ( select name, out() as outs from SimpleV where name='foo') ")) {
+      Assert.assertTrue(rs.hasNext());
+      OResult item = rs.next();
+      Assert.assertFalse(((String) item.getProperty("json")).contains("null"));
+    }
+  }
+
+  @Test
+  public void testOutJsonEmb() {
+    db.command("create class SimpleV extends V ").close();
+    db.command("create vertex SimpleV set name = 'foo'").close();
+    db.command("create vertex SimpleV set name = 'foo1'").close();
+    db.command(
+            "create edge e from (select from SimpleV where name='foo') to (select from SimpleV where name='foo1')")
+        .close();
+    try (OResultSet rs =
+        db.query(
+            "select name, outs as json from ( select name, out().toJson() as outs from SimpleV where name='foo') ")) {
+      Assert.assertTrue(rs.hasNext());
+      OResult item = rs.next();
+      Assert.assertFalse(((String) item.getProperty("json")).contains("null"));
+    }
+  }
+
+  @Test
   public void testOptimizedCountQuery() {
     String className = "testOptimizedCountQuery";
     db.command("create class " + className).close();

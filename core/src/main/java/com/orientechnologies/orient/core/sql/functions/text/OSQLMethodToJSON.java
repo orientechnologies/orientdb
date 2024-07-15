@@ -19,6 +19,7 @@ package com.orientechnologies.orient.core.sql.functions.text;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -56,19 +57,27 @@ public class OSQLMethodToJSON extends OAbstractSQLMethod {
     }
 
     final String format = iParams.length > 0 ? ((String) iParams[0]).replace("\"", "") : null;
-
-    if (iThis instanceof OResult) {
-      iThis = ((OResult) iThis).toElement();
+    if (iThis instanceof ORecordId) {
+      ORecord rec = iContext.getDatabase().load((ORecordId) iThis);
+      if (rec != null) {
+        return rec.toJSON(format);
+      }
     }
-    if (iThis instanceof ORecord) {
+    if (iThis instanceof OResult) {
+      if (format != null) {
+        return ((OResult) iThis).toJSON();
+      } else {
+        ((OResult) iThis).toElement().toJSON(format);
+      }
+    } else if (iThis instanceof ORecord) {
 
       final ORecord record = (ORecord) iThis;
-      return iParams.length == 1 ? record.toJSON(format) : record.toJSON();
+      return record.toJSON(format);
 
     } else if (iThis instanceof Map) {
 
       final ODocument doc = new ODocument().fromMap((Map<String, Object>) iThis);
-      return iParams.length == 1 ? doc.toJSON(format) : doc.toJSON();
+      return doc.toJSON(format);
 
     } else if (OMultiValue.isMultiValue(iThis)) {
 
