@@ -59,7 +59,7 @@
                 </dependency>
                 <dependency>
                     <groupId>org.graalvm.js</groupId>
-                    <artifactId>js</artifactId>
+                    <artifactId>js-language</artifactId>
                     <version>${graalvm.version}</version>
                     <scope>runtime</scope>
                 </dependency>
@@ -70,13 +70,13 @@
                 </dependency>
                 <dependency>
                     <groupId>org.graalvm.tools</groupId>
-                    <artifactId>profiler</artifactId>
+                    <artifactId>profiler-tool</artifactId>
                     <version>${graalvm.version}</version>
                     <scope>runtime</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.graalvm.tools</groupId>
-                    <artifactId>chromeinspector</artifactId>
+                    <artifactId>chromeinspector-tool</artifactId>
                     <version>${graalvm.version}</version>
                     <scope>runtime</scope>
                 </dependency>
