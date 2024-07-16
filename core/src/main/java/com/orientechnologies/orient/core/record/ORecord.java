@@ -97,7 +97,7 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    *
    * @return
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   ODatabaseDocument getDatabase();
 
   /**
@@ -117,7 +117,7 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * @return The record loaded or itself if the record has been reloaded from the storage. Useful to
    *     call methods in chain.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   <RET extends ORecord> RET load() throws ORecordNotFoundException;
 
   /**
@@ -130,11 +130,11 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods
    *     in chain.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   <RET extends ORecord> RET reload() throws ORecordNotFoundException;
 
   /** Use {@link ODatabaseSession#reload(ORecord, String, boolean)} instead. */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   <RET extends ORecord> RET reload(final String fetchPlan, final boolean ignoreCache, boolean force)
       throws ORecordNotFoundException;
 
@@ -151,7 +151,7 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods
    *     in chain.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   <RET extends ORecord> RET save();
 
   /**
@@ -168,7 +168,7 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods
    *     in chain.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   <RET extends ORecord> RET save(String iCluster);
 
   /**
@@ -176,7 +176,7 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    *
    * @return
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   <RET extends ORecord> RET save(boolean forceCreate);
 
   /**
@@ -184,7 +184,7 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    *
    * @return
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   <RET extends ORecord> RET save(String iCluster, boolean forceCreate);
 
   /**
@@ -198,7 +198,7 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods
    *     in chain.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   <RET extends ORecord> RET delete();
 
   /**

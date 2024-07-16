@@ -47,16 +47,16 @@ public interface OIdentifiable extends Comparable<OIdentifiable>, Comparator<OId
   <T extends ORecord> T getRecord();
 
   /** Use {@link ODatabaseSession#lock(ORID)} instead. */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   void lock(boolean iExclusive);
 
-  @Deprecated(forRemoval = true)
+  @Deprecated
   boolean isLocked();
 
-  @Deprecated(forRemoval = true)
+  @Deprecated
   OStorage.LOCKING_STRATEGY lockingStrategy();
 
   /** Use {@link ODatabaseSession#unlock(ORID)} instead. */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   void unlock();
 }
