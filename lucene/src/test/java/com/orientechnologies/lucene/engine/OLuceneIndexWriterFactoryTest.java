@@ -8,7 +8,7 @@ import java.io.File;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.LiveIndexWriterConfig;
-import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.store.ByteBuffersDirectory;
 import org.junit.Test;
 
 /** Created by frank on 05/01/2016. */
@@ -26,7 +26,8 @@ public class OLuceneIndexWriterFactoryTest {
                 OIOUtils.readFileAsString(
                     new File("./src/test/resources/index_metadata_new.json")));
 
-    IndexWriter writer = fc.createIndexWriter(new RAMDirectory(), meta, new StandardAnalyzer());
+    IndexWriter writer =
+        fc.createIndexWriter(new ByteBuffersDirectory(), meta, new StandardAnalyzer());
 
     LiveIndexWriterConfig config = writer.getConfig();
     assertThat(config.getUseCompoundFile()).isFalse();

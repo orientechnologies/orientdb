@@ -33,7 +33,7 @@
     <inceptionYear>2013</inceptionYear>
 
     <properties>
-        <lucene.version>7.7.3</lucene.version> <!-- latest version 8.5.1+ -->
+        <lucene.version>9.11.1</lucene.version> <!-- latest version 8.5.1+ -->
         <!--<geotools.version>13.2</geotools.version>-->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!--This property is updated automatically and is needed to make build reproducible-->
@@ -57,7 +57,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
+            <artifactId>lucene-analysis-common</artifactId>
             <version>${lucene.version}</version>
         </dependency>
         <dependency>
@@ -102,11 +102,6 @@
         </dependency>
 
         <!-- spatial -->
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-spatial</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-spatial-extras</artifactId>

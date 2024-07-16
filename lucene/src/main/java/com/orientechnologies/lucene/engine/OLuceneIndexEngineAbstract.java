@@ -77,8 +77,8 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
 public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
@@ -198,7 +198,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
 
   private boolean shouldClose() {
     //noinspection resource
-    return !(directory.getDirectory() instanceof RAMDirectory)
+    return !(directory.getDirectory() instanceof ByteBuffersDirectory)
         && System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
   }
 
@@ -223,7 +223,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
     //noinspection resource
     if (indexWriter != null
         && indexWriter.isOpen()
-        && directory.getDirectory() instanceof RAMDirectory) {
+        && directory.getDirectory() instanceof ByteBuffersDirectory) {
       // don't waste time reopening an in memory index
       return;
     }
@@ -265,7 +265,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
     try {
       final TopDocs topDocs =
           searcher.search(new TermQuery(new Term("_CLASS", "JSON_METADATA")), 1);
-      if (topDocs.totalHits == 0) {
+      if (topDocs.totalHits.value == 0) {
         String metaAsJson = metadata.toJSON();
         String defAsJson = indexDefinition.toStream().toJSON();
         Document metaDoc = new Document();
@@ -504,10 +504,14 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
   public OLuceneTxChanges buildTxChanges() throws IOException {
     if (isCollectionDelete()) {
       return new OLuceneTxChangesMultiRid(
-          this, createIndexWriter(new RAMDirectory()), createIndexWriter(new RAMDirectory()));
+          this,
+          createIndexWriter(new ByteBuffersDirectory()),
+          createIndexWriter(new ByteBuffersDirectory()));
     } else {
       return new OLuceneTxChangesSingleRid(
-          this, createIndexWriter(new RAMDirectory()), createIndexWriter(new RAMDirectory()));
+          this,
+          createIndexWriter(new ByteBuffersDirectory()),
+          createIndexWriter(new ByteBuffersDirectory()));
     }
   }
 

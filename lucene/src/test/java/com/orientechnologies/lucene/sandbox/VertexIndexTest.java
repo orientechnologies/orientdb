@@ -17,7 +17,8 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.store.ByteBuffersDirectory;
+import org.apache.lucene.store.Directory;
 import org.junit.After;
 import org.junit.Test;
 
@@ -28,7 +29,7 @@ public class VertexIndexTest {
   public void testSpacesInQuery() throws IOException, ParseException {
 
     IndexWriterConfig conf = new IndexWriterConfig(new StandardAnalyzer());
-    final RAMDirectory directory = new RAMDirectory();
+    final Directory directory = new ByteBuffersDirectory();
     final IndexWriter writer = new IndexWriter(directory, conf);
 
     Document doc = new Document();
@@ -58,7 +59,7 @@ public class VertexIndexTest {
     final TopDocs topDocs = searcher.search(query, 10);
 
     assertThat(topDocs.totalHits).isEqualTo(2);
-    for (int i = 0; i < topDocs.totalHits; i++) {
+    for (int i = 0; i < topDocs.totalHits.value; i++) {
 
       final Document found = searcher.doc(topDocs.scoreDocs[i].doc);
 

@@ -41,14 +41,14 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.RAMDirectory;
 
 /** Shows simple usage of faceted indexing and search. */
 public class OLuceneNativeTest {
 
-  private final Directory indexDir = new RAMDirectory();
-  private final Directory taxoDir = new RAMDirectory();
+  private final Directory indexDir = new ByteBuffersDirectory();
+  private final Directory taxoDir = new ByteBuffersDirectory();
   private final FacetsConfig config = new FacetsConfig();
 
   /** Empty constructor */

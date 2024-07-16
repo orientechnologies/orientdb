@@ -8,10 +8,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.store.NIOFSDirectory;
-import org.apache.lucene.store.RAMDirectory;
 
 /** Created by frank on 03/03/2016. */
 public class OLuceneDirectoryFactory {
@@ -36,7 +36,7 @@ public class OLuceneDirectoryFactory {
             : DIRECTORY_MMAP;
     if (storage.getType().equals(ODatabaseType.MEMORY.name().toLowerCase())
         || DIRECTORY_RAM.equals(luceneType)) {
-      final Directory dir = new RAMDirectory();
+      final Directory dir = new ByteBuffersDirectory();
       return new OLuceneDirectory(dir, null);
     }
     return createDirectory(storage, indexName, metadata, luceneType);
@@ -67,6 +67,6 @@ public class OLuceneDirectoryFactory {
       logger.error("unable to create Lucene Directory with type " + luceneType, e);
     }
     logger.warn("unable to create Lucene Directory, FALL BACK to ramDir");
-    return new OLuceneDirectory(new RAMDirectory(), null);
+    return new OLuceneDirectory(new ByteBuffersDirectory(), null);
   }
 }

@@ -15,10 +15,10 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.File;
 import java.util.Collections;
+import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.store.NIOFSDirectory;
-import org.apache.lucene.store.RAMDirectory;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -92,7 +92,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
       ODatabaseDocumentInternal db =
           (ODatabaseDocumentInternal) ctx.open(name.getMethodName(), "admin", "adminpwd");
       Directory directory = fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
-      assertThat(directory).isInstanceOf(RAMDirectory.class);
+      assertThat(directory).isInstanceOf(ByteBuffersDirectory.class);
       ctx.drop(name.getMethodName());
     }
   }
@@ -111,7 +111,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
       final Directory directory =
           fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
       // 'ODatabaseType.MEMORY' and 'DIRECTORY_RAM' determines the RAMDirectory.
-      assertThat(directory).isInstanceOf(RAMDirectory.class);
+      assertThat(directory).isInstanceOf(ByteBuffersDirectory.class);
       ctx.drop(name.getMethodName());
     }
   }
@@ -131,7 +131,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
           fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
       // 'ODatabaseType.MEMORY' plus 'DIRECTORY_MMAP' leads to the same result as just
       // 'DIRECTORY_RAM'.
-      assertThat(directory).isInstanceOf(RAMDirectory.class);
+      assertThat(directory).isInstanceOf(ByteBuffersDirectory.class);
       ctx.drop(name.getMethodName());
     }
   }

@@ -59,8 +59,9 @@ public class OLuceneIndexEngineUtils {
               put("totalTime", finalTime);
               put("totalHits", docs.totalHits);
               put("returnedHits", docs.scoreDocs.length);
-              if (!Float.isNaN(docs.getMaxScore())) {
-                put("maxScore", docs.getMaxScore());
+              float maxScore = docs.scoreDocs.length == 0 ? Float.NaN : docs.scoreDocs[0].score;
+              if (!Float.isNaN(maxScore)) {
+                put("maxScore", maxScore);
               }
             }
           });

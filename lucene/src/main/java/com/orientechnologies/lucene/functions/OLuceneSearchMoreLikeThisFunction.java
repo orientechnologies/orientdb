@@ -1,5 +1,7 @@
 package com.orientechnologies.lucene.functions;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
@@ -182,55 +184,60 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
   private MoreLikeThis buildMoreLikeThis(
       OLuceneFullTextIndex index, IndexSearcher searcher, ODocument metadata) {
 
-    MoreLikeThis mlt = new MoreLikeThis(searcher.getIndexReader());
+    try {
+      MoreLikeThis mlt = new MoreLikeThis(searcher.getIndexReader());
 
-    mlt.setAnalyzer(index.queryAnalyzer());
+      mlt.setAnalyzer(index.queryAnalyzer());
 
-    mlt.setFieldNames(
-        Optional.ofNullable(metadata.<List<String>>getProperty("fieldNames"))
-            .orElse(index.getDefinition().getFields())
-            .toArray(new String[] {}));
+      mlt.setFieldNames(
+          Optional.ofNullable(metadata.<List<String>>getProperty("fieldNames"))
+              .orElse(index.getDefinition().getFields())
+              .toArray(new String[] {}));
 
-    mlt.setMaxQueryTerms(
-        Optional.ofNullable(metadata.<Integer>getProperty("maxQueryTerms"))
-            .orElse(MoreLikeThis.DEFAULT_MAX_QUERY_TERMS));
+      mlt.setMaxQueryTerms(
+          Optional.ofNullable(metadata.<Integer>getProperty("maxQueryTerms"))
+              .orElse(MoreLikeThis.DEFAULT_MAX_QUERY_TERMS));
 
-    mlt.setMinTermFreq(
-        Optional.ofNullable(metadata.<Integer>getProperty("minTermFreq"))
-            .orElse(MoreLikeThis.DEFAULT_MIN_TERM_FREQ));
+      mlt.setMinTermFreq(
+          Optional.ofNullable(metadata.<Integer>getProperty("minTermFreq"))
+              .orElse(MoreLikeThis.DEFAULT_MIN_TERM_FREQ));
 
-    mlt.setMaxDocFreq(
-        Optional.ofNullable(metadata.<Integer>getProperty("maxDocFreq"))
-            .orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
+      mlt.setMaxDocFreq(
+          Optional.ofNullable(metadata.<Integer>getProperty("maxDocFreq"))
+              .orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
 
-    mlt.setMinDocFreq(
-        Optional.ofNullable(metadata.<Integer>getProperty("minDocFreq"))
-            .orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
+      mlt.setMinDocFreq(
+          Optional.ofNullable(metadata.<Integer>getProperty("minDocFreq"))
+              .orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
 
-    mlt.setBoost(
-        Optional.ofNullable(metadata.<Boolean>getProperty("boost"))
-            .orElse(MoreLikeThis.DEFAULT_BOOST));
+      mlt.setBoost(
+          Optional.ofNullable(metadata.<Boolean>getProperty("boost"))
+              .orElse(MoreLikeThis.DEFAULT_BOOST));
 
-    mlt.setBoostFactor(Optional.ofNullable(metadata.<Float>getProperty("boostFactor")).orElse(1f));
+      mlt.setBoostFactor(
+          Optional.ofNullable(metadata.<Float>getProperty("boostFactor")).orElse(1f));
 
-    mlt.setMaxWordLen(
-        Optional.ofNullable(metadata.<Integer>getProperty("maxWordLen"))
-            .orElse(MoreLikeThis.DEFAULT_MAX_WORD_LENGTH));
+      mlt.setMaxWordLen(
+          Optional.ofNullable(metadata.<Integer>getProperty("maxWordLen"))
+              .orElse(MoreLikeThis.DEFAULT_MAX_WORD_LENGTH));
 
-    mlt.setMinWordLen(
-        Optional.ofNullable(metadata.<Integer>getProperty("minWordLen"))
-            .orElse(MoreLikeThis.DEFAULT_MIN_WORD_LENGTH));
+      mlt.setMinWordLen(
+          Optional.ofNullable(metadata.<Integer>getProperty("minWordLen"))
+              .orElse(MoreLikeThis.DEFAULT_MIN_WORD_LENGTH));
 
-    mlt.setMaxNumTokensParsed(
-        Optional.ofNullable(metadata.<Integer>getProperty("maxNumTokensParsed"))
-            .orElse(MoreLikeThis.DEFAULT_MAX_NUM_TOKENS_PARSED));
+      mlt.setMaxNumTokensParsed(
+          Optional.ofNullable(metadata.<Integer>getProperty("maxNumTokensParsed"))
+              .orElse(MoreLikeThis.DEFAULT_MAX_NUM_TOKENS_PARSED));
 
-    mlt.setStopWords(
-        (Set<?>)
-            Optional.ofNullable(metadata.getProperty("stopWords"))
-                .orElse(MoreLikeThis.DEFAULT_STOP_WORDS));
+      mlt.setStopWords(
+          (Set<?>)
+              Optional.ofNullable(metadata.getProperty("stopWords"))
+                  .orElse(MoreLikeThis.DEFAULT_STOP_WORDS));
 
-    return mlt;
+      return mlt;
+    } catch (IOException e) {
+      throw OException.wrapException(new OIOException("Lucene IO Exception"), e);
+    }
   }
 
   private void addLikeQueries(List<ORecord> others, MoreLikeThis mlt, Builder queryBuilder) {

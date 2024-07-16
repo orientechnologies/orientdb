@@ -38,7 +38,8 @@ import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
 import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
 import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
-import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.store.ByteBuffersDirectory;
+import org.apache.lucene.store.Directory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.spatial4j.context.jts.JtsSpatialContext;
@@ -58,7 +59,7 @@ public class LuceneGeoTest {
     strategy.setDistErrPct(0);
 
     IndexWriterConfig conf = new IndexWriterConfig(new StandardAnalyzer());
-    final RAMDirectory directory = new RAMDirectory();
+    final Directory directory = new ByteBuffersDirectory();
     final IndexWriter writer = new IndexWriter(directory, conf);
 
     Shape point = JtsSpatialContext.GEO.getWktShapeParser().parse("POINT (9.4714708 47.6819432)");
@@ -116,7 +117,7 @@ public class LuceneGeoTest {
             new GeohashPrefixTree(JtsSpatialContext.GEO, 11), "location");
 
     IndexWriterConfig conf = new IndexWriterConfig(new StandardAnalyzer());
-    final RAMDirectory directory = new RAMDirectory();
+    final Directory directory = new ByteBuffersDirectory();
     final IndexWriter writer = new IndexWriter(directory, conf);
 
     Shape multiPolygon =
@@ -170,7 +171,7 @@ public class LuceneGeoTest {
             new GeohashPrefixTree(JtsSpatialContext.GEO, 11), "location");
 
     IndexWriterConfig conf = new IndexWriterConfig(new StandardAnalyzer());
-    final RAMDirectory directory = new RAMDirectory();
+    final Directory directory = new ByteBuffersDirectory();
     final IndexWriter writer = new IndexWriter(directory, conf);
 
     ODocument entries = loadMultiPolygon();

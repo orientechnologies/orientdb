@@ -181,7 +181,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
 
   @Override
   public int size() {
-    return (int) Math.max(0, topDocs.totalHits - deletedMatchCount);
+    return (int) Math.max(0, topDocs.totalHits.value - deletedMatchCount);
   }
 
   @Override
@@ -197,12 +197,12 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
     private long totalHits;
 
     public OLuceneResultSetIteratorTx() {
-      totalHits = topDocs.totalHits;
+      totalHits = topDocs.totalHits.value;
       index = 0;
       localIndex = 0;
       scoreDocs = topDocs.scoreDocs;
       OLuceneIndexEngineUtils.sendTotalHits(
-          indexName, queryContext.getContext(), topDocs.totalHits - deletedMatchCount);
+          indexName, queryContext.getContext(), topDocs.totalHits.value - deletedMatchCount);
     }
 
     @Override
