@@ -1220,6 +1220,7 @@ public class ODocument extends ORecordAbstract
    *
    * @param iFetchPlan Fetch plan to use
    */
+  @Deprecated(forRemoval = true)
   public ODocument load(final String iFetchPlan) {
     return load(iFetchPlan, false);
   }
@@ -1232,6 +1233,7 @@ public class ODocument extends ORecordAbstract
    *
    * @param iIgnoreCache Ignore the cache or use it
    */
+  @Deprecated(forRemoval = true)
   public ODocument load(final String iFetchPlan, boolean iIgnoreCache) {
     Object result;
     try {
@@ -1246,6 +1248,7 @@ public class ODocument extends ORecordAbstract
   }
 
   @Override
+  @Deprecated(forRemoval = true)
   public ODocument reload(final String fetchPlan, final boolean ignoreCache) {
     super.reload(fetchPlan, ignoreCache);
     if (!lazyLoad) {
@@ -1262,6 +1265,7 @@ public class ODocument extends ORecordAbstract
   }
 
   @Override
+  @Deprecated(forRemoval = true)
   public byte[] toStream() {
     if (recordFormat == null) setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     return toStream(false);
@@ -2409,16 +2413,19 @@ public class ODocument extends ORecordAbstract
   }
 
   @Override
+  @Deprecated(forRemoval = true)
   public ODocument save() {
     return (ODocument) save(null, false);
   }
 
   @Override
+  @Deprecated(forRemoval = true)
   public ODocument save(final String iClusterName) {
     return (ODocument) save(iClusterName, false);
   }
 
   @Override
+  @Deprecated(forRemoval = true)
   public ORecordAbstract save(final String iClusterName, final boolean forceCreate) {
     return getDatabase()
         .save(

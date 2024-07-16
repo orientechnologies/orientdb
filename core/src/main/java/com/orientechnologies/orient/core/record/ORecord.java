@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -96,6 +97,7 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    *
    * @return
    */
+  @Deprecated(forRemoval = true)
   ODatabaseDocument getDatabase();
 
   /**
@@ -110,9 +112,11 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * so pay attention to use the returned. If the record is dirty, then it returns to the original
    * content. If the record does not exist a ORecordNotFoundException exception is thrown.
    *
+   * <p> Use {@link ODatabaseSession#load(ORecord)} instead.</p>
    * @return The record loaded or itself if the record has been reloaded from the storage. Useful to
    *     call methods in chain.
    */
+  @Deprecated(forRemoval = true)
   <RET extends ORecord> RET load() throws ORecordNotFoundException;
 
   /**
@@ -120,11 +124,18 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * to the original content. If the record does not exist a ORecordNotFoundException exception is
    * thrown.
    *
+   * <p> Use {@link ODatabaseSession#reload(OElement)} instead.</p>
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods
    *     in chain.
    */
+  @Deprecated(forRemoval = true)
   <RET extends ORecord> RET reload() throws ORecordNotFoundException;
 
+  /**
+   * <p> Use {@link ODatabaseSession#reload(ORecord, String, boolean)} instead.</p>
+   *
+   */
+  @Deprecated(forRemoval = true)
   <RET extends ORecord> RET reload(final String fetchPlan, final boolean ignoreCache, boolean force)
       throws ORecordNotFoundException;
 
@@ -136,9 +147,11 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * running, then an exclusive lock is acquired against the record. Current transaction will
    * continue to see the record as modified, while others cannot access to it since it's locked.
    *
+   * <p> Use {@link ODatabaseSession#save(ORecord)} instead.</p>
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods
    *     in chain.
    */
+  @Deprecated(forRemoval = true)
   <RET extends ORecord> RET save();
 
   /**
@@ -150,13 +163,25 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * record. Current transaction will continue to see the record as modified, while others cannot
    * access to it since it's locked.
    *
+   * <p> Use {@link ODatabaseSession#save(ORecord, String)} instead.</p>
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods
    *     in chain.
    */
+  @Deprecated(forRemoval = true)
   <RET extends ORecord> RET save(String iCluster);
 
+  /**
+   * <p> Use {@link ODatabaseSession#save(ORecord, String)} instead.</p>
+   * @return
+   */
+  @Deprecated(forRemoval = true)
   <RET extends ORecord> RET save(boolean forceCreate);
 
+  /**
+   * <p> Use {@link ODatabaseSession#save(ORecord, String)} instead.</p>
+   * @return
+   */
+  @Deprecated(forRemoval = true)
   <RET extends ORecord> RET save(String iCluster, boolean forceCreate);
 
   /**
@@ -170,6 +195,7 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods
    *     in chain.
    */
+  @Deprecated(forRemoval = true)
   <RET extends ORecord> RET delete();
 
   /**
