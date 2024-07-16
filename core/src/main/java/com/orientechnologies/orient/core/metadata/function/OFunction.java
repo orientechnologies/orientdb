@@ -27,11 +27,11 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,13 +42,14 @@ import java.util.Map;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OFunction extends ODocumentWrapper {
+public class OFunction {
+  private ODocument document;
   public static final String CLASS_NAME = "OFunction";
   private OCallable<Object, Map<Object, Object>> callback;
 
   /** Creates a new function. */
   public OFunction() {
-    super(CLASS_NAME);
+    this.document = new ODocument(CLASS_NAME);
     setLanguage("SQL");
   }
 
@@ -58,7 +59,7 @@ public class OFunction extends ODocumentWrapper {
    * @param iDocument Document to assign
    */
   public OFunction(final ODocument iDocument) {
-    super(iDocument);
+    this.document = iDocument;
   }
 
   /**
@@ -67,7 +68,7 @@ public class OFunction extends ODocumentWrapper {
    * @param iRid RID of the function to load
    */
   public OFunction(final ORecordId iRid) {
-    super(iRid);
+    this.document = new ODocument(iRid);
   }
 
   public String getName() {
@@ -254,5 +255,13 @@ public class OFunction extends ODocumentWrapper {
   @Override
   public String toString() {
     return getName();
+  }
+
+  public void save(ODatabaseSession database) {
+    database.save(this.document);
+  }
+
+  public ODocument getDocument() {
+    return this.document;
   }
 }

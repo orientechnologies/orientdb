@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -69,6 +70,7 @@ public class ORole extends OIdentity implements OSecurityRole {
   protected ORole parentRole;
 
   private Map<ORule.ResourceGeneric, ORule> rules = new HashMap<ORule.ResourceGeneric, ORule>();
+  @ODocumentInstance protected ODocument document;
 
   /** Constructor used in unmarshalling. */
   public ORole() {}
@@ -82,7 +84,7 @@ public class ORole extends OIdentity implements OSecurityRole {
       final ORole iParent,
       final ALLOW_MODES iAllowMode,
       Map<String, OSecurityPolicy> policies) {
-    super(CLASS_NAME);
+    this.document = new ODocument(CLASS_NAME);
     document.field("name", iName);
 
     parentRole = iParent;
@@ -142,7 +144,6 @@ public class ORole extends OIdentity implements OSecurityRole {
     return value;
   }
 
-  @Override
   public void fromStream(final ODocument iSource) {
     if (document != null) return;
 
@@ -379,7 +380,6 @@ public class ORole extends OIdentity implements OSecurityRole {
     return this;
   }
 
-  @Override
   public ORole save() {
     document.save(ORole.class.getSimpleName());
     return this;
@@ -476,5 +476,13 @@ public class ORole extends OIdentity implements OSecurityRole {
       return null;
     }
     return new OSecurityPolicyImpl(policy);
+  }
+
+  public ODocument toStream() {
+    return this.document;
+  }
+
+  public void reload() {
+    this.document.reload();
   }
 }

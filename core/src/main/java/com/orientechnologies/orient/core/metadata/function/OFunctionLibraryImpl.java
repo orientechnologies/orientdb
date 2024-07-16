@@ -128,7 +128,7 @@ public class OFunctionLibraryImpl {
 
     final OFunction f = new OFunction().setName(iName);
     try {
-      f.save();
+      f.save(database);
     } catch (ORecordDuplicatedException ex) {
       logger.error("Exception is suppressed, original exception is ", ex);
 

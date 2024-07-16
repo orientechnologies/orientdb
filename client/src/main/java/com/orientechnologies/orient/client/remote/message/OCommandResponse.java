@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.query.OBasicLegacyResultSet;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -136,12 +135,6 @@ public final class OCommandResponse implements OBinaryResponse {
 
       if (listener != null) listener.result(result);
       OMessageHelper.writeIdentifiable(channel, (OIdentifiable) result, recordSerializer);
-    } else if (result instanceof ODocumentWrapper) {
-      // RECORD
-      channel.writeByte((byte) 'r');
-      final ODocument doc = ((ODocumentWrapper) result).getDocument();
-      if (listener != null) listener.result(doc);
-      OMessageHelper.writeIdentifiable(channel, doc, recordSerializer);
     } else if (!isRecordResultSet) {
       writeSimpleValue(channel, listener, result, protocolVersion, recordSerializer);
     } else if (OMultiValue.isMultiValue(result)) {

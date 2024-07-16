@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.schedule;
 
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import java.util.Date;
 import java.util.Map;
 
@@ -28,14 +27,16 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since v2.2
  */
-public class OScheduledEventBuilder extends ODocumentWrapper {
+public class OScheduledEventBuilder {
+  private ODocument document;
+
   public OScheduledEventBuilder() {
-    super(new ODocument(OScheduledEvent.CLASS_NAME));
+    document = new ODocument(OScheduledEvent.CLASS_NAME);
   }
 
   /** Creates a scheduled event object from a configuration. */
   public OScheduledEventBuilder(final ODocument doc) {
-    super(doc);
+    this.document = doc;
   }
 
   public OScheduledEventBuilder setFunction(final OFunction function) {

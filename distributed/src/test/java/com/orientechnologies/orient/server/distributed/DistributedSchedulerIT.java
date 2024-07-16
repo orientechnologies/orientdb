@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -169,7 +170,7 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
       final List<String> pars = new ArrayList<String>();
       pars.add("note");
       func.setParameters(pars);
-      func.save();
+      func.save((ODatabaseSession) db);
     }
     return func;
   }

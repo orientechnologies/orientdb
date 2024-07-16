@@ -33,7 +33,7 @@ public class OFunctionSqlTest extends BaseMemoryDatabase {
             add("name");
           }
         });
-    function.save();
+    function.save(db);
     Object result = function.executeInContext(new OBasicCommandContext(), "Enrico");
 
     Assert.assertEquals(((OLegacyResultSet) result).size(), 1);
@@ -60,7 +60,7 @@ public class OFunctionSqlTest extends BaseMemoryDatabase {
             add("name");
           }
         });
-    function.save();
+    function.save(db);
 
     OFunction function1 = new OFunction();
     function1.setName("hello");
@@ -72,7 +72,7 @@ public class OFunctionSqlTest extends BaseMemoryDatabase {
             add("name");
           }
         });
-    function1.save();
+    function1.save(db);
     Object result = function.executeInContext(new OBasicCommandContext(), "Enrico");
 
     Assert.assertEquals(((OLegacyResultSet) result).size(), 1);

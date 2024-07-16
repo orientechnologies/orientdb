@@ -48,7 +48,7 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
       f.setParameters(
           parameters.stream().map(x -> x.getStringValue()).collect(Collectors.toList()));
     if (language != null) f.setLanguage(language.getStringValue());
-    f.save();
+    f.save(database);
     ORID functionId = f.getId();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create function");

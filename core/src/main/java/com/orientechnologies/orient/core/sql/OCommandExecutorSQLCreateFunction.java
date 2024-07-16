@@ -23,6 +23,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -115,7 +116,7 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
     f.setIdempotent(idempotent);
     if (parameters != null) f.setParameters(parameters);
     if (language != null) f.setLanguage(language);
-    f.save();
+    f.save((ODatabaseSession) database);
     return f.getId();
   }
 

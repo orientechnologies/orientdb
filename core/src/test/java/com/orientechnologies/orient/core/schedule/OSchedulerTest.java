@@ -223,7 +223,7 @@ public class OSchedulerTest {
     final List<String> pars = new ArrayList<>();
     pars.add("note");
     func.setParameters(pars);
-    func.save();
+    func.save(db);
     return func;
   }
 

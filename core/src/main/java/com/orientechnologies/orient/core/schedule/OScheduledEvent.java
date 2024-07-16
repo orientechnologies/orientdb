@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduler.STATUS;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
@@ -43,7 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
-public class OScheduledEvent extends ODocumentWrapper {
+public class OScheduledEvent {
   private static final OLogger logger = OLogManager.instance().logger(OScheduledEvent.class);
 
   public static final String CLASS_NAME = "OSchedule";
@@ -56,6 +55,7 @@ public class OScheduledEvent extends ODocumentWrapper {
   public static final String PROP_STARTTIME = "starttime";
   public static final String PROP_EXEC_ID = "nextExecId";
 
+  protected ODocument document;
   private OFunction function;
   private final AtomicBoolean running;
   private OCronExpression cron;
@@ -64,7 +64,7 @@ public class OScheduledEvent extends ODocumentWrapper {
 
   /** Creates a scheduled event object from a configuration. */
   public OScheduledEvent(final ODocument doc) {
-    super(doc);
+    this.document = doc;
     running = new AtomicBoolean(false);
     nextExecutionId = new AtomicLong(getNextExecutionId());
     getFunction();
@@ -143,9 +143,8 @@ public class OScheduledEvent extends ODocumentWrapper {
         + "]";
   }
 
-  @Override
   public void fromStream(final ODocument iDocument) {
-    super.fromStream(iDocument);
+    this.document = iDocument;
     try {
       cron.buildExpression(getRule());
     } catch (ParseException e) {
@@ -170,6 +169,10 @@ public class OScheduledEvent extends ODocumentWrapper {
       }
     }
     return function;
+  }
+
+  public void reload() {
+    document.reload();
   }
 
   private static class ScheduledTimerTask extends TimerTask {
@@ -334,5 +337,9 @@ public class OScheduledEvent extends ODocumentWrapper {
       }
       return false;
     }
+  }
+
+  public ODocument getDocument() {
+    return document;
   }
 }

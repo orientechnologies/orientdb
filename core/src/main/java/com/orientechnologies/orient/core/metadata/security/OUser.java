@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -53,17 +54,19 @@ public class OUser extends OIdentity implements OSecurityUser {
   // AVOID THE INVOCATION OF SETTER
   protected Set<ORole> roles = new HashSet<ORole>();
 
+  @ODocumentInstance private ODocument document;
+
   /** Constructor used in unmarshalling. */
   public OUser() {}
 
   public OUser(final String iName) {
-    super(CLASS_NAME);
+    this.document = new ODocument(CLASS_NAME);
     document.field("name", iName);
     setAccountStatus(STATUSES.ACTIVE);
   }
 
   public OUser(String iUserName, final String iUserPassword) {
-    super("OUser");
+    this.document = new ODocument(CLASS_NAME);
     document.field("name", iUserName);
     setPassword(iUserPassword);
     setAccountStatus(STATUSES.ACTIVE);
@@ -101,7 +104,6 @@ public class OUser extends OIdentity implements OSecurityUser {
     return false;
   }
 
-  @Override
   public void fromStream(final ODocument iSource) {
     if (document != null) return;
 
@@ -337,8 +339,6 @@ public class OUser extends OIdentity implements OSecurityUser {
     return false;
   }
 
-  @Override
-  @SuppressWarnings("unchecked")
   public OUser save() {
     document.save(OUser.class.getSimpleName());
     return this;
@@ -357,5 +357,9 @@ public class OUser extends OIdentity implements OSecurityUser {
   @Override
   public String getUserType() {
     return "Database";
+  }
+
+  public ODocument getDocument() {
+    return this.document;
   }
 }

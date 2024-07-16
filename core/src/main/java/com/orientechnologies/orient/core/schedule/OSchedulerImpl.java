@@ -57,7 +57,7 @@ public class OSchedulerImpl {
   public void scheduleEvent(final OScheduledEvent event) {
     if (event.getDocument().getIdentity().isNew())
       // FIST TIME: SAVE IT
-      event.save();
+      event.getDocument().save();
 
     if (events.putIfAbsent(event.getName(), event) == null) {
       String database = event.getDocument().getDatabase().getName();

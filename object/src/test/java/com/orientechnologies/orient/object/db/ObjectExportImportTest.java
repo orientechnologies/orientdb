@@ -24,7 +24,7 @@ public class ObjectExportImportTest {
       db.setAutomaticSchemaGeneration(true);
       db.getMetadata().getSchema().synchronizeSchema();
 
-      assertNotNull(db.getMetadata().getSchema().getClass("ODocumentWrapper"));
+      assertNotNull(db.getMetadata().getSchema().getClass("OIdentity"));
       byte[] bytes;
       ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
       new ODatabaseExport(
@@ -51,7 +51,7 @@ public class ObjectExportImportTest {
               })
           .importDatabase()
           .close();
-      assertNotNull(db1.getMetadata().getSchema().getClass("ODocumentWrapper"));
+      assertNotNull(db1.getMetadata().getSchema().getClass("OIdentity"));
     } finally {
       db.drop();
       if (db1 != null) db1.drop();
