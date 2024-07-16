@@ -254,7 +254,7 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(new Integer(100), (Integer) doc.field("number"));
+    assertEquals(Integer.valueOf(100), (Integer) doc.field("number"));
   }
 
   @Test
@@ -268,7 +268,7 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(new Integer(100), (Integer) doc.field("number"));
+    assertEquals(Integer.valueOf(100), (Integer) doc.field("number"));
   }
 
   @Test
@@ -282,7 +282,7 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(new Long(3000000000L), (Long) doc.field("number"));
+    assertEquals(Long.valueOf(3000000000L), (Long) doc.field("number"));
   }
 
   @Test
@@ -295,7 +295,7 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(new Long(3000000000L), (Long) doc.field("number"));
+    assertEquals(Long.valueOf(3000000000L), (Long) doc.field("number"));
   }
 
   @Test
@@ -316,7 +316,7 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     proc.execute();
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
-    assertEquals(new Integer(1), (Integer) doc.field("id"));
+    assertEquals(Integer.valueOf(1), (Integer) doc.field("id"));
     assertNull(doc.field("postId"));
     assertEquals("Hello", (String) doc.field("text"));
   }
@@ -332,7 +332,7 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(new Integer(1), (Integer) doc.field("id"));
+    assertEquals(Integer.valueOf(1), (Integer) doc.field("id"));
     assertNull(doc.field("postId"));
     assertEquals("Hello", (String) doc.field("text"));
   }
@@ -348,7 +348,7 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(new Integer(1), (Integer) doc.field("id"));
+    assertEquals(Integer.valueOf(1), (Integer) doc.field("id"));
     assertNull(doc.field("postId"));
     assertEquals("Hello", (String) doc.field("text"));
   }
@@ -365,7 +365,7 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(new Integer(1), (Integer) doc.field("id"));
+    assertEquals(Integer.valueOf(1), (Integer) doc.field("id"));
     assertThat(doc.<String>field("title")).isNull();
     // assertEquals("", (String) doc.field("title"));
     assertEquals("Hello", (String) doc.field("text"));
@@ -382,7 +382,7 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(new Integer(1), (Integer) doc.field("id"));
+    assertEquals(Integer.valueOf(1), (Integer) doc.field("id"));
     assertThat(doc.<String>field("title")).isNull();
     assertEquals("Hello", (String) doc.field("text"));
   }
@@ -416,9 +416,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(new Integer(1), (Integer) doc.field("id"));
+    assertEquals(Integer.valueOf(1), (Integer) doc.field("id"));
     assertEquals("my test text", (String) doc.field("text"));
-    assertEquals(new Integer(1), (Integer) doc.field("num"));
+    assertEquals(Integer.valueOf(1), (Integer) doc.field("num"));
   }
 
   @Test

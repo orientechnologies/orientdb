@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.util.ODateHelper;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -532,25 +533,25 @@ public enum OType {
         final int sum = a.intValue() + b.intValue();
         if (sum < 0 && a.intValue() > 0 && b.intValue() > 0)
           // SPECIAL CASE: UPGRADE TO LONG
-          return new Long(a.intValue() + b.intValue());
+          return Long.valueOf(a.intValue() + b.intValue());
         return sum;
-      } else if (b instanceof Long) return new Long(a.intValue() + b.longValue());
+      } else if (b instanceof Long) return Long.valueOf(a.intValue() + b.longValue());
       else if (b instanceof Short) {
         final int sum = a.intValue() + b.shortValue();
         if (sum < 0 && a.intValue() > 0 && b.shortValue() > 0)
           // SPECIAL CASE: UPGRADE TO LONG
-          return new Long(a.intValue() + b.shortValue());
+          return Long.valueOf(a.intValue() + b.shortValue());
         return sum;
-      } else if (b instanceof Float) return new Float(a.intValue() + b.floatValue());
-      else if (b instanceof Double) return new Double(a.intValue() + b.doubleValue());
+      } else if (b instanceof Float) return Float.valueOf(a.intValue() + b.floatValue());
+      else if (b instanceof Double) return Double.valueOf(a.intValue() + b.doubleValue());
       else if (b instanceof BigDecimal) return new BigDecimal(a.intValue()).add((BigDecimal) b);
 
     } else if (a instanceof Long) {
-      if (b instanceof Integer) return new Long(a.longValue() + b.intValue());
-      else if (b instanceof Long) return new Long(a.longValue() + b.longValue());
-      else if (b instanceof Short) return new Long(a.longValue() + b.shortValue());
-      else if (b instanceof Float) return new Float(a.longValue() + b.floatValue());
-      else if (b instanceof Double) return new Double(a.longValue() + b.doubleValue());
+      if (b instanceof Integer) return Long.valueOf(a.longValue() + b.intValue());
+      else if (b instanceof Long) return Long.valueOf(a.longValue() + b.longValue());
+      else if (b instanceof Short) return Long.valueOf(a.longValue() + b.shortValue());
+      else if (b instanceof Float) return Float.valueOf(a.longValue() + b.floatValue());
+      else if (b instanceof Double) return Double.valueOf(a.longValue() + b.doubleValue());
       else if (b instanceof BigDecimal) return new BigDecimal(a.longValue()).add((BigDecimal) b);
 
     } else if (a instanceof Short) {
@@ -558,33 +559,33 @@ public enum OType {
         final int sum = a.shortValue() + b.intValue();
         if (sum < 0 && a.shortValue() > 0 && b.intValue() > 0)
           // SPECIAL CASE: UPGRADE TO LONG
-          return new Long(a.shortValue() + b.intValue());
+          return Long.valueOf(a.shortValue() + b.intValue());
         return sum;
-      } else if (b instanceof Long) return new Long(a.shortValue() + b.longValue());
+      } else if (b instanceof Long) return Long.valueOf(a.shortValue() + b.longValue());
       else if (b instanceof Short) {
         final int sum = a.shortValue() + b.shortValue();
         if (sum < 0 && a.shortValue() > 0 && b.shortValue() > 0)
           // SPECIAL CASE: UPGRADE TO INTEGER
-          return new Integer(a.intValue() + b.intValue());
+          return Integer.valueOf(a.intValue() + b.intValue());
         return sum;
-      } else if (b instanceof Float) return new Float(a.shortValue() + b.floatValue());
-      else if (b instanceof Double) return new Double(a.shortValue() + b.doubleValue());
+      } else if (b instanceof Float) return Float.valueOf(a.shortValue() + b.floatValue());
+      else if (b instanceof Double) return Double.valueOf(a.shortValue() + b.doubleValue());
       else if (b instanceof BigDecimal) return new BigDecimal(a.shortValue()).add((BigDecimal) b);
 
     } else if (a instanceof Float) {
-      if (b instanceof Integer) return new Float(a.floatValue() + b.intValue());
-      else if (b instanceof Long) return new Float(a.floatValue() + b.longValue());
-      else if (b instanceof Short) return new Float(a.floatValue() + b.shortValue());
-      else if (b instanceof Float) return new Float(a.floatValue() + b.floatValue());
-      else if (b instanceof Double) return new Double(a.floatValue() + b.doubleValue());
+      if (b instanceof Integer) return Float.valueOf(a.floatValue() + b.intValue());
+      else if (b instanceof Long) return Float.valueOf(a.floatValue() + b.longValue());
+      else if (b instanceof Short) return Float.valueOf(a.floatValue() + b.shortValue());
+      else if (b instanceof Float) return Float.valueOf(a.floatValue() + b.floatValue());
+      else if (b instanceof Double) return Double.valueOf(a.floatValue() + b.doubleValue());
       else if (b instanceof BigDecimal) return new BigDecimal(a.floatValue()).add((BigDecimal) b);
 
     } else if (a instanceof Double) {
-      if (b instanceof Integer) return new Double(a.doubleValue() + b.intValue());
-      else if (b instanceof Long) return new Double(a.doubleValue() + b.longValue());
-      else if (b instanceof Short) return new Double(a.doubleValue() + b.shortValue());
-      else if (b instanceof Float) return new Double(a.doubleValue() + b.floatValue());
-      else if (b instanceof Double) return new Double(a.doubleValue() + b.doubleValue());
+      if (b instanceof Integer) return Double.valueOf(a.doubleValue() + b.intValue());
+      else if (b instanceof Long) return Double.valueOf(a.doubleValue() + b.longValue());
+      else if (b instanceof Short) return Double.valueOf(a.doubleValue() + b.shortValue());
+      else if (b instanceof Float) return Double.valueOf(a.doubleValue() + b.floatValue());
+      else if (b instanceof Double) return Double.valueOf(a.doubleValue() + b.doubleValue());
       else if (b instanceof BigDecimal) return new BigDecimal(a.doubleValue()).add((BigDecimal) b);
 
     } else if (a instanceof BigDecimal) {
@@ -619,8 +620,8 @@ public enum OType {
       else if (max instanceof BigDecimal) {
         context = new BigDecimal(context.intValue());
         int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
-        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
-        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        context = ((BigDecimal) context).setScale(maxScale, RoundingMode.DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, RoundingMode.DOWN);
       } else if (max instanceof Byte) context = context.byteValue();
 
     } else if (context instanceof Integer) {
@@ -631,8 +632,8 @@ public enum OType {
       else if (max instanceof BigDecimal) {
         context = new BigDecimal(context.intValue());
         int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
-        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
-        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        context = ((BigDecimal) context).setScale(maxScale, RoundingMode.DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, RoundingMode.DOWN);
       } else if (max instanceof Short) max = max.intValue();
       else if (max instanceof Byte) max = max.intValue();
 
@@ -643,8 +644,8 @@ public enum OType {
       else if (max instanceof BigDecimal) {
         context = new BigDecimal(context.longValue());
         int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
-        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
-        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        context = ((BigDecimal) context).setScale(maxScale, RoundingMode.DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, RoundingMode.DOWN);
       } else if (max instanceof Integer || max instanceof Byte || max instanceof Short)
         max = max.longValue();
 
@@ -654,8 +655,8 @@ public enum OType {
       else if (max instanceof BigDecimal) {
         context = new BigDecimal(context.floatValue());
         int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
-        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
-        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        context = ((BigDecimal) context).setScale(maxScale, RoundingMode.DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, RoundingMode.DOWN);
       } else if (max instanceof Byte
           || max instanceof Short
           || max instanceof Integer
@@ -666,8 +667,8 @@ public enum OType {
       if (max instanceof BigDecimal) {
         context = new BigDecimal(context.doubleValue());
         int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
-        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
-        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        context = ((BigDecimal) context).setScale(maxScale, RoundingMode.DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, RoundingMode.DOWN);
       } else if (max instanceof Byte
           || max instanceof Short
           || max instanceof Integer
@@ -685,8 +686,8 @@ public enum OType {
       }
 
       int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
-      context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
-      max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+      context = ((BigDecimal) context).setScale(maxScale, RoundingMode.DOWN);
+      max = ((BigDecimal) max).setScale(maxScale, RoundingMode.DOWN);
     } else if (context instanceof Byte) {
       if (max instanceof Short) context = context.shortValue();
       else if (max instanceof Integer) context = context.intValue();
@@ -696,8 +697,8 @@ public enum OType {
       else if (max instanceof BigDecimal) {
         context = new BigDecimal(context.intValue());
         int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
-        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
-        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        context = ((BigDecimal) context).setScale(maxScale, RoundingMode.DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, RoundingMode.DOWN);
       }
     }
 
