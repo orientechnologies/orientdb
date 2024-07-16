@@ -53,7 +53,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentEmbedded;
 import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -865,9 +864,6 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     } else if (iRecord instanceof OBlob) {
       iRecord.fromStream(iSource);
       return iRecord;
-    } else if (iRecord instanceof ORecordFlat) {
-      iRecord.fromStream(iSource);
-      return iRecord;
     }
     ORecordInternal.setRecordSerializer(iRecord, this);
     BytesContainer container = new BytesContainer(iSource);
@@ -888,8 +884,6 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   @Override
   public byte[] toStream(ORecord iSource) {
     if (iSource instanceof OBlob) {
-      return iSource.toStream();
-    } else if (iSource instanceof ORecordFlat) {
       return iSource.toStream();
     } else {
       final BytesContainer container = new BytesContainer();

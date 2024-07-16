@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OEdgeDocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.record.impl.OVertexDocument;
 import com.orientechnologies.orient.core.record.impl.OViewDocument;
 
@@ -69,11 +68,6 @@ public class ORecordFactoryManager {
         });
     declareRecordType(
         OBlob.RECORD_TYPE, "bytes", OBlob.class, (cluster, database) -> new ORecordBytes());
-    declareRecordType(
-        ORecordFlat.RECORD_TYPE,
-        "flat",
-        ORecordFlat.class,
-        (cluster, database) -> new ORecordFlat());
   }
 
   public String getRecordTypeName(final byte iRecordType) {
