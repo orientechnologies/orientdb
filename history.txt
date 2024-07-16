@@ -28,6 +28,26 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.32 - (July, 18 2024)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3232---18-July-2024
+
+# Core
+
+- Fix bug in SQL engine variable name resolution
+- Keep order for asSet() function
+- Minor optimization in query engine class/cluster filtering
+- Make sure to load record from database all the times by query engine
+- Make sure that toJson of list of ids get expanded, issue #10264
+
+# Lucene
+
+- Fix IndexReader ref leak when Lucene index modified and read in transaction
+
+# Security Module
+
+- Removed copied code in favor of dependency
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.31 - (June, 19 2024)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3231---19-June-2024
 
