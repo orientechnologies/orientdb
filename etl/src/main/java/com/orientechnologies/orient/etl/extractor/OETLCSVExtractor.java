@@ -301,15 +301,15 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
     try {
       if (fieldStringValue.contains(".") || fieldStringValue.contains(",")) {
         String numberAsString = fieldStringValue.replaceAll(",", ".");
-        fieldValue = new Float(numberAsString);
+        fieldValue = Float.valueOf(numberAsString);
         if (!isFinite((Float) fieldValue)) {
-          fieldValue = new Double(numberAsString);
+          fieldValue = Double.valueOf(numberAsString);
         }
       } else {
         try {
-          fieldValue = new Integer(fieldStringValue);
+          fieldValue = Integer.valueOf(fieldStringValue);
         } catch (Exception e) {
-          fieldValue = new Long(fieldStringValue);
+          fieldValue = Long.valueOf(fieldStringValue);
         }
       }
     } catch (NumberFormatException nf) {

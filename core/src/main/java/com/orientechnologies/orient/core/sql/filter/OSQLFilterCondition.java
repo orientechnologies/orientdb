@@ -321,7 +321,7 @@ public class OSQLFilterCondition {
         || OStringSerializerHelper.contains(stringValue, ',')) {
       return (int) Float.parseFloat(stringValue);
     } else {
-      return stringValue.length() > 0 ? new Integer(stringValue) : new Integer(0);
+      return stringValue.length() > 0 ? Integer.valueOf(stringValue) : Integer.valueOf(0);
     }
   }
 
@@ -336,7 +336,7 @@ public class OSQLFilterCondition {
       return null;
     }
 
-    return stringValue.length() > 0 ? new Float(stringValue) : new Float(0);
+    return stringValue.length() > 0 ? Float.valueOf(stringValue) : Float.valueOf(0);
   }
 
   protected Date getDate(final Object value) {
@@ -379,7 +379,7 @@ public class OSQLFilterCondition {
       return formatter.parse(stringValue);
     } catch (ParseException ignore) {
       try {
-        return new Date(new Double(stringValue).longValue());
+        return new Date(Double.valueOf(stringValue).longValue());
       } catch (Exception pe2) {
         throw OException.wrapException(
             new OQueryParsingException(
@@ -493,7 +493,7 @@ public class OSQLFilterCondition {
       {
         if (r instanceof Integer && !(l instanceof Number || l instanceof Collection)) {
           if (l instanceof String && ((String) l).indexOf('.') > -1) {
-            result = new Object[] {new Float((String) l).intValue(), r};
+            result = new Object[] {Float.valueOf((String) l).intValue(), r};
           } else if (l instanceof Date) {
             result = new Object[] {((Date) l).getTime(), r};
           } else if (!(l instanceof OQueryRuntimeValueMulti)
@@ -504,7 +504,7 @@ public class OSQLFilterCondition {
           }
         } else if (l instanceof Integer && !(r instanceof Number || r instanceof Collection)) {
           if (r instanceof String && ((String) r).indexOf('.') > -1) {
-            result = new Object[] {l, new Float((String) r).intValue()};
+            result = new Object[] {l, Float.valueOf((String) r).intValue()};
           } else if (r instanceof Date) {
             result = new Object[] {l, ((Date) r).getTime()};
           } else if (!(r instanceof OQueryRuntimeValueMulti)
