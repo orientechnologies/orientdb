@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -45,11 +46,17 @@ public interface OIdentifiable extends Comparable<OIdentifiable>, Comparator<OId
    */
   <T extends ORecord> T getRecord();
 
+  /** Use {@link ODatabaseSession#lock(ORID)} instead. */
+  @Deprecated(forRemoval = true)
   void lock(boolean iExclusive);
 
+  @Deprecated(forRemoval = true)
   boolean isLocked();
 
+  @Deprecated(forRemoval = true)
   OStorage.LOCKING_STRATEGY lockingStrategy();
 
+  /** Use {@link ODatabaseSession#unlock(ORID)} instead. */
+  @Deprecated(forRemoval = true)
   void unlock();
 }

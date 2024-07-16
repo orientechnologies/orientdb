@@ -27,6 +27,7 @@ import java.io.Serializable;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
+@Deprecated(forRemoval = true)
 public interface OSerializableStream extends Serializable {
   /**
    * Marshalls the object. Transforms the current object in byte[] form to being stored or
@@ -36,6 +37,7 @@ public interface OSerializableStream extends Serializable {
    * @see #fromStream(byte[])
    * @throws OSerializationException if the marshalling does not succeed
    */
+  @Deprecated(forRemoval = true)
   byte[] toStream() throws OSerializationException;
 
   /**
@@ -47,5 +49,6 @@ public interface OSerializableStream extends Serializable {
    *     in chain.
    * @throws OSerializationException if the unmarshalling does not succeed
    */
+  @Deprecated(forRemoval = true)
   OSerializableStream fromStream(byte[] iStream) throws OSerializationException;
 }
