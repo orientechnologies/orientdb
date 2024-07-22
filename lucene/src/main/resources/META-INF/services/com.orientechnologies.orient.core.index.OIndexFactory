@@ -18,3 +18,4 @@
 
 com.orientechnologies.lucene.OLuceneIndexFactory
 com.orientechnologies.spatial.OLuceneSpatialIndexFactory
+com.orientechnologies.lucene.OLuceneCrossClassIndexFactory
