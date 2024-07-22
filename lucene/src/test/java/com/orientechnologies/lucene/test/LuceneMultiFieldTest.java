@@ -74,7 +74,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
         db.query(
             "select * from Song where [title,author] LUCENE \"(title:mountain AND"
                 + " author:Fabbio)\"");
-    assertThat(docs).hasSize(1);
+    assertThat(docs.stream()).hasSize(1);
   }
 
   @Test
@@ -96,21 +96,21 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
         db.query(
             "select * from Song where [title,author] LUCENE \"(title:mountain OR author:Fabbio)\"");
 
-    assertThat(docs).hasSize(91);
+    assertThat(docs.stream()).hasSize(91);
   }
 
   @Test
   public void testSelectOnTitleAndAuthorWithMatchOnTitle() {
     OResultSet docs = db.query("select * from Song where [title,author] LUCENE \"mountain\"");
 
-    assertThat(docs).hasSize(5);
+    assertThat(docs.stream()).hasSize(5);
   }
 
   @Test
   public void testSelectOnTitleAndAuthorWithMatchOnAuthor() {
     OResultSet docs = db.query("select * from Song where [title,author] LUCENE \"author:fabbio\"");
 
-    assertThat(docs).hasSize(87);
+    assertThat(docs.stream()).hasSize(87);
   }
 
   @Test
@@ -118,7 +118,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   public void testSelectOnAuthorWithMatchOnAuthor() {
     OResultSet docs = db.query("select * from Song where [author,title] LUCENE \"(fabbio)\"");
 
-    assertThat(docs).hasSize(87);
+    assertThat(docs.stream()).hasSize(87);
   }
 
   @Test
@@ -136,12 +136,12 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
     db.execute("sql", script).close();
 
     OResultSet docs = db.query("select * from Item where Title lucene 'te*'");
-    assertThat(docs).hasSize(1);
+    assertThat(docs.stream()).hasSize(1);
 
     //noinspection deprecation
     docs = db.query("select * from Item where [Title, Summary, Content] lucene 'test'");
 
-    assertThat(docs).hasSize(1);
+    assertThat(docs.stream()).hasSize(1);
 
     // nidex api
     final OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Item.i_lucene");

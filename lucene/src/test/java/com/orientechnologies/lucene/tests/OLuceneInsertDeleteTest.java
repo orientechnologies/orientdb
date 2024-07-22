@@ -99,7 +99,7 @@ public class OLuceneInsertDeleteTest extends OLuceneBaseTest {
 
     try (OResultSet docs = db.query("select from Song where title lucene 'mountain'")) {
 
-      assertThat(docs).hasSize(4);
+      assertThat(docs.stream()).hasSize(4);
       TimeUnit.SECONDS.sleep(5);
       docs.close();
 
@@ -108,7 +108,7 @@ public class OLuceneInsertDeleteTest extends OLuceneBaseTest {
           db.command("delete vertex from Song where title lucene 'mountain'")) {}
 
       try (OResultSet resultSet = db.query("select from Song where  title lucene 'mountain'")) {
-        assertThat(resultSet).hasSize(0);
+        assertThat(resultSet.stream()).hasSize(0);
       }
     }
   }

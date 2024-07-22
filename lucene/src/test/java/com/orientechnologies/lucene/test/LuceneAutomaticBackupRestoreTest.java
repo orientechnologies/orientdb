@@ -155,7 +155,7 @@ public class LuceneAutomaticBackupRestoreTest {
   @Test
   public void shouldBackupAndRestore() throws IOException, InterruptedException {
     try (OResultSet query = db.query("select from City where name lucene 'Rome'")) {
-      assertThat(query).hasSize(1);
+      assertThat(query.stream()).hasSize(1);
     }
 
     String jsonConfig =
@@ -224,14 +224,14 @@ public class LuceneAutomaticBackupRestoreTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
-    assertThat(db.query("select from City where name lucene 'Rome'")).hasSize(1);
+    assertThat(db.query("select from City where name lucene 'Rome'").stream()).hasSize(1);
   }
 
   @Test
   public void shouldExportImport() throws IOException, InterruptedException {
 
     try (OResultSet query = db.query("select from City where name lucene 'Rome'")) {
-      assertThat(query).hasSize(1);
+      assertThat(query.stream()).hasSize(1);
     }
 
     String jsonConfig =
@@ -300,7 +300,7 @@ public class LuceneAutomaticBackupRestoreTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
-    assertThat(db.query("select from City where name lucene 'Rome'")).hasSize(1);
+    assertThat(db.query("select from City where name lucene 'Rome'").stream()).hasSize(1);
   }
 
   private ODatabaseDocumentInternal createAndOpen() {

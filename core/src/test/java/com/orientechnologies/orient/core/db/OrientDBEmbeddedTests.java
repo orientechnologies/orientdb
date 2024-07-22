@@ -97,7 +97,7 @@ public class OrientDBEmbeddedTests {
             try {
               assertThat(db.isActiveOnCurrentThread()).isTrue();
               final OResultSet res = db.query("SELECT * FROM OUser");
-              assertThat(res).hasSize(1); // Only 'admin' created in this test
+              assertThat(res.stream()).hasSize(1); // Only 'admin' created in this test
             } finally {
               db.close();
             }

@@ -64,27 +64,27 @@ public class LucenePhraseQueriesTest extends BaseLuceneTest {
 
     OResultSet vertexes = db.query("select from Role where name lucene ' \"Business Owner\" '  ");
 
-    assertThat(vertexes).hasSize(1);
+    assertThat(vertexes.stream()).hasSize(1);
 
     vertexes = db.query("select from Role where name lucene ' \"Owner of Business\" '  ");
 
-    assertThat(vertexes).hasSize(0);
+    assertThat(vertexes.stream()).hasSize(0);
 
     vertexes = db.query("select from Role where name lucene ' \"System Owner\" '  ");
 
-    assertThat(vertexes).hasSize(0);
+    assertThat(vertexes.stream()).hasSize(0);
 
     vertexes = db.query("select from Role where name lucene ' \"System SME\"~1 '  ");
 
-    assertThat(vertexes).hasSize(2);
+    assertThat(vertexes.stream()).hasSize(2);
 
     vertexes = db.query("select from Role where name lucene ' \"System Business\"~1 '  ");
 
-    assertThat(vertexes).hasSize(2);
+    assertThat(vertexes.stream()).hasSize(2);
 
     vertexes = db.query("select from Role where name lucene ' /[mb]oat/ '  ");
 
-    assertThat(vertexes).hasSize(2);
+    assertThat(vertexes.stream()).hasSize(2);
   }
 
   @Test
@@ -92,35 +92,35 @@ public class LucenePhraseQueriesTest extends BaseLuceneTest {
 
     OResultSet vertexes = db.query("select from Role where name lucene ?", "\"System SME\"~1");
 
-    assertThat(vertexes).allMatch(v -> v.<String>getProperty("name").contains("SME"));
+    assertThat(vertexes.stream()).allMatch(v -> v.<String>getProperty("name").contains("SME"));
 
     vertexes = db.query("select from Role where name lucene ? ", "\"SME System\"~1");
 
-    assertThat(vertexes).isEmpty();
+    assertThat(vertexes.stream()).isEmpty();
 
     vertexes = db.query("select from Role where name lucene ? ", "\"Owner Of Business\"");
     vertexes.stream().forEach(v -> System.out.println("v = " + v.getProperty("name")));
 
-    assertThat(vertexes).isEmpty();
+    assertThat(vertexes.stream()).isEmpty();
 
     vertexes = db.query("select from Role where name lucene ? ", "\"System Business SME\"");
 
-    assertThat(vertexes)
+    assertThat(vertexes.stream())
         .hasSize(1)
         .allMatch(v -> v.<String>getProperty("name").equalsIgnoreCase("System Business SME"));
 
     vertexes = db.query("select from Role where name lucene ? ", "\"System Owner\"~1 -IT");
-    assertThat(vertexes)
+    assertThat(vertexes.stream())
         .hasSize(1)
         .allMatch(v -> v.<String>getProperty("name").equalsIgnoreCase("System Business Owner"));
 
     vertexes = db.query("select from Role where name lucene ? ", "+System +Own*~0.0 -IT");
-    assertThat(vertexes)
+    assertThat(vertexes.stream())
         .hasSize(1)
         .allMatch(v -> v.<String>getProperty("name").equalsIgnoreCase("System Business Owner"));
 
     vertexes = db.query("select from Role where name lucene ? ", "\"System Owner\"~1 -Business");
-    assertThat(vertexes)
+    assertThat(vertexes.stream())
         .hasSize(1)
         .allMatch(v -> v.<String>getProperty("name").equalsIgnoreCase("System IT Owner"));
   }

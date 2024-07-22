@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+.stream() *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -71,23 +71,23 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
   public void testQueries() {
     OResultSet docs = db.query("select * from Song where search_fields(['title'],'mountain')=true");
 
-    assertThat(docs).hasSize(4);
+    assertThat(docs.stream()).hasSize(4);
     docs.close();
     docs = db.query("select * from Song where search_fields(['author'],'Fabbio')=true");
 
-    assertThat(docs).hasSize(87);
+    assertThat(docs.stream()).hasSize(87);
     docs.close();
     String query =
         "select * from Song where search_fields(['title'],'mountain')=true AND"
             + " search_fields(['author'],'Fabbio')=true";
     docs = db.query(query);
-    assertThat(docs).hasSize(1);
+    assertThat(docs.stream()).hasSize(1);
     docs.close();
     query =
         "select * from Song where search_fields(['title'],'mountain')=true   and author = 'Fabbio'";
     docs = db.query(query);
 
-    assertThat(docs).hasSize(1);
+    assertThat(docs.stream()).hasSize(1);
     docs.close();
   }
 
@@ -97,7 +97,7 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
     String query = "select * from Song where search_fields(['title'],'local')=true ";
     OResultSet docs = db.query(query);
 
-    assertThat(docs).hasSize(1);
+    assertThat(docs.stream()).hasSize(1);
     docs.close();
   }
 }

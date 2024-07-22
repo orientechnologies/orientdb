@@ -32,7 +32,7 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
     // querying with leading wildcard
     OResultSet docs = db.query("select * from Song where search_class(\"(title:*tain)\") = true");
 
-    assertThat(docs).hasSize(4);
+    assertThat(docs.stream()).hasSize(4);
     docs.close();
   }
 
@@ -47,12 +47,12 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
 
     OResultSet docs = db.query("select * from Song where search_class('Hunter') =true");
 
-    assertThat(docs).hasSize(97);
+    assertThat(docs.stream()).hasSize(97);
     docs.close();
 
     docs = db.query("select * from Song where search_class('HUNTER')=true");
 
-    assertThat(docs).hasSize(0);
+    assertThat(docs.stream()).hasSize(0);
     docs.close();
   }
 
@@ -67,7 +67,7 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
     // querying with leading wildcard
     OResultSet docs = db.query("select * from Song where search_class ('title:*tain')=true");
 
-    assertThat(docs).hasSize(4);
+    assertThat(docs.stream()).hasSize(4);
     docs.close();
   }
 
@@ -206,7 +206,7 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
                 + "  \"query\": \"org.apache.lucene.analysis.core.KeywordAnalyzer\" } "
                 + ")=true");
 
-    assertThat(resultSet).hasSize(5);
+    assertThat(resultSet.stream()).hasSize(5);
     resultSet.close();
   }
 }

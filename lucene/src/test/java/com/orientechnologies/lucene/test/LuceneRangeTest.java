@@ -67,12 +67,12 @@ public class LuceneRangeTest extends BaseLuceneTest {
     // range
     OResultSet results = db.command("SELECT FROM Person WHERE age LUCENE 'age:[5 TO 6]'");
 
-    assertThat(results).hasSize(2);
+    assertThat(results.stream()).hasSize(2);
 
     // single value
     results = db.command("SELECT FROM Person WHERE age LUCENE 'age:5'");
 
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
   }
 
   @Test
@@ -100,7 +100,7 @@ public class LuceneRangeTest extends BaseLuceneTest {
         db.command(
             "SELECT FROM Person WHERE date LUCENE 'date:[" + fiveDaysAgo + " TO " + today + "]'");
 
-    assertThat(results).hasSize(5);
+    assertThat(results.stream()).hasSize(5);
   }
 
   @Test
@@ -130,7 +130,7 @@ public class LuceneRangeTest extends BaseLuceneTest {
             "SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'age:[5 TO 6] name:robert "
                 + " '");
 
-    assertThat(results).hasSize(3);
+    assertThat(results.stream()).hasSize(3);
 
     // date range
     results =
@@ -141,7 +141,7 @@ public class LuceneRangeTest extends BaseLuceneTest {
                 + today
                 + "]'");
 
-    assertThat(results).hasSize(5);
+    assertThat(results.stream()).hasSize(5);
 
     // age and date range with MUST
     results =
@@ -152,7 +152,7 @@ public class LuceneRangeTest extends BaseLuceneTest {
                 + today
                 + "]'");
 
-    assertThat(results).hasSize(2);
+    assertThat(results.stream()).hasSize(2);
   }
 
   @Test
@@ -216,6 +216,6 @@ public class LuceneRangeTest extends BaseLuceneTest {
     OResultSet results =
         db.command("SELECT FROM Person WHERE name LUCENE '+_CLUSTER:" + cluster + "'");
 
-    assertThat(results).hasSize(2);
+    assertThat(results.stream()).hasSize(2);
   }
 }

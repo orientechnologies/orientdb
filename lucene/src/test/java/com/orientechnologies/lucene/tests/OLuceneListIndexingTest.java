@@ -117,7 +117,7 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
 
     try (OResultSet query = db.query("select from City where search_class('Beautiful') =true ")) {
 
-      assertThat(query).hasSize(2);
+      assertThat(query.stream()).hasSize(2);
     }
   }
 
@@ -171,28 +171,28 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
 
     try (OResultSet query =
         db.query("select from Person where search_class('name:Enrico') =true ")) {
-      assertThat(query).hasSize(1);
+      assertThat(query.stream()).hasSize(1);
       try (OResultSet queryTwo =
           db.query("select from (select from Person search_class('name:Enrico')=true)")) {
 
-        assertThat(queryTwo).hasSize(1);
+        assertThat(queryTwo.stream()).hasSize(1);
         try (OResultSet queryThree =
             db.query("select from Person where search_class('Jared')=true")) {
 
-          assertThat(queryThree).hasSize(1);
+          assertThat(queryThree.stream()).hasSize(1);
           try (OResultSet queryFour =
               db.query("select from Person where search_class('Funny') =true")) {
 
-            assertThat(queryFour).hasSize(1);
+            assertThat(queryFour.stream()).hasSize(1);
             try (OResultSet queryFive =
                 db.query("select from Person where search_class('Geek')=true")) {
 
-              assertThat(queryFive).hasSize(2);
+              assertThat(queryFive.stream()).hasSize(2);
               try (OResultSet querySix =
                   db.query(
                       "select from Person where search_class('(name:Enrico AND tags:Geek)"
                           + " ')=true")) {
-                assertThat(querySix).hasSize(1);
+                assertThat(querySix.stream()).hasSize(1);
               }
             }
           }

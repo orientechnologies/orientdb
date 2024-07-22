@@ -26,7 +26,7 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
 
     OResultSet resultSet = db.query("SELECT from Song where SEARCH_Class('BELIEVE') = true");
 
-    assertThat(resultSet).hasSize(2);
+    assertThat(resultSet.stream()).hasSize(2);
 
     resultSet.close();
   }
@@ -38,7 +38,7 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
         db.query(
             "SELECT from Song where SEARCH_CLASS( '*EVE*', {'allowLeadingWildcard': true}) = true");
 
-    assertThat(resultSet).hasSize(14);
+    assertThat(resultSet.stream()).hasSize(14);
 
     resultSet.close();
   }
@@ -51,7 +51,7 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
             "SELECT from Song where SEARCH_CLASS('BELIEVE') = true OR SEARCH_CLASS('GOODNIGHT') ="
                 + " true ");
 
-    assertThat(resultSet).hasSize(5);
+    assertThat(resultSet.stream()).hasSize(5);
     resultSet.close();
   }
 
@@ -63,7 +63,7 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
             "SELECT from Song where SEARCH_CLASS('GOODNIGHT') = true AND SEARCH_CLASS( 'Irene',"
                 + " {'allowLeadingWildcard': true}) = true ");
 
-    assertThat(resultSet).hasSize(1);
+    assertThat(resultSet.stream()).hasSize(1);
     resultSet.close();
   }
 

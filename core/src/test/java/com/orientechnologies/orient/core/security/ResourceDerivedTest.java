@@ -119,7 +119,7 @@ public class ResourceDerivedTest {
     try {
       OResultSet result = query(db, "SELECT FROM Customer");
 
-      assertThat(result).hasSize(3);
+      assertThat(result.stream()).hasSize(3);
     } finally {
       db.close();
     }
@@ -134,7 +134,7 @@ public class ResourceDerivedTest {
     try {
       OResultSet result = query(db, "SELECT FROM Customer_t2");
 
-      assertThat(result).hasSize(1);
+      assertThat(result.stream()).hasSize(1);
     } finally {
       db.close();
     }
@@ -146,7 +146,7 @@ public class ResourceDerivedTest {
 
     try {
       OResultSet result = query(db, "SELECT FROM Customer_u2");
-      assertThat(result).hasSize(0);
+      assertThat(result.stream()).hasSize(0);
     } finally {
       db.close();
     }
@@ -158,7 +158,7 @@ public class ResourceDerivedTest {
 
     try {
       OResultSet result = query(db, "SELECT FROM Customer");
-      assertThat(result).hasSize(0);
+      assertThat(result.stream()).hasSize(0);
     } finally {
       db.close();
     }
@@ -174,7 +174,7 @@ public class ResourceDerivedTest {
     try {
       OResultSet result = query(db, "SELECT FROM Customer_t2");
 
-      assertThat(result).hasSize(2);
+      assertThat(result.stream()).hasSize(2);
     } finally {
       db.close();
     }

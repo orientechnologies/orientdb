@@ -56,13 +56,13 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
     String query = "select from C1 where search_class( \"abc\")=true ";
 
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
     }
     db.rollback();
 
     query = "select from C1 where search_class( \"abc\")=true  ";
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(0);
+      assertThat(vertices.stream()).hasSize(0);
     }
   }
 
@@ -79,14 +79,14 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     String query = "select from C1 where search_class( \"abc\")=true";
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
       Assert.assertEquals(index.getInternal().size(), 1);
     }
     db.commit();
 
     try (OResultSet vertices = db.command(query)) {
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
       Assert.assertEquals(index.getInternal().size(), 1);
     }
 
@@ -101,7 +101,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
 
-      assertThat(vertices).hasSize(0);
+      assertThat(vertices.stream()).hasSize(0);
       Assert.assertEquals(coll.size(), 0);
 
       Iterator iterator = coll.iterator();
@@ -118,7 +118,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     try (OResultSet vertices = db.command(query)) {
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
 
       Assert.assertEquals(index.getInternal().size(), 1);
     }
@@ -141,7 +141,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     String query = "select from C1 where search_class(\"update\")=true ";
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
       Assert.assertEquals(index.getInternal().size(), 2);
     }
     db.commit();
@@ -152,7 +152,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
       Assert.assertEquals(coll.size(), 2);
       Assert.assertEquals(index.getInternal().size(), 2);
     }
@@ -168,7 +168,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
       Assert.assertEquals(coll.size(), 1);
       Assert.assertEquals(index.getInternal().size(), 1);
     }
@@ -178,13 +178,13 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
       Assert.assertEquals(coll.size(), 1);
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
     }
 
     db.rollback();
 
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
     }
 
     Assert.assertEquals(index.getInternal().size(), 2);

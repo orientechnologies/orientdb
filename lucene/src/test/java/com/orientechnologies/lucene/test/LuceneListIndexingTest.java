@@ -197,27 +197,27 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
 
     OResultSet query = db.query("select from Person where [name,tags] lucene 'Enrico'");
 
-    assertThat(query).hasSize(1);
+    assertThat(query.stream()).hasSize(1);
 
     query = db.query("select from (select from Person where [name,tags] lucene 'Enrico')");
 
-    assertThat(query).hasSize(1);
+    assertThat(query.stream()).hasSize(1);
 
     query = db.query("select from Person where [name,tags] lucene 'Jared'");
 
-    assertThat(query).hasSize(1);
+    assertThat(query.stream()).hasSize(1);
 
     query = db.query("select from Person where [name,tags] lucene 'Funny'");
 
-    assertThat(query).hasSize(1);
+    assertThat(query.stream()).hasSize(1);
 
     query = db.query("select from Person where [name,tags] lucene 'Geek'");
 
-    assertThat(query).hasSize(2);
+    assertThat(query.stream()).hasSize(2);
 
     query = db.query("select from Person where [name,tags] lucene '(name:Enrico AND tags:Geek)'");
 
-    assertThat(query).hasSize(1);
+    assertThat(query.stream()).hasSize(1);
   }
 
   @Test
@@ -237,6 +237,6 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
 
     OResultSet search = db.query("SELECT from C1 WHERE p1 LUCENE \"tested\"");
 
-    assertThat(search).hasSize(1);
+    assertThat(search.stream()).hasSize(1);
   }
 }

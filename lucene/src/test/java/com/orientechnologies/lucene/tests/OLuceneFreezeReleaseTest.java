@@ -33,13 +33,13 @@ public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
 
     OResultSet results = db.query("select from Person where search_class('John')=true");
 
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     db.freeze();
 
     results = db.command("select from Person where search_class('John')=true");
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     db.release();
@@ -49,7 +49,7 @@ public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
     db.save(doc);
 
     results = db.query("select from Person where search_class('John')=true");
-    assertThat(results).hasSize(2);
+    assertThat(results.stream()).hasSize(2);
     results.close();
   }
 
@@ -67,7 +67,7 @@ public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
 
     OResultSet results = db.command("select from Person where search_class('John')=true");
 
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     db.freeze();
@@ -76,7 +76,7 @@ public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
 
     results = db.command("select from Person where search_class('John')=true");
 
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     db.release();
@@ -85,7 +85,7 @@ public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
     db.save(new ODocument("Person").field("name", "John"));
 
     results = db.command("select from Person where search_class('John')=true");
-    assertThat(results).hasSize(2);
+    assertThat(results.stream()).hasSize(2);
     results.close();
   }
 }

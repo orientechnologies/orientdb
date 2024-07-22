@@ -72,13 +72,13 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     // range
     try (final OResultSet results =
         db.command("SELECT FROM Person WHERE search_class('weight:[0.0 TO 1.1]') = true")) {
-      assertThat(results).hasSize(2);
+      assertThat(results.stream()).hasSize(2);
     }
 
     // single value
     try (final OResultSet results =
         db.command("SELECT FROM Person WHERE search_class('weight:7.1') = true")) {
-      assertThat(results).hasSize(1);
+      assertThat(results.stream()).hasSize(1);
     }
   }
 
@@ -101,12 +101,12 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     try (OResultSet results =
         db.command("SELECT FROM Person WHERE search_class('age:[5 TO 6]') = true")) {
 
-      assertThat(results).hasSize(2);
+      assertThat(results.stream()).hasSize(2);
     }
 
     // single value
     try (OResultSet results = db.command("SELECT FROM Person WHERE search_class('age:5') = true")) {
-      assertThat(results).hasSize(1);
+      assertThat(results.stream()).hasSize(1);
     }
   }
 
@@ -140,7 +140,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
                 + " TO "
                 + today
                 + "]')=true")) {
-      assertThat(results).hasSize(5);
+      assertThat(results.stream()).hasSize(5);
     }
   }
 
@@ -172,7 +172,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     try (OResultSet results =
         db.command("SELECT * FROM Person WHERE search_class('age:[5 TO 6] name:robert  ')=true")) {
 
-      assertThat(results).hasSize(3);
+      assertThat(results.stream()).hasSize(3);
     }
 
     // date range
@@ -184,7 +184,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
                 + today
                 + "]')=true")) {
 
-      assertThat(results).hasSize(5);
+      assertThat(results.stream()).hasSize(5);
     }
 
     // age and date range with MUST
@@ -195,7 +195,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
                 + " TO "
                 + today
                 + "]')=true")) {
-      assertThat(results).hasSize(2);
+      assertThat(results.stream()).hasSize(2);
     }
   }
 

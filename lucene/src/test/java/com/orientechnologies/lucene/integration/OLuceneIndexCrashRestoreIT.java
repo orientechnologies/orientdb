@@ -148,12 +148,12 @@ public class OLuceneIndexCrashRestoreIT {
         db = (ODatabaseDocumentInternal) databasePool.acquire();
         // wildcard will not work
         res = db.query("select from Person where name lucene 'Robert' ");
-        assertThat(res).hasSize(0);
+        assertThat(res.stream()).hasSize(0);
         res.close();
 
         // plain name fetch docs
         res = db.query("select from Person where name lucene 'Robert Luis' LIMIT 20");
-        assertThat(res).hasSize(20);
+        assertThat(res.stream()).hasSize(20);
         res.close();
         db.close();
         System.out.println("END data propagation ::" + i);
@@ -216,11 +216,11 @@ public class OLuceneIndexCrashRestoreIT {
     // sometimes it is not null, and all works fine
     res = db.query("select from Person where name lucene 'Robert' ");
 
-    assertThat(res).hasSize(0);
+    assertThat(res.stream()).hasSize(0);
     res.close();
     res = db.query("select from Person where name lucene 'Robert Luis' LIMIT 20");
 
-    assertThat(res).hasSize(20);
+    assertThat(res.stream()).hasSize(20);
     res.close();
     db.close();
     // shutdown embedded

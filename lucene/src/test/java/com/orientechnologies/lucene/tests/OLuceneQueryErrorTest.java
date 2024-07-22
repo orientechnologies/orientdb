@@ -42,7 +42,7 @@ public class OLuceneQueryErrorTest extends OLuceneBaseTest {
     String query = "select * from Song where search_class(\"\")=true ";
     OResultSet result = db.query(query);
 
-    Assertions.assertThat(result).isEmpty();
+    Assertions.assertThat(result.stream()).isEmpty();
     result.close();
   }
 }

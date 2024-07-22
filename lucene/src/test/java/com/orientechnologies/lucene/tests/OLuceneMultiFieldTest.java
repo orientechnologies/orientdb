@@ -68,7 +68,7 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
             "select * from Song where  search_fields(['title','author'] ,'title:mountain AND"
                 + " author:Fabbio')=true")) {
 
-      assertThat(docs).hasSize(1);
+      assertThat(docs.stream()).hasSize(1);
     }
   }
 
@@ -79,7 +79,7 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
             "select * from Song where  search_fields(['title','author'] ,'title:mountain OR"
                 + " author:Fabbio')=true")) {
 
-      assertThat(docs).hasSize(91);
+      assertThat(docs.stream()).hasSize(91);
     }
   }
 
@@ -88,7 +88,7 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
     try (OResultSet docs =
         db.query(
             "select * from  Song where search_fields(['title','author'] ,'title:mountain')=true")) {
-      assertThat(docs).hasSize(5);
+      assertThat(docs.stream()).hasSize(5);
     }
   }
 
@@ -96,10 +96,10 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
   public void testSelectOnTitleAndAuthorWithMatchOnAuthor() {
     try (OResultSet docs =
         db.query("select * from Song where search_class('author:fabbio')=true")) {
-      assertThat(docs).hasSize(87);
+      assertThat(docs.stream()).hasSize(87);
     }
     try (OResultSet docs = db.query("select * from Song where search_class('fabbio')=true")) {
-      assertThat(docs).hasSize(87);
+      assertThat(docs.stream()).hasSize(87);
     }
   }
 
@@ -119,15 +119,15 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
     db.execute("sql", script).close();
 
     try (OResultSet resultSet = db.query("select * from Item where search_class('te*')=true")) {
-      assertThat(resultSet).hasSize(1);
+      assertThat(resultSet.stream()).hasSize(1);
     }
 
     try (OResultSet docs = db.query("select * from Item where search_class('test')=true")) {
-      assertThat(docs).hasSize(1);
+      assertThat(docs.stream()).hasSize(1);
     }
 
     try (OResultSet docs = db.query("select * from Item where search_class('title:test')=true")) {
-      assertThat(docs).hasSize(1);
+      assertThat(docs.stream()).hasSize(1);
     }
 
     // index

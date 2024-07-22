@@ -106,6 +106,6 @@ public class LuceneExportImportTest extends BaseLuceneTest {
     // redo the query
     query = db.query("select from City where name lucene 'Rome'");
 
-    assertThat(query).hasSize(1);
+    assertThat(query.stream()).hasSize(1);
   }
 }

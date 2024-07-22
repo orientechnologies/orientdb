@@ -67,15 +67,15 @@ public class LuceneIssuesTest extends BaseLuceneTest {
 
     documents = db.query("select from Test where [a] lucene 'lion'");
 
-    Assertions.assertThat(documents).hasSize(1);
+    Assertions.assertThat(documents.stream()).hasSize(1);
 
     documents = db.query("select from Test where [b] lucene 'mouse'");
 
-    Assertions.assertThat(documents).hasSize(1);
+    Assertions.assertThat(documents.stream()).hasSize(1);
 
     documents = db.query("select from Test where [a] lucene 'lion' OR [b] LUCENE 'mouse' ");
 
-    Assertions.assertThat(documents).hasSize(2);
+    Assertions.assertThat(documents.stream()).hasSize(2);
   }
 
   @Test
@@ -89,14 +89,14 @@ public class LuceneIssuesTest extends BaseLuceneTest {
 
     documents = db.query("select from Test where a lucene 'lion'");
 
-    Assertions.assertThat(documents).hasSize(1);
+    Assertions.assertThat(documents.stream()).hasSize(1);
 
     documents = db.query("select from Test where b lucene 'mouse'");
 
-    Assertions.assertThat(documents).hasSize(1);
+    Assertions.assertThat(documents.stream()).hasSize(1);
 
     documents = db.query("select from Test where a lucene 'lion' OR b LUCENE 'mouse' ");
 
-    Assertions.assertThat(documents).hasSize(2);
+    Assertions.assertThat(documents.stream()).hasSize(2);
   }
 }

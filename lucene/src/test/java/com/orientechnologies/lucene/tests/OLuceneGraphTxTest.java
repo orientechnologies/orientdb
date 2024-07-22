@@ -49,7 +49,7 @@ public class OLuceneGraphTxTest extends OLuceneBaseTest {
 
     OResultSet resultSet = db.command("select from City where search_class('London') =true ");
 
-    assertThat(resultSet).hasSize(1);
+    assertThat(resultSet.stream()).hasSize(1);
 
     // modifiy vertex
     v.setProperty("name", "Berlin");
@@ -59,18 +59,18 @@ public class OLuceneGraphTxTest extends OLuceneBaseTest {
 
     // only berlin
     resultSet = db.command("select from City where search_class('Berlin') =true ");
-    assertThat(resultSet).hasSize(1);
+    assertThat(resultSet.stream()).hasSize(1);
 
     resultSet = db.command("select from City where search_class('London') =true ");
-    assertThat(resultSet).hasSize(0);
+    assertThat(resultSet.stream()).hasSize(0);
 
     db.commit();
 
     //
     resultSet = db.command("select from City where search_class('Berlin') =true ");
-    assertThat(resultSet).hasSize(1);
+    assertThat(resultSet.stream()).hasSize(1);
 
     resultSet = db.command("select from City where search_class('London') =true ");
-    assertThat(resultSet).hasSize(0);
+    assertThat(resultSet.stream()).hasSize(0);
   }
 }

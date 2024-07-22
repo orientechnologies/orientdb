@@ -103,7 +103,7 @@ public class LuceneBackupRestoreTest {
     File backupFile = new File(tempFolder, "backupRestore.gz");
 
     try (OResultSet query = session.query("select from City where name lucene 'Rome'")) {
-      assertThat(query).hasSize(1);
+      assertThat(query.stream()).hasSize(1);
     }
 
     session.backup(new FileOutputStream(backupFile), null, null, null, 9, 1048576);
@@ -127,7 +127,7 @@ public class LuceneBackupRestoreTest {
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
     try (OResultSet query = session.query("select from City where name lucene 'Rome'")) {
-      assertThat(query).hasSize(1);
+      assertThat(query.stream()).hasSize(1);
     }
   }
 }

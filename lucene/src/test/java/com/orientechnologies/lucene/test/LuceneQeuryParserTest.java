@@ -29,7 +29,7 @@ public class LuceneQeuryParserTest extends BaseLuceneTest {
     // querying with leading wildcard
     OResultSet docs = db.query("select * from Song where [title] LUCENE \"(title:*tain)\"");
 
-    assertThat(docs).hasSize(4);
+    assertThat(docs.stream()).hasSize(4);
   }
 
   @Test
@@ -45,10 +45,10 @@ public class LuceneQeuryParserTest extends BaseLuceneTest {
 
     OResultSet docs = db.query("select * from Song where [author] LUCENE \"Hunter\"");
 
-    assertThat(docs).hasSize(97);
+    assertThat(docs.stream()).hasSize(97);
 
     docs = db.query("select * from Song where [author] LUCENE \"HUNTER\"");
 
-    assertThat(docs).hasSize(0);
+    assertThat(docs.stream()).hasSize(0);
   }
 }

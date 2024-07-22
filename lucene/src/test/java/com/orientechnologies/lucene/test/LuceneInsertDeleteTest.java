@@ -95,12 +95,12 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
 
     OResultSet docs = db.query("select from Song where title lucene 'mountain'");
 
-    assertThat(docs).hasSize(4);
+    assertThat(docs.stream()).hasSize(4);
     TimeUnit.SECONDS.sleep(5);
 
     db.command("delete vertex from Song where title lucene 'mountain'").close();
 
     docs = db.query("select from Song where  title lucene 'mountain'");
-    assertThat(docs).hasSize(0);
+    assertThat(docs.stream()).hasSize(0);
   }
 }

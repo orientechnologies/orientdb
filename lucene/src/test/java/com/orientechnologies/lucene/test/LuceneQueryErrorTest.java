@@ -44,6 +44,6 @@ public class LuceneQueryErrorTest extends BaseLuceneTest {
     String query = "select * from Song where [title] LUCENE \"\" ";
     OResultSet result = db.query(query);
 
-    Assertions.assertThat(result).isEmpty();
+    Assertions.assertThat(result.stream()).isEmpty();
   }
 }

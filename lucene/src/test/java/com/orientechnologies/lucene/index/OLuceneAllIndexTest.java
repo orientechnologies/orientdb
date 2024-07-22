@@ -53,6 +53,6 @@ public class OLuceneAllIndexTest extends BaseLuceneTest {
   public void testLuceneFunction() {
     OResultSet docs =
         db.query("select from Song where lucene_match( \"Song.author:Fabbio\" ) = true ");
-    assertThat(docs).hasSize(87);
+    assertThat(docs.stream()).hasSize(87);
   }
 }

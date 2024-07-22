@@ -53,7 +53,7 @@ public class OLuceneDocumentEmbeddedTest extends OLuceneBaseTest {
     OResultSet results =
         db.command("select from City where SEARCH_FIELDS(['name'] ,'London') = true ");
 
-    Assertions.assertThat(results).hasSize(1);
+    Assertions.assertThat(results.stream()).hasSize(1);
   }
 
   @Test
@@ -71,6 +71,6 @@ public class OLuceneDocumentEmbeddedTest extends OLuceneBaseTest {
     OResultSet results =
         db.command("select from City where SEARCH_FIELDS(['name'] ,'Berlin')=true ");
 
-    Assertions.assertThat(results).hasSize(1);
+    Assertions.assertThat(results.stream()).hasSize(1);
   }
 }

@@ -61,13 +61,13 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     String query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") =true ";
     try (OResultSet vertices = db.command(query)) {
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
     }
     db.rollback();
 
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") = true ";
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(0);
+      assertThat(vertices.stream()).hasSize(0);
     }
   }
 
@@ -97,7 +97,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
 
-      assertThat(vertices).hasSize(0);
+      assertThat(vertices.stream()).hasSize(0);
 
       Assert.assertEquals(coll.size(), 0);
 
@@ -108,7 +108,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") = true ";
     try (OResultSet vertices = db.command(query)) {
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
 
       Assert.assertEquals(index.getInternal().size(), 1);
     }
@@ -149,7 +149,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
 
-      assertThat(vertices).hasSize(0);
+      assertThat(vertices.stream()).hasSize(0);
       Assert.assertEquals(coll.size(), 0);
 
       Iterator iterator = coll.iterator();
@@ -168,7 +168,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
       Assert.assertEquals(coll.size(), 1);
     }
 
@@ -177,7 +177,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     query = "select from Foo where name = 'Test' and SEARCH_CLASS (\"abc\")=true ";
     try (OResultSet vertices = db.command(query)) {
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
 
       Assert.assertEquals(index.getInternal().size(), 1);
     }
@@ -222,7 +222,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
       Assert.assertEquals(1, coll.size());
 
       Iterator iterator = coll.iterator();
@@ -245,7 +245,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
 
       Assert.assertEquals(1, coll.size());
     }
@@ -253,7 +253,7 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\")=true ";
     try (OResultSet vertices = db.query(query)) {
-      assertThat(vertices).hasSize(2);
+      assertThat(vertices.stream()).hasSize(2);
       Assert.assertEquals(2, index.getInternal().size());
     }
   }

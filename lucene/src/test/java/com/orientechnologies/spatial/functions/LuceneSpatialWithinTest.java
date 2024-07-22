@@ -83,13 +83,13 @@ public class LuceneSpatialWithinTest extends BaseSpatialLuceneTest {
             "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50"
                 + " 50)'), 50)) = true");
 
-    assertThat(execute).hasSize(2);
+    assertThat(execute.stream()).hasSize(2);
 
     execute =
         db.query(
             "SELECT from Polygon where ST_Within(geometry, ST_Buffer(ST_GeomFromText('POINT(50"
                 + " 50)'), 30)) = true");
 
-    assertThat(execute).hasSize(1);
+    assertThat(execute.stream()).hasSize(1);
   }
 }

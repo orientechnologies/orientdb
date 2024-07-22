@@ -38,11 +38,11 @@ public class OLuceneReuseTest extends OLuceneBaseTest {
     OResultSet results =
         db.command("SELECT FROM Reuse WHERE name='John' and search_class('Reese') =true");
 
-    assertThat(results).hasSize(10);
+    assertThat(results.stream()).hasSize(10);
 
     results = db.command("SELECT FROM Reuse WHERE search_class('Reese')=true  and name='John'");
 
-    assertThat(results).hasSize(10);
+    assertThat(results.stream()).hasSize(10);
   }
 
   @Test
@@ -82,16 +82,16 @@ public class OLuceneReuseTest extends OLuceneBaseTest {
     OResultSet results =
         db.command("SELECT FROM Reuse WHERE name='John' and search_class('Reese')=true");
 
-    assertThat(results).hasSize(10);
+    assertThat(results.stream()).hasSize(10);
 
     results = db.command("SELECT FROM Reuse WHERE search_class('Reese')=true and name='John'");
 
-    assertThat(results).hasSize(10);
+    assertThat(results.stream()).hasSize(10);
 
     results =
         db.command(
             "SELECT FROM Reuse WHERE name='John' AND search_class('surname:Franklin') =true");
 
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
   }
 }

@@ -50,28 +50,28 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
         db.query(
             "select from Test where search_index('Test.attr1',\"foo*\") =true OR"
                 + " search_index('Test.attr2', \"foo*\")=true  ");
-    assertThat(results).hasSize(2);
+    assertThat(results.stream()).hasSize(2);
     results.close();
 
     results =
         db.query(
             "select from Test where SEARCH_FIELDS( ['attr1'], 'bar') = true OR"
                 + " SEARCH_FIELDS(['attr2'], 'bar*' )= true ");
-    assertThat(results).hasSize(2);
+    assertThat(results.stream()).hasSize(2);
     results.close();
 
     results =
         db.query(
             "select from Test where SEARCH_FIELDS( ['attr1'], 'foo*') = true AND"
                 + " SEARCH_FIELDS(['attr2'], 'bar*') = true");
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     results =
         db.query(
             "select from Test where SEARCH_FIELDS( ['attr1'], 'bar*') = true AND"
                 + " SEARCH_FIELDS(['attr2'], 'foo*')= true");
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
   }
 
@@ -91,7 +91,7 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
             + " true";
     OResultSet results = db.query(query);
 
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     // WITH PROJECTION it works using index directly
@@ -100,7 +100,7 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
         "select  from (select name from Person where age = 18) where"
             + " search_index('Person.name','Enrico') = true";
     results = db.query(query);
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
   }
 
@@ -120,7 +120,7 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
     params.put("name", "FOO or");
     OResultSet results = db.command(query, params);
 
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
   }
 
   @Test
@@ -155,12 +155,12 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
 
     OResultSet results = db.query("select from AuthorOf");
 
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
 
     results.close();
     results = db.query("select from AuthorOf where in.title lucene 'hurricane'");
 
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
   }
 }

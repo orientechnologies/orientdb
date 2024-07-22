@@ -52,7 +52,7 @@ public class OLuceneInheritanceQueryTest extends OLuceneBaseTest {
 
     OResultSet resultSet = db.query("select from C1 where search_class(\"abc\")=true ");
 
-    assertThat(resultSet).hasSize(1);
+    assertThat(resultSet.stream()).hasSize(1);
     resultSet.close();
   }
 }

@@ -53,23 +53,23 @@ public class OLuceneMassiveInsertDeleteTest extends OLuceneBaseTest {
     }
     String query = "select * from City where search_class('name:Rome')=true";
     OResultSet docs = db.query(query);
-    Assertions.assertThat(docs).hasSize(size);
+    Assertions.assertThat(docs.stream()).hasSize(size);
     docs.close();
     db.close();
 
     db = (ODatabaseDocumentInternal) pool.acquire();
     docs = db.query(query);
-    Assertions.assertThat(docs).hasSize(size);
+    Assertions.assertThat(docs.stream()).hasSize(size);
     docs.close();
     db.command("delete vertex City");
 
     docs = db.query(query);
-    Assertions.assertThat(docs).hasSize(0);
+    Assertions.assertThat(docs.stream()).hasSize(0);
     docs.close();
     db.close();
     db = (ODatabaseDocumentInternal) pool.acquire();
     docs = db.query(query);
-    Assertions.assertThat(docs).hasSize(0);
+    Assertions.assertThat(docs.stream()).hasSize(0);
     docs.close();
     db.getMetadata().reload();
     OIndex idx = db.getMetadata().getSchema().getClass("City").getClassIndex("City.name");

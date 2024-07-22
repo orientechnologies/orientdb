@@ -62,7 +62,7 @@ public class OLuceneExportImportTest extends OLuceneBaseTest {
 
     OResultSet query = db.query("select from City where search_class('Rome')=true");
 
-    assertThat(query).hasSize(1);
+    assertThat(query.stream()).hasSize(1);
 
     query.close();
 
@@ -92,7 +92,7 @@ public class OLuceneExportImportTest extends OLuceneBaseTest {
     // redo the query
     query = db.query("select from City where search_class('Rome')=true");
 
-    assertThat(query).hasSize(1);
+    assertThat(query.stream()).hasSize(1);
     query.close();
   }
 }

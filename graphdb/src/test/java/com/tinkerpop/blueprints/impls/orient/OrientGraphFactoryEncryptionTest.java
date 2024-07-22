@@ -87,7 +87,7 @@ public class OrientGraphFactoryEncryptionTest {
     db.command("insert into shouldQueryDESEncryptedDatabase set name = 'Jay'");
 
     try (OResultSet result = db.query("select from shouldQueryDESEncryptedDatabase")) {
-      assertThat(result).hasSize(1);
+      assertThat(result.stream()).hasSize(1);
     }
 
     db.close();
@@ -136,7 +136,7 @@ public class OrientGraphFactoryEncryptionTest {
 
     db = graphFactory.getDatabase();
     try (OResultSet result = db.query("select from shouldFailWitWrongKey")) {
-      assertThat(result).hasSize(1);
+      assertThat(result.stream()).hasSize(1);
     }
 
     db.close();

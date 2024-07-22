@@ -61,13 +61,13 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
     String query = "select from C1 where search_fields(['p1'], 'abc' )=true ";
 
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
     }
 
     db.rollback();
 
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(0);
+      assertThat(vertices.stream()).hasSize(0);
     }
   }
 
@@ -85,7 +85,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
     String query = "select from C1 where search_fields(['p1'], 'abc' )=true ";
 
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
     }
     assertThat(index.getInternal().size()).isEqualTo(1);
 
@@ -114,7 +114,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
       }
 
       assertThat(coll).hasSize(0);
-      assertThat(vertices).hasSize(0);
+      assertThat(vertices.stream()).hasSize(0);
     }
 
     Iterator iterator = coll.iterator();
@@ -130,7 +130,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
     query = "select from C1 where search_fields(['p1'], 'abc' )=true ";
 
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
     }
     assertThat(index.getInternal().size()).isEqualTo(1);
   }
@@ -157,7 +157,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
 
     String query = "select from C1 where search_fields(['p1'], \"update\")=true ";
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
     }
     Assert.assertEquals(1, index.getInternal().size());
 
@@ -188,7 +188,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
     db.save(element);
 
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(0);
+      assertThat(vertices.stream()).hasSize(0);
     }
     Assert.assertEquals(1, index.getInternal().size());
 
@@ -198,7 +198,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
     }
 
     Assert.assertEquals(1, coll.size());
@@ -210,7 +210,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
       try (Stream<ORID> stream = index.getInternal().getRids("update")) {
         coll = stream.collect(Collectors.toList());
       }
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
     }
     assertThat(coll).hasSize(1);
     assertThat(index.getInternal().size()).isEqualTo(1);
@@ -254,7 +254,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
       Assert.assertEquals(1, coll.size());
     }
 
@@ -277,7 +277,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
         coll = stream.collect(Collectors.toList());
       }
 
-      assertThat(vertices).hasSize(1);
+      assertThat(vertices.stream()).hasSize(1);
       Assert.assertEquals(coll.size(), 1);
     }
 
@@ -285,7 +285,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
 
     query = "select from C1 where search_fields(['p1'], \"abc\")=true ";
     try (OResultSet vertices = db.command(query)) {
-      assertThat(vertices).hasSize(2);
+      assertThat(vertices.stream()).hasSize(2);
     }
 
     Assert.assertEquals(index.getInternal().size(), 2);

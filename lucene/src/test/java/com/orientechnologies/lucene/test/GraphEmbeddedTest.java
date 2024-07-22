@@ -62,11 +62,11 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
     OResultSet resultSet = db.query("SELECT from City where name = 'London / a' ");
 
-    Assertions.assertThat(resultSet).hasSize(1);
+    Assertions.assertThat(resultSet.stream()).hasSize(1);
 
     resultSet = db.query("SELECT from City where name = 'Rome' ");
 
-    Assertions.assertThat(resultSet).hasSize(1);
+    Assertions.assertThat(resultSet.stream()).hasSize(1);
   }
 
   @Test
@@ -92,7 +92,7 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
     OResultSet resultSet = db.query("SELECT from One where name = 'Same' ");
 
-    Assertions.assertThat(resultSet).hasSize(1);
+    Assertions.assertThat(resultSet.stream()).hasSize(1);
 
     //    graph.addVertex("class:Two", new Object[] { "name", "Same" });
     //

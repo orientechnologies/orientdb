@@ -33,7 +33,7 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
                 + ":2, #"
                 + defCluster
                 + ":3],{'minTermFreq':1, 'minDocFreq':1} ) = true")) {
-      assertThat(resultSet).hasSize(48);
+      assertThat(resultSet.stream()).hasSize(48);
     }
   }
 
@@ -52,7 +52,7 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
                 + ":2, #"
                 + defCluster
                 + ":3] , {'minTermFreq':1, 'minDocFreq':1} ) = true")) {
-      assertThat(resultSet).hasSize(84);
+      assertThat(resultSet.stream()).hasSize(84);
     }
   }
 
@@ -74,7 +74,7 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
                 + ":4,#"
                 + defCluster
                 + ":5],{'minTermFreq':1, 'minDocFreq':1} ) = true")) {
-      assertThat(resultSet).hasSize(8);
+      assertThat(resultSet.stream()).hasSize(8);
     }
   }
 
@@ -94,7 +94,7 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
                 + defCluster
                 + ":3], {'minTermFreq':1, 'minDocFreq':1} ) = true OR author ='Hunter' ")) {
       resultSet.getExecutionPlan().ifPresent(c -> System.out.println(c.prettyPrint(1, 1)));
-      assertThat(resultSet).hasSize(138);
+      assertThat(resultSet.stream()).hasSize(138);
     }
   }
 
@@ -115,7 +115,7 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
                 + ":3] , {'fields': [ 'title' ], 'minTermFreq':1, 'minDocFreq':1}) = true")) {
 
       resultSet.getExecutionPlan().ifPresent(c -> System.out.println(c.prettyPrint(1, 1)));
-      assertThat(resultSet).hasSize(84);
+      assertThat(resultSet.stream()).hasSize(84);
     }
   }
 
@@ -128,7 +128,7 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
         db.query(
             "SELECT from Song  let $a=(SELECT @rid FROM Song WHERE author = 'Hunter')  where"
                 + " SEARCH_More( $a, { 'minTermFreq':1, 'minDocFreq':1} ) = true")) {
-      assertThat(resultSet).hasSize(229);
+      assertThat(resultSet.stream()).hasSize(229);
     }
   }
 }

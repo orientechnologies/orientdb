@@ -95,7 +95,7 @@ public class OPartitionedDatabasePoolTest {
 
             OResultSet res = db.query("SELECT * FROM OUser");
 
-            assertThat(res).hasSize(3);
+            assertThat(res.stream()).hasSize(3);
 
           } finally {
 

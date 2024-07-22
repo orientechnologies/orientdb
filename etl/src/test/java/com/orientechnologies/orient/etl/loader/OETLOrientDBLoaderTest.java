@@ -139,7 +139,7 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
 
     final OResultSet resultSet = db.query("select from Person where search_class('mi*')=true");
 
-    assertThat(resultSet).hasSize(1);
+    assertThat(resultSet.stream()).hasSize(1);
     resultSet.close();
   }
 
@@ -249,7 +249,7 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
 
     OResultSet res = db.query("SELECT FROM Person");
 
-    assertThat(res).hasSize(1);
+    assertThat(res.stream()).hasSize(1);
 
     res.close();
     db.close();

@@ -61,12 +61,12 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
     OResultSet vertices = db.query(query);
 
-    assertThat(vertices).hasSize(1);
+    assertThat(vertices.stream()).hasSize(1);
     db.rollback();
 
     query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
     vertices = db.query(query);
-    assertThat(vertices).hasSize(0);
+    assertThat(vertices.stream()).hasSize(0);
   }
 
   @Test
@@ -95,7 +95,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
       coll = stream.collect(Collectors.toList());
     }
 
-    assertThat(vertices).hasSize(0);
+    assertThat(vertices.stream()).hasSize(0);
 
     Assert.assertEquals(coll.size(), 0);
 
@@ -106,7 +106,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
     vertices = db.query(query);
 
-    assertThat(vertices).hasSize(1);
+    assertThat(vertices.stream()).hasSize(1);
 
     Assert.assertEquals(1, index.getInternal().size());
   }
@@ -146,7 +146,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
       coll = stream.collect(Collectors.toList());
     }
 
-    assertThat(vertices).hasSize(0);
+    assertThat(vertices.stream()).hasSize(0);
     Assert.assertEquals(coll.size(), 0);
 
     Iterator iterator = coll.iterator();
@@ -165,7 +165,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
       coll = stream.collect(Collectors.toList());
     }
 
-    assertThat(vertices).hasSize(1);
+    assertThat(vertices.stream()).hasSize(1);
     Assert.assertEquals(coll.size(), 1);
 
     db.rollback();
@@ -173,7 +173,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
     vertices = db.query(query);
 
-    assertThat(vertices).hasSize(1);
+    assertThat(vertices.stream()).hasSize(1);
 
     Assert.assertEquals(index.getInternal().size(), 1);
   }
@@ -218,7 +218,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
       coll = stream.collect(Collectors.toList());
     }
 
-    assertThat(vertices).hasSize(1);
+    assertThat(vertices.stream()).hasSize(1);
     Assert.assertEquals(1, coll.size());
 
     Iterator iterator = coll.iterator();
@@ -241,7 +241,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
       coll = stream.collect(Collectors.toList());
     }
 
-    assertThat(vertices).hasSize(1);
+    assertThat(vertices.stream()).hasSize(1);
 
     Assert.assertEquals(1, coll.size());
 
@@ -250,7 +250,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
     vertices = db.query(query);
 
-    assertThat(vertices).hasSize(2);
+    assertThat(vertices.stream()).hasSize(2);
 
     Assert.assertEquals(2, index.getInternal().size());
   }

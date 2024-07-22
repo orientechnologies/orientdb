@@ -31,7 +31,7 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
   public void shouldSearchOnSingleField() throws Exception {
     final OResultSet resultSet =
         db.query("SELECT from Song where SEARCH_FIELDS(['title'], 'BELIEVE') = true");
-    assertThat(resultSet).hasSize(2);
+    assertThat(resultSet.stream()).hasSize(2);
     resultSet.close();
   }
 
@@ -42,7 +42,7 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
         db.query(
             "SELECT from Song where SEARCH_FIELDS(['title'], '*EVE*', {'allowLeadingWildcard':"
                 + " true}) = true");
-    assertThat(resultSet).hasSize(14);
+    assertThat(resultSet.stream()).hasSize(14);
     resultSet.close();
   }
 
@@ -52,7 +52,7 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
         db.query(
             "SELECT from Song where SEARCH_FIELDS(['title'], 'BELIEVE') = true OR"
                 + " SEARCH_FIELDS(['author'], 'Bob') = true ");
-    assertThat(resultSet).hasSize(41);
+    assertThat(resultSet.stream()).hasSize(41);
     resultSet.close();
   }
 
@@ -62,7 +62,7 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
         db.query(
             "SELECT from Song where SEARCH_FIELDS(['title'], 'tambourine') = true AND"
                 + " SEARCH_FIELDS(['author'], 'Bob') = true ");
-    assertThat(resultSet).hasSize(1);
+    assertThat(resultSet.stream()).hasSize(1);
     resultSet.close();
   }
 
@@ -72,7 +72,7 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
         db.query(
             "SELECT from Song where SEARCH_FIELDS(['title'], 'tambourine') = true AND"
                 + " SEARCH_FIELDS(['author'], 'Bob', {'allowLeadingWildcard': true}) = true ");
-    assertThat(resultSet).hasSize(1);
+    assertThat(resultSet.stream()).hasSize(1);
     resultSet.close();
   }
 
@@ -82,7 +82,7 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
         db.query(
             "SELECT from Song where SEARCH_FIELDS(['lyrics','description'],"
                 + " '(description:happiness) (lyrics:sad)  ') = true ");
-    assertThat(resultSet).hasSize(2);
+    assertThat(resultSet.stream()).hasSize(2);
     resultSet.close();
 
     resultSet =
@@ -90,14 +90,14 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
             "SELECT from Song where SEARCH_FIELDS(['description','lyrics'],"
                 + " '(description:happiness) (lyrics:sad)  ') = true ");
 
-    assertThat(resultSet).hasSize(2);
+    assertThat(resultSet.stream()).hasSize(2);
     resultSet.close();
 
     resultSet =
         db.query(
             "SELECT from Song where SEARCH_FIELDS(['description'], '(description:happiness)"
                 + " (lyrics:sad)  ') = true ");
-    assertThat(resultSet).hasSize(2);
+    assertThat(resultSet.stream()).hasSize(2);
     resultSet.close();
   }
 
@@ -114,7 +114,7 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
     db.command("create vertex RockSong set title=\"This is only rock\", author=\"A cool rocker\"");
     final OResultSet resultSet =
         db.query("SELECT from RockSong where SEARCH_FIELDS(['title'], '+only +rock') = true ");
-    assertThat(resultSet).hasSize(1);
+    assertThat(resultSet.stream()).hasSize(1);
     resultSet.close();
   }
 

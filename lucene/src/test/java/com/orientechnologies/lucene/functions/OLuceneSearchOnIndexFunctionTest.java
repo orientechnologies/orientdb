@@ -37,18 +37,18 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
         db.query("SELECT from Song where SEARCH_INDEX('Song.title', 'BELIEVE') = true");
 
     //    resultSet.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 2)));
-    assertThat(resultSet).hasSize(2);
+    assertThat(resultSet.stream()).hasSize(2);
 
     resultSet.close();
 
     resultSet = db.query("SELECT from Song where SEARCH_INDEX('Song.title', \"bel*\") = true");
 
-    assertThat(resultSet).hasSize(3);
+    assertThat(resultSet.stream()).hasSize(3);
     resultSet.close();
 
     resultSet = db.query("SELECT from Song where SEARCH_INDEX('Song.title', 'bel*') = true");
 
-    assertThat(resultSet).hasSize(3);
+    assertThat(resultSet.stream()).hasSize(3);
 
     resultSet.close();
   }
@@ -59,7 +59,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
     OResultSet resultSet = db.query("SELECT from Song where SEARCH_INDEX('Song.title', '') = true");
 
     //    resultSet.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 2)));
-    assertThat(resultSet).hasSize(0);
+    assertThat(resultSet.stream()).hasSize(0);
 
     resultSet.close();
   }
@@ -75,7 +75,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
                 + " true}) = true");
 
     //    resultSet.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 2)));
-    assertThat(resultSet).hasSize(14);
+    assertThat(resultSet.stream()).hasSize(14);
 
     resultSet.close();
   }
@@ -88,7 +88,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
             "SELECT from Song where SEARCH_INDEX('Song.title', 'BELIEVE') = true OR"
                 + " SEARCH_INDEX('Song.author', 'Bob') = true ");
 
-    assertThat(resultSet).hasSize(41);
+    assertThat(resultSet.stream()).hasSize(41);
     resultSet.close();
   }
 
@@ -100,7 +100,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
             "SELECT from Song where SEARCH_INDEX('Song.title', 'tambourine') = true AND"
                 + " SEARCH_INDEX('Song.author', 'Bob') = true ");
 
-    assertThat(resultSet).hasSize(1);
+    assertThat(resultSet.stream()).hasSize(1);
     resultSet.close();
   }
 
@@ -112,7 +112,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
             "SELECT from Song where SEARCH_INDEX('Song.title', 'tambourine') = true AND"
                 + " SEARCH_INDEX('Song.author', 'Bob', {'allowLeadingWildcard': true}) = true ");
 
-    assertThat(resultSet).hasSize(1);
+    assertThat(resultSet.stream()).hasSize(1);
     resultSet.close();
   }
 
