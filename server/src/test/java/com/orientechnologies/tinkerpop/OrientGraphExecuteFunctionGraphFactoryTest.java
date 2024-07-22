@@ -1,5 +1,6 @@
 package com.orientechnologies.tinkerpop;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import java.util.Collection;
@@ -35,7 +36,7 @@ public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGr
     testGremlin.setLanguage("gremlin-groovy");
     testGremlin.setCode("g.V()");
 
-    testGremlin.save();
+    testGremlin.save((ODatabaseSession) noTx.getRawDatabase());
 
     Iterator gremlin = (Iterator) testGremlin.execute();
 
@@ -58,7 +59,7 @@ public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGr
     testGremlin.setLanguage("gremlin-groovy");
     testGremlin.setCode("g.V().count()");
 
-    testGremlin.save();
+    testGremlin.save((ODatabaseSession) noTx.getRawDatabase());
 
     Iterator gremlin = (Iterator) testGremlin.execute();
 
@@ -83,7 +84,7 @@ public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGr
     testGremlin.setLanguage("gremlin-groovy");
     testGremlin.setCode("g.V()");
 
-    testGremlin.save();
+    testGremlin.save((ODatabaseSession) noTx.getRawDatabase());
 
     OGremlinResultSet gremlin = noTx.executeSql("select testGremlin() as gremlin");
 
@@ -111,7 +112,7 @@ public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGr
     testGremlin.setLanguage("gremlin-groovy");
     testGremlin.setCode("g.V()");
 
-    testGremlin.save();
+    testGremlin.save((ODatabaseSession) noTx.getRawDatabase());
 
     OGremlinResultSet gremlin = noTx.executeSql("select expand(testGremlin())");
 
