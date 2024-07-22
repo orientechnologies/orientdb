@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -44,9 +43,6 @@ public class ORebuildIndexStatementExecutionTest extends BaseMemoryDatabase {
     OResult resultRecord = result.next();
     Assert.assertEquals(resultRecord.<Object>getProperty("totalIndexed"), 2l);
     Assert.assertFalse(result.hasNext());
-    assertEquals(
-        db.query(new OSQLSynchQuery<Object>("select from " + className + " where key = 'a'"))
-            .size(),
-        2);
+    assertEquals(db.query("select from " + className + " where key = 'a'").stream().count(), 2);
   }
 }

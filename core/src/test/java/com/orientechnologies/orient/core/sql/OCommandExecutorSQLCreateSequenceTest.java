@@ -20,12 +20,9 @@
 package com.orientechnologies.orient.core.sql;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.BaseMemoryDatabase;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Test;
 
 public class OCommandExecutorSQLCreateSequenceTest extends BaseMemoryDatabase {
@@ -34,89 +31,47 @@ public class OCommandExecutorSQLCreateSequenceTest extends BaseMemoryDatabase {
   public void testSimple() {
     db.command("CREATE SEQUENCE Sequence1 TYPE ORDERED").close();
 
-    List<ODocument> results =
-        db.query(new OSQLSynchQuery("select sequence('Sequence1').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(1L);
-    }
-    results = db.query(new OSQLSynchQuery("select sequence('Sequence1').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(2L);
-    }
-    results = db.query(new OSQLSynchQuery("select sequence('Sequence1').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(3L);
-    }
+    OResultSet results = db.query("select sequence('Sequence1').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(1L);
+    results = db.query("select sequence('Sequence1').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(2L);
+    results = db.query("select sequence('Sequence1').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(3L);
   }
 
   @Test
   public void testIncrement() {
     db.command("CREATE SEQUENCE SequenceIncrement TYPE ORDERED INCREMENT 3").close();
 
-    List<ODocument> results =
-        db.query(new OSQLSynchQuery("select sequence('SequenceIncrement').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(3L);
-    }
-    results = db.query(new OSQLSynchQuery("select sequence('SequenceIncrement').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(6L);
-    }
-    results = db.query(new OSQLSynchQuery("select sequence('SequenceIncrement').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(9L);
-    }
+    OResultSet results = db.query("select sequence('SequenceIncrement').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(3L);
+    results = db.query("select sequence('SequenceIncrement').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(6L);
+    results = db.query("select sequence('SequenceIncrement').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(9L);
   }
 
   @Test
   public void testStart() {
     db.command("CREATE SEQUENCE SequenceStart TYPE ORDERED START 3").close();
 
-    List<ODocument> results =
-        db.query(new OSQLSynchQuery("select sequence('SequenceStart').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(4L);
-    }
-    results = db.query(new OSQLSynchQuery("select sequence('SequenceStart').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(5L);
-    }
-    results = db.query(new OSQLSynchQuery("select sequence('SequenceStart').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(6L);
-    }
+    OResultSet results = db.query("select sequence('SequenceStart').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(4L);
+    results = db.query("select sequence('SequenceStart').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(5L);
+    results = db.query("select sequence('SequenceStart').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(6L);
   }
 
   @Test
   public void testStartIncrement() {
     db.command("CREATE SEQUENCE SequenceStartIncrement TYPE ORDERED START 3 INCREMENT 10").close();
 
-    List<ODocument> results =
-        db.query(new OSQLSynchQuery("select sequence('SequenceStartIncrement').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(13L);
-    }
-    results =
-        db.query(new OSQLSynchQuery("select sequence('SequenceStartIncrement').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(23L);
-    }
-    results =
-        db.query(new OSQLSynchQuery("select sequence('SequenceStartIncrement').next() as val"));
-    assertEquals(results.size(), 1);
-    for (ODocument result : results) {
-      assertThat(result.<Long>field("val")).isEqualTo(33L);
-    }
+    OResultSet results = db.query("select sequence('SequenceStartIncrement').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(13L);
+    results = db.query("select sequence('SequenceStartIncrement').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(23L);
+    results = db.query("select sequence('SequenceStartIncrement').next() as val");
+    assertThat(results.next().<Long>getProperty("val")).isEqualTo(33L);
   }
 }

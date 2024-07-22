@@ -18,11 +18,10 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -137,10 +136,10 @@ public class SimulateOperationsAgainstServer {
     try {
       log(threadId, iCycle, dbUrl, " query class=" + className);
 
-      List<OIdentifiable> result = db.query(new OSQLSynchQuery<Object>("select from " + className));
+      List<OResult> result = db.query("select from " + className).stream().toList();
 
       int browsed = 0;
-      for (OIdentifiable r : result) {
+      for (OResult r : result) {
         if (browsed++ > iMax) return;
 
         r.getRecord().toString();
@@ -161,15 +160,13 @@ public class SimulateOperationsAgainstServer {
     for (int retry = 0; retry < MAX_RETRY; ++retry) {
       ODocument doc = null;
       try {
-        List<OIdentifiable> result =
-            db.query(
-                new OSQLSynchQuery<Object>(
-                    "select from " + className + " skip " + iSkip + " limit 1"));
+        List<OResult> result =
+            db.query("select from " + className + " skip " + iSkip + " limit 1").stream().toList();
 
         if (result == null || result.isEmpty())
           log(threadId, iCycle, dbUrl, " update no item " + iSkip + " because out of range");
         else {
-          doc = (ODocument) result.get(0);
+          doc = (ODocument) result.get(0).getElement().get();
           doc.field("updated", "" + (doc.getVersion() + 1));
           doc.save();
           log(threadId, iCycle, dbUrl, " updated item " + iSkip + " RID=" + result.get(0));
@@ -212,15 +209,13 @@ public class SimulateOperationsAgainstServer {
     for (int retry = 0; retry < MAX_RETRY; ++retry) {
       ODocument doc = null;
       try {
-        List<OIdentifiable> result =
-            db.query(
-                new OSQLSynchQuery<Object>(
-                    "select from " + className + " skip " + iSkip + " limit 1"));
+        List<OResult> result =
+            db.query("select from " + className + " skip " + iSkip + " limit 1").stream().toList();
 
         if (result == null || result.isEmpty())
           log(threadId, iCycle, dbUrl, " delete no item " + iSkip + " because out of range");
         else {
-          doc = result.get(0).getRecord();
+          doc = result.get(0).getElement().get().getRecord();
           doc.delete();
           log(threadId, iCycle, dbUrl, " deleted item " + iSkip + " RID=" + result.get(0));
         }

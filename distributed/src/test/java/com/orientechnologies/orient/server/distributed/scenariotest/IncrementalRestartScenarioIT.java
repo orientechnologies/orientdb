@@ -24,9 +24,8 @@ import static org.junit.Assert.fail;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
@@ -120,7 +119,7 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
     @Override
     public Void call() throws Exception {
 
-      List<ODocument> result = null;
+      List<OResult> result = null;
       OrientDB orientDb = serverInstance.get(0).getServerInstance().getContext();
       final ODatabaseDocument dbServer1 = orientDb.open(getDatabaseName(), "admin", "admin");
 
@@ -166,9 +165,9 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         }
 
         // check that no records were inserted
-        result = dbServer1.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+        result = dbServer1.query("select count(*) as count from Person").stream().toList();
         assertEquals(1, result.size());
-        assertEquals(0, ((Number) result.get(0).field("count")).intValue());
+        assertEquals(0, ((Number) result.get(0).getProperty("count")).intValue());
 
         // restarting server2
         try {
@@ -247,7 +246,7 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
     @Override
     public Void call() throws Exception {
 
-      List<ODocument> result = null;
+      List<OResult> result = null;
       OrientDB orientDB = serverInstances.get(0).getServerInstance().getContext();
       final ODatabaseDocument dbServer1 = orientDB.open(getDatabaseName(), "admin", "admin");
 
@@ -294,9 +293,9 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         }
 
         // check that records were inserted
-        result = dbServer1.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+        result = dbServer1.query("select count(*) as count from Person").stream().toList();
         assertEquals(1, result.size());
-        assertEquals(3, ((Number) result.get(0).field("count")).intValue());
+        assertEquals(3, ((Number) result.get(0).getProperty("count")).intValue());
 
         // restarting server2
         try {

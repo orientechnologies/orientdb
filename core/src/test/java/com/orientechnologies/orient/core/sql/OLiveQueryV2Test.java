@@ -31,9 +31,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -205,10 +204,9 @@ public class OLiveQueryV2Test {
       schema.createClass("test", oRestricted);
 
       int liveMatch = 2;
-      List<ODocument> query =
-          db.query(new OSQLSynchQuery("select from OUSer where name = 'reader'"));
+      OResultSet query = db.query("select from OUSer where name = 'reader'");
 
-      final OIdentifiable reader = query.iterator().next().getIdentity();
+      final OIdentifiable reader = query.next().getIdentity().get();
       final OIdentifiable current = db.getUser().getIdentity();
 
       ExecutorService executorService = Executors.newSingleThreadExecutor();

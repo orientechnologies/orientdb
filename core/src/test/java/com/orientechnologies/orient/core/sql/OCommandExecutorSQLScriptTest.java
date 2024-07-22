@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -294,10 +294,9 @@ public class OCommandExecutorSQLScriptTest extends BaseMemoryDatabase {
 
     db.command(new OCommandScript(batch.toString())).execute();
 
-    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM QuotedRegex2"));
-    Assert.assertEquals(result.size(), 1);
-    ODocument doc = result.get(0);
-    Assert.assertEquals(doc.field("regexp"), "'';");
+    OResultSet result = db.query("SELECT FROM QuotedRegex2");
+    OResult doc = result.next();
+    Assert.assertEquals(doc.getProperty("regexp"), "'';");
   }
 
   @Test

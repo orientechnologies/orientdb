@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.setup.ServerRun;
@@ -230,17 +230,15 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
       final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-      List<ODocument> result =
-          database.query(
-              new OSQLSynchQuery<ODocument>("select from Person where name = ?"),
-              "Billy" + uniqueId);
+      List<OResult> result =
+          database.query("select from Person where name = ?", "Billy" + uniqueId).stream().toList();
       if (result.size() == 0)
         Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)
         Assert.assertTrue(
             result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
 
-      return result.get(0);
+      return (ODocument) result.get(0).getElement().get();
     }
 
     protected void updateRecord(ODatabaseDocument database, ODocument doc) {
@@ -346,9 +344,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
             serverNum); // serverInstance.get(serverNum).getEmbeddedDatabase(getDatabaseName());
 
     try {
-      List<ODocument> result =
-          database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-      baseCount = ((Number) result.get(0).field("count")).intValue();
+      List<OResult> result =
+          database.query("select count(*) as count from Person").stream().toList();
+      baseCount = ((Number) result.get(0).getProperty("count")).intValue();
     } finally {
       database.close();
     }
@@ -728,8 +726,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     final ODatabaseDocument database = getDatabase(serverRun);
 
     try {
-      List<ODocument> result =
-          database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from " + className));
+      List<OResult> result =
+          database.query("select count(*) as count from " + className).stream().toList();
 
       final String name = database.getURL();
 

@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.io.IOException;
 import java.util.Date;
@@ -331,15 +331,13 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
   protected ODocument loadRecord(ODatabaseDocument database, int i) {
     final String uniqueId = database.getName() + "-" + i;
     database.activateOnCurrentThread();
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from Person where name = 'Billy" + uniqueId + "'"));
+    List<OResult> result =
+        database.query("select from Person where name = 'Billy" + uniqueId + "'").stream().toList();
     if (result.size() == 0)
       assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
     else if (result.size() > 1)
       assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
-    return result.get(0);
+    return (ODocument) result.get(0).getElement().get();
   }
 
   protected Callable<Void> createWriter(ODatabaseDocument database) {
@@ -443,16 +441,15 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     private ODocument loadRecord(ODatabaseDocument database, int i) {
       final String uniqueId = database.getName() + "-" + i;
 
-      List<ODocument> result =
-          database.query(
-              new OSQLSynchQuery<ODocument>(
-                  "select from Person where name = 'Billy" + uniqueId + "'"));
+      List<OResult> result =
+          database.query("select from Person where name = 'Billy" + uniqueId + "'").stream()
+              .toList();
       if (result.size() == 0)
         assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)
         assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
 
-      return result.get(0);
+      return (ODocument) result.get(0).getElement().get();
     }
   }
 }

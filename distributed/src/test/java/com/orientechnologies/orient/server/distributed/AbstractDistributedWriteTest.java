@@ -16,20 +16,23 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-// import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Assert;
@@ -146,17 +149,16 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
     private ODocument loadRecord(ODatabaseDocument database, int i) {
       final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-      List<ODocument> result =
-          database.query(
-              new OSQLSynchQuery<ODocument>(
-                  "select from Person where name = 'Billy" + uniqueId + "'"));
+      List<OResult> result =
+          database.query("select from Person where name = 'Billy" + uniqueId + "'").stream()
+              .toList();
       if (result.size() == 0)
         Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)
         Assert.assertTrue(
             result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
 
-      return result.get(0);
+      return (ODocument) result.get(0).getElement().get();
     }
   }
 

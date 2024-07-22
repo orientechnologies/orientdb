@@ -21,7 +21,7 @@ import static org.junit.Assert.fail;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
@@ -136,14 +136,13 @@ public class Quorum1ScenarioIT extends AbstractScenarioTest {
   protected ODocument retrieveRecord(ServerRun serverRun, String uniqueId) {
     ODatabaseDocument dbServer = getDatabase(serverRun);
     try {
-      List<ODocument> result =
-          dbServer.query(
-              new OSQLSynchQuery<ODocument>("select from Hero where id = '" + uniqueId + "'"));
+      List<OResult> result =
+          dbServer.query("select from Hero where id = '" + uniqueId + "'").stream().toList();
       if (result.size() == 0) fail("No record found with id = '" + uniqueId + "'!");
       else if (result.size() > 1)
         fail(result.size() + " records found with id = '" + uniqueId + "'!");
 
-      return result.get(0);
+      return (ODocument) result.get(0).getElement().get();
     } finally {
       dbServer.close();
     }

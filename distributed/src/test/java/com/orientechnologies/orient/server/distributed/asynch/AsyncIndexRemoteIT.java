@@ -5,8 +5,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.junit.Assert;
 
@@ -46,10 +45,9 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
       } catch (ORecordDuplicatedException e) {
       }
 
-      final Iterable<OElement> result =
-          graph.command(new OSQLSynchQuery<OElement>("select count(*) from SMS")).execute();
+      final OResultSet result = graph.query("select count(*) as count from SMS");
 
-      Assert.assertEquals(1, ((Number) result.iterator().next().getProperty("count")).intValue());
+      Assert.assertEquals(1, ((Number) result.next().getProperty("count")).intValue());
 
     } catch (Throwable e) {
       if (exceptionInThread == null) {
@@ -76,10 +74,9 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
       } catch (ORecordDuplicatedException e) {
       }
 
-      final Iterable<OElement> result =
-          graph2.command(new OSQLSynchQuery<OElement>("select count(*) from SMS")).execute();
+      final OResultSet result = graph2.query("select count(*) as count from SMS");
 
-      Assert.assertEquals(1, ((Number) result.iterator().next().getProperty("count")).intValue());
+      Assert.assertEquals(1, ((Number) result.next().getProperty("count")).intValue());
 
     } catch (Throwable e) {
       if (exceptionInThread == null) {
@@ -105,10 +102,9 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
       } catch (ORecordDuplicatedException e) {
       }
 
-      final Iterable<OElement> result =
-          graph3.command(new OSQLSynchQuery<OElement>("select count(*) from SMS")).execute();
+      final OResultSet result = graph3.query("select count(*) as count from SMS");
 
-      Assert.assertEquals(1, ((Number) result.iterator().next().getProperty("count")).intValue());
+      Assert.assertEquals(1, ((Number) result.next().getProperty("count")).intValue());
 
     } catch (Throwable e) {
       if (exceptionInThread == null) {
