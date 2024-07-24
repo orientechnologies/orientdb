@@ -18,7 +18,6 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OClusterDoesNotExistException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -32,6 +31,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
@@ -494,12 +494,11 @@ public class SchemaTest extends DocumentDBBaseTest {
     database.command("create class TestOffline").close();
     database.command("insert into TestOffline set status = 'offline'").close();
 
-    List<OIdentifiable> result =
-        database.command(new OCommandSQL("select from TestOffline")).execute();
+    List<OResult> result = database.command("select from TestOffline").stream().toList();
     Assert.assertNotNull(result);
     Assert.assertFalse(result.isEmpty());
 
-    ODocument record = result.get(0).getRecord();
+    ODocument record = (ODocument) result.get(0).getRecord().get();
 
     // TEST NO EFFECTS
     Boolean changed =
@@ -512,7 +511,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertTrue(changed);
 
     // NO DATA?
-    result = database.command(new OCommandSQL("select from TestOffline")).execute();
+    result = database.command("select from TestOffline").stream().toList();
     Assert.assertNotNull(result);
     Assert.assertTrue(result.isEmpty());
 
