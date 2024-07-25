@@ -9,10 +9,10 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OServerExecutionPlan;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import java.util.Map;
 
@@ -95,7 +95,7 @@ public class OServerStatement extends SimpleNode {
    * @param ctx the context that will be used to execute the statement
    * @return an execution plan
    */
-  public OInternalExecutionPlan createExecutionPlan(OServerCommandContext ctx) {
+  public OServerExecutionPlan createExecutionPlan(OServerCommandContext ctx) {
     return createExecutionPlan(ctx, false);
   }
 
@@ -106,11 +106,11 @@ public class OServerStatement extends SimpleNode {
    * @param profile true to enable profiling, false to disable it
    * @return an execution plan
    */
-  public OInternalExecutionPlan createExecutionPlan(OServerCommandContext ctx, boolean profile) {
+  public OServerExecutionPlan createExecutionPlan(OServerCommandContext ctx, boolean profile) {
     throw new UnsupportedOperationException();
   }
 
-  public OInternalExecutionPlan createExecutionPlanNoCache(
+  public OServerExecutionPlan createExecutionPlanNoCache(
       OServerCommandContext ctx, boolean profile) {
     return createExecutionPlan(ctx, profile);
   }

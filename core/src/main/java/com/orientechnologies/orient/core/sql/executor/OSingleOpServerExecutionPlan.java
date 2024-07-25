@@ -10,37 +10,20 @@ import java.util.Collections;
 import java.util.List;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
+public class OSingleOpServerExecutionPlan implements OServerExecutionPlan {
 
   protected final OSimpleExecServerStatement statement;
-  private OServerCommandContext ctx;
 
-  private boolean executed = false;
-  private OExecutionStream result;
-
-  public OSingleOpServerExecutionPlan(OServerCommandContext ctx, OSimpleExecServerStatement stm) {
-    this.ctx = ctx;
+  public OSingleOpServerExecutionPlan(OSimpleExecServerStatement stm) {
     this.statement = stm;
   }
 
   @Override
-  public void close() {}
-
-  @Override
-  public OExecutionStream start(OCommandContext ctx) {
-    if (executed && result == null) {
-      return OExecutionStream.empty();
-    }
-    if (!executed) {
-      executed = true;
-      result = statement.executeSimple(this.ctx);
-    }
-    return result;
+  public OExecutionStream start(OServerCommandContext ctx) {
+    return statement.executeSimple(ctx);
   }
 
-  public void reset(OCommandContext ctx) {
-    executed = false;
-  }
+  public void reset(OCommandContext ctx) {}
 
   @Override
   public long getCost() {
@@ -54,13 +37,7 @@ public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
 
   public OExecutionStream executeInternal(OBasicServerCommandContext ctx)
       throws OCommandExecutionException {
-    if (executed) {
-      throw new OCommandExecutionException(
-          "Trying to execute a result-set twice. Please use reset()");
-    }
-    executed = true;
-    result = statement.executeSimple(this.ctx);
-    return result;
+    return statement.executeSimple(ctx);
   }
 
   @Override
@@ -89,4 +66,7 @@ public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
     result.setProperty("steps", null);
     return result;
   }
+
+  @Override
+  public void close() {}
 }

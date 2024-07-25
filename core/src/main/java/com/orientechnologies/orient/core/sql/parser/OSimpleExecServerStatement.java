@@ -3,8 +3,8 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OBasicServerCommandContext;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OServerExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OSingleOpServerExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionResultSet;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
@@ -64,8 +64,8 @@ public abstract class OSimpleExecServerStatement extends OServerStatement {
     return new OExecutionResultSet(executionPlan.executeInternal(ctx), ctx, executionPlan);
   }
 
-  public OInternalExecutionPlan createExecutionPlan(
+  public OServerExecutionPlan createExecutionPlan(
       OServerCommandContext ctx, boolean enableProfiling) {
-    return new OSingleOpServerExecutionPlan(ctx, this);
+    return new OSingleOpServerExecutionPlan(this);
   }
 }
