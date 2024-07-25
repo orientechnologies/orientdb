@@ -12,7 +12,6 @@ import java.util.List;
 public class ODDLExecutionPlan implements OInternalExecutionPlan {
 
   private final ODDLStatement statement;
-  private boolean executed = false;
 
   public ODDLExecutionPlan(ODDLStatement stm) {
     this.statement = stm;
@@ -26,9 +25,7 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
     return OExecutionStream.empty();
   }
 
-  public void reset(OCommandContext ctx) {
-    executed = false;
-  }
+  public void reset(OCommandContext ctx) {}
 
   @Override
   public long getCost() {
@@ -42,13 +39,7 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
 
   public OExecutionStream executeInternal(OBasicCommandContext ctx)
       throws OCommandExecutionException {
-    if (executed) {
-      throw new OCommandExecutionException(
-          "Trying to execute a result-set twice. Please use reset()");
-    }
-    executed = true;
-    OExecutionStream result = statement.executeDDL(ctx);
-    return result;
+    return statement.executeDDL(ctx);
   }
 
   @Override

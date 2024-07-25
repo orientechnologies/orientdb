@@ -11,8 +11,6 @@ import java.util.stream.Collectors;
 /** Created by luigidellaquila on 06/07/16. */
 public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
-  private String location;
-
   protected List<OExecutionStepInternal> steps = new ArrayList<>();
 
   private OExecutionStepInternal lastStep = null;
@@ -141,7 +139,6 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
       copy.getSteps().add(newStep);
     }
     copy.lastStep = copy.steps.size() == 0 ? null : copy.steps.get(copy.steps.size() - 1);
-    copy.location = this.location;
     copy.statement = this.statement;
   }
 
