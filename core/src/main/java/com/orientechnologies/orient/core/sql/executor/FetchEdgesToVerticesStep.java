@@ -8,11 +8,9 @@ import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -37,30 +35,12 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    Stream<Object> source = init();
+    Iterator<Object> source = init();
 
-    OExecutionStreamProducer res =
-        new OExecutionStreamProducer() {
-          private final Iterator iter = source.iterator();
-
-          @Override
-          public OExecutionStream next(OCommandContext ctx) {
-            return edges(iter.next());
-          }
-
-          @Override
-          public boolean hasNext(OCommandContext ctx) {
-            return iter.hasNext();
-          }
-
-          @Override
-          public void close(OCommandContext ctx) {}
-        };
-
-    return OExecutionStream.multiplStreams(res);
+    return OExecutionStream.streamsFromIterator(source, this::edges);
   }
 
-  private Stream<Object> init() {
+  private Iterator<Object> init() {
     Object toValues = null;
 
     toValues = ctx.getVariable(toAlias);
@@ -70,10 +50,10 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
       toValues = Collections.singleton(toValues).iterator();
     }
 
-    return StreamSupport.stream(Spliterators.spliteratorUnknownSize((Iterator) toValues, 0), false);
+    return (Iterator) toValues;
   }
 
-  private OExecutionStream edges(Object from) {
+  private OExecutionStream edges(Object from, OCommandContext ctx) {
     if (from instanceof OResult) {
       from = ((OResult) from).toElement();
     }

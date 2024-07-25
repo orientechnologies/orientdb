@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Collections;
 import java.util.HashSet;
@@ -46,26 +45,8 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
 
     final Set<ORID> toList = loadTo();
 
-    OExecutionStreamProducer res =
-        new OExecutionStreamProducer() {
-          private final Iterator iter = fromIter;
-          private final Set<ORID> to = toList;
-
-          @Override
-          public OExecutionStream next(OCommandContext ctx) {
-            return createResultSet(to, iter.next());
-          }
-
-          @Override
-          public boolean hasNext(OCommandContext ctx) {
-            return iter.hasNext();
-          }
-
-          @Override
-          public void close(OCommandContext ctx) {}
-        };
-
-    return OExecutionStream.multiplStreams(res);
+    return OExecutionStream.streamsFromIterator(
+        fromIter, (value, pc) -> createResultSet(toList, value));
   }
 
   private OExecutionStream createResultSet(Set<ORID> toList, Object val) {

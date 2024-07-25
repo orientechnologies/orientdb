@@ -98,7 +98,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
             }
           }
         };
-    return OExecutionStream.multiplStreams(res);
+    return OExecutionStream.multipleStreams(res);
   }
 
   private OResult readResult(OCommandContext ctx, ORawPair<Object, ORID> entry) {

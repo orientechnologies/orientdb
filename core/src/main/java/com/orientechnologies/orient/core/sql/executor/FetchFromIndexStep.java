@@ -98,7 +98,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
             }
           }
         };
-    return OExecutionStream.multiplStreams(res).onClose(this::close);
+    return OExecutionStream.multipleStreams(res).onClose(this::close);
   }
 
   private void close(OCommandContext context) {

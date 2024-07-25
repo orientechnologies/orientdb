@@ -21,8 +21,13 @@ public interface OExecutionStream {
     return new OProduceExecutionStream(producer);
   }
 
-  public static OExecutionStream multiplStreams(OExecutionStreamProducer producer) {
+  public static OExecutionStream multipleStreams(OExecutionStreamProducer producer) {
     return new OMultipleExecutionStream(producer);
+  }
+
+  public static <T> OExecutionStream streamsFromIterator(
+      Iterator<T> producer, OExecutionStreamProducerValueMap<T> map) {
+    return new OMultipleExecutionStream(new OExcutionStreamProducerFromIterator<T>(producer, map));
   }
 
   public default OExecutionStream map(OMapResult mapper) {

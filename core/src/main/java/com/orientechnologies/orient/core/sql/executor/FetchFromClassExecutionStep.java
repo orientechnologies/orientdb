@@ -7,10 +7,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -133,31 +131,17 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
     List<OExecutionStep> stepsIter = getSubSteps();
 
-    OExecutionStreamProducer res =
-        new OExecutionStreamProducer() {
-          private final Iterator<OExecutionStep> iter = stepsIter.iterator();
+    return OExecutionStream.streamsFromIterator(stepsIter.iterator(), this::startStep)
+        .map(this::setCurrent);
+  }
 
-          @Override
-          public OExecutionStream next(OCommandContext ctx) {
-            OExecutionStep step = iter.next();
-            return ((AbstractExecutionStep) step).start(ctx);
-          }
+  private OResult setCurrent(OResult result, OCommandContext context) {
+    context.setVariable("$current", result);
+    return result;
+  }
 
-          @Override
-          public boolean hasNext(OCommandContext ctx) {
-            return iter.hasNext();
-          }
-
-          @Override
-          public void close(OCommandContext ctx) {}
-        };
-
-    return OExecutionStream.multiplStreams(res)
-        .map(
-            (result, context) -> {
-              context.setVariable("$current", result);
-              return result;
-            });
+  private OExecutionStream startStep(OExecutionStep value, OCommandContext cx) {
+    return ((AbstractExecutionStep) value).start(cx);
   }
 
   @Override

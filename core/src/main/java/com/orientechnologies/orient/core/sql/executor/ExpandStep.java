@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
 import java.util.Iterator;
 
 /**
@@ -41,7 +40,7 @@ public class ExpandStep extends AbstractExecutionStep {
     return valueStream(projValue, ctx);
   }
 
-  private static OExecutionStream valueStream(Object projValue, OCommandContext ctx) {
+  private OExecutionStream valueStream(Object projValue, OCommandContext ctx) {
 
     if (projValue == null) {
       return OExecutionStream.empty();
@@ -65,25 +64,8 @@ public class ExpandStep extends AbstractExecutionStep {
     }
   }
 
-  private static OExecutionStream nestedExpand(final Iterator input) {
-    OExecutionStreamProducer producer =
-        new OExecutionStreamProducer() {
-          private Iterator source = input;
-
-          @Override
-          public OExecutionStream next(OCommandContext ctx) {
-            return valueStream(source.next(), ctx);
-          }
-
-          @Override
-          public boolean hasNext(OCommandContext ctx) {
-            return source.hasNext();
-          }
-
-          @Override
-          public void close(OCommandContext ctx) {}
-        };
-    return OExecutionStream.multiplStreams(producer);
+  private OExecutionStream nestedExpand(final Iterator input) {
+    return OExecutionStream.streamsFromIterator(input, this::valueStream);
   }
 
   @Override
