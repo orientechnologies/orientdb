@@ -58,6 +58,6 @@ public abstract class OSimpleExecStatement extends OStatement {
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
-    return new OSingleOpExecutionPlan(ctx, this);
+    return new OSingleOpExecutionPlan(this);
   }
 }

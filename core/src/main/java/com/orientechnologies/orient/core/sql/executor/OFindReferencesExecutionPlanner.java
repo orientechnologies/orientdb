@@ -31,7 +31,7 @@ public class OFindReferencesExecutionPlanner {
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
-    OSelectExecutionPlan plan = new OSelectExecutionPlan(ctx);
+    OSelectExecutionPlan plan = new OSelectExecutionPlan();
     handleRidSource(plan, ctx, enableProfiling);
     handleSubQuerySource(plan, ctx, enableProfiling);
     handleFindReferences(plan, ctx, enableProfiling);

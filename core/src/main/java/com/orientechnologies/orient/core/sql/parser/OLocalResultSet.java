@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -18,12 +19,14 @@ public class OLocalResultSet implements OResultSet {
 
   private OExecutionStream stream = null;
   private final OInternalExecutionPlan executionPlan;
+  private final OCommandContext ctx;
 
   long totalExecutionTime = 0;
   long startTime = 0;
 
-  public OLocalResultSet(OInternalExecutionPlan executionPlan) {
+  public OLocalResultSet(OInternalExecutionPlan executionPlan, OCommandContext ctx) {
     this.executionPlan = executionPlan;
+    this.ctx = ctx;
     start();
   }
 
@@ -33,8 +36,8 @@ public class OLocalResultSet implements OResultSet {
       if (stream == null) {
         startTime = begin;
       }
-      stream = executionPlan.start();
-      if (!stream.hasNext(executionPlan.getContext())) {
+      stream = executionPlan.start(ctx);
+      if (!stream.hasNext(ctx)) {
         logProfiling();
         return false;
       }
@@ -46,7 +49,7 @@ public class OLocalResultSet implements OResultSet {
 
   @Override
   public boolean hasNext() {
-    boolean next = stream.hasNext(executionPlan.getContext());
+    boolean next = stream.hasNext(ctx);
     if (!next) {
       logProfiling();
     }
@@ -58,7 +61,7 @@ public class OLocalResultSet implements OResultSet {
     if (!hasNext()) {
       throw new IllegalStateException();
     }
-    return stream.next(executionPlan.getContext());
+    return stream.next(ctx);
   }
 
   private void logProfiling() {
@@ -93,7 +96,7 @@ public class OLocalResultSet implements OResultSet {
 
   @Override
   public void close() {
-    stream.close(executionPlan.getContext());
+    stream.close(ctx);
     executionPlan.close();
   }
 

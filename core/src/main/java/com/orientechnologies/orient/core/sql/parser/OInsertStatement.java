@@ -150,8 +150,8 @@ public class OInsertStatement extends OStatement {
     } else {
       executionPlan = (OInsertExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   @Override
@@ -168,8 +168,8 @@ public class OInsertStatement extends OStatement {
     } else {
       executionPlan = (OInsertExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {

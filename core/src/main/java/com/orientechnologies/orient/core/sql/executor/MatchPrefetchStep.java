@@ -33,7 +33,7 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
 
-    OExecutionStream nextBlock = prefetchExecutionPlan.start();
+    OExecutionStream nextBlock = prefetchExecutionPlan.start(ctx);
     List<OResult> prefetched = new ArrayList<>();
     while (nextBlock.hasNext(ctx)) {
       prefetched.add(nextBlock.next(ctx));

@@ -132,7 +132,7 @@ public class OSelectExecutionPlanner {
     long planningStart = System.currentTimeMillis();
 
     init(ctx);
-    OSelectExecutionPlan result = new OSelectExecutionPlan(ctx);
+    OSelectExecutionPlan result = new OSelectExecutionPlan();
 
     if (info.expand && info.distinct) {
       throw new OCommandExecutionException(
@@ -269,7 +269,7 @@ public class OSelectExecutionPlanner {
         } else {
           DistributedExecutionStep step =
               new DistributedExecutionStep(entry.getValue(), entry.getKey(), ctx, enableProfiling);
-          OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+          OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
           subPlan.chain(step);
           subPlans.add(subPlan);
         }
@@ -300,7 +300,7 @@ public class OSelectExecutionPlanner {
     if (!db.isSharded()) {
       info.serverToClusters = new LinkedHashMap<>();
       info.serverToClusters.put(localNode, clusterNames);
-      info.distributedFetchExecutionPlans.put(localNode, new OSelectExecutionPlan(ctx));
+      info.distributedFetchExecutionPlans.put(localNode, new OSelectExecutionPlan());
       return;
     }
 
@@ -313,7 +313,7 @@ public class OSelectExecutionPlanner {
 
       info.serverToClusters = new LinkedHashMap<>();
       info.serverToClusters.put(localNode, clusterMap.get(localNode));
-      info.distributedFetchExecutionPlans.put(localNode, new OSelectExecutionPlan(ctx));
+      info.distributedFetchExecutionPlans.put(localNode, new OSelectExecutionPlan());
       return;
     }
 
@@ -328,7 +328,7 @@ public class OSelectExecutionPlanner {
     }
     info.serverToClusters = minimalSetOfNodes;
     for (String node : info.serverToClusters.keySet()) {
-      info.distributedFetchExecutionPlans.put(node, new OSelectExecutionPlan(ctx));
+      info.distributedFetchExecutionPlans.put(node, new OSelectExecutionPlan());
     }
     //    } else {
     //      // all on a node
@@ -1362,7 +1362,7 @@ public class OSelectExecutionPlanner {
       } else if (target.getInputParams() != null && target.getInputParams().size() > 0) {
         List<OInternalExecutionPlan> plans = new ArrayList<>();
         for (OInputParameter param : target.getInputParams()) {
-          OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+          OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
           handleInputParamAsTarget(
               subPlan,
               info.serverToClusters.get(shardedPlan.getKey()),
@@ -2036,7 +2036,7 @@ public class OSelectExecutionPlanner {
 
           FetchFromIndexStep step = new FetchFromIndexStep(bestIndex, true, ctx, profilingEnabled);
 
-          OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+          OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
           subPlan.chain(step);
           int[] filterClusterIds = null;
           if (filterClusters != null) {
@@ -2071,7 +2071,7 @@ public class OSelectExecutionPlanner {
                 new FetchFromClassExecutionStep(
                     clazz.getName(), filterClusters, ctx, true, profilingEnabled);
           }
-          OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+          OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
           subPlan.chain(step);
           if (!block.getSubBlocks().isEmpty()) {
             if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
@@ -2146,7 +2146,7 @@ public class OSelectExecutionPlanner {
                     profilingEnabled));
           }
         } else {
-          OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+          OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
           subPlan.chain(step);
           if (!block.getSubBlocks().isEmpty()) {
             subPlan.chain(
@@ -2339,7 +2339,7 @@ public class OSelectExecutionPlanner {
       if (subSteps == null || subSteps.size() == 0) {
         return false;
       }
-      OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+      OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
       subSteps.stream().forEach(x -> subPlan.chain(x));
       subclassPlans.add(subPlan);
     }
@@ -2407,7 +2407,7 @@ public class OSelectExecutionPlanner {
         if (subSteps == null || subSteps.size() == 0) {
           return null;
         }
-        OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+        OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
         subSteps.stream().forEach(x -> subPlan.chain(x));
         subclassPlans.add(subPlan);
       }
@@ -2491,7 +2491,7 @@ public class OSelectExecutionPlanner {
       if (desc.getRemainingCondition() != null && !desc.getRemainingCondition().isEmpty()) {
         if ((info.perRecordLetClause != null
             && refersToLet(Collections.singletonList(desc.getRemainingCondition())))) {
-          OSelectExecutionPlan stubPlan = new OSelectExecutionPlan(ctx);
+          OSelectExecutionPlan stubPlan = new OSelectExecutionPlan();
           boolean prevCreatedDist = info.distributedPlanCreated;
           info.distributedPlanCreated = true; // little hack, check this!!!
           handleLet(stubPlan, info, ctx, profilingEnabled);
@@ -2560,7 +2560,7 @@ public class OSelectExecutionPlanner {
       boolean profilingEnabled) {
     List<OInternalExecutionPlan> subPlans = new ArrayList<>();
     for (IndexSearchDescriptor desc : indexSearchDescriptors) {
-      OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+      OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
       subPlan.chain(new FetchFromIndexStep(desc, true, ctx, profilingEnabled));
       int[] filterClusterIds = null;
       if (filterClusters != null) {

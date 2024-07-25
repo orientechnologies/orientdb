@@ -49,7 +49,7 @@ public class OInsertExecutionPlanner {
   }
 
   public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
-    OInsertExecutionPlan result = new OInsertExecutionPlan(ctx);
+    OInsertExecutionPlan result = new OInsertExecutionPlan();
 
     if (targetIndex != null) {
       OIndexAbstract.manualIndexesWarning();

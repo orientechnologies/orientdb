@@ -107,7 +107,7 @@ public class OMatchExecutionPlanner {
     buildPatterns(context);
     splitDisjointPatterns(context);
 
-    OSelectExecutionPlan result = new OSelectExecutionPlan(context);
+    OSelectExecutionPlan result = new OSelectExecutionPlan();
     Map<String, Long> estimatedRootEntries =
         estimateRootEntries(aliasClasses, aliasClusters, aliasRids, aliasFilters, context);
     Set<String> aliasesToPrefetch =
@@ -295,7 +295,7 @@ public class OMatchExecutionPlanner {
       Map<String, Long> estimatedRootEntries,
       Set<String> prefetchedAliases,
       boolean profilingEnabled) {
-    OSelectExecutionPlan plan = new OSelectExecutionPlan(context);
+    OSelectExecutionPlan plan = new OSelectExecutionPlan();
     List<EdgeTraversal> sortedEdges = getTopologicalSortedSchedule(estimatedRootEntries, pattern);
 
     boolean first = true;

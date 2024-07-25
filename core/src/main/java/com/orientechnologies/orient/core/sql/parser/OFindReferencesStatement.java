@@ -58,7 +58,7 @@ public class OFindReferencesStatement extends OStatement {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
 
-    return new OLocalResultSet(executionPlan);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   @Override
@@ -76,7 +76,7 @@ public class OFindReferencesStatement extends OStatement {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
 
-    return new OLocalResultSet(executionPlan);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   @Override

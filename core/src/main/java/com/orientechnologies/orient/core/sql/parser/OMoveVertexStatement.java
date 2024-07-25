@@ -52,8 +52,8 @@ public class OMoveVertexStatement extends OStatement {
     } else {
       executionPlan = (OUpdateExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {

@@ -116,8 +116,8 @@ public class ODeleteStatement extends OStatement {
     } else {
       executionPlan = (ODeleteExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   @Override
@@ -140,8 +140,8 @@ public class ODeleteStatement extends OStatement {
     } else {
       executionPlan = (ODeleteExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {

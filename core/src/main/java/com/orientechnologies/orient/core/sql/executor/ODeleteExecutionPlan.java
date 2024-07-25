@@ -5,8 +5,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODeleteExecutionPlan extends OUpdateExecutionPlan {
 
-  public ODeleteExecutionPlan(OCommandContext ctx) {
-    super(ctx);
+  public ODeleteExecutionPlan() {
+    super();
   }
 
   @Override
@@ -28,7 +28,7 @@ public class ODeleteExecutionPlan extends OUpdateExecutionPlan {
 
   @Override
   public OInternalExecutionPlan copy(OCommandContext ctx) {
-    ODeleteExecutionPlan copy = new ODeleteExecutionPlan(ctx);
+    ODeleteExecutionPlan copy = new ODeleteExecutionPlan();
     super.copyOn(copy, ctx);
     return copy;
   }

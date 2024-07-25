@@ -13,8 +13,6 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   private String location;
 
-  protected OCommandContext ctx;
-
   protected List<OExecutionStepInternal> steps = new ArrayList<>();
 
   private OExecutionStepInternal lastStep = null;
@@ -22,14 +20,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   private String statement;
   private String genericStatement;
 
-  public OSelectExecutionPlan(OCommandContext ctx) {
-    this.ctx = ctx;
-  }
-
-  @Override
-  public OCommandContext getContext() {
-    return ctx;
-  }
+  public OSelectExecutionPlan() {}
 
   @Override
   public void close() {
@@ -37,7 +28,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
-  public OExecutionStream start() {
+  public OExecutionStream start(OCommandContext ctx) {
     return lastStep.start(ctx);
   }
 
@@ -132,7 +123,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   @Override
   public OInternalExecutionPlan copy(OCommandContext ctx) {
-    OSelectExecutionPlan copy = new OSelectExecutionPlan(ctx);
+    OSelectExecutionPlan copy = new OSelectExecutionPlan();
     copyOn(copy, ctx);
     return copy;
   }

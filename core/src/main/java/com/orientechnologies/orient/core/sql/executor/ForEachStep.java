@@ -40,7 +40,7 @@ public class ForEachStep extends AbstractExecutionStep {
     while (iterator.hasNext()) {
       ctx.setVariable(loopVariable.getStringValue(), iterator.next());
       OScriptExecutionPlan plan = initPlan(ctx);
-      OExecutionStepInternal result = plan.executeFull();
+      OExecutionStepInternal result = plan.executeFull(ctx);
       if (result != null) {
         return result.start(ctx);
       }
@@ -57,9 +57,9 @@ public class ForEachStep extends AbstractExecutionStep {
   public OScriptExecutionPlan initPlan(OCommandContext ctx) {
     OBasicCommandContext subCtx1 = new OBasicCommandContext(ctx.getDatabase());
     subCtx1.setParent(ctx);
-    OScriptExecutionPlan plan = new OScriptExecutionPlan(subCtx1);
+    OScriptExecutionPlan plan = new OScriptExecutionPlan();
     for (OStatement stm : body) {
-      plan.chain(stm.createExecutionPlan(subCtx1, profilingEnabled), profilingEnabled);
+      plan.chain(stm.createExecutionPlan(subCtx1, profilingEnabled), profilingEnabled, subCtx1);
     }
     return plan;
   }

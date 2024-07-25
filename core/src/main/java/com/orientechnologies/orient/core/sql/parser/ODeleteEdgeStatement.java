@@ -54,8 +54,8 @@ public class ODeleteEdgeStatement extends OStatement {
     } else {
       executionPlan = (ODeleteExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   @Override

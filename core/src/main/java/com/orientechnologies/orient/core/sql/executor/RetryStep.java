@@ -41,7 +41,7 @@ public class RetryStep extends AbstractExecutionStep {
           throw new OCommandInterruptedException("The command has been interrupted");
         }
         OScriptExecutionPlan plan = initPlan(body, ctx);
-        OExecutionStepInternal result = plan.executeFull();
+        OExecutionStepInternal result = plan.executeFull(ctx);
         if (result != null) {
           return result.start(ctx);
         }
@@ -55,7 +55,7 @@ public class RetryStep extends AbstractExecutionStep {
         if (i == retries - 1) {
           if (elseBody != null && elseBody.size() > 0) {
             OScriptExecutionPlan plan = initPlan(elseBody, ctx);
-            OExecutionStepInternal result = plan.executeFull();
+            OExecutionStepInternal result = plan.executeFull(ctx);
             if (result != null) {
               return result.start(ctx);
             }
@@ -75,9 +75,9 @@ public class RetryStep extends AbstractExecutionStep {
   public OScriptExecutionPlan initPlan(List<OStatement> body, OCommandContext ctx) {
     OBasicCommandContext subCtx1 = new OBasicCommandContext(ctx.getDatabase());
     subCtx1.setParent(ctx);
-    OScriptExecutionPlan plan = new OScriptExecutionPlan(subCtx1);
+    OScriptExecutionPlan plan = new OScriptExecutionPlan();
     for (OStatement stm : body) {
-      plan.chain(stm.createExecutionPlan(subCtx1, profilingEnabled), profilingEnabled);
+      plan.chain(stm.createExecutionPlan(subCtx1, profilingEnabled), profilingEnabled, subCtx1);
     }
     return plan;
   }

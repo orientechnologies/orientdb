@@ -28,7 +28,7 @@ public class OMoveVertexExecutionPlanner {
   }
 
   public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
-    OUpdateExecutionPlan result = new OUpdateExecutionPlan(ctx);
+    OUpdateExecutionPlan result = new OUpdateExecutionPlan();
 
     handleSource(result, ctx, this.source, enableProfiling);
     convertToModifiableResult(result, ctx, enableProfiling);

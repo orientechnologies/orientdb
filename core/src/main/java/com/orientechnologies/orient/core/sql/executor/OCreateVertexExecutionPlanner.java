@@ -28,7 +28,7 @@ public class OCreateVertexExecutionPlanner extends OInsertExecutionPlanner {
   public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OInsertExecutionPlan prev = super.createExecutionPlan(ctx, enableProfiling);
     List<OExecutionStep> steps = new ArrayList<>(prev.getSteps());
-    OInsertExecutionPlan result = new OInsertExecutionPlan(ctx);
+    OInsertExecutionPlan result = new OInsertExecutionPlan();
 
     handleCheckType(result, ctx, enableProfiling);
     for (OExecutionStep step : steps) {

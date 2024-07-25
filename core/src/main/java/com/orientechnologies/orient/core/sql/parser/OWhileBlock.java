@@ -56,8 +56,8 @@ public class OWhileBlock extends OStatement {
       executionPlan = (OUpdateExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
 
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   @Override
@@ -76,12 +76,12 @@ public class OWhileBlock extends OStatement {
       executionPlan = (OUpdateExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
 
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
-    OForEachExecutionPlan plan = new OForEachExecutionPlan(ctx);
+    OForEachExecutionPlan plan = new OForEachExecutionPlan();
     plan.chain(new WhileStep(condition, statements, ctx, enableProfiling));
     return plan;
   }

@@ -37,7 +37,7 @@ public class WhileStep extends AbstractExecutionStep {
         throw new OCommandInterruptedException("The command has been interrupted");
 
       OScriptExecutionPlan plan = initPlan(ctx);
-      OExecutionStepInternal result = plan.executeFull();
+      OExecutionStepInternal result = plan.executeFull(ctx);
       if (result != null) {
         return result.start(ctx);
       }
@@ -48,7 +48,7 @@ public class WhileStep extends AbstractExecutionStep {
   public OScriptExecutionPlan initPlan(OCommandContext ctx) {
     OBasicCommandContext subCtx1 = new OBasicCommandContext(ctx.getDatabase());
     subCtx1.setParent(ctx);
-    OScriptExecutionPlan plan = new OScriptExecutionPlan(subCtx1);
+    OScriptExecutionPlan plan = new OScriptExecutionPlan();
     for (OStatement stm : statements) {
       if (stm.originalStatement == null) {
         stm.originalStatement = stm.toString();
@@ -60,7 +60,7 @@ public class WhileStep extends AbstractExecutionStep {
       } else {
         subPlan = stm.createExecutionPlan(subCtx1, profilingEnabled);
       }
-      plan.chain(subPlan, profilingEnabled);
+      plan.chain(subPlan, profilingEnabled, subCtx1);
     }
     return plan;
   }

@@ -10,27 +10,25 @@ import java.util.List;
 public class OUpdateExecutionPlan extends OSelectExecutionPlan {
 
   private List<OResult> result = new ArrayList<>();
-  private int next = 0;
 
-  public OUpdateExecutionPlan(OCommandContext ctx) {
-    super(ctx);
+  public OUpdateExecutionPlan() {
+    super();
   }
 
   @Override
-  public OExecutionStream start() {
+  public OExecutionStream start(OCommandContext ctx) {
     return OExecutionStream.resultIterator(result.iterator());
   }
 
   @Override
   public void reset(OCommandContext ctx) {
     result.clear();
-    next = 0;
     super.reset(ctx);
-    executeInternal();
+    executeInternal(ctx);
   }
 
-  public void executeInternal() throws OCommandExecutionException {
-    OExecutionStream nextBlock = super.start();
+  public void executeInternal(OCommandContext ctx) throws OCommandExecutionException {
+    OExecutionStream nextBlock = super.start(ctx);
     while (nextBlock.hasNext(ctx)) {
       result.add(nextBlock.next(ctx));
     }
@@ -56,7 +54,7 @@ public class OUpdateExecutionPlan extends OSelectExecutionPlan {
 
   @Override
   public OInternalExecutionPlan copy(OCommandContext ctx) {
-    OUpdateExecutionPlan copy = new OUpdateExecutionPlan(ctx);
+    OUpdateExecutionPlan copy = new OUpdateExecutionPlan();
     super.copyOn(copy, ctx);
     return copy;
   }

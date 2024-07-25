@@ -20,7 +20,7 @@ public class ParallelExecStepTest {
           new FetchFromRidsStep(Collections.singleton(new ORecordId(12, i)), ctx, false);
       FetchFromRidsStep step1 =
           new FetchFromRidsStep(Collections.singleton(new ORecordId(12, i)), ctx, false);
-      OInternalExecutionPlan plan = new OSelectExecutionPlan(ctx);
+      OInternalExecutionPlan plan = new OSelectExecutionPlan();
       plan.getSteps().add(step0);
       plan.getSteps().add(step1);
       subPlans.add(plan);
@@ -28,7 +28,7 @@ public class ParallelExecStepTest {
 
     ParallelExecStep step = new ParallelExecStep(subPlans, ctx, false);
 
-    OSelectExecutionPlan plan = new OSelectExecutionPlan(ctx);
+    OSelectExecutionPlan plan = new OSelectExecutionPlan();
     plan.getSteps()
         .add(new FetchFromRidsStep(Collections.singleton(new ORecordId(12, 100)), ctx, false));
     plan.getSteps().add(step);

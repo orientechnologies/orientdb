@@ -85,7 +85,7 @@ public class ODeleteEdgeExecutionPlanner {
     long planningStart = System.currentTimeMillis();
 
     init();
-    ODeleteExecutionPlan result = new ODeleteExecutionPlan(ctx);
+    ODeleteExecutionPlan result = new ODeleteExecutionPlan();
 
     if (leftExpression != null || rightExpression != null) {
       handleGlobalLet(

@@ -11,12 +11,12 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
 
   private List<OResult> result = new ArrayList<>();
 
-  public OInsertExecutionPlan(OCommandContext ctx) {
-    super(ctx);
+  public OInsertExecutionPlan() {
+    super();
   }
 
   @Override
-  public OExecutionStream start() {
+  public OExecutionStream start(OCommandContext ctx) {
     return OExecutionStream.resultIterator(result.iterator());
   }
 
@@ -24,11 +24,11 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
   public void reset(OCommandContext ctx) {
     result.clear();
     super.reset(ctx);
-    executeInternal();
+    executeInternal(ctx);
   }
 
-  public void executeInternal() throws OCommandExecutionException {
-    OExecutionStream nextBlock = super.start();
+  public void executeInternal(OCommandContext ctx) throws OCommandExecutionException {
+    OExecutionStream nextBlock = super.start(ctx);
     while (nextBlock.hasNext(ctx)) {
       result.add(nextBlock.next(ctx));
     }
@@ -44,7 +44,7 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
 
   @Override
   public OInternalExecutionPlan copy(OCommandContext ctx) {
-    OInsertExecutionPlan copy = new OInsertExecutionPlan(ctx);
+    OInsertExecutionPlan copy = new OInsertExecutionPlan();
     super.copyOn(copy, ctx);
     return copy;
   }

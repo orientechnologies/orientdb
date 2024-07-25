@@ -10,8 +10,6 @@ import java.util.stream.Collectors;
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OScriptExecutionPlan implements OInternalExecutionPlan {
 
-  private String location;
-  private final OCommandContext ctx;
   private boolean executed = false;
   protected List<ScriptLineStep> steps = new ArrayList<>();
   private OExecutionStepInternal lastStep = null;
@@ -19,9 +17,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   private String statement;
   private String genericStatement;
 
-  public OScriptExecutionPlan(OCommandContext ctx) {
-    this.ctx = ctx;
-  }
+  public OScriptExecutionPlan() {}
 
   @Override
   public void reset(OCommandContext ctx) {
@@ -30,24 +26,19 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
-  public OCommandContext getContext() {
-    return ctx;
-  }
-
-  @Override
   public void close() {
     lastStep.close();
   }
 
   @Override
-  public OExecutionStream start() {
-    doExecute();
+  public OExecutionStream start(OCommandContext ctx) {
+    doExecute(ctx);
     return finalResult;
   }
 
-  private void doExecute() {
+  private void doExecute(OCommandContext ctx) {
     if (!executed) {
-      executeUntilReturn();
+      executeUntilReturn(ctx);
       executed = true;
       List<OResult> collected = new ArrayList<>();
       OExecutionStream results = lastStep.start(ctx);
@@ -75,7 +66,8 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     return result.toString();
   }
 
-  public void chain(OInternalExecutionPlan nextPlan, boolean profilingEnabled) {
+  public void chain(
+      OInternalExecutionPlan nextPlan, boolean profilingEnabled, OCommandContext ctx) {
     ScriptLineStep lastStep = steps.size() == 0 ? null : steps.get(steps.size() - 1);
     ScriptLineStep nextStep = new ScriptLineStep(nextPlan, ctx, profilingEnabled);
     if (lastStep != null) {
@@ -135,10 +127,11 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   /**
    * executes all the script and returns last statement execution step, so that it can be executed
    * from outside
+   * @param ctx TODO
    *
    * @return
    */
-  public OExecutionStepInternal executeUntilReturn() {
+  public OExecutionStepInternal executeUntilReturn(OCommandContext ctx) {
     if (steps.size() > 0) {
       lastStep = steps.get(steps.size() - 1);
     }
@@ -165,10 +158,11 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   /**
    * executes the whole script and returns last statement ONLY if it's a RETURN, otherwise it
    * returns null;
+   * @param ctx TODO
    *
    * @return
    */
-  public OExecutionStepInternal executeFull() {
+  public OExecutionStepInternal executeFull(OCommandContext ctx) {
     for (int i = 0; i < steps.size(); i++) {
       ScriptLineStep step = steps.get(i);
       if (step.containsReturn()) {

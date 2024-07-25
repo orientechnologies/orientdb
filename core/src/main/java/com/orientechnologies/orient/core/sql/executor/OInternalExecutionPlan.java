@@ -14,14 +14,13 @@ public interface OInternalExecutionPlan extends OExecutionPlan {
    * if the execution can still return N elements, then the result will contain them all. If the
    * execution contains less than N elements, then the result will contain them all, next result(s)
    * will contain zero elements
+   * @param ctx TODO
    *
    * @return
    */
-  OExecutionStream start();
+  OExecutionStream start(OCommandContext ctx);
 
   void reset(OCommandContext ctx);
-
-  OCommandContext getContext();
 
   long getCost();
 

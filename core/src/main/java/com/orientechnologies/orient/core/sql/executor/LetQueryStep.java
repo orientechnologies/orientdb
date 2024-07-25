@@ -35,7 +35,8 @@ public class LetQueryStep extends AbstractExecutionStep {
     } else {
       subExecutionPlan = query.createExecutionPlan(subCtx, profilingEnabled);
     }
-    result.setMetadata(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
+    result.setMetadata(
+        varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan, ctx)));
     return result;
   }
 

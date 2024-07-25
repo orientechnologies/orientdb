@@ -55,8 +55,8 @@ public class OCreateEdgeStatement extends OStatement {
     } else {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   @Override
@@ -73,8 +73,8 @@ public class OCreateEdgeStatement extends OStatement {
     } else {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {

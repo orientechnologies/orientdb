@@ -24,15 +24,10 @@ public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
-  public OCommandContext getContext() {
-    return ctx;
-  }
-
-  @Override
   public void close() {}
 
   @Override
-  public OExecutionStream start() {
+  public OExecutionStream start(OCommandContext ctx) {
     if (executed && result == null) {
       return OExecutionStream.empty();
     }

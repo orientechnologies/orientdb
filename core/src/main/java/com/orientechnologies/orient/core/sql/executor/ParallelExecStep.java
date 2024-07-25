@@ -28,8 +28,7 @@ public class ParallelExecStep extends AbstractExecutionStep {
   }
 
   private OExecutionStream startStep(OInternalExecutionPlan step, OCommandContext ctx) {
-    // TODO: check forwarding of context
-    return ((OInternalExecutionPlan) step).start();
+    return ((OInternalExecutionPlan) step).start(ctx);
   }
 
   @Override

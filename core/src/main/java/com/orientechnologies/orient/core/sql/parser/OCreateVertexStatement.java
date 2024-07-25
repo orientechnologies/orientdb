@@ -42,8 +42,8 @@ public class OCreateVertexStatement extends OStatement {
     } else {
       executionPlan = (OInsertExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   @Override
@@ -66,8 +66,8 @@ public class OCreateVertexStatement extends OStatement {
     } else {
       executionPlan = (OInsertExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
-    executionPlan.executeInternal();
-    return new OLocalResultSet(executionPlan);
+    executionPlan.executeInternal(ctx);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   @Override

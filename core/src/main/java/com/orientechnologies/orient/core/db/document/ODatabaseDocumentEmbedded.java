@@ -785,7 +785,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       OBasicCommandContext ctx = new OBasicCommandContext(this);
       ctx.setInputParameters(params);
 
-      OLocalResultSet result = new OLocalResultSet((OInternalExecutionPlan) plan);
+      OLocalResultSet result = new OLocalResultSet((OInternalExecutionPlan) plan, ctx);
       OLocalResultSetLifecycleDecorator decorator = new OLocalResultSetLifecycleDecorator(result);
       queryStarted(decorator);
 

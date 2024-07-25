@@ -41,7 +41,7 @@ public class MatchFirstStep extends AbstractExecutionStep {
     if (matchedNodes != null) {
       data = OExecutionStream.resultIterator(matchedNodes.iterator());
     } else {
-      data = executionPlan.start();
+      data = executionPlan.start(ctx);
     }
 
     return data.map(

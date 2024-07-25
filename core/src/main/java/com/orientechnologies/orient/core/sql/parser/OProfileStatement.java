@@ -61,10 +61,10 @@ public class OProfileStatement extends OStatement {
     }
 
     if (executionPlan instanceof OUpdateExecutionPlan) {
-      ((OUpdateExecutionPlan) executionPlan).executeInternal();
+      ((OUpdateExecutionPlan) executionPlan).executeInternal(ctx);
     }
 
-    OLocalResultSet rs = new OLocalResultSet((OInternalExecutionPlan) executionPlan);
+    OLocalResultSet rs = new OLocalResultSet((OInternalExecutionPlan) executionPlan, ctx);
 
     while (rs.hasNext()) {
       rs.next();
@@ -97,7 +97,7 @@ public class OProfileStatement extends OStatement {
       executionPlan = statement.createExecutionPlanNoCache(ctx, true);
     }
 
-    OLocalResultSet rs = new OLocalResultSet((OInternalExecutionPlan) executionPlan);
+    OLocalResultSet rs = new OLocalResultSet((OInternalExecutionPlan) executionPlan, ctx);
 
     while (rs.hasNext()) {
       rs.next();

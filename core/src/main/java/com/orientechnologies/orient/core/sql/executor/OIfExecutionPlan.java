@@ -9,24 +9,12 @@ import java.util.List;
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OIfExecutionPlan implements OInternalExecutionPlan {
 
-  private String location;
-
-  private final OCommandContext ctx;
-
-  @Override
-  public OCommandContext getContext() {
-    return ctx;
-  }
-
   protected IfStep step;
 
-  public OIfExecutionPlan(OCommandContext ctx) {
-    this.ctx = ctx;
-  }
+  public OIfExecutionPlan() {}
 
   @Override
   public void reset(OCommandContext ctx) {
-    // TODO
     throw new UnsupportedOperationException();
   }
 
@@ -36,7 +24,7 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
-  public OExecutionStream start() {
+  public OExecutionStream start(OCommandContext ctx) {
     return step.start(ctx);
   }
 
@@ -82,10 +70,10 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
     return false;
   }
 
-  public OExecutionStepInternal executeUntilReturn() {
+  public OExecutionStepInternal executeUntilReturn(OCommandContext ctx) {
     OScriptExecutionPlan plan = step.producePlan(ctx);
     if (plan != null) {
-      return plan.executeUntilReturn();
+      return plan.executeUntilReturn(ctx);
     } else {
       return null;
     }

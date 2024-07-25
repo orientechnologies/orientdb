@@ -83,19 +83,19 @@ public class OIfStatement extends OStatement {
       executionPlan = (OIfExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
 
-    OExecutionStepInternal last = executionPlan.executeUntilReturn();
+    OExecutionStepInternal last = executionPlan.executeUntilReturn(ctx);
     if (last == null) {
       last = new EmptyStep(ctx, false);
     }
     if (isIdempotent()) {
-      OSelectExecutionPlan finalPlan = new OSelectExecutionPlan(ctx);
+      OSelectExecutionPlan finalPlan = new OSelectExecutionPlan();
       finalPlan.chain(last);
-      return new OLocalResultSet(finalPlan);
+      return new OLocalResultSet(finalPlan, ctx);
     } else {
-      OUpdateExecutionPlan finalPlan = new OUpdateExecutionPlan(ctx);
+      OUpdateExecutionPlan finalPlan = new OUpdateExecutionPlan();
       finalPlan.chain(last);
-      finalPlan.executeInternal();
-      return new OLocalResultSet(finalPlan);
+      finalPlan.executeInternal(ctx);
+      return new OLocalResultSet(finalPlan, ctx);
     }
   }
 
@@ -115,26 +115,26 @@ public class OIfStatement extends OStatement {
       executionPlan = (OIfExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
 
-    OExecutionStepInternal last = executionPlan.executeUntilReturn();
+    OExecutionStepInternal last = executionPlan.executeUntilReturn(ctx);
     if (last == null) {
       last = new EmptyStep(ctx, false);
     }
     if (isIdempotent()) {
-      OSelectExecutionPlan finalPlan = new OSelectExecutionPlan(ctx);
+      OSelectExecutionPlan finalPlan = new OSelectExecutionPlan();
       finalPlan.chain(last);
-      return new OLocalResultSet(finalPlan);
+      return new OLocalResultSet(finalPlan, ctx);
     } else {
-      OUpdateExecutionPlan finalPlan = new OUpdateExecutionPlan(ctx);
+      OUpdateExecutionPlan finalPlan = new OUpdateExecutionPlan();
       finalPlan.chain(last);
-      finalPlan.executeInternal();
-      return new OLocalResultSet(finalPlan);
+      finalPlan.executeInternal(ctx);
+      return new OLocalResultSet(finalPlan, ctx);
     }
   }
 
   @Override
   public OIfExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
 
-    OIfExecutionPlan plan = new OIfExecutionPlan(ctx);
+    OIfExecutionPlan plan = new OIfExecutionPlan();
 
     IfStep step = new IfStep(ctx, enableProfiling);
     step.setCondition(this.expression);

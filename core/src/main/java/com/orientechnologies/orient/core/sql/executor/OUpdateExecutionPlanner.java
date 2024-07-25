@@ -66,7 +66,7 @@ public class OUpdateExecutionPlanner {
   }
 
   public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
-    OUpdateExecutionPlan result = new OUpdateExecutionPlan(ctx);
+    OUpdateExecutionPlan result = new OUpdateExecutionPlan();
 
     handleTarget(result, ctx, this.target, this.whereClause, this.timeout, enableProfiling);
     if (updateEdge) {

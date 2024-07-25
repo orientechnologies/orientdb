@@ -353,7 +353,7 @@ public class OSelectStatement extends OStatement {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
 
-    OLocalResultSet result = new OLocalResultSet(executionPlan);
+    OLocalResultSet result = new OLocalResultSet(executionPlan, ctx);
     return result;
   }
 
@@ -372,7 +372,7 @@ public class OSelectStatement extends OStatement {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
 
-    OLocalResultSet result = new OLocalResultSet(executionPlan);
+    OLocalResultSet result = new OLocalResultSet(executionPlan, ctx);
     return result;
   }
 

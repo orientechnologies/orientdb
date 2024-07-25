@@ -25,7 +25,7 @@ public class ODeleteVertexExecutionPlanner {
   }
 
   public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
-    ODeleteExecutionPlan result = new ODeleteExecutionPlan(ctx);
+    ODeleteExecutionPlan result = new ODeleteExecutionPlan();
 
     if (handleIndexAsTarget(result, fromClause.getItem().getIndex(), whereClause, ctx)) {
       if (limit != null) {

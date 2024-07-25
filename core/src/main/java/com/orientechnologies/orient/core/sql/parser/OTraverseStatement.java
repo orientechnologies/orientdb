@@ -80,7 +80,7 @@ public class OTraverseStatement extends OStatement {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
 
-    return new OLocalResultSet(executionPlan);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   @Override
@@ -98,7 +98,7 @@ public class OTraverseStatement extends OStatement {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
 
-    return new OLocalResultSet(executionPlan);
+    return new OLocalResultSet(executionPlan, ctx);
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {

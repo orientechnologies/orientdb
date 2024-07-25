@@ -53,6 +53,6 @@ public abstract class ODDLStatement extends OStatement {
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
-    return new ODDLExecutionPlan(ctx, this);
+    return new ODDLExecutionPlan(this);
   }
 }

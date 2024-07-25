@@ -26,7 +26,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
       OInternalExecutionPlan ep = this.subPlans.get(i);
       final int pos = i;
       if (stream == null) {
-        OExecutionStream es = ep.start();
+        OExecutionStream es = ep.start(ctx);
         stream =
             es.stream(ctx)
                 .map(
@@ -39,7 +39,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
         stream =
             stream.flatMap(
                 (val) -> {
-                  OExecutionStream es = ep.start();
+                  OExecutionStream es = ep.start(ctx);
                   return es.stream(ctx)
                       .map(
                           (value) -> {

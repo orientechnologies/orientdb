@@ -32,7 +32,7 @@ public class SubQueryStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    OExecutionStream parentRs = subExecuitonPlan.start();
+    OExecutionStream parentRs = subExecuitonPlan.start(ctx);
     return parentRs.map(this::mapResult);
   }
 

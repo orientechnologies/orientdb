@@ -33,7 +33,7 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
   private boolean matchesPattern(OResult nextItem, OCommandContext ctx) {
     OSelectExecutionPlan plan = createExecutionPlan(nextItem, ctx);
-    OExecutionStream rs = plan.start();
+    OExecutionStream rs = plan.start(ctx);
     try {
       return rs.hasNext(ctx);
     } finally {
@@ -42,7 +42,7 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
   }
 
   private OSelectExecutionPlan createExecutionPlan(OResult nextItem, OCommandContext ctx) {
-    OSelectExecutionPlan plan = new OSelectExecutionPlan(ctx);
+    OSelectExecutionPlan plan = new OSelectExecutionPlan();
     plan.chain(
         new AbstractExecutionStep(ctx, profilingEnabled) {
 

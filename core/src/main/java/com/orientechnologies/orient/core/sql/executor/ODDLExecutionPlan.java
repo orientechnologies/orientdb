@@ -12,12 +12,9 @@ import java.util.List;
 public class ODDLExecutionPlan implements OInternalExecutionPlan {
 
   private final ODDLStatement statement;
-  private OCommandContext ctx;
-
   private boolean executed = false;
 
-  public ODDLExecutionPlan(OCommandContext ctx, ODDLStatement stm) {
-    this.ctx = ctx;
+  public ODDLExecutionPlan(ODDLStatement stm) {
     this.statement = stm;
   }
 
@@ -25,12 +22,7 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
   public void close() {}
 
   @Override
-  public OCommandContext getContext() {
-    return ctx;
-  }
-
-  @Override
-  public OExecutionStream start() {
+  public OExecutionStream start(OCommandContext ctx) {
     return OExecutionStream.empty();
   }
 
@@ -55,7 +47,7 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
           "Trying to execute a result-set twice. Please use reset()");
     }
     executed = true;
-    OExecutionStream result = statement.executeDDL(this.ctx);
+    OExecutionStream result = statement.executeDDL(ctx);
     return result;
   }
 

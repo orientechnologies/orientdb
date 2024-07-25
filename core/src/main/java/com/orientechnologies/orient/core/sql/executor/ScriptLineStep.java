@@ -22,17 +22,17 @@ public class ScriptLineStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     if (plan instanceof OInsertExecutionPlan) {
-      ((OInsertExecutionPlan) plan).executeInternal();
+      ((OInsertExecutionPlan) plan).executeInternal(ctx);
     } else if (plan instanceof ODeleteExecutionPlan) {
-      ((ODeleteExecutionPlan) plan).executeInternal();
+      ((ODeleteExecutionPlan) plan).executeInternal(ctx);
     } else if (plan instanceof OUpdateExecutionPlan) {
-      ((OUpdateExecutionPlan) plan).executeInternal();
+      ((OUpdateExecutionPlan) plan).executeInternal(ctx);
     } else if (plan instanceof ODDLExecutionPlan) {
       ((ODDLExecutionPlan) plan).executeInternal((OBasicCommandContext) ctx);
     } else if (plan instanceof OSingleOpExecutionPlan) {
       ((OSingleOpExecutionPlan) plan).executeInternal((OBasicCommandContext) ctx);
     }
-    return plan.start();
+    return plan.start(ctx);
   }
 
   public boolean containsReturn() {
@@ -60,7 +60,7 @@ public class ScriptLineStep extends AbstractExecutionStep {
 
   public OExecutionStepInternal executeUntilReturn(OCommandContext ctx) {
     if (plan instanceof OScriptExecutionPlan) {
-      return ((OScriptExecutionPlan) plan).executeUntilReturn();
+      return ((OScriptExecutionPlan) plan).executeUntilReturn(ctx);
     }
     if (plan instanceof OSingleOpExecutionPlan) {
       if (((OSingleOpExecutionPlan) plan).statement instanceof OReturnStatement) {
@@ -68,7 +68,7 @@ public class ScriptLineStep extends AbstractExecutionStep {
       }
     }
     if (plan instanceof OIfExecutionPlan) {
-      return ((OIfExecutionPlan) plan).executeUntilReturn();
+      return ((OIfExecutionPlan) plan).executeUntilReturn(ctx);
     }
     throw new IllegalStateException();
   }

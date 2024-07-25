@@ -67,7 +67,7 @@ public class OSqlScriptExecutor extends OAbstractScriptExecutor {
   }
 
   private OResultSet executeInternal(List<OStatement> statements, OCommandContext scriptContext) {
-    OScriptExecutionPlan plan = new OScriptExecutionPlan(scriptContext);
+    OScriptExecutionPlan plan = new OScriptExecutionPlan();
 
     plan.setStatement(
         statements.stream().map(OStatement::toString).collect(Collectors.joining(";")));
@@ -85,7 +85,7 @@ public class OSqlScriptExecutor extends OAbstractScriptExecutor {
 
       if (nestedTxLevel <= 0) {
         OInternalExecutionPlan sub = stm.createExecutionPlan(scriptContext);
-        plan.chain(sub, false);
+        plan.chain(sub, false, scriptContext);
       } else {
         lastRetryBlock.add(stm);
       }
@@ -107,14 +107,14 @@ public class OSqlScriptExecutor extends OAbstractScriptExecutor {
                     ((OCommitStatement) stm).getElseFail(),
                     scriptContext,
                     false);
-            ORetryExecutionPlan retryPlan = new ORetryExecutionPlan(scriptContext);
+            ORetryExecutionPlan retryPlan = new ORetryExecutionPlan();
             retryPlan.chain(step);
-            plan.chain(retryPlan, false);
+            plan.chain(retryPlan, false, scriptContext);
             lastRetryBlock = new ArrayList<>();
           } else {
             for (OStatement statement : lastRetryBlock) {
               OInternalExecutionPlan sub = statement.createExecutionPlan(scriptContext);
-              plan.chain(sub, false);
+              plan.chain(sub, false, scriptContext);
             }
           }
         }
@@ -124,7 +124,7 @@ public class OSqlScriptExecutor extends OAbstractScriptExecutor {
         scriptContext.declareScriptVariable(((OLetStatement) stm).getName().getStringValue());
       }
     }
-    return new OLocalResultSet(plan);
+    return new OLocalResultSet(plan, scriptContext);
   }
 
   @Override

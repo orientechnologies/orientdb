@@ -48,7 +48,7 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
   }
 
   private void calculate(OCommandContext ctx) {
-    ctx.setVariable(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
+    ctx.setVariable(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan, ctx)));
   }
 
   private List<OResult> toList(OLocalResultSet oLocalResultSet) {

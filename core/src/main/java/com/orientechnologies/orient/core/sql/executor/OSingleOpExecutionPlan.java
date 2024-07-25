@@ -12,32 +12,25 @@ import java.util.List;
 public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
 
   protected final OSimpleExecStatement statement;
-  private OCommandContext ctx;
 
   private boolean executed = false;
   private OExecutionStream result;
 
-  public OSingleOpExecutionPlan(OCommandContext ctx, OSimpleExecStatement stm) {
-    this.ctx = ctx;
+  public OSingleOpExecutionPlan(OSimpleExecStatement stm) {
     this.statement = stm;
-  }
-
-  @Override
-  public OCommandContext getContext() {
-    return ctx;
   }
 
   @Override
   public void close() {}
 
   @Override
-  public OExecutionStream start() {
+  public OExecutionStream start(OCommandContext ctx) {
     if (executed && result == null) {
       return OExecutionStream.empty();
     }
     if (!executed) {
       executed = true;
-      result = statement.executeSimple(this.ctx);
+      result = statement.executeSimple(ctx);
     }
     return result;
   }
@@ -63,7 +56,7 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
           "Trying to execute a result-set twice. Please use reset()");
     }
     executed = true;
-    result = statement.executeSimple(this.ctx);
+    result = statement.executeSimple(ctx);
     return result;
   }
 

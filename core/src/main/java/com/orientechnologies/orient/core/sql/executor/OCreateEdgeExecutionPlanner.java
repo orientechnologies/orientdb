@@ -78,7 +78,7 @@ public class OCreateEdgeExecutionPlanner {
       }
     }
 
-    OInsertExecutionPlan result = new OInsertExecutionPlan(ctx);
+    OInsertExecutionPlan result = new OInsertExecutionPlan();
 
     handleCheckType(result, ctx, enableProfiling);
 

@@ -24,7 +24,7 @@ public class IfStep extends AbstractExecutionStep {
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     OScriptExecutionPlan plan = producePlan(ctx);
     if (plan != null) {
-      return plan.start();
+      return plan.start(ctx);
     } else {
       return OExecutionStream.empty();
     }
@@ -46,9 +46,10 @@ public class IfStep extends AbstractExecutionStep {
   public OScriptExecutionPlan initPositivePlan(OCommandContext ctx) {
     OBasicCommandContext subCtx1 = new OBasicCommandContext(ctx.getDatabase());
     subCtx1.setParent(ctx);
-    OScriptExecutionPlan positivePlan = new OScriptExecutionPlan(subCtx1);
+    OScriptExecutionPlan positivePlan = new OScriptExecutionPlan();
     for (OStatement stm : positiveStatements) {
-      positivePlan.chain(stm.createExecutionPlan(subCtx1, profilingEnabled), profilingEnabled);
+      positivePlan.chain(
+          stm.createExecutionPlan(subCtx1, profilingEnabled), profilingEnabled, subCtx1);
     }
     return positivePlan;
   }
@@ -58,9 +59,10 @@ public class IfStep extends AbstractExecutionStep {
       if (negativeStatements.size() > 0) {
         OBasicCommandContext subCtx2 = new OBasicCommandContext(ctx.getDatabase());
         subCtx2.setParent(ctx);
-        OScriptExecutionPlan negativePlan = new OScriptExecutionPlan(subCtx2);
+        OScriptExecutionPlan negativePlan = new OScriptExecutionPlan();
         for (OStatement stm : negativeStatements) {
-          negativePlan.chain(stm.createExecutionPlan(subCtx2, profilingEnabled), profilingEnabled);
+          negativePlan.chain(
+              stm.createExecutionPlan(subCtx2, profilingEnabled), profilingEnabled, subCtx2);
         }
         return negativePlan;
       }

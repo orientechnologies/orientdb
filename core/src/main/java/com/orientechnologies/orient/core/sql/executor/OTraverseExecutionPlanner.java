@@ -70,7 +70,7 @@ public class OTraverseExecutionPlanner {
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
-    OSelectExecutionPlan result = new OSelectExecutionPlan(ctx);
+    OSelectExecutionPlan result = new OSelectExecutionPlan();
 
     handleFetchFromTarger(result, ctx, enableProfiling);
 
