@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutionStream;
 
 /** Created by luigidellaquila on 08/07/16. */
 public class EmptyDataGeneratorStep extends AbstractExecutionStep {
@@ -18,7 +17,7 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    return new OProduceExecutionStream(this::create).limit(size);
+    return OExecutionStream.produce(this::create).limit(size);
   }
 
   private OResult create(OCommandContext ctx) {

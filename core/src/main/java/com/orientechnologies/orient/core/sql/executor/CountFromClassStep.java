@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
 /**
@@ -36,7 +35,7 @@ public class CountFromClassStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    return new OProduceExecutionStream(this::produce).limit(1);
+    return OExecutionStream.produce(this::produce).limit(1);
   }
 
   private OResult produce(OCommandContext ctx) {

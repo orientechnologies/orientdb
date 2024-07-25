@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
-import com.orientechnologies.orient.core.sql.executor.resultset.OMultipleExecutionStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -89,7 +88,7 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
           public void close(OCommandContext ctx) {}
         };
 
-    return new OMultipleExecutionStream(res);
+    return OExecutionStream.multiplStreams(res);
   }
 
   @Override

@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OResultMapper;
+import com.orientechnologies.orient.core.sql.executor.resultset.OMapResult;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
@@ -30,7 +30,7 @@ public class InsertValuesStep extends AbstractExecutionStep {
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     OExecutionStream upstream = getPrev().get().start(ctx);
     return upstream.map(
-        new OResultMapper() {
+        new OMapResult() {
 
           private int nextValueSet = 0;
 

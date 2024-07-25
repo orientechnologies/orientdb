@@ -5,10 +5,10 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 
 public final class OFlatMapExecutionStream implements OExecutionStream {
   private final OExecutionStream base;
-  private final OMapExecutionStream map;
+  private final OFlatMapResult map;
   private OExecutionStream currentResultSet;
 
-  public OFlatMapExecutionStream(OExecutionStream base, OMapExecutionStream map) {
+  public OFlatMapExecutionStream(OExecutionStream base, OFlatMapResult map) {
     this.base = base;
     this.map = map;
   }

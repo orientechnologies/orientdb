@@ -4,7 +4,6 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
-import com.orientechnologies.orient.core.sql.executor.resultset.OMultipleExecutionStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,7 +45,7 @@ public class ParallelExecStep extends AbstractExecutionStep {
           public void close(OCommandContext ctx) {}
         };
 
-    return new OMultipleExecutionStream(res);
+    return OExecutionStream.multiplStreams(res);
   }
 
   @Override

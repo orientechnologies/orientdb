@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
-import com.orientechnologies.orient.core.sql.executor.resultset.OMultipleExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
@@ -99,7 +98,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
             }
           }
         };
-    return new OMultipleExecutionStream(res);
+    return OExecutionStream.multiplStreams(res);
   }
 
   private OResult readResult(OCommandContext ctx, ORawPair<Object, ORID> entry) {

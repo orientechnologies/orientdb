@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
-import com.orientechnologies.orient.core.sql.executor.resultset.OMultipleExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
@@ -99,7 +98,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
             }
           }
         };
-    return new OMultipleExecutionStream(res).onClose(this::close);
+    return OExecutionStream.multiplStreams(res).onClose(this::close);
   }
 
   private void close(OCommandContext context) {

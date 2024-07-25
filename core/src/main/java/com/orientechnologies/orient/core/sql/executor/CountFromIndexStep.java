@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
 
 /**
@@ -33,7 +32,7 @@ public class CountFromIndexStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    return new OProduceExecutionStream(this::produce).limit(1);
+    return OExecutionStream.produce(this::produce).limit(1);
   }
 
   private OResult produce(OCommandContext ctx) {

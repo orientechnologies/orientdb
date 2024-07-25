@@ -17,15 +17,23 @@ public interface OExecutionStream {
 
   void close(OCommandContext ctx);
 
-  public default OExecutionStream map(OResultMapper mapper) {
-    return new OMapperExecutionStream(this, mapper);
+  public static OExecutionStream produce(OProduceResult producer) {
+    return new OProduceExecutionStream(producer);
+  }
+
+  public static OExecutionStream multiplStreams(OExecutionStreamProducer producer) {
+    return new OMultipleExecutionStream(producer);
+  }
+
+  public default OExecutionStream map(OMapResult mapper) {
+    return new OMapExecutionStream(this, mapper);
   }
 
   public default OExecutionStream filter(OFilterResult filter) {
     return new OFilterExecutionStream(this, filter);
   }
 
-  public default OExecutionStream flatMap(OMapExecutionStream map) {
+  public default OExecutionStream flatMap(OFlatMapResult map) {
     return new OFlatMapExecutionStream(this, map);
   }
 

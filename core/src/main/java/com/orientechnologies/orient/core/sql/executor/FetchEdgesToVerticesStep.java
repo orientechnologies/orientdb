@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
-import com.orientechnologies.orient.core.sql.executor.resultset.OMultipleExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Collections;
 import java.util.Iterator;
@@ -58,7 +57,7 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
           public void close(OCommandContext ctx) {}
         };
 
-    return new OMultipleExecutionStream(res);
+    return OExecutionStream.multiplStreams(res);
   }
 
   private Stream<Object> init() {

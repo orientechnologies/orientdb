@@ -4,7 +4,6 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.executor.resultset.OProduceExecutionStream;
 
 /**
  * Returns an OResult containing metadata regarding the database
@@ -20,7 +19,7 @@ public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    return new OProduceExecutionStream(this::produce).limit(1);
+    return OExecutionStream.produce(this::produce).limit(1);
   }
 
   private OResult produce(OCommandContext ctx) {
