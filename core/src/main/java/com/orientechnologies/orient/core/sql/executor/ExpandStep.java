@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStreamProducer;
 import java.util.Iterator;
 
 /**
@@ -37,6 +38,11 @@ public class ExpandStep extends AbstractExecutionStep {
 
     String propName = nextAggregateItem.getPropertyNames().iterator().next();
     Object projValue = nextAggregateItem.getProperty(propName);
+    return valueStream(projValue, ctx);
+  }
+
+  private static OExecutionStream valueStream(Object projValue, OCommandContext ctx) {
+
     if (projValue == null) {
       return OExecutionStream.empty();
     }
@@ -51,12 +57,33 @@ public class ExpandStep extends AbstractExecutionStep {
     } else if (projValue instanceof OResult) {
       return OExecutionStream.singleton((OResult) projValue);
     } else if (projValue instanceof Iterator) {
-      return OExecutionStream.iterator((Iterator) projValue);
+      return nestedExpand((Iterator) projValue);
     } else if (projValue instanceof Iterable) {
-      return OExecutionStream.iterator(((Iterable) projValue).iterator());
+      return nestedExpand(((Iterable) projValue).iterator());
     } else {
       return OExecutionStream.empty();
     }
+  }
+
+  private static OExecutionStream nestedExpand(final Iterator input) {
+    OExecutionStreamProducer producer =
+        new OExecutionStreamProducer() {
+          private Iterator source = input;
+
+          @Override
+          public OExecutionStream next(OCommandContext ctx) {
+            return valueStream(source.next(), ctx);
+          }
+
+          @Override
+          public boolean hasNext(OCommandContext ctx) {
+            return source.hasNext();
+          }
+
+          @Override
+          public void close(OCommandContext ctx) {}
+        };
+    return OExecutionStream.multiplStreams(producer);
   }
 
   @Override

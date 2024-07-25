@@ -1215,13 +1215,12 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   @Test
   public void testLinkListSequence1() {
     initLinkListSequence(db);
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
-            "select expand(children.children.children) from LinkListSequence where name = 'root'");
-    List<ODocument> results = db.query(sql);
+    String sql =
+        "select expand(children.children.children) from LinkListSequence where name = 'root'";
+    List<OResult> results = db.query(sql).stream().toList();
     assertEquals(results.size(), 4);
-    for (ODocument result : results) {
-      String value = result.field("name");
+    for (OResult result : results) {
+      String value = result.getProperty("name");
       assertEquals(value.length(), 5);
     }
   }
