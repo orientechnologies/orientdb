@@ -20,19 +20,11 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /** Merges two records. Useful when a record needs to be updated rather than created. */
 public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransformer {
@@ -40,7 +32,7 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
   protected Object joinValue;
   protected String lookup;
   protected ACTION unresolvedLinkAction = ACTION.NOTHING;
-  private OSQLQuery<ODocument> sqlQuery;
+  private String sqlQuery;
   private OIndex index;
 
   @Override
@@ -61,13 +53,12 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
 
   protected Object lookup(
       ODatabaseDocumentInternal db, Object joinValue, final boolean iReturnRIDS) {
-    Object result = null;
+    List<ORID> result = null;
 
     if (joinValue != null) {
       if (sqlQuery == null && index == null) {
         // ONLY THE FIRST TIME
-        if (lookup.toUpperCase(Locale.ENGLISH).startsWith("SELECT"))
-          sqlQuery = new OSQLSynchQuery<>(lookup);
+        if (lookup.toUpperCase(Locale.ENGLISH).startsWith("SELECT")) sqlQuery = lookup;
         else {
           index = db.getMetadata().getIndexManagerInternal().getIndex(db, lookup);
           if (index == null) {
@@ -75,56 +66,25 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
                 .getMessageHandler()
                 .warn(this, "WARNING: index %s not found. Lookups could be really slow", lookup);
             final String[] parts = lookup.split("\\.");
-            sqlQuery =
-                new OSQLSynchQuery<ODocument>(
-                    "SELECT FROM " + parts[0] + " WHERE " + parts[1] + " = ?");
+            sqlQuery = "SELECT FROM " + parts[0] + " WHERE " + parts[1] + " = ?";
+          } else {
+            sqlQuery = "SELECT expand(rid) FROM index: " + lookup + " WHERE  key = ?";
           }
         }
       }
 
-      if (index != null) {
-        final OType idxFieldType = index.getDefinition().getTypes()[0];
-        joinValue = OType.convert(joinValue, idxFieldType.getDefaultJavaType());
-        //noinspection resource
-        if (index.getInternal() != null) {
-          result = index.getInternal().getRids(joinValue);
-        } else {
-          result = index.get(joinValue);
-        }
-      } else {
-        if (sqlQuery instanceof OSQLSynchQuery) ((OSQLSynchQuery) sqlQuery).resetPagination();
-
-        result = db.query(sqlQuery, joinValue);
-      }
-
-      if (result instanceof Stream) {
-        @SuppressWarnings("unchecked")
-        final Stream<ORID> stream = (Stream<ORID>) result;
-        final List<ORID> rids = stream.collect(Collectors.toList());
-        if (rids.isEmpty()) {
-          return null;
-        }
-        return rids;
-      }
-      if (result != null && result instanceof Collection) {
-        final Collection coll = (Collection) result;
-
-        if (!coll.isEmpty()) {
-          if (iReturnRIDS) {
-            // CONVERT COLLECTION OF RECORDS IN RIDS
-            final List<ORID> resultRIDs = new ArrayList<ORID>(coll.size());
-            for (Object o : coll) {
-              if (o instanceof OIdentifiable) resultRIDs.add(((OIdentifiable) o).getIdentity());
-            }
-            result = resultRIDs;
-          }
-        } else result = null;
-      } else if (result instanceof OIdentifiable) {
-        if (iReturnRIDS) result = ((OIdentifiable) result).getIdentity();
-        else result = ((OIdentifiable) result).getRecord();
+      result =
+          db.query(sqlQuery, joinValue).stream()
+              .filter(
+                  (x) -> {
+                    return x.getIdentity().isPresent();
+                  })
+              .map((x) -> x.getIdentity().get())
+              .toList();
+      if (result.isEmpty()) {
+        return null;
       }
     }
-
     return result;
   }
 
