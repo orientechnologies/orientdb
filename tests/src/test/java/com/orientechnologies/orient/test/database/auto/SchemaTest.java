@@ -371,7 +371,7 @@ public class SchemaTest extends DocumentDBBaseTest {
   public void invalidClusterWrongClusterId() {
 
     try {
-      database.command(new OCommandSQL("create class Antani cluster 212121")).execute();
+      database.command("create class Antani cluster 212121").close();
       Assert.fail();
     } catch (Exception e) {
       Assert.assertTrue(e instanceof OClusterDoesNotExistException);
@@ -382,7 +382,7 @@ public class SchemaTest extends DocumentDBBaseTest {
   public void invalidClusterWrongClusterName() {
 
     try {
-      database.command(new OCommandSQL("create class Antani cluster blaaa")).execute();
+      database.command("create class Antani cluster blaaa").close();
       Assert.fail();
 
     } catch (Exception e) {
@@ -394,7 +394,7 @@ public class SchemaTest extends DocumentDBBaseTest {
   public void invalidClusterWrongKeywords() {
 
     try {
-      database.command(new OCommandSQL("create class Antani the pen is on the table")).execute();
+      database.command("create class Antani the pen is on the table").close();
       Assert.fail();
     } catch (Exception e) {
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
@@ -427,7 +427,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   public void testMinimumClustersAndClusterSelection() {
 
-    database.command(new OCommandSQL("alter database minimumclusters 3")).execute();
+    database.command("alter database minimumclusters 3").close();
 
     try {
       database.command("create class multipleclusters").close();
@@ -458,9 +458,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.assertEquals(deleted, 2);
 
       // CHANGE CLASS STRATEGY to BALANCED
-      database
-          .command(new OCommandSQL("alter class multipleclusters clusterselection balanced"))
-          .execute();
+      database.command("alter class multipleclusters clusterselection balanced").close();
       database.reload();
       database.getMetadata().getSchema().reload();
 
