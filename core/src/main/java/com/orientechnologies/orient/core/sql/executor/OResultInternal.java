@@ -327,7 +327,7 @@ public class OResultInternal implements OResult {
   @Override
   public Optional<ORID> getIdentity() {
     if (element != null) {
-      return Optional.of(element.getIdentity());
+      return Optional.ofNullable(element.getIdentity());
     }
     return Optional.empty();
   }
