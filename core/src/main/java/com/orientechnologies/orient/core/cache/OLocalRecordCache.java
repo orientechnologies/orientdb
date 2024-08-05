@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.cache;
 
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -26,6 +28,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Local cache. it's one to one with record database instances. It is needed to avoid cases when
@@ -33,18 +37,21 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OLocalRecordCache extends OAbstractRecordCache {
+public class OLocalRecordCache {
+  protected ORecordCache underlying;
+  protected String profilerPrefix = "noname";
+  protected String profilerMetadataPrefix = "noname";
+  protected int excludedCluster = -1;
   private String cacheHit;
   private String cacheMiss;
 
   public OLocalRecordCache() {
-    super(
+    underlying =
         Orient.instance()
             .getLocalRecordCache()
-            .newInstance(OGlobalConfiguration.CACHE_LOCAL_IMPL.getValueAsString()));
+            .newInstance(OGlobalConfiguration.CACHE_LOCAL_IMPL.getValueAsString());
   }
 
-  @Override
   public void startup() {
     ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
 
@@ -53,8 +60,20 @@ public class OLocalRecordCache extends OAbstractRecordCache {
 
     cacheHit = profilerPrefix + "cache.found";
     cacheMiss = profilerPrefix + "cache.notFound";
+    underlying.startup();
 
-    super.startup();
+    Orient.instance()
+        .getProfiler()
+        .registerHookValue(
+            profilerPrefix + "current",
+            "Number of entries in cache",
+            METRIC_TYPE.SIZE,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return getSize();
+              }
+            },
+            profilerMetadataPrefix + "current");
   }
 
   /**
@@ -105,16 +124,21 @@ public class OLocalRecordCache extends OAbstractRecordCache {
    * @param rid unique identifier of record
    */
   public void deleteRecord(final ORID rid) {
-    super.deleteRecord(rid);
+    underlying.remove(rid);
   }
 
   public void shutdown() {
-    super.shutdown();
+    underlying.shutdown();
+
+    if (Orient.instance().getProfiler() != null) {
+      Orient.instance().getProfiler().unregisterHookValue(profilerPrefix + "enabled");
+      Orient.instance().getProfiler().unregisterHookValue(profilerPrefix + "current");
+      Orient.instance().getProfiler().unregisterHookValue(profilerPrefix + "max");
+    }
   }
 
-  @Override
   public void clear() {
-    super.clear();
+    underlying.clear();
   }
 
   /** Invalidates the cache emptying all the records. */
@@ -125,5 +149,61 @@ public class OLocalRecordCache extends OAbstractRecordCache {
   @Override
   public String toString() {
     return "DB level cache records = " + getSize();
+  }
+
+  /**
+   * Tell whether cache is enabled
+   *
+   * @return {@code true} if cache enabled at call time, otherwise - {@code false}
+   */
+  public boolean isEnabled() {
+    return underlying.isEnabled();
+  }
+
+  /**
+   * Switch cache state between enabled and disabled
+   *
+   * @param enable pass {@code true} to enable, otherwise - {@code false}
+   */
+  public void setEnable(final boolean enable) {
+    if (enable) underlying.enable();
+    else underlying.disable();
+  }
+
+  /**
+   * Remove record with specified identifier
+   *
+   * @param rid unique identifier of record
+   * @return record stored in cache if any, otherwise - {@code null}
+   */
+  public ORecord freeRecord(final ORID rid) {
+    return underlying.remove(rid);
+  }
+
+  /**
+   * Remove all records belonging to specified cluster
+   *
+   * @param cid identifier of cluster
+   */
+  public void freeCluster(final int cid) {
+    final Set<ORID> toRemove = new HashSet<ORID>(underlying.size() / 2);
+
+    final Set<ORID> keys = new HashSet<ORID>(underlying.keys());
+    for (final ORID id : keys) if (id.getClusterId() == cid) toRemove.add(id);
+
+    for (final ORID ridToRemove : toRemove) underlying.remove(ridToRemove);
+  }
+
+  /**
+   * Total number of cached entries
+   *
+   * @return non-negative integer
+   */
+  public int getSize() {
+    return underlying.size();
+  }
+
+  public void clearRecords() {
+    underlying.clearRecords();
   }
 }
