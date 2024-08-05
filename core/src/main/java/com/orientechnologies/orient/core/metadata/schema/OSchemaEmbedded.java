@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
+import com.orientechnologies.orient.core.exception.OClusterDoesNotExistException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -155,7 +156,7 @@ public class OSchemaEmbedded extends OSchemaShared {
         throw new OSchemaException("Found class name null or empty");
 
       checkEmbedded();
-
+      checkClustersExist(clusterIdsToAdd, database);
       checkClustersAreAbsent(clusterIdsToAdd);
 
       final int[] clusterIds;
@@ -388,6 +389,7 @@ public class OSchemaEmbedded extends OSchemaShared {
 
       checkEmbedded();
 
+      checkClustersExist(clusterIdsToAdd, database);
       checkClustersAreAbsent(clusterIdsToAdd);
 
       final int[] clusterIds;
@@ -480,6 +482,8 @@ public class OSchemaEmbedded extends OSchemaShared {
     acquireSchemaWriteLock(database);
     try {
 
+      checkClustersExist(clusterIds, database);
+
       final String key = className.toLowerCase(Locale.ENGLISH);
       if (classes.containsKey(key) && retry == 0)
         throw new OSchemaException("Class '" + className + "' already exists in current database");
@@ -563,19 +567,43 @@ public class OSchemaEmbedded extends OSchemaShared {
     }
   }
 
+  protected void checkClustersExist(final int[] clusterIds, ODatabaseDocumentInternal database) {
+    if (clusterIds != null) {
+      for (int clusterId : clusterIds) {
+        checkClusterIdExists(database, clusterId);
+      }
+    }
+  }
+
+  protected void checkClusterIdExists(ODatabaseDocumentInternal database, int clusterId) {
+    if (clusterId < 0) return;
+    String clusterName = database.getClusterNameById(clusterId);
+    if (clusterName == null) {
+      throw new OClusterDoesNotExistException(
+          "Cluster with id "
+              + clusterId
+              + " does not exist inside of storage "
+              + database.getName());
+    }
+  }
+
   protected void checkClustersAreAbsent(final int[] iClusterIds) {
     if (iClusterIds == null) return;
 
     for (int clusterId : iClusterIds) {
       if (clusterId < 0) continue;
 
-      if (clustersToClasses.containsKey(clusterId))
-        throw new OSchemaException(
-            "Cluster with id "
-                + clusterId
-                + " already belongs to class "
-                + clustersToClasses.get(clusterId));
+      checkClusterOwnedByOther(clusterId);
     }
+  }
+
+  protected void checkClusterOwnedByOther(int clusterId) {
+    if (clustersToClasses.containsKey(clusterId))
+      throw new OSchemaException(
+          "Cluster with id "
+              + clusterId
+              + " already belongs to class "
+              + clustersToClasses.get(clusterId));
   }
 
   public void dropClass(ODatabaseDocumentInternal database, final String className) {
@@ -820,6 +848,7 @@ public class OSchemaEmbedded extends OSchemaShared {
       if (clusterId < 0) return;
 
       checkEmbedded();
+      checkClusterIdExists(database, clusterId);
 
       final OClass existingCls = clustersToClasses.get(clusterId);
       if (existingCls != null && !cls.equals(existingCls))
@@ -842,6 +871,7 @@ public class OSchemaEmbedded extends OSchemaShared {
       if (clusterId < 0) return;
 
       checkEmbedded();
+      checkClusterIdExists(database, clusterId);
 
       final OView existingView = clustersToViews.get(clusterId);
       if (existingView != null && !view.equals(existingView))

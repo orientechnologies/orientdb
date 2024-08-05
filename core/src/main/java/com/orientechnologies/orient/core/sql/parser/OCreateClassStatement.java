@@ -65,7 +65,6 @@ public class OCreateClassStatement extends ODDLStatement {
           schema.createClass(
               name.getStringValue(), totalClusterNo.getValue().intValue(), superclasses);
     } else if (clusters != null) {
-      clusters.stream().map(x -> x.getValue().intValue()).collect(Collectors.toList());
       int[] clusterIds = new int[clusters.size()];
       for (int i = 0; i < clusters.size(); i++) {
         clusterIds[i] = clusters.get(i).getValue().intValue();
