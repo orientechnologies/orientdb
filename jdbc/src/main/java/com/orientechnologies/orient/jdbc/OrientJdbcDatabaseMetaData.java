@@ -26,8 +26,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -629,7 +629,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern)
       throws SQLException {
     database.activateOnCurrentThread();
-    final OInternalResultSet resultSet = new OInternalResultSet();
+    final OResultSetReady resultSet = new OResultSetReady();
 
     OFunctionLibrary functionLibrary = database.getMetadata().getFunctionLibrary();
 
@@ -661,7 +661,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       throws SQLException {
     database.activateOnCurrentThread();
 
-    final OInternalResultSet resultSet = new OInternalResultSet();
+    final OResultSetReady resultSet = new OResultSetReady();
     OFunctionLibrary functionLibrary = database.getMetadata().getFunctionLibrary();
 
     for (String functionName : functionLibrary.getFunctionNames()) {
@@ -712,7 +712,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     database.activateOnCurrentThread();
     final Collection<OClass> classes = database.getMetadata().getSchema().getClasses();
 
-    OInternalResultSet resultSet = new OInternalResultSet();
+    OResultSetReady resultSet = new OResultSetReady();
 
     final List tableTypes = types != null ? Arrays.asList(types) : TABLE_TYPES;
     for (OClass cls : classes) {
@@ -752,7 +752,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   @Override
   public ResultSet getSchemas() throws SQLException {
     database.activateOnCurrentThread();
-    OInternalResultSet resultSet = new OInternalResultSet();
+    OResultSetReady resultSet = new OResultSetReady();
 
     final OResultInternal field = new OResultInternal();
     field.setProperty("TABLE_SCHEM", database.getName());
@@ -771,7 +771,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getCatalogs() throws SQLException {
     database.activateOnCurrentThread();
 
-    OInternalResultSet resultSet = new OInternalResultSet();
+    OResultSetReady resultSet = new OResultSetReady();
 
     final OResultInternal field = new OResultInternal();
     field.setProperty("TABLE_CAT", database.getName());
@@ -790,7 +790,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getTableTypes() throws SQLException {
     database.activateOnCurrentThread();
 
-    OInternalResultSet resultSet = new OInternalResultSet();
+    OResultSetReady resultSet = new OResultSetReady();
     for (String tableType : TABLE_TYPES) {
       final OResultInternal field = new OResultInternal();
       field.setProperty("TABLE_TYPE", tableType);
@@ -814,7 +814,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       throws SQLException {
     database.activateOnCurrentThread();
 
-    final OInternalResultSet resultSet = new OInternalResultSet();
+    final OResultSetReady resultSet = new OResultSetReady();
 
     final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
 
@@ -877,7 +877,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       if (oIndex.getType().equals(INDEX_TYPE.UNIQUE.name())) uniqueIndexes.add(oIndex);
     }
 
-    final OInternalResultSet resultSet = new OInternalResultSet();
+    final OResultSetReady resultSet = new OResultSetReady();
 
     for (OIndex unique : uniqueIndexes) {
       int keyFiledSeq = 1;
@@ -919,7 +919,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
     return new OrientJdbcResultSet(
         new OrientJdbcStatement(connection),
-        new OInternalResultSet(),
+        new OResultSetReady(),
         ResultSet.TYPE_FORWARD_ONLY,
         ResultSet.CONCUR_READ_ONLY,
         ResultSet.HOLD_CURSORS_OVER_COMMIT);
@@ -944,7 +944,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public ResultSet getTypeInfo() throws SQLException {
-    final OInternalResultSet resultSet = new OInternalResultSet();
+    final OResultSetReady resultSet = new OResultSetReady();
 
     OResultInternal res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.BINARY.toString());
@@ -1100,7 +1100,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       if (!unique || oIndex.getType().equals(INDEX_TYPE.UNIQUE.name())) indexes.add(oIndex);
     }
 
-    final OInternalResultSet resultSet = new OInternalResultSet();
+    final OResultSetReady resultSet = new OResultSetReady();
     for (OIndex idx : indexes) {
       boolean notUniqueIndex = !(idx.getType().equals(INDEX_TYPE.UNIQUE.name()));
 
@@ -1194,7 +1194,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     database.activateOnCurrentThread();
     final Collection<OClass> classes = database.getMetadata().getSchema().getClasses();
 
-    OInternalResultSet resultSet = new OInternalResultSet();
+    OResultSetReady resultSet = new OResultSetReady();
     for (OClass cls : classes) {
       final OResultInternal res = new OResultInternal();
       res.setProperty("TYPE_CAT", (Object) null);
@@ -1243,7 +1243,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     database.activateOnCurrentThread();
     final OClass cls = database.getMetadata().getSchema().getClass(typeNamePattern);
 
-    final OInternalResultSet resultSet = new OInternalResultSet();
+    final OResultSetReady resultSet = new OResultSetReady();
     if (cls != null && cls.getSuperClass() != null) {
       final OResultInternal res = new OResultInternal();
       res.setProperty("TABLE_CAT", catalog);
@@ -1268,7 +1268,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       throws SQLException {
     database.activateOnCurrentThread();
     final OClass cls = database.getMetadata().getSchema().getClass(tableNamePattern);
-    final OInternalResultSet resultSet = new OInternalResultSet();
+    final OResultSetReady resultSet = new OResultSetReady();
 
     if (cls != null && cls.getSuperClass() != null) {
       final OResultInternal res = new OResultInternal();
@@ -1368,7 +1368,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       throws SQLException {
 
     database.activateOnCurrentThread();
-    OInternalResultSet resultSet = new OInternalResultSet();
+    OResultSetReady resultSet = new OResultSetReady();
     for (String fName : database.getMetadata().getFunctionLibrary().getFunctionNames()) {
       final OResultInternal res = new OResultInternal();
       res.setProperty("FUNCTION_CAT", (Object) null);
@@ -1393,7 +1393,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern)
       throws SQLException {
     database.activateOnCurrentThread();
-    final OInternalResultSet resultSet = new OInternalResultSet();
+    final OResultSetReady resultSet = new OResultSetReady();
 
     final OFunction f =
         database.getMetadata().getFunctionLibrary().getFunction(functionNamePattern);

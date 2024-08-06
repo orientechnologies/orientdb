@@ -27,8 +27,8 @@ import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -108,8 +108,8 @@ public class OMultiValue {
       }
       return i;
     }
-    if (iObject instanceof OInternalResultSet) {
-      return ((OInternalResultSet) iObject).size();
+    if (iObject instanceof OResultSetReady) {
+      return ((OResultSetReady) iObject).size();
     }
     return 0;
   }

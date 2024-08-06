@@ -92,8 +92,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     } else if (!(toValues instanceof Iterator)) {
       toValues = Collections.singleton(toValues).iterator();
     }
-    if (toValues instanceof OInternalResultSet) {
-      toValues = ((OInternalResultSet) toValues).copy();
+    if (toValues instanceof OResultSetReady) {
+      toValues = ((OResultSetReady) toValues).copy();
     }
 
     Iterator toIter = (Iterator) toValues;
@@ -118,8 +118,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     } else if (!(fromValues instanceof Iterator)) {
       fromValues = Collections.singleton(fromValues).iterator();
     }
-    if (fromValues instanceof OInternalResultSet) {
-      fromValues = ((OInternalResultSet) fromValues).copy();
+    if (fromValues instanceof OResultSetReady) {
+      fromValues = ((OResultSetReady) fromValues).copy();
     }
     Iterator fromIter = (Iterator) fromValues;
     if (fromIter instanceof OResultSet) {

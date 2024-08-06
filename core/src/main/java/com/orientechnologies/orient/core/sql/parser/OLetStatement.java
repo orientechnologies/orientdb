@@ -3,9 +3,9 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Map;
 
@@ -36,7 +36,7 @@ public class OLetStatement extends OSimpleExecStatement {
       result = statement.execute(ctx.getDatabase(), params, ctx, false);
     }
     if (result instanceof OResultSet) {
-      OInternalResultSet rs = new OInternalResultSet();
+      OResultSetReady rs = new OResultSetReady();
       ((OResultSet) result).stream().forEach(x -> rs.add(x));
       rs.setPlan(((OResultSet) result).getExecutionPlan().orElse(null));
       ((OResultSet) result).close();

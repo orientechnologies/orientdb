@@ -5,9 +5,9 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
 import java.util.Map;
 
 public class OHaRemoveServerStatement extends OStatement {
@@ -41,7 +41,7 @@ public class OHaRemoveServerStatement extends OStatement {
     boolean res = internalDb.removeHaServer(serverName.getStringValue());
     OResultInternal r = new OResultInternal();
     r.setProperty("result", res);
-    OInternalResultSet rs = new OInternalResultSet();
+    OResultSetReady rs = new OResultSetReady();
     rs.add(r);
     return rs;
   }
@@ -53,7 +53,7 @@ public class OHaRemoveServerStatement extends OStatement {
     boolean res = internalDb.removeHaServer(serverName.getStringValue());
     OResultInternal r = new OResultInternal();
     r.setProperty("result", res);
-    OInternalResultSet rs = new OInternalResultSet();
+    OResultSetReady rs = new OResultSetReady();
     rs.add(r);
     return rs;
   }

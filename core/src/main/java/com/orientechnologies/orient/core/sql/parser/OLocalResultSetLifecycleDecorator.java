@@ -2,9 +2,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.document.OQueryLifecycleListener;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +28,7 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
     queryId = "" + System.currentTimeMillis() + "_" + counter.incrementAndGet();
   }
 
-  public OLocalResultSetLifecycleDecorator(OInternalResultSet rsCopy, String queryId) {
+  public OLocalResultSetLifecycleDecorator(OResultSetReady rsCopy, String queryId) {
     this.entity = rsCopy;
     this.queryId = queryId;
   }
@@ -85,7 +85,7 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
   }
 
   public boolean isDetached() {
-    return entity instanceof OInternalResultSet;
+    return entity instanceof OResultSetReady;
   }
 
   public OResultSet getInternal() {

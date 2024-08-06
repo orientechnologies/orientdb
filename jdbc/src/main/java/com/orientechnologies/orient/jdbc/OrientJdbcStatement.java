@@ -20,10 +20,10 @@ import static java.lang.Boolean.parseBoolean;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -106,7 +106,7 @@ public class OrientJdbcStatement implements Statement {
     if (sql.equalsIgnoreCase("select 1")) {
       OResultInternal element = new OResultInternal();
       element.setProperty("1", 1);
-      OInternalResultSet rs = new OInternalResultSet();
+      OResultSetReady rs = new OResultSetReady();
       rs.add(element);
       oResultSet = rs;
     } else {

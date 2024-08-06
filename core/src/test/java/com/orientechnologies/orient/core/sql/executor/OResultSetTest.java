@@ -8,7 +8,7 @@ import org.junit.Test;
 public class OResultSetTest {
   @Test
   public void testResultStream() {
-    OInternalResultSet rs = new OInternalResultSet();
+    OResultSetReady rs = new OResultSetReady();
     for (int i = 0; i < 10; i++) {
       OResultInternal item = new OResultInternal();
       item.setProperty("i", i);
@@ -22,7 +22,7 @@ public class OResultSetTest {
 
   @Test
   public void testResultEmptyVertexStream() {
-    OInternalResultSet rs = new OInternalResultSet();
+    OResultSetReady rs = new OResultSetReady();
     for (int i = 0; i < 10; i++) {
       OResultInternal item = new OResultInternal();
       item.setProperty("i", i);
@@ -35,7 +35,7 @@ public class OResultSetTest {
 
   @Test
   public void testResultEdgeVertexStream() {
-    OInternalResultSet rs = new OInternalResultSet();
+    OResultSetReady rs = new OResultSetReady();
     for (int i = 0; i < 10; i++) {
       OResultInternal item = new OResultInternal();
       item.setProperty("i", i);

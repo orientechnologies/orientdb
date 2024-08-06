@@ -44,8 +44,8 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.security.ODefaultSecuritySystem;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OServerStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -1176,7 +1176,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     //    if (!statement.isIdempotent()) {
     // fetch all, close and detach
     // TODO pagination!
-    OInternalResultSet prefetched = new OInternalResultSet();
+    OResultSetReady prefetched = new OResultSetReady();
     original.forEachRemaining(x -> prefetched.add(x));
     original.close();
     result = new OLocalResultSetLifecycleDecorator(prefetched);
@@ -1197,7 +1197,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     //    if (!statement.isIdempotent()) {
     // fetch all, close and detach
     // TODO pagination!
-    OInternalResultSet prefetched = new OInternalResultSet();
+    OResultSetReady prefetched = new OResultSetReady();
     original.forEachRemaining(x -> prefetched.add(x));
     original.close();
     result = new OLocalResultSetLifecycleDecorator(prefetched);

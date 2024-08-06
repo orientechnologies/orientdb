@@ -18,9 +18,9 @@ package com.orientechnologies.orient.jdbc;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
 import com.orientechnologies.orient.jdbc.OrientJdbcParameterMetadata.ParameterDefinition;
 import java.io.IOException;
 import java.io.InputStream;
@@ -92,7 +92,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
       // OPTIMIZATION
       OResultInternal element = new OResultInternal();
       element.setProperty("1", 1);
-      OInternalResultSet rs = new OInternalResultSet();
+      OResultSetReady rs = new OResultSetReady();
       rs.add(element);
       oResultSet = rs;
     } else {
