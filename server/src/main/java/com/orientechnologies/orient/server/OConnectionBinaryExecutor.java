@@ -1368,9 +1368,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     // copy the result-set to make sure that the execution is successful
     Stream<OResult> stream = rs.stream();
-    if (database
-        .getActiveQueries()
-        .containsKey(((OLocalResultSetLifecycleDecorator) rs).getQueryId())) {
+    OLocalResultSetLifecycleDecorator irs = (OLocalResultSetLifecycleDecorator) rs;
+    if (database.getActiveQueries().containsKey(irs.getQueryId())) {
       stream = stream.limit(request.getRecordsPerPage());
     }
     List<OResult> rsCopy = stream.collect(Collectors.toList());
@@ -1382,13 +1381,16 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
     database.getSharedContext().unregisterListener(metadataListener);
     Optional<OExecutionPlan> plan;
-    if (OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
+    if (request.isIncludePlan()) {
+      plan = rs.getExecutionPlan();
+      irs.setIncludePlan(true);
+    } else if (OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
       plan = rs.getExecutionPlan();
     } else {
       plan = Optional.empty();
     }
     return new OQueryResponse(
-        ((OLocalResultSetLifecycleDecorator) rs).getQueryId(),
+        irs.getQueryId(),
         txChanges,
         rsCopy,
         plan,
@@ -1435,7 +1437,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       }
       boolean hasNext = rs.hasNext();
       Optional<OExecutionPlan> plan;
-      if (OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
+      if (rs.isIncludePlan()) {
+        plan = rs.getExecutionPlan();
+      } else if (OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
         plan = rs.getExecutionPlan();
       } else {
         plan = Optional.empty();

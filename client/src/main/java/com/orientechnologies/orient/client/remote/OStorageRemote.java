@@ -1295,12 +1295,18 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
 
   public ORemoteQueryResult execute(
       ODatabaseDocumentRemote db, String language, String query, Map args) {
-    int recordsPerPage = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
+    int recordsPerPage =
+        db.getConfiguration()
+            .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }
+    boolean sendExecutionPlan =
+        db.getConfiguration()
+            .getValueAsBoolean(OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN);
     OQueryRequest request =
         OQueryRequest.executeMap(language, query, args, db.getSerializer(), recordsPerPage);
+    request.setIncludePlan(sendExecutionPlan);
     OQueryResponse response =
         networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs =
@@ -1326,7 +1332,10 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   }
 
   public void fetchNextPage(ODatabaseDocumentRemote database, ORemoteResultSet rs) {
-    int recordsPerPage = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
+    int recordsPerPage =
+        database
+            .getConfiguration()
+            .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }

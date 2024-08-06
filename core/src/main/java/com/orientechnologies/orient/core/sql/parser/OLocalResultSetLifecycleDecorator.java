@@ -19,6 +19,7 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
   private OResultSet entity;
   private List<OQueryLifecycleListener> lifecycleListeners = new ArrayList<>();
   private String queryId;
+  private boolean includePlan = false;
 
   private boolean hasNextPage;
 
@@ -89,5 +90,13 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
 
   public OResultSet getInternal() {
     return entity;
+  }
+
+  public void setIncludePlan(boolean includePlan) {
+    this.includePlan = includePlan;
+  }
+
+  public boolean isIncludePlan() {
+    return includePlan;
   }
 }

@@ -38,6 +38,9 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   public static byte COMMAND = 0;
   public static byte QUERY = 1;
   public static byte EXECUTE = 2;
+  public static byte COMMAND_PLAN = 3;
+  public static byte QUERY_PLAN = 4;
+  public static byte EXECUTE_PLAN = 5;
 
   private int recordsPerPage = 100;
   private ORecordSerializer serializer;
@@ -192,8 +195,45 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     return paramsDoc.field("params");
   }
 
+  public void setIncludePlan(boolean include) {
+    if (include) {
+      if (COMMAND == operationType) {
+        operationType = COMMAND_PLAN;
+      } else if (QUERY == operationType) {
+        operationType = QUERY_PLAN;
+      } else if (EXECUTE == operationType) {
+        operationType = EXECUTE_PLAN;
+      }
+    } else {
+      if (operationType == COMMAND_PLAN) {
+        operationType = COMMAND;
+      } else if (operationType == QUERY_PLAN) {
+        operationType = QUERY;
+      } else if (operationType == EXECUTE_PLAN) {
+        operationType = EXECUTE;
+      }
+    }
+  }
+
+  public boolean isIncludePlan() {
+    if (operationType == COMMAND_PLAN
+        || operationType == QUERY_PLAN
+        || operationType == EXECUTE_PLAN) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public byte getOperationType() {
-    return operationType;
+    if (COMMAND == operationType || operationType == COMMAND_PLAN) {
+      return COMMAND;
+    } else if (QUERY == operationType || operationType == QUERY_PLAN) {
+      return QUERY;
+    } else if (EXECUTE == operationType || operationType == EXECUTE_PLAN) {
+      return EXECUTE;
+    }
+    throw new UnsupportedOperationException();
   }
 
   public boolean isNamedParams() {
