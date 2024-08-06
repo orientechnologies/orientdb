@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
@@ -1380,12 +1381,17 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       txChanges = ((OTransactionOptimistic) database.getTransaction()).isChanged();
     }
     database.getSharedContext().unregisterListener(metadataListener);
-
+    Optional<OExecutionPlan> plan;
+    if (OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
+      plan = rs.getExecutionPlan();
+    } else {
+      plan = Optional.empty();
+    }
     return new OQueryResponse(
         ((OLocalResultSetLifecycleDecorator) rs).getQueryId(),
         txChanges,
         rsCopy,
-        rs.getExecutionPlan(),
+        plan,
         hasNext,
         rs.getQueryStats(),
         metadataListener.isUpdated());
@@ -1428,14 +1434,14 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         i++;
       }
       boolean hasNext = rs.hasNext();
+      Optional<OExecutionPlan> plan;
+      if (OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
+        plan = rs.getExecutionPlan();
+      } else {
+        plan = Optional.empty();
+      }
       return new OQueryResponse(
-          rs.getQueryId(),
-          false,
-          rsCopy,
-          rs.getExecutionPlan(),
-          hasNext,
-          rs.getQueryStats(),
-          false);
+          rs.getQueryId(), false, rsCopy, plan, hasNext, rs.getQueryStats(), false);
     } finally {
       orientDB.endCommand();
     }
