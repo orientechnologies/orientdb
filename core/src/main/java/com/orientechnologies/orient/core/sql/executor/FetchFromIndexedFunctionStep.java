@@ -65,10 +65,10 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
     try {
       OExecutionStepInternal.basicDeserialize(fromResult, this);
       functionCondition = new OBinaryCondition(-1);
-      functionCondition.deserialize(fromResult.getProperty("functionCondition "));
+      functionCondition.deserialize(fromResult.getProperty("functionCondition"));
 
       queryTarget = new OFromClause(-1);
-      queryTarget.deserialize(fromResult.getProperty("functionCondition "));
+      queryTarget.deserialize(fromResult.getProperty("queryTarget"));
 
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
