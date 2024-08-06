@@ -5,7 +5,10 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionStep;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+
 import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation;
 
 /** Created by Enrico Risa on 25/05/2017. */
@@ -37,5 +40,10 @@ public class OGremlinExecutionPlan implements OExecutionPlan {
     result.setProperty("prettyPrint", prettyPrint(0, 2));
 
     return result;
+  }
+  
+  @Override
+  public Set<String> getIndexes() {
+    return Collections.emptySet();
   }
 }
