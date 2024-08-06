@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
 import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation;
 
 /** Created by Enrico Risa on 25/05/2017. */
@@ -41,7 +40,7 @@ public class OGremlinExecutionPlan implements OExecutionPlan {
 
     return result;
   }
-  
+
   @Override
   public Set<String> getIndexes() {
     return Collections.emptySet();

@@ -37,9 +37,9 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
 import groovy.lang.MissingPropertyException;
 import java.util.HashMap;
 import java.util.Map;
@@ -133,14 +133,14 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
 
         return new OGremlinScriptResultSet(iText, result, this.transformer, false);
       } else if (eval instanceof TraversalExplanation) {
-        OInternalResultSet resultSet = new OInternalResultSet();
+        OResultSetReady resultSet = new OResultSetReady();
         resultSet.setPlan(new OGremlinExecutionPlan((TraversalExplanation) eval));
         OResultInternal item = new OResultInternal();
         item.setProperty("executionPlan", ((TraversalExplanation) eval).prettyPrint());
         resultSet.add(item);
         return resultSet;
       } else {
-        OInternalResultSet resultSet = new OInternalResultSet();
+        OResultSetReady resultSet = new OResultSetReady();
         OResultInternal item = new OResultInternal();
         item.setProperty("value", this.transformer.toResult(eval));
         resultSet.add(item);
