@@ -30,6 +30,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
@@ -43,48 +44,85 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   private String language;
   private String statement;
   private byte operationType;
-  private Map<String, Object> params;
   private byte[] paramsBytes;
   private boolean namedParams;
 
-  public OQueryRequest(
-      String language,
-      String iCommand,
-      Object[] positionalParams,
-      byte operationType,
+  public static OQueryRequest commandArray(
+      String command, Object[] params, ORecordSerializer serializer, int recordsPerPage) {
+    return new OQueryRequest(
+        "SQL", command, paramsDoc(params), false, COMMAND, serializer, recordsPerPage);
+  }
+
+  public static OQueryRequest commandMap(
+      String command,
+      Map<String, Object> params,
       ORecordSerializer serializer,
       int recordsPerPage) {
-    this.language = language;
-    this.statement = iCommand;
-    params = OStorageRemote.paramsArrayToParamsMap(positionalParams);
-    namedParams = false;
-    this.serializer = serializer;
-    this.recordsPerPage = recordsPerPage;
-    if (this.recordsPerPage <= 0) {
-      this.recordsPerPage = 100;
-    }
-    this.operationType = operationType;
-    ODocument parms = new ODocument();
-    parms.field("params", this.params);
+    return new OQueryRequest(
+        "SQL", command, paramsDoc(params), true, COMMAND, serializer, recordsPerPage);
+  }
 
-    paramsBytes = OMessageHelper.getRecordBytes(parms, serializer);
+  public static OQueryRequest queryArray(
+      String command, Object[] params, ORecordSerializer serializer, int recordsPerPage) {
+    return new OQueryRequest(
+        "SQL", command, paramsDoc(params), false, QUERY, serializer, recordsPerPage);
+  }
+
+  public static OQueryRequest queryMap(
+      String command,
+      Map<String, Object> params,
+      ORecordSerializer serializer,
+      int recordsPerPage) {
+    return new OQueryRequest(
+        "SQL", command, paramsDoc(params), true, QUERY, serializer, recordsPerPage);
+  }
+
+  public static OQueryRequest executeArray(
+      String language,
+      String command,
+      Object[] params,
+      ORecordSerializer serializer,
+      int recordsPerPage) {
+    return new OQueryRequest(
+        language, command, paramsDoc(params), false, EXECUTE, serializer, recordsPerPage);
+  }
+
+  public static OQueryRequest executeMap(
+      String language,
+      String command,
+      Map<String, Object> params,
+      ORecordSerializer serializer,
+      int recordsPerPage) {
+    return new OQueryRequest(
+        language, command, paramsDoc(params), true, EXECUTE, serializer, recordsPerPage);
+  }
+
+  private static ODocument paramsDoc(Object[] params) {
+    HashMap<String, Object> pm = OStorageRemote.paramsArrayToParamsMap(params);
+    ODocument pd = new ODocument();
+    pd.field("params", pm);
+    return pd;
+  }
+
+  private static ODocument paramsDoc(Map<String, Object> params) {
+    ODocument pd = new ODocument();
+    pd.field("params", params);
+    return pd;
   }
 
   public OQueryRequest(
       String language,
-      String iCommand,
-      Map<String, Object> namedParams,
+      String command,
+      ODocument params,
+      boolean namedParams,
       byte operationType,
       ORecordSerializer serializer,
       int recordsPerPage) {
     this.language = language;
-    this.statement = iCommand;
-    this.params = (Map) namedParams;
-    ODocument parms = new ODocument();
-    parms.field("params", this.params);
+    this.statement = command;
 
-    paramsBytes = OMessageHelper.getRecordBytes(parms, serializer);
-    this.namedParams = true;
+    paramsBytes = OMessageHelper.getRecordBytes(params, serializer);
+    this.namedParams = namedParams;
     this.serializer = serializer;
     this.recordsPerPage = recordsPerPage;
     if (this.recordsPerPage <= 0) {
@@ -148,14 +186,10 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   }
 
   public Map<String, Object> getParams() {
-    if (params == null && this.paramsBytes != null) {
-      // params
-      ODocument paramsDoc = new ODocument();
-      paramsDoc.setTrackingChanges(false);
-      serializer.fromStream(this.paramsBytes, paramsDoc, null);
-      this.params = paramsDoc.field("params");
-    }
-    return params;
+    ODocument paramsDoc = new ODocument();
+    paramsDoc.setTrackingChanges(false);
+    serializer.fromStream(this.paramsBytes, paramsDoc, null);
+    return paramsDoc.field("params");
   }
 
   public byte getOperationType() {

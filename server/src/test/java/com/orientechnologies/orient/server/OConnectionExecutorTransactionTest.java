@@ -249,11 +249,9 @@ public class OConnectionExecutorTransactionTest {
     assertTrue(response instanceof OBeginTransactionResponse);
 
     OQueryRequest query =
-        new OQueryRequest(
-            "sql",
+        OQueryRequest.commandMap(
             "update test set name='bla'",
             new HashMap<>(),
-            OQueryRequest.COMMAND,
             ORecordSerializerNetworkFactory.INSTANCE.current(),
             20);
     OQueryResponse queryResponse = (OQueryResponse) query.execute(executor);
@@ -279,11 +277,9 @@ public class OConnectionExecutorTransactionTest {
     assertTrue(response instanceof OBeginTransactionResponse);
 
     OQueryRequest query =
-        new OQueryRequest(
-            "sql",
+        OQueryRequest.commandMap(
             "update test set name='bla'",
             new HashMap<>(),
-            OQueryRequest.COMMAND,
             ORecordSerializerNetworkFactory.INSTANCE.current(),
             20);
     OQueryResponse queryResponse = (OQueryResponse) query.execute(executor);

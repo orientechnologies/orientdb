@@ -1111,8 +1111,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       recordsPerPage = 100;
     }
     OQueryRequest request =
-        new OQueryRequest(
-            "sql", query, args, OQueryRequest.QUERY, db.getSerializer(), recordsPerPage);
+        OQueryRequest.queryArray(query, args, db.getSerializer(), recordsPerPage);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     ORemoteResultSet rs =
         new ORemoteResultSet(
@@ -1135,9 +1134,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }
-    OQueryRequest request =
-        new OQueryRequest(
-            "sql", query, args, OQueryRequest.QUERY, db.getSerializer(), recordsPerPage);
+    OQueryRequest request = OQueryRequest.queryMap(query, args, db.getSerializer(), recordsPerPage);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
 
     ORemoteResultSet rs =
@@ -1162,8 +1159,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       recordsPerPage = 100;
     }
     OQueryRequest request =
-        new OQueryRequest(
-            "sql", query, args, OQueryRequest.COMMAND, db.getSerializer(), recordsPerPage);
+        OQueryRequest.commandArray(query, args, db.getSerializer(), recordsPerPage);
     OQueryResponse response =
         networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs =
@@ -1188,8 +1184,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       recordsPerPage = 100;
     }
     OQueryRequest request =
-        new OQueryRequest(
-            "sql", query, args, OQueryRequest.COMMAND, db.getSerializer(), recordsPerPage);
+        OQueryRequest.commandMap(query, args, db.getSerializer(), recordsPerPage);
     OQueryResponse response =
         networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs =
@@ -1277,8 +1272,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       recordsPerPage = 100;
     }
     OQueryRequest request =
-        new OQueryRequest(
-            language, query, args, OQueryRequest.EXECUTE, db.getSerializer(), recordsPerPage);
+        OQueryRequest.executeArray(language, query, args, db.getSerializer(), recordsPerPage);
     OQueryResponse response =
         networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs =
@@ -1306,8 +1300,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       recordsPerPage = 100;
     }
     OQueryRequest request =
-        new OQueryRequest(
-            language, query, args, OQueryRequest.EXECUTE, db.getSerializer(), recordsPerPage);
+        OQueryRequest.executeMap(language, query, args, db.getSerializer(), recordsPerPage);
     OQueryResponse response =
         networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs =

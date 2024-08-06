@@ -21,11 +21,9 @@ public class OQueryRequestTest {
   public void testWithPositionalParams() throws IOException {
     Object[] params = new Object[] {1, "Foo"};
     OQueryRequest request =
-        new OQueryRequest(
-            "sql",
+        OQueryRequest.queryArray(
             "select from Foo where a = ?",
             params,
-            OQueryRequest.QUERY,
             ORecordSerializerNetworkFactory.INSTANCE.current(),
             123);
 
@@ -52,11 +50,9 @@ public class OQueryRequestTest {
     params.put("foo", "bar");
     params.put("baz", 12);
     OQueryRequest request =
-        new OQueryRequest(
-            "sql",
+        OQueryRequest.queryMap(
             "select from Foo where a = ?",
             params,
-            OQueryRequest.QUERY,
             ORecordSerializerNetworkFactory.INSTANCE.current(),
             123);
 
@@ -79,11 +75,9 @@ public class OQueryRequestTest {
   public void testWithNoParams() throws IOException {
     Map<String, Object> params = null;
     OQueryRequest request =
-        new OQueryRequest(
-            "sql",
+        OQueryRequest.queryMap(
             "select from Foo where a = ?",
             params,
-            OQueryRequest.QUERY,
             ORecordSerializerNetworkFactory.INSTANCE.current(),
             123);
 
