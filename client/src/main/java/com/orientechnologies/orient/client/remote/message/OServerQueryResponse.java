@@ -159,6 +159,7 @@ public class OServerQueryResponse implements OBinaryResponse {
 
   private OExecutionStep toInfoStep(OResult x) {
     OInfoExecutionStep result = new OInfoExecutionStep();
+    result.setSourceResult(x);
     result.setName(x.getProperty("name"));
     result.setType(x.getProperty("type"));
     result.setTargetNode(x.getProperty("targetNode"));

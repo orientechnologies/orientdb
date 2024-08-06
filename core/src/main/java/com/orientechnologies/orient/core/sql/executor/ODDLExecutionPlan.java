@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
 import com.orientechnologies.orient.core.sql.parser.ODDLStatement;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODDLExecutionPlan implements OInternalExecutionPlan {
@@ -67,5 +68,10 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
     result.setProperty("cost", getCost());
     result.setProperty("prettyPrint", prettyPrint(0, 2));
     return result;
+  }
+
+  @Override
+  public Set<String> getIndexes() {
+    return Collections.emptySet();
   }
 }

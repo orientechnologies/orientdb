@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /** Created by luigidellaquila on 19/12/16. */
 public class OInfoExecutionPlan implements OExecutionPlan {
@@ -75,5 +77,14 @@ public class OInfoExecutionPlan implements OExecutionPlan {
   @Override
   public String toString() {
     return prettyPrint;
+  }
+
+  @Override
+  public Set<String> getIndexes() {
+    Set<String> indexes = new HashSet<>();
+    for (OExecutionStep chilStep : steps) {
+      OExecutionStepInternal.fillIndexes(chilStep, indexes);
+    }
+    return indexes;
   }
 }

@@ -762,6 +762,17 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   @Override
+  public void serializeToResult(OResultInternal result) {
+    result.setProperty("index", desc.getIndex().getName());
+    if (desc.getKeyCondition() != null) {
+      result.setProperty("key", desc.getKeyCondition().toString());
+      if (desc.getAdditionalRangeCondition() != null) {
+        result.setProperty("toKey", desc.getAdditionalRangeCondition().toString());
+      }
+    }
+  }
+
+  @Override
   public OResult serialize() {
     OResultInternal result = OExecutionStepInternal.basicSerialize(this);
     result.setProperty("indexName", desc.getIndex().getName());

@@ -13,6 +13,7 @@ public class OInfoExecutionStep implements OExecutionStep {
   private String description;
   private long cost;
   private List<OExecutionStep> subSteps = new ArrayList<>();
+  private OResult sourceResult;
 
   @Override
   public String getName() {
@@ -46,7 +47,11 @@ public class OInfoExecutionStep implements OExecutionStep {
 
   @Override
   public OResult toResult() {
-    return null;
+    return sourceResult;
+  }
+
+  public void setSourceResult(OResult sourceResult) {
+    this.sourceResult = sourceResult;
   }
 
   public void setName(String name) {

@@ -5,7 +5,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Created by luigidellaquila on 06/07/16. */
@@ -170,5 +172,14 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   @Override
   public void setGenericStatement(String stm) {
     this.genericStatement = stm;
+  }
+
+  @Override
+  public Set<String> getIndexes() {
+    Set<String> indexes = new HashSet<>();
+    for (OExecutionStep chilStep : steps) {
+      OExecutionStepInternal.fillIndexes(chilStep, indexes);
+    }
+    return indexes;
   }
 }

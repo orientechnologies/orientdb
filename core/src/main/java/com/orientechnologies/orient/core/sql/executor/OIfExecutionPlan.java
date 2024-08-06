@@ -4,7 +4,9 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OIfExecutionPlan implements OInternalExecutionPlan {
@@ -81,5 +83,12 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
 
   public boolean containsReturn() {
     return step.containsReturn();
+  }
+
+  @Override
+  public Set<String> getIndexes() {
+    Set<String> indexes = new HashSet<>();
+    OExecutionStepInternal.fillIndexes(step, indexes);
+    return indexes;
   }
 }

@@ -6,6 +6,8 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Execution Steps are the building blocks of a query execution plan
@@ -143,5 +145,34 @@ public interface OExecutionStepInternal extends OExecutionStep {
 
   default boolean canBeCached() {
     return false;
+  }
+
+  default OResult toResult() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("name", getName());
+    result.setProperty("type", getType());
+    result.setProperty("targetNode", getType());
+    result.setProperty(OInternalExecutionPlan.JAVA_TYPE, getClass().getName());
+    result.setProperty("cost", getCost());
+    result.setProperty(
+        "subSteps",
+        getSubSteps() == null
+            ? null
+            : getSubSteps().stream().map(x -> x.toResult()).collect(Collectors.toList()));
+    result.setProperty("description", getDescription());
+    serializeToResult(result);
+    return result;
+  }
+
+  default void serializeToResult(OResultInternal result) {}
+
+  static void fillIndexes(OExecutionStep step, Set<String> indexes) {
+    for (OExecutionStep chilStep : step.getSubSteps()) {
+      fillIndexes(chilStep, indexes);
+    }
+    String index = step.toResult().getProperty("index");
+    if (index != null) {
+      indexes.add(index);
+    }
   }
 }

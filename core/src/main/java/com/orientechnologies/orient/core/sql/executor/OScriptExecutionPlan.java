@@ -4,7 +4,9 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
@@ -200,5 +202,14 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   @Override
   public void setGenericStatement(String stm) {
     this.genericStatement = stm;
+  }
+
+  @Override
+  public Set<String> getIndexes() {
+    Set<String> indexes = new HashSet<>();
+    for (OExecutionStep chilStep : steps) {
+      OExecutionStepInternal.fillIndexes(chilStep, indexes);
+    }
+    return indexes;
   }
 }

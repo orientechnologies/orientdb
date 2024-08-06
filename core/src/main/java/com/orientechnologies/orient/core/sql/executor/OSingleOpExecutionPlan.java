@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream
 import com.orientechnologies.orient.core.sql.parser.OSimpleExecStatement;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
@@ -85,5 +86,10 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
     result.setProperty("prettyPrint", prettyPrint(0, 2));
     result.setProperty("steps", null);
     return result;
+  }
+
+  @Override
+  public Set<String> getIndexes() {
+    return Collections.emptySet();
   }
 }
