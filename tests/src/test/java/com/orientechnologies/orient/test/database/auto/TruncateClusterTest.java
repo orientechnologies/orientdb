@@ -23,7 +23,7 @@ public class TruncateClusterTest extends DocumentDBBaseTest {
 
     final int clusterId = database.addCluster(clusterName);
     final ODocument document = new ODocument();
-    document.save(clusterName);
+    database.save(document, clusterName);
 
     Assert.assertEquals(database.countClusterElements(clusterId), 1);
 
@@ -48,9 +48,9 @@ public class TruncateClusterTest extends DocumentDBBaseTest {
     clazz.createIndex("TruncateClusterIndex", OClass.INDEX_TYPE.UNIQUE, "value");
 
     final ODocument document = new ODocument();
-    document.field("value", "val");
+    document.setProperty("value", "val");
 
-    document.save(clusterName);
+    database.save(document, clusterName);
 
     Assert.assertEquals(database.countClass(className), 1);
     Assert.assertEquals(database.countClusterElements(clusterId), 1);
@@ -73,7 +73,7 @@ public class TruncateClusterTest extends DocumentDBBaseTest {
     final int clusterId = database.addCluster(clusterName);
 
     final ODocument document = new ODocument();
-    document.save(clusterName);
+    database.save(document, clusterName);
 
     Assert.assertEquals(database.countClusterElements(clusterId), 1);
     try {
@@ -100,7 +100,7 @@ public class TruncateClusterTest extends DocumentDBBaseTest {
     clazz.addClusterId(clusterId);
 
     final ODocument document = new ODocument();
-    document.save(clusterName);
+    database.save(document, clusterName);
 
     Assert.assertEquals(database.countClusterElements(clusterId), 1);
     Assert.assertEquals(database.countClass(className), 1);

@@ -54,7 +54,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     database.begin();
 
     OBlob recordBytes = new ORecordBytes("This is the first version".getBytes());
-    recordBytes.save("binary");
+    database.save(recordBytes, "binary");
 
     database.rollback();
 
@@ -70,7 +70,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     database.begin();
 
     OBlob recordBytes = new ORecordBytes("This is the first version".getBytes());
-    recordBytes.save("binary");
+    database.save(recordBytes, "binary");
 
     database.commit();
 
@@ -86,7 +86,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
     database.activateOnCurrentThread();
     OBlob record1 = new ORecordBytes("This is the first version".getBytes());
-    record1.save("binary");
+    database.save(record1, "binary");
 
     try {
       database.begin();
@@ -99,12 +99,12 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
       record2.setDirty();
       record2.fromStream("This is the second version".getBytes());
-      record2.save();
+      db2.save(record2);
 
       ODatabaseRecordThreadLocal.instance().set(database);
       record1.setDirty();
       record1.fromStream("This is the third version".getBytes());
-      record1.save();
+      database.save(record1);
 
       database.commit();
 
@@ -128,7 +128,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     if (database.getClusterIdByName("binary") == -1) database.addBlobCluster("binary");
 
     OBlob record = new ORecordBytes("This is the first version".getBytes());
-    record.save();
+    database.save(record);
 
     try {
       database.begin();
@@ -138,7 +138,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       int v1 = record.getVersion();
       record.setDirty();
       record.fromStream("This is the second version".getBytes());
-      record.save();
+      database.save(record);
       database.commit();
 
       record.reload();
@@ -157,7 +157,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     db2.open("admin", "admin");
 
     OBlob record1 = new ORecordBytes("This is the first version".getBytes());
-    record1.save();
+    db2.save(record1);
 
     try {
       ODatabaseRecordThreadLocal.instance().set(database);
@@ -168,7 +168,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       int v1 = record1.getVersion();
       record1.setDirty();
       record1.fromStream("This is the second version".getBytes());
-      record1.save();
+      database.save(record1);
 
       database.commit();
 
@@ -203,9 +203,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     for (int g = 0; g < 1000; g++) {
       ODocument doc = new ODocument("Account");
       doc.fromJSON(json);
-      doc.field("nr", g);
+      doc.setProperty("nr", g);
 
-      doc.save();
+      database.save(doc);
     }
     database.commit();
 
@@ -233,7 +233,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     ((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following"))
         .add(jack);
 
-    jack.save();
+    database.save(jack);
 
     database.commit();
 
@@ -288,8 +288,8 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     database.begin();
 
     final ODocument externalDocOne = new ODocument("NestedTxClass");
-    externalDocOne.field("v", "val1");
-    externalDocOne.save();
+    externalDocOne.setProperty("v", "val1");
+    database.save(externalDocOne);
 
     Future assertFuture = executorService.submit(assertEmptyRecord);
     assertFuture.get();
@@ -297,8 +297,8 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     database.begin();
 
     final ODocument externalDocTwo = new ODocument("NestedTxClass");
-    externalDocTwo.field("v", "val2");
-    externalDocTwo.save();
+    externalDocTwo.setProperty("v", "val2");
+    database.save(externalDocTwo);
 
     assertFuture = executorService.submit(assertEmptyRecord);
     assertFuture.get();
@@ -309,8 +309,8 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     assertFuture.get();
 
     final ODocument externalDocThree = new ODocument("NestedTxClass");
-    externalDocThree.field("v", "val3");
-    externalDocThree.save();
+    externalDocThree.setProperty("v", "val3");
+    database.save(externalDocThree);
 
     database.commit();
 
@@ -341,35 +341,35 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     if (!schema.existsClass("NestedTxRollbackOne")) schema.createClass("NestedTxRollbackOne");
 
     ODocument brokenDocOne = new ODocument("NestedTxRollbackOne");
-    brokenDocOne.save();
+    database.save(brokenDocOne);
 
     brokenDocOne = database.load(brokenDocOne.getIdentity(), "*:-1", true);
 
     ODocument brokenDocTwo = database.load(brokenDocOne.getIdentity(), "*:-1", true);
     brokenDocTwo.setDirty();
-    brokenDocTwo.field("v", "vstr");
-    brokenDocTwo.save();
+    brokenDocTwo.setProperty("v", "vstr");
+    database.save(brokenDocTwo);
 
     try {
       database.begin();
 
       final ODocument externalDocOne = new ODocument("NestedTxRollbackOne");
-      externalDocOne.field("v", "val1");
-      externalDocOne.save();
+      externalDocOne.setProperty("v", "val1");
+      database.save(externalDocOne);
 
       Future assertFuture = executorService.submit(assertEmptyRecord);
       assertFuture.get();
 
       database.begin();
       ODocument externalDocTwo = new ODocument("NestedTxRollbackOne");
-      externalDocTwo.field("v", "val2");
-      externalDocTwo.save();
+      externalDocTwo.setProperty("v", "val2");
+      database.save(externalDocTwo);
 
       assertFuture = executorService.submit(assertEmptyRecord);
       assertFuture.get();
 
       brokenDocOne.setDirty();
-      brokenDocOne.save();
+      database.save(brokenDocOne);
 
       database.commit();
 
@@ -377,8 +377,8 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       assertFuture.get();
 
       final ODocument externalDocThree = new ODocument("NestedTxRollbackOne");
-      externalDocThree.field("v", "val3");
-      externalDocThree.save();
+      externalDocThree.setProperty("v", "val3");
+      database.save(externalDocThree);
 
       database.commit();
       Assert.fail();
@@ -397,28 +397,28 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     database.begin();
     try {
       final ODocument externalDocOne = new ODocument("NestedTxRollbackTwo");
-      externalDocOne.field("v", "val1");
-      externalDocOne.save();
+      externalDocOne.setProperty("v", "val1");
+      database.save(externalDocOne);
 
       database.begin();
 
       final ODocument externalDocTwo = new ODocument("NestedTxRollbackTwo");
-      externalDocTwo.field("v", "val2");
-      externalDocTwo.save();
+      externalDocTwo.setProperty("v", "val2");
+      database.save(externalDocTwo);
 
       database.rollback();
 
       database.begin();
 
       final ODocument externalDocFour = new ODocument("NestedTxRollbackTwo");
-      externalDocFour.field("v", "val4");
-      externalDocFour.save();
+      externalDocFour.setProperty("v", "val4");
+      database.save(externalDocFour);
 
       database.commit();
 
       final ODocument externalDocThree = new ODocument("NestedTxRollbackTwo");
-      externalDocThree.field("v", "val3");
-      externalDocThree.save();
+      externalDocThree.setProperty("v", "val3");
+      database.save(externalDocThree);
 
       database.commit();
       Assert.fail();

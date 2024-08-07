@@ -46,7 +46,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
       if (i % 2 == 0) document.field("prop3", i);
 
-      document.save();
+      database.save(document);
     }
 
     String query = "select from compositeIndexNullPointQueryClass where prop1 = 1 and prop2 = 2";
@@ -110,7 +110,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
       if (i % 2 == 0) document.field("prop3", i);
 
-      document.save();
+      database.save(document);
     }
 
     database.commit();
@@ -179,7 +179,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
       if (i % 2 == 0) document.field("prop3", i);
 
-      document.save();
+      database.save(document);
     }
 
     String query =
@@ -246,7 +246,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
       if (i % 2 == 0) document.field("prop3", i);
 
-      document.save();
+      database.save(document);
     }
 
     String query = "select from compositeIndexNullRangeQueryClass where prop1 = 1 and prop2 > 2";
@@ -306,7 +306,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
       if (i % 2 == 0) document.field("prop3", i);
 
-      document.save();
+      database.save(document);
     }
 
     String query =
@@ -367,7 +367,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
       document.field("prop3", i);
 
-      document.save();
+      database.save(document);
     }
 
     String query = "select from compositeIndexNullPointQueryNullInTheMiddleClass where prop1 = 1";
@@ -453,7 +453,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
       document.field("prop3", i);
 
-      document.save();
+      database.save(document);
     }
 
     String query =
@@ -536,7 +536,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
       document.field("prop3", i);
 
-      document.save();
+      database.save(document);
     }
 
     final String query =
@@ -586,7 +586,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
       document.field("prop3", i);
 
-      document.save();
+      database.save(document);
     }
 
     final String query =

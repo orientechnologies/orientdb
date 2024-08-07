@@ -117,8 +117,8 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
     if (polymorpicIdsPropagation == null)
       polymorpicIdsPropagation = schema.createClass("polymorpicIdsPropagation");
 
-    polymorpicIdsPropagation.setSuperClass(polymorpicIdsPropagationSuper);
-    polymorpicIdsPropagationSuper.setSuperClass(polymorpicIdsPropagationSuperSuper);
+    polymorpicIdsPropagation.addSuperClass(polymorpicIdsPropagationSuper);
+    polymorpicIdsPropagationSuper.addSuperClass(polymorpicIdsPropagationSuperSuper);
 
     polymorpicIdsPropagationSuperSuper.createProperty("value", OType.STRING);
     polymorpicIdsPropagationSuperSuper.createIndex(
@@ -129,7 +129,7 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
     for (int i = 0; i < 10; i++) {
       ODocument document = new ODocument("polymorpicIdsPropagation");
       document.field("value", "val" + counter);
-      document.save();
+      database.save(document);
 
       counter++;
     }
@@ -139,7 +139,7 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
     for (int i = 0; i < 10; i++) {
       ODocument document = new ODocument();
       document.field("value", "val" + counter);
-      document.save("polymorpicIdsPropagationSuperSuper2");
+      database.save(document, "polymorpicIdsPropagationSuperSuper2");
 
       counter++;
     }

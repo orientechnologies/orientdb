@@ -24,8 +24,8 @@ public class RecordReloadTest extends DocumentDBBaseTest {
     ExecutorService executor = Executors.newSingleThreadExecutor();
     final ODocument document = new ODocument();
 
-    document.field("value", "value one");
-    document.save(database.getClusterNameById(database.getDefaultClusterId()));
+    document.setProperty("value", "value one");
+    database.save(document, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid = document.getIdentity();
     final Future<?> future =
@@ -37,8 +37,8 @@ public class RecordReloadTest extends DocumentDBBaseTest {
                 db.open("admin", "admin");
 
                 ODocument doc = db.load(rid);
-                doc.field("value", "value two");
-                doc.save();
+                doc.setProperty("value", "value two");
+                db.save(doc);
 
                 db.close();
               }
@@ -48,15 +48,15 @@ public class RecordReloadTest extends DocumentDBBaseTest {
 
     document.reload();
 
-    Assert.assertEquals(document.field("value"), "value two");
+    Assert.assertEquals(document.getProperty("value"), "value two");
   }
 
   public void documentReloadLatestVersionSingleValueTwo() throws Exception {
     ExecutorService executor = Executors.newSingleThreadExecutor();
     final ODocument document = new ODocument();
 
-    document.field("value", "value one");
-    document.save(database.getClusterNameById(database.getDefaultClusterId()));
+    document.setProperty("value", "value one");
+    database.save(document, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid = document.getIdentity();
     final Future<?> future =
@@ -68,8 +68,8 @@ public class RecordReloadTest extends DocumentDBBaseTest {
                 db.open("admin", "admin");
 
                 ODocument doc = db.load(rid);
-                doc.field("value", "value two");
-                doc.save();
+                doc.setProperty("value", "value two");
+                db.save(doc);
 
                 db.close();
               }
@@ -79,7 +79,7 @@ public class RecordReloadTest extends DocumentDBBaseTest {
 
     document.reload(null, true, false);
 
-    Assert.assertEquals(document.field("value"), "value two");
+    Assert.assertEquals(document.getProperty("value"), "value two");
   }
 
   public void documentReloadLatestVersionLinkedValueOne() throws Exception {
@@ -88,14 +88,14 @@ public class RecordReloadTest extends DocumentDBBaseTest {
     ExecutorService executor = Executors.newSingleThreadExecutor();
     final ODocument document = new ODocument();
 
-    document.field("value", "value one");
+    document.setProperty("value", "value one");
 
     ODocument linkedValue = new ODocument();
-    linkedValue.field("val", "value 1");
-    linkedValue.save(database.getClusterNameById(database.getDefaultClusterId()));
-    document.field("link", linkedValue);
+    linkedValue.setProperty("val", "value 1");
+    database.save(linkedValue, database.getClusterNameById(database.getDefaultClusterId()));
+    document.setProperty("link", linkedValue);
 
-    document.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(document, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid = document.getIdentity();
     final Future<?> future =
@@ -109,8 +109,8 @@ public class RecordReloadTest extends DocumentDBBaseTest {
                 ODocument doc = db.load(rid);
 
                 ODocument linkedValue = doc.field("link");
-                linkedValue.field("val", "value 2");
-                linkedValue.save();
+                linkedValue.setProperty("val", "value 2");
+                db.save(linkedValue);
 
                 db.close();
               }
@@ -120,8 +120,8 @@ public class RecordReloadTest extends DocumentDBBaseTest {
 
     document.reload("*:1", true);
 
-    linkedValue = document.field("link");
-    Assert.assertEquals(linkedValue.field("val"), "value 2");
+    linkedValue = document.getProperty("link");
+    Assert.assertEquals(linkedValue.getProperty("val"), "value 2");
   }
 
   public void documentReloadLatestVersionLinkedValueTwo() throws Exception {
@@ -130,14 +130,14 @@ public class RecordReloadTest extends DocumentDBBaseTest {
     ExecutorService executor = Executors.newSingleThreadExecutor();
     final ODocument document = new ODocument();
 
-    document.field("value", "value one");
+    document.setProperty("value", "value one");
 
     ODocument linkedValue = new ODocument();
-    linkedValue.field("val", "value 1");
-    linkedValue.save(database.getClusterNameById(database.getDefaultClusterId()));
-    document.field("link", linkedValue);
+    linkedValue.setProperty("val", "value 1");
+    database.save(linkedValue, database.getClusterNameById(database.getDefaultClusterId()));
+    document.setProperty("link", linkedValue);
 
-    document.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(document, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid = document.getIdentity();
     final Future<?> future =
@@ -151,8 +151,8 @@ public class RecordReloadTest extends DocumentDBBaseTest {
                 ODocument doc = db.load(rid);
 
                 ODocument linkedValue = doc.field("link");
-                linkedValue.field("val", "value 2");
-                linkedValue.save();
+                linkedValue.setProperty("val", "value 2");
+                db.save(linkedValue);
 
                 db.close();
               }
@@ -162,7 +162,7 @@ public class RecordReloadTest extends DocumentDBBaseTest {
 
     document.reload("*:1", true, false);
 
-    linkedValue = document.field("link");
-    Assert.assertEquals(linkedValue.field("val"), "value 1");
+    linkedValue = document.getProperty("link");
+    Assert.assertEquals(linkedValue.getProperty("val"), "value 1");
   }
 }
