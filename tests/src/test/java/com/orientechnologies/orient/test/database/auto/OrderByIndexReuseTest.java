@@ -4,10 +4,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
-import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -70,12 +69,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals((int) document.<Integer>field("firstProp"), i / 2 + 6);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -92,12 +89,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + (i + 12));
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -114,12 +109,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + (101 - i));
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -140,10 +133,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertFalse(explain.<Boolean>field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
+        new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
   public void testGreaterThanOrderByDescFirstProperty() {
@@ -157,12 +151,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals((int) document.<Integer>field("firstProp"), 50 - i / 2);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -177,12 +169,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals((int) document.<Integer>field("firstProp"), i / 2 + 5);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -203,12 +193,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -229,12 +217,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -255,10 +241,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertFalse(explain.<Boolean>field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
+        new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
   public void testGTEOrderByDescFirstProperty() {
@@ -272,12 +259,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals((int) document.<Integer>field("firstProp"), 50 - i / 2);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -292,12 +277,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals((int) document.<Integer>field("firstProp"), i / 2 + 1);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -319,12 +302,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -346,12 +327,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -373,10 +352,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertFalse(explain.<Boolean>field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
+        new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
   public void testLTOrderByDescFirstProperty() {
@@ -390,12 +370,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals((int) document.<Integer>field("firstProp"), 4 - i / 2);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -410,12 +388,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals((int) document.<Integer>field("firstProp"), i / 2 + 1);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -437,12 +413,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -464,12 +438,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -491,10 +463,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertFalse(explain.<Boolean>field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
+        new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
   public void testLTEOrderByDescFirstProperty() {
@@ -508,12 +481,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals((int) document.<Integer>field("firstProp"), 5 - i / 2);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -528,12 +499,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals((int) document.<Integer>field("firstProp"), i / 2 + 5);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -555,12 +524,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -582,12 +549,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -609,10 +574,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertFalse(explain.<Boolean>field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
+        new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
   public void testBetweenOrderByDescFirstProperty() {
@@ -627,12 +593,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals((int) document.<Integer>field("firstProp"), 15 - i / 2);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -653,12 +617,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     document = result.get(2);
     Assert.assertEquals((int) document.<Integer>field("firstProp"), 10);
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -679,12 +641,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     document = result.get(2);
     Assert.assertEquals((int) document.<Integer>field("firstProp"), 45);
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -701,12 +661,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.<String>field("prop4"), "prop" + (i + 12));
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -727,12 +685,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -754,12 +710,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -781,12 +735,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -808,12 +760,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -835,12 +785,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -862,12 +810,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -889,12 +835,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -916,12 +860,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -943,12 +885,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -972,12 +912,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     Assert.assertEquals((int) document.<Integer>field("firstProp"), 10);
     Assert.assertEquals(document.<String>field("prop4"), "prop20");
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -1001,12 +939,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     Assert.assertEquals((int) document.<Integer>field("firstProp"), 45);
     Assert.assertEquals(document.<String>field("prop4"), "prop90");
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final OResultSet explainResult = database.command("explain " + query);
 
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -1023,11 +959,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.<Object>field("firstProp"), 6 + i / 2);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
+    final OResultSet explainResult = database.command("explain " + query);
+
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -1044,11 +979,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.<Object>field("firstProp"), 45 - i / 2);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
+    final OResultSet explainResult = database.command("explain " + query);
+
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexFirstPropNotUnique"});
   }
 
@@ -1072,11 +1006,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
+    final OResultSet explainResult = database.command("explain " + query);
+
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -1100,11 +1033,10 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
-    Assert.assertTrue(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertTrue(explain.<Boolean>field("indexIsUsedInOrderBy"));
+    final OResultSet explainResult = database.command("explain " + query);
+
     Assert.assertEquals(
-        explain.<Set>field("involvedIndexes").toArray(),
+        explainResult.getExecutionPlan().get().getIndexes().toArray(),
         new String[] {"OrderByIndexReuseIndexSecondThirdProp"});
   }
 
@@ -1128,9 +1060,9 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertFalse(explain.<Boolean>field("indexIsUsedInOrderBy"));
+    final OResultSet explainResult = database.command("explain " + query);
+
+    Assert.assertTrue(explainResult.getExecutionPlan().get().getIndexes().isEmpty());
   }
 
   public void testOrderBySecondThirdPropWithLimitDescAsc() {
@@ -1153,8 +1085,8 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
       Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
     }
 
-    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
-    Assert.assertFalse(explain.<Boolean>field("fullySortedByIndex"));
-    Assert.assertFalse(explain.<Boolean>field("indexIsUsedInOrderBy"));
+    final OResultSet explainResult = database.command("explain " + query);
+
+    Assert.assertTrue(explainResult.getExecutionPlan().get().getIndexes().isEmpty());
   }
 }
