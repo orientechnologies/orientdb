@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -161,6 +162,21 @@ public class OBetweenCondition extends OBooleanExpression {
   @Override
   public boolean supportsBasicCalculation() {
     return true;
+  }
+
+  @Override
+  public boolean isIndexAware(OIndexSearchInfo info) {
+    if (info.allowsRange()) {
+      if (first.isBaseIdentifier()) {
+        if (info.getField().equals(first.getDefaultAlias().getStringValue())) {
+          if (second != null && third != null) {
+            return second.isEarlyCalculated(info.getCtx())
+                && third.isEarlyCalculated(info.getCtx());
+          }
+        }
+      }
+    }
+    return false;
   }
 
   @Override
