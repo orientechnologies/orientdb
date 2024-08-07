@@ -92,7 +92,7 @@ public class TokenMgrError extends Error {
       int errorLine,
       int errorColumn,
       String errorAfter,
-      char curChar) {
+      int curChar) {
     return ("Lexical error at line "
         + errorLine
         + ", column "
@@ -139,7 +139,7 @@ public class TokenMgrError extends Error {
       int errorLine,
       int errorColumn,
       String errorAfter,
-      char curChar,
+      int curChar,
       int reason) {
     this(LexicalError(EOFSeen, lexState, errorLine, errorColumn, errorAfter, curChar), reason);
   }

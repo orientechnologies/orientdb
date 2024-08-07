@@ -20,7 +20,7 @@
 
 options {
 	TRACK_TOKENS = true;
-  	JDK_VERSION = "1.8";
+  	JDK_VERSION = "17";
   	MULTI=true;
   	VISITOR=true;
   	STATIC=false;
