@@ -4,13 +4,13 @@ import com.orientechnologies.orient.core.db.ODatabaseStats;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetInternal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 /** Created by luigidellaquila on 08/07/16. */
-public class OExplainResultSet implements OResultSet {
+public class OExplainResultSet implements OResultSetInternal {
   private final OExecutionPlan executionPlan;
   private final ODatabaseStats dbStats;
   boolean hasNext = true;
@@ -50,5 +50,15 @@ public class OExplainResultSet implements OResultSet {
   @Override
   public Map<String, Long> getQueryStats() {
     return new HashMap<>();
+  }
+
+  @Override
+  public boolean isExplain() {
+    return true;
+  }
+
+  @Override
+  public boolean isDetached() {
+    return true;
   }
 }

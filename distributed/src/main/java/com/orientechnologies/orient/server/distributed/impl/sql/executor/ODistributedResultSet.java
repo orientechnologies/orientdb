@@ -2,7 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.sql.executor;
 
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.OCloseQueryTask;
@@ -13,7 +13,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /** Created by luigidellaquila on 21/06/17. */
-public class ODistributedResultSet implements OResultSet {
+public class ODistributedResultSet implements OResultSetInternal {
   private String queryId;
   private List<OResult> data;
   private ODatabaseDocumentDistributed database;
@@ -97,5 +97,15 @@ public class ODistributedResultSet implements OResultSet {
 
   public void setNodeName(String nodeName) {
     this.nodeName = nodeName;
+  }
+
+  @Override
+  public boolean isDetached() {
+    return false;
+  }
+
+  @Override
+  public boolean isExplain() {
+    return false;
   }
 }

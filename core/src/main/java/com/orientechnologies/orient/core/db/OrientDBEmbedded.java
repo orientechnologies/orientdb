@@ -77,6 +77,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.NullArgumentException;
 
@@ -90,6 +91,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   /** Storage IDs current assigned to the storage. */
   private static final Set<Integer> currentStorageIds =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+  private static final AtomicLong queryCounter = new AtomicLong(0);
 
   protected final Map<String, OAbstractPaginatedStorage> storages = new ConcurrentHashMap<>();
   protected final Map<String, OSharedContext> sharedContexts = new ConcurrentHashMap<>();
@@ -1168,24 +1171,21 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return scriptManager;
   }
 
+  private String newQueryId() {
+    return "" + System.currentTimeMillis() + "_" + queryCounter.incrementAndGet();
+  }
+
   public OResultSet executeServerStatement(
       String script, String username, String pw, Map<String, Object> args) {
     OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
     OResultSet original = statement.execute(this, args, true);
     OLocalResultSetLifecycleDecorator result;
-    //    if (!statement.isIdempotent()) {
-    // fetch all, close and detach
-    // TODO pagination!
+
     OResultSetReady prefetched = new OResultSetReady();
     original.forEachRemaining(x -> prefetched.add(x));
     original.close();
-    result = new OLocalResultSetLifecycleDecorator(prefetched);
-    //    } else {
-    // stream, keep open and attach to the current DB
-    //      result = new OLocalResultSetLifecycleDecorator(original);
-    //      this.queryStarted(result.getQueryId(), result);
-    //      result.addLifecycleListener(this);
-    //    }
+    result = new OLocalResultSetLifecycleDecorator(prefetched, newQueryId());
+
     return result;
   }
 
@@ -1194,19 +1194,12 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
     OResultSet original = statement.execute(this, args, true);
     OLocalResultSetLifecycleDecorator result;
-    //    if (!statement.isIdempotent()) {
-    // fetch all, close and detach
-    // TODO pagination!
+
     OResultSetReady prefetched = new OResultSetReady();
     original.forEachRemaining(x -> prefetched.add(x));
     original.close();
-    result = new OLocalResultSetLifecycleDecorator(prefetched);
-    //    } else {
-    // stream, keep open and attach to the current DB
-    //      result = new OLocalResultSetLifecycleDecorator(original);
-    //      this.queryStarted(result.getQueryId(), result);
-    //      result.addLifecycleListener(this);
-    //    }
+    result = new OLocalResultSetLifecycleDecorator(prefetched, newQueryId());
+
     return result;
   }
 

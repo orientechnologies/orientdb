@@ -8,14 +8,14 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetInternal;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 /** Created by luigidellaquila on 07/07/16. */
-public class OLocalResultSet implements OResultSet {
+public class OLocalResultSet implements OResultSetInternal {
 
   private OExecutionStream stream = null;
   private final OInternalExecutionPlan executionPlan;
@@ -108,5 +108,15 @@ public class OLocalResultSet implements OResultSet {
   @Override
   public Map<String, Long> getQueryStats() {
     return new HashMap<>(); // TODO
+  }
+
+  @Override
+  public boolean isDetached() {
+    return false;
+  }
+
+  @Override
+  public boolean isExplain() {
+    return false;
   }
 }

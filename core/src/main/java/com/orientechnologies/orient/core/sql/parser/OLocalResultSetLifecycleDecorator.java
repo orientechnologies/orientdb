@@ -4,31 +4,23 @@ import com.orientechnologies.orient.core.db.document.OQueryLifecycleListener;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
+import com.orientechnologies.orient.core.sql.executor.OResultSetInternal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 
 /** Created by luigidellaquila on 05/12/16. */
-public class OLocalResultSetLifecycleDecorator implements OResultSet {
+public class OLocalResultSetLifecycleDecorator implements OResultSetInternal {
 
-  private static final AtomicLong counter = new AtomicLong(0);
-
-  private OResultSet entity;
+  private OResultSetInternal entity;
   private List<OQueryLifecycleListener> lifecycleListeners = new ArrayList<>();
   private String queryId;
   private boolean includePlan = false;
 
   private boolean hasNextPage;
 
-  public OLocalResultSetLifecycleDecorator(OResultSet entity) {
-    this.entity = entity;
-    queryId = "" + System.currentTimeMillis() + "_" + counter.incrementAndGet();
-  }
-
-  public OLocalResultSetLifecycleDecorator(OResultSetReady rsCopy, String queryId) {
+  public OLocalResultSetLifecycleDecorator(OResultSetInternal rsCopy, String queryId) {
     this.entity = rsCopy;
     this.queryId = queryId;
   }
@@ -85,7 +77,7 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
   }
 
   public boolean isDetached() {
-    return entity instanceof OResultSetReady;
+    return entity.isDetached();
   }
 
   public OResultSet getInternal() {
@@ -98,5 +90,10 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
 
   public boolean isIncludePlan() {
     return includePlan;
+  }
+
+  @Override
+  public boolean isExplain() {
+    return entity.isExplain();
   }
 }

@@ -106,6 +106,7 @@ import com.orientechnologies.orient.core.sql.executor.LiveQueryListenerImpl;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
@@ -139,6 +140,7 @@ import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /** Created by tglman on 27/06/16. */
 public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
@@ -146,6 +148,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   private static final OLogger logger =
       OLogManager.instance().logger(ODatabaseDocumentEmbedded.class);
 
+  private static final AtomicLong queryCounter = new AtomicLong(0);
   private OrientDBConfig config;
   private OStorage storage;
 
@@ -582,6 +585,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     storage = iNewStorage;
   }
 
+  private String newQueryId() {
+    return "" + System.currentTimeMillis() + "_" + queryCounter.incrementAndGet();
+  }
+
   @Override
   public OResultSet query(String query, Object[] args) {
     checkOpenness();
@@ -595,7 +602,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
             "Cannot execute query on non idempotent statement: " + query);
       }
       OResultSet original = statement.execute(this, args, true);
-      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      OLocalResultSetLifecycleDecorator result =
+          new OLocalResultSetLifecycleDecorator((OResultSetInternal) original, newQueryId());
       queryStarted(result);
       return result;
     } finally {
@@ -617,7 +625,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
             "Cannot execute query on non idempotent statement: " + query);
       }
       OResultSet original = statement.execute(this, args, true);
-      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      OLocalResultSetLifecycleDecorator result =
+          new OLocalResultSetLifecycleDecorator((OResultSetInternal) original, newQueryId());
       queryStarted(result);
       return result;
     } finally {
@@ -643,10 +652,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         original.forEachRemaining(x -> prefetched.add(x));
         original.close();
         queryCompleted();
-        result = new OLocalResultSetLifecycleDecorator(prefetched);
+        result = new OLocalResultSetLifecycleDecorator(prefetched, newQueryId());
       } else {
         // stream, keep open and attach to the current DB
-        result = new OLocalResultSetLifecycleDecorator(original);
+        result = new OLocalResultSetLifecycleDecorator((OResultSetInternal) original, newQueryId());
         queryStarted(result);
       }
       return result;
@@ -674,10 +683,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         original.forEachRemaining(x -> prefetched.add(x));
         original.close();
         queryCompleted();
-        result = new OLocalResultSetLifecycleDecorator(prefetched);
+        result = new OLocalResultSetLifecycleDecorator(prefetched, newQueryId());
       } else {
         // stream, keep open and attach to the current DB
-        result = new OLocalResultSetLifecycleDecorator(original);
+        result = new OLocalResultSetLifecycleDecorator((OResultSetInternal) original, newQueryId());
 
         queryStarted(result);
       }
@@ -713,7 +722,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       } finally {
         ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
       }
-      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      OLocalResultSetLifecycleDecorator result =
+          new OLocalResultSetLifecycleDecorator((OResultSetInternal) original, newQueryId());
       queryStarted(result);
       return result;
     } finally {
@@ -767,7 +777,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
       }
 
-      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      OLocalResultSetLifecycleDecorator result =
+          new OLocalResultSetLifecycleDecorator((OResultSetInternal) original, newQueryId());
       queryStarted(result);
       return result;
     } finally {
@@ -786,7 +797,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       ctx.setInputParameters(params);
 
       OLocalResultSet result = new OLocalResultSet((OInternalExecutionPlan) plan, ctx);
-      OLocalResultSetLifecycleDecorator decorator = new OLocalResultSetLifecycleDecorator(result);
+      OLocalResultSetLifecycleDecorator decorator =
+          new OLocalResultSetLifecycleDecorator(result, newQueryId());
       queryStarted(decorator);
 
       return decorator;

@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /** Created by luigidellaquila on 07/07/16. */
-public class OResultSetReady implements OResultSet, OResettable {
+public class OResultSetReady implements OResultSetInternal, OResettable {
   private List<OResult> content = new ArrayList<>();
   private int next = 0;
   protected OExecutionPlan plan;
@@ -58,5 +58,15 @@ public class OResultSetReady implements OResultSet, OResettable {
     OResultSetReady result = new OResultSetReady();
     result.content = this.content;
     return result;
+  }
+
+  @Override
+  public boolean isDetached() {
+    return true;
+  }
+
+  @Override
+  public boolean isExplain() {
+    return false;
   }
 }
