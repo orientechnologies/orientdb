@@ -93,342 +93,186 @@ MORE :
   < ~[] >
 }
 
-
 /* reserved words */
-TOKEN:
+TOKEN [ IGNORE_CASE ] :
 {
-	< SELECT: ( "s" | "S" ) ( "e" | "E" ) ( "l" | "L" ) ( "e" | "E" ) ( "c" | "C" ) ( "t" | "T" ) >
-	|
-	< TRAVERSE: ( "t" | "T") ( "r" | "R") ( "a" | "A") ( "v" | "V") ( "e" | "E") ( "r" | "R") ( "s" | "S") ( "e" | "E") >
-	|
-	< MATCH: ( "m" | "M" ) ( "a" | "A" ) ( "t" | "T" ) ( "c" | "C" ) ( "h" | "H" ) >
-	|
-	< INSERT: ( "i" | "I" ) ( "n" | "N" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) >
-	|
-	< CREATE: ( "c" | "C" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
-	|
-	< DELETE: ( "d" | "D" ) ( "e" | "E" ) ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) ( "e" | "E" ) >
-	|
-	< VERTEX: ( "v" | "V" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) ( "e" | "E" ) ( "x" | "X" ) >
-	|
-	< EDGE: ( "e" | "E" ) ( "d" | "D" ) ( "g" | "G" ) ( "e" | "E" ) >
-	|
-	< UPDATE: ( "u" | "U" ) ( "p" | "P" ) ( "d" | "D" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
-	|
-	< UPSERT: ( "u" | "U" ) ( "p" | "P" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) >
-	|
-	< FROM: ( "f" | "F" ) ( "r" | "R" ) ( "o" | "O" ) ( "m" | "M" ) >
-	|
-	< TO: ( "t" | "T" ) ( "o" | "O" ) >
-	|
-	< WHERE: ( "w" | "W" ) ( "h" | "H" ) ( "e" | "E" ) ( "r" | "R" ) ( "e" | "E" ) >
-	|
-	< WHILE: ( "w" | "W" ) ( "h" | "H" ) ( "i" | "I" ) ( "l" | "L" ) ( "e" | "E" ) >
-	|
-	< INTO: ( "i" | "I" ) ( "n" | "N" ) ( "t" | "T" ) ( "o" | "O" ) >
-	|
-	< VALUE: ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) >
-	|
-	< VALUES: ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) ( "s" | "S" )>
-	|
-	< SET: ( "s" | "S" ) ( "e" | "E" ) ( "t" | "T" ) >
-	|
-	< ADD: ( "a" | "A" ) ( "d" | "D" ) ( "d" | "D" ) >
-	|
-	< PUT: ( "p" | "P" ) ( "u" | "U" ) ( "t" | "T" ) >
-	|
-	< MERGE: ( "m" | "M" ) ( "e" | "E" ) ( "r" | "R" ) ( "g" | "G" ) ( "e" | "E" ) >
-	|
-	< CONTENT: ( "c" | "C" ) ( "o" | "O" ) ( "n" | "N" ) ( "t" | "T" ) ( "e" | "E" ) ( "n" | "N" ) ( "t" | "T" )  >
-	|
-	< REMOVE: ( "r" | "R" ) ( "e" | "E" ) ( "m" | "M" ) ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) >
-	|
-	< INCREMENT: ( "i" | "I" ) ( "n" | "N" ) ( "c" | "C" ) ( "r" | "R" ) ( "e" | "E" ) ( "m" | "M" ) ( "e" | "E" ) ( "n" | "N" ) ( "t" | "T" ) >
-	|
-	< AND: ( "a" | "A" ) ( "n" | "N" ) ( "d" | "D" ) >
-	|
-	< OR: ( "o" | "O" ) ( "r" | "R" ) >
-	|
-	< NULL: ( "N" | "n" ) ( "U" | "u" ) ( "L" | "l" ) ( "L" | "l" ) >
-	|
-	< DEFINED: ( "D" | "d" ) ( "E" | "e" ) ( "F" | "f" ) ( "I" | "i" ) ( "N" | "n" ) ( "E" | "e" ) ( "D" | "d" ) >
-    |
-    < ORDER: ( "o" | "O" ) ( "r" | "R" ) ( "d" | "D" ) ( "e" | "E" ) ( "r" | "R" ) >
-	|
-	< GROUP: ( "g" | "G" ) ( "r" | "R" ) ( "o" | "O" ) ( "u" | "U" ) ( "p" | "P" ) >
-	|
-	< BY: ( "b" | "B" ) ( "y" | "Y" ) >
-	|
-	< LIMIT: ( "l" | "L" ) ( "i" | "I" ) ( "m" | "M" ) ( "i" | "I" ) ( "t" | "T" ) >
-	|
-	< SKIP2: ( "s" | "S" ) ( "k" | "K" ) ( "i" | "I" ) ( "p" | "P" ) >
-	|
-	< BATCH: ( "b" | "B" ) ( "a" | "A" ) ( "t" | "T" ) ( "c" | "C" ) ( "h" | "H" ) >
-	|
-	< OFFSET: ( "o" | "O" ) ( "f" | "F" ) ( "f" | "F" ) ( "s" | "S" ) ( "e" | "E" ) ( "t" | "T" ) >
-	|
-	< TIMEOUT: ( "t" | "T" ) ( "i" | "I" ) ( "m" | "M" ) ( "e" | "E" ) ( "o" | "O" ) ( "u" | "U" ) ( "t" | "T" ) >
-	|
-	< ASC: ( "a" | "A" ) ( "s" | "S" ) ( "c" | "C" ) >
-	|
-	< AS: ( "a" | "A" ) ( "s" | "S" ) >
-	|
-	< DESC: ( "d" | "D" ) ( "e" | "E" ) ( "s" | "S" ) ( "c" | "C" ) >
-	|
-	< FETCHPLAN: ( "f" | "F" ) ( "e" | "E" ) ( "t" | "T" ) ( "c" | "C" ) ( "h" | "H" ) ( "p" | "P" ) ( "l" | "L" ) ( "a" | "A" ) ( "n" | "N" ) >
-	|
-	< RETURN: ( "r" | "R" ) ( "e" | "E" ) ( "t" | "T" ) ( "u" | "U" ) ( "r" | "R" ) ( "n" | "N" ) >
-	|
-	< BEFORE: ( "b" | "B" ) ( "e" | "E" ) ( "f" | "F" ) ( "o" | "O" ) ( "r" | "R" ) ( "e" | "E" ) >
-	|
-	< AFTER: ( "a" | "A" ) ( "f" | "F" ) ( "t" | "T" ) ( "e" | "E" ) ( "r" | "R" ) >
-	|
-	< LOCK: ( "l" | "L" ) ( "o" | "O" ) ( "c" | "C" ) ( "k" | "K" ) >
-    |
-    < RECORD: ( "r" | "R" ) ( "e" | "E" ) ( "c" | "C" ) ( "o" | "O" ) ( "r" | "R" ) ( "d" | "D" ) >
-    |
-    < WAIT: ( "w" | "W" ) ( "a" | "A" ) ( "i" | "I" ) ( "t" | "T" ) >
-    |
-    < RETRY: ( "r" | "R" ) ( "e" | "E" ) ( "t" | "T" ) ( "r" | "R" ) ( "y" | "Y" ) >
-    |
-    < LET: ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) >
-    |
-    < CACHE: ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
-    |    
-    < CYCLE: ( "c" | "C" ) ( "y" | "Y" ) ( "c" | "C" ) ( "l" | "L" ) ( "e" | "E" ) >
-    |
-    < NOCACHE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
-    |
-    < NOLIMIT: ( "n" | "N" ) ( "o" | "O" ) ( "l" | "L" ) ( "i" | "I" ) ( "m" | "M" ) ( "i" | "I" ) ( "t" | "T" ) >
-    |
-    < NOCYCLE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "y" | "Y" ) ( "c" | "C" ) ( "l" | "L" ) ( "e" | "E" ) >
-    |
-    < UNSAFE: ( "u" | "U" ) ( "n" | "N" ) ( "s" | "S" ) ( "a" | "A" ) ( "f" | "F" ) ( "e" | "E" ) >
-    |
-    < PARALLEL: ( "p" | "P" ) ( "a" | "A" ) ( "r" | "R" ) ( "a" | "A" ) ( "l" | "L" ) ( "l" | "L" ) ( "e" | "E" ) ( "l" | "L" ) >
-    |
-    < STRATEGY: ( "s" | "S" ) ( "t" | "T" ) ( "r" | "R" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) ( "g" | "G" ) ( "y" | "Y" )  >
-    |
-    < DEPTH_FIRST: ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) ( "_" )  ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
-    |
-    < BREADTH_FIRST: ( "b" | "B" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "d" | "D" ) ( "t" | "T" )  ( "h" | "H" ) ( "_" ) ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
-	|
-	< LUCENE: ( "l" | "L" ) ( "u" | "U" ) ( "c" | "C" ) ( "e" | "E" ) ( "n" | "N" ) ( "e" | "E" ) >
-	|
-	< NEAR: ( "n" | "N" ) ( "e" | "E" ) ( "a" | "A" ) ( "r" | "R" ) >
-	|
-	< WITHIN: ( "w" | "W" ) ( "i" | "I" ) ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "n" | "N" ) >
-	|
-	< UNWIND: ( "u" | "U" ) ( "n" | "N" ) ( "w" | "W" ) ( "i" | "I" ) ( "n" | "N" ) ( "d" | "D" ) >
-	|
-	< MAXDEPTH: ( "m" | "M" ) ( "a" | "A" ) ( "x" | "X" ) ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) >
-	|
-	< MINDEPTH: ( "m" | "M" ) ( "i" | "I" ) ( "n" | "N" ) ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) >
-	|
-	< CLASS: ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) >
-	|
-	< SUPERCLASS: ( "s" | "S" ) ( "u" | "U" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) >
-	|
-	< CLASSES: ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) ( "e" | "E" ) ( "s" | "S" ) >
-	|
-	< SUPERCLASSES: ( "s" | "S" ) ( "u" | "U" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) ( "e" | "E" ) ( "s" | "S" )>
-	|
-	< VIEW: ( "v" | "V" ) ( "i" | "I" ) ( "e" | "E" ) ( "w" | "W" ) >
-	|
-	< UPDATABLE: ( "u" | "U" ) ( "p" | "P" ) ( "d" | "D" ) ( "a" | "A" ) ( "t" | "T" ) ( "a" | "A" ) ( "b" | "B" ) ( "l" | "L" ) ( "e" | "E" )  >
-    |
-	< EXCEPTION: ( "e" | "E" ) ( "x" | "X" ) ( "c" | "C" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
-	|
-	< PROFILE: ( "p" | "P" ) ( "r" | "R" ) ( "o" | "O" ) ( "f" | "F" ) ( "i" | "I" ) ( "l" | "L" ) ( "e" | "E" ) >
-	|
-	< STORAGE: ( "s" | "S" ) ( "t" | "T" ) ( "o" | "O" ) ( "r" | "R" ) ( "a" | "A" ) ( "g" | "G" ) ( "e" | "E" ) >
-	|
-	< ON: ( "o" | "O" ) ( "n" | "N" ) >
-	|
-	< OFF: ( "o" | "O" ) ( "f" | "F" ) ( "f" | "F" ) >
-	|
-	< TRUNCATE: ( "t" | "T" ) ( "r" | "R" ) ( "u" | "U" ) ( "n" | "N" ) ( "c" | "C" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
-	|
-	< POLYMORPHIC: ( "p" | "P" ) ( "o" | "O" ) ( "l" | "L" ) ( "y" | "Y" ) ( "m" | "M" ) ( "o" | "O" ) ( "r" | "R" ) ( "p" | "P" ) ( "h" | "H" ) ( "i" | "I" ) ( "c" | "C" ) >
-	|
-	< FIND: ( "f" | "F" ) ( "i" | "I" ) ( "n" | "N" ) ( "d" | "D" ) >
-	|
-	< REFERENCES: ( "r" | "R" ) ( "e" | "E" ) ( "f" | "F" ) ( "e" | "E" ) ( "r" | "R" ) ( "e" | "E" ) ( "n" | "N" ) ( "c" | "C" ) ( "e" | "E" ) ( "s" | "S" ) >
-	|
-	< EXTENDS: ( "e" | "E" ) ( "x" | "X" ) ( "t" | "T" ) ( "e" | "E" ) ( "n" | "N" ) ( "d" | "D" ) ( "s" | "S" ) >
-	|
-	< CLUSTERS: ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) ( "S" | "s" ) >
-	|
-	< ABSTRACT: ( "a" | "A" ) ( "b" | "B" ) ( "s" | "S" ) ( "T" | "t" ) ( "R" | "r" ) ( "a" | "A" ) ( "C" | "c" ) ( "T" | "t" ) >
-	|
-	< ALTER: ( "a" | "A" ) ( "l" | "L" ) ( "t" | "T" ) ( "e" | "E" ) ( "r" | "R" ) >
-	|
-	< NAME: ("n" | "N") ( "a" | "A" ) ( "m" | "M" ) ( "e" | "E" ) >
-	|
-	< SHORTNAME: ( "s" | "S" ) ( "h" | "H" ) ( "o" | "O" ) ( "r" | "R" ) ( "t" | "T" ) ("n" | "N") ( "a" | "A" ) ( "m" | "M" ) ( "e" | "E" ) >
-	|
-	< OVERSIZE:  ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) ( "r" | "R" ) ( "s" | "S" ) ( "i" | "I" ) ("z" | "Z") ( "e" | "E" ) >
-	|
-	< STRICTMODE: ( "s" | "S" ) ( "t" | "T" ) ( "r" | "R" ) ( "i" | "I" ) ( "C" | "c" ) ( "T" | "t" ) ( "m" | "M" ) ( "o" | "O" ) ( "d" | "D" ) ( "e" | "E" ) >
-	|
-	< ADDCLUSTER: ( "a" | "A" ) ( "d" | "D" ) ( "d" | "D" ) ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
-	|
-	< REMOVECLUSTER: ( "r" | "R" ) ( "e" | "E" ) ( "m" | "M" ) ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
-	|
-	< CUSTOM: ( "c" | "C" ) ( "u" | "U" ) ( "s" | "S" ) ( "t" | "T" ) ( "o" | "O" ) ( "m" | "M" ) >
-	|
-	< CLUSTERSELECTION: ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) ( "s" | "S" ) ( "e" | "E" ) ( "l" | "L" ) ( "e" | "E" ) ( "c" | "C" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
-	|
-	< DESCRIPTION: ( "d" | "D" ) ( "E" | "e" )  ( "s" | "S" ) ( "c" | "C" ) ( "r" | "R" ) ( "i" | "I" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
-	|
-	< ENCRYPTION: ( "E" | "e" ) ( "n" | "N" ) ( "c" | "C" ) ( "r" | "R" ) ( "y" | "Y" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
-	|
-	< DROP: ( "d" | "D" ) ( "r" | "R" ) ( "o" | "O" ) ( "p" | "P" ) >
-	|
-	< PROPERTY: ( "p" | "P" ) ( "r" | "R" ) ( "o" | "O" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) ( "y" | "Y" ) >
-	|
-	< FORCE: ( "f" | "F" ) ( "o" | "O" ) ( "r" | "R" ) ( "c" | "C" ) ( "e" | "E" ) >
-	|
-	< METADATA: ( "m" | "M" ) ( "e" | "E" ) ( "t" | "T" ) ( "a" | "A" ) ( "d" | "D" ) ( "a" | "A" ) ( "t" | "T" ) ( "a" | "A" )   >
-	|
-    < INDEX: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x")  >
-    |
-    < COLLATE: ( "c" | "C") ( "o" | "O") ( "l" | "L") ( "l" | "L") ( "a" | "A") ( "t" | "T") ( "E" | "e")  >
-    |
-    < ENGINE: ( "E" | "e")  ( "N" | "n") ( "G" | "g") ( "I" | "i") ( "N" | "n")( "E" | "e") >
-    |
-    < REBUILD: ( "R" | "r") ( "E" | "e")  ( "B" | "b") ( "U" | "u") ( "I" | "i") ( "L" | "l") ( "D" | "d") >
-    |
-    < ID: ( "I" | "i") ( "D" | "d") >
-    |
-    < DATABASE: ( "D" | "d") ( "A" | "a")  ( "T" | "t") ( "A" | "a") ( "B" | "b") ( "A" | "a") ( "S" | "s") ( "E" | "e") >
-    |
-    < OPTIMIZE: ( "O" | "o") ( "P" | "p")  ( "T" | "t") ( "I" | "i") ( "M" | "m") ( "I" | "i") ( "Z" | "z") ( "E" | "e") >
-    |
-    < LINK: ( "L" | "l") ( "I" | "i")  ( "N" | "n") ( "K" | "k") >
-    |
-    < TYPE: ( "T" | "t") ( "Y" | "y")  ( "P" | "p") ( "E" | "e") >
-    |
-    < INVERSE: ( "I" | "i") ( "N" | "n")  ( "V" | "v") ( "E" | "e") ( "R" | "r")  ( "S" | "s") ( "E" | "e") >
-    |
-    < EXPLAIN: ( "E" | "e") ( "X" | "x")  ( "P" | "p") ( "L" | "l") ( "A" | "a")  ( "I" | "i") ( "N" | "n") >
-    |
-    < GRANT: ( "G" | "g") ( "R" | "r")  ( "A" | "a") ( "N" | "n") ( "T" | "t") >
-    |
-    < REVOKE: ( "R" | "r") ( "E" | "e")  ( "V" | "v") ( "O" | "o") ( "K" | "k")  ( "E" | "e") >
-    |
-    < READ: ( "R" | "r") ( "E" | "e")  ( "A" | "a") ( "D" | "d")>
-    |
-    < EXECUTE: ( "E" | "e") ( "X" | "x") ( "E" | "e") ( "C" | "c")  ( "U" | "u")  ( "T" | "t") ( "E" | "e")>
-    |
-    < ALL: ( "A" | "a") ( "L" | "l") ( "L" | "l")>
-    |
-    < NONE: ( "N" | "n") ( "O" | "o")  ( "N" | "n") ( "E" | "e")>
-    |
-    < FUNCTION: ( "F" | "f") ( "U" | "u")  ( "N" | "n") ( "C" | "c") ( "T" | "t")  ( "I" | "i") ( "O" | "o")  ( "N" | "n") >
-    |
-    < PARAMETERS: ( "P" | "p") ( "A" | "a")  ( "R" | "r") ( "A" | "a") ( "M" | "m")  ( "E" | "e") ( "T" | "t")  ( "E" | "e") ( "R" | "r") ( "S" | "s") >
-    |
-    < IDEMPOTENT: ( "I" | "i") ( "D" | "d")  ( "E" | "e") ( "M" | "m") ( "P" | "p")  ( "O" | "o") ( "T" | "t")  ( "E" | "e") ( "N" | "n") ( "T" | "t") >
-    |
-    < LANGUAGE: ( "L" | "l") ( "A" | "a")  ( "N" | "n") ( "G" | "g") ( "U" | "u")  ( "A" | "a") ( "G" | "g")  ( "E" | "e") >
-    |
-    < BEGIN: ( "B" | "b") ( "E" | "e")  ( "G" | "g") ( "I" | "i") ( "N" | "n") >
-    |
-    < COMMIT: ( "C" | "c") ( "O" | "o")  ( "M" | "m") ( "M" | "m") ( "I" | "i")  ( "T" | "t") >
-    |
-    < ROLLBACK: ( "R" | "r") ( "O" | "o")  ( "L" | "l") ( "L" | "l") ( "B" | "b") ( "A" | "a") ( "C" | "c") ( "K" | "k")>
-    |
-    < IF: ( "I" | "i") ( "F" | "f") >
-    |
-    < ELSE: ( "E" | "e") ( "L" | "l") ( "S" | "s") ( "E" | "e") >
-    |
-    < CONTINUE: ( "C" | "c") ( "O" | "o") ( "N" | "n") ( "T" | "t") ( "I" | "i") ( "N" | "n") ( "U" | "u") ( "E" | "e") >
-    |
-    < FAIL: ( "F" | "f") ( "A" | "a") ( "I" | "i") ( "L" | "l") >
-    |
-    < ISOLATION: ( "I" | "i") ( "S" | "s") ( "O" | "o") ( "L" | "l") ( "A" | "a") ( "T" | "t") ( "I" | "i") ( "O" | "o") ( "N" | "n") >
-    |
-    < SLEEP: ( "S" | "s") ( "L" | "l") ( "E" | "e") ( "E" | "e") ( "P" | "p")  >
-    |
-    < CONSOLE: ( "C" | "c") ( "O" | "o") ( "N" | "n") ( "S" | "s") ( "O" | "o")  ( "L" | "l") ( "E" | "e")>
-    |
-    < BLOB: ( "B" | "b") ( "L" | "l") ( "O" | "o") ( "B" | "b") >
-    |
-    < SHARED: ( "S" | "s") ( "H" | "h") ( "A" | "a") ( "R" | "r") ( "E" | "e") ( "D" | "d") >
-    |
-    < DEFAULT_: ( "D" | "d") ( "E" | "e") ( "F" | "f") ( "A" | "a") ( "U" | "u") ( "L" | "l") ( "T" | "t") >
-	|
-	< SEQUENCE: ( "S" | "s") ( "E" | "e") ( "Q" | "q") ( "U" | "u") ( "E" | "e") ( "N" | "n") ( "C" | "c") ( "E" | "e") >
-	|
-	< START: ( "S" | "s") ( "T" | "t") ( "A" | "a") ( "R" | "r") ( "T" | "t") >
-	|
-	< OPTIONAL: ( "O" | "o") ( "P" | "p") ( "T" | "t") ( "I" | "i") ( "O" | "o") ( "N" | "n") ( "A" | "a") ( "L" | "l") >
-	|
-	< COUNT: ( "C" | "c") ( "O" | "o") ( "U" | "u") ( "N" | "n") ( "T" | "t") >
-	|
-	< DISTINCT: ( "D" | "d") ( "I" | "i") ( "S" | "s") ( "T" | "t") ( "I" | "i") ( "N" | "n") ( "C" | "c") ( "T" | "t") >
-	|
-    < HA: ( "H" | "h") ( "A" | "a") >
-    |
-    < STATUS: ( "S" | "s") ( "T" | "t") ( "A" | "a") ( "T" | "t") ( "U" | "u") ( "S" | "s") >
-    |
-    < SERVER: ( "S" | "s") ( "E" | "e") ( "R" | "r") ( "V" | "v") ( "E" | "e") ( "R" | "r") >
-    |
-    < SYNC: ( "S" | "s") ( "Y" | "y") ( "N" | "n") ( "C" | "c") >
-	|
-	< EXISTS: ( "E" | "e" ) ( "X" | "x" ) ( "i" | "I" ) ( "s" | "S" ) ( "t" | "T" ) ( "s" | "S" ) >
-	|
-	< FOREACH: ( "F" | "f" ) ( "O" | "o" ) ( "R" | "r" ) ( "E" | "e" ) ( "A" | "a" ) ( "C" | "c" ) ( "H" | "h" ) >
-	|
-	< MOVE: ( "m" | "M" ) ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) >
-	|
-	< DEPTH_ALIAS: ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) ( "a" | "A" ) ( "l" | "L" ) ( "i" | "I" ) ( "a" | "A" ) ( "s" | "S" )>
-	|
-	< PATH_ALIAS: ( "p" | "P" ) ( "a" | "A" ) ( "t" | "T" ) ( "h" | "H" ) ( "a" | "A" ) ( "l" | "L" ) ( "i" | "I" ) ( "a" | "A" ) ( "s" | "S" )>
-	|
-	< IDENTIFIED: ( "i" | "I" ) ( "d" | "D" ) ( "e" | "E" ) ( "n" | "N" ) ( "t" | "T" ) ( "i" | "I" ) ( "f" | "F" ) ( "i" | "I" ) ( "e" | "E" ) ( "d" | "D" )>
-	|
-	< ROLE: ( "r" | "R" ) ( "o" | "O" ) ( "l" | "L" ) ( "e" | "E" ) >
-	|
-	< USER: ( "u" | "U" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) >
-	|
-	< USERS: ( "u" | "U" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "s" | "S" ) >
-	|
-	< RID: ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) >
-	|
-	< SECURITY: ( "s" | "S" ) ( "e" | "E" ) ( "c" | "C" ) ( "u" | "U" ) ( "r" | "R" ) ( "i" | "I" ) ( "t" | "T" ) ( "y" | "Y" ) >
-	|
-	< POLICY: ( "p" | "P" ) ( "o" | "O" ) ( "l" | "L" ) ( "i" | "I" ) ( "c" | "C" ) ( "y" | "Y" ) >
-	|
-	< DEFAULTCLUSTER: ( "D" | "d") ( "E" | "e") ( "F" | "f") ( "A" | "a") ( "U" | "u") ( "L" | "l") ( "T" | "t") ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
-	|
-	< SYSTEM: ( "s" | "S" ) ( "y" | "Y" ) ( "s" | "S" ) ( "t" | "T" ) ( "e" | "E" ) ( "m" | "M" ) >
-	|
-	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
-	|
-	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
-	|
-	< RID_ATTR: "@" ( ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) ) >
-	|
-	< RID_STRING: "\"@" ( ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) ) "\"">
-	|
-	< #CLASS_ATTR: "@" ( ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ))>
-	|
-	< #VERSION_ATTR: "@" ( ( "v" | "V" ) ( "e" | "E" ) ( "r" | "R" ) ( "s" | "S" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" )) >
-	|
-	< #SIZE_ATTR: "@" ( ( "s" | "S" ) ( "i" | "I" ) ( "z" | "Z" ) ( "e" | "E" ) ) >
-	|
-	< #TYPE_ATTR: "@" ( ( "t" | "T" ) ( "y" | "Y" ) ( "p" | "P" ) ( "e" | "E" ) ) >
-    |
-	< #RAW_ATTR: "@" ( ( "r" | "R" ) ( "a" | "A" ) ( "w" | "W" ) ) >
-	|
-	< #RID_ID_ATTR: "@" ( ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) "_" ( "i" | "I" ) ( "d" | "D" )) >
-	|
-	< #RID_POS_ATTR: "@" ( ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) "_" ( "p" | "P" ) ( "o" | "O" )  ( "s" | "S" )) >
-    |
-    < #FIELDS_ATTR: "@" ( ( "f" | "F" ) ( "i" | "I" ) ( "e" | "E" ) ( "l" | "L" ) ( "d" | "D" ) ( "s" | "S" )) >
-
+< SELECT : "select" >
+| < TRAVERSE : "traverse" >
+| < MATCH : "match" >
+| < INSERT : "insert" >
+| < CREATE : "create" >
+| < DELETE : "delete" >
+| < VERTEX : "vertex" >
+| < EDGE : "edge" >
+| < UPDATE : "update" >
+| < UPSERT : "upsert" >
+| < FROM : "from" >
+| < TO : "to" >
+| < WHERE : "where" >
+| < WHILE : "while" >
+| < INTO : "into" >
+| < VALUE : "value" >
+| < VALUES : "values" >
+| < SET : "set" >
+| < ADD : "add" >
+| < PUT : "put" >
+| < MERGE : "merge" >
+| < CONTENT : "content" >
+| < REMOVE : "remove" >
+| < INCREMENT : "increment" >
+| < AND : "and" >
+| < OR : "or" >
+| < NULL : "null" >
+| < DEFINED : "defined" >
+| < ORDER : "order" >
+| < GROUP : "group" >
+| < BY : "by" >
+| < LIMIT : "limit" >
+| < SKIP2 : "skip" >
+| < BATCH : "batch" >
+| < OFFSET : "offset" >
+| < TIMEOUT : "timeout" >
+| < ASC : "asc" >
+| < AS : "as" >
+| < DESC : "desc" >
+| < FETCHPLAN : "fetchplan" >
+| < RETURN : "return" >
+| < BEFORE : "before" >
+| < AFTER : "after" >
+| < LOCK : "lock" >
+| < RECORD : "record" >
+| < WAIT : "wait" >
+| < RETRY : "retry" >
+| < LET : "let" >
+| < CACHE : "cache" >
+| < CYCLE : "cycle" >
+| < NOCACHE : "nocache" >
+| < NOLIMIT : "nolimit" >
+| < NOCYCLE : "nocycle" >
+| < UNSAFE : "unsafe" >
+| < PARALLEL : "parallel" >
+| < STRATEGY : "strategy" >
+| < DEPTH_FIRST : "depth_first" >
+| < BREADTH_FIRST : "breadth_first" >
+| < LUCENE : "lucene" >
+| < NEAR : "near" >
+| < WITHIN : "within" >
+| < UNWIND : "unwind" >
+| < MAXDEPTH : "maxdepth" >
+| < MINDEPTH : "mindepth" >
+| < CLASS : "class" >
+| < SUPERCLASS : "superclass" >
+| < CLASSES : "classes" >
+| < SUPERCLASSES : "superclasses" >
+| < VIEW : "view" >
+| < UPDATABLE : "updatable" >
+| < EXCEPTION : "exception" >
+| < PROFILE : "profile" >
+| < STORAGE : "storage" >
+| < ON : "on" >
+| < OFF : "off" >
+| < TRUNCATE : "truncate" >
+| < POLYMORPHIC : "polymorphic" >
+| < FIND : "find" >
+| < REFERENCES : "references" >
+| < EXTENDS : "extends" >
+| < CLUSTERS : "clusters" >
+| < ABSTRACT : "abstract" >
+| < ALTER : "alter" >
+| < NAME : "name" >
+| < SHORTNAME : "shortname" >
+| < OVERSIZE : "oversize" >
+| < STRICTMODE : "strictmode" >
+| < ADDCLUSTER : "addcluster" >
+| < REMOVECLUSTER : "removecluster" >
+| < CUSTOM : "custom" >
+| < CLUSTERSELECTION : "clusterselection" >
+| < DESCRIPTION : "description" >
+| < ENCRYPTION : "encryption" >
+| < DROP : "drop" >
+| < PROPERTY : "property" >
+| < FORCE : "force" >
+| < METADATA : "metadata" >
+| < INDEX : "index" >
+| < COLLATE : "collate" >
+| < ENGINE : "engine" >
+| < REBUILD : "rebuild" >
+| < ID : "id" >
+| < DATABASE : "database" >
+| < OPTIMIZE : "optimize" >
+| < LINK : "link" >
+| < TYPE : "type" >
+| < INVERSE : "inverse" >
+| < EXPLAIN : "explain" >
+| < GRANT : "grant" >
+| < REVOKE : "revoke" >
+| < READ : "read" >
+| < EXECUTE : "execute" >
+| < ALL : "all" >
+| < NONE : "none" >
+| < FUNCTION : "function" >
+| < PARAMETERS : "parameters" >
+| < IDEMPOTENT : "idenpotent" >
+| < LANGUAGE : "language" >
+| < BEGIN : "begin" >
+| < COMMIT : "commit" >
+| < ROLLBACK : "rollback" >
+| < IF : "if" >
+| < ELSE : "else" >
+| < CONTINUE : "continue" >
+| < FAIL : "fail" >
+| < ISOLATION : "isolation" >
+| < SLEEP : "sleep" >
+| < CONSOLE : "console" >
+| < BLOB : "blob" >
+| < SHARED : "shared" >
+| < DEFAULT_ : "default" >
+| < SEQUENCE : "sequence" >
+| < START : "start" >
+| < OPTIONAL : "optional" >
+| < COUNT : "count" >
+| < DISTINCT : "distinct" >
+| < HA : "ha" >
+| < STATUS : "status" >
+| < SERVER : "server" >
+| < SYNC : "sync" >
+| < EXISTS : "exists" >
+| < FOREACH : "foreach" >
+| < MOVE : "move" >
+| < DEPTH_ALIAS : "depthalias" >
+| < PATH_ALIAS : "pathalias" >
+| < IDENTIFIED : "identified" >
+| < ROLE : "role" >
+| < USER : "user" >
+| < USERS : "users" >
+| < RID : "rid" >
+| < SECURITY : "security" >
+| < POLICY : "policy" >
+| < DEFAULTCLUSTER : "defaultcluster" >
+| < SYSTEM : "system" >
+| < THIS : "@this" >
+| < RECORD_ATTRIBUTE :
+    < RID_ATTR >
+  | < CLASS_ATTR >
+  | < VERSION_ATTR >
+  | < SIZE_ATTR >
+  | < TYPE_ATTR >
+  | < RAW_ATTR >
+  | < RID_ID_ATTR >
+  | < RID_POS_ATTR >
+  | < FIELDS_ATTR > >
+| < RID_ATTR : "@rid" >
+| < RID_STRING : "\"@rid\"" >
+| < #CLASS_ATTR : "@class" >
+| < #VERSION_ATTR : "@version" >
+| < #SIZE_ATTR : "@size" >
+| < #TYPE_ATTR : "@type" >
+| < #RAW_ATTR : "@raw" >
+| < #RID_ID_ATTR : "@rid_id" >
+| < #RID_POS_ATTR : "@rid_pos" >
+| < #FIELDS_ATTR : "@fields" >
+| < TRUE: "true" >
+| < FALSE: "false" >
 }
 
 
@@ -517,10 +361,6 @@ TOKEN :
   < ELLIPSIS_INTEGER_RANGE:
     (<MINUS>)? <INTEGER_LITERAL> <ELLIPSIS> (<MINUS>)?<INTEGER_LITERAL>
   >
-  |
-  < TRUE: ("T" | "t") ("R" | "r") ("U" | "u") ("E" | "e") >
-  |
-  < FALSE: ("F" | "f") ("A" | "a") ("L" | "l") ("S" | "s") ("E" | "e") >
 }
 
 
@@ -589,24 +429,25 @@ TOKEN :
 | < RUNSIGNEDSHIFT: ">>>" >
 | < ELLIPSIS: "..." >
 | < RANGE: ".." >
-| < NOT: ( "N" | "n") ( "O" | "o") ( "T" | "t")  >
-| < IN: ( "I" | "i") ( "N" | "n") >
-| < LIKE: ( "L" | "l") ( "I" | "i") ( "K" | "k") ( "E" | "e") >
-| < IS: "is" | "IS" | "Is" | "iS" >
-| < BETWEEN: ( "B" | "b") ( "E" | "e") ( "T" | "t") ( "W" | "w") ( "E" | "e") ( "E" | "e") ( "N" | "n")>
-| < CONTAINS: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) >
-| < CONTAINSALL: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "A" | "a" ) ( "L" | "l" ) ( "L" | "l" ) >
-| < CONTAINSANY: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "A" | "a" ) ( "N" | "n" ) ( "Y" | "y" ) >
-| < CONTAINSKEY: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "K" | "k" ) ( "E" | "e" ) ( "Y" | "y" ) >
-| < CONTAINSVALUE: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "V" | "v" ) ( "A" | "a" ) ( "L" | "l" ) ( "U" | "u" ) ( "E" | "e" ) >
-| < CONTAINSTEXT: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "X" | "x" ) ( "T" | "t" ) >
-| < MATCHES: ( "M" | "m") ( "A" | "a") ( "T" | "t") ( "C" | "c") ( "H" | "h") ( "E" | "e") ( "S" | "s") >
-| < KEY: ( "K" | "k") ( "E" | "e") ( "Y" | "y") >
-| < INSTANCEOF: ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "T" | "t" ) ( "A" | "a" ) ( "N" | "n" ) ( "C" | "c" ) ( "E" | "e" ) ( "O" | "o" ) ( "F" | "f" ) >
-| < CLUSTER: ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
 }
-
-
+TOKEN [IGNORE_CASE] :
+{
+< NOT: "not"  >
+| < IN: "in" >
+| < LIKE: "like" >
+| < IS: "is" >
+| < BETWEEN: "between">
+| < CONTAINS: "contains" >
+| < CONTAINSALL: "containsall">
+| < CONTAINSANY: "containsany" >
+| < CONTAINSKEY: "containskey" >
+| < CONTAINSVALUE: "containsvalue" >
+| < CONTAINSTEXT: "containstext" >
+| < MATCHES: "matches" >
+| < KEY: "key" >
+| < INSTANCEOF: "instanceof" >
+| < CLUSTER: "cluster" >
+}
 
 TOKEN :
 {
@@ -969,11 +810,6 @@ OIdentifier Identifier():
         jjtThis.quoted = true;
         jjtThis.value = quotedToken.image;
         jjtThis.value = jjtThis.value.substring(1, jjtThis.value.length() - 1);
-        /*try{
-            jjtThis.value = java.net.URLEncoder.encode(jjtThis.value, null);
-        }catch(Exception e){
-
-        }*/
     }
 
     return jjtThis;

@@ -645,6 +645,18 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testIgnoreCase() {
+    checkRightSyntax("SELECT FROM V");
+    checkRightSyntax("select FROM V");
+    checkRightSyntax("Select FROM V");
+    checkRightSyntax("sElect FROM V");
+    checkRightSyntax("seLect FROM V");
+    checkRightSyntax("selEct FROM V");
+    checkRightSyntax("seleCt FROM V");
+    checkRightSyntax("selecT FROM V");
+  }
+
+  @Test
   public void testFetchPlanBracketStar() {
     // issue #5689
     checkRightSyntax("SELECT FROM Def fetchplan *:2 [*]in_*:-2");
