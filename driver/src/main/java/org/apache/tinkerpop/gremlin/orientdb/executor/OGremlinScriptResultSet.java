@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OQueryMetrics;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSetInternal;
 import java.nio.channels.ClosedChannelException;
 import java.util.Map;
 import java.util.Optional;
@@ -17,7 +17,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalInterruptedException;
 
 /** Created by Enrico Risa on 24/01/17. */
-public class OGremlinScriptResultSet implements OResultSet, OQueryMetrics {
+public class OGremlinScriptResultSet implements OResultSetInternal, OQueryMetrics {
 
   private final String textTraversal;
   protected Traversal traversal;
@@ -134,5 +134,15 @@ public class OGremlinScriptResultSet implements OResultSet, OQueryMetrics {
   @Override
   public String getLanguage() {
     return "gremlin";
+  }
+
+  @Override
+  public boolean isDetached() {
+    return false;
+  }
+
+  @Override
+  public boolean isExplain() {
+    return false;
   }
 }
