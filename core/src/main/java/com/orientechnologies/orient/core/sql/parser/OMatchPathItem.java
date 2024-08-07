@@ -28,12 +28,10 @@ public class OMatchPathItem extends SimpleNode {
 
   private void graphPath(OIdentifier edgeName, String direction) {
     if (edgeName == null) {
-      edgeName = new OIdentifier(-1);
-      edgeName.value = "E";
+      edgeName = new OIdentifier("E");
     }
     this.method = new OMethodCall(-1);
-    this.method.methodName = new OIdentifier(-1);
-    this.method.methodName.value = direction;
+    this.method.methodName = new OIdentifier(direction);
     OExpression exp = new OExpression(-1);
     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
     exp.mathExpression = sub;

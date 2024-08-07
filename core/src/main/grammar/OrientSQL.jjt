@@ -805,16 +805,12 @@ OIdentifier Identifier():
 ) {
 
     if(token!=null){
-        jjtThis.value = token.image;
-    }else{
-        jjtThis.quoted = true;
-        jjtThis.value = quotedToken.image;
-        jjtThis.value = jjtThis.value.substring(1, jjtThis.value.length() - 1);
+        jjtThis.setValue(token.image);
+    } else {
+        jjtThis.setQuotedValue(quotedToken.image);
     }
 
     return jjtThis;
-
-
     }
 }
 

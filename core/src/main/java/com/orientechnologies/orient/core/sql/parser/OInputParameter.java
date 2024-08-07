@@ -122,7 +122,7 @@ public class OInputParameter extends SimpleNode {
     if (value instanceof Date) {
       OFunctionCall function = new OFunctionCall(-1);
       function.name = new OIdentifier(-1);
-      function.name.value = "date";
+      function.name.setValue("date");
 
       OExpression dateExpr = new OExpression(-1);
       dateExpr.singleQuotes = true;

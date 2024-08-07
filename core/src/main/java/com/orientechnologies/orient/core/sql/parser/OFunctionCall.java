@@ -407,7 +407,7 @@ public class OFunctionCall extends SimpleNode {
     if (name == null) {
       return false;
     }
-    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.value);
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getValue());
     if (function instanceof OSQLFunctionMove) {
       return true;
     }

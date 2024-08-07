@@ -16,8 +16,8 @@ import java.util.Map;
  */
 public class OIdentifier extends SimpleNode {
 
-  protected String value;
-  protected boolean quoted = false;
+  private String value;
+  private boolean quoted = false;
 
   /**
    * set to true by the query executor/optimizer for internally generated aliases for query
@@ -65,8 +65,13 @@ public class OIdentifier extends SimpleNode {
    *
    * @param value
    */
-  private void setValue(String value) {
+  public void setValue(String value) {
     this.value = value;
+  }
+
+  public void setQuotedValue(String value) {
+    this.value = value.substring(1, value.length() - 1);
+    this.quoted = true;
   }
 
   /**
@@ -132,16 +137,11 @@ public class OIdentifier extends SimpleNode {
     builder.append(value);
   }
 
-  private void setQuoted(boolean quoted) {
-    this.quoted = quoted;
-  }
-
   public OIdentifier copy() {
-    return this;
-    //    OIdentifier result = new OIdentifier(-1);
-    //    result.value = value;
-    //    result.quoted = quoted;
-    //    return result;
+    OIdentifier result = new OIdentifier(-1);
+    result.value = value;
+    result.quoted = quoted;
+    return result;
   }
 
   @Override
