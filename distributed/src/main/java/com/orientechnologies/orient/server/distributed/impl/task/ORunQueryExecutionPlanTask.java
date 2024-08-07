@@ -13,7 +13,7 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -22,7 +22,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.server.distributed.impl.sql.executor.ODistributedResultSet;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -106,14 +105,13 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
     }
   }
 
-  public OResultSet getResult(ODistributedResponse resp, ODatabaseDocumentDistributed db) {
+  public OExecutionStream getResult(ODistributedResponse resp, ODatabaseDocumentDistributed db) {
     OResult payload = (OResult) resp.getPayload();
-    ODistributedResultSet result = new ODistributedResultSet();
-    result.setQueryId(payload.getProperty("queryId"));
-    result.setData(payload.getProperty("data"));
-    result.setDatabase(db);
-    result.setNodeName(nodeName);
-    return result;
+    OExecutionStream first =
+        OExecutionStream.resultIterator(((List<OResult>) payload.getProperty("data")).iterator());
+    String queryId = payload.getProperty("queryId");
+    return OExecutionStream.multipleStreams(
+        new OExecutionStreamDistributedFetch(queryId, nodeName, first, db));
   }
 
   @Override
