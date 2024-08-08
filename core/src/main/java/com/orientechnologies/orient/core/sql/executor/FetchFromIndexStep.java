@@ -804,6 +804,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       } else
         return additionalOperator == null
             || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator));
+    } else if (exp instanceof OBetweenCondition) {
+      return true;
     } else {
       throw new UnsupportedOperationException("Cannot execute index query with " + exp);
     }
@@ -854,6 +856,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       } else
         return additionalOperator == null
             || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator));
+    } else if (exp instanceof OBetweenCondition) {
+      return true;
     } else {
       throw new UnsupportedOperationException("Cannot execute index query with " + exp);
     }

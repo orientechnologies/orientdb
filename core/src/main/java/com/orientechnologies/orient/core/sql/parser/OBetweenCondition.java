@@ -179,6 +179,14 @@ public class OBetweenCondition extends OBooleanExpression {
     return false;
   }
 
+  public OExpression resolveKeyFrom(OBinaryCondition additional) {
+    return this.second;
+  }
+
+  public OExpression resolveKeyTo(OBinaryCondition additional) {
+    return this.third;
+  }
+
   @Override
   protected int getNumberOfExternalCalculations() {
     return 0;

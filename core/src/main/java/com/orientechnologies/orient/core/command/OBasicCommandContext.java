@@ -60,8 +60,7 @@ public class OBasicCommandContext implements OCommandContext {
   // MANAGES THE TIMEOUT
   private long executionStartedOn;
   private long timeoutMs;
-  private com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY
-      timeoutStrategy;
+  private OCommandContext.TIMEOUT_STRATEGY timeoutStrategy;
   protected AtomicLong resultsProcessed = new AtomicLong(0);
   protected Set<Object> uniqueResult = new HashSet<Object>();
 
