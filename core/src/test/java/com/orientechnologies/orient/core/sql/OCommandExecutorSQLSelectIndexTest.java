@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Test;
 
-public class OCommandExecutorSQLSelectTestIndex extends BaseMemoryInternalDatabase {
+public class OCommandExecutorSQLSelectIndexTest extends BaseMemoryInternalDatabase {
 
   @Test
   public void testIndexSqlEmbeddedList() {
