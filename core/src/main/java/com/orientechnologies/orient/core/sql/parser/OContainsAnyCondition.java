@@ -373,7 +373,7 @@ public class OContainsAnyCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean isIndexAware(OIndexSearchInfo info) {
+  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
     if (left.isBaseIdentifier()) {
       if (info.getField().equals(left.getDefaultAlias().getStringValue())) {
         if (right.isEarlyCalculated(info.getCtx())) {

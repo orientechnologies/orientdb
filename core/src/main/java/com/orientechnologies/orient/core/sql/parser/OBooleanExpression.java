@@ -300,7 +300,7 @@ public abstract class OBooleanExpression extends SimpleNode {
     return false;
   }
 
-  public boolean isIndexAware(OIndexSearchInfo info) {
+  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
     return false;
   }
 

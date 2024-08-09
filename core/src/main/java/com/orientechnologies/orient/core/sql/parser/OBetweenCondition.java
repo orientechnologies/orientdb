@@ -165,7 +165,7 @@ public class OBetweenCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean isIndexAware(OIndexSearchInfo info) {
+  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
     if (info.allowsRange()) {
       if (first.isBaseIdentifier()) {
         if (info.getField().equals(first.getDefaultAlias().getStringValue())) {

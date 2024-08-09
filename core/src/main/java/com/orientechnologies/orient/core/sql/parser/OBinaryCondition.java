@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -526,11 +527,15 @@ public class OBinaryCondition extends OBooleanExpression {
     return Optional.empty();
   }
 
-  public boolean isIndexAware(OIndexSearchInfo info) {
+  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
     if (left.isBaseIdentifier()) {
       if (info.getField().equals(left.getDefaultAlias().getStringValue())) {
         if (right.isEarlyCalculated(info.getCtx())) {
           if (operator instanceof OEqualsCompareOperator) {
+            Object vl = this.right.execute((OResult) null, ctx);
+            if (vl instanceof Collection<?>) {
+              return !((Collection) vl).isEmpty();
+            }
             return true;
           } else if (operator instanceof OContainsKeyOperator
               && info.isMap()

@@ -2766,7 +2766,7 @@ public class OSelectExecutionPlanner {
       boolean indexFieldFound = false;
       while (blockIterator.hasNext()) {
         OBooleanExpression singleExp = blockIterator.next();
-        if (singleExp.isIndexAware(info)) {
+        if (singleExp.isIndexAware(info, ctx)) {
           indexFieldFound = true;
           indexKeyValue.getSubBlocks().add(singleExp.copy());
           blockIterator.remove();
