@@ -3649,6 +3649,24 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testEmptyListNoIndex() {
+    String className = "testEmptyListNoIndex";
+    OClass clazz = db.createClassIfNotExist(className);
+    OProperty prop = clazz.createProperty("noIndex", OType.EMBEDDEDLIST, OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    db.command("insert into " + className + "  set noIndex = ['foo', 'bar']");
+    db.command("insert into " + className + "  set noIndex = ['bbb', 'FFF']");
+
+    try (OResultSet result = db.query("select from " + className + " where noIndex = []")) {
+      Assert.assertFalse(result.hasNext());
+      Assert.assertFalse(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+  @Test
   public void testContainsAll() {
     String className = "testContainsAll";
     OClass clazz = db.createClassIfNotExist(className);
