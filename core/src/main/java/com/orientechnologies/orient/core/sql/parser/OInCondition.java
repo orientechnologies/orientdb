@@ -393,7 +393,7 @@ public class OInCondition extends OBooleanExpression {
     this.rightMathExpression = rightMathExpression;
   }
 
-  public boolean isIndexAware(OIndexSearchInfo info) {
+  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
     if (left.isBaseIdentifier()) {
       if (info.getField().equals(left.getDefaultAlias().getStringValue())) {
         if (rightMathExpression != null) {
