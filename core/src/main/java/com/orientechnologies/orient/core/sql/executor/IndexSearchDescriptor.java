@@ -55,7 +55,7 @@ public class IndexSearchDescriptor {
     OBooleanExpression lastOp = getSubBlocks().get(getSubBlocks().size() - 1);
     if (lastOp instanceof OBinaryCondition) {
       OBinaryCompareOperator op = ((OBinaryCondition) lastOp).getOperator();
-      range = op.isRangeOperator();
+      range = op.isRange();
     }
 
     long val =

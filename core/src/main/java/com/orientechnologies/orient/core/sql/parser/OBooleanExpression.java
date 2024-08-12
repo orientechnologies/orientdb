@@ -323,4 +323,12 @@ public abstract class OBooleanExpression extends SimpleNode {
   public OExpression resolveKeyTo(OBinaryCondition additional) {
     throw new UnsupportedOperationException("Cannot execute index query with " + this);
   }
+
+  public boolean isKeyFromIncluded(OBinaryCondition additional) {
+    throw new UnsupportedOperationException("Cannot execute index query with " + this);
+  }
+
+  public boolean isKeyToIncluded(OBinaryCondition additional) {
+    throw new UnsupportedOperationException("Cannot execute index query with " + this);
+  }
 }

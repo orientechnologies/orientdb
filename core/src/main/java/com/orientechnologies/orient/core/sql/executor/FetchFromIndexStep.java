@@ -26,9 +26,7 @@ import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 import com.orientechnologies.orient.core.sql.parser.OCollection;
-import com.orientechnologies.orient.core.sql.parser.OContainsAnyCondition;
 import com.orientechnologies.orient.core.sql.parser.OContainsKeyOperator;
-import com.orientechnologies.orient.core.sql.parser.OContainsTextCondition;
 import com.orientechnologies.orient.core.sql.parser.OContainsValueCondition;
 import com.orientechnologies.orient.core.sql.parser.OContainsValueOperator;
 import com.orientechnologies.orient.core.sql.parser.OEqualsCompareOperator;
@@ -149,7 +147,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         OBooleanExpression lastOp = andBlock.getSubBlocks().get(andBlock.getSubBlocks().size() - 1);
         if (lastOp instanceof OBinaryCondition) {
           OBinaryCompareOperator op = ((OBinaryCondition) lastOp).getOperator();
-          range = op.isRangeOperator();
+          range = op.isRange();
         }
       } else if (condition instanceof OInCondition) {
         size = 1;
@@ -212,14 +210,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           }
         }
 
-        OIndexStream localCursor =
-            createCursor(index, equals, definition, item, ctx, orderAsc, condition);
+        OIndexStream localCursor = createCursor(index, equals, item, ctx, orderAsc, condition);
 
         acquiredStreams.add(localCursor);
       }
     } else {
-      OIndexStream stream =
-          createCursor(index, equals, definition, rightValue, ctx, orderAsc, condition);
+      OIndexStream stream = createCursor(index, equals, rightValue, ctx, orderAsc, condition);
       acquiredStreams.add(stream);
     }
     return acquiredStreams;
@@ -315,66 +311,73 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
                   item -> {
                     Object itemVal =
                         convertToIndexDefinitionTypes(condition, item, indexDef.getTypes());
-                    if (index.supportsOrderedIterations()) {
-
-                      Object from = toBetweenIndexKey(indexDef, itemVal);
-                      Object to = toBetweenIndexKey(indexDef, itemVal);
-                      if (from == null && to == null) {
-                        // manage null value explicitly, as the index API does not seem to work
-                        // correctly in this
-                        // case
-                        if (!index.getDefinition().isNullValuesIgnored()) {
-                          acquiredStreams.add(new ONullIndexStream(index));
-                        }
-                      } else {
-                        acquiredStreams.add(
-                            new OBetweenIndexStream(
-                                index, from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc));
-                      }
-
-                    } else if (additionalRangeCondition == null
-                        && allEqualities((OAndBlock) condition)) {
-                      acquiredStreams.add(
-                          new OExactIndexStream(index, toIndexKey(indexDef, itemVal), isOrderAsc));
-                    } else if (isFullTextIndex(index)) {
-                      acquiredStreams.add(
-                          new OExactIndexStream(index, toIndexKey(indexDef, itemVal), isOrderAsc));
-                    } else {
-                      throw new UnsupportedOperationException(
-                          "Cannot evaluate " + condition + " on index " + index);
-                    }
+                    rangeIndexOps(
+                        index,
+                        fromKeyIncluded,
+                        toKeyIncluded,
+                        condition,
+                        isOrderAsc,
+                        additionalRangeCondition,
+                        acquiredStreams,
+                        indexDef,
+                        itemVal,
+                        itemVal);
                   });
         }
 
         // some problems in key conversion, so the params do not match the key types
         continue;
       }
-      if (index.supportsOrderedIterations()) {
-
-        Object from = toBetweenIndexKey(indexDef, secondValue);
-        Object to = toBetweenIndexKey(indexDef, thirdValue);
-
-        if (from == null && to == null) {
-          if (!index.getDefinition().isNullValuesIgnored()) {
-            acquiredStreams.add(new ONullIndexStream(index));
-          }
-        } else {
-          acquiredStreams.add(
-              new OBetweenIndexStream(index, from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc));
-        }
-
-      } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
-        acquiredStreams.add(
-            new OExactIndexStream(index, toIndexKey(indexDef, secondValue), isOrderAsc));
-      } else if (isFullTextIndex(index)) {
-        acquiredStreams.add(
-            new OExactIndexStream(index, toIndexKey(indexDef, secondValue), isOrderAsc));
-      } else {
-        throw new UnsupportedOperationException(
-            "Cannot evaluate " + condition + " on index " + index);
-      }
+      rangeIndexOps(
+          index,
+          fromKeyIncluded,
+          toKeyIncluded,
+          condition,
+          isOrderAsc,
+          additionalRangeCondition,
+          acquiredStreams,
+          indexDef,
+          secondValue,
+          thirdValue);
     }
     return acquiredStreams;
+  }
+
+  protected static void rangeIndexOps(
+      OIndexInternal index,
+      boolean fromKeyIncluded,
+      boolean toKeyIncluded,
+      OBooleanExpression condition,
+      boolean isOrderAsc,
+      OBinaryCondition additionalRangeCondition,
+      List<OIndexStream> acquiredStreams,
+      OIndexDefinition indexDef,
+      Object fromVal,
+      Object toVal) {
+    if (index.supportsOrderedIterations()) {
+
+      Object from = toBetweenIndexKey(indexDef, fromVal);
+      Object to = toBetweenIndexKey(indexDef, toVal);
+      if (from == null && to == null) {
+        // manage null value explicitly, as the index API does not seem to work
+        // correctly in this
+        // case
+        if (!index.getDefinition().isNullValuesIgnored()) {
+          acquiredStreams.add(new ONullIndexStream(index));
+        }
+      } else {
+        acquiredStreams.add(
+            new OBetweenIndexStream(index, from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc));
+      }
+
+    } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
+      acquiredStreams.add(new OExactIndexStream(index, toIndexKey(indexDef, fromVal), isOrderAsc));
+    } else if (isFullTextIndex(index)) {
+      acquiredStreams.add(new OExactIndexStream(index, toIndexKey(indexDef, fromVal), isOrderAsc));
+    } else {
+      throw new UnsupportedOperationException(
+          "Cannot evaluate " + condition + " on index " + index);
+    }
   }
 
   private static boolean isFullTextIndex(OIndex index) {
@@ -543,7 +546,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     OBooleanExpression condition = desc.getKeyCondition();
 
     List<OIndexStream> acquiredStreams = new ArrayList<>();
-    OIndexDefinition definition = index.getDefinition();
     OBinaryCompareOperator operator = ((OBinaryCondition) condition).getOperator();
     OExpression left = ((OBinaryCondition) condition).getLeft();
     if (!left.toString().equalsIgnoreCase("key")) {
@@ -551,8 +553,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           "search for index for " + condition + " is not supported yet");
     }
     Object rightValue = ((OBinaryCondition) condition).getRight().execute((OResult) null, ctx);
-    OIndexStream stream =
-        createCursor(index, operator, definition, rightValue, ctx, isOrderAsc, condition);
+    OIndexStream stream = createCursor(index, operator, rightValue, ctx, isOrderAsc, condition);
     acquiredStreams.add(stream);
     return acquiredStreams;
   }
@@ -593,7 +594,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private static OIndexStream createCursor(
       OIndexInternal index,
       OBinaryCompareOperator operator,
-      OIndexDefinition definition,
       Object value,
       OCommandContext ctx,
       boolean orderAsc,
@@ -601,7 +601,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     if (operator instanceof OEqualsCompareOperator
         || operator instanceof OContainsKeyOperator
         || operator instanceof OContainsValueOperator) {
-      return new OExactIndexStream(index, toIndexKey(definition, value), orderAsc);
+      return new OExactIndexStream(index, toIndexKey(index.getDefinition(), value), orderAsc);
     } else if (operator instanceof OGeOperator) {
       return new OMajorIndexStream(index, value, true, orderAsc);
     } else if (operator instanceof OGtOperator) {
@@ -645,84 +645,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private static boolean indexKeyFromIncluded(OAndBlock keyCondition, OBinaryCondition additional) {
     OBooleanExpression exp =
         keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
-    OBinaryCompareOperator additionalOperator =
-        Optional.ofNullable(additional).map(OBinaryCondition::getOperator).orElse(null);
-    if (exp instanceof OBinaryCondition) {
-      OBinaryCompareOperator operator = ((OBinaryCondition) exp).getOperator();
-      if (isGreaterOperator(operator)) {
-        return isIncludeOperator(operator);
-      } else
-        return additionalOperator == null
-            || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator));
-    } else if (exp instanceof OInCondition || exp instanceof OContainsAnyCondition) {
-      return additional == null
-          || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator));
-    } else if (exp instanceof OContainsTextCondition) {
-      return true;
-    } else if (exp instanceof OContainsValueCondition) {
-      OBinaryCompareOperator operator = ((OContainsValueCondition) exp).getOperator();
-      if (isGreaterOperator(operator)) {
-        return isIncludeOperator(operator);
-      } else
-        return additionalOperator == null
-            || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator));
-    } else if (exp instanceof OBetweenCondition) {
-      return true;
-    } else {
-      throw new UnsupportedOperationException("Cannot execute index query with " + exp);
-    }
-  }
-
-  private static boolean isGreaterOperator(OBinaryCompareOperator operator) {
-    if (operator == null) {
-      return false;
-    }
-    return operator instanceof OGeOperator || operator instanceof OGtOperator;
-  }
-
-  private static boolean isLessOperator(OBinaryCompareOperator operator) {
-    if (operator == null) {
-      return false;
-    }
-    return operator instanceof OLeOperator || operator instanceof OLtOperator;
-  }
-
-  private static boolean isIncludeOperator(OBinaryCompareOperator operator) {
-    if (operator == null) {
-      return false;
-    }
-    return operator instanceof OGeOperator || operator instanceof OLeOperator;
+    return exp.isKeyFromIncluded(additional);
   }
 
   private static boolean indexKeyToIncluded(OAndBlock keyCondition, OBinaryCondition additional) {
     OBooleanExpression exp =
         keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
-    OBinaryCompareOperator additionalOperator =
-        Optional.ofNullable(additional).map(OBinaryCondition::getOperator).orElse(null);
-    if (exp instanceof OBinaryCondition) {
-      OBinaryCompareOperator operator = ((OBinaryCondition) exp).getOperator();
-      if (isLessOperator(operator)) {
-        return isIncludeOperator(operator);
-      } else
-        return additionalOperator == null
-            || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator));
-    } else if (exp instanceof OInCondition || exp instanceof OContainsAnyCondition) {
-      return additionalOperator == null
-          || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator));
-    } else if (exp instanceof OContainsTextCondition) {
-      return true;
-    } else if (exp instanceof OContainsValueCondition) {
-      OBinaryCompareOperator operator = ((OContainsValueCondition) exp).getOperator();
-      if (isLessOperator(operator)) {
-        return isIncludeOperator(operator);
-      } else
-        return additionalOperator == null
-            || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator));
-    } else if (exp instanceof OBetweenCondition) {
-      return true;
-    } else {
-      throw new UnsupportedOperationException("Cannot execute index query with " + exp);
-    }
+    return exp.isKeyToIncluded(additional);
   }
 
   @Override

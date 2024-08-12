@@ -292,5 +292,15 @@ public class OBetweenCondition extends OBooleanExpression {
     }
     return true;
   }
+
+  @Override
+  public boolean isKeyFromIncluded(OBinaryCondition additional) {
+    return true;
+  }
+
+  @Override
+  public boolean isKeyToIncluded(OBinaryCondition additional) {
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=f94f4779c4a6c6d09539446045ceca89 (do not edit this line) */

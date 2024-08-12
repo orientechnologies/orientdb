@@ -335,5 +335,33 @@ public class OContainsValueCondition extends OBooleanExpression {
   public OExpression resolveKeyTo(OBinaryCondition additional) {
     return getExpression();
   }
+
+  @Override
+  public boolean isKeyFromIncluded(OBinaryCondition additional) {
+    OBinaryCompareOperator operator = getOperator();
+    if (operator.isGreater()) {
+      return operator.isInclude();
+    } else {
+      if (additional != null && additional.getOperator() != null) {
+        return additional.getOperator().isGreaterInclude();
+      } else {
+        return false;
+      }
+    }
+  }
+
+  @Override
+  public boolean isKeyToIncluded(OBinaryCondition additional) {
+    OBinaryCompareOperator operator = getOperator();
+    if (operator.isLess()) {
+      return operator.isInclude();
+    } else {
+      if (additional != null && additional.getOperator() != null) {
+        return additional.getOperator().isLessInclude();
+      } else {
+        return false;
+      }
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */

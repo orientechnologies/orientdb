@@ -270,5 +270,15 @@ public class OContainsTextCondition extends OBooleanExpression {
   public OExpression resolveKeyTo(OBinaryCondition additional) {
     return getRight();
   }
+
+  @Override
+  public boolean isKeyFromIncluded(OBinaryCondition additional) {
+    return true;
+  }
+
+  @Override
+  public boolean isKeyToIncluded(OBinaryCondition additional) {
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=b588492ba2cbd0f932055f1f64bbbecd (do not edit this line) */

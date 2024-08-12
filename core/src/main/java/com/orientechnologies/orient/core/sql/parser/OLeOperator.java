@@ -72,7 +72,7 @@ public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
   }
 
   @Override
-  public boolean isRangeOperator() {
+  public boolean isRange() {
     return true;
   }
 
@@ -89,6 +89,21 @@ public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
   @Override
   public int hashCode() {
     return getClass().hashCode();
+  }
+
+  @Override
+  public boolean isInclude() {
+    return true;
+  }
+
+  @Override
+  public boolean isLess() {
+    return true;
+  }
+
+  @Override
+  public boolean isGreater() {
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=8b3232c970fd654af947274a5f384a93 (do not edit this line) */

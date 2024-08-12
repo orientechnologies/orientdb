@@ -12,9 +12,23 @@ public interface OBinaryCompareOperator {
 
   OBinaryCompareOperator copy();
 
-  default boolean isRangeOperator() {
+  default boolean isRange() {
     return false;
   }
 
   public OIndexFinder.Operation getOperation();
+
+  public boolean isInclude();
+
+  public boolean isLess();
+
+  public boolean isGreater();
+
+  public default boolean isGreaterInclude() {
+    return isGreater() && isInclude();
+  }
+
+  public default boolean isLessInclude() {
+    return isLess() && isInclude();
+  }
 }

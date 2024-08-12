@@ -65,5 +65,20 @@ public class OScAndOperator extends SimpleNode implements OBinaryCompareOperator
   public int hashCode() {
     return getClass().hashCode();
   }
+
+  @Override
+  public boolean isInclude() {
+    return false;
+  }
+
+  @Override
+  public boolean isLess() {
+    return false;
+  }
+
+  @Override
+  public boolean isGreater() {
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=12592a24f576571470ce760aff503b30 (do not edit this line) */

@@ -1476,7 +1476,7 @@ public class OSelectExecutionPlanner {
     if (booleanExpression instanceof OBinaryCondition) {
       OBinaryCondition cond = ((OBinaryCondition) booleanExpression);
       OBinaryCompareOperator operator = cond.getOperator();
-      if (operator.isRangeOperator() && cond.getLeft().toString().equalsIgnoreCase("@rid")) {
+      if (operator.isRange() && cond.getLeft().toString().equalsIgnoreCase("@rid")) {
         Object obj;
         if (cond.getRight().getRid() != null) {
           obj = cond.getRight().getRid().toRecordId((OResult) null, ctx);
@@ -2772,7 +2772,7 @@ public class OSelectExecutionPlanner {
           blockIterator.remove();
           if (singleExp instanceof OBinaryCondition
               && info.allowsRange()
-              && ((OBinaryCondition) singleExp).getOperator().isRangeOperator()) {
+              && ((OBinaryCondition) singleExp).getOperator().isRange()) {
             // look for the opposite condition, on the same field, for range queries (the other
             // side of the range)
             while (blockIterator.hasNext()) {

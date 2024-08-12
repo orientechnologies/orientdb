@@ -518,7 +518,7 @@ public class OBinaryCondition extends OBooleanExpression {
           return info.findExactIndex(p, value, ctx);
         } else if (operator instanceof OContainsKeyOperator) {
           return info.findByKeyIndex(p, value, ctx);
-        } else if (operator.isRangeOperator()) {
+        } else if (operator.isRange()) {
           return info.findAllowRangeIndex(p, operator.getOperation(), value, ctx);
         }
       }
@@ -541,7 +541,7 @@ public class OBinaryCondition extends OBooleanExpression {
               && info.isMap()
               && info.isIndexByKey()) {
             return true;
-          } else if (info.allowsRange() && operator.isRangeOperator()) {
+          } else if (info.allowsRange() && operator.isRange()) {
             return true;
           }
           return false;
@@ -602,6 +602,34 @@ public class OBinaryCondition extends OBooleanExpression {
     } else {
       return null;
       //      throw new UnsupportedOperationException("Cannot execute index query with " + this);
+    }
+  }
+
+  @Override
+  public boolean isKeyFromIncluded(OBinaryCondition additional) {
+    OBinaryCompareOperator operator = getOperator();
+    if (operator.isGreater()) {
+      return operator.isInclude();
+    } else {
+      if (additional != null && additional.getOperator() != null) {
+        return additional.getOperator().isGreaterInclude();
+      } else {
+        return true;
+      }
+    }
+  }
+
+  @Override
+  public boolean isKeyToIncluded(OBinaryCondition additional) {
+    OBinaryCompareOperator operator = getOperator();
+    if (operator.isLess()) {
+      return operator.isInclude();
+    } else {
+      if (additional != null && additional.getOperator() != null) {
+        return additional.getOperator().isLessInclude();
+      } else {
+        return true;
+      }
     }
   }
 }

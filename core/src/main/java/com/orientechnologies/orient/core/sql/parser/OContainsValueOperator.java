@@ -62,5 +62,20 @@ public class OContainsValueOperator extends SimpleNode implements OBinaryCompare
   public int hashCode() {
     return getClass().hashCode();
   }
+
+  @Override
+  public boolean isInclude() {
+    return false;
+  }
+
+  @Override
+  public boolean isLess() {
+    return false;
+  }
+
+  @Override
+  public boolean isGreater() {
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=5d6492dbb028b8bac69e60d4916cf341 (do not edit this line) */
