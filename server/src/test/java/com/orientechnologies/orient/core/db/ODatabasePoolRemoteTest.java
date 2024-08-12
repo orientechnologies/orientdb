@@ -1,12 +1,15 @@
 package com.orientechnologies.orient.core.db;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import java.io.File;
 import org.junit.After;
@@ -72,6 +75,59 @@ public class ODatabasePoolRemoteTest {
     ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
     db.close();
+    pool.close();
+    orientDb.close();
+  }
+
+  @Test
+  public void testPoolCorrectVertex() {
+    OrientDB orientDb =
+        new OrientDB(
+            "remote:localhost:",
+            "root",
+            "root",
+            OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
+
+    if (!orientDb.exists("test")) {
+      orientDb.execute(
+          "create database test memory users (admin identified by 'admin' role admin)");
+    }
+
+    ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
+    ODatabaseDocument db = pool.acquire();
+    db.command("create vertex v set name='abc'").close();
+    OResultSet res = db.query("select * from V ");
+    assertTrue(res.next().getElement().get() instanceof OVertex);
+    db.close();
+    pool.close();
+    orientDb.close();
+  }
+
+  @Test
+  public void testPoolCorrectVertexCloseOpen() {
+    OrientDB orientDb =
+        new OrientDB(
+            "remote:localhost:",
+            "root",
+            "root",
+            OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
+
+    if (!orientDb.exists("test")) {
+      orientDb.execute(
+          "create database test memory users (admin identified by 'admin' role admin)");
+    }
+
+    ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
+    ODatabaseDocument db = pool.acquire();
+    db.command("create vertex v set name='abc'").close();
+    OResultSet res = db.query("select * from V ");
+    assertTrue(res.next().getElement().get() instanceof OVertex);
+    db.close();
+
+    db = pool.acquire();
+    res = db.query("select * from V ");
+    assertTrue(res.next().getElement().get() instanceof OVertex);
+
     pool.close();
     orientDb.close();
   }

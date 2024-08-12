@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
-import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
 /**
  * Assigns a class to documents coming from upstream
@@ -15,10 +14,9 @@ import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 public class SetDocumentClassStep extends AbstractExecutionStep {
   private final String targetClass;
 
-  public SetDocumentClassStep(
-      OIdentifier targetClass, OCommandContext ctx, boolean profilingEnabled) {
+  public SetDocumentClassStep(String targetClass, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
-    this.targetClass = targetClass.getStringValue();
+    this.targetClass = targetClass;
   }
 
   @Override
