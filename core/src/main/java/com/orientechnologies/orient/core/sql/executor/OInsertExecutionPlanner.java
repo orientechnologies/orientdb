@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
@@ -18,6 +19,7 @@ import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /** Created by luigidellaquila on 08/08/16. */
 public class OInsertExecutionPlanner {
@@ -57,10 +59,10 @@ public class OInsertExecutionPlanner {
     } else {
       if (selectStatement != null) {
         handleInsertSelect(result, this.selectStatement, ctx, enableProfiling);
+        handleTargetClass(result, ctx, enableProfiling);
       } else {
         handleCreateRecord(result, this.insertBody, ctx, enableProfiling);
       }
-      handleTargetClass(result, ctx, enableProfiling);
       handleSetFields(result, insertBody, ctx, enableProfiling);
       ODatabaseSession database = ctx.getDatabase();
       if (targetCluster != null) {
@@ -134,7 +136,14 @@ public class OInsertExecutionPlanner {
   private void handleTargetClass(
       OInsertExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
     ODatabaseSession database = ctx.getDatabase();
-    OSchema schema = database.getMetadata().getSchema();
+    Optional<String> tc = resolveTargetClass(database);
+    if (tc.isPresent()) {
+      result.chain(new SetDocumentClassStep(tc.get(), ctx, profilingEnabled));
+    }
+  }
+
+  protected Optional<String> resolveTargetClass(ODatabaseSession database) {
+    OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
     OIdentifier tc = null;
     if (targetClass != null) {
       tc = targetClass;
@@ -157,7 +166,9 @@ public class OInsertExecutionPlanner {
       }
     }
     if (tc != null) {
-      result.chain(new SetDocumentClassStep(tc, ctx, profilingEnabled));
+      return Optional.of(tc.getStringValue());
+    } else {
+      return Optional.empty();
     }
   }
 
@@ -185,7 +196,8 @@ public class OInsertExecutionPlanner {
         tot = body.getContent().size();
       }
     }
-    result.chain(new CreateRecordStep(ctx, tot, profilingEnabled));
+    Optional<String> cl = resolveTargetClass(ctx.getDatabase());
+    result.chain(new CreateRecordStep(ctx, tot, profilingEnabled, cl));
   }
 
   private void handleInsertSelect(

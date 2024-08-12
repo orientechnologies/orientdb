@@ -14,10 +14,13 @@ public class CreateRecordStep extends AbstractExecutionStep {
 
   private int created = 0;
   private int total = 0;
+  private Optional<String> cl;
 
-  public CreateRecordStep(OCommandContext ctx, int total, boolean profilingEnabled) {
+  public CreateRecordStep(
+      OCommandContext ctx, int total, boolean profilingEnabled, Optional<String> cl) {
     super(ctx, profilingEnabled);
     this.total = total;
+    this.cl = cl;
   }
 
   @Override
@@ -39,6 +42,9 @@ public class CreateRecordStep extends AbstractExecutionStep {
                 throw new IllegalStateException();
               }
               created++;
+              if (cl.isPresent()) {
+                return new OUpdatableResult((ODocument) ctx.getDatabase().newInstance(cl.get()));
+              }
               return new OUpdatableResult((ODocument) ctx.getDatabase().newInstance());
             } finally {
               if (profilingEnabled) {
