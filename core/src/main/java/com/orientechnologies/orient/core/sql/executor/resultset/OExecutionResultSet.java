@@ -18,7 +18,7 @@ public class OExecutionResultSet implements OResultSetInternal {
     super();
     this.stream = stream;
     this.context = context;
-    this.plan = Optional.of(plan);
+    this.plan = Optional.ofNullable(plan);
   }
 
   @Override
