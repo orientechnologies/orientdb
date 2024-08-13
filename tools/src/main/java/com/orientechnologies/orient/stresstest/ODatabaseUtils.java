@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
  *
  * @author Andrea Iacono
  */
+@Deprecated
 public class ODatabaseUtils {
 
   public static void createDatabase(final ODatabaseIdentifier databaseIdentifier) throws Exception {
