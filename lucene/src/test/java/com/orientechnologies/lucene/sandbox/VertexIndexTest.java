@@ -58,7 +58,7 @@ public class VertexIndexTest {
 
     final TopDocs topDocs = searcher.search(query, 10);
 
-    assertThat(topDocs.totalHits).isEqualTo(2);
+    assertThat(topDocs.totalHits.value).isEqualTo(2);
     for (int i = 0; i < topDocs.totalHits.value; i++) {
 
       final Document found = searcher.doc(topDocs.scoreDocs[i].doc);
