@@ -53,6 +53,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
    * @param iClassName Class name to iterate
    * @return Iterator of ODocument instances
    */
+  @Deprecated
   ORecordIteratorClass<ODocument> browseClass(String iClassName);
 
   /**
@@ -66,6 +67,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
    * @param iPolymorphic Consider also the instances of the subclasses or not
    * @return Iterator of ODocument instances
    */
+  @Deprecated
   ORecordIteratorClass<ODocument> browseClass(String iClassName, boolean iPolymorphic);
 
   /**
@@ -145,8 +147,10 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
    * @param iClusterName Cluster name to iterate
    * @return Iterator of ODocument instances
    */
+  @Deprecated
   <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName);
 
+  @Deprecated
   <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(
       String iClusterName,
       long startClusterPosition,
@@ -190,6 +194,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
   <RET extends ORecord> RET getRecord(OIdentifiable iIdentifiable);
 
   /** Returns the default record type for this kind of database. */
+  @Deprecated
   byte getRecordType();
 
   /**
@@ -197,6 +202,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
    *
    * @see #setRetainRecords(boolean)
    */
+  @Deprecated
   boolean isRetainRecords();
 
   /**
@@ -206,6 +212,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
    * @param iValue True to enable, false to disable it.
    * @see #isRetainRecords()
    */
+  @Deprecated
   ODatabaseDocument setRetainRecords(boolean iValue);
 
   /**
