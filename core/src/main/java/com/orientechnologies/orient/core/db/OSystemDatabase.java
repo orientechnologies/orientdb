@@ -178,7 +178,7 @@ public class OSystemDatabase {
       if (this.serverId == null) {
         this.serverId = UUID.randomUUID().toString();
         info.setProperty(SERVER_ID_PROPERTY, serverId);
-        info.save();
+        db.save(info);
       }
     } finally {
       db.close();
