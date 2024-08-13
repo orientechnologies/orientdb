@@ -12,7 +12,7 @@
 
     <properties>
         <surefire.version>3.3.1</surefire.version>
-        <metrics.version>4.2.17</metrics.version>
+        <metrics.version>4.2.26</metrics.version>
         <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
@@ -176,7 +176,7 @@
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
-            <version>5.7.1</version>
+            <version>5.9</version>
         </dependency>
         <dependency>
             <groupId>com.jcraft</groupId>
@@ -239,7 +239,7 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.15</version>
+            <version>1.17.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
