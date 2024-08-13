@@ -57,22 +57,16 @@ public abstract class OLuceneBaseTest {
 
     if ("ci".equals(config) || "release".equals(config)) {
       orient = new OrientDB("embedded:./target/databases/", cfg);
-      if (orient.exists(name.getMethodName())) orient.drop(name.getMethodName());
-
-      orient.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin) ",
-          name.getMethodName());
-
     } else {
       orient = new OrientDB("embedded:", cfg);
-      if (orient.exists(name.getMethodName())) orient.drop(name.getMethodName());
-
-      orient.execute(
-          "create database ? memory users(admin identified by 'admin' role admin) ",
-          name.getMethodName());
     }
+    if (orient.exists(name.getMethodName())) orient.drop(name.getMethodName());
 
-    pool = new ODatabasePool(orient, name.getMethodName(), "admin", "admin");
+    orient.execute(
+        "create database ? memory users(admin identified by 'adminpwd' role admin) ",
+        name.getMethodName());
+
+    pool = new ODatabasePool(orient, name.getMethodName(), "admin", "adminpwd");
     db = (ODatabaseDocumentInternal) pool.acquire();
   }
 
