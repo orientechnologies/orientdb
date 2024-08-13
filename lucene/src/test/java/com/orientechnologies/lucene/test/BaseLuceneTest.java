@@ -51,7 +51,7 @@ public abstract class BaseLuceneTest {
       path = "embedded:./target/databases";
     } else {
       type = ODatabaseType.MEMORY;
-      path = "embedded:.";
+      path = "embedded:";
     }
     context = new OrientDB(path, OrientDBConfig.defaultConfig());
 
