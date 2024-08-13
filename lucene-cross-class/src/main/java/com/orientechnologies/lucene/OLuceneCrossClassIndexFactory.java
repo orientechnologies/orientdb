@@ -31,9 +31,10 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -167,14 +168,18 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
 
   private void createCrossClassSearchIndex(ODatabaseInternal db) {
 
-    OIndexManager indexManager = db.getMetadata().getIndexManager();
+    OIndexManagerAbstract indexManager =
+        ((OMetadataInternal) db.getMetadata()).getIndexManagerInternal();
 
     ODatabaseDocument dbd = (ODatabaseDocument) db;
-    if (!indexManager.existsIndex("CrossClassSearchIndex")) {
+    synchronized (this) {
+      if (!indexManager.existsIndex("CrossClassSearchIndex")) {
 
-      logger.info("creating cross class Lucene index");
+        logger.info("creating cross class Lucene index");
 
-      dbd.command("CREATE INDEX CrossClassSearchIndex FULLTEXT ENGINE LUCENE_CROSS_CLASS").close();
+        dbd.command("CREATE INDEX CrossClassSearchIndex FULLTEXT ENGINE LUCENE_CROSS_CLASS")
+            .close();
+      }
     }
   }
 }

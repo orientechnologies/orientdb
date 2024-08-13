@@ -30,13 +30,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.junit.Before;
 import org.junit.Test;
 
 public class OLuceneCrossClassIndexTest extends OLuceneBaseTest {
 
-  @Before
-  public void setUp() throws Exception {
+  protected void setupDatabase(String config) {
+    super.setupDatabase(config);
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
     db.execute("sql", getScriptFromStream(stream));
