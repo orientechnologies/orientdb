@@ -283,7 +283,8 @@ public class OTraverseStatementExecutionTest extends BaseMemoryDatabase {
     OEdge ownsEdge = person.addEdge(pet, "TOwns");
     db.save(ownsEdge);
     String query =
-        "select $current as person, $current.out('TOwns').name as petName, (traverse out('TOwns') from $current) from (select from TPerson where name = 'John Doe')";
+        "select $current as person, $current.out('TOwns').name as petName, (traverse out('TOwns')"
+            + " from $current) from (select from TPerson where name = 'John Doe')";
 
     try (OResultSet resultSet = db.query(query)) {
       assertTrue(resultSet.hasNext());
@@ -307,7 +308,9 @@ public class OTraverseStatementExecutionTest extends BaseMemoryDatabase {
     OEdge ownsEdge = person.addEdge(pet, "TOwns");
     db.save(ownsEdge);
     String query =
-        "select $current as person, $current.out('TOwns').name as petName, $path  from (select from TPerson where name = 'John Doe')  let $path = (traverse out('TOwns') from $current)";
+        "select $current as person, $current.out('TOwns').name as petName, $path  from (select from"
+            + " TPerson where name = 'John Doe')  let $path = (traverse out('TOwns') from"
+            + " $current)";
     try (OResultSet resultSet = db.query(query)) {
       assertTrue(resultSet.hasNext());
     }
