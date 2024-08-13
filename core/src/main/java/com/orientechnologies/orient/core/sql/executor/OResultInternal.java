@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Created by luigidellaquila on 06/07/16. */
-public class OResultInternal implements OResult {
+public class OResultInternal implements OResult, Comparable<OResultInternal> {
   protected Map<String, Object> content;
   protected Map<String, Object> temporaryContent;
   protected Map<String, Object> metadata;
@@ -503,6 +503,19 @@ public class OResultInternal implements OResult {
       } else {
         db.getLocalCache().updateRecord(rec);
       }
+    }
+  }
+  
+  @Override
+  public int compareTo(OResultInternal o) {
+    if (element != null) {
+      if(o.element != null) {
+        return element.getIdentity().compareTo(o.element.getIdentity());
+      } else {
+        return 1;
+      }
+    } else { 
+      return 1;
     }
   }
 }

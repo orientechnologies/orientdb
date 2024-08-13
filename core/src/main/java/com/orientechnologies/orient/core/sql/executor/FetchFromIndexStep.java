@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.sql.parser.OValueExpression;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -50,6 +51,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -314,6 +317,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     OEqualsCompareOperator equals = new OEqualsCompareOperator(-1);
     if (OMultiValue.isMultiValue(rightValue)) {
       customIterator = new OMultiCollectionIterator<>();
+      Set<Object> itemsSet;
+      if (orderAsc) {
+        itemsSet = new TreeSet<>();
+      } else {
+        itemsSet = new TreeSet<>((Comparator<Object>) Collections.reverseOrder());
+      }
       for (Object item : OMultiValue.getMultiValueIterable(rightValue)) {
         if (item instanceof OResult) {
           if (((OResult) item).isElement()) {
@@ -323,7 +332,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
                 ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
           }
         }
-
+        itemsSet.add(item);
+      }
+      for (Object item : itemsSet) {
         Iterator<ORawPair<Object, ORID>> localCursor =
             createCursor(equals, definition, item, ctx).iterator();
         final Object itemRef = item;
@@ -406,8 +417,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private void init(
       OCollection fromKey, boolean fromKeyIncluded, OCollection toKey, boolean toKeyIncluded) {
-    List<OCollection> secondValueCombinations = cartesianProduct(fromKey);
-    List<OCollection> thirdValueCombinations = cartesianProduct(toKey);
+    List<OCollection> secondValueCombinations = cartesianProduct(fromKey, orderAsc);
+    List<OCollection> thirdValueCombinations = cartesianProduct(toKey, orderAsc);
 
     OIndexDefinition indexDef = index.getDefinition();
 
@@ -558,19 +569,29 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return value;
   }
 
-  private List<OCollection> cartesianProduct(OCollection key) {
-    return cartesianProduct(new OCollection(-1), key); // TODO
+  private List<OCollection> cartesianProduct(OCollection key, boolean isOrderAsc) {
+    return cartesianProduct(new OCollection(-1), key, isOrderAsc); // TODO
   }
 
-  private List<OCollection> cartesianProduct(OCollection head, OCollection key) {
+  private List<OCollection> cartesianProduct(
+      OCollection head, OCollection key, boolean isOrderAsc) {
     if (key.getExpressions().size() == 0) {
       return Collections.singletonList(head);
     }
     OExpression nextElementInKey = key.getExpressions().get(0);
     Object value = nextElementInKey.execute(new OResultInternal(), ctx);
     if (value instanceof Iterable && !(value instanceof OIdentifiable)) {
-      List<OCollection> result = new ArrayList<>();
+      SortedSet<Object> ss;
+      if (isOrderAsc) {
+        ss = new TreeSet<>();
+      } else {
+        ss = new TreeSet<>((Comparator<Object>) Collections.reverseOrder());
+      }
       for (Object elemInKey : (Collection) value) {
+        ss.add(elemInKey);
+      }
+      List<OCollection> result = new ArrayList<>();
+      for (Object elemInKey : ss) {
         OCollection newHead = new OCollection(-1);
         for (OExpression exp : head.getExpressions()) {
           newHead.add(exp.copy());
@@ -578,7 +599,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         newHead.add(toExpression(elemInKey, ctx));
         OCollection tail = key.copy();
         tail.getExpressions().remove(0);
-        result.addAll(cartesianProduct(newHead, tail));
+        result.addAll(cartesianProduct(newHead, tail, isOrderAsc));
       }
       return result;
     } else {
@@ -589,7 +610,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       newHead.add(nextElementInKey);
       OCollection tail = key.copy();
       tail.getExpressions().remove(0);
-      return cartesianProduct(newHead, tail);
+      return cartesianProduct(newHead, tail, isOrderAsc);
     }
   }
 
