@@ -958,22 +958,36 @@ public class OServer {
   }
 
   protected void createDefaultServerUsers() throws IOException {
-
-    if (databases.getSecuritySystem() != null
-        && !databases.getSecuritySystem().arePasswordsStored()) return;
-
     // ORIENTDB_ROOT_PASSWORD ENV OR JVM SETTING
-    String rootPassword = OSystemVariableResolver.resolveVariable(ROOT_PASSWORD_VAR);
-
-    if (rootPassword != null) {
-      rootPassword = rootPassword.trim();
-      if (rootPassword.isEmpty()) rootPassword = null;
+    String envRootPassword = OSystemVariableResolver.resolveVariable(ROOT_PASSWORD_VAR);
+    if (envRootPassword != null) {
+      envRootPassword = envRootPassword.trim();
+      if (envRootPassword.isEmpty()) envRootPassword = null;
     }
+
+    OSecuritySystem securitySystem = databases.getSecuritySystem();
+    if (securitySystem != null && !securitySystem.arePasswordsStored()) {
+      if (envRootPassword != null) {
+        final String pwd = envRootPassword;
+        getSystemDatabase()
+            .executeWithDB(
+                (db) -> {
+                  db.command(
+                          "update OUser set password= ? WHERE name = ?",
+                          pwd,
+                          OServerConfiguration.DEFAULT_ROOT_USER)
+                      .close();
+                  return (Void) null;
+                });
+      }
+      return;
+    }
+
     boolean existsRoot =
         existsSystemUser(OServerConfiguration.DEFAULT_ROOT_USER)
             || serverCfg.existsUser(OServerConfiguration.DEFAULT_ROOT_USER);
 
-    if (rootPassword == null && !existsRoot) {
+    if (envRootPassword == null && !existsRoot) {
       try {
         // WAIT ANY LOG IS PRINTED
         Thread.sleep(1000);
@@ -1019,14 +1033,14 @@ public class OServer {
       do {
         System.out.print(
             OAnsiCode.format("\n$ANSI{yellow Root password [BLANK=auto generate it]: }"));
-        rootPassword = console.readPassword();
+        envRootPassword = console.readPassword();
 
-        if (rootPassword != null) {
-          rootPassword = rootPassword.trim();
-          if (rootPassword.isEmpty()) rootPassword = null;
+        if (envRootPassword != null) {
+          envRootPassword = envRootPassword.trim();
+          if (envRootPassword.isEmpty()) envRootPassword = null;
         }
 
-        if (rootPassword != null) {
+        if (envRootPassword != null) {
           System.out.print(OAnsiCode.format("$ANSI{yellow Please confirm the root password: }"));
 
           String rootConfirmPassword = console.readPassword();
@@ -1035,7 +1049,7 @@ public class OServer {
             if (rootConfirmPassword.isEmpty()) rootConfirmPassword = null;
           }
 
-          if (!rootPassword.equals(rootConfirmPassword)) {
+          if (!envRootPassword.equals(rootConfirmPassword)) {
             System.out.println(
                 OAnsiCode.format(
                     "$ANSI{red ERROR: Passwords don't match, please reinsert both of them, or press"
@@ -1045,7 +1059,7 @@ public class OServer {
 
             try {
               if (getSecurity() != null) {
-                getSecurity().validatePassword("root", rootPassword);
+                getSecurity().validatePassword("root", envRootPassword);
               }
               // PASSWORD IS STRONG ENOUGH
               break;
@@ -1059,19 +1073,19 @@ public class OServer {
             }
         }
 
-      } while (rootPassword != null);
+      } while (envRootPassword != null);
 
     } else
       logger.info(
           "Found ORIENTDB_ROOT_PASSWORD variable, using this value as root's password",
-          rootPassword);
+          envRootPassword);
 
     if (!existsRoot) {
       context.execute(
           "CREATE SYSTEM USER "
               + OServerConfiguration.DEFAULT_ROOT_USER
               + " IDENTIFIED BY ? ROLE root",
-          rootPassword);
+          envRootPassword);
     }
 
     if (!existsSystemUser(OServerConfiguration.GUEST_USER)) {
