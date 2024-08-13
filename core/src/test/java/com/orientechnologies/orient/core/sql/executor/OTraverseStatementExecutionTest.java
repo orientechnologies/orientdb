@@ -1,6 +1,10 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.BaseMemoryDatabase;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OVertex;
 import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Test;
@@ -256,5 +260,52 @@ public class OTraverseStatementExecutionTest extends BaseMemoryDatabase {
     Assert.assertTrue(val instanceof Collection);
     Assert.assertEquals(1, ((Collection) val).size());
     result.close();
+  }
+
+  @Test
+  public void testSimplifiedTraversalQuery() {
+    db.command("CREATE CLASS TPerson EXTENDS V");
+    db.command("CREATE CLASS TPet EXTENDS V");
+    db.command("CREATE CLASS TOwns EXTENDS E");
+
+    OVertex person = db.newVertex("TPerson");
+    person.setProperty("name", "John Doe");
+    db.save(person);
+
+    OVertex pet = db.newVertex("TPet");
+    pet.setProperty("name", "Buddy");
+    db.save(pet);
+
+    OEdge ownsEdge = person.addEdge(pet, "TOwns");
+    db.save(ownsEdge);
+    String query =
+        "select $current as person, $current.out('TOwns').name as petName, (traverse out('TOwns') from $current) from (select from TPerson where name = 'John Doe')";
+
+    try (OResultSet resultSet = db.query(query)) {
+      assertTrue(resultSet.hasNext());
+    }
+  }
+
+  @Test
+  public void testSimplifiedTraversalQuery1() {
+    db.command("CREATE CLASS TPerson EXTENDS V");
+    db.command("CREATE CLASS TPet EXTENDS V");
+    db.command("CREATE CLASS TOwns EXTENDS E");
+
+    OVertex person = db.newVertex("TPerson");
+    person.setProperty("name", "John Doe");
+    db.save(person);
+
+    OVertex pet = db.newVertex("TPet");
+    pet.setProperty("name", "Buddy");
+    db.save(pet);
+
+    OEdge ownsEdge = person.addEdge(pet, "TOwns");
+    db.save(ownsEdge);
+    String query =
+        "select $current as person, $current.out('TOwns').name as petName, $path  from (select from TPerson where name = 'John Doe')  let $path = (traverse out('TOwns') from $current)";
+    try (OResultSet resultSet = db.query(query)) {
+      assertTrue(resultSet.hasNext());
+    }
   }
 }

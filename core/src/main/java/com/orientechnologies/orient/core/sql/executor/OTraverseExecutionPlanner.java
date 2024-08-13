@@ -110,7 +110,16 @@ public class OTraverseExecutionPlanner {
     if (target == null) {
       handleNoTarget(result, ctx, profilingEnabled);
     } else if (target.getIdentifier() != null) {
-      handleClassAsTarget(result, this.target, ctx, profilingEnabled);
+      String className = target.getIdentifier().getStringValue();
+      if (className.startsWith("$")
+          && !((ODatabaseDocumentInternal) ctx.getDatabase())
+              .getMetadata()
+              .getImmutableSchemaSnapshot()
+              .existsClass(className)) {
+        handleVariableAsTarget(result, this.target, ctx, profilingEnabled);
+      } else {
+        handleClassAsTarget(result, this.target, ctx, profilingEnabled);
+      }
     } else if (target.getCluster() != null) {
       handleClustersAsTarget(
           result, Collections.singletonList(target.getCluster()), ctx, profilingEnabled);
@@ -336,5 +345,13 @@ public class OTraverseExecutionPlanner {
     OInternalExecutionPlan subExecutionPlan =
         subQuery.createExecutionPlan(subCtx, profilingEnabled);
     plan.chain(new SubQueryStep(subExecutionPlan, ctx, subCtx, profilingEnabled));
+  }
+
+  private void handleVariableAsTarget(
+      OSelectExecutionPlan plan,
+      OFromClause target,
+      OCommandContext ctx,
+      boolean profilingEnabled) {
+    plan.chain(new FetchFromVariableStep(target.getItem(), ctx, profilingEnabled));
   }
 }
