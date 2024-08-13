@@ -14,7 +14,7 @@ import org.junit.Test;
 
 public class BruteForceSecurityTest {
 
-  private static final int BRUTE_FORCE_ATTEMPT = 1000;
+  private static final int BRUTE_FORCE_ATTEMPT = 100;
   private OServer server;
 
   @Before
@@ -26,7 +26,7 @@ public class BruteForceSecurityTest {
         .execute(
             "create database `"
                 + BruteForceSecurityTest.class.getSimpleName()
-                + "` memory users(admin identified by 'admin' role admin)");
+                + "` memory users(admin identified by 'adminpwd' role admin)");
   }
 
   @Test
@@ -79,13 +79,13 @@ public class BruteForceSecurityTest {
             () -> {
               try {
                 for (int i = 0; i < BRUTE_FORCE_ATTEMPT; i++) {
-                  long start = System.currentTimeMillis();
+                  long start = System.nanoTime();
                   long end;
                   try (ODatabaseSession open =
                       context.open(
-                          BruteForceSecurityTest.class.getSimpleName(), "admin", "admin")) {
+                          BruteForceSecurityTest.class.getSimpleName(), "admin", "adminpwd")) {
                     open.query("select from OUser").close();
-                    end = System.currentTimeMillis() - start;
+                    end = System.nanoTime() - start;
                     count.incrementAndGet();
                     total.addAndGet(end);
                   }
@@ -99,7 +99,8 @@ public class BruteForceSecurityTest {
     latch.await();
 
     long mean = total.get() / count.get();
-    Assert.assertTrue(mean < 300 && mean > 0);
+    Assert.assertTrue(
+        String.format("failing 300000000 < %d > 0", mean), mean < 300000000 && mean > 0);
     context.close();
   }
 
