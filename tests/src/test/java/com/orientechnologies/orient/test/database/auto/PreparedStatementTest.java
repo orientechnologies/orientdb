@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.testng.Assert;
@@ -59,7 +60,7 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     boolean found = false;
     for (ODocument doc : result) {
       found = true;
-      Assert.assertTrue(expected.contains(doc.field("name")));
+      Assert.assertTrue(expected.contains(doc.getProperty("name")));
     }
     Assert.assertTrue(found);
   }
@@ -77,7 +78,7 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     boolean found = false;
     for (ODocument doc : result) {
       found = true;
-      Assert.assertTrue(expected.contains(doc.field("name")));
+      Assert.assertTrue(expected.contains(doc.getProperty("name")));
     }
     Assert.assertTrue(found);
   }
@@ -85,23 +86,21 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
   @Test
   public void testNamedParamTargetRid() {
 
-    Iterable<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select from PreparedStatementTest1 limit 1"))
-            .execute();
+    List<OResult> result =
+        database.command("select from PreparedStatementTest1 limit 1").stream().toList();
 
-    ODocument record = result.iterator().next();
+    OResult record = result.iterator().next();
 
     Map<String, Object> params = new HashMap<String, Object>();
-    params.put("inputRid", record.getIdentity());
-    result =
+    params.put("inputRid", record.getIdentity().get());
+    Iterable<ODocument> oldResult =
         database.command(new OSQLSynchQuery<ODocument>("select from :inputRid")).execute(params);
 
     boolean found = false;
-    for (ODocument doc : result) {
+    for (ODocument doc : oldResult) {
       found = true;
       Assert.assertEquals(doc.getIdentity(), record.getIdentity());
-      Assert.assertEquals(doc.<Object>field("name"), record.field("name"));
+      Assert.assertEquals(doc.<Object>getProperty("name"), record.getProperty("name"));
     }
     Assert.assertTrue(found);
   }
@@ -124,7 +123,7 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     for (ODocument doc : result) {
       found = true;
       Assert.assertEquals(doc.getIdentity(), record.getIdentity());
-      Assert.assertEquals(doc.<Object>field("name"), record.field("name"));
+      Assert.assertEquals(doc.<Object>getProperty("name"), record.getProperty("name"));
     }
     Assert.assertTrue(found);
   }
@@ -148,7 +147,7 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     for (ODocument doc : result) {
       found = true;
       Assert.assertEquals(doc.getIdentity(), record.getIdentity());
-      Assert.assertEquals(doc.<Object>field("name"), record.field("name"));
+      Assert.assertEquals(doc.<Object>getProperty("name"), record.getProperty("name"));
     }
     Assert.assertTrue(found);
   }
@@ -168,7 +167,7 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     for (ODocument doc : result) {
       found = true;
       Assert.assertEquals(doc.getIdentity(), record.getIdentity());
-      Assert.assertEquals(doc.<Object>field("name"), record.field("name"));
+      Assert.assertEquals(doc.<Object>getProperty("name"), record.getProperty("name"));
     }
     Assert.assertTrue(found);
   }
@@ -204,17 +203,14 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
 
   @Test
   public void testUnnamedParamInArray() {
-    Iterable<ODocument> result =
-        database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from PreparedStatementTest1 where name in [?]"))
-            .execute("foo1");
+    List<OResult> result =
+        database.command("select from PreparedStatementTest1 where name in [?]", "foo1").stream()
+            .toList();
 
     boolean found = false;
-    for (ODocument doc : result) {
+    for (OResult doc : result) {
       found = true;
-      Assert.assertEquals(doc.field("name"), "foo1");
+      Assert.assertEquals(doc.getProperty("name"), "foo1");
     }
     Assert.assertTrue(found);
   }
@@ -223,34 +219,32 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
   public void testNamedParamInArray() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("name", "foo1");
-    Iterable<ODocument> result =
+    List<OResult> result =
         database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from PreparedStatementTest1 where name in [:name]"))
-            .execute(params);
+            .command("select from PreparedStatementTest1 where name in [:name]", params)
+            .stream()
+            .toList();
 
     boolean found = false;
-    for (ODocument doc : result) {
+    for (OResult doc : result) {
       found = true;
-      Assert.assertEquals(doc.field("name"), "foo1");
+      Assert.assertEquals(doc.getProperty("name"), "foo1");
     }
     Assert.assertTrue(found);
   }
 
   @Test
   public void testUnnamedParamInArray2() {
-    Iterable<ODocument> result =
+    List<OResult> result =
         database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from PreparedStatementTest1 where name in [?, 'antani']"))
-            .execute("foo1");
+            .command("select from PreparedStatementTest1 where name in [?, 'antani']", "foo1")
+            .stream()
+            .toList();
 
     boolean found = false;
-    for (ODocument doc : result) {
+    for (OResult doc : result) {
       found = true;
-      Assert.assertEquals(doc.field("name"), "foo1");
+      Assert.assertEquals(doc.getProperty("name"), "foo1");
     }
     Assert.assertTrue(found);
   }
@@ -259,17 +253,16 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
   public void testNamedParamInArray2() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("name", "foo1");
-    Iterable<ODocument> result =
+    List<OResult> result =
         database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from PreparedStatementTest1 where name in [:name, 'antani']"))
-            .execute(params);
+            .command("select from PreparedStatementTest1 where name in [:name, 'antani']", params)
+            .stream()
+            .toList();
 
     boolean found = false;
-    for (ODocument doc : result) {
+    for (OResult doc : result) {
       found = true;
-      Assert.assertEquals(doc.field("name"), "foo1");
+      Assert.assertEquals(doc.getProperty("name"), "foo1");
     }
     Assert.assertTrue(found);
   }

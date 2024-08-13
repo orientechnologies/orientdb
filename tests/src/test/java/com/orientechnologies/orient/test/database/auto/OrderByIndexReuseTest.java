@@ -4,8 +4,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -61,11 +61,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
 
   public void testGreaterThanOrderByAscFirstProperty() {
     String query = "select from OrderByIndexReuse where firstProp > 5 order by firstProp limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), i / 2 + 6);
     }
 
@@ -80,11 +80,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     String query =
         "select from OrderByIndexReuse where secondProp > 5 order by secondProp asc, thirdProp asc"
             + " limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), i / 2 + 6);
       Assert.assertEquals(document.getProperty("thirdProp"), "prop" + (i + 12));
     }
@@ -100,11 +100,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     String query =
         "select from OrderByIndexReuse where secondProp > 5 order by secondProp desc, thirdProp"
             + " desc limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), 50 - i / 2);
       Assert.assertEquals(document.getProperty("thirdProp"), "prop" + (101 - i));
     }
@@ -120,11 +120,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     String query =
         "select from OrderByIndexReuse where secondProp > 5 order by secondProp asc, thirdProp desc"
             + " limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), i / 2 + 6);
       int thirdPropertyIndex;
       if (i % 2 == 0) thirdPropertyIndex = document.<Integer>getProperty("secondProp") * 2 + 1;
@@ -143,11 +143,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
   public void testGreaterThanOrderByDescFirstProperty() {
     final String query =
         "select from OrderByIndexReuse where firstProp > 5 order by firstProp desc limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 50 - i / 2);
     }
 
@@ -161,11 +161,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
   public void testGTEOrderByAscFirstProperty() {
     final String query =
         "select from OrderByIndexReuse where firstProp >= 5 order by firstProp limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), i / 2 + 5);
     }
 
@@ -180,11 +180,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp >= 5 order by secondProp asc, thirdProp asc"
             + " limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), i / 2 + 5);
       int thirdPropertyIndex;
       if (i % 2 == 0) thirdPropertyIndex = document.<Integer>getProperty("secondProp") * 2;
@@ -204,11 +204,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp >= 5 order by secondProp desc, thirdProp"
             + " desc limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), 50 - i / 2);
       int thirdPropertyIndex;
       if (i % 2 == 0) thirdPropertyIndex = document.<Integer>getProperty("secondProp") * 2 + 1;
@@ -228,11 +228,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp >= 5 order by secondProp asc, thirdProp"
             + " desc limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), i / 2 + 5);
       int thirdPropertyIndex;
       if (i % 2 == 0) thirdPropertyIndex = document.<Integer>getProperty("secondProp") * 2 + 1;
@@ -251,11 +251,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
   public void testGTEOrderByDescFirstProperty() {
     final String query =
         "select from OrderByIndexReuse where firstProp >= 5 order by firstProp desc limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 50 - i / 2);
     }
 
@@ -269,11 +269,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
   public void testLTOrderByAscFirstProperty() {
     final String query =
         "select from OrderByIndexReuse where firstProp < 5 order by firstProp limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), i / 2 + 1);
     }
 
@@ -288,11 +288,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp < 5 order by secondProp asc, thirdProp asc"
             + " limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), i / 2 + 1);
 
       int thirdPropertyIndex;
@@ -313,11 +313,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp < 5 order by secondProp desc, thirdProp"
             + " desc limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), 4 - i / 2);
 
       int thirdPropertyIndex;
@@ -338,11 +338,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp < 5 order by secondProp asc, thirdProp desc"
             + " limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), i / 2 + 1);
 
       int thirdPropertyIndex;
@@ -362,11 +362,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
   public void testLTOrderByDescFirstProperty() {
     final String query =
         "select from OrderByIndexReuse where firstProp < 5 order by firstProp desc limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 4 - i / 2);
     }
 
@@ -380,11 +380,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
   public void testLTEOrderByAscFirstProperty() {
     final String query =
         "select from OrderByIndexReuse where firstProp <= 5 order by firstProp limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), i / 2 + 1);
     }
 
@@ -399,11 +399,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp <= 5 order by secondProp asc, thirdProp asc"
             + " limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), i / 2 + 1);
 
       int thirdPropertyIndex;
@@ -424,11 +424,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp <= 5 order by secondProp desc, thirdProp"
             + " desc limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), 5 - i / 2);
 
       int thirdPropertyIndex;
@@ -449,11 +449,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp <= 5 order by secondProp asc, thirdProp"
             + " desc limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), i / 2 + 1);
 
       int thirdPropertyIndex;
@@ -473,11 +473,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
   public void testLTEOrderByDescFirstProperty() {
     final String query =
         "select from OrderByIndexReuse where firstProp <= 5 order by firstProp desc limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 5 - i / 2);
     }
 
@@ -491,11 +491,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
   public void testBetweenOrderByAscFirstProperty() {
     final String query =
         "select from OrderByIndexReuse where firstProp between 5 and 15 order by firstProp limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), i / 2 + 5);
     }
 
@@ -510,11 +510,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp between 5 and 15 order by secondProp asc,"
             + " thirdProp asc limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), i / 2 + 5);
 
       int thirdPropertyIndex;
@@ -535,11 +535,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp between 5 and 15 order by secondProp desc,"
             + " thirdProp desc limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), 15 - i / 2);
 
       int thirdPropertyIndex;
@@ -560,11 +560,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where secondProp between 5 and 15 order by secondProp asc,"
             + " thirdProp desc limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("secondProp"), i / 2 + 5);
 
       int thirdPropertyIndex;
@@ -585,11 +585,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp between 5 and 15 order by firstProp desc"
             + " limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 15 - i / 2);
     }
 
@@ -604,11 +604,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp in [10, 2, 43, 21, 45, 47, 11, 12] order by"
             + " firstProp limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
 
-    ODocument document = result.get(0);
+    OResult document = result.get(0);
     Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 2);
 
     document = result.get(1);
@@ -628,11 +628,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp in [10, 2, 43, 21, 45, 47, 11, 12] order by"
             + " firstProp desc limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
 
-    ODocument document = result.get(0);
+    OResult document = result.get(0);
     Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 47);
 
     document = result.get(1);
@@ -652,11 +652,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     String query =
         "select from OrderByIndexReuse where firstProp > 5 order by firstProp asc, prop4 asc limit"
             + " 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), i / 2 + 6);
       Assert.assertEquals(document.<String>getProperty("prop4"), "prop" + (i + 12));
     }
@@ -672,11 +672,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp > 5 order by firstProp desc, prop4 asc limit"
             + " 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 50 - i / 2);
       int property4Index;
       if (i % 2 == 0) property4Index = document.<Integer>getProperty("firstProp") * 2;
@@ -696,11 +696,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp >= 5 order by firstProp asc, prop4 asc limit"
             + " 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), i / 2 + 5);
 
       int property4Index;
@@ -721,11 +721,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp >= 5 order by firstProp desc, prop4 asc"
             + " limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 50 - i / 2);
 
       int property4Index;
@@ -746,11 +746,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp < 5 order by firstProp asc, prop4 asc limit"
             + " 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), i / 2 + 1);
 
       int property4Index;
@@ -771,11 +771,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp < 5 order by firstProp desc, prop4 asc limit"
             + " 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 4 - i / 2);
 
       int property4Index;
@@ -796,11 +796,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp <= 5 order by firstProp asc, prop4 asc limit"
             + " 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), i / 2 + 1);
 
       int property4Index;
@@ -821,11 +821,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp <= 5 order by firstProp desc, prop4 asc"
             + " limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
     for (int i = 0; i < 3; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 5 - i / 2);
 
       int property4Index;
@@ -846,11 +846,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp between 5 and 15 order by firstProp asc,"
             + " prop4 asc limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), i / 2 + 5);
 
       int property4Index;
@@ -871,11 +871,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp between 5 and 15 order by firstProp desc,"
             + " prop4 asc limit 5";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 5);
     for (int i = 0; i < 5; i++) {
-      ODocument document = result.get(i);
+      OResult document = result.get(i);
       Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 15 - i / 2);
 
       int property4Index;
@@ -896,11 +896,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp in [10, 2, 43, 21, 45, 47, 11, 12] order by"
             + " firstProp asc, prop4 asc limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
 
-    ODocument document = result.get(0);
+    OResult document = result.get(0);
     Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 2);
     Assert.assertEquals(document.<String>getProperty("prop4"), "prop4");
 
@@ -923,11 +923,11 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse where firstProp in [10, 2, 43, 21, 45, 47, 11, 12] order by"
             + " firstProp desc, prop4 asc limit 3";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 3);
 
-    ODocument document = result.get(0);
+    OResult document = result.get(0);
     Assert.assertEquals((int) document.<Integer>getProperty("firstProp"), 47);
     Assert.assertEquals(document.<String>getProperty("prop4"), "prop94");
 
@@ -949,12 +949,12 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
   public void testOrderByFirstPropWithLimitAsc() {
     final String query = "select from OrderByIndexReuse order by firstProp offset 10 limit 4";
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 4);
 
     for (int i = 0; i < 4; i++) {
-      final ODocument document = result.get(i);
+      final OResult document = result.get(i);
 
       Assert.assertEquals(document.<Object>getProperty("firstProp"), 6 + i / 2);
     }
@@ -969,12 +969,12 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
   public void testOrderByFirstPropWithLimitDesc() {
     final String query = "select from OrderByIndexReuse order by firstProp desc offset 10 limit 4";
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 4);
 
     for (int i = 0; i < 4; i++) {
-      final ODocument document = result.get(i);
+      final OResult document = result.get(i);
 
       Assert.assertEquals(document.<Object>getProperty("firstProp"), 45 - i / 2);
     }
@@ -990,12 +990,12 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse order by secondProp asc, thirdProp asc offset 10 limit 4";
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 4);
 
     for (int i = 0; i < 4; i++) {
-      final ODocument document = result.get(i);
+      final OResult document = result.get(i);
 
       Assert.assertEquals(document.<Object>getProperty("secondProp"), 6 + i / 2);
 
@@ -1017,12 +1017,12 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse order by secondProp desc, thirdProp desc offset 10 limit 4";
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 4);
 
     for (int i = 0; i < 4; i++) {
-      final ODocument document = result.get(i);
+      final OResult document = result.get(i);
 
       Assert.assertEquals(document.<Object>getProperty("secondProp"), 45 - i / 2);
 
@@ -1044,12 +1044,12 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse order by secondProp asc, thirdProp desc offset 10 limit 4";
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 4);
 
     for (int i = 0; i < 4; i++) {
-      final ODocument document = result.get(i);
+      final OResult document = result.get(i);
 
       Assert.assertEquals(document.<Object>getProperty("secondProp"), 6 + i / 2);
 
@@ -1069,12 +1069,12 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     final String query =
         "select from OrderByIndexReuse order by secondProp desc, thirdProp asc offset 10 limit 4";
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
 
     Assert.assertEquals(result.size(), 4);
 
     for (int i = 0; i < 4; i++) {
-      final ODocument document = result.get(i);
+      final OResult document = result.get(i);
 
       Assert.assertEquals(document.<Object>getProperty("secondProp"), 45 - i / 2);
 
