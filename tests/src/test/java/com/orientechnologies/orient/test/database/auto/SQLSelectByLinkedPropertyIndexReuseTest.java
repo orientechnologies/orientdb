@@ -44,7 +44,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     super.beforeClass();
 
     if (database.isClosed()) {
-      database.open("admin", "admin");
+      reopendb("admin", "admin");
     }
 
     createSchemaForTest();
@@ -54,7 +54,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   @AfterClass
   public void afterClass() throws Exception {
     if (database.isClosed()) {
-      database.open("admin", "admin");
+      reopendb("admin", "admin");
     }
 
     database.command("drop class lpirtStudent").close();

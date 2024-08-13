@@ -54,7 +54,7 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void afterClass() {
-    if (database.isClosed()) database.open("admin", "admin");
+    if (database.isClosed()) reopendb("admin", "admin");
 
     database.command("delete from PropertyIndexTestClass");
     database.command("drop class PropertyIndexTestClass");

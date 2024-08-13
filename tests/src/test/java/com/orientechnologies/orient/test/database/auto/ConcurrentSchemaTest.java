@@ -19,8 +19,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
 import com.orientechnologies.orient.test.TestFactory;
@@ -52,8 +51,7 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
     public Void call() {
       this.id = createClassThreadCounter.getAndIncrement();
       for (int i = 0; i < CYCLES; i++) {
-        ODatabaseDocument db = new ODatabaseDocumentTx(url).open("admin", "admin");
-        try {
+        try (ODatabaseSession db = openSession("admin", "admin")) {
           final String clsName = "ConcurrentClassTest-" + id + "-" + i;
 
           OClass cls = database.getMetadata().getSchema().createClass(clsName);
@@ -64,8 +62,6 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
           db.command("select from " + clsName).close();
 
           counter.incrementAndGet();
-        } finally {
-          db.close();
         }
       }
       return null;
@@ -84,8 +80,7 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
     public Void call() {
       this.id = dropClassThreadCounter.getAndIncrement();
       for (int i = 0; i < CYCLES; i++) {
-        ODatabaseDocument db = new ODatabaseDocumentTx(url).open("admin", "admin");
-        try {
+        try (ODatabaseSession db = openSession("admin", "admin")) {
           final String clsName = "ConcurrentClassTest-" + id + "-" + i;
 
           Assert.assertTrue(database.getMetadata().getSchema().existsClass(clsName));
@@ -93,8 +88,6 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
           Assert.assertFalse(database.getMetadata().getSchema().existsClass(clsName));
 
           counter.decrementAndGet();
-        } finally {
-          db.close();
         }
       }
       return null;

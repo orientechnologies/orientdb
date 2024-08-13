@@ -17,8 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.OBlob;
@@ -81,8 +80,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   public void testTransactionOptimisticConcurrentException() throws IOException {
     if (database.getClusterIdByName("binary") == -1) database.addBlobCluster("binary");
 
-    ODatabaseDocument db2 = new ODatabaseDocumentTx(database.getURL());
-    db2.open("admin", "admin");
+    ODatabaseSession db2 = openSession("admin", "admin");
 
     database.activateOnCurrentThread();
     OBlob record1 = new ORecordBytes("This is the first version".getBytes());
@@ -153,8 +151,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   public void testTransactionOptimisticCacheMgmt2Db() throws IOException {
     if (database.getClusterIdByName("binary") == -1) database.addBlobCluster("binary");
 
-    ODatabaseDocument db2 = new ODatabaseDocumentTx(database.getURL());
-    db2.open("admin", "admin");
+    ODatabaseSession db2 = openSession("admin", "admin");
 
     OBlob record1 = new ORecordBytes("This is the first version".getBytes());
     db2.save(record1);
@@ -238,7 +235,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     database.commit();
 
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     ODocument loadedJack = database.load(jack.getIdentity());
     Assert.assertEquals(loadedJack.field("name"), "Jack");
@@ -270,12 +267,8 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
         new Callable<Void>() {
           @Override
           public Void call() throws Exception {
-            final ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
-            db.open("admin", "admin");
-            try {
+            try (ODatabaseSession db = openSession("admin", "admin")) {
               Assert.assertEquals(db.countClass("NestedTxClass"), 0);
-            } finally {
-              db.close();
             }
 
             return null;
@@ -325,12 +318,8 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
         new Callable<Void>() {
           @Override
           public Void call() throws Exception {
-            final ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
-            db.open("admin", "admin");
-            try {
+            try (ODatabaseSession db = openSession("admin", "admin")) {
               Assert.assertEquals(db.countClass("NestedTxRollbackOne"), 1);
-            } finally {
-              db.close();
             }
 
             return null;

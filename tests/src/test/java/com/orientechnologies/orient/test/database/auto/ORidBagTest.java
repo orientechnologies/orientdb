@@ -6,7 +6,6 @@ import static org.testng.Assert.assertTrue;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -263,8 +262,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     database.close();
 
-    database = new ODatabaseDocumentTx(database.getURL());
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     doc = database.load(rid);
     doc.setLazyLoad(false);
@@ -337,7 +335,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     database.activateOnCurrentThread();
     database.resetInitialization();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     doc = database.load(rid);
     doc.setLazyLoad(false);
@@ -451,8 +449,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     database.close();
 
-    database = new ODatabaseDocumentTx(database.getURL());
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     doc = database.load(rid);
     doc.setLazyLoad(false);
@@ -607,8 +604,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     database.close();
 
-    database = new ODatabaseDocumentTx(database.getURL());
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     doc = database.load(rid);
     doc.setLazyLoad(false);
@@ -727,8 +723,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     ORID rid = doc.getIdentity();
     database.close();
 
-    database = new ODatabaseDocumentTx(database.getURL());
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     doc = database.load(rid);
     doc.setLazyLoad(false);
@@ -909,8 +904,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     database.close();
 
-    database = new ODatabaseDocumentTx(database.getURL());
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     doc = database.load(id);
     doc.setLazyLoad(false);

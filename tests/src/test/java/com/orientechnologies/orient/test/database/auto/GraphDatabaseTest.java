@@ -81,7 +81,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
     database.commit();
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     database.setUseLightweightEdges(false);
 

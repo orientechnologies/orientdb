@@ -22,8 +22,7 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -47,8 +46,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
   @Test
   public void testIsolationRepeatableRead() throws IOException {
 
-    ODatabaseDocument db1 = new ODatabaseDocumentTx(url);
-    db1.open("admin", "admin");
+    ODatabaseSession db1 = openSession("admin", "admin");
 
     ODocument record1 = new ODocument();
     record1
@@ -63,8 +61,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
       record1.getIdentity().getRecord();
 
       // CHANGE THE RECORD FROM DB2
-      ODatabaseDocument db2 = new ODatabaseDocumentTx(url);
-      db2.open("admin", "admin");
+      ODatabaseSession db2 = openSession("admin", "admin");
 
       ODocument record2 = db2.load(record1.getIdentity());
       record2.field("name", "This is the second version").save();
@@ -86,8 +83,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
 
   @Test
   public void testIsolationReadCommitted() throws IOException {
-    ODatabaseDocument db1 = new ODatabaseDocumentTx(url);
-    db1.open("admin", "admin");
+    ODatabaseSession db1 = openSession("admin", "admin");
 
     ODocument record1 = new ODocument();
     record1
@@ -101,8 +97,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     record1.getIdentity().getRecord();
 
     // CHANGE THE RECORD FROM DB2
-    ODatabaseDocument db2 = new ODatabaseDocumentTx(url);
-    db2.open("admin", "admin");
+    ODatabaseSession db2 = openSession("admin", "admin");
 
     ODocument record2 = db2.load(record1.getIdentity());
     record2.field("name", "This is the second version").save();
@@ -120,8 +115,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
 
   @Test
   public void testIsolationRepeatableReadScript() throws ExecutionException, InterruptedException {
-    final ODatabaseDocument db1 = new ODatabaseDocumentTx(url);
-    db1.open("admin", "admin");
+    ODatabaseSession db1 = openSession("admin", "admin");
 
     final ODocument record1 = new ODocument();
     record1
@@ -156,8 +150,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     Thread.sleep(500);
 
     // CHANGE THE RECORD FROM DB2
-    ODatabaseDocument db2 = new ODatabaseDocumentTx(url);
-    db2.open("admin", "admin");
+    ODatabaseSession db2 = openSession("admin", "admin");
 
     ODocument record2 = db2.load(record1.getIdentity());
     record2.field("name", "This is the second version").save();
@@ -178,8 +171,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
 
   @Test
   public void testIsolationReadCommittedScript() throws ExecutionException, InterruptedException {
-    final ODatabaseDocument db1 = new ODatabaseDocumentTx(url);
-    db1.open("admin", "admin");
+    ODatabaseSession db1 = openSession("admin", "admin");
 
     final ODocument record1 = new ODocument();
     record1
@@ -214,8 +206,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     Thread.sleep(500);
 
     // CHANGE THE RECORD FROM DB2
-    ODatabaseDocument db2 = new ODatabaseDocumentTx(url);
-    db2.open("admin", "admin");
+    ODatabaseSession db2 = openSession("admin", "admin");
 
     ODocument record2 = db2.load(record1.getIdentity());
     record2.field("name", "This is the second version").save();

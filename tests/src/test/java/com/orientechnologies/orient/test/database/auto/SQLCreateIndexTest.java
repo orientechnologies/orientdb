@@ -38,7 +38,7 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
   public void beforeClass() throws Exception {
     super.beforeClass();
 
-    if (database.isClosed()) database.open("admin", "admin");
+    if (database.isClosed()) reopendb("admin", "admin");
 
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.createClass("sqlCreateIndexTestClass");
@@ -56,7 +56,7 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void afterClass() throws Exception {
-    if (database.isClosed()) database.open("admin", "admin");
+    if (database.isClosed()) reopendb("admin", "admin");
 
     database.command("delete from sqlCreateIndexTestClass").close();
     database.command("drop class sqlCreateIndexTestClass").close();

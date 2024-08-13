@@ -198,7 +198,7 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void deleteTestEnvironment() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     carID.reset();
     carID = null;

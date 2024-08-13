@@ -16,8 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -62,7 +61,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     @Override
     public void run() {
       try {
-        ODatabaseDocument db = new ODatabaseDocumentTx(url);
         for (int i = 0; i < OPTIMISTIC_CYCLES; i++) {
           int retries = 0;
           while (true) {
@@ -72,8 +70,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
             try {
 
-              db.open("admin", "admin");
-              try {
+              try (ODatabaseSession db = openSession("admin", "admin")) {
                 db.begin(TXTYPE.OPTIMISTIC);
 
                 ODocument vDoc1 = db.load(rid1, null, true);
@@ -85,8 +82,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
                 vDoc2.save();
 
                 db.commit();
-              } finally {
-                db.close();
               }
 
               counter.incrementAndGet();
@@ -125,7 +120,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     @Override
     public void run() {
       try {
-        ODatabaseDocument db = new ODatabaseDocumentTx(url);
 
         for (int i = 0; i < PESSIMISTIC_CYCLES; i++) {
           String cmd = "update " + rid + " set total = total + 1";
@@ -136,12 +130,9 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
             try {
               retries++;
 
-              db.open("admin", "admin");
-              try {
+              try (ODatabaseSession db = openSession("admin", "admin")) {
                 db.command(cmd).close();
                 counter.incrementAndGet();
-              } finally {
-                db.close();
               }
 
               if (retries % 10 == 0)
@@ -167,8 +158,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
   public void concurrentOptimisticUpdates() throws Exception {
     counter.set(0);
 
-    ODatabaseDocument database = new ODatabaseDocumentTx(url);
-    database.open("admin", "admin");
+    ODatabaseSession database = openSession("admin", "admin");
 
     ODocument doc1 = database.newInstance();
     doc1.field("INIT", "ok");
@@ -224,8 +214,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
   protected void sqlUpdate(boolean lock) throws InterruptedException {
     counter.set(0);
 
-    ODatabaseDocument database = new ODatabaseDocumentTx(url);
-    database.open("admin", "admin");
+    ODatabaseSession database = openSession("admin", "admin");
 
     ODocument doc1 = database.newInstance();
     doc1.field("total", 0);

@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -54,7 +53,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     final ORID rid = newDoc.getIdentity();
 
     database.close();
-    database = new ODatabaseDocumentTx(url).open("admin", "admin");
+    reopendb("admin", "admin");
 
     ODocument loadedDoc = database.load(rid);
     Assert.assertEquals(((Number) loadedDoc.field("integer")).intValue(), 10);
@@ -75,7 +74,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     final ORID rid = newDoc.getIdentity();
 
     database.close();
-    database = new ODatabaseDocumentTx(url).open("admin", "admin");
+    reopendb("admin", "admin");
 
     ODocument loadedDoc = database.load(rid);
     Assert.assertTrue(loadedDoc.containsField("embeddedList"));
@@ -106,7 +105,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     final ORID rid = newDoc.getIdentity();
 
     database.close();
-    database = new ODatabaseDocumentTx(url).open("admin", "admin");
+    reopendb("admin", "admin");
 
     ODocument loadedDoc = database.load(rid);
     Assert.assertTrue(loadedDoc.containsField("linkedList"));
@@ -135,7 +134,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     final ORID rid = newDoc.getIdentity();
 
     database.close();
-    database = new ODatabaseDocumentTx(url).open("admin", "admin");
+    reopendb("admin", "admin");
 
     ODocument loadedDoc = database.load(rid);
     Assert.assertTrue(loadedDoc.containsField("embeddedSet"));
@@ -173,7 +172,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     final ORID rid = newDoc.getIdentity();
 
     database.close();
-    database = new ODatabaseDocumentTx(url).open("admin", "admin");
+    reopendb("admin", "admin");
 
     ODocument loadedDoc = database.load(rid);
     Assert.assertTrue(loadedDoc.containsField("linkedSet"));
@@ -209,7 +208,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     final ORID rid = newDoc.getIdentity();
 
     database.close();
-    database = new ODatabaseDocumentTx(url).open("admin", "admin");
+    reopendb("admin", "admin");
 
     ODocument loadedDoc = database.load(rid);
     Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
@@ -240,7 +239,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     final ORID rid = newDoc.getIdentity();
 
     database.close();
-    database = new ODatabaseDocumentTx(url).open("admin", "admin");
+    reopendb("admin", "admin");
 
     ODocument loadedDoc = database.load(rid);
 
@@ -273,7 +272,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     final ORID rid = newDoc.getIdentity();
 
     database.close();
-    database = new ODatabaseDocumentTx(url).open("admin", "admin");
+    reopendb("admin", "admin");
 
     ODocument loadedDoc = database.load(rid);
     Assert.assertNotNull(loadedDoc.field("linkedMap", OType.LINKMAP));

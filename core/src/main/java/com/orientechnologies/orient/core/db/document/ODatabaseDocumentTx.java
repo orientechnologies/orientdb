@@ -949,7 +949,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <DB extends ODatabase> DB open(String iUserName, String iUserPassword) {
-    setupThreadOwner();
     try {
       if ("remote".equals(type)) {
         factory = getOrCreateRemoteFactory(baseUrl);
@@ -1014,7 +1013,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <DB extends ODatabase> DB create(Map<OGlobalConfiguration, Object> iInitialSettings) {
-    setupThreadOwner();
     try {
       OrientDBConfig config = buildConfig(iInitialSettings);
       if ("remote".equals(type)) {

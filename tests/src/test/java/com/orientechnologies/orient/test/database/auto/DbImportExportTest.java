@@ -68,8 +68,7 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
 
   @Test
   public void testDbExport() throws IOException {
-    final ODatabaseDocument database = new ODatabaseDocumentTx(url);
-    database.open("admin", "admin");
+    final ODatabaseDocument database = openSession("admin", "admin");
 
     // ADD A CUSTOM TO THE CLASS
     database.command("alter class V custom onBeforeCreate=onBeforeCreateItem").close();

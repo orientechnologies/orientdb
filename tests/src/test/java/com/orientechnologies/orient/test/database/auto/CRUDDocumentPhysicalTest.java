@@ -56,7 +56,6 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@SuppressWarnings("groupsTestNG")
 @Test(
     groups = {"crud", "record-vobject"},
     singleThreaded = true)
@@ -566,8 +565,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       database.close();
     }
 
-    //noinspection deprecation
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     doc = testInvalidFetchPlanClearL1Cache(doc, docRid);
     doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 0));
@@ -721,8 +719,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
         new Thread(
             () -> {
               //noinspection deprecation
-              try (final ODatabaseDocument db =
-                  new ODatabaseDocumentTx(url).open("admin", "admin")) {
+              try (final ODatabaseDocument db = openSession("admin", "admin")) {
                 long tot;
                 while (db.countClusterElements("Account") < startRecordNumber + TOT_RECORDS) {
                   // System.out.println("Asynchronous insertion: found " + tot + " records but
@@ -762,8 +759,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     database.commit();
 
     database.close();
-    //noinspection deprecation
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     bank.reload();
     Assert.assertTrue(((ODocument) bank.field("embedded")).isEmbedded());
@@ -802,8 +798,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     bank.save();
 
     database.close();
-    //noinspection deprecation
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     bank.reload();
 

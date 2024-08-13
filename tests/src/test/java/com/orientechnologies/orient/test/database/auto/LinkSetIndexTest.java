@@ -44,7 +44,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
   @BeforeMethod
   public void beforeMethod() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
   }
 
   @AfterMethod

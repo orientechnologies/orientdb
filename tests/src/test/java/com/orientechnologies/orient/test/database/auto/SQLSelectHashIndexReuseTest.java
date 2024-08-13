@@ -32,7 +32,7 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
   @BeforeClass
   public void beforeClass() throws Exception {
     super.beforeClass();
-    if (database.isClosed()) database.open("admin", "admin");
+    if (database.isClosed()) reopendb("admin", "admin");
 
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.createClass("sqlSelectHashIndexReuseTestClass");
@@ -177,7 +177,7 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
 
   @AfterClass
   public void afterClass() throws Exception {
-    if (database.isClosed()) database.open("admin", "admin");
+    if (database.isClosed()) reopendb("admin", "admin");
 
     database.command("drop class sqlSelectHashIndexReuseTestClass").close();
     database.getMetadata().getSchema().reload();

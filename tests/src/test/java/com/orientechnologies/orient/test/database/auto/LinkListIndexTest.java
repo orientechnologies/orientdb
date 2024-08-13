@@ -41,8 +41,7 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void destroySchema() {
-    //noinspection deprecation
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     database.getMetadata().getSchema().dropClass("LinkListIndexTestClass");
   }
 

@@ -19,6 +19,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -55,14 +56,14 @@ public class DbImportStreamExportTest extends DocumentDBBaseTest implements OCom
 
   @Test
   public void testDbExport() throws IOException {
-    final ODatabaseDocumentInternal database = new ODatabaseDocumentTx(url);
-    database.open("admin", "admin");
+    final ODatabaseSession database = openSession("admin", "admin");
 
     // ADD A CUSTOM TO THE CLASS
     database.command("alter class V custom onBeforeCreate=onBeforeCreateItem").close();
 
     final ODatabaseExport export =
-        new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
+        new ODatabaseExport(
+            (ODatabaseDocumentInternal) database, testPath + "/" + exportFilePath, this);
     export.exportDatabase();
     export.close();
     database.close();

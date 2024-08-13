@@ -142,7 +142,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     database.reload();
     database.getMetadata().reload();
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     List<OResult> result =
         database.query("SELECT FROM MyTestClass WHERE keyField = ?", "K1").stream()
             .collect(Collectors.toList());
@@ -173,7 +173,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     doc.save();
 
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     List<OResult> result =
         database.query("SELECT FROM MyTestClass WHERE keyField = ?", "K2").stream()

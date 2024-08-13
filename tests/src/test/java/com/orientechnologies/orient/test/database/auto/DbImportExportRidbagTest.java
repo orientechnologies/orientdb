@@ -19,6 +19,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -54,8 +55,7 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
 
   @Test
   public void testDbExport() throws IOException {
-    ODatabaseDocumentInternal database = new ODatabaseDocumentTx(url);
-    database.open("admin", "admin");
+    ODatabaseSession database = openSession("admin", "admin");
 
     database.command("insert into V set name ='a'");
     for (int i = 0; i < 100; i++) {
@@ -68,7 +68,9 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
     // ADD A CUSTOM TO THE CLASS
     database.command("alter class V custom onBeforeCreate=onBeforeCreateItem").close();
 
-    ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
+    ODatabaseExport export =
+        new ODatabaseExport(
+            (ODatabaseDocumentInternal) database, testPath + "/" + exportFilePath, this);
     export.exportDatabase();
     export.close();
 

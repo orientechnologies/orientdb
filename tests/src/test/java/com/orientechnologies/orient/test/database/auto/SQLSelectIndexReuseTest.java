@@ -29,7 +29,7 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
   public void beforeClass() throws Exception {
     super.beforeClass();
     if (database.isClosed()) {
-      database.open("admin", "admin");
+      reopendb("admin", "admin");
     }
 
     final OSchema schema = database.getMetadata().getSchema();
@@ -169,7 +169,7 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
   @AfterClass
   public void afterClass() throws Exception {
     if (database.isClosed()) {
-      database.open("admin", "admin");
+      reopendb("admin", "admin");
     }
 
     database.command("drop class sqlSelectIndexReuseTestClass").close();

@@ -16,8 +16,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.client.db.ODatabaseHelper;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -38,9 +36,8 @@ public class AbstractClassTest extends DocumentDBBaseTest {
 
   @BeforeClass
   public void createSchema() throws IOException {
-    database = new ODatabaseDocumentTx(url);
-    if (ODatabaseHelper.existsDatabase(database, "plocal")) database.open("admin", "admin");
-    else database.create();
+    if (existsdb()) reopendb("admin", "admin");
+    else createDatabase();
 
     OClass abstractPerson =
         database.getMetadata().getSchema().createAbstractClass("AbstractPerson");

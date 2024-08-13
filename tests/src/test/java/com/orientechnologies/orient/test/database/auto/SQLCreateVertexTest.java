@@ -30,7 +30,7 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
     System.out.println(Charset.defaultCharset());
     database.close();
 
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     OSchema schema = database.getMetadata().getSchema();
     if (!schema.existsClass("CreateVertexByContent")) {
@@ -84,7 +84,7 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
 
   public void testCreateVertexBooleanProp() {
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     database.command("create vertex set script = true").close();
     database.command("create vertex").close();
@@ -98,7 +98,7 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
 
   public void testIsClassName() {
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     database.createVertexClass("Like").createProperty("anything", OType.STRING);
     database.createVertexClass("Is").createProperty("anything", OType.STRING);
   }

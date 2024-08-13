@@ -57,7 +57,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   public void testWrongPassword() throws IOException {
     try {
-      database.open("reader", "swdsds");
+      reopendb("reader", "swdsds");
     } catch (OException e) {
       Assert.assertTrue(
           e instanceof OSecurityAccessException
@@ -71,7 +71,7 @@ public class SecurityTest extends DocumentDBBaseTest {
   }
 
   public void testSecurityAccessWriter() throws IOException {
-    database.open("writer", "writer");
+    reopendb("writer", "writer");
 
     try {
       new ODocument().save("internal");
@@ -85,7 +85,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testSecurityAccessReader() throws IOException {
-    database.open("reader", "reader");
+    reopendb("reader", "reader");
 
     try {
       new ODocument("Profile")
@@ -108,7 +108,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testEncryptPassword() throws IOException {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     Long updated =
         database
@@ -135,7 +135,7 @@ public class SecurityTest extends DocumentDBBaseTest {
   }
 
   public void testParentRole() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     OSecurity security = database.getMetadata().getSecurity();
     ORole writer = security.getRole("writer");
@@ -160,7 +160,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
           database.close();
           if (!database.isRemote()) {
-            database.open("writerChild", "writerChild");
+            reopendb("writerChild", "writerChild");
 
             OSecurityUser user = database.getUser();
             Assert.assertTrue(user.hasRole("writer", true));
@@ -168,7 +168,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
             database.close();
           }
-          database.open("admin", "admin");
+          reopendb("admin", "admin");
           security = database.getMetadata().getSecurity();
         } finally {
           security.dropUser("writerChild");
@@ -183,7 +183,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testQuotedUserName() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     OSecurity security = database.getMetadata().getSecurity();
 
@@ -192,10 +192,10 @@ public class SecurityTest extends DocumentDBBaseTest {
 
     database.close();
 
-    database.open("user'quoted", "foobar");
+    reopendb("user'quoted", "foobar");
     database.close();
 
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     security = database.getMetadata().getSecurity();
     OUser user = security.getUser("user'quoted");
     Assert.assertNotNull(user);
@@ -204,7 +204,7 @@ public class SecurityTest extends DocumentDBBaseTest {
     database.close();
 
     try {
-      database.open("user'quoted", "foobar");
+      reopendb("user'quoted", "foobar");
       Assert.fail();
     } catch (Exception e) {
 
@@ -213,7 +213,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testUserNoRole() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     OSecurity security = database.getMetadata().getSecurity();
 
@@ -222,10 +222,10 @@ public class SecurityTest extends DocumentDBBaseTest {
     database.close();
 
     try {
-      database.open("noRole", "noRole");
+      reopendb("noRole", "noRole");
       Assert.fail();
     } catch (OSecurityAccessException e) {
-      database.open("admin", "admin");
+      reopendb("admin", "admin");
       security = database.getMetadata().getSecurity();
       security.dropUser("noRole");
     }
@@ -233,7 +233,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testAdminCanSeeSystemClusters() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     List<OResult> result =
         database.command("select from ouser").stream().collect(Collectors.toList());
@@ -246,7 +246,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testOnlyAdminCanSeeSystemClusters() {
-    database.open("reader", "reader");
+    reopendb("reader", "reader");
 
     try {
       database.command(new OCommandSQL("select from ouser")).execute();
@@ -268,11 +268,11 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testCannotExtendClassWithNoUpdateProvileges() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     database.getMetadata().getSchema().createClass("Protected");
     database.close();
 
-    database.open("writer", "writer");
+    reopendb("writer", "writer");
 
     try {
       database.command(new OCommandSQL("alter class Protected superclass OUser")).execute();
@@ -281,14 +281,14 @@ public class SecurityTest extends DocumentDBBaseTest {
     } finally {
       database.close();
 
-      database.open("admin", "admin");
+      reopendb("admin", "admin");
       database.getMetadata().getSchema().dropClass("Protected");
     }
   }
 
   @Test
   public void testSuperUserCanExtendClassWithNoUpdateProvileges() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     database.getMetadata().getSchema().createClass("Protected");
 
     try {
@@ -302,14 +302,14 @@ public class SecurityTest extends DocumentDBBaseTest {
   public void testGremlinExecution() throws IOException {
     if (!database.getURL().startsWith("remote:")) return;
 
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     try {
       database.command(new OCommandGremlin("g.V")).execute();
     } finally {
       database.close();
     }
 
-    database.open("reader", "reader");
+    reopendb("reader", "reader");
     try {
       database.command(new OCommandGremlin("g.V")).execute();
       Assert.fail("Security breach: Gremlin can be executed by reader user!");
@@ -318,7 +318,7 @@ public class SecurityTest extends DocumentDBBaseTest {
       database.close();
     }
 
-    database.open("writer", "writer");
+    reopendb("writer", "writer");
     try {
       database.command(new OCommandGremlin("g.V")).execute();
       Assert.fail("Security breach: Gremlin can be executed by writer user!");
@@ -330,7 +330,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testEmptyUserName() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     try {
       OSecurity security = database.getMetadata().getSecurity();
 
@@ -350,7 +350,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testUserNameWithAllSpaces() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     try {
       OSecurity security = database.getMetadata().getSecurity();
 
@@ -370,7 +370,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testUserNameWithSurroundingSpacesOne() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     try {
       OSecurity security = database.getMetadata().getSecurity();
 
@@ -390,7 +390,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testUserNameWithSurroundingSpacesTwo() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     try {
       OSecurity security = database.getMetadata().getSecurity();
 
@@ -410,7 +410,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testUserNameWithSurroundingSpacesThree() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     try {
       OSecurity security = database.getMetadata().getSecurity();
 
@@ -430,7 +430,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testUserNameWithSpacesInTheMiddle() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     try {
       OSecurity security = database.getMetadata().getSecurity();
 

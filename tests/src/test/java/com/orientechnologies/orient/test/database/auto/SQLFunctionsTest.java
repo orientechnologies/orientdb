@@ -162,7 +162,7 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     Assert.assertEquals(2L, count.<Object>field("count"));
 
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     result =
         database.query(
@@ -171,7 +171,7 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     Assert.assertEquals(2L, count.<Object>field("count"));
 
     database.close();
-    database.open("reader", "reader");
+    reopendb("reader", "reader");
 
     result =
         database.query(
@@ -180,7 +180,7 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     Assert.assertEquals(1L, count.<Object>field("count"));
 
     database.close();
-    database.open("superReader", "superReader");
+    reopendb("superReader", "superReader");
 
     result =
         database.query(
