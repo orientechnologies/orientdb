@@ -7,16 +7,13 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Created by Enrico Risa on 23/09/16. */
 public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
 
-  @Before
-  public void setUp() throws Exception {
-
-    dropDatabase();
+  @Override
+  protected void setupDatabase(String config) {
     super.setupDatabase("ci");
   }
 

@@ -242,7 +242,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
 
     private Document toDocument(final ScoreDoc score) {
       try {
-        return queryContext.getSearcher().doc(score.doc);
+        return queryContext.getSearcher().getIndexReader().storedFields().document(score.doc);
       } catch (final IOException e) {
         logger.error("Error during conversion to document", e);
         return null;

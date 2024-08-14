@@ -54,16 +54,18 @@ public abstract class OLuceneBaseTest {
         OrientDBConfig.builder()
             .addAttribute(ODatabaseSession.ATTRIBUTES.MINIMUMCLUSTERS, 8)
             .build();
-
+    String dbtype;
     if ("ci".equals(config) || "release".equals(config)) {
       orient = new OrientDB("embedded:./target/databases/", cfg);
+      dbtype = "plocal";
     } else {
       orient = new OrientDB("embedded:", cfg);
+      dbtype = "memory";
     }
     if (orient.exists(name.getMethodName())) orient.drop(name.getMethodName());
 
     orient.execute(
-        "create database ? memory users(admin identified by 'adminpwd' role admin) ",
+        "create database ? " + dbtype + " users(admin identified by 'adminpwd' role admin) ",
         name.getMethodName());
 
     pool = new ODatabasePool(orient, name.getMethodName(), "admin", "adminpwd");
