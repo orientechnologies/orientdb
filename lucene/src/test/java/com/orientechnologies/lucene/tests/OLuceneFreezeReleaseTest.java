@@ -38,11 +38,13 @@ public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
 
     db.freeze();
 
-    results = db.command("select from Person where search_class('John')=true");
-    assertThat(results.stream()).hasSize(1);
-    results.close();
-
-    db.release();
+    try {
+      results = db.command("select from Person where search_class('John')=true");
+      assertThat(results.stream()).hasSize(1);
+      results.close();
+    } finally {
+      db.release();
+    }
 
     ODocument doc = db.newInstance("Person");
     doc.field("name", "John");
@@ -74,14 +76,15 @@ public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
 
     db.freeze();
 
-    results = db.command("select from Person where search_class('John')=true");
+    try {
+      results = db.command("select from Person where search_class('John')=true");
 
-    assertThat(results.stream()).hasSize(1);
-    results.close();
-
-    db.release();
-    db.release();
-
+      assertThat(results.stream()).hasSize(1);
+      results.close();
+    } finally {
+      db.release();
+      db.release();
+    }
     db.save(new ODocument("Person").field("name", "John"));
 
     results = db.command("select from Person where search_class('John')=true");
