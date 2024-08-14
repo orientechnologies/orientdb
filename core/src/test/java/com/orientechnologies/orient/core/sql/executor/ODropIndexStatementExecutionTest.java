@@ -21,7 +21,7 @@ public class ODropIndexStatementExecutionTest extends BaseMemoryInternalDatabase
             .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     String indexName = index.getName();
 
-    db.getMetadata().getIndexManagerInternal().reload();
+    db.getMetadata().getIndexManagerInternal().reload(db);
     Assert.assertNotNull((db.getMetadata().getIndexManagerInternal()).getIndex(db, indexName));
 
     OResultSet result = db.command("drop index " + indexName);
@@ -31,7 +31,7 @@ public class ODropIndexStatementExecutionTest extends BaseMemoryInternalDatabase
     Assert.assertFalse(result.hasNext());
     result.close();
 
-    db.getMetadata().getIndexManagerInternal().reload();
+    db.getMetadata().getIndexManagerInternal().reload(db);
     Assert.assertNull(db.getMetadata().getIndexManagerInternal().getIndex(db, indexName));
   }
 
@@ -45,7 +45,7 @@ public class ODropIndexStatementExecutionTest extends BaseMemoryInternalDatabase
             .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     String indexName = index.getName();
 
-    db.getMetadata().getIndexManagerInternal().reload();
+    db.getMetadata().getIndexManagerInternal().reload(db);
     Assert.assertNotNull(db.getMetadata().getIndexManagerInternal().getIndex(db, indexName));
 
     OResultSet result = db.command("drop index *");
@@ -53,7 +53,7 @@ public class ODropIndexStatementExecutionTest extends BaseMemoryInternalDatabase
     OResult next = result.next();
     Assert.assertEquals("drop index", next.getProperty("operation"));
     result.close();
-    db.getMetadata().getIndexManagerInternal().reload();
+    db.getMetadata().getIndexManagerInternal().reload(db);
     Assert.assertNull(db.getMetadata().getIndexManagerInternal().getIndex(db, indexName));
     Assert.assertTrue(db.getMetadata().getIndexManagerInternal().getIndexes(db).isEmpty());
   }
@@ -62,7 +62,7 @@ public class ODropIndexStatementExecutionTest extends BaseMemoryInternalDatabase
   public void testWrongName() {
 
     String indexName = "nonexistingindex";
-    db.getMetadata().getIndexManagerInternal().reload();
+    db.getMetadata().getIndexManagerInternal().reload(db);
     Assert.assertNull(db.getMetadata().getIndexManagerInternal().getIndex(db, indexName));
 
     try {
@@ -78,7 +78,7 @@ public class ODropIndexStatementExecutionTest extends BaseMemoryInternalDatabase
   public void testIfExists() {
 
     String indexName = "nonexistingindex";
-    db.getMetadata().getIndexManagerInternal().reload();
+    db.getMetadata().getIndexManagerInternal().reload(db);
     Assert.assertNull(db.getMetadata().getIndexManagerInternal().getIndex(db, indexName));
 
     try {

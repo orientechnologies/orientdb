@@ -1088,7 +1088,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     database.activateOnCurrentThread();
     OMetadataInternal metadata = database.getMetadata();
     if (!approximate) {
-      metadata.getIndexManagerInternal().reload();
+      metadata.getIndexManagerInternal().reload(database);
     }
 
     final Set<OIndex> classIndexes =

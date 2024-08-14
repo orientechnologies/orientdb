@@ -1872,7 +1872,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
   protected void autoStartTransaction() {}
 
   protected void saveIndexConfiguration() {
-    ((ODatabaseDocumentInternal) getRawGraph()).getMetadata().getIndexManagerInternal().save();
+    ((ODatabaseDocumentInternal) getRawGraph())
+        .getMetadata()
+        .getIndexManagerInternal()
+        .save(database);
   }
 
   protected <T> String getClassName(final Class<T> elementClass) {

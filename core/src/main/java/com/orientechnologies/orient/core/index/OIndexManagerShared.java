@@ -104,33 +104,37 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
             new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
         // RELOAD IT
         ODocument document = database.load(identity, "*:-1 index:0", true);
-        fromStream(document);
+        boolean migrated = fromStream(document);
+        if (migrated) {
+          save(database);
+        }
       } finally {
         releaseExclusiveLock();
       }
     }
   }
 
-  public void reload() {
+  public void reload(ODatabaseDocumentInternal database) {
     acquireExclusiveLock();
     try {
-      ODatabaseDocumentInternal database = getDatabase();
       ODocument document = database.load(identity, "*:-1 index:0", true);
-      fromStream(document);
+      boolean migrated = fromStream(document);
+      if (migrated) {
+        save(database);
+      }
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  public void save() {
+  public void save(ODatabaseDocumentInternal database) {
 
     OScenarioThreadLocal.executeAsDistributed(
         () -> {
           acquireExclusiveLock();
 
           try {
-            internalSave();
-
+            internalSave(database);
             return null;
 
           } finally {
@@ -140,6 +144,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   public void addClusterToIndex(final String clusterName, final String indexName) {
+    ODatabaseDocumentInternal database = getDatabaseIfDefined();
     acquireSharedLock();
     try {
       final OIndex index = indexes.get(indexName);
@@ -162,11 +167,12 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         index.getInternal().addCluster(clusterName);
       }
     } finally {
-      releaseExclusiveLock(true);
+      releaseExclusiveLock(database, true);
     }
   }
 
   public void removeClusterFromIndex(final String clusterName, final String indexName) {
+    ODatabaseDocumentInternal database = getDatabaseIfDefined();
     acquireSharedLock();
     try {
       final OIndex index = indexes.get(indexName);
@@ -183,7 +189,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         throw new OIndexException("Index with name " + indexName + " does not exist.");
       index.getInternal().removeCluster(clusterName);
     } finally {
-      releaseExclusiveLock(true);
+      releaseExclusiveLock(database, true);
     }
   }
 
@@ -397,18 +403,18 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   protected void releaseExclusiveLock() {
-    releaseExclusiveLock(false);
+    ODatabaseDocumentInternal database = getDatabaseIfDefined();
+    releaseExclusiveLock(database, false);
   }
 
-  protected void releaseExclusiveLock(boolean save) {
+  protected void releaseExclusiveLock(ODatabaseDocumentInternal database, boolean save) {
     int val = writeLockNesting.decrementAndGet();
-    ODatabaseDocumentInternal database = getDatabaseIfDefined();
     try {
       if (val == 0 && database != null) {
         if (save) {
           OScenarioThreadLocal.executeAsDistributed(
               () -> {
-                internalSave();
+                internalSave(database);
                 return null;
               });
         }
@@ -519,7 +525,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       OIndex idx = getIndex(database, DICTIONARY_NAME);
       return idx != null ? idx : createDictionary(database);
     } finally {
-      releaseExclusiveLock(true);
+      releaseExclusiveLock(database, true);
     }
   }
 
@@ -673,7 +679,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       addIndexInternal(index);
 
     } finally {
-      releaseExclusiveLock(true);
+      releaseExclusiveLock(database, true);
       notifyInvolvedClasses(database, clusterIdsToIndex);
     }
 
@@ -813,7 +819,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         indexes.remove(iIndexName);
       }
     } finally {
-      releaseExclusiveLock(true);
+      releaseExclusiveLock(database, true);
       notifyInvolvedClasses(database, clusterIdsToIndex);
     }
   }
@@ -890,77 +896,72 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     return false;
   }
 
-  protected void fromStream(ODocument document) {
-    internalAcquireExclusiveLock();
-    try {
-      final Map<String, OIndex> oldIndexes = new HashMap<>(indexes);
+  protected boolean fromStream(ODocument document) {
+    boolean configUpdated = false;
+    final Map<String, OIndex> oldIndexes = new HashMap<>(indexes);
 
-      clearMetadata();
-      final Collection<ODocument> indexDocuments = document.field(CONFIG_INDEXES);
+    clearMetadata();
+    final Collection<ODocument> indexDocuments = document.field(CONFIG_INDEXES);
 
-      if (indexDocuments != null) {
-        OIndexInternal index;
-        boolean configUpdated = false;
-        Iterator<ODocument> indexConfigurationIterator = indexDocuments.iterator();
-        while (indexConfigurationIterator.hasNext()) {
-          final ODocument d = indexConfigurationIterator.next();
-          try {
+    if (indexDocuments != null) {
+      OIndexInternal index;
+      Iterator<ODocument> indexConfigurationIterator = indexDocuments.iterator();
+      while (indexConfigurationIterator.hasNext()) {
+        final ODocument d = indexConfigurationIterator.next();
+        try {
 
-            final OIndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataFromDoc(d);
+          final OIndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataFromDoc(d);
 
-            index = OIndexes.createIndex(storage, newIndexMetadata);
+          index = OIndexes.createIndex(storage, newIndexMetadata);
 
-            final String normalizedName = newIndexMetadata.getName();
+          final String normalizedName = newIndexMetadata.getName();
 
-            OIndex oldIndex = oldIndexes.remove(normalizedName);
-            if (oldIndex != null) {
-              OIndexMetadata oldIndexMetadata =
-                  oldIndex.getInternal().loadMetadata(oldIndex.getConfiguration());
+          OIndex oldIndex = oldIndexes.remove(normalizedName);
+          if (oldIndex != null) {
+            OIndexMetadata oldIndexMetadata =
+                oldIndex.getInternal().loadMetadata(oldIndex.getConfiguration());
 
-              if (!(oldIndexMetadata.equals(newIndexMetadata)
-                  || newIndexMetadata.getIndexDefinition() == null)) {
-                oldIndex.delete();
-              }
-
-              if (index.loadFromConfiguration(d)) {
-                addIndexInternalNoLock(index);
-              } else {
-                indexConfigurationIterator.remove();
-                configUpdated = true;
-              }
-            } else {
-              if (index.loadFromConfiguration(d)) {
-                addIndexInternalNoLock(index);
-              } else {
-                indexConfigurationIterator.remove();
-                configUpdated = true;
-              }
+            if (!(oldIndexMetadata.equals(newIndexMetadata)
+                || newIndexMetadata.getIndexDefinition() == null)) {
+              oldIndex.delete();
             }
-          } catch (RuntimeException e) {
-            indexConfigurationIterator.remove();
-            configUpdated = true;
-            logger.error("Error on loading index by configuration: %s", e, d);
+
+            if (index.loadFromConfiguration(d)) {
+              addIndexInternalNoLock(index);
+            } else {
+              indexConfigurationIterator.remove();
+              configUpdated = true;
+            }
+          } else {
+            if (index.loadFromConfiguration(d)) {
+              addIndexInternalNoLock(index);
+            } else {
+              indexConfigurationIterator.remove();
+              configUpdated = true;
+            }
           }
-        }
-
-        for (OIndex oldIndex : oldIndexes.values())
-          try {
-            logger.warn(
-                "Index '%s' was not found after reload and will be removed", oldIndex.getName());
-
-            oldIndex.delete();
-          } catch (Exception e) {
-            logger.error("Error on deletion of index '%s'", e, oldIndex.getName());
-          }
-
-        if (configUpdated) {
-          document.field(CONFIG_INDEXES, indexDocuments);
-          save();
+        } catch (RuntimeException e) {
+          indexConfigurationIterator.remove();
+          configUpdated = true;
+          logger.error("Error on loading index by configuration: %s", e, d);
         }
       }
-    } finally {
-      internalReleaseExclusiveLock();
+
+      for (OIndex oldIndex : oldIndexes.values())
+        try {
+          logger.warn(
+              "Index '%s' was not found after reload and will be removed", oldIndex.getName());
+
+          oldIndex.delete();
+        } catch (Exception e) {
+          logger.error("Error on deletion of index '%s'", e, oldIndex.getName());
+        }
+
+      if (configUpdated) {
+        document.field(CONFIG_INDEXES, indexDocuments);
+      }
     }
+    return configUpdated;
   }
 
   public void removeClassPropertyIndex(final OIndex idx) {
@@ -1036,13 +1037,13 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     return toStream();
   }
 
-  private void internalSave() {
+  private void internalSave(ODatabaseDocumentInternal database) {
     boolean saved = false;
     for (int retry = 0; retry < 10; retry++)
       try {
 
         ODocument document = toStream();
-        document.save();
+        database.save(document);
         saved = true;
         break;
 

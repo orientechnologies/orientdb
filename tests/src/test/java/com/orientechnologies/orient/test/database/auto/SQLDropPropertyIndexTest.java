@@ -66,7 +66,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
             "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2,"
                 + " prop1) UNIQUE")
         .close();
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
 
     OIndex index =
         database
@@ -77,7 +77,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
     Assert.assertNotNull(index);
 
     database.command("DROP PROPERTY DropPropertyIndexTestClass.prop1 FORCE").close();
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
 
     index =
         database
@@ -96,7 +96,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
             "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2,"
                 + " prop1) UNIQUE")
         .close();
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
 
     OIndex index =
         database
@@ -107,7 +107,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
     Assert.assertNotNull(index);
 
     database.command("DROP PROPERTY DropPropertyIndextestclasS.prop1 FORCE").close();
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
 
     index =
         database
@@ -126,7 +126,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
             "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop1,"
                 + " prop2) UNIQUE")
         .close();
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
 
     OIndex index =
         database
@@ -147,7 +147,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
                       + " indexes before removing property or use FORCE parameter."));
     }
 
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
 
     index =
         database
@@ -186,7 +186,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
                       + " indexes before removing property or use FORCE parameter."));
     }
 
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
     final OIndex index =
         database
             .getMetadata()

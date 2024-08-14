@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -79,7 +80,9 @@ public class SQLDropIndexTest {
   public void testOldSyntax() throws Exception {
     database.command("CREATE INDEX SQLDropIndexTestClass.prop1 UNIQUE").close();
 
-    ((OMetadataDefault) database.getMetadata()).getIndexManagerInternal().reload();
+    ((OMetadataDefault) database.getMetadata())
+        .getIndexManagerInternal()
+        .reload((ODatabaseDocumentInternal) database);
 
     OIndex index =
         database
@@ -90,7 +93,9 @@ public class SQLDropIndexTest {
     Assert.assertNotNull(index);
 
     database.command("DROP INDEX SQLDropIndexTestClass.prop1").close();
-    ((OMetadataDefault) database.getMetadata()).getIndexManagerInternal().reload();
+    ((OMetadataDefault) database.getMetadata())
+        .getIndexManagerInternal()
+        .reload((ODatabaseDocumentInternal) database);
 
     index =
         database
@@ -108,7 +113,9 @@ public class SQLDropIndexTest {
             "CREATE INDEX SQLDropIndexCompositeIndex ON SQLDropIndexTestClass (prop1, prop2)"
                 + " UNIQUE")
         .close();
-    ((OMetadataDefault) database.getMetadata()).getIndexManagerInternal().reload();
+    ((OMetadataDefault) database.getMetadata())
+        .getIndexManagerInternal()
+        .reload((ODatabaseDocumentInternal) database);
 
     OIndex index =
         database
@@ -119,7 +126,9 @@ public class SQLDropIndexTest {
     Assert.assertNotNull(index);
 
     database.command("DROP INDEX SQLDropIndexCompositeIndex").close();
-    ((OMetadataDefault) database.getMetadata()).getIndexManagerInternal().reload();
+    ((OMetadataDefault) database.getMetadata())
+        .getIndexManagerInternal()
+        .reload((ODatabaseDocumentInternal) database);
 
     index =
         database

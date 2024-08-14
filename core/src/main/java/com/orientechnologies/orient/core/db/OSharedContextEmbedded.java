@@ -130,7 +130,7 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
     schema.reload(database);
-    indexManager.reload();
+    indexManager.reload(database);
     // The Immutable snapshot should be after index and schema that require and before everything
     // else that use it
     schema.forceSnapshot(database);

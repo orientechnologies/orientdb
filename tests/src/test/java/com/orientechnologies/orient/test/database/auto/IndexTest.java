@@ -202,7 +202,10 @@ public class IndexTest extends ObjectDBBaseTest {
 
     int profileSize = result.size();
 
-    database.getMetadata().getIndexManagerInternal().reload();
+    database
+        .getMetadata()
+        .getIndexManagerInternal()
+        .reload((ODatabaseDocumentInternal) database.getUnderlying());
     Assert.assertEquals(
         database
             .getMetadata()

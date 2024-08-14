@@ -260,7 +260,7 @@ public class OLuceneIndexCrashRestoreIT {
         "Create index Person.surname on Person(surname) FULLTEXT ENGINE LUCENE METADATA"
             + " {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer',"
             + " 'unknownKey':'unknownValue'}");
-    db.getMetadata().getIndexManagerInternal().reload();
+    db.getMetadata().getIndexManagerInternal().reload(db);
 
     System.out.println(
         db.getMetadata()

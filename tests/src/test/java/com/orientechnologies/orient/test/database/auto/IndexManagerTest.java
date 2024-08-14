@@ -67,7 +67,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
 
     assertEquals(result.getName(), "propertyone");
 
-    indexManager.reload();
+    indexManager.reload(database);
     assertEquals(
         database
             .getMetadata()
@@ -98,7 +98,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
 
     assertEquals(result.getName(), "compositeone");
 
-    indexManager.reload();
+    indexManager.reload(database);
     assertEquals(
         database
             .getMetadata()
@@ -150,7 +150,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     assertEquals(result.getName(), "compositetwo");
     assertEquals(atomicInteger.get(), 2);
 
-    indexManager.reload();
+    indexManager.reload(database);
     assertEquals(
         database
             .getMetadata()

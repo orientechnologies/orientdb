@@ -91,10 +91,9 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
     }
   }
 
-  public void reload() {
+  public void reload(ODatabaseDocumentInternal database) {
     acquireExclusiveLock();
     try {
-      ODatabaseDocumentInternal database = getDatabase();
       ORecordId id =
           new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
 
@@ -106,7 +105,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
     }
   }
 
-  public void save() {
+  public void save(ODatabaseDocumentInternal database) {
     throw new UnsupportedOperationException();
   }
 
@@ -429,7 +428,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
 
       if (progressListener != null) progressListener.onCompletition(this, true);
 
-      reload();
+      reload(database);
 
       return indexes.get(iName);
     } catch (OCommandExecutionException x) {
@@ -467,7 +466,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
 
       // REMOVE THE INDEX LOCALLY
       indexes.remove(iIndexName);
-      reload();
+      reload(database);
 
     } finally {
       releaseExclusiveLock();

@@ -48,7 +48,7 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
         .command(
             "CREATE INDEX SchemaSharedIndexCompositeIndex ON SchemaIndexTest (prop1, prop2) UNIQUE")
         .close();
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
     Assert.assertNotNull(
         database
             .getMetadata()
@@ -57,7 +57,7 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
 
     database.getMetadata().getSchema().dropClass("SchemaIndexTest");
     database.getMetadata().getSchema().reload();
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
 
     Assert.assertNull(database.getMetadata().getSchema().getClass("SchemaIndexTest"));
     Assert.assertNotNull(database.getMetadata().getSchema().getClass("SchemaSharedIndexSuperTest"));
@@ -75,7 +75,7 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
         .command(
             "CREATE INDEX SchemaSharedIndexCompositeIndex ON SchemaIndexTest (prop1, prop2) UNIQUE")
         .close();
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
 
     try {
       database.getMetadata().getSchema().dropClass("SchemaSharedIndexSuperTest");

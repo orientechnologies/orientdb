@@ -128,7 +128,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     OScenarioThreadLocal.executeAsDistributed(
         () -> {
           schema.reload(database);
-          indexManager.reload();
+          indexManager.reload(database);
           // The Immutable snapshot should be after index and schema that require and before
           // everything else that use it
           schema.forceSnapshot(database);

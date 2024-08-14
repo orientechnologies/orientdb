@@ -213,7 +213,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       if (!merge) {
         removeDefaultNonSecurityClasses();
-        database.getMetadata().getIndexManagerInternal().reload();
+        database.getMetadata().getIndexManagerInternal().reload(database);
       }
 
       for (final OIndex index :
@@ -320,7 +320,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   public void rebuildIndexes() {
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
 
     OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
 
@@ -524,7 +524,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     // FORCE RELOADING
-    indexManager.reload();
+    indexManager.reload(database);
 
     int n = 0;
     do {
@@ -1544,7 +1544,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("\n\nImporting indexes ...");
 
     OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
-    indexManager.reload();
+    indexManager.reload(database);
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
@@ -1668,7 +1668,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (blueprintsIndexClass != null) {
         ODocument configuration = index.getConfiguration();
         configuration.field("blueprintsIndexClass", blueprintsIndexClass);
-        indexManager.save();
+        indexManager.save(database);
       }
       numberOfCreatedIndexes++;
       listener.onMessage("OK");

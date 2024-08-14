@@ -111,7 +111,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
 
     if (progressListener != null) progressListener.onCompletition(this, true);
 
-    reload();
+    reload(database);
 
     return super.getIndex(database, iName);
   }
@@ -134,7 +134,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
 
     sendCommand(database, dropIndexDDL);
 
-    reload();
+    reload(database);
   }
 
   public void sendCommand(ODatabaseDocumentInternal database, String query) {

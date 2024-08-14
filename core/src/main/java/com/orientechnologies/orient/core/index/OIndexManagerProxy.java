@@ -91,6 +91,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract>
         algorithm);
   }
 
+  @Deprecated
   public ODocument getConfiguration() {
     return delegate.getConfiguration();
   }
@@ -177,8 +178,9 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract>
   }
 
   @Override
+  @Deprecated
   public OIndexManager save() {
-    delegate.save();
+    delegate.save(database);
     return this;
   }
 

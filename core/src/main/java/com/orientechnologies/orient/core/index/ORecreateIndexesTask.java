@@ -82,7 +82,7 @@ public class ORecreateIndexesTask implements Runnable {
       }
     }
 
-    ((OIndexManagerShared) db.getMetadata().getIndexManagerInternal()).save();
+    ((OIndexManagerShared) db.getMetadata().getIndexManagerInternal()).save(db);
 
     indexManager.rebuildCompleted = true;
 

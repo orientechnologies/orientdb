@@ -414,7 +414,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.beginCollection(1, true, "indexes");
 
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
-    indexManager.reload();
+    indexManager.reload(database);
 
     final Collection<? extends OIndex> indexes = indexManager.getIndexes(database);
 
@@ -472,7 +472,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nExporting manual indexes content...");
 
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
-    indexManager.reload();
+    indexManager.reload(database);
 
     final Collection<? extends OIndex> indexes = indexManager.getIndexes(database);
 

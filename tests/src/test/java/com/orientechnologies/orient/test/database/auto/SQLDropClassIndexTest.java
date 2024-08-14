@@ -72,7 +72,7 @@ public class SQLDropClassIndexTest {
             "CREATE INDEX SQLDropClassCompositeIndex ON SQLDropClassTestClass (prop1, prop2)"
                 + " UNIQUE")
         .close();
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
 
     Assert.assertNotNull(
         database
@@ -81,7 +81,7 @@ public class SQLDropClassIndexTest {
             .getIndex(database, "SQLDropClassCompositeIndex"));
 
     database.command("DROP CLASS SQLDropClassTestClass").close();
-    database.getMetadata().getIndexManagerInternal().reload();
+    database.getMetadata().getIndexManagerInternal().reload(database);
     database.getMetadata().getSchema().reload();
 
     Assert.assertNull(database.getMetadata().getSchema().getClass("SQLDropClassTestClass"));

@@ -70,7 +70,7 @@ public interface OIndexManagerAbstract extends OCloseable {
 
   void dropIndex(ODatabaseDocumentInternal database, String iIndexName);
 
-  void reload();
+  void reload(ODatabaseDocumentInternal database);
 
   void addClusterToIndex(String clusterName, String indexName);
 
@@ -78,7 +78,7 @@ public interface OIndexManagerAbstract extends OCloseable {
 
   void removeClusterFromIndex(String clusterName, String indexName);
 
-  void save();
+  void save(ODatabaseDocumentInternal database);
 
   void getClassRawIndexes(String name, Collection<OIndex> indexes2);
 

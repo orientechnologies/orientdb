@@ -219,7 +219,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
     }
   }
 
-  private void reOpen(OStorage storage) throws IOException {
+  private void reOpen() throws IOException {
     //noinspection resource
     if (indexWriter != null
         && indexWriter.isOpen()
@@ -227,14 +227,14 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
       // don't waste time reopening an in memory index
       return;
     }
-    open(storage);
+    open();
   }
 
   protected static ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
-  private synchronized void open(OStorage storage) throws IOException {
+  private synchronized void open() throws IOException {
 
     if (!closed.get()) return;
 
@@ -335,7 +335,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
   public void delete(OAtomicOperation atomicOperation) {
     try {
       updateLastAccess();
-      openIfClosed(storage);
+      openIfClosed();
 
       if (indexWriter != null && indexWriter.isOpen()) {
         synchronized (this) {
@@ -450,18 +450,14 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
     return collectionDelete;
   }
 
-  protected synchronized void openIfClosed(OStorage storage) {
+  protected synchronized void openIfClosed() {
     if (closed.get()) {
       try {
-        reOpen(storage);
+        reOpen();
       } catch (final IOException e) {
         logger.error("error while opening closed index:: " + indexName(), e);
       }
     }
-  }
-
-  protected void openIfClosed() {
-    openIfClosed(getDatabase().getStorage());
   }
 
   @Override
@@ -621,7 +617,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
   public void release() {
     try {
       close();
-      reOpen(getDatabase().getStorage());
+      reOpen();
     } catch (IOException e) {
       logger.error("Error on releasing Lucene index:: " + indexName(), e);
     }
