@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
@@ -35,6 +36,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
 
@@ -103,11 +105,26 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
     Object scriptGraph = binding.get("orient");
     if (scriptGraph == null || !(scriptGraph instanceof OScriptGraphOrientWrapper))
       binding.put("orient", new OScriptGraphOrientWrapper());
+    bindGraph(acquireGraph(database), binding);
+  }
+
+  public OrientBaseGraph acquireGraph(final ODatabaseDocument database) {
+    return OrientGraphFactory.getTxGraphImplFactory()
+        .getGraph((ODatabaseDocumentInternal) database);
+  }
+
+  private void bindGraph(OrientBaseGraph graph, Bindings bindings) {
+    bindings.put("g", graph);
+  }
+
+  private void unbindGraph(Bindings bindings) {
+    bindings.put("g", null);
   }
 
   @Override
   public void unbind(ScriptEngine engine, Bindings binding) {
     binding.put("orient", null);
+    unbindGraph(binding);
   }
 
   @Override
