@@ -877,7 +877,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     if (record == null) throw new ODatabaseException("Cannot delete null document");
     if (record instanceof OVertex) {
       reload(record, "in*:2 out*:2");
-      OVertexDocument.deleteLinks((OVertex) record);
+      OVertexDocument.deleteLinks(this, (OVertex) record);
     } else if (record instanceof OEdge) {
       reload(record, "in:1 out:1");
       OEdgeDocument.deleteLinks((OEdge) record);
@@ -1010,7 +1010,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
     while (iteratorCluster.hasNext()) {
       final ODocument document = iteratorCluster.next();
-      document.delete();
+      this.delete(document);
     }
 
     return getStorageRemote().dropCluster(clusterId);

@@ -160,7 +160,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
                   linkedV.setProperty(f, resolve(targetVertexFields.field(f)));
               }
 
-              linkedV.save();
+              db.save(linkedV);
 
               debug("created new vertex=" + linkedV.getRecord());
 

@@ -116,7 +116,7 @@ public class ODatabaseRepair extends ODatabaseTool {
 
             if (changed) {
               modifiedDocuments++;
-              doc.save();
+              database.save(doc);
 
               if (verbose) message("\n-- updated document " + doc.getIdentity());
             }

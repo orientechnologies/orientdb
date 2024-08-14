@@ -243,7 +243,7 @@ public class OGraphRepair {
               message(
                   outputListener,
                   "+ deleting corrupted edge " + edge + " because " + removalReason + "\n");
-              edge.delete();
+              db.delete(edge);
             } else
               message(
                   outputListener,
@@ -408,11 +408,11 @@ public class OGraphRepair {
 
           message(outputListener, "+ repaired corrupted vertex " + vertex + "\n");
           if (!checkOnly) {
-            vertex.save();
+            db.save(vertex);
           }
         } else if (vertex.isDirty() && !checkOnly) {
           message(outputListener, "+ optimized vertex " + vertex + "\n");
-          vertex.save();
+          db.save(vertex);
         }
       }
 

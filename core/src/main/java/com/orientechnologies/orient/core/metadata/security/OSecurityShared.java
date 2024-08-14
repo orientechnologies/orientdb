@@ -574,7 +574,7 @@ public class OSecurityShared implements OSecurityInternal {
       return;
     }
     policies.remove(resource);
-    roleDoc.save();
+    session.save(roleDoc);
     role.reload();
     updateAllFilteredProperties((ODatabaseDocumentInternal) session);
     initPredicateSecurityOptimizations(session);

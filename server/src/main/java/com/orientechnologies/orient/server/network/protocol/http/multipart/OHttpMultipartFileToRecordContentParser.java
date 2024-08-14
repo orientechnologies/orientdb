@@ -35,7 +35,7 @@ public class OHttpMultipartFileToRecordContentParser implements OHttpMultipartCo
       throws IOException {
     final OBlob record = new ORecordBytes();
     record.fromInputStream(in);
-    record.save();
+    database.save(record);
     return record.getIdentity();
   }
 }

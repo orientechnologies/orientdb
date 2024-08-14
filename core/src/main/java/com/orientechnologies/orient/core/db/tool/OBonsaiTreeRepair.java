@@ -83,8 +83,7 @@ public class OBonsaiTreeRepair {
 
             final ORidBag inRidBag = inVertex.field(inVertexName);
             inRidBag.add(edge.getIdentity());
-
-            inVertex.save();
+            db.save(inVertex);
           }
 
           if (outVertex.field(outVertexName) instanceof ORidBag) {
@@ -95,7 +94,7 @@ public class OBonsaiTreeRepair {
             final ORidBag outRidBag = outVertex.field(outVertexName);
             outRidBag.add(edge.getIdentity());
 
-            outVertex.save();
+            db.save(outVertex);
           }
 
           counter++;

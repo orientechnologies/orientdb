@@ -51,7 +51,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
       // ASSURE TO MAKE THE RECORD ID INVALID
       ((ORecordId) doc.getIdentity()).setClusterPosition(ORID.CLUSTER_POS_INVALID);
 
-      doc.save();
+      db.save(doc);
 
       iResponse.send(
           OHttpUtils.STATUS_CREATED_CODE,

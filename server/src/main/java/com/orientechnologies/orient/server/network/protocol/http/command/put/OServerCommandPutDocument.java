@@ -97,7 +97,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
           // OVERWRITE THE VERSION
           ORecordInternal.setVersion(currentDocument, doc.getVersion());
 
-        currentDocument.save();
+        db.save(currentDocument);
       }
 
       iResponse.send(

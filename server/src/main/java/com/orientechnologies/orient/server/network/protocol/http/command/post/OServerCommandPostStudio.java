@@ -286,7 +286,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       if (rid == null) throw new IllegalArgumentException("Record ID not found in request");
 
       ODocument doc = new ODocument(className, new ORecordId(rid));
-      doc.reload(null, true);
+      db.reload(doc, null, true);
 
       // BIND ALL CHANGED FIELDS
       for (Entry<String, String> f : fields.entrySet()) {
@@ -316,7 +316,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
         }
       }
 
-      doc.save();
+      db.save(doc);
       iResponse.send(
           OHttpUtils.STATUS_OK_CODE,
           OHttpUtils.STATUS_OK_DESCRIPTION,
@@ -331,7 +331,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       // BIND ALL CHANGED FIELDS
       for (Entry<String, String> f : fields.entrySet()) doc.field(f.getKey(), f.getValue());
 
-      doc.save();
+      db.save(doc);
       iResponse.send(
           201,
           "OK",
@@ -344,9 +344,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
       if (rid == null) throw new IllegalArgumentException("Record ID not found in request");
 
-      final ODocument doc = new ODocument(new ORecordId(rid));
-      doc.load();
-      doc.delete();
+      db.delete(new ORecordId(rid));
       iResponse.send(
           OHttpUtils.STATUS_OK_CODE,
           OHttpUtils.STATUS_OK_DESCRIPTION,

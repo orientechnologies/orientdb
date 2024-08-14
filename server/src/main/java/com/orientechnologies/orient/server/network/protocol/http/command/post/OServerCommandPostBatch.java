@@ -137,12 +137,12 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         if (type.equals("c")) {
           // CREATE
           final ODocument doc = getRecord(operation);
-          doc.save();
+          db.save(doc);
           lastResult = doc;
         } else if (type.equals("u")) {
           // UPDATE
           final ODocument doc = getRecord(operation);
-          doc.save();
+          db.save(doc);
           lastResult = doc;
         } else if (type.equals("d")) {
           // DELETE

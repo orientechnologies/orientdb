@@ -1938,6 +1938,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       final int waitBetweenRetry,
       final ORecord[] recordToReloadOnRetry) {
     ONeedRetryException lastException = null;
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     for (int retry = 0; retry < maxRetry; ++retry) {
       try {
         return callback.call(retry);
@@ -1947,7 +1948,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
         if (recordToReloadOnRetry != null) {
           // RELOAD THE RECORDS
-          for (ORecord r : recordToReloadOnRetry) r.reload();
+          for (ORecord r : recordToReloadOnRetry) {
+            db.reload(r, null, false);
+          }
         }
 
         if (waitBetweenRetry > 0)
@@ -1999,7 +2002,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       msg.append(
           " open command/query result sets, please make sure you close them with"
               + " OResultSet.close()");
-      logger.warn(msg.toString(), null);
+      logger.warn("%s", msg.toString());
       if (logger.isDebugEnabled()) {
         activeQueries.values().stream()
             .map(pendingQuery -> pendingQuery.getResultSet().getExecutionPlan())

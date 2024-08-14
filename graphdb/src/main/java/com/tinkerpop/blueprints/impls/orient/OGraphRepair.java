@@ -238,7 +238,7 @@ public class OGraphRepair {
               message(
                   outputListener,
                   "+ deleting corrupted edge " + edge + " because " + removalReason + "\n");
-              edge.delete();
+              db.delete(edge);
             } else
               message(
                   outputListener,

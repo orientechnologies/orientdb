@@ -73,7 +73,9 @@ public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
 
       final boolean existent = record.getIdentity().isPersistent();
 
-      if (existent && record instanceof ORecord) ((ORecord) record).save();
+      if (existent && record instanceof ORecord) {
+        db.save(((ORecord) record));
+      }
 
       index.put(key, record);
 

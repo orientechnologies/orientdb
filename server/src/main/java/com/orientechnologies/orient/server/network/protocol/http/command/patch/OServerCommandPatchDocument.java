@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.patch;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -69,8 +70,7 @@ public class OServerCommandPatchDocument extends OServerCommandDocumentAbstract 
       if (!recordId.isValid())
         throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
 
-      final com.orientechnologies.orient.core.record.impl.ODocument currentDocument =
-          db.load(recordId);
+      final ODocument currentDocument = db.load(recordId);
 
       if (currentDocument == null) {
         iResponse.send(
@@ -86,7 +86,7 @@ public class OServerCommandPatchDocument extends OServerCommandDocumentAbstract 
       currentDocument.merge(doc, partialUpdateMode, false);
       ORecordInternal.setVersion(currentDocument, doc.getVersion());
 
-      currentDocument.save();
+      db.save(currentDocument);
 
       iResponse.send(
           OHttpUtils.STATUS_OK_CODE,

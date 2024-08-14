@@ -163,18 +163,20 @@ public class OFunctionLibraryImpl {
   }
 
   public synchronized void dropFunction(OFunction function) {
-    reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
+    reloadIfNeeded(database);
     String name = function.getName();
     ODocument doc = function.getDocument();
-    doc.delete();
+    database.delete(doc);
     functions.remove(name.toUpperCase(Locale.ENGLISH));
   }
 
   public synchronized void dropFunction(String iName) {
-    reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
+    reloadIfNeeded(database);
     OFunction function = getFunction(iName);
     ODocument doc = function.getDocument();
-    doc.delete();
+    database.delete(doc);
     functions.remove(iName.toUpperCase(Locale.ENGLISH));
   }
 

@@ -813,7 +813,7 @@ public class OSchemaEmbedded extends OSchemaShared {
       if (iteratorCluster != null) {
         while (iteratorCluster.hasNext()) {
           final ODocument document = iteratorCluster.next();
-          document.delete();
+          db.delete(document);
         }
 
         db.dropClusterInternal(clusterId);

@@ -120,7 +120,7 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
               }
             }
 
-            outV.save();
+            db.save(outV);
 
             // INCOMING
             final Object inField = inV.field("in_" + doc.getClassName());
@@ -137,9 +137,9 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
               }
             }
 
-            inV.save();
+            db.save(inV);
 
-            doc.delete();
+            db.delete(doc);
 
             if (++transformed % batch == 0) {
               db.commit();

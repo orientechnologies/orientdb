@@ -591,7 +591,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   }
 
   @Override
-  public OResultSet query(String query, Object[] args) {
+  public OResultSet query(String query, Object... args) {
     checkOpenness();
     checkIfActive();
     getSharedContext().getOrientDB().startCommand(Optional.empty());
@@ -637,7 +637,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   }
 
   @Override
-  public OResultSet command(String query, Object[] args) {
+  public OResultSet command(String query, Object... args) {
     checkOpenness();
     checkIfActive();
 
@@ -1060,7 +1060,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     if (record instanceof OElement) {
       if (((OElement) record).isVertex()) {
-        OVertexDocument.deleteLinks(((OElement) record).asVertex().get());
+        OVertexDocument.deleteLinks(this, ((OElement) record).asVertex().get());
       } else if (((OElement) record).isEdge()) {
         OEdge edge = ((OElement) record).asEdge().get();
         OEdgeDocument.deleteLinks(edge);
@@ -1772,7 +1772,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     while (iteratorCluster.hasNext()) {
       final ODocument document = iteratorCluster.next();
-      document.delete();
+      this.delete(document);
     }
 
     return dropClusterInternal(clusterId);
@@ -2082,7 +2082,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         new ORecordIteratorCluster<ORecord>(this, id);
     while (iteratorCluster.hasNext()) {
       final ORecord record = iteratorCluster.next();
-      record.delete();
+      this.delete(record);
       count++;
     }
     return count;

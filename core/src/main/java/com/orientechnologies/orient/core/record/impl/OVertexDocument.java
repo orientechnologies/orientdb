@@ -305,7 +305,7 @@ public class OVertexDocument extends ODocument implements OVertex {
               getConnectionFieldName(
                   ODirection.IN, oe.getSchemaType().map(x -> x.getName()).orElse(null), true);
 
-          replaceLinks(inV.getRecord(), inFieldName, oldIdentity, newIdentity);
+          replaceLinks(inV.getRecord(), inFieldName, oldIdentity, newIdentity, db);
         } else {
           // REPLACE WITH NEW VERTEX
           oe.setProperty("out", newIdentity);
@@ -322,7 +322,7 @@ public class OVertexDocument extends ODocument implements OVertex {
               getConnectionFieldName(
                   ODirection.OUT, oe.getSchemaType().map(x -> x.getName()).orElse(null), true);
 
-          replaceLinks(outV.getRecord(), outFieldName, oldIdentity, newIdentity);
+          replaceLinks(outV.getRecord(), outFieldName, oldIdentity, newIdentity, db);
         } else {
           // REPLACE WITH NEW VERTEX
           oe.setProperty("in", newIdentity);
@@ -367,14 +367,14 @@ public class OVertexDocument extends ODocument implements OVertex {
     return this;
   }
 
-  public static void deleteLinks(OVertex delegate) {
+  public static void deleteLinks(ODatabaseSession db, OVertex delegate) {
     Iterable<OEdge> allEdges = delegate.getEdges(ODirection.BOTH);
     List<OEdge> items = new ArrayList<>();
     for (OEdge edge : allEdges) {
       items.add(edge);
     }
     for (OEdge edge : items) {
-      edge.delete();
+      db.delete(edge);
     }
   }
 
@@ -486,7 +486,8 @@ public class OVertexDocument extends ODocument implements OVertex {
       final ODocument iVertex,
       final String iFieldName,
       final OIdentifiable iVertexToRemove,
-      final OIdentifiable iNewVertex) {
+      final OIdentifiable iNewVertex,
+      ODatabaseSession db) {
     if (iVertex == null) return;
 
     final Object fieldValue =
@@ -526,7 +527,7 @@ public class OVertexDocument extends ODocument implements OVertex {
       if (col.remove(iVertexToRemove)) col.add(iNewVertex);
     }
 
-    iVertex.save();
+    db.save(iVertex);
   }
 
   protected OPair<ODirection, String> getConnection(

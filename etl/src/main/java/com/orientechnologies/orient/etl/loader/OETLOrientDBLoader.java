@@ -102,7 +102,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader {
       final OVertex v = (OVertex) input;
 
       try {
-        v.save(clusterName);
+        db.save(v, clusterName);
       } catch (ORecordDuplicatedException e) {
         if (!skipDuplicates) {
           throw e;

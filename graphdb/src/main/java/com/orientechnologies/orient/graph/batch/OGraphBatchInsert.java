@@ -171,7 +171,8 @@ public class OGraphBatchInsert {
       final List<Object> inIds = in.get(i);
       final ODocument doc = new ODocument(vClass);
       if (outIds == null && inIds == null) {
-        db.save(doc, clusterName).delete();
+        db.save(doc, clusterName);
+        db.delete(doc);
       } else {
         doc.field(idPropertyName, i);
         if (outIds != null) {

@@ -131,7 +131,7 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
               final String[] lookupParts = lookup.split("\\.");
               final ODocument linkedDoc = new ODocument(lookupParts[0]);
               linkedDoc.field(lookupParts[1], joinRuntimeValue);
-              linkedDoc.save();
+              db.save(linkedDoc);
 
               debug("created new document=%s", linkedDoc.getRecord());
 

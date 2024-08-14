@@ -429,7 +429,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     // Starting from v4 schema has been moved to internal cluster.
     // Create a stub at #2:0 to prevent cluster position shifting.
-    new ODocument().save(OStorage.CLUSTER_DEFAULT_NAME);
+    database.save(new ODocument(), OStorage.CLUSTER_DEFAULT_NAME);
 
     database.getSharedContext().getSecurity().create(database);
   }
@@ -1143,7 +1143,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId()))
         == null) {
       ODocument indexDocument = new ODocument();
-      indexDocument.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      database.save(indexDocument, OMetadataDefault.CLUSTER_INTERNAL_NAME);
 
       database.getStorage().setIndexMgrRecordId(indexDocument.getIdentity().toString());
     }
@@ -1324,7 +1324,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         record.setDirty();
         if (preserveRids) {
           database.begin();
-          record.save();
+          database.save(record);
           ((OTransactionInternal) database.getTransaction())
                   .getRecordEntry(record.getIdentity())
                   .type =
@@ -1332,17 +1332,17 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           database.commitPreallocate();
         } else if (record instanceof ODocument
             && ODocumentInternal.getImmutableSchemaClass(database, ((ODocument) record)) != null) {
-          record.save();
+          database.save(record);
         } else {
-          record.save(database.getClusterNameById(clusterId));
+          database.save(record, database.getClusterNameById(clusterId));
         }
 
         if (!rid.equals(record.getIdentity())) {
           // SAVE IT ONLY IF DIFFERENT
-          new ODocument(EXPORT_IMPORT_CLASS_NAME)
-              .field("key", rid.toString())
-              .field("value", record)
-              .save();
+          ODocument doc = new ODocument(EXPORT_IMPORT_CLASS_NAME);
+          doc.setProperty("key", rid.toString());
+          doc.setProperty("value", record);
+          database.save(doc);
         }
       }
 
@@ -1486,7 +1486,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           ridset.forEach(
               rid -> {
                 ridbag.add(rid);
-                doc.save();
+                database.save(doc);
               });
         });
   }
@@ -1528,7 +1528,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         if (ridString.length() > 0) {
           ORecordId rid = new ORecordId(ridString);
           bag.add(rid);
-          record.save();
+          database.save(record);
         }
         ridBuffer = new StringBuilder();
         if (value.charAt(i) == ']') {
@@ -1795,7 +1795,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       ODatabaseSession session, ODocument document, Set<ORID> brokenRids) {
     doRewriteLinksInDocument(session, document, brokenRids);
 
-    document.save();
+    session.save(document);
   }
 
   protected static void doRewriteLinksInDocument(

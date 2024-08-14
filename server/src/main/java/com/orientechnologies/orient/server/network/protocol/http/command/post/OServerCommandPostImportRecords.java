@@ -123,7 +123,7 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
               doc.field(columns.get(col), value);
             }
 
-            doc.save();
+            db.save(doc);
             imported++;
 
           } catch (Exception e) {

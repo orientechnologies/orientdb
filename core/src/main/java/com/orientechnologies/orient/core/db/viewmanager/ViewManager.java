@@ -666,7 +666,7 @@ public class ViewManager {
             viewRow.setProperty(oProjectionItem.getProjectionAliasAsString(), value);
           }
         }
-        viewRow.save();
+        db.save(viewRow);
       }
     }
 
@@ -679,7 +679,7 @@ public class ViewManager {
                 "SELECT FROM " + viewName + " WHERE " + view.getOriginRidField() + " = ?",
                 (Object) data.getProperty("@rid"))) {
           while (rs.hasNext()) {
-            rs.next().getElement().ifPresent(x -> x.delete());
+            rs.next().getElement().ifPresent(x -> db.delete(x));
           }
         }
       }
