@@ -89,6 +89,7 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
+import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -1044,7 +1045,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       if (((OElement) record).isVertex()) {
         OVertexDocument.deleteLinks(((OElement) record).asVertex().get());
       } else if (((OElement) record).isEdge()) {
-        OEdgeDocument.deleteLinks(((OElement) record).asEdge().get());
+        OEdge edge = ((OElement) record).asEdge().get();
+        OEdgeDocument.deleteLinks(edge);
+        if (edge.isLightweight()) {
+          return this;
+        }
       }
     }
 
