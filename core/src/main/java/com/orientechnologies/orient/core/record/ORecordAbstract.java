@@ -229,6 +229,7 @@ public abstract class ORecordAbstract implements ORecord {
     return this;
   }
 
+  @Deprecated
   public ORecord load() {
     if (!getIdentity().isValid())
       throw new ORecordNotFoundException(
@@ -300,6 +301,7 @@ public abstract class ORecordAbstract implements ORecord {
         .save(this, iClusterName, ODatabase.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
   }
 
+  @Deprecated
   public ORecordAbstract delete() {
     getDatabase().delete(this);
     return this;

@@ -505,16 +505,16 @@ public class OResultInternal implements OResult, Comparable<OResultInternal> {
       }
     }
   }
-  
+
   @Override
   public int compareTo(OResultInternal o) {
     if (element != null) {
-      if(o.element != null) {
+      if (o.element != null) {
         return element.getIdentity().compareTo(o.element.getIdentity());
       } else {
         return 1;
       }
-    } else { 
+    } else {
       return 1;
     }
   }

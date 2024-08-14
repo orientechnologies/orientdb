@@ -206,6 +206,7 @@ public class OVertexDelegate implements OVertex {
     return this;
   }
 
+  @Deprecated
   public static void deleteLinks(OVertex delegate) {
     Iterable<OEdge> allEdges = delegate.getEdges(ODirection.BOTH);
     for (OEdge edge : allEdges) {
