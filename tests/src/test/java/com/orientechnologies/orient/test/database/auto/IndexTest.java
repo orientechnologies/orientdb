@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -692,8 +691,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void linkedIndexedProperty() {
-    try (ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL())) {
-      db.open("admin", "admin");
+    try (ODatabaseDocument db = rawSession("admin", "admin")) {
 
       if (!db.getMetadata().getSchema().existsClass("TestClass")) {
         OClass testClass =
@@ -729,9 +727,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "linkedIndexedProperty")
   public void testLinkedIndexedPropertyInTx() {
-    try (ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL())) {
-      db.open("admin", "admin");
-
+    try (ODatabaseDocument db = rawSession("admin", "admin")) {
       db.begin();
       ODocument testClassDocument = db.newInstance("TestClass");
       testClassDocument.field("name", "Test Class 2");
@@ -750,8 +746,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testDictionary() {
-    try (ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL())) {
-      db.open("admin", "admin");
+    try (ODatabaseDocument db = rawSession("admin", "admin")) {
 
       OClass pClass = db.getMetadata().getSchema().createClass("Person2", 1, (OClass[]) null);
       pClass.createProperty("firstName", OType.STRING);
@@ -770,8 +765,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testConcurrentRemoveDelete() {
     checkEmbeddedDB();
 
-    try (ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL())) {
-      db.open("admin", "admin");
+    try (ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) rawSession("admin", "admin")) {
 
       if (!db.getMetadata().getSchema().existsClass("MyFruit")) {
         OClass fruitClass = db.getMetadata().getSchema().createClass("MyFruit", 1, (OClass[]) null);
@@ -846,8 +840,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     final ODocument doc;
     final ORecordId result;
-    try (ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL())) {
-      db.open("admin", "admin");
+    try (ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) rawSession("admin", "admin")) {
 
       if (!db.getMetadata().getSchema().existsClass("IndexTestTerm")) {
         final OClass termClass =
@@ -881,8 +874,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testTransactionUniqueIndexTestOne() {
     checkEmbeddedDB();
 
-    ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL());
-    db.open("admin", "admin");
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) rawSession("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
       final OClass termClass =
@@ -924,8 +916,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testTransactionUniqueIndexTestTwo() {
     checkEmbeddedDB();
 
-    ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL());
-    db.open("admin", "admin");
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) rawSession("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
       final OClass termClass =
@@ -971,8 +962,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testTransactionUniqueIndexTestWithDotNameOne() {
     checkEmbeddedDB();
 
-    ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL());
-    db.open("admin", "admin");
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) rawSession("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexWithDotTest")) {
       final OClass termClass =
@@ -1016,8 +1006,7 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testTransactionUniqueIndexTestWithDotNameTwo() {
     checkEmbeddedDB();
 
-    ODatabaseDocumentInternal db = new ODatabaseDocumentTx(database.getURL());
-    db.open("admin", "admin");
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) rawSession("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexWithDotTest")) {
       final OClass termClass =
@@ -1077,8 +1066,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void createInheritanceIndex() {
-    try (ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL())) {
-      db.open("admin", "admin");
+    try (ODatabaseDocument db = rawSession("admin", "admin")) {
 
       if (!db.getMetadata().getSchema().existsClass("BaseTestClass")) {
         OClass baseClass =
@@ -1853,7 +1841,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final ORID rid = document.getIdentity();
 
     database.close();
-    database.open("admin", "admin");
+    database = (ODatabaseDocumentInternal) rawSession("admin", "admin");
 
     document = database.load(rid);
 
@@ -1875,7 +1863,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     database.close();
-    database.open("admin", "admin");
+    database = (ODatabaseDocumentInternal) rawSession("admin", "admin");
 
     document = database.load(rid);
 
@@ -1899,7 +1887,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     database.close();
-    database.open("admin", "admin");
+    database = (ODatabaseDocumentInternal) rawSession("admin", "admin");
 
     document = database.load(rid);
     users = document.field("users");
@@ -1921,7 +1909,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     database.close();
-    database.open("admin", "admin");
+    database = (ODatabaseDocumentInternal) rawSession("admin", "admin");
 
     users = document.field("users");
     users.add(rid4);
@@ -1946,7 +1934,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     database.close();
-    database.open("admin", "admin");
+    database = (ODatabaseDocumentInternal) rawSession("admin", "admin");
 
     document.removeField("users");
     database.save(document);

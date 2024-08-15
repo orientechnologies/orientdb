@@ -108,8 +108,7 @@ public class DbImportStreamExportTest extends DocumentDBBaseTest implements OCom
       }
       // EXECUTES ONLY IF NOT REMOTE ON CI/RELEASE TEST ENV
     }
-    ODatabaseDocumentInternal first = new ODatabaseDocumentTx(url);
-    first.open("admin", "admin");
+    ODatabaseDocumentInternal first = (ODatabaseDocumentInternal) openSession("admin", "admin");
     ODatabaseDocumentInternal second =
         new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
     second.open("admin", "admin");

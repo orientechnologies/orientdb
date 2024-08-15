@@ -83,8 +83,8 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
     ODatabaseHelper.createDatabase(database, url + "_objectschema", getStorageType());
 
     try {
-      ODatabaseDocumentInternal exportDatabase = new ODatabaseDocumentTx(url);
-      exportDatabase.open("admin", "admin");
+      ODatabaseDocumentInternal exportDatabase =
+          (ODatabaseDocumentInternal) rawSession("admin", "admin");
 
       OCommandOutputListener listener =
           new OCommandOutputListener() {
