@@ -2761,6 +2761,7 @@ public class OSelectExecutionPlanner {
               isMap(clazz, indexField),
               isIndexByKey(index, indexField),
               isIndexByValue(index, indexField),
+              !index.getDefinition().isNullValuesIgnored(),
               ctx);
       blockIterator = blockCopy.getSubBlocks().iterator();
       boolean indexFieldFound = false;

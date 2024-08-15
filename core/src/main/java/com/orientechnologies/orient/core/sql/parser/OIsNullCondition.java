@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.Collections;
 import java.util.List;
@@ -122,6 +123,39 @@ public class OIsNullCondition extends OBooleanExpression {
       return true;
     }
     return false;
+  }
+
+  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
+    if (expression.isBaseIdentifier()) {
+      if (info.getField().equals(expression.getDefaultAlias().getStringValue())) {
+        return info.isSupportNull();
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public OExpression resolveKeyFrom(OBinaryCondition additional) {
+    OExpression exp = new OExpression(-1);
+    exp.setNull(true);
+    return exp;
+  }
+
+  @Override
+  public boolean isKeyFromIncluded(OBinaryCondition additional) {
+    return true;
+  }
+
+  @Override
+  public OExpression resolveKeyTo(OBinaryCondition additional) {
+    OExpression exp = new OExpression(-1);
+    exp.setNull(true);
+    return exp;
+  }
+
+  @Override
+  public boolean isKeyToIncluded(OBinaryCondition additional) {
+    return true;
   }
 
   @Override

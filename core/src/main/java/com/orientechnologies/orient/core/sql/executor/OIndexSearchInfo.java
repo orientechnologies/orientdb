@@ -10,6 +10,7 @@ public class OIndexSearchInfo {
   private String field;
   private OCommandContext ctx;
   private boolean indexByValue;
+  private boolean supportNull;
 
   public OIndexSearchInfo(
       String indexField,
@@ -17,6 +18,7 @@ public class OIndexSearchInfo {
       boolean map,
       boolean indexByKey,
       boolean indexByValue,
+      boolean supportNull,
       OCommandContext ctx) {
     this.field = indexField;
     this.allowsRangeQueries = allowsRangeQueries;
@@ -24,6 +26,7 @@ public class OIndexSearchInfo {
     this.indexByKey = indexByKey;
     this.ctx = ctx;
     this.indexByValue = indexByValue;
+    this.supportNull = supportNull;
   }
 
   public String getField() {
@@ -48,5 +51,9 @@ public class OIndexSearchInfo {
 
   public boolean isIndexByValue() {
     return indexByValue;
+  }
+
+  public boolean isSupportNull() {
+    return supportNull;
   }
 }
