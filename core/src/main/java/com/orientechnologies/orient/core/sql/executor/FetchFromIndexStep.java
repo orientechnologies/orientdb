@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OGeOperator;
 import com.orientechnologies.orient.core.sql.parser.OGtOperator;
 import com.orientechnologies.orient.core.sql.parser.OInCondition;
+import com.orientechnologies.orient.core.sql.parser.OIsNullCondition;
 import com.orientechnologies.orient.core.sql.parser.OLeOperator;
 import com.orientechnologies.orient.core.sql.parser.OLtOperator;
 import com.orientechnologies.orient.core.sql.parser.OValueExpression;
@@ -827,6 +828,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
             || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator));
     } else if (exp instanceof OBetweenCondition) {
       return true;
+    } else if (exp instanceof OIsNullCondition) {
+      return true;
     } else {
       throw new UnsupportedOperationException("Cannot execute index query with " + exp);
     }
@@ -878,6 +881,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         return additionalOperator == null
             || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator));
     } else if (exp instanceof OBetweenCondition) {
+      return true;
+    } else if (exp instanceof OIsNullCondition) {
       return true;
     } else {
       throw new UnsupportedOperationException("Cannot execute index query with " + exp);
