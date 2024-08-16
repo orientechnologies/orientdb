@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -653,12 +654,16 @@ public class OSelectExecutionPlanner {
   private boolean securityPoliciesExistForClass(OIdentifier targetClass, OCommandContext ctx) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     OSecurityInternal security = db.getSharedContext().getSecurity();
-    OClass clazz =
-        db.getMetadata()
-            .getImmutableSchemaSnapshot()
-            .getClass(targetClass.getStringValue()); // normalize class name case
+    OImmutableClass clazz =
+        (OImmutableClass)
+            db.getMetadata()
+                .getImmutableSchemaSnapshot()
+                .getClass(targetClass.getStringValue()); // normalize class name case
     if (clazz == null) {
       return false;
+    }
+    if (clazz.isRestricted()) {
+      return true;
     }
     return security.isReadRestrictedBySecurityPolicy(
         (ODatabaseSession) db, "database.class." + clazz.getName());
