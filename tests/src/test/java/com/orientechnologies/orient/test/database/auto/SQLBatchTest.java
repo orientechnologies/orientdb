@@ -18,8 +18,8 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
@@ -48,12 +48,11 @@ public class SQLBatchTest extends DocumentDBBaseTest {
       Assert.fail("Tx has been committed while a rollback was expected");
     } catch (OCommandExecutionException e) {
 
-      List<OIdentifiable> result =
-          database.query(new OSQLSynchQuery<Object>("select from V where email = '123'"));
-      Assert.assertTrue(result.isEmpty());
+      OResultSet result = database.query("select from V where email = '123'");
+      Assert.assertTrue(!result.hasNext());
 
-      result = database.query(new OSQLSynchQuery<Object>("select from E where crazyName = 'yes'"));
-      Assert.assertTrue(result.isEmpty());
+      result = database.query("select from E where crazyName = 'yes'");
+      Assert.assertTrue(!result.hasNext());
 
     } catch (Exception e) {
       Assert.fail("Error but not what was expected");
@@ -87,10 +86,9 @@ public class SQLBatchTest extends DocumentDBBaseTest {
 
     database.command(new OCommandScript(script)).execute();
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<Object>("select from " + className2));
+    List<OResult> result = database.query("select from " + className2).stream().toList();
     Assert.assertEquals(result.size(), 1);
-    List foos = result.get(0).field("foos");
+    List foos = result.get(0).getProperty("foos");
     Assert.assertEquals(foos.size(), 3);
     Assert.assertTrue(foos.get(0) instanceof OIdentifiable);
     Assert.assertTrue(foos.get(1) instanceof OIdentifiable);
@@ -125,10 +123,9 @@ public class SQLBatchTest extends DocumentDBBaseTest {
 
     database.command(new OCommandScript(script)).execute();
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<Object>("select from " + className2));
+    List<OResult> result = database.query("select from " + className2).stream().toList();
     Assert.assertEquals(result.size(), 1);
-    List foos = result.get(0).field("foos");
+    List foos = result.get(0).getProperty("foos");
     Assert.assertEquals(foos.size(), 3);
     Assert.assertTrue(foos.get(0) instanceof OIdentifiable);
     Assert.assertTrue(foos.get(1) instanceof OIdentifiable);

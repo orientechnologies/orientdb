@@ -2,9 +2,8 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.testng.Assert;
@@ -30,38 +29,37 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
     database.command("create vertex testFromToV set name = 'Luca'").close();
     database.command("create vertex testFromToV set name = 'Luca'").close();
 
-    List<OIdentifiable> result =
-        database.query(new OSQLSynchQuery<ODocument>("select from testFromToV"));
+    List<OResult> result = database.query("select from testFromToV").stream().toList();
 
     database
         .command(
             "CREATE EDGE testFromToOneE from "
-                + result.get(1).getIdentity()
+                + result.get(1).getIdentity().get()
                 + " to "
-                + result.get(0).getIdentity())
+                + result.get(0).getIdentity().get())
         .close();
     database
         .command(
             "CREATE EDGE testFromToTwoE from "
-                + result.get(1).getIdentity()
+                + result.get(1).getIdentity().get()
                 + " to "
-                + result.get(0).getIdentity())
+                + result.get(0).getIdentity().get())
         .close();
 
     OResultSet resultTwo =
-        database.query("select expand(outE()) from " + result.get(1).getIdentity());
+        database.query("select expand(outE()) from " + result.get(1).getIdentity().get());
 
     Assert.assertEquals(resultTwo.stream().count(), 2);
 
     database
         .command(
             "DELETE EDGE testFromToTwoE from "
-                + result.get(1).getIdentity()
+                + result.get(1).getIdentity().get()
                 + " to"
-                + result.get(0).getIdentity())
+                + result.get(0).getIdentity().get())
         .close();
 
-    resultTwo = database.query("select expand(outE()) from " + result.get(1).getIdentity());
+    resultTwo = database.query("select expand(outE()) from " + result.get(1).getIdentity().get());
 
     Assert.assertEquals(resultTwo.stream().count(), 1);
 
@@ -78,37 +76,38 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
     database.command("create vertex testFromV set name = 'Luca'").close();
     database.command("create vertex testFromV set name = 'Luca'").close();
 
-    List<OIdentifiable> result =
-        database.query(new OSQLSynchQuery<ODocument>("select from testFromV"));
+    List<OResult> result = database.query("select from testFromV").stream().toList();
 
     database
         .command(
             "CREATE EDGE testFromOneE from "
-                + result.get(1).getIdentity()
+                + result.get(1).getIdentity().get()
                 + " to "
-                + result.get(0).getIdentity())
+                + result.get(0).getIdentity().get())
         .close();
     database
         .command(
             "CREATE EDGE testFromTwoE from "
-                + result.get(1).getIdentity()
+                + result.get(1).getIdentity().get()
                 + " to "
-                + result.get(0).getIdentity())
+                + result.get(0).getIdentity().get())
         .close();
 
     OResultSet resultTwo =
-        database.query("select expand(outE()) from " + result.get(1).getIdentity());
+        database.query("select expand(outE()) from " + result.get(1).getIdentity().get());
 
     Assert.assertEquals(resultTwo.stream().count(), 2);
 
     try {
-      database.command("DELETE EDGE testFromTwoE from " + result.get(1).getIdentity()).close();
+      database
+          .command("DELETE EDGE testFromTwoE from " + result.get(1).getIdentity().get())
+          .close();
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
     }
 
-    resultTwo = database.query("select expand(outE()) from " + result.get(1).getIdentity());
+    resultTwo = database.query("select expand(outE()) from " + result.get(1).getIdentity().get());
 
     Assert.assertEquals(resultTwo.stream().count(), 1);
 
@@ -125,32 +124,31 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
     database.command("create vertex testToV set name = 'Luca'").close();
     database.command("create vertex testToV set name = 'Luca'").close();
 
-    List<OIdentifiable> result =
-        database.query(new OSQLSynchQuery<ODocument>("select from testToV"));
+    List<OResult> result = database.query("select from testToV").stream().toList();
 
     database
         .command(
             "CREATE EDGE testToOneE from "
-                + result.get(1).getIdentity()
+                + result.get(1).getIdentity().get()
                 + " to "
-                + result.get(0).getIdentity())
+                + result.get(0).getIdentity().get())
         .close();
     database
         .command(
             "CREATE EDGE testToTwoE from "
-                + result.get(1).getIdentity()
+                + result.get(1).getIdentity().get()
                 + " to "
-                + result.get(0).getIdentity())
+                + result.get(0).getIdentity().get())
         .close();
 
     OResultSet resultTwo =
-        database.query("select expand(outE()) from " + result.get(1).getIdentity());
+        database.query("select expand(outE()) from " + result.get(1).getIdentity().get());
 
     Assert.assertEquals(resultTwo.stream().count(), 2);
 
-    database.command("DELETE EDGE testToTwoE to " + result.get(0).getIdentity()).close();
+    database.command("DELETE EDGE testToTwoE to " + result.get(0).getIdentity().get()).close();
 
-    resultTwo = database.query("select expand(outE()) from " + result.get(1).getIdentity());
+    resultTwo = database.query("select expand(outE()) from " + result.get(1).getIdentity().get());
 
     Assert.assertEquals(resultTwo.stream().count(), 1);
 
