@@ -946,25 +946,26 @@ public class OServer {
 
     OSecuritySystem securitySystem = databases.getSecuritySystem();
     if (securitySystem != null && !securitySystem.arePasswordsStored()) {
-      if (envRootPassword != null) {
-        final String pwd = envRootPassword;
-        getSystemDatabase()
-            .executeWithDB(
-                (db) -> {
-                  db.command(
-                          "update OUser set password= ? WHERE name = ?",
-                          pwd,
-                          OServerConfiguration.DEFAULT_ROOT_USER)
-                      .close();
-                  return (Void) null;
-                });
-      }
       return;
     }
 
+    boolean existServerUser = existsSystemUser(OServerConfiguration.DEFAULT_ROOT_USER);
+    if (existServerUser && envRootPassword != null) {
+      final String pwd = envRootPassword;
+      getSystemDatabase()
+          .executeWithDB(
+              (db) -> {
+                db.command(
+                        "update OUser set password= ? WHERE name = ?",
+                        pwd,
+                        OServerConfiguration.DEFAULT_ROOT_USER)
+                    .close();
+                return (Void) null;
+              });
+    }
+
     boolean existsRoot =
-        existsSystemUser(OServerConfiguration.DEFAULT_ROOT_USER)
-            || serverCfg.existsUser(OServerConfiguration.DEFAULT_ROOT_USER);
+        serverCfg.existsUser(OServerConfiguration.DEFAULT_ROOT_USER) || existServerUser;
 
     if (envRootPassword == null && !existsRoot) {
       try {
