@@ -509,6 +509,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       } else if (isFullTextIndex(index)) {
         stream = index.streamEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
         storeAcquiredStream(stream);
+      } else if (allNullCheck((OAndBlock) condition)) {
+        stream = getStreamForNullKey();
+        storeAcquiredStream(stream);
       } else {
         throw new UnsupportedOperationException(
             "Cannot evaluate " + this.condition + " on index " + index);
@@ -670,6 +673,18 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       } else if (!(exp instanceof OInCondition)) {
         return false;
       } // OK
+    }
+    return true;
+  }
+
+  private static boolean allNullCheck(OAndBlock condition) {
+    if (condition == null) {
+      return false;
+    }
+    for (OBooleanExpression exp : condition.getSubBlocks()) {
+      if (!(exp instanceof OIsNullCondition)) {
+        return false;
+      }
     }
     return true;
   }
