@@ -3650,16 +3650,92 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     String className = "testEmptyListNoIndex";
     OClass clazz = db.createClassIfNotExist(className);
     OProperty prop = clazz.createProperty("noIndex", OType.EMBEDDEDLIST, OType.STRING);
-    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    final ODocument metadata = new ODocument();
+    metadata.field("ignoreNullValues", false);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE, metadata);
 
     db.command("insert into " + className + "  set noIndex = ['foo', 'bar']");
     db.command("insert into " + className + "  set noIndex = ['bbb', 'FFF']");
+    db.command("insert into " + className + "  set noIndex = []");
 
     try (OResultSet result = db.query("select from " + className + " where noIndex = []")) {
-      Assert.assertFalse(result.hasNext());
       Assert.assertFalse(
           result.getExecutionPlan().get().getSteps().stream()
               .anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertEquals(1, result.stream().count());
+    }
+  }
+
+  @Test
+  public void testEmptyListOrNullOrEmptyMultipleCondition() {
+    String className = "testEmptyListNoIndex";
+    OClass clazz = db.createClassIfNotExist(className);
+    OProperty prop = clazz.createProperty("noIndex", OType.EMBEDDEDLIST, OType.STRING);
+    final ODocument metadata = new ODocument();
+    metadata.field("ignoreNullValues", false);
+
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE, metadata);
+
+    db.command("insert into " + className + "  set noIndex = ['foo', 'bar'], name='aa' ");
+    db.command("insert into " + className + "  set noIndex = ['bbb', 'FFF'], name='aa' ");
+    db.command("insert into " + className + "  set noIndex = [] , name='aa' ");
+    db.command("insert into " + className + "  set noIndex = null , name='aa'");
+
+    try (OResultSet result =
+        db.query(
+            "select from "
+                + className
+                + " where name='aa' and(noIndex = [] or noIndex is null or noIndex = '') ")) {
+      Assert.assertFalse(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertEquals(2, result.stream().count());
+    }
+  }
+
+  @Test
+  public void testEmptyListOrNull() {
+    String className = "testEmptyListNoIndex";
+    OClass clazz = db.createClassIfNotExist(className);
+    OProperty prop = clazz.createProperty("noIndex", OType.EMBEDDEDLIST, OType.STRING);
+    final ODocument metadata = new ODocument();
+    metadata.field("ignoreNullValues", false);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE, metadata);
+
+    db.command("insert into " + className + "  set noIndex = ['foo', 'bar']");
+    db.command("insert into " + className + "  set noIndex = ['bbb', 'FFF']");
+    db.command("insert into " + className + "  set noIndex = []");
+    db.command("insert into " + className + "  set noIndex = null");
+
+    try (OResultSet result =
+        db.query("select from " + className + " where noIndex = [] or noIndex is null ")) {
+      Assert.assertFalse(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertEquals(2, result.stream().count());
+    }
+  }
+
+  @Test
+  public void testEmptyListOrNullHashIndex() {
+    String className = "testEmptyListNoIndex";
+    OClass clazz = db.createClassIfNotExist(className);
+    OProperty prop = clazz.createProperty("noIndex", OType.EMBEDDEDLIST, OType.STRING);
+    final ODocument metadata = new ODocument();
+    metadata.field("ignoreNullValues", false);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, metadata);
+
+    db.command("insert into " + className + "  set noIndex = ['foo', 'bar']");
+    db.command("insert into " + className + "  set noIndex = ['bbb', 'FFF']");
+    db.command("insert into " + className + "  set noIndex = []");
+    db.command("insert into " + className + "  set noIndex = null");
+
+    try (OResultSet result =
+        db.query("select from " + className + " where noIndex = [] or noIndex is null ")) {
+      Assert.assertFalse(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertEquals(2, result.stream().count());
     }
   }
 
