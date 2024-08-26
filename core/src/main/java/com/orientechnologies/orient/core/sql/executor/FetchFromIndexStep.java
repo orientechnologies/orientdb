@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OGeOperator;
 import com.orientechnologies.orient.core.sql.parser.OGtOperator;
 import com.orientechnologies.orient.core.sql.parser.OInCondition;
+import com.orientechnologies.orient.core.sql.parser.OIsNullCondition;
 import com.orientechnologies.orient.core.sql.parser.OLeOperator;
 import com.orientechnologies.orient.core.sql.parser.OLtOperator;
 import com.orientechnologies.orient.core.sql.parser.OValueExpression;
@@ -384,6 +385,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       acquiredStreams.add(new OExactIndexStream(index, toIndexKey(indexDef, fromVal), isOrderAsc));
     } else if (isFullTextIndex(index)) {
       acquiredStreams.add(new OExactIndexStream(index, toIndexKey(indexDef, fromVal), isOrderAsc));
+    } else if (allNullCheck((OAndBlock) condition)) {
+      if (!index.getDefinition().isNullValuesIgnored()) {
+        acquiredStreams.add(new ONullIndexStream(index));
+      }
     } else {
       throw new UnsupportedOperationException(
           "Cannot evaluate " + condition + " on index " + index);
@@ -524,6 +529,18 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       } else if (!(exp instanceof OInCondition)) {
         return false;
       } // OK
+    }
+    return true;
+  }
+
+  private static boolean allNullCheck(OAndBlock condition) {
+    if (condition == null) {
+      return false;
+    }
+    for (OBooleanExpression exp : condition.getSubBlocks()) {
+      if (!(exp instanceof OIsNullCondition)) {
+        return false;
+      }
     }
     return true;
   }
