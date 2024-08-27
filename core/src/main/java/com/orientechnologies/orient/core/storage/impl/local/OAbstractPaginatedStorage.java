@@ -81,7 +81,6 @@ import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OInternalErrorException;
 import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
@@ -5193,12 +5192,8 @@ public abstract class OAbstractPaginatedStorage
       if (version > -1 && ppos.recordVersion != version) {
         recordConflict.increment();
 
-        if (OFastConcurrentModificationException.enabled()) {
-          throw OFastConcurrentModificationException.instance();
-        } else {
-          throw new OConcurrentModificationException(
-              rid, ppos.recordVersion, version, ORecordOperation.DELETED);
-        }
+        throw new OConcurrentModificationException(
+            rid, ppos.recordVersion, version, ORecordOperation.DELETED);
       }
 
       cluster.deleteRecord(atomicOperation, ppos.clusterPosition);

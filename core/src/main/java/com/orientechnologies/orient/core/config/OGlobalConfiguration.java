@@ -480,15 +480,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   DB_POOL_IDLE_CHECK_DELAY(
       "db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
 
-  DB_MVCC_THROWFAST(
-      "db.mvcc.throwfast",
-      "Use fast-thrown exceptions for MVCC OConcurrentModificationExceptions. No context"
-          + " information will be available. Set to true, when these exceptions are thrown, but the"
-          + " details are not necessary",
-      Boolean.class,
-      false,
-      true),
-
   DB_VALIDATION(
       "db.validation", "Enables or disables validation of records", Boolean.class, true, true),
 
