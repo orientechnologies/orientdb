@@ -288,17 +288,12 @@ public final class DistributedConfigReloadIT {
                       } else {
                         log("[" + id + "] OrientDB Exception [" + ex + "]");
                       }
-                      if (!(ex instanceof ODistributedConfigurationChangedException
-                          || ex.getCause() instanceof ODistributedConfigurationChangedException)) {
-                        // reloadVertex(vertex, ex);
-                      } else {
-                        log(
-                            "["
-                                + id
-                                + "] ODistributedConfigurationChangedException {} while updating"
-                                + " vertex "
-                                + vertex);
-                      }
+                      log(
+                          "["
+                              + id
+                              + "] ODistributedConfigurationChangedException {} while updating"
+                              + " vertex "
+                              + vertex);
                     } catch (ORecordDuplicatedException ex) {
                       // BY LUCA
                       log("[" + id + "] Caught [" + ex + "], no errors just go ahead");
@@ -308,16 +303,12 @@ public final class DistributedConfigReloadIT {
                       } else {
                         log("[" + id + "] OrientDB Exception [" + ex + "]");
                       }
-                      if (!(ex.getCause() instanceof ODistributedConfigurationChangedException)) {
-                        // reloadVertex(vertex, ex);
-                      } else {
-                        log(
-                            "["
-                                + id
-                                + "] ODistributedConfigurationChangedException {} while updating"
-                                + " vertex "
-                                + vertex);
-                      }
+                      log(
+                          "["
+                              + id
+                              + "] ODistributedConfigurationChangedException {} while updating"
+                              + " vertex "
+                              + vertex);
                     } catch (Exception ex) {
                       if (showException) {
                         log("[" + id + "] Failed to create record Exception [" + ex + "]");
