@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
@@ -11,7 +12,7 @@ import org.junit.Before;
  */
 public class OPropertySBTreeRidBagIndexDefinitionTest
     extends OPropertyRidBagAbstractIndexDefinition {
-  protected ODatabaseDocumentTx database;
+  protected ODatabaseDocument database;
   private int topThreshold;
   private int bottomThreshold;
 

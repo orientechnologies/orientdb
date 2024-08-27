@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
 import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
 import com.orientechnologies.orient.test.domain.base.CustomMethodFilterTestClass;
@@ -48,7 +47,7 @@ public class ObjectEnhancingTest extends ObjectDBBaseTest {
     database.save(testClass);
     ORID rid = database.getIdentity(testClass);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
     testClass = database.load(rid);
     Assert.assertEquals(testClass.getStandardField(), "testStandard");
     Assert.assertEquals(testClass.getUPPERCASEFIELD(), "testUpperCase");

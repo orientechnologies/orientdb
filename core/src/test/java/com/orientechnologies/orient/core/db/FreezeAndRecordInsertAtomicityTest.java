@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.db;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -63,7 +64,7 @@ public class FreezeAndRecordInsertAtomicityTest {
   }
 
   private Random random;
-  private ODatabaseDocumentTx db;
+  private ODatabaseDocument db;
   private ExecutorService executorService;
   private CountDownLatch countDownLatch;
 

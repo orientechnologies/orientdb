@@ -15,14 +15,15 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializer;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
-import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerContext;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 import com.orientechnologies.orient.test.domain.base.Animal;
@@ -171,7 +172,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
   @Override
   public void beforeMethod() throws Exception {
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
   }
 
   @AfterClass
@@ -441,7 +442,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     // Assert.assertEquals(test.getSet().size(), 100);
     ORID rid = database.getIdentity(test);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     test = database.load(rid);
     Assert.assertNotNull(test.getDuplicationTestSet());
@@ -455,7 +456,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     database.save(test);
     rid = database.getIdentity(test);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
     test = database.load(rid);
     Assert.assertNotNull(test.getDuplicationTestSet());
     Assert.assertEquals(test.getDuplicationTestSet().size(), 1);
@@ -479,7 +480,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     // Assert.assertEquals(test.getSet().size(), 100);
     ORID rid = database.getIdentity(test);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     test = database.load(rid);
     Assert.assertNotNull(test.getSet());
@@ -542,7 +543,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
     database.close();
 
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     JavaComplexTestClass loadedObj = database.load(rid);
 
@@ -565,7 +566,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     ORID testRid = database.getRecordByUserObject(test, false).getIdentity();
     ORID simpleRid = database.getRecordByUserObject(simple, false).getIdentity();
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     database.delete(testRid);
     simple = database.load(simpleRid);
@@ -573,7 +574,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
     // TEST SET NULL
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     test = database.newInstance(JavaCascadeDeleteTestClass.class);
     simple = database.newInstance(JavaSimpleTestClass.class);
@@ -583,7 +584,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     testRid = database.getRecordByUserObject(test, false).getIdentity();
     simpleRid = database.getRecordByUserObject(simple, false).getIdentity();
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     test.setSimpleClass(null);
     database.save(test);
@@ -600,7 +601,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     testRid = database.getRecordByUserObject(test, false).getIdentity();
     simpleRid = database.getRecordByUserObject(simple, false).getIdentity();
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     simple = database.newInstance(JavaSimpleTestClass.class);
     database.save(simple);
@@ -643,7 +644,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     ORID set2Rid = database.getRecordByUserObject(setChild2, false).getIdentity();
     ORID set3Rid = database.getRecordByUserObject(setChild3, false).getIdentity();
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     database.delete(testRid);
     listChild1 = database.load(list1Rid);
@@ -698,7 +699,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     set3Rid = database.getRecordByUserObject(setChild3, false).getIdentity();
     ORID set4Rid = database.getRecordByUserObject(setChild4, false).getIdentity();
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     test = database.load(testRid);
     test.getList().remove(listChild4);
@@ -768,7 +769,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     ORID list1Rid = database.getRecordByUserObject(listChild1, false).getIdentity();
     ORID set2Rid = database.getRecordByUserObject(setChild2, false).getIdentity();
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     database.delete(list1Rid);
     database.delete(set2Rid);
@@ -809,7 +810,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     ORID map3Rid = database.getRecordByUserObject(mapChild3, false).getIdentity();
 
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     database.delete(testRid);
     mapChild1 = database.load(map1Rid);
@@ -819,7 +820,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     Assert.assertNull(mapChild2);
     Assert.assertNull(mapChild3);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     // MAP UPDATE TEST
     test = database.newInstance(JavaCascadeDeleteTestClass.class);
@@ -847,7 +848,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     ORID map4Rid = database.getRecordByUserObject(mapChild4, false).getIdentity();
     ORID map5Rid = database.getRecordByUserObject(mapChild5, false).getIdentity();
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
 
     test = database.load(testRid);
     Assert.assertNotNull(test.getChildren().get("1"));
@@ -944,7 +945,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testCustomTypes")
   public void testCustomTypesDatabaseNewInstance() {
-    OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    ODatabaseObject database = openpool("admin", "admin");
     ORID rid = null;
     try {
       // init counters
@@ -978,7 +979,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
       database.close();
 
-      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      database = openpool("admin", "admin");
 
       pojo = database.load(rid);
       Assert.assertEquals(unserialized, 0);
@@ -1008,7 +1009,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testCustomTypesDatabaseNewInstance")
   public void testEnumListWithCustomTypes() {
-    OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    ODatabaseObject database = openpool("admin", "admin");
     ORID rid = null;
     try {
       OObjectSerializerContext serializerContext = new OObjectSerializerContext();
@@ -1043,7 +1044,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
       database.close();
 
-      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      database = openpool("admin", "admin");
 
       s = database.load(rid);
 
@@ -1055,7 +1056,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testEnumListWithCustomTypes")
   public void childUpdateTest() {
-    OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    ODatabaseObject database = openpool("admin", "admin");
     Planet p = database.newInstance(Planet.class);
     Satellite sat = database.newInstance(Satellite.class);
     p.setName("Earth");
@@ -1065,7 +1066,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     database.save(p);
     ORID rid = database.getIdentity(p);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = openpool("admin", "admin");
     p = database.load(rid);
     sat = p.getSatellites().get(0);
     Assert.assertEquals(sat.getDiameter(), 50);
@@ -1076,7 +1077,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     // db.save(sat);
     database.save(p);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = openpool("admin", "admin");
     p = database.load(rid);
     sat = p.getSatellites().get(0);
     Assert.assertEquals(sat.getDiameter(), 500);
@@ -1087,7 +1088,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "childUpdateTest")
   public void childNLevelUpdateTest() {
-    OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    ODatabaseObject database = openpool("admin", "admin");
     Planet p = database.newInstance(Planet.class);
     Planet near = database.newInstance(Planet.class);
     Satellite sat = database.newInstance(Satellite.class);
@@ -1100,7 +1101,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     database.save(p);
     ORID rid = database.getIdentity(p);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = openpool("admin", "admin");
     p = database.load(rid);
     sat = p.getSatellites().get(0);
     near = sat.getNear();
@@ -1111,7 +1112,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     // db.save(sat);
     database.save(p);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = openpool("admin", "admin");
     p = database.load(rid);
     sat = p.getSatellites().get(0);
     near = sat.getNear();
@@ -1122,7 +1123,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "childNLevelUpdateTest")
   public void childMapUpdateTest() {
-    OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    ODatabaseObject database = openpool("admin", "admin");
     Planet p = database.newInstance(Planet.class);
     p.setName("Earth");
     p.setDistanceSun(1000);
@@ -1135,7 +1136,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     Assert.assertEquals(p.getName(), "Earth");
     ORID rid = database.getIdentity(p);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = openpool("admin", "admin");
     p = database.load(rid);
     sat = p.getSatellitesMap().get("Moon");
     Assert.assertEquals(p.getDistanceSun(), 1000);
@@ -1144,7 +1145,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     sat.setDiameter(500);
     database.save(p);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = openpool("admin", "admin");
     p = database.load(rid);
     sat = p.getSatellitesMap().get("Moon");
     Assert.assertEquals(sat.getDiameter(), 500);
@@ -1155,7 +1156,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "childMapUpdateTest")
   public void childMapNLevelUpdateTest() {
-    OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    ODatabaseObject database = openpool("admin", "admin");
     Planet jupiter = database.newInstance(Planet.class);
     jupiter.setName("Jupiter");
     jupiter.setDistanceSun(3000);
@@ -1174,7 +1175,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     database.save(jupiter);
     ORID rid = database.getIdentity(jupiter);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = openpool("admin", "admin");
     jupiter = database.load(rid);
     jupiterMoon = jupiter.getSatellitesMap().get("JupiterMoon");
     mercury = jupiterMoon.getNear();
@@ -1192,7 +1193,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     // db.save(sat);
     database.save(jupiter);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    database = openpool("admin", "admin");
     jupiter = database.load(rid);
     jupiterMoon = jupiter.getSatellitesMap().get("JupiterMoon");
     mercury = jupiterMoon.getNear();
@@ -1210,7 +1211,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
   @Test
   public void iteratorShouldTerminate() {
-    OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    ODatabaseObject db = openpool("admin", "admin");
     try {
       db.getEntityManager().registerEntityClass(Profile.class);
 
@@ -1232,7 +1233,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
       person2.setName("Guy");
       person2.setSurname("Brush");
       person2 = db.save(person2);
-      OObjectIteratorClass<Profile> it = db.browseClass(Profile.class);
+      OObjectIteratorClassInterface<Profile> it = db.browseClass(Profile.class);
       while (it.hasNext()) {
         System.out.println(it.next());
       }

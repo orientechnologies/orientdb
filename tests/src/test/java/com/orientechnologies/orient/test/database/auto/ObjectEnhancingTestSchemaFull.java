@@ -57,7 +57,7 @@ public class ObjectEnhancingTestSchemaFull extends ObjectDBBaseTest {
     database.save(testClass);
     ORID rid = database.getIdentity(testClass);
     database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    reopenpool("admin", "admin");
     testClass = database.load(rid);
     Assert.assertEquals(testClass.getStandardField(), "testStandard");
     Assert.assertEquals(testClass.getUPPERCASEFIELD(), "testUpperCase");

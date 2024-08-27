@@ -132,7 +132,7 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
         .getEntityManager()
         .registerEntityClasses("com.orientechnologies.orient.test.domain.inheritance");
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     OClass abstractClass =
         database.getMetadata().getSchema().getClass(InheritanceTestAbstractClass.class);
     OClass baseClass = database.getMetadata().getSchema().getClass(InheritanceTestBaseClass.class);

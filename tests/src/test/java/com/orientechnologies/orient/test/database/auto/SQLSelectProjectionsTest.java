@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -67,7 +68,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryProjectionObjectLevel() {
-    OObjectDatabaseTx db = new OObjectDatabaseTx(url);
+    ODatabaseObject db = new OObjectDatabaseTx(url);
     db.open("admin", "admin");
 
     List<ODocument> result =

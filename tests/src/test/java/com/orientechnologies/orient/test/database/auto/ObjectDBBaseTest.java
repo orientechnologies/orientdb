@@ -3,6 +3,7 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -35,5 +36,20 @@ public class ObjectDBBaseTest extends BaseTest<ODatabaseObject> {
     ODatabaseDocumentTx session = new ODatabaseDocumentTx(this.url);
     session.open(user, password);
     return session;
+  }
+
+  protected void reopendb(String user, String password) {
+    if (!database.isClosed() && !database.isActiveOnCurrentThread()) {
+      database = new OObjectDatabaseTx(this.url);
+    }
+    database.open(user, password);
+  }
+
+  protected void reopenpool(String user, String password) {
+    database = OObjectDatabasePool.global().acquire(url, user, password);
+  }
+
+  protected ODatabaseObject openpool(String user, String password) {
+    return OObjectDatabasePool.global().acquire(url, user, password);
   }
 }

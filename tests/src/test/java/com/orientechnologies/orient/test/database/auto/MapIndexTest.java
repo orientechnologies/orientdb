@@ -53,7 +53,7 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
   @AfterClass
   public void destroySchema() {
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     database.getMetadata().getSchema().dropClass("Mapper");
     database.getMetadata().getSchema().dropClass("MapIndexTestMovie");
     database.close();

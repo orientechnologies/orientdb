@@ -48,8 +48,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
   @AfterClass
   public void destroySchema() {
     if (database.isClosed()) {
-      //noinspection deprecation
-      database.open("admin", "admin");
+      reopendb("admin", "admin");
     }
 
     database.getMetadata().getSchema().dropClass("RidBagIndexTestClass");
@@ -73,10 +72,10 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBag = new ORidBag();
@@ -84,7 +83,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBag.add(docTwo);
 
     document.field("ridBag", ridBag);
-    document.save();
+    database.save(document);
 
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getInternal().size(), 2);
@@ -107,10 +106,10 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     try {
       database.begin();
@@ -120,7 +119,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
       ridBag.add(docTwo);
 
       document.field("ridBag", ridBag);
-      document.save();
+      database.save(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -148,13 +147,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBagOne = new ORidBag();
@@ -162,14 +161,14 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBagOne.add(docTwo);
 
     document.field("ridBag", ridBagOne);
-    document.save();
+    database.save(document);
 
     final ORidBag ridBagTwo = new ORidBag();
     ridBagTwo.add(docOne);
     ridBagTwo.add(docThree);
 
     document.field("ridBag", ridBagTwo);
-    document.save();
+    database.save(document);
 
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getInternal().size(), 2);
@@ -192,13 +191,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBagOne = new ORidBag();
@@ -206,7 +205,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBagOne.add(docTwo);
 
     document.field("ridBag", ridBagOne);
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
@@ -216,7 +215,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
       ridBagTwo.add(docThree);
 
       document.field("ridBag", ridBagTwo);
-      document.save();
+      database.save(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -244,13 +243,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORidBag ridBagOne = new ORidBag();
     ridBagOne.add(docOne);
@@ -258,7 +257,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
     document.field("ridBag", ridBagOne);
-    document.save();
+    database.save(document);
 
     database.begin();
 
@@ -267,7 +266,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBagTwo.add(docThree);
 
     document.field("ridBag", ridBagTwo);
-    document.save();
+    database.save(document);
     database.rollback();
 
     final OIndex index = getIndex("ridBagIndex");
@@ -291,13 +290,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBag = new ORidBag();
@@ -305,7 +304,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBag.add(docTwo);
     document.field("ridBag", ridBag);
 
-    document.save();
+    database.save(document);
 
     database
         .command(
@@ -337,13 +336,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBag = new ORidBag();
@@ -351,13 +350,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBag.add(docTwo);
 
     document.field("ridBag", ridBag);
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<ORidBag>field("ridBag").add(docThree);
-      document.save();
+      database.save(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -386,13 +385,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBag = new ORidBag();
@@ -400,12 +399,12 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBag.add(docTwo);
 
     document.field("ridBag", ridBag);
-    document.save();
+    database.save(document);
 
     database.begin();
     ODocument loadedDocument = database.load(document.getIdentity());
     loadedDocument.<ORidBag>field("ridBag").add(docThree);
-    loadedDocument.save();
+    database.save(loadedDocument);
     database.rollback();
 
     final OIndex index = getIndex("ridBagIndex");
@@ -429,23 +428,23 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBag = new ORidBag();
     ridBag.add(docOne);
     ridBag.add(docTwo);
     document.field("ridBag", ridBag);
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<ORidBag>field("ridBag").remove(docTwo);
-      loadedDocument.save();
+      database.save(loadedDocument);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -472,22 +471,22 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBag = new ORidBag();
     ridBag.add(docOne);
     ridBag.add(docTwo);
     document.field("ridBag", ridBag);
-    document.save();
+    database.save(document);
 
     database.begin();
     ODocument loadedDocument = database.load(document.getIdentity());
     loadedDocument.<ORidBag>field("ridBag").remove(docTwo);
-    loadedDocument.save();
+    database.save(loadedDocument);
     database.rollback();
 
     final OIndex index = getIndex("ridBagIndex");
@@ -511,10 +510,10 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBag = new ORidBag();
@@ -522,7 +521,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBag.add(docTwo);
 
     document.field("ridBag", ridBag);
-    document.save();
+    database.save(document);
 
     //noinspection deprecation
     database
@@ -549,10 +548,10 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
 
@@ -561,8 +560,8 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBag.add(docTwo);
 
     document.field("ridBag", ridBag);
-    document.save();
-    document.delete();
+    database.save(document);
+    database.delete(document);
 
     final OIndex index = getIndex("ridBagIndex");
     Assert.assertEquals(index.getInternal().size(), 0);
@@ -572,10 +571,10 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
 
@@ -584,10 +583,10 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBag.add(docTwo);
 
     document.field("ridBag", ridBag);
-    document.save();
+    database.save(document);
     try {
       database.begin();
-      document.delete();
+      database.delete(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -602,10 +601,10 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBag = new ORidBag();
@@ -613,10 +612,10 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBag.add(docTwo);
 
     document.field("ridBag", ridBag);
-    document.save();
+    database.save(document);
 
     database.begin();
-    document.delete();
+    database.delete(document);
     database.rollback();
 
     final OIndex index = getIndex("ridBagIndex");
@@ -639,13 +638,13 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
 
   public void testIndexRidBagSQL() {
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBagOne = new ORidBag();
@@ -653,7 +652,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBagOne.add(docTwo);
 
     document.field("ridBag", ridBagOne);
-    document.save();
+    database.save(document);
 
     document = new ODocument("RidBagIndexTestClass");
     ORidBag ridBag = new ORidBag();
@@ -661,7 +660,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBag.add(docTwo);
 
     document.field("ridBag", ridBag);
-    document.save();
+    database.save(document);
 
     OResultSet result =
         database.query(

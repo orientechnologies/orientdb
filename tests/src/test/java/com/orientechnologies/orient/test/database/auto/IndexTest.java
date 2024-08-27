@@ -755,10 +755,12 @@ public class IndexTest extends ObjectDBBaseTest {
       pClass.createIndex("testIdx", INDEX_TYPE.DICTIONARY, "firstName", "lastName");
 
       ODocument person = new ODocument("Person2");
-      person.field("firstName", "foo").field("lastName", "bar").save();
+      person.field("firstName", "foo").field("lastName", "bar");
+      db.save(person);
 
       person = new ODocument("Person2");
-      person.field("firstName", "foo").field("lastName", "bar").field("age", 32).save();
+      person.field("firstName", "foo").field("lastName", "bar").field("age", 32);
+      db.save(person);
     }
   }
 
@@ -1057,7 +1059,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
       ORawPair<Object, ORID> pair = streamIterator.next();
       key = pair.first;
-      pair.second.getRecord().delete();
+      database.delete(pair.second);
     }
 
     try (Stream<ORID> stream = index.getInternal().getRids(key)) {
@@ -1772,13 +1774,21 @@ public class IndexTest extends ObjectDBBaseTest {
 
     // generates stubs for index
     ODocument doc1 = new ODocument();
-    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .getUnderlying()
+        .save(doc1, database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc2 = new ODocument();
-    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .getUnderlying()
+        .save(doc2, database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc3 = new ODocument();
-    doc3.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .getUnderlying()
+        .save(doc3, database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc4 = new ODocument();
-    doc4.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .getUnderlying()
+        .save(doc4, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid1 = doc1.getIdentity();
     final ORID rid2 = doc2.getIdentity();
@@ -1959,13 +1969,21 @@ public class IndexTest extends ObjectDBBaseTest {
 
     // generates stubs for index
     ODocument doc1 = new ODocument();
-    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .getUnderlying()
+        .save(doc1, database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc2 = new ODocument();
-    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .getUnderlying()
+        .save(doc2, database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc3 = new ODocument();
-    doc3.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .getUnderlying()
+        .save(doc3, database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc4 = new ODocument();
-    doc4.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .getUnderlying()
+        .save(doc4, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid1 = doc1.getIdentity();
     final ORID rid2 = doc2.getIdentity();

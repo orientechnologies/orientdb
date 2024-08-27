@@ -138,7 +138,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
     } catch (IOException e) {
       Assert.fail("Export import didn't go as expected", e);
     }
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     if (database.getMetadata().getSchema().existsClass("Company"))
       database.command("delete from Company").close();
     if (database.getMetadata().getSchema().existsClass("Account"))
@@ -254,7 +254,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
         .getEntityManager()
         .registerEntityClasses("com.orientechnologies.orient.test.domain.inheritance");
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
     OClass abstractClass =
         database.getMetadata().getSchema().getClass(InheritanceTestAbstractClass.class);
     OClass baseClass = database.getMetadata().getSchema().getClass(InheritanceTestBaseClass.class);
