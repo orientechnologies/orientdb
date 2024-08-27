@@ -28,6 +28,34 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.33 - (August, 29 2024)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3233---29-August-2024
+
+# Core
+
+- Marked methods deprecated for removal in the next major
+- Make sure to handle record with missing id (lightweight edges) in delete query, issue #10239
+- Re-add support of indexes for between queries in new query engine
+- Return every time the correct document instance in APis and queries, issue #10280
+- Re-add fetch from variable for traverse in the new query engine implementation, issue #10281
+- Avoid to use index when the condition is empty list
+- Make sure to respect sorting on IN conditions with indexed fields
+- Handle correctly lightweight edges in save
+- Support of indexes in 'is null' operator
+- Corrected ORestricted case for count operations in new query engine
+
+
+# Graph
+
+- Make sure to bind g variable for groovy-gremlin scripts
+
+
+# Server
+
+- Update the root password if env variable is set, issue #10273
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.32 - (July, 18 2024)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3232---18-July-2024
 
