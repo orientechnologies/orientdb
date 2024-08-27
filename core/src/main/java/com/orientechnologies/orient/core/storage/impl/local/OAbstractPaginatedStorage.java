@@ -81,7 +81,6 @@ import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OInternalErrorException;
 import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.exception.OInvalidInstanceIdException;
@@ -1756,9 +1755,7 @@ public abstract class OAbstractPaginatedStorage
       return;
     }
 
-    if (!(e instanceof OInternalErrorException)) {
-      setInError(e);
-    }
+    setInError(e);
 
     try {
       makeStorageDirty();
@@ -3867,9 +3864,7 @@ public abstract class OAbstractPaginatedStorage
 
   public void moveToErrorStateIfNeeded(final Throwable error) {
     if (error != null
-        && !((error instanceof OHighLevelException)
-            || (error instanceof ONeedRetryException)
-            || (error instanceof OInternalErrorException))) {
+        && !((error instanceof OHighLevelException) || (error instanceof ONeedRetryException))) {
       setInError(error);
     }
   }
@@ -6940,7 +6935,6 @@ public abstract class OAbstractPaginatedStorage
   protected RuntimeException logAndPrepareForRethrow(final RuntimeException runtimeException) {
     if (!(runtimeException instanceof OHighLevelException
         || runtimeException instanceof ONeedRetryException
-        || runtimeException instanceof OInternalErrorException
         || runtimeException instanceof IllegalArgumentException)) {
       logger.error(
           "Exception `%08X` in storage `%s`: %s",
@@ -6977,9 +6971,7 @@ public abstract class OAbstractPaginatedStorage
 
   protected RuntimeException logAndPrepareForRethrow(
       final Throwable throwable, final boolean putInReadOnlyMode) {
-    if (!(throwable instanceof OHighLevelException
-        || throwable instanceof ONeedRetryException
-        || throwable instanceof OInternalErrorException)) {
+    if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException)) {
       if (putInReadOnlyMode) {
         setInError(throwable);
       }
