@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -292,13 +293,11 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
         .field("tag_list", new String[] {"actor", "myth"});
     vDoc.save();
 
-    @SuppressWarnings("deprecation")
-    List<ODocument> result =
+    List<OResult> result =
         database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from Profile where name = 'Kiefer' and tag_list.size() > 0 "))
-            .execute();
+            .query("select from Profile where name = 'Kiefer' and tag_list.size() > 0 ")
+            .stream()
+            .toList();
 
     Assert.assertEquals(result.size(), 1);
   }
@@ -337,13 +336,11 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     vDoc.save();
 
     @SuppressWarnings("deprecation")
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select from Profile where name = 'Michael'"))
-            .execute();
+    List<OResult> result =
+        database.query("select from Profile where name = 'Michael'").stream().toList();
 
     Assert.assertEquals(result.size(), 1);
-    ODocument dexter = result.get(0);
+    ODocument dexter = (ODocument) result.get(0).getElement().get();
     ((Collection<String>) dexter.field("tag_list")).add("actor");
 
     dexter.setDirty();
@@ -352,11 +349,11 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     //noinspection deprecation
     result =
         database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from Profile where tag_list contains 'actor' and tag_list contains"
-                        + " 'test'"))
-            .execute();
+            .query(
+                "select from Profile where tag_list contains 'actor' and tag_list contains"
+                    + " 'test'")
+            .stream()
+            .toList();
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -414,35 +411,29 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test
   public void commandWithPositionalParameters() {
-    final OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<>("select from Profile where name = ? and surname = ?");
-    @SuppressWarnings("deprecation")
-    List<ODocument> result = database.command(query).execute("Barack", "Obama");
+    String query = "select from Profile where name = ? and surname = ?";
+    List<OResult> result = database.query(query, "Barack", "Obama").stream().toList();
 
     Assert.assertTrue(result.size() != 0);
   }
 
   @Test
   public void queryWithPositionalParameters() {
-    final OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<>("select from Profile where name = ? and surname = ?");
-    @SuppressWarnings("deprecation")
-    List<ODocument> result = database.query(query, "Barack", "Obama");
+    String query = "select from Profile where name = ? and surname = ?";
+    List<OResult> result = database.query(query, "Barack", "Obama").stream().toList();
 
     Assert.assertTrue(result.size() != 0);
   }
 
   @Test
   public void commandWithNamedParameters() {
-    final OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<>("select from Profile where name = :name and surname = :surname");
+    String query = "select from Profile where name = :name and surname = :surname";
 
     HashMap<String, String> params = new HashMap<>();
     params.put("name", "Barack");
     params.put("surname", "Obama");
 
-    @SuppressWarnings("deprecation")
-    List<ODocument> result = database.command(query).execute(params);
+    List<OResult> result = database.command(query, params).stream().toList();
     Assert.assertTrue(result.size() != 0);
   }
 
@@ -467,15 +458,13 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test
   public void queryWithNamedParameters() {
-    final OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<>("select from Profile where name = :name and surname = :surname");
+    String query = "select from Profile where name = :name and surname = :surname";
 
     HashMap<String, String> params = new HashMap<>();
     params.put("name", "Barack");
     params.put("surname", "Obama");
 
-    @SuppressWarnings("deprecation")
-    List<ODocument> result = database.query(query, params);
+    List<OResult> result = database.query(query, params).stream().toList();
 
     Assert.assertTrue(result.size() != 0);
   }
@@ -599,12 +588,14 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     final ORecordAbstract newAccount =
         new ODocument("Account").field("name", "testInheritanceName").save();
 
-    @SuppressWarnings("deprecation")
     List<ODocument> superClassResult =
-        database.query(new OSQLSynchQuery<ODocument>("select from Account"));
-    @SuppressWarnings("deprecation")
+        database.query("select from Account").stream()
+            .map((x) -> (ODocument) x.toElement())
+            .toList();
     List<ODocument> subClassResult =
-        database.query(new OSQLSynchQuery<ODocument>("select from Company"));
+        database.query("select from Company").stream()
+            .map((x) -> (ODocument) x.toElement())
+            .toList();
 
     Assert.assertTrue(superClassResult.size() != 0);
     Assert.assertTrue(subClassResult.size() != 0);

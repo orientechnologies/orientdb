@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.JavaAttachDetachTestClass;
@@ -123,9 +122,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     // BROWSE ALL THE OBJECTS
     Assert.assertTrue(database.countClass(Country.class) > 0);
     for (Country c :
-        (List<Country>)
-            database.query(
-                new OSQLSynchQuery<Object>("select from Country where name = 'Austria'"))) {
+        (List<Country>) database.objectQuery("select from Country where name = 'Austria'")) {
       Assert.assertNotNull(c.getId());
       Assert.assertNotNull(c.getVersion());
 
@@ -139,9 +136,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
 
     // BROWSE ALL THE OBJECTS
     for (Country c :
-        (List<Country>)
-            database.query(
-                new OSQLSynchQuery<Object>("select from Country where name = 'Austria v1'"))) {
+        (List<Country>) database.objectQuery("select from Country where name = 'Austria v1'")) {
       Assert.assertNotNull(c.getId());
       Assert.assertNotNull(c.getVersion());
       Assert.assertTrue((Integer) c.getVersion() > 0);
@@ -732,7 +727,7 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertNotNull(finalPerson.getLocation().getCity()); // out = null
     // Same problem with query and detachAll
     String query = "select from Profile where name = 'Jack' and surname = 'Black'";
-    newPerson = (Profile) database.query(new OSQLSynchQuery<Object>(query), new Object[0]).get(0);
+    newPerson = (Profile) database.objectQuery(query, new Object[0]).get(0);
     finalPerson = database.detachAll(newPerson, true);
     Assert.assertNotNull(finalPerson.getLocation().getCity()); // out = null
     // Close db

@@ -472,8 +472,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.close();
 
     reopenpool("admin", "admin");
-    List<JavaComplexTestClass> agendas =
-        database.query(new OSQLSynchQuery<JavaComplexTestClass>("SELECT FROM " + rid));
+    List<JavaComplexTestClass> agendas = database.objectQuery("SELECT FROM " + rid);
     JavaComplexTestClass testLoadedEntity = agendas.get(0);
 
     ODocument doc = database.getRecordByUserObject(testLoadedEntity, false);
@@ -507,8 +506,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.close();
 
     reopenpool("admin", "admin");
-    List<JavaComplexTestClass> agendas =
-        database.query(new OSQLSynchQuery<JavaComplexTestClass>("SELECT FROM " + rid));
+    List<JavaComplexTestClass> agendas = database.objectQuery("SELECT FROM " + rid);
     JavaComplexTestClass testLoadedEntity = agendas.get(0);
 
     ODocument doc = database.getRecordByUserObject(testLoadedEntity, false);
@@ -541,8 +539,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.close();
 
     reopenpool("admin", "admin");
-    List<JavaComplexTestClass> agendas =
-        database.query(new OSQLSynchQuery<JavaComplexTestClass>("SELECT FROM " + rid));
+    List<JavaComplexTestClass> agendas = database.objectQuery("SELECT FROM " + rid);
     JavaComplexTestClass testLoadedEntity = agendas.get(0);
 
     ODocument doc = database.getRecordByUserObject(testLoadedEntity, false);
@@ -666,8 +663,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
     for (int i = 0; i < TOT_RECORDS; i++) ids.add(i);
 
-    List<Account> result =
-        database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:2"));
+    List<Account> result = database.objectQuery("select from Account fetchplan *:2");
     for (Account a : result) {
       int id = a.getId();
       Assert.assertTrue(ids.remove(id));
@@ -731,7 +727,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     database.save(p);
 
-    List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+    List<Child> cresult = database.objectQuery("select * from Child");
 
     Assert.assertTrue(cresult.size() > 0);
 
@@ -810,7 +806,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.close();
 
     reopenpool("admin", "admin");
-    List<Agenda> agendas = database.query(new OSQLSynchQuery<Agenda>("SELECT FROM " + rid));
+    List<Agenda> agendas = database.objectQuery("SELECT FROM " + rid);
     Agenda agenda = agendas.get(0);
     for (Event e : agenda.getEvents()) {
       // NO NEED TO DO ANYTHING, JUST NEED TO ITERATE THE LIST
@@ -837,7 +833,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "listObjectsIterationTest")
   public void mapObjectsListEmbeddedTest() {
-    List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+    List<Child> cresult = database.objectQuery("select * from Child");
 
     int childSize = cresult.size();
 
@@ -866,7 +862,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     database.save(p);
 
-    cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+    cresult = database.objectQuery("select * from Child");
 
     Assert.assertTrue(cresult.size() == childSize);
 
@@ -898,7 +894,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "mapObjectsListEmbeddedTest")
   public void mapObjectsSetEmbeddedTest() {
-    List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+    List<Child> cresult = database.objectQuery("select * from Child");
 
     int childSize = cresult.size();
 
@@ -928,7 +924,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     database.save(p);
 
-    cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+    cresult = database.objectQuery("select * from Child");
 
     Assert.assertTrue(cresult.size() == childSize);
 
@@ -956,7 +952,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "mapObjectsSetEmbeddedTest")
   public void mapObjectsMapEmbeddedTest() {
-    List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+    List<Child> cresult = database.objectQuery("select * from Child");
 
     int childSize = cresult.size();
 
@@ -986,7 +982,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     database.save(p);
 
-    cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+    cresult = database.objectQuery("select * from Child");
 
     Assert.assertTrue(cresult.size() == childSize);
 
@@ -1039,7 +1035,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     database.save(p);
 
-    List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+    List<Child> cresult = database.objectQuery("select * from Child");
 
     Assert.assertTrue(cresult.size() > 0);
 
@@ -1085,7 +1081,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     database.save(p);
 
-    List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+    List<Child> cresult = database.objectQuery("select * from Child");
 
     Assert.assertTrue(cresult.size() > 0);
 
@@ -1135,30 +1131,28 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     ORID enum1Rid = database.getIdentity(testEnum1);
     ORID enum2Rid = database.getIdentity(testEnum2);
 
-    OSQLSynchQuery<JavaComplexTestClass> enumFieldQuery =
-        new OSQLSynchQuery<JavaComplexTestClass>(
-            "select from JavaComplexTestClass where enumField = :enumField");
+    String enumFieldQuery = "select from JavaComplexTestClass where enumField = :enumField";
 
     Map<String, Object> enum1Config = new HashMap<String, Object>();
     Map<String, Object> enum2Config = new HashMap<String, Object>();
     enum1Config.put("enumField", EnumTest.ENUM1);
     enum2Config.put("enumField", EnumTest.ENUM2);
-    List<JavaComplexTestClass> result = database.query(enumFieldQuery, enum1Config);
+    List<JavaComplexTestClass> result = database.objectQuery(enumFieldQuery, enum1Config);
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), enum1Rid);
 
-    result = database.query(enumFieldQuery, enum2Config);
+    result = database.objectQuery(enumFieldQuery, enum2Config);
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), enum2Rid);
 
     database.close();
 
     reopenpool("admin", "admin");
-    result = database.query(enumFieldQuery, enum1Config);
+    result = database.objectQuery(enumFieldQuery, enum1Config);
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), enum1Rid);
 
-    result = database.query(enumFieldQuery, enum2Config);
+    result = database.objectQuery(enumFieldQuery, enum2Config);
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), enum2Rid);
   }
@@ -1176,14 +1170,13 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     ORID testObjectRid = database.getIdentity(testObject);
     ORID childRid = database.getIdentity(child);
 
-    OSQLSynchQuery<JavaComplexTestClass> enumFieldQuery =
-        new OSQLSynchQuery<JavaComplexTestClass>(
-            "select from JavaComplexTestClass where enumField = :enumField and child = :child");
+    String enumFieldQuery =
+        "select from JavaComplexTestClass where enumField = :enumField and child = :child";
 
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("child", childRid);
     params.put("enumField", EnumTest.ENUM1);
-    List<JavaComplexTestClass> result = database.query(enumFieldQuery, params);
+    List<JavaComplexTestClass> result = database.objectQuery(enumFieldQuery, params);
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), testObjectRid);
 
@@ -1191,9 +1184,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     reopenpool("admin", "admin");
     enumFieldQuery =
-        new OSQLSynchQuery<JavaComplexTestClass>(
-            "select from JavaComplexTestClass where enumField = :enumField and child = :child");
-    result = database.query(enumFieldQuery, params);
+        "select from JavaComplexTestClass where enumField = :enumField and child = :child";
+    result = database.objectQuery(enumFieldQuery, params);
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), testObjectRid);
   }
@@ -2044,7 +2036,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     ODocument testDocument = new ODocument();
     testDocument.field("testField", "testValue");
 
-    testDocument.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .getUnderlying()
+        .save(testDocument, database.getClusterNameById(database.getDefaultClusterId()));
 
     p.setDocument(testDocument);
 
@@ -2100,7 +2094,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
             .getBytes();
     OBlob oRecordBytes =
         new ORecordBytes((ODatabaseDocumentInternal) database.getUnderlying(), thumbnailImageBytes);
-    oRecordBytes.save();
+    database.getUnderlying().save(oRecordBytes);
     p.setByteArray(oRecordBytes);
     p = database.save(p);
     Assert.assertTrue(p.getByteArray() instanceof OBlob);
@@ -2364,8 +2358,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "checkLazyLoadingOff")
   public void queryPerFloat() {
     final List<Account> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select * from Account where salary = 500.10"));
+        database.objectQuery("select * from Account where salary = 500.10");
 
     Assert.assertTrue(result.size() > 0);
 
@@ -2382,9 +2375,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.getMetadata().getSchema().reload();
 
     final List<Profile> result =
-        database.query(
-            new OSQLSynchQuery<Profile>(
-                "select from Profile where location.city.country.name = 'Spain'"));
+        database.objectQuery("select from Profile where location.city.country.name = 'Spain'");
 
     Assert.assertTrue(result.size() > 0);
 
@@ -2415,9 +2406,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void commandWithPositionalParameters() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query =
-        new OSQLSynchQuery<Profile>("select from Profile where name = ? and surname = ?");
-    List<Profile> result = database.command(query).execute("Barack", "Obama");
+    String query = "select from Profile where name = ? and surname = ?";
+    List<Profile> result = database.objectQuery(query, "Barack", "Obama");
 
     Assert.assertTrue(result.size() != 0);
   }
@@ -2426,9 +2416,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryWithPositionalParameters() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query =
-        new OSQLSynchQuery<Profile>("select from Profile where name = ? and surname = ?");
-    List<Profile> result = database.query(query, "Barack", "Obama");
+    String query = "select from Profile where name = ? and surname = ?";
+    List<Profile> result = database.objectQuery(query, "Barack", "Obama");
 
     Assert.assertTrue(result.size() != 0);
   }
@@ -2439,9 +2428,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     Profile profile = (Profile) database.browseClass("Profile").next();
 
-    final OSQLSynchQuery<Profile> query =
-        new OSQLSynchQuery<Profile>("select from Profile where @rid = ?");
-    List<Profile> result = database.query(query, new ORecordId(profile.getId()));
+    String query = "select from Profile where @rid = ?";
+    List<Profile> result = database.objectQuery(query, new ORecordId(profile.getId()));
 
     Assert.assertEquals(result.size(), 1);
   }
@@ -2452,15 +2440,14 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     Profile profile = (Profile) database.browseClass("Profile").next();
 
-    OSQLSynchQuery<Profile> query =
-        new OSQLSynchQuery<Profile>("select from Profile where @rid = ?");
-    List<Profile> result = database.query(query, profile.getId());
+    String query = "select from Profile where @rid = ?";
+    List<Profile> result = database.objectQuery(query, profile.getId());
 
     Assert.assertEquals(result.size(), 1);
 
     // TEST WITHOUT # AS PREFIX
-    query = new OSQLSynchQuery<Profile>("select from Profile where @rid = ?");
-    result = database.query(query, profile.getId().substring(1));
+    query = "select from Profile where @rid = ?";
+    result = database.objectQuery(query, profile.getId().substring(1));
 
     Assert.assertEquals(result.size(), 1);
   }
@@ -2469,15 +2456,13 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void commandWithNamedParameters() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query =
-        new OSQLSynchQuery<Profile>(
-            "select from Profile where name = :name and surname = :surname");
+    String query = "select from Profile where name = :name and surname = :surname";
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
     params.put("surname", "Obama");
 
-    List<Profile> result = database.command(query).execute(params);
+    List<Profile> result = database.objectQuery(query, (Map) params);
     Assert.assertTrue(result.size() != 0);
   }
 
@@ -2505,15 +2490,13 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryWithNamedParameters() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query =
-        new OSQLSynchQuery<Profile>(
-            "select from Profile where name = :name and surname = :surname");
+    String query = "select from Profile where name = :name and surname = :surname";
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
     params.put("surname", "Obama");
 
-    List<Profile> result = database.query(query, params);
+    List<Profile> result = database.objectQuery(query, (Map) params);
     Assert.assertTrue(result.size() != 0);
   }
 
@@ -2521,24 +2504,20 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryWithObjectAsParameter() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query =
-        new OSQLSynchQuery<Profile>(
-            "select from Profile where name = :name and surname = :surname");
+    String query = "select from Profile where name = :name and surname = :surname";
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
     params.put("surname", "Obama");
 
-    List<Profile> result = database.query(query, params);
+    List<Profile> result = database.objectQuery(query, (Map) params);
     Assert.assertTrue(result.size() != 0);
 
     Profile obama = result.get(0);
 
     result =
-        database.query(
-            new OSQLSynchQuery<Profile>(
-                "select from Profile where followings contains ( @Rid = :who )"),
-            obama);
+        database.objectQuery(
+            "select from Profile where followings contains ( @Rid = :who )", obama);
     Assert.assertTrue(result.size() != 0);
   }
 
@@ -2546,20 +2525,16 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryWithListOfObjectAsParameter() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query =
-        new OSQLSynchQuery<Profile>(
-            "select from Profile where name = :name and surname = :surname");
+    String query = "select from Profile where name = :name and surname = :surname";
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
     params.put("surname", "Obama");
 
-    List<Profile> result = database.query(query, params);
+    List<Profile> result = database.objectQuery(query, (Map) params);
     Assert.assertTrue(result.size() != 0);
 
-    result =
-        database.query(
-            new OSQLSynchQuery<Profile>("select from Profile where followings in (:who)"), result);
+    result = database.objectQuery("select from Profile where followings in (:who)", result);
     Assert.assertTrue(result.size() != 0);
   }
 
@@ -2568,36 +2543,25 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.getMetadata().getSchema().reload();
 
     Assert.assertTrue(
-        database
-                .query(
-                    new OSQLSynchQuery<Profile>(
-                        "select from City where country.@class = 'Country'"))
-                .size()
-            > 0);
+        database.objectQuery("select from City where country.@class = 'Country'").size() > 0);
     Assert.assertEquals(
-        database
-            .query(
-                new OSQLSynchQuery<Profile>("select from City where country.@class = 'Country22'"))
-            .size(),
-        0);
+        database.objectQuery("select from City where country.@class = 'Country22'").size(), 0);
   }
 
   @Test
   public void queryPreparredTwice() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query =
-        new OSQLSynchQuery<Profile>(
-            "select from Profile where name = :name and surname = :surname");
+    String query = "select from Profile where name = :name and surname = :surname";
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
     params.put("surname", "Obama");
 
-    List<Profile> result = database.query(query, params);
+    List<Profile> result = database.objectQuery(query, (Map) params);
     Assert.assertTrue(result.size() != 0);
 
-    result = database.query(query, params);
+    result = database.objectQuery(query, (Map) params);
     Assert.assertTrue(result.size() != 0);
   }
 
@@ -2605,18 +2569,16 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void commandPreparredTwice() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query =
-        new OSQLSynchQuery<Profile>(
-            "select from Profile where name = :name and surname = :surname");
+    String query = "select from Profile where name = :name and surname = :surname ";
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
     params.put("surname", "Obama");
 
-    List<Profile> result = database.command(query).execute(params);
+    List<Profile> result = database.objectQuery(query, (Map) params);
     Assert.assertTrue(result.size() != 0);
 
-    result = database.command(query).execute(params);
+    result = database.objectQuery(query, (Map) params);
     Assert.assertTrue(result.size() != 0);
   }
 
@@ -2632,9 +2594,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     parent = database.save(parent);
 
-    List<Parent> presult = database.query(new OSQLSynchQuery<Parent>("select from Parent"));
-    List<EmbeddedChild> cresult =
-        database.query(new OSQLSynchQuery<EmbeddedChild>("select from EmbeddedChild"));
+    List<Parent> presult = database.objectQuery("select from Parent");
+    List<EmbeddedChild> cresult = database.objectQuery("select from EmbeddedChild");
     Assert.assertEquals(presult.size(), 1);
     Assert.assertEquals(cresult.size(), 0);
 
@@ -2644,23 +2605,23 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     parent = database.save(parent);
 
-    presult = database.query(new OSQLSynchQuery<Parent>("select from Parent"));
-    cresult = database.query(new OSQLSynchQuery<EmbeddedChild>("select from EmbeddedChild"));
+    presult = database.objectQuery("select from Parent");
+    cresult = database.objectQuery("select from EmbeddedChild");
     Assert.assertEquals(presult.size(), 1);
     Assert.assertEquals(cresult.size(), 1);
 
     database.delete(parent);
 
-    presult = database.query(new OSQLSynchQuery<Parent>("select * from Parent"));
-    cresult = database.query(new OSQLSynchQuery<EmbeddedChild>("select * from EmbeddedChild"));
+    presult = database.objectQuery("select * from Parent");
+    cresult = database.objectQuery("select * from EmbeddedChild");
 
     Assert.assertEquals(presult.size(), 0);
     Assert.assertEquals(cresult.size(), 1);
 
     database.delete(child);
 
-    presult = database.query(new OSQLSynchQuery<Parent>("select * from Parent"));
-    cresult = database.query(new OSQLSynchQuery<EmbeddedChild>("select * from EmbeddedChild"));
+    presult = database.objectQuery("select * from Parent");
+    cresult = database.objectQuery("select * from EmbeddedChild");
 
     Assert.assertEquals(presult.size(), 0);
     Assert.assertEquals(cresult.size(), 0);
@@ -2685,13 +2646,10 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
   @Test
   public void queryById() {
-    List<Profile> result1 =
-        database.query(new OSQLSynchQuery<Profile>("select from Profile limit 1"));
+    List<Profile> result1 = database.objectQuery("select from Profile limit 1");
 
     List<Profile> result2 =
-        database.query(
-            new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"),
-            result1.get(0).getId());
+        database.objectQuery("select from Profile where @rid = ?", result1.get(0).getId());
 
     Assert.assertTrue(result2.size() != 0);
   }

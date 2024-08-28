@@ -17,8 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
@@ -77,7 +75,7 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testCreate")
   public void queryByBaseType() {
     final List<Account> result =
-        database.query(new OSQLSynchQuery<Account>("select from Company where name.length() > 0"));
+        database.objectQuery("select from Company where name.length() > 0");
 
     Assert.assertTrue(result.size() > 0);
     Assert.assertEquals(result.size(), TOT_RECORDS);
@@ -98,8 +96,7 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "queryByBaseType")
   public void queryPerSuperType() {
     final List<Company> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select * from Company where name.length() > 0"));
+        database.objectQuery("select * from Company where name.length() > 0");
 
     Assert.assertTrue(result.size() == TOT_RECORDS);
 
@@ -171,8 +168,7 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
     database.save(b);
 
     final List<InheritanceTestBaseClass> result1 =
-        database.query(
-            new OSQLSynchQuery<InheritanceTestBaseClass>("select from InheritanceTestBaseClass"));
+        database.objectQuery("select from InheritanceTestBaseClass");
     Assert.assertEquals(2, result1.size());
   }
 

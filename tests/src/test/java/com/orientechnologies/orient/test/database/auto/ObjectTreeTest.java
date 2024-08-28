@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializer;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
@@ -249,8 +249,7 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testCitySaving")
   public void testCityEquality() {
     List<Profile> resultset =
-        database.query(
-            new OSQLSynchQuery<Object>("select from profile where location.city.name = 'Rome'"));
+        database.objectQuery("select from profile where location.city.name = 'Rome'");
     Assert.assertEquals(resultset.size(), 2);
 
     Profile p1 = resultset.get(0);
@@ -285,7 +284,7 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testSaveCircularLink")
   public void testQueryCircular() {
-    List<Profile> result = database.query(new OSQLSynchQuery<ODocument>("select * from Profile"));
+    List<Profile> result = database.objectQuery("select * from Profile");
 
     Profile parent;
     for (Profile r : result) {
@@ -324,36 +323,36 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
   public void testQueryMultiCircular() {
     Assert.assertEquals(database.countClass("Profile"), startRecordNumber + 3);
 
-    List<ODocument> result =
+    List<OResult> result =
         database
             .getUnderlying()
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select * from Profile where name = 'Barack' and surname = 'Obama'"))
-            .execute();
+            .command("select * from Profile where name = 'Barack' and surname = 'Obama'")
+            .stream()
+            .toList();
 
     Assert.assertEquals(result.size(), 1);
 
-    for (ODocument profile : result) {
+    for (OResult profile : result) {
 
-      System.out.println(profile.field("name") + " " + profile.field("surname"));
+      System.out.println(profile.getProperty("name") + " " + profile.getProperty("surname"));
 
-      final Collection<ODocument> followers = profile.field("followers");
+      final Collection<ODocument> followers = profile.getProperty("followers");
 
       if (followers != null) {
         for (ODocument follower : followers) {
           Assert.assertTrue(
-              ((Collection<ODocument>) follower.field("followings")).contains(profile));
+              ((Collection<ODocument>) follower.getProperty("followings"))
+                  .contains((ODocument) profile.toElement()));
 
           System.out.println(
               "- follower: "
-                  + follower.field("name")
+                  + follower.getProperty("name")
                   + " "
-                  + follower.field("surname")
+                  + follower.getProperty("surname")
                   + " (parent: "
-                  + follower.field("name")
+                  + follower.getProperty("name")
                   + " "
-                  + follower.field("surname")
+                  + follower.getProperty("surname")
                   + ")");
         }
       }
@@ -497,8 +496,7 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     test = database.load(rid);
     Assert.assertNotNull(test.getDuplicationTestSet());
     Assert.assertEquals(test.getDuplicationTestSet().size(), 1);
-    List<IdentityChild> childs =
-        database.query(new OSQLSynchQuery<IdentityChild>("select from IdentityChild"));
+    List<IdentityChild> childs = database.objectQuery("select from IdentityChild");
     Assert.assertEquals(childs.size(), 1);
     database.delete(test);
   }
