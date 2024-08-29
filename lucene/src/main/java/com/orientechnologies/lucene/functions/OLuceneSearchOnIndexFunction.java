@@ -123,6 +123,7 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
     if (index != null && query != null) {
 
       ODocument meta = getMetadata(args, ctx);
+      OLuceneFunctionsUtils.configureResultLimit(target, ctx, meta);
 
       List<OIdentifiable> luceneResultSet;
       try (Stream<ORID> rids =
