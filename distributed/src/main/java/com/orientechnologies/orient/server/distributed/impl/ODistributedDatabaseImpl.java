@@ -641,9 +641,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         new TimerTask() {
           @Override
           public void run() {
-            checkTxTimeout();
+            context.execute(() -> checkTxTimeout());
           }
         };
+    final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
+    context.schedule(txTimeoutTask, timeout / 3, timeout / 3);
   }
 
   public void checkTxTimeout() {
