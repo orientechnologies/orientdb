@@ -345,7 +345,7 @@ public class OContainsValueCondition extends OBooleanExpression {
       if (additional != null && additional.getOperator() != null) {
         return additional.getOperator().isGreaterInclude();
       } else {
-        return false;
+        return true;
       }
     }
   }
@@ -359,7 +359,7 @@ public class OContainsValueCondition extends OBooleanExpression {
       if (additional != null && additional.getOperator() != null) {
         return additional.getOperator().isLessInclude();
       } else {
-        return false;
+        return true;
       }
     }
   }
