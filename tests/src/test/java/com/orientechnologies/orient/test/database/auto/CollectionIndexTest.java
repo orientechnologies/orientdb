@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Collector;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -442,10 +441,7 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     database.save(collector);
 
     List<Collector> result =
-        database.query(
-            new OSQLSynchQuery<Collector>(
-                "select * from Collector where stringCollection contains ?"),
-            "eggs");
+        database.objectQuery("select * from Collector where stringCollection contains ?", "eggs");
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(Arrays.asList("spam", "eggs"), result.get(0).getStringCollection());

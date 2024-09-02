@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Mapper;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -873,16 +872,14 @@ public class MapIndexTest extends ObjectDBBaseTest {
     database.save(mapper);
 
     final List<Mapper> resultByKey =
-        database.query(
-            new OSQLSynchQuery<Mapper>("select * from Mapper where intMap containskey ?"), "key1");
+        database.objectQuery("select * from Mapper where intMap containskey ?", "key1");
     Assert.assertNotNull(resultByKey);
     Assert.assertEquals(resultByKey.size(), 1);
 
     Assert.assertEquals(map, resultByKey.get(0).getIntMap());
 
     final List<Mapper> resultByValue =
-        database.query(
-            new OSQLSynchQuery<Mapper>("select * from Mapper where intMap containsvalue ?"), 10);
+        database.objectQuery("select * from Mapper where intMap containsvalue ?", 10);
     Assert.assertNotNull(resultByValue);
     Assert.assertEquals(resultByValue.size(), 1);
 

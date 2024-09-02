@@ -53,17 +53,15 @@ public class CollateTest extends DocumentDBBaseTest {
         document.field("cip", "val");
       }
 
-      document.save();
+      database.save(document);
     }
 
-    @SuppressWarnings("deprecation")
     List<ODocument> result =
         database.query(new OSQLSynchQuery<ODocument>("select from collateTest where csp = 'VAL'"));
     Assert.assertEquals(result.size(), 5);
 
     for (ODocument document : result) Assert.assertEquals(document.field("csp"), "VAL");
 
-    //noinspection deprecation
     result =
         database.query(new OSQLSynchQuery<ODocument>("select from collateTest where cip = 'VaL'"));
     Assert.assertEquals(result.size(), 10);
@@ -81,19 +79,17 @@ public class CollateTest extends DocumentDBBaseTest {
 
     ODocument document = new ODocument("collateTestNotNull");
     document.field("bar", "baz");
-    document.save();
+    database.save(document);
 
     document = new ODocument("collateTestNotNull");
     document.field("nobar", true);
-    document.save();
+    database.save(document);
 
-    @SuppressWarnings("deprecation")
     List<ODocument> result =
         database.query(
             new OSQLSynchQuery<ODocument>("select from collateTestNotNull where bar is null"));
     Assert.assertEquals(result.size(), 1);
 
-    //noinspection deprecation
     result =
         database.query(
             new OSQLSynchQuery<ODocument>("select from collateTestNotNull where bar is not null"));
@@ -124,11 +120,10 @@ public class CollateTest extends DocumentDBBaseTest {
         document.field("cip", "val");
       }
 
-      document.save();
+      database.save(document);
     }
 
     String query = "select from collateIndexTest where csp = 'VAL'";
-    @SuppressWarnings("deprecation")
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 5);
 
@@ -139,14 +134,12 @@ public class CollateTest extends DocumentDBBaseTest {
     Assert.assertTrue(explain.<Set<String>>field("involvedIndexes").contains("collateIndexCSP"));
 
     query = "select from collateIndexTest where cip = 'VaL'";
-    //noinspection deprecation
     result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 10);
 
     for (ODocument document : result)
       Assert.assertEquals((document.<String>field("cip")).toUpperCase(Locale.ENGLISH), "VAL");
 
-    //noinspection deprecation
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>>field("involvedIndexes").contains("collateIndexCIP"));
   }
@@ -166,11 +159,10 @@ public class CollateTest extends DocumentDBBaseTest {
       if (i % 2 == 0) document.field("cp", "VAL");
       else document.field("cp", "val");
 
-      document.save();
+      database.save(document);
     }
 
     String query = "select from collateWasChangedIndexTest where cp = 'VAL'";
-    @SuppressWarnings("deprecation")
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 5);
 
@@ -185,14 +177,12 @@ public class CollateTest extends DocumentDBBaseTest {
     cp.setCollate(OCaseInsensitiveCollate.NAME);
 
     query = "select from collateWasChangedIndexTest where cp = 'VaL'";
-    //noinspection deprecation
     result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 10);
 
     for (ODocument document : result)
       Assert.assertEquals((document.<String>field("cp")).toUpperCase(Locale.ENGLISH), "VAL");
 
-    //noinspection deprecation
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(
         explain.<Set<String>>field("involvedIndexes").contains("collateWasChangedIndex"));
@@ -220,12 +210,10 @@ public class CollateTest extends DocumentDBBaseTest {
         document.field("csp", "val");
         document.field("cip", "val");
       }
-
-      document.save();
+      database.save(document);
     }
 
     String query = "select from CompositeIndexQueryCSTest where csp = 'VAL'";
-    @SuppressWarnings("deprecation")
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 5);
 
@@ -237,7 +225,6 @@ public class CollateTest extends DocumentDBBaseTest {
         explain.<Set<String>>field("involvedIndexes").contains("collateCompositeIndexCS"));
 
     query = "select from CompositeIndexQueryCSTest where csp = 'VAL' and cip = 'VaL'";
-    //noinspection deprecation
     result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 5);
 
@@ -246,7 +233,6 @@ public class CollateTest extends DocumentDBBaseTest {
       Assert.assertEquals((document.<String>field("cip")).toUpperCase(Locale.ENGLISH), "VAL");
     }
 
-    //noinspection deprecation
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(
         explain.<Set<String>>field("involvedIndexes").contains("collateCompositeIndexCS"));
@@ -291,11 +277,10 @@ public class CollateTest extends DocumentDBBaseTest {
         document.field("cip", "val");
       }
 
-      document.save();
+      database.save(document);
     }
 
     String query = "select from CompositeIndexQueryCollateWasChangedTest where csp = 'VAL'";
-    @SuppressWarnings("deprecation")
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 5);
 
@@ -312,14 +297,12 @@ public class CollateTest extends DocumentDBBaseTest {
     csp.setCollate(OCaseInsensitiveCollate.NAME);
 
     query = "select from CompositeIndexQueryCollateWasChangedTest where csp = 'VaL'";
-    //noinspection deprecation
     result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 10);
 
     for (ODocument document : result)
       Assert.assertEquals(document.<String>field("csp").toUpperCase(Locale.ENGLISH), "VAL");
 
-    //noinspection deprecation
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(
         explain
@@ -334,7 +317,6 @@ public class CollateTest extends DocumentDBBaseTest {
     clazz.createProperty("csp", OType.STRING);
     clazz.createProperty("cip", OType.STRING);
 
-    //noinspection deprecation
     database
         .command(
             new OCommandSQL(
@@ -353,10 +335,9 @@ public class CollateTest extends DocumentDBBaseTest {
         document.field("cip", "val");
       }
 
-      document.save();
+      database.save(document);
     }
 
-    @SuppressWarnings("deprecation")
     List<ODocument> result =
         database.query(
             new OSQLSynchQuery<ODocument>("select from collateTestViaSQL where csp = 'VAL'"));
@@ -364,7 +345,6 @@ public class CollateTest extends DocumentDBBaseTest {
 
     for (ODocument document : result) Assert.assertEquals(document.field("csp"), "VAL");
 
-    //noinspection deprecation
     result =
         database.query(
             new OSQLSynchQuery<ODocument>("select from collateTestViaSQL where cip = 'VaL'"));

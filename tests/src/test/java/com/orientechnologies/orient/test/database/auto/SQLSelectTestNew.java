@@ -1376,33 +1376,36 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     ODocument doc1 = new ODocument(facClass);
     doc1.field("context", "test");
     doc1.field("date", currentYear.getTime());
-    doc1.save();
+    database.save(doc1);
 
     ODocument doc2 = new ODocument(facClass);
     doc2.field("context", "test");
     doc2.field("date", oneYearAgo.getTime());
-    doc2.save();
+    database.save(doc2);
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from " + facClass.getName() + " where context = 'test' order by date",
-                1));
+    List<OResult> result =
+        database
+            .query(
+                "select * from " + facClass.getName() + " where context = 'test' order by date", 1)
+            .stream()
+            .toList();
 
     Calendar smaller = Calendar.getInstance();
-    smaller.setTime((Date) result.get(0).field("date", Date.class));
+    smaller.setTime((Date) result.get(0).getProperty("date"));
     Assert.assertEquals(smaller.get(Calendar.YEAR), oneYearAgo.get(Calendar.YEAR));
 
     result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+        database
+            .query(
                 "select * from "
                     + facClass.getName()
                     + " where context = 'test' order by date DESC",
-                1));
+                1)
+            .stream()
+            .toList();
 
     Calendar bigger = Calendar.getInstance();
-    bigger.setTime((Date) result.get(0).field("date", Date.class));
+    bigger.setTime((Date) result.get(0).getProperty("date"));
     Assert.assertEquals(bigger.get(Calendar.YEAR), currentYear.get(Calendar.YEAR));
   }
 
@@ -2090,15 +2093,17 @@ public class SQLSelectTestNew extends AbstractSelectTest {
                 + " (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')")
         .close();
 
-    List<OIdentifiable> result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
+    List<OResult> result =
+        database
+            .query(
                 " select out().data as result from (select from EmbeddedMapAndDotNotation where"
-                    + " name = 'foo')"));
+                    + " name = 'foo')")
+            .stream()
+            .toList();
     Assert.assertEquals(result.size(), 1);
-    ODocument doc = result.get(0).getRecord();
+    OResult doc = result.get(0);
     Assert.assertNotNull(doc);
-    List list = doc.field("result");
+    List list = doc.getProperty("result");
     Assert.assertEquals(list.size(), 1);
     Object first = list.get(0);
     Assert.assertTrue(first instanceof Map);
@@ -2112,12 +2117,11 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     final OClass cls = schema.createClass("LetWithQuotedValue", v);
     database.command("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\"").close();
 
-    List<OIdentifiable> result =
+    OResultSet result =
         database.query(
-            new OSQLSynchQuery<OIdentifiable>(
-                " select expand($a) let $a = (select from LetWithQuotedValue where name ="
-                    + " \"\\\"foo\\\"\")"));
-    Assert.assertEquals(result.size(), 1);
+            " select expand($a) let $a = (select from LetWithQuotedValue where name ="
+                + " \"\\\"foo\\\"\")");
+    Assert.assertEquals(result.stream().count(), 1);
   }
 
   @Test
@@ -2126,23 +2130,23 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     database.command("create class " + className).close();
     OElement elem1 = database.newElement(className);
     elem1.setProperty("name", "a");
-    elem1.save();
+    database.save(elem1);
 
     OElement elem2 = database.newElement(className);
     elem2.setProperty("name", "b");
     elem2.setProperty("surname", "lkj");
-    elem2.save();
+    database.save(elem2);
 
     OElement elem3 = database.newElement(className);
     elem3.setProperty("name", "c");
-    elem3.save();
+    database.save(elem3);
 
     OElement elem4 = database.newElement(className);
     elem4.setProperty("name", "d");
     elem4.setProperty("elem1", elem1);
     elem4.setProperty("elem2", elem2);
     elem4.setProperty("elem3", elem3);
-    elem4.save();
+    database.save(elem4);
 
     OResultSet result =
         database.query(

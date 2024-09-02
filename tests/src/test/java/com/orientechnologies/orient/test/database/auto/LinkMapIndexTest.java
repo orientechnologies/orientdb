@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -43,7 +43,6 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void destroySchema() {
-    //noinspection deprecation
     reopendb("admin", "admin");
     database.getMetadata().getSchema().dropClass("LinkMapIndexTestClass");
     database.close();
@@ -60,10 +59,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -72,7 +71,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
@@ -111,10 +110,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     try {
       database.begin();
@@ -125,7 +124,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       final ODocument document = new ODocument("LinkMapIndexTestClass");
       document.field("linkMap", map);
-      document.save();
+      database.save(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -168,13 +167,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> mapOne = new HashMap<>();
 
@@ -183,14 +182,14 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", mapOne);
-    document.save();
+    database.save(document);
 
     final Map<String, ORID> mapTwo = new HashMap<>();
     mapTwo.put("key2", docOne.getIdentity());
     mapTwo.put("key3", docThree.getIdentity());
 
     document.field("linkMap", mapTwo);
-    document.save();
+    database.save(document);
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
@@ -228,10 +227,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     database.begin();
     try {
@@ -242,7 +241,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       final ODocument document = new ODocument("LinkMapIndexTestClass");
       document.field("linkMap", mapTwo);
-      document.save();
+      database.save(document);
 
       database.commit();
     } catch (Exception e) {
@@ -286,13 +285,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> mapOne = new HashMap<>();
 
@@ -301,7 +300,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", mapOne);
-    document.save();
+    database.save(document);
 
     database.begin();
     final Map<String, ORID> mapTwo = new HashMap<>();
@@ -310,7 +309,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     mapTwo.put("key2", docThree.getIdentity());
 
     document.field("linkMap", mapTwo);
-    document.save();
+    database.save(document);
     database.rollback();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
@@ -349,13 +348,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -364,7 +363,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     database
         .command(
@@ -408,13 +407,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -423,13 +422,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
       final ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<Map<String, ORID>>field("linkMap").put("key3", docThree.getIdentity());
-      loadedDocument.save();
+      database.save(loadedDocument);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -474,13 +473,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -489,12 +488,12 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     database.begin();
     final ODocument loadedDocument = database.load(document.getIdentity());
     loadedDocument.<Map<String, ORID>>field("linkMap").put("key3", docThree.getIdentity());
-    loadedDocument.save();
+    database.save(loadedDocument);
     database.rollback();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
@@ -533,13 +532,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -548,7 +547,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     database
         .command(
@@ -591,13 +590,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -606,13 +605,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
       final ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<Map<String, ORID>>field("linkMap").put("key2", docThree.getIdentity());
-      loadedDocument.save();
+      database.save(loadedDocument);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -656,13 +655,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -671,12 +670,12 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     database.begin();
     final ODocument loadedDocument = database.load(document.getIdentity());
     loadedDocument.<Map<String, ORID>>field("linkMap").put("key2", docThree.getIdentity());
-    loadedDocument.save();
+    database.save(loadedDocument);
     database.rollback();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
@@ -715,13 +714,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -731,7 +730,7 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     database.command("UPDATE " + document.getIdentity() + " remove linkMap = 'key2'").close();
 
@@ -771,13 +770,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -787,13 +786,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
       final ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<Map<String, ORID>>field("linkMap").remove("key2");
-      loadedDocument.save();
+      database.save(loadedDocument);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -836,13 +835,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -852,12 +851,12 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     database.begin();
     final ODocument loadedDocument = database.load(document.getIdentity());
     loadedDocument.<Map<String, ORID>>field("linkMap").remove("key2");
-    loadedDocument.save();
+    database.save(loadedDocument);
     database.rollback();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
@@ -897,13 +896,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -912,8 +911,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
-    document.delete();
+    database.save(document);
+    database.delete(document);
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getInternal().size(), 0);
@@ -926,10 +925,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -938,11 +937,11 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
-      document.delete();
+      database.delete(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -960,10 +959,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -972,10 +971,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
     database.begin();
-    document.delete();
+    database.delete(document);
     database.rollback();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
@@ -1012,10 +1011,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapSQL() {
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<>();
 
@@ -1024,23 +1023,25 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkMapIndexTestClass");
     document.field("linkMap", map);
-    document.save();
+    database.save(document);
 
-    final List<ODocument> resultByKey =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from LinkMapIndexTestClass where linkMap containskey ?"),
-            "key1");
+    final List<OResult> resultByKey =
+        database
+            .query("select * from LinkMapIndexTestClass where linkMap containskey ?", "key1")
+            .stream()
+            .toList();
     Assert.assertNotNull(resultByKey);
     Assert.assertEquals(resultByKey.size(), 1);
 
     Assert.assertEquals(map, document.field("linkMap"));
 
-    final List<ODocument> resultByValue =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from LinkMapIndexTestClass where linkMap  containsvalue ?"),
-            docOne.getIdentity());
+    final List<OResult> resultByValue =
+        database
+            .query(
+                "select * from LinkMapIndexTestClass where linkMap  containsvalue ?",
+                docOne.getIdentity())
+            .stream()
+            .toList();
     Assert.assertNotNull(resultByValue);
     Assert.assertEquals(resultByValue.size(), 1);
 

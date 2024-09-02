@@ -220,7 +220,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     ODocument vDoc = database.newInstance();
     vDoc.setClassName("Profile");
     vDoc.field("nick", "JayM1").field("name", "Jay").field("surname", "Miner");
-    vDoc.save();
+    database.save(vDoc);
 
     Assert.assertEquals(
         vDoc.getIdentity().getClusterId(), vDoc.getSchemaClass().getDefaultClusterId());
@@ -228,7 +228,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     vDoc = database.load(vDoc.getIdentity());
     vDoc.field("nick", "JayM2");
     vDoc.field("nick", "JayM3");
-    vDoc.save();
+    database.save(vDoc);
 
     @SuppressWarnings("deprecation")
     Set<OIndex> indexes =
@@ -255,13 +255,13 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     ODocument vDoc = database.newInstance();
     vDoc.setClassName("Profile");
     vDoc.field("nick", "Jacky").field("name", "Jack").field("surname", "Tramiel");
-    vDoc.save();
+    database.save(vDoc);
 
     // add a new record with the same name "nameA".
     vDoc = database.newInstance();
     vDoc.setClassName("Profile");
     vDoc.field("nick", "Jack").field("name", "Jack").field("surname", "Bauer");
-    vDoc.save();
+    database.save(vDoc);
 
     @SuppressWarnings("deprecation")
     Collection<OIndex> indexes =
@@ -291,7 +291,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
         .field("name", "Kiefer")
         .field("surname", "Sutherland")
         .field("tag_list", new String[] {"actor", "myth"});
-    vDoc.save();
+    database.save(vDoc);
 
     List<OResult> result =
         database
@@ -306,7 +306,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     ODocument coreDoc = new ODocument();
     ODocument linkDoc = new ODocument();
 
-    linkDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(linkDoc, database.getClusterNameById(database.getDefaultClusterId()));
     coreDoc.field("link", linkDoc);
     coreDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -333,9 +333,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
         .field("name", "Michael")
         .field("surname", "Hall")
         .field("tag_list", tags);
-    vDoc.save();
+    database.save(vDoc);
 
-    @SuppressWarnings("deprecation")
     List<OResult> result =
         database.query("select from Profile where name = 'Michael'").stream().toList();
 
@@ -346,7 +345,6 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     dexter.setDirty();
     dexter.save();
 
-    //noinspection deprecation
     result =
         database
             .query(
@@ -854,7 +852,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     ORecordInternal.setVersion(doc, -2);
 
-    doc.save();
+    database.save(doc);
 
     doc.reload();
     Assert.assertEquals(doc.getVersion(), oldVersion);
@@ -895,7 +893,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     for (int i = 0; i < 10; i++) {
       final ODocument linkDoc = new ODocument();
-      linkDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+      database.save(linkDoc, database.getClusterNameById(database.getDefaultClusterId()));
 
       allDocs.add(linkDoc);
     }
@@ -917,7 +915,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     for (int i = 5; i < 10; i++) Assert.assertEquals(linkList.get(i - 5), allDocs.get(i));
 
-    doc.save();
+    database.save(doc);
 
     doc.reload();
 

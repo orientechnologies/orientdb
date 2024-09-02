@@ -635,8 +635,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
     for (int i = 0; i < TOT_RECORDS; i++) ids.add(i);
 
-    List<Account> result =
-        database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:-1"));
+    List<Account> result = database.objectQuery("select from Account fetchplan *:-1");
     for (Account a : result) {
       int id = a.getId();
       Assert.assertTrue(ids.remove(id));

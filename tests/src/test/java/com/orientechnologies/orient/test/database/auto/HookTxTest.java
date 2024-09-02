@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,7 +42,7 @@ public class HookTxTest extends ORecordHookAbstract {
   public static final int RECORD_BEFORE_DELETE = 19;
   public static final int RECORD_AFTER_DELETE = 23;
 
-  private OObjectDatabaseTx database;
+  private ODatabaseObject database;
   private int callbackCount = 0;
   private Profile p;
   private int expectedHookState;
@@ -167,9 +168,9 @@ public class HookTxTest extends ORecordHookAbstract {
         });
 
     Assert.assertFalse(exc.get());
-    new ODocument()
-        .field("test-hook", true)
-        .save(database.getClusterNameById(database.getDefaultClusterId()));
+    ODocument doc = new ODocument();
+    doc.setProperty("test-hook", true);
+    database.getUnderlying().save(doc, database.getClusterNameById(database.getDefaultClusterId()));
     Assert.assertTrue(exc.get());
 
     database.activateOnCurrentThread();

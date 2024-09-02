@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.testng.Assert;
@@ -34,34 +35,29 @@ public class SQLMetadataTest extends DocumentDBBaseTest {
 
   @Test
   public void querySchemaClasses() {
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select expand(classes) from metadata:schema"))
-            .execute();
+    List<OResult> result =
+        database.command("select expand(classes) from metadata:schema").stream().toList();
 
     Assert.assertTrue(result.size() != 0);
   }
 
   @Test
   public void querySchemaProperties() {
-    List<ODocument> result =
+    List<OResult> result =
         database
             .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select expand(properties) from (select expand(classes) from metadata:schema)"
-                        + " where name = 'OUser'"))
-            .execute();
+                "select expand(properties) from (select expand(classes) from metadata:schema)"
+                    + " where name = 'OUser'")
+            .stream()
+            .toList();
 
     Assert.assertTrue(result.size() != 0);
   }
 
   @Test
   public void queryIndexes() {
-    List<ODocument> result =
-        database
-            .command(
-                new OSQLSynchQuery<ODocument>("select expand(indexes) from metadata:indexmanager"))
-            .execute();
+    List<OResult> result =
+        database.command("select expand(indexes) from metadata:indexmanager").stream().toList();
 
     Assert.assertTrue(result.size() != 0);
   }

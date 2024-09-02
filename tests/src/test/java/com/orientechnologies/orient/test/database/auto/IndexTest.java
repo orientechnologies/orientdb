@@ -59,7 +59,6 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@SuppressWarnings({"deprecation", "unchecked"})
 @Test(groups = {"index"})
 public class IndexTest extends ObjectDBBaseTest {
   @Parameters(value = "url")
@@ -155,10 +154,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
   public void testUseOfIndex() {
-    final List<Profile> result =
-        database
-            .command(new OSQLSynchQuery<Profile>("select * from Profile where nick = 'Jay'"))
-            .execute();
+    final List<Profile> result = database.objectCommand("select * from Profile where nick = 'Jay'");
 
     Assert.assertFalse(result.isEmpty());
 
@@ -645,8 +641,7 @@ public class IndexTest extends ObjectDBBaseTest {
         .getProperty("account")
         .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    final List<Account> result =
-        database.command(new OSQLSynchQuery<Account>("select * from Account limit 1")).execute();
+    final List<Account> result = database.objectCommand("select * from Account limit 1");
 
     final OIndex idx =
         database
@@ -666,16 +661,17 @@ public class IndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(idx.getInternal().size(), 5);
 
-    final List<ODocument> indexedResult =
+    final List<OResult> indexedResult =
         database
             .getUnderlying()
-            .command(new OSQLSynchQuery<Profile>("select * from Whiz where account = ?"))
-            .execute(result.get(0).getRid());
+            .command("select * from Whiz where account = ?", result.get(0).getRid())
+            .stream()
+            .toList();
 
     Assert.assertEquals(indexedResult.size(), 5);
 
-    for (final ODocument resDoc : indexedResult) {
-      resDoc.delete();
+    for (final OResult resDoc : indexedResult) {
+      db.delete(resDoc.getIdentity().get());
     }
 
     final ODocument whiz = new ODocument("Whiz");
@@ -686,7 +682,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     Assert.assertTrue(((ODocument) whiz.field("account")).getIdentity().isValid());
 
-    ((ODocument) whiz.field("account")).delete();
+    db.delete((ODocument) whiz.field("account"));
     db.delete(whiz);
   }
 
@@ -2044,7 +2040,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final ORID rid = document.getIdentity();
 
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     document = database.load(rid);
 
@@ -2066,7 +2062,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     document = database.load(rid);
 
@@ -2084,7 +2080,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(index.getInternal().size(), 0);
 
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     document = database.load(rid);
     users = document.field("users");
@@ -2106,7 +2102,8 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     database.close();
-    database.open("admin", "admin");
+
+    reopendb("admin", "admin");
 
     users = document.field("users");
     users.add(rid4);
@@ -2131,7 +2128,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     database.close();
-    database.open("admin", "admin");
+    reopendb("admin", "admin");
 
     document.removeField("users");
     database.save(document);
