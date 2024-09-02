@@ -1137,8 +1137,31 @@ public class OSelectExecutionPlanner {
         info.aggregateProjection = null;
       }
       info.projection = postAggregate;
-
       addGroupByExpressionsToProjections(info);
+    } else {
+      handleGroupByNoAggragation(info);
+    }
+  }
+
+  private static void handleGroupByNoAggragation(QueryPlanningInfo info) {
+    if (info.groupBy == null
+        || info.groupBy.getItems() == null
+        || info.groupBy.getItems().size() == 0) {
+      return;
+    }
+    for (OExpression exp : info.groupBy.getItems()) {
+      if (exp.isAggregate()) {
+        throw new OCommandExecutionException("Cannot group by an aggregate function");
+      }
+      OProjectionItem newItem = new OProjectionItem(-1);
+      newItem.setExpression(exp);
+      if (info.aggregateProjection == null) {
+        info.aggregateProjection = new OProjection(-1);
+      }
+      if (info.aggregateProjection.getItems() == null) {
+        info.aggregateProjection.setItems(new ArrayList<>());
+      }
+      info.aggregateProjection.getItems().add(newItem);
     }
   }
 
