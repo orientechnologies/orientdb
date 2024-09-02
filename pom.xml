@@ -154,7 +154,7 @@
         <implementation.build>${scmBranch}@r${buildNumber}</implementation.build>
         <blueprints.version>2.6.0</blueprints.version>
         <!-- | shared build/report plugins version -->
-        <surefire.version>3.4.0</surefire.version>
+        <surefire.version>3.5.0</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
 
