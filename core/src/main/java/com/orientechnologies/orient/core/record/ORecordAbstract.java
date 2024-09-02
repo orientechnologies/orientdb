@@ -250,18 +250,22 @@ public abstract class ORecordAbstract implements ORecord {
     return ODatabaseRecordThreadLocal.instance().getIfDefined();
   }
 
+  @Deprecated(forRemoval = true)
   public ORecord reload() {
     return reload(null, true, true);
   }
 
+  @Deprecated(forRemoval = true)
   public ORecord reload(final String fetchPlan) {
     return reload(fetchPlan, true);
   }
 
+  @Deprecated(forRemoval = true)
   public ORecord reload(final String fetchPlan, final boolean ignoreCache) {
     return reload(fetchPlan, ignoreCache, true);
   }
 
+  @Deprecated(forRemoval = true)
   @Override
   public ORecord reload(String fetchPlan, boolean ignoreCache, boolean force)
       throws ORecordNotFoundException {
@@ -283,19 +287,23 @@ public abstract class ORecordAbstract implements ORecord {
     }
   }
 
+  @Deprecated(forRemoval = true)
   public ORecordAbstract save() {
     return save(false);
   }
 
+  @Deprecated(forRemoval = true)
   public ORecordAbstract save(final String iClusterName) {
     return save(iClusterName, false);
   }
 
+  @Deprecated(forRemoval = true)
   public ORecordAbstract save(boolean forceCreate) {
     getDatabase().save(this, ODatabase.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
     return this;
   }
 
+  @Deprecated(forRemoval = true)
   public ORecordAbstract save(String iClusterName, boolean forceCreate) {
     return getDatabase()
         .save(this, iClusterName, ODatabase.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
@@ -312,6 +320,7 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   @Override
+  @Deprecated(forRemoval = true)
   public void lock(final boolean iExclusive) {
     ODatabaseRecordThreadLocal.instance()
         .get()
@@ -324,16 +333,19 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   @Override
+  @Deprecated(forRemoval = true)
   public boolean isLocked() {
     return ODatabaseRecordThreadLocal.instance().get().getTransaction().isLockedRecord(this);
   }
 
   @Override
+  @Deprecated(forRemoval = true)
   public OStorage.LOCKING_STRATEGY lockingStrategy() {
     return ODatabaseRecordThreadLocal.instance().get().getTransaction().lockingStrategy(this);
   }
 
   @Override
+  @Deprecated(forRemoval = true)
   public void unlock() {
     ODatabaseRecordThreadLocal.instance().get().getTransaction().unlockRecord(this);
   }
