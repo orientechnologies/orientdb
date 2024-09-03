@@ -18,9 +18,9 @@ public class OLocalResultSet implements OResultSet {
   private OResultSet lastFetch = null;
   private final OInternalExecutionPlan executionPlan;
   private boolean finished = false;
-
-  long totalExecutionTime = 0;
-  long startTime = 0;
+  private long totalExecutionTime = 0;
+  private long startTime = 0;
+  private boolean closed = false;
 
   public OLocalResultSet(OInternalExecutionPlan executionPlan) {
     this.executionPlan = executionPlan;
@@ -47,7 +47,7 @@ public class OLocalResultSet implements OResultSet {
 
   @Override
   public boolean hasNext() {
-    if (finished) {
+    if (finished || closed) {
       return false;
     }
     if (lastFetch.hasNext()) {
@@ -102,7 +102,10 @@ public class OLocalResultSet implements OResultSet {
 
   @Override
   public void close() {
-    executionPlan.close();
+    if (!closed) {
+      executionPlan.close();
+      closed = true;
+    }
   }
 
   @Override

@@ -19,8 +19,8 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
   private OResultSet entity;
   private List<OQueryLifecycleListener> lifecycleListeners = new ArrayList<>();
   private String queryId;
-
   private boolean hasNextPage;
+  private boolean closed = false;
 
   public OLocalResultSetLifecycleDecorator(OResultSet entity) {
     this.entity = entity;
@@ -38,11 +38,15 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
 
   @Override
   public boolean hasNext() {
-    boolean hasNext = entity.hasNext();
-    if (!hasNext) {
-      close();
+    if (closed) {
+      return false;
+    } else {
+      boolean hasNext = entity.hasNext();
+      if (!hasNext) {
+        close();
+      }
+      return hasNext;
     }
-    return hasNext;
   }
 
   @Override
@@ -56,9 +60,12 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
 
   @Override
   public void close() {
-    entity.close();
-    this.lifecycleListeners.forEach(x -> x.queryClosed(this.getQueryId()));
-    this.lifecycleListeners.clear();
+    if (!closed) {
+      entity.close();
+      this.lifecycleListeners.forEach(x -> x.queryClosed(this.getQueryId()));
+      this.lifecycleListeners.clear();
+      closed = true;
+    }
   }
 
   @Override
