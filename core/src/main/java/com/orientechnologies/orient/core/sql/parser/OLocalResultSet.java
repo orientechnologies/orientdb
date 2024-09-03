@@ -19,9 +19,9 @@ public class OLocalResultSet implements OResultSetInternal {
   private OExecutionStream stream = null;
   private final OInternalExecutionPlan executionPlan;
   private final OCommandContext ctx;
-
-  long totalExecutionTime = 0;
-  long startTime = 0;
+  private long totalExecutionTime = 0;
+  private long startTime = 0;
+  private boolean closed = false;
 
   public OLocalResultSet(OInternalExecutionPlan executionPlan, OCommandContext ctx) {
     this.executionPlan = executionPlan;
@@ -48,11 +48,15 @@ public class OLocalResultSet implements OResultSetInternal {
 
   @Override
   public boolean hasNext() {
-    boolean next = stream.hasNext(ctx);
-    if (!next) {
-      logProfiling();
+    if (closed) {
+      return false;
+    } else {
+      boolean next = stream.hasNext(ctx);
+      if (!next) {
+        logProfiling();
+      }
+      return next;
     }
-    return next;
   }
 
   @Override
@@ -92,8 +96,11 @@ public class OLocalResultSet implements OResultSetInternal {
 
   @Override
   public void close() {
-    stream.close(ctx);
-    executionPlan.close();
+    if (!closed) {
+      stream.close(ctx);
+      executionPlan.close();
+      closed = true;
+    }
   }
 
   @Override

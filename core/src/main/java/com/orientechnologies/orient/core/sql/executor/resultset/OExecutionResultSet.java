@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSetInternal;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 public class OExecutionResultSet implements OResultSetInternal {
@@ -12,6 +13,7 @@ public class OExecutionResultSet implements OResultSetInternal {
   private final OExecutionStream stream;
   private final OCommandContext context;
   private final Optional<OExecutionPlan> plan;
+  private boolean closed = false;
 
   public OExecutionResultSet(
       OExecutionStream stream, OCommandContext context, OExecutionPlan plan) {
@@ -23,17 +25,28 @@ public class OExecutionResultSet implements OResultSetInternal {
 
   @Override
   public boolean hasNext() {
-    return stream.hasNext(context);
+    if (closed) {
+      return false;
+    } else {
+      return stream.hasNext(context);
+    }
   }
 
   @Override
   public OResult next() {
-    return stream.next(context);
+    if (closed) {
+      throw new NoSuchElementException();
+    } else {
+      return stream.next(context);
+    }
   }
 
   @Override
   public void close() {
-    stream.close(context);
+    if (!closed) {
+      stream.close(context);
+      closed = true;
+    }
   }
 
   @Override
