@@ -1076,10 +1076,7 @@ public class OServer {
 
       } while (envRootPassword != null);
 
-    } else
-      logger.info(
-          "Found ORIENTDB_ROOT_PASSWORD variable, using this value as root's password",
-          envRootPassword);
+    } else logger.info("Using ORIENTDB_ROOT_PASSWORD variable, for root's password");
 
     if (!existsRoot) {
       context.execute(
