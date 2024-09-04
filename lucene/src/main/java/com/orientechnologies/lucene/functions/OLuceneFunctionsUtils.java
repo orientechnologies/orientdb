@@ -85,6 +85,9 @@ public class OLuceneFunctionsUtils {
   }
 
   public static Long getResultLimit(OCommandContext ctx) {
+    if (ctx == null) {
+      return null;
+    }
     return (Long) ctx.getVariable(OLuceneFunctionsUtils.MAX_HITS);
   }
 }
