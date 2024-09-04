@@ -3323,7 +3323,7 @@ public class OConsoleDatabaseApp extends OConsoleApplication
     return (float) (System.currentTimeMillis() - start) / 1000;
   }
 
-  protected void printError(final Exception e) {
+  protected void printError(final Throwable e) {
     if (properties.get(OConsoleProperties.DEBUG) != null
         && Boolean.parseBoolean(properties.get(OConsoleProperties.DEBUG))) {
       message("\n\n!ERROR:");
@@ -3598,11 +3598,7 @@ public class OConsoleDatabaseApp extends OConsoleApplication
 
   @Override
   protected void onException(Throwable e) {
-    Throwable current = e;
-    while (current != null) {
-      err.print("\nError: " + current.toString() + "\n");
-      current = current.getCause();
-    }
+    printError(e);
   }
 
   @Override
