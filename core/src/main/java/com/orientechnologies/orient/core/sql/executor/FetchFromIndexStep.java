@@ -3,7 +3,9 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -158,6 +160,25 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       }
     }
     stats.pushIndexStats(indexName, size, range, additionalRangeCondition != null, count);
+
+    final OProfiler profiler = Orient.instance().getProfiler();
+    if (profiler.isRecording()) {
+      profiler.updateCounter(
+          profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"),
+          "Used index in query",
+          +1);
+
+      final int paramCount = index.getDefinition().getParamCount();
+      if (paramCount > 1) {
+        final String profiler_prefix =
+            profiler.getDatabaseMetric(index.getDatabaseName(), "query.compositeIndexUsed");
+        profiler.updateCounter(profiler_prefix, "Used composite index in query", +1);
+        profiler.updateCounter(
+            profiler_prefix + "." + paramCount,
+            "Used composite index in query with " + paramCount + " params",
+            +1);
+      }
+    }
   }
 
   private static List<OIndexStream> init(
@@ -193,7 +214,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     OBooleanExpression condition = desc.getKeyCondition();
 
     List<OIndexStream> acquiredStreams = new ArrayList<>();
-    OIndexDefinition definition = index.getDefinition();
     OInCondition inCondition = (OInCondition) condition;
 
     OExpression left = inCondition.getLeft();
