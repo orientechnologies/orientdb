@@ -23,7 +23,9 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
       OCommandContext ctx, int[] filterClusterIds, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.filterClusterIds = filterClusterIds;
-    Arrays.sort(this.filterClusterIds);
+    if (this.filterClusterIds != null) {
+      Arrays.sort(this.filterClusterIds);
+    }
   }
 
   @Override
