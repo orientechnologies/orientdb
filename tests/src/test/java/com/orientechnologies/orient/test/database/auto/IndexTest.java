@@ -124,12 +124,9 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final List<Profile> result =
-        database
-            .command(
-                new OSQLSynchQuery<Profile>(
-                    "SELECT * FROM Profile WHERE nick in ['ZZZJayLongNickIndex0'"
-                        + " ,'ZZZJayLongNickIndex1', 'ZZZJayLongNickIndex2']"))
-            .execute();
+        database.objectCommand(
+            "SELECT * FROM Profile WHERE nick in ['ZZZJayLongNickIndex0'"
+                + " ,'ZZZJayLongNickIndex1', 'ZZZJayLongNickIndex2']");
 
     final List<String> expectedSurnames =
         new ArrayList<>(Arrays.asList("NolteIndex0", "NolteIndex1", "NolteIndex2"));
@@ -270,11 +267,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final List<Profile> result =
-        database
-            .command(
-                new OSQLSynchQuery<Profile>(
-                    "select * from Profile where nick > 'ZZZJayLongNickIndex3'"))
-            .execute();
+        database.objectCommand("select * from Profile where nick > 'ZZZJayLongNickIndex3'");
     final List<String> expectedNicks =
         new ArrayList<>(Arrays.asList("ZZZJayLongNickIndex4", "ZZZJayLongNickIndex5"));
 
@@ -310,11 +303,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final List<Profile> result =
-        database
-            .command(
-                new OSQLSynchQuery<Profile>(
-                    "select * from Profile where nick >= 'ZZZJayLongNickIndex3'"))
-            .execute();
+        database.objectCommand("select * from Profile where nick >= 'ZZZJayLongNickIndex3'");
     final List<String> expectedNicks =
         new ArrayList<>(
             Arrays.asList("ZZZJayLongNickIndex3", "ZZZJayLongNickIndex4", "ZZZJayLongNickIndex5"));
@@ -350,10 +339,7 @@ public class IndexTest extends ObjectDBBaseTest {
       indexQueries = 0;
     }
 
-    final List<Profile> result =
-        database
-            .command(new OSQLSynchQuery<Profile>("select * from Profile where nick < '002'"))
-            .execute();
+    final List<Profile> result = database.objectCommand("select * from Profile where nick < '002'");
     final List<String> expectedNicks = new ArrayList<>(Arrays.asList("000", "001"));
 
     if (!oldRecording) {
@@ -388,9 +374,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final List<Profile> result =
-        database
-            .command(new OSQLSynchQuery<Profile>("select * from Profile where nick <= '002'"))
-            .execute();
+        database.objectCommand("select * from Profile where nick <= '002'");
     final List<String> expectedNicks = new ArrayList<>(Arrays.asList("000", "001", "002"));
 
     if (!oldRecording) {
@@ -425,11 +409,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final List<Profile> result =
-        database
-            .command(
-                new OSQLSynchQuery<Profile>(
-                    "select * from Profile where nick between '001' and '004'"))
-            .execute();
+        database.objectCommand("select * from Profile where nick between '001' and '004'");
     final List<String> expectedNicks = new ArrayList<>(Arrays.asList("001", "002", "003", "004"));
 
     if (!oldRecording) {
@@ -602,12 +582,9 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final List<Profile> result =
-        database
-            .command(
-                new OSQLSynchQuery<Profile>(
-                    "SELECT * FROM Profile WHERE nick in ['ZZZJayLongNickIndex0'"
-                        + " ,'ZZZJayLongNickIndex1', 'ZZZJayLongNickIndex2']"))
-            .execute();
+        database.objectCommand(
+            "SELECT * FROM Profile WHERE nick in ['ZZZJayLongNickIndex0'"
+                + " ,'ZZZJayLongNickIndex1', 'ZZZJayLongNickIndex2']");
 
     final List<String> expectedSurnames =
         new ArrayList<>(Arrays.asList("NolteIndex0", "NolteIndex1", "NolteIndex2"));
@@ -1074,9 +1051,9 @@ public class IndexTest extends ObjectDBBaseTest {
         OClass anotherChildClass =
             db.getMetadata().getSchema().createClass("AnotherChildTestClass", 1, (OClass[]) null);
 
-        if (!baseClass.isSuperClassOf(childClass)) childClass.setSuperClass(baseClass);
+        if (!baseClass.isSuperClassOf(childClass)) childClass.addSuperClass(baseClass);
         if (!baseClass.isSuperClassOf(anotherChildClass))
-          anotherChildClass.setSuperClass(baseClass);
+          anotherChildClass.addSuperClass(baseClass);
 
         baseClass
             .createProperty("testParentProperty", OType.LONG)

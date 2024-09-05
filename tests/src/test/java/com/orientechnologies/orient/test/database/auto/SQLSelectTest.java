@@ -70,7 +70,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   @BeforeClass
   public void init() {
     if (!database.getMetadata().getSchema().existsClass("Profile")) {
-      database.getMetadata().getSchema().createClass("Profile", 1, null);
+      database.getMetadata().getSchema().createClass("Profile", 1);
 
       for (int i = 0; i < 1000; ++i) {
         database.<ODocument>newInstance("Profile").field("test", i).field("name", "N" + i).save();
@@ -78,8 +78,12 @@ public class SQLSelectTest extends AbstractSelectTest {
     }
 
     if (!database.getMetadata().getSchema().existsClass("company")) {
-      database.getMetadata().getSchema().createClass("company", 1, null);
-      for (int i = 0; i < 20; ++i) new ODocument("company").field("id", i).save();
+      database.getMetadata().getSchema().createClass("company", 1);
+      for (int i = 0; i < 20; ++i) {
+        ODocument doc = new ODocument("company");
+        doc.setProperty("id", i);
+        database.save(doc);
+      }
     }
 
     database.getMetadata().getSchema().getOrCreateClass("Account");
@@ -153,9 +157,8 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testQueryCount() {
     database.getMetadata().reload();
     final long vertexesCount = database.countClass("V");
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
-    Assert.assertEquals(result.get(0).<Object>field("count"), vertexesCount);
+    List<OResult> result = database.query("select count(*) as count from V").stream().toList();
+    Assert.assertEquals(result.get(0).<Object>getProperty("count"), vertexesCount);
   }
 
   @Test
@@ -208,7 +211,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     ODocument doc = new ODocument("Profile");
     doc.field("tags", tags, OType.EMBEDDEDSET);
 
-    doc.save();
+    database.save(doc);
 
     List<ODocument> resultset =
         executeQuery("select from Profile where tags CONTAINS 'smart'", database);
@@ -222,7 +225,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-    doc.delete();
+    database.delete(doc);
   }
 
   @Test
@@ -234,7 +237,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     ODocument doc = new ODocument("Profile");
     doc.field("tags", tags);
 
-    doc.save();
+    database.save(doc);
 
     List<ODocument> resultset =
         executeQuery("select from Profile where tags[0] = 'smart'", database);
@@ -254,7 +257,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-    doc.delete();
+    database.delete(doc);
   }
 
   @Test
@@ -266,7 +269,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     ODocument doc = new ODocument("Profile");
     doc.field("coll", coll, OType.EMBEDDEDSET);
 
-    doc.save();
+    database.save(doc);
 
     List<ODocument> resultset =
         executeQuery(
@@ -275,7 +278,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(resultset.get(0).field("value") instanceof ODocument);
     Assert.assertEquals(((ODocument) resultset.get(0).field("value")).field("name"), "Jay");
 
-    doc.delete();
+    database.delete(doc);
   }
 
   @Test
@@ -287,7 +290,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     ODocument doc = new ODocument("Profile");
     doc.field("coll", coll, OType.EMBEDDEDLIST);
 
-    doc.save();
+    database.save(doc);
 
     List<ODocument> resultset =
         executeQuery(
@@ -296,7 +299,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(resultset.get(0).field("value") instanceof ODocument);
     Assert.assertEquals(((ODocument) resultset.get(0).field("value")).field("name"), "Jay");
 
-    doc.delete();
+    database.delete(doc);
   }
 
   @Test
@@ -308,7 +311,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     ODocument doc = new ODocument("Profile");
     doc.field("customReferences", customReferences, OType.EMBEDDEDMAP);
 
-    doc.save();
+    database.save(doc);
 
     List<ODocument> resultset =
         executeQuery("select from Profile where customReferences CONTAINSKEY 'first'", database);
@@ -365,7 +368,7 @@ public class SQLSelectTest extends AbstractSelectTest {
             database);
     Assert.assertEquals(resultset.size(), 1);
 
-    doc.delete();
+    database.delete(doc);
   }
 
   @Test
@@ -377,7 +380,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     ODocument doc = new ODocument("Profile");
     doc.field("customReferences", customReferences, OType.EMBEDDEDMAP);
 
-    doc.save();
+    database.save(doc);
 
     List<ODocument> resultset =
         executeQuery(
@@ -394,7 +397,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-    doc.delete();
+    database.delete(doc);
   }
 
   @Test
@@ -434,7 +437,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     races.add(((ODocument) database.newInstance("AnimalRace")).field("name", "Siamese"));
     record.field("age", 10);
     record.field("races", races);
-    record.save();
+    database.save(record);
 
     List<ODocument> result =
         executeQuery(
@@ -511,7 +514,7 @@ public class SQLSelectTest extends AbstractSelectTest {
             database);
     Assert.assertEquals(result.size(), 1);
 
-    record.delete();
+    database.delete(record);
   }
 
   @Test
@@ -525,7 +528,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     rates.add(200);
     record.field("rates", rates);
 
-    record.save();
+    database.save(record);
 
     List<ODocument> result =
         executeQuery("select * from cluster:animal where rates in [100,200]", database);
@@ -572,7 +575,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     result = executeQuery("select * from cluster:animal where rates contains 100", database);
     Assert.assertEquals(result.size(), 1);
 
-    record.delete();
+    database.delete(record);
   }
 
   @Test
@@ -931,7 +934,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void queryWithManualPagination() {
     ORID last = new ORecordId();
     List<ODocument> resultset =
-        executeQuery("select from Profile where @rid > ? LIMIT 3", database, last);
+        executeQuery("select from Profile where @rid > ? order by @rid LIMIT 3", database, last);
 
     int iterationCount = 0;
     Assert.assertTrue(!resultset.isEmpty());
@@ -948,7 +951,8 @@ public class SQLSelectTest extends AbstractSelectTest {
       last = resultset.get(resultset.size() - 1).getIdentity();
 
       iterationCount++;
-      resultset = executeQuery("select from Profile where @rid > ? LIMIT 3", database, last);
+      resultset =
+          executeQuery("select from Profile where @rid > ? order by @rid LIMIT 3", database, last);
     }
 
     Assert.assertTrue(iterationCount > 1);
@@ -1441,33 +1445,36 @@ public class SQLSelectTest extends AbstractSelectTest {
     ODocument doc1 = new ODocument(facClass);
     doc1.field("context", "test");
     doc1.field("date", currentYear.getTime());
-    doc1.save();
+    database.save(doc1);
 
     ODocument doc2 = new ODocument(facClass);
     doc2.field("context", "test");
     doc2.field("date", oneYearAgo.getTime());
-    doc2.save();
+    database.save(doc2);
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select * from " + facClass.getName() + " where context = 'test' order by date",
-                1));
+    List<OResult> result =
+        database
+            .query(
+                "select * from " + facClass.getName() + " where context = 'test' order by date", 1)
+            .stream()
+            .toList();
 
     Calendar smaller = Calendar.getInstance();
-    smaller.setTime((Date) result.get(0).field("date", Date.class));
+    smaller.setTime((Date) result.get(0).getProperty("date"));
     Assert.assertEquals(smaller.get(Calendar.YEAR), oneYearAgo.get(Calendar.YEAR));
 
     result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+        database
+            .query(
                 "select * from "
                     + facClass.getName()
                     + " where context = 'test' order by date DESC",
-                1));
+                1)
+            .stream()
+            .toList();
 
     Calendar bigger = Calendar.getInstance();
-    bigger.setTime((Date) result.get(0).field("date", Date.class));
+    bigger.setTime((Date) result.get(0).getProperty("date"));
     Assert.assertEquals(bigger.get(Calendar.YEAR), currentYear.get(Calendar.YEAR));
   }
 
@@ -1508,7 +1515,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testSelectFromListParameter() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1);
     placeClass.createProperty("id", OType.STRING);
     placeClass.createProperty("descr", OType.STRING);
     placeClass.createIndex("place_id_index", INDEX_TYPE.UNIQUE, "id");
@@ -1537,7 +1544,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testSelectRidFromListParameter() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1);
     placeClass.createProperty("id", OType.STRING);
     placeClass.createProperty("descr", OType.STRING);
     placeClass.createIndex("place_id_index", INDEX_TYPE.UNIQUE, "id");
@@ -1568,7 +1575,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testSelectRidInList() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1);
     database.getMetadata().getSchema().createClass("FamousPlace", 1, placeClass);
 
     ODocument firstPlace = new ODocument("Place");
@@ -1692,9 +1699,9 @@ public class SQLSelectTest extends AbstractSelectTest {
             + " addresses.size() > 0 )";
 
     final List<ODocument> synchResultOne =
-        database.command(new OSQLSynchQuery<ODocument>(sqlOne)).execute();
+        database.command(sqlOne).stream().map((x) -> (ODocument) x.toElement()).toList();
     final List<ODocument> synchResultTwo =
-        database.command(new OSQLSynchQuery<ODocument>(sqlTwo)).execute();
+        database.command(sqlTwo).stream().map((x) -> (ODocument) x.toElement()).toList();
 
     Assert.assertTrue(synchResultOne.size() > 0);
     Assert.assertTrue(synchResultTwo.size() > 0);
@@ -1821,26 +1828,29 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testSelectFromIndexValuesAsc() {
     database.command("create index selectFromIndexValuesAsc on Profile (name) notunique").close();
 
-    final List<ODocument> classResult =
-        new ArrayList<ODocument>(
-            (List<ODocument>)
-                database.query(
-                    new OSQLSynchQuery<ODocument>(
-                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name"
-                            + " is not null)")));
+    final List<OResult> classResult =
+        new ArrayList<>(
+            database
+                .query(
+                    "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name"
+                        + " is not null)")
+                .stream()
+                .toList());
 
-    final List<ODocument> indexValuesResult =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+    final List<OResult> indexValuesResult =
+        database
+            .query(
                 "select from indexvaluesasc:selectFromIndexValuesAsc where ((nick like 'J%') or"
-                    + " (nick like 'N%')) and (name is not null)"));
+                    + " (nick like 'N%')) and (name is not null)")
+            .stream()
+            .toList();
 
     Assert.assertEquals(indexValuesResult.size(), classResult.size());
 
     String lastName = null;
 
-    for (ODocument document : indexValuesResult) {
-      String name = document.field("name");
+    for (OResult document : indexValuesResult) {
+      String name = document.getProperty("name");
 
       if (lastName != null) Assert.assertTrue(lastName.compareTo(name) <= 0);
 
@@ -1854,26 +1864,29 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testSelectFromIndexValuesDesc() {
     database.command("create index selectFromIndexValuesDesc on Profile (name) notunique").close();
 
-    final List<ODocument> classResult =
-        new ArrayList<ODocument>(
-            (List<ODocument>)
-                database.query(
-                    new OSQLSynchQuery<ODocument>(
-                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name"
-                            + " is not null)")));
+    final List<OResult> classResult =
+        new ArrayList<>(
+            database
+                .query(
+                    "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name"
+                        + " is not null)")
+                .stream()
+                .toList());
 
-    final List<ODocument> indexValuesResult =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+    final List<OResult> indexValuesResult =
+        database
+            .query(
                 "select from indexvaluesdesc:selectFromIndexValuesDesc where ((nick like 'J%') or"
-                    + " (nick like 'N%')) and (name is not null)"));
+                    + " (nick like 'N%')) and (name is not null)")
+            .stream()
+            .toList();
 
     Assert.assertEquals(indexValuesResult.size(), classResult.size());
 
     String lastName = null;
 
-    for (ODocument document : indexValuesResult) {
-      String name = document.field("name");
+    for (OResult document : indexValuesResult) {
+      String name = document.getProperty("name");
 
       if (lastName != null) Assert.assertTrue(lastName.compareTo(name) >= 0);
 
@@ -1887,7 +1900,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testQueryParameterNotPersistent() {
     ODocument doc = new ODocument();
     doc.field("test", "test");
-    database.query(new OSQLSynchQuery<Object>("select from OUser where @rid = ?"), doc);
+    database.query("select from OUser where @rid = ?", doc);
     Assert.assertTrue(doc.isDirty());
   }
 
@@ -1918,23 +1931,22 @@ public class SQLSelectTest extends AbstractSelectTest {
           new HashSet<String>(
               Arrays.asList(new String[] {"Luca", "Jill", "Sara", "Tania", "Gianluca", "Marco"}));
       for (String n : names) {
-        new ODocument("PersonMultipleClusters").field("First", n).save();
+        ODocument doc = new ODocument("PersonMultipleClusters").field("First", n);
+        database.save(doc);
       }
 
-      OSQLSynchQuery<ODocument> query =
-          new OSQLSynchQuery<ODocument>(
-              "select from PersonMultipleClusters where @rid > ? limit 2");
-      List<ODocument> resultset = database.query(query, new ORecordId());
+      String query = "select from PersonMultipleClusters where @rid > ? limit 2";
+      List<OResult> resultset = database.query(query, new ORecordId()).stream().toList();
 
       while (!resultset.isEmpty()) {
-        final ORID last = resultset.get(resultset.size() - 1).getIdentity();
+        final ORID last = resultset.get(resultset.size() - 1).getIdentity().get();
 
-        for (ODocument personDoc : resultset) {
-          Assert.assertTrue(names.contains(personDoc.field("First")));
-          Assert.assertTrue(names.remove(personDoc.field("First")));
+        for (OResult personDoc : resultset) {
+          Assert.assertTrue(names.contains(personDoc.getProperty("First")));
+          Assert.assertTrue(names.remove(personDoc.getProperty("First")));
         }
 
-        resultset = database.query(query, last);
+        resultset = database.query(query, last).stream().toList();
       }
 
       Assert.assertTrue(names.isEmpty());
@@ -1957,17 +1969,19 @@ public class SQLSelectTest extends AbstractSelectTest {
                 + " = 'one') to (select from TestOutFilterInclude where name = 'two')")
         .close();
 
-    final List<OIdentifiable> result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
+    final List<OResult> result =
+        database
+            .query(
                 "select"
                     + " expand(out('linkedToOutFilterInclude')[@class='TestOutFilterInclude'].include('@rid'))"
-                    + " from TestOutFilterInclude where name = 'one'"));
+                    + " from TestOutFilterInclude where name = 'one'")
+            .stream()
+            .toList();
 
     Assert.assertEquals(result.size(), 1);
 
-    for (OIdentifiable r : result) {
-      Assert.assertEquals(((ODocument) r.getRecord()).<Object>field("name"), null);
+    for (OResult r : result) {
+      Assert.assertEquals(r.<Object>getProperty("name"), null);
     }
   }
 
@@ -2123,15 +2137,17 @@ public class SQLSelectTest extends AbstractSelectTest {
                 + " (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')")
         .close();
 
-    List<OIdentifiable> result =
-        database.query(
-            new OSQLSynchQuery<OIdentifiable>(
+    List<OResult> result =
+        database
+            .query(
                 " select out().data as result from (select from EmbeddedMapAndDotNotation where"
-                    + " name = 'foo')"));
+                    + " name = 'foo')")
+            .stream()
+            .toList();
     Assert.assertEquals(result.size(), 1);
-    ODocument doc = result.get(0).getRecord();
+    OResult doc = result.get(0);
     Assert.assertNotNull(doc);
-    List list = doc.field("result");
+    List list = doc.getProperty("result");
     Assert.assertEquals(list.size(), 1);
     Object first = list.get(0);
     Assert.assertTrue(first instanceof Map);
