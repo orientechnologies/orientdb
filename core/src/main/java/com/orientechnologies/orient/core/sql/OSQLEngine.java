@@ -347,7 +347,11 @@ public class OSQLEngine {
           for (Object inner : OMultiValue.getMultiValueIterable(o, false)) {
             result.add(iCallable.call((OIdentifiable) inner));
           }
-        } else result.add(iCallable.call((OIdentifiable) o));
+        } else if (o instanceof OIdentifiable) {
+          result.add(iCallable.call((OIdentifiable) o));
+        } else if (o instanceof OResult) {
+          return iCallable.call(((OResult) o).toElement());
+        }
       }
       return result;
     } else if (iCurrent instanceof OIdentifiable) {

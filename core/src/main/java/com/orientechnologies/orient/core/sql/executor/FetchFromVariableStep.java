@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
 import com.orientechnologies.orient.core.sql.parser.OFromItem;
@@ -92,6 +93,9 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
     } else if (src instanceof OResultSet) {
       source = (OResultSet) src;
       source.reset();
+    } else if (src instanceof ORID) {
+      source = new OInternalResultSet();
+      ((OInternalResultSet) source).add(new OResultInternal(ctx.getDatabase().load((ORID) src)));
     } else if (src instanceof OElement) {
       source = new OInternalResultSet();
       ((OInternalResultSet) source).add(new OResultInternal((OElement) src));

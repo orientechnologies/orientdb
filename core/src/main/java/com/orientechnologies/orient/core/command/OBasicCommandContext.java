@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -121,8 +122,13 @@ public class OBasicCommandContext implements OCommandContext {
         else result = getVariableFromParentHierarchy(firstPart);
       }
     }
-
-    if (pos > -1) result = ODocumentHelper.getFieldValue(result, lastPart, this);
+    if (pos > -1) {
+      if (result instanceof OResult) {
+        result = ODocumentHelper.getFieldValue(((OResult) result).toElement(), lastPart, this);
+      } else {
+        result = ODocumentHelper.getFieldValue(result, lastPart, this);
+      }
+    }
 
     return result != null ? resolveValue(result) : iDefault;
   }
