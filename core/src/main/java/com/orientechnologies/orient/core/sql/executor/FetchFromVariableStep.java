@@ -4,10 +4,10 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OFromItem;
-import java.util.Collections;
 
 /** Created by luigidellaquila on 22/07/16. */
 public class FetchFromVariableStep extends AbstractExecutionStep {
@@ -34,12 +34,12 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
       source =
           OExecutionStream.resultIterator(((OResultSet) src).stream().iterator())
               .onClose((context) -> ((OResultSet) src).close());
+    } else if (src instanceof ORID) {
+      source = OExecutionStream.singleton(new OResultInternal(ctx.getDatabase().load((ORID) src)));
     } else if (src instanceof OElement) {
-      source =
-          OExecutionStream.resultIterator(
-              Collections.singleton((OResult) new OResultInternal((OElement) src)).iterator());
+      source = OExecutionStream.singleton(new OResultInternal((OElement) src));
     } else if (src instanceof OResult) {
-      source = OExecutionStream.resultIterator(Collections.singleton((OResult) src).iterator());
+      source = OExecutionStream.singleton((OResult) src);
     } else if (src instanceof Iterable) {
       source = OExecutionStream.iterator(((Iterable) src).iterator());
     } else {
