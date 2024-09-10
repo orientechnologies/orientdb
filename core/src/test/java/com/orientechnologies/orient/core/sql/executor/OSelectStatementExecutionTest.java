@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
+import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -4728,6 +4729,72 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       OResult item = rs.next();
       Assert.assertEquals((long) item.getProperty("count"), 1L);
       Assert.assertFalse(rs.hasNext());
+    }
+  }
+
+  @Test
+  public void traverseFromVariable() {
+
+    db.command("CREATE CLASS Person EXTENDS V");
+    db.command("CREATE CLASS Pet EXTENDS V");
+    db.command("CREATE CLASS Owns EXTENDS E");
+
+    OVertex person = db.newVertex("Person");
+    person.setProperty("name", "John Doe");
+    db.save(person);
+
+    OVertex pet = db.newVertex("Pet");
+    pet.setProperty("name", "Buddy");
+    db.save(pet);
+
+    OEdge ownsEdge = person.addEdge(pet, "Owns");
+    db.save(ownsEdge);
+
+    String query =
+        "select $path.out('Owns')[0].name as name from ( "
+            + "select $current as person "
+            + " from (select from Person where name = 'John Doe') ) "
+            + " let $path = (traverse out('Owns') from $current.person)";
+    try (OResultSet resultSet = db.query(query)) {
+      Assert.assertTrue(resultSet.hasNext());
+
+      while (resultSet.hasNext()) {
+        OResult result = resultSet.next();
+        Assert.assertEquals((String) result.getProperty("name"), "Buddy");
+      }
+    }
+  }
+
+  @Test
+  public void variableProjectionTraverse() {
+    db.command("CREATE CLASS Person EXTENDS V");
+    db.command("CREATE CLASS Pet EXTENDS V");
+    db.command("CREATE CLASS Owns EXTENDS E");
+
+    OVertex person = db.newVertex("Person");
+    person.setProperty("name", "John Doe");
+    db.save(person);
+
+    OVertex pet = db.newVertex("Pet");
+    pet.setProperty("name", "Buddy");
+    db.save(pet);
+
+    OEdge ownsEdge = person.addEdge(pet, "Owns");
+    db.save(ownsEdge);
+    String query =
+        "select $path1.name as name from ( "
+            + "select $current as person "
+            + " from (select from Person where name = 'John Doe')"
+            + ")"
+            + "let $path = (traverse out('Owns') from $current),"
+            + "    $path1 = $path.out('Owns')";
+    try (OResultSet resultSet = db.query(query)) {
+      Assert.assertTrue(resultSet.hasNext());
+
+      while (resultSet.hasNext()) {
+        OResult result = resultSet.next();
+        Assert.assertEquals((List) result.getProperty("name"), Arrays.asList("Buddy"));
+      }
     }
   }
 }
