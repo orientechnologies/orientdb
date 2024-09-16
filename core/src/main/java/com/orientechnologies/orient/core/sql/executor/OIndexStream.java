@@ -6,5 +6,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import java.util.stream.Stream;
 
 public interface OIndexStream {
-  public Stream<ORawPair<Object, ORID>> start(OCommandContext ctx);
+  Stream<ORawPair<Object, ORID>> start(OCommandContext ctx);
+
+  OIndexStreamStat indexStats();
 }

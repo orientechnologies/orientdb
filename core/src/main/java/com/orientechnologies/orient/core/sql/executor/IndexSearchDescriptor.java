@@ -187,7 +187,7 @@ public class IndexSearchDescriptor {
    * argument is [a] and the second argument is [a, b]
    *
    * @param item
-   * @param desc
+   * @param descriptors
    * @return
    */
   public boolean isPrefixOf(IndexSearchDescriptor other) {

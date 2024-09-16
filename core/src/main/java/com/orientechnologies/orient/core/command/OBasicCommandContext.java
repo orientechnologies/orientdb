@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -27,11 +29,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.executor.OExecutionStep;
+import com.orientechnologies.orient.core.sql.executor.OIndexStreamStat;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -69,6 +73,7 @@ public class OBasicCommandContext implements OCommandContext {
   protected Set<Object> uniqueResult = new HashSet<Object>();
   private Map<OExecutionStep, OStepStats> stepStats = new IdentityHashMap<>();
   private LinkedList<OStepStats> currentStepStats = new LinkedList<>();
+  private boolean indexStats = true;
 
   public OBasicCommandContext() {
     this.database = ODatabaseRecordThreadLocal.instance().getIfDefined();
@@ -454,5 +459,43 @@ public class OBasicCommandContext implements OCommandContext {
   @Override
   public OStepStats getStats(OExecutionStep step) {
     return stepStats.get(step);
+  }
+
+  public void updateProfilerIndex(List<OIndexStreamStat> stats) {
+    final OProfiler profiler = Orient.instance().getProfiler();
+    if (profiler.isRecording()) {
+      if (indexStats) {
+        profiler.updateCounter(
+            profiler.getDatabaseMetric(getDatabase().getName(), "query.indexUsed"),
+            "Used index in query",
+            +1);
+      }
+      for (OIndexStreamStat stat : stats) {
+
+        final int paramCount = stat.getDefinitionKeySize();
+        if (paramCount > 1) {
+          final String profiler_prefix =
+              profiler.getDatabaseMetric(getDatabase().getName(), "query.compositeIndexUsed");
+          if (indexStats) {
+            profiler.updateCounter(profiler_prefix, "Used composite index in query", +1);
+          }
+          profiler.updateCounter(
+              profiler_prefix + "." + paramCount,
+              "Used composite index in query with " + paramCount + " params",
+              +1);
+          profiler.updateCounter(
+              profiler_prefix + "." + paramCount + '.' + stat.getKeySize(),
+              "Used composite index in query with "
+                  + paramCount
+                  + " params and "
+                  + stat.getKeySize()
+                  + " keys",
+              +1);
+        }
+      }
+      if (indexStats) {
+        indexStats = false;
+      }
+    }
   }
 }

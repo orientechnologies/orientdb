@@ -1,11 +1,13 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
+import java.util.Collections;
 
 /**
  * Returns the number of records contained in an index
@@ -32,7 +34,24 @@ public class CountFromIndexStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    return OExecutionStream.produce(this::produce).limit(1);
+    return OExecutionStream.produce(this::produce)
+        .limit(1)
+        .onClose(
+            (OCommandContext context) -> {
+              final ODatabaseDocumentInternal database =
+                  (ODatabaseDocumentInternal) ctx.getDatabase();
+              OIndexInternal idx =
+                  database
+                      .getMetadata()
+                      .getIndexManagerInternal()
+                      .getIndex(database, target.getIndexName())
+                      .getInternal();
+              ((OBasicCommandContext) context)
+                  .updateProfilerIndex(
+                      Collections.singletonList(
+                          new OIndexStreamStat(
+                              target.getIndexName(), idx.getDefinition().getParamCount(), 0)));
+            });
   }
 
   private OResult produce(OCommandContext ctx) {

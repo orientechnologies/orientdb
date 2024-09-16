@@ -23,4 +23,8 @@ class OAllIndexStream implements OIndexStream {
       return index.descStream();
     }
   }
+
+  public OIndexStreamStat indexStats() {
+    return new OIndexStreamStat(index.getName(), index.getDefinition().getParamCount(), 0);
+  }
 }

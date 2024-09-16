@@ -18,4 +18,8 @@ public class ONullIndexStream implements OIndexStream {
     final Stream<ORID> stream = index.getRids(null);
     return stream.map((rid) -> new ORawPair<>(null, rid));
   }
+
+  public OIndexStreamStat indexStats() {
+    return new OIndexStreamStat(index.getName(), index.getDefinition().getParamCount(), 2);
+  }
 }
