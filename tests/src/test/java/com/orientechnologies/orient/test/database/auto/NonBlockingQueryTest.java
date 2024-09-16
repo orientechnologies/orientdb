@@ -2,9 +2,8 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.query.OSQLNonBlockingQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -46,9 +45,9 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
     db.commit();
     ODatabaseDocumentInternal newDb = db.copy();
 
-    List<ODocument> result = newDb.query(new OSQLSynchQuery<ODocument>("Select from Foo"));
+    List<OResult> result = newDb.query("Select from Foo").stream().toList();
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(result.get(0).field("a"), "bar");
+    Assert.assertEquals(result.get(0).getProperty("a"), "bar");
     newDb.close();
   }
 

@@ -86,6 +86,7 @@ public class AutoShardingTest extends DocumentDBBaseTest {
       Assert.assertTrue(resultSet.hasNext());
       final OResult sqlRecord = resultSet.next();
       Assert.assertEquals(sqlRecord.getIdentity().get().getClusterId(), selectedClusterId);
+      resultSet.close();
     }
   }
 

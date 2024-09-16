@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -132,28 +131,30 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
 
       final ODocument doc1 = new ODocument("IndexInSubclassesTestChild1");
       doc1.field("name", "name" + i);
-      doc1.save();
+      database.save(doc1);
 
       final ODocument doc2 = new ODocument("IndexInSubclassesTestChild2");
       doc2.field("name", "name" + i);
-      doc2.save();
+      database.save(doc2);
       if (i % 100 == 0) {
         database.commit();
       }
     }
     database.commit();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+    List<OResult> result =
+        database
+            .query(
                 "select from IndexInSubclassesTestBase where name > 'name9995' and name <"
-                    + " 'name9999' order by name ASC"));
+                    + " 'name9999' order by name ASC")
+            .stream()
+            .toList();
     Assert.assertEquals(result.size(), 6);
-    String lastName = result.get(0).field("name");
+    String lastName = result.get(0).getProperty("name");
 
     for (int i = 1; i < result.size(); i++) {
-      ODocument current = result.get(i);
-      String currentName = current.field("name");
+      OResult current = result.get(i);
+      String currentName = current.getProperty("name");
       Assert.assertTrue(lastName.compareTo(currentName) <= 0);
       lastName = currentName;
     }
@@ -163,15 +164,17 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
     Assert.assertEquals(reverted < 0 ? 0 : reverted, indexUsageReverted);
 
     result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+        database
+            .query(
                 "select from IndexInSubclassesTestBase where name > 'name9995' and name <"
-                    + " 'name9999' order by name DESC"));
+                    + " 'name9999' order by name DESC")
+            .stream()
+            .toList();
     Assert.assertEquals(result.size(), 6);
-    lastName = result.get(0).field("name");
+    lastName = result.get(0).getProperty("name");
     for (int i = 1; i < result.size(); i++) {
-      ODocument current = result.get(i);
-      String currentName = current.field("name");
+      OResult current = result.get(i);
+      String currentName = current.getProperty("name");
       Assert.assertTrue(lastName.compareTo(currentName) >= 0);
       lastName = currentName;
     }
@@ -199,31 +202,33 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
     for (int i = 0; i < 10000; i++) {
       final ODocument doc0 = new ODocument("IndexInSubclassesTestBase");
       doc0.field("name", "name" + i);
-      doc0.save();
+      database.save(doc0);
 
       final ODocument doc1 = new ODocument("IndexInSubclassesTestChild1");
       doc1.field("name", "name" + i);
-      doc1.save();
+      database.save(doc1);
 
       final ODocument doc2 = new ODocument("IndexInSubclassesTestChild2");
       doc2.field("name", "name" + i);
-      doc2.save();
+      database.save(doc2);
       if (i % 100 == 0) {
         database.commit();
       }
     }
     database.commit();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+    List<OResult> result =
+        database
+            .query(
                 "select from IndexInSubclassesTestBase where name > 'name9995' and name <"
-                    + " 'name9999' order by name ASC"));
+                    + " 'name9999' order by name ASC")
+            .stream()
+            .toList();
     Assert.assertTrue(result.size() == 9);
-    String lastName = result.get(0).field("name");
+    String lastName = result.get(0).getProperty("name");
     for (int i = 1; i < result.size(); i++) {
-      ODocument current = result.get(i);
-      String currentName = current.field("name");
+      OResult current = result.get(i);
+      String currentName = current.getProperty("name");
       Assert.assertTrue(lastName.compareTo(currentName) <= 0);
       lastName = currentName;
     }
@@ -234,15 +239,17 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
     Assert.assertEquals(reverted < 0 ? 0 : reverted, indexUsageReverted);
 
     result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+        database
+            .query(
                 "select from IndexInSubclassesTestBase where name > 'name9995' and name <"
-                    + " 'name9999' order by name DESC"));
+                    + " 'name9999' order by name DESC")
+            .stream()
+            .toList();
     Assert.assertTrue(result.size() == 9);
-    lastName = result.get(0).field("name");
+    lastName = result.get(0).getProperty("name");
     for (int i = 1; i < result.size(); i++) {
-      ODocument current = result.get(i);
-      String currentName = current.field("name");
+      OResult current = result.get(i);
+      String currentName = current.getProperty("name");
       Assert.assertTrue(lastName.compareTo(currentName) >= 0);
       lastName = currentName;
     }
@@ -260,11 +267,11 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
 
       final ODocument doc1 = new ODocument("IndexInSubclassesTestChild1Fail");
       doc1.field("name", "name" + i);
-      doc1.save();
+      database.save(doc1);
 
       final ODocument doc2 = new ODocument("IndexInSubclassesTestChild2Fail");
       doc2.field("name", "name" + i);
-      doc2.save();
+      database.save(doc2);
       if (i % 100 == 0) {
         database.commit();
       }
@@ -308,7 +315,7 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
     for (int i = 0; i < 2; i++) {
       final ODocument doc1 = new ODocument("GenericCrash");
       doc1.field("name", "foo");
-      doc1.save();
+      database.save(doc1);
     }
 
     // crashed with OIOException, issue #3632

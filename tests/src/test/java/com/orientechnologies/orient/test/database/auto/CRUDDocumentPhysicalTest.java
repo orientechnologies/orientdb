@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -637,28 +638,24 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testCreate")
   public void nonPolymorphicQuery() {
-    final ORecordAbstract newAccount =
-        new ODocument("Account").field("name", "testInheritanceName").save();
+    final ORecord newAccount = new ODocument("Account").field("name", "testInheritanceName");
+    database.save(newAccount);
 
-    @SuppressWarnings("deprecation")
-    List<ODocument> allResult =
-        database.query(new OSQLSynchQuery<ODocument>("select from Account"));
-    @SuppressWarnings("deprecation")
-    List<ODocument> superClassResult =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select from Account where @class = 'Account'"));
-    @SuppressWarnings("deprecation")
-    List<ODocument> subClassResult =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select from Company where @class = 'Company'"));
+    List<OResult> allResult = database.query("select from Account").stream().toList();
+    List<ORID> superClassResult =
+        database.query("select from Account where @class = 'Account'").stream()
+            .map((x) -> x.getIdentity().get())
+            .toList();
+    List<OResult> subClassResult =
+        database.query("select from Company where @class = 'Company'").stream().toList();
 
     Assert.assertTrue(allResult.size() != 0);
     Assert.assertTrue(superClassResult.size() != 0);
     Assert.assertTrue(subClassResult.size() != 0);
 
     // VERIFY ALL THE SUBCLASS RESULT ARE NOT CONTAINED IN SUPERCLASS RESULT
-    for (ODocument d : subClassResult) {
-      Assert.assertFalse(superClassResult.contains(d));
+    for (OResult d : subClassResult) {
+      Assert.assertFalse(superClassResult.contains(d.getIdentity().get()));
     }
 
     HashSet<ODocument> browsed = new HashSet<>();
@@ -667,7 +664,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       browsed.add(d);
     }
 
-    newAccount.delete();
+    database.delete(newAccount);
   }
 
   @Test(dependsOnMethods = "cleanAll")
@@ -844,8 +841,10 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   }
 
   public void testUpdateNoVersionCheck() {
-    @SuppressWarnings("deprecation")
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
+    List<ODocument> result =
+        database.query("select from Account").stream()
+            .map((x) -> (ODocument) x.getElement().get())
+            .toList();
     ODocument doc = result.get(0);
     doc.field("name", "modified");
     int oldVersion = doc.getVersion();
@@ -854,7 +853,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     database.save(doc);
 
-    doc.reload();
+    database.reload(doc);
     Assert.assertEquals(doc.getVersion(), oldVersion);
     Assert.assertEquals(doc.field("name"), "modified");
   }
