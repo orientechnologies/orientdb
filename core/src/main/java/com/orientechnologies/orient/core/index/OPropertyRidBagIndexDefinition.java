@@ -90,7 +90,13 @@ public class OPropertyRidBagIndexDefinition extends OPropertyIndexDefinition
 
   @Override
   public Object createValue(final Object... params) {
-    if (!(params[0] instanceof ORidBag)) return null;
+    if (!(params[0] instanceof ORidBag)) {
+      try {
+        return OType.convert(params[0], keyType.getDefaultJavaType());
+      } catch (Exception e) {
+        return null;
+      }
+    }
 
     final ORidBag ridBag = (ORidBag) params[0];
     final List<Object> values = new ArrayList<Object>();
