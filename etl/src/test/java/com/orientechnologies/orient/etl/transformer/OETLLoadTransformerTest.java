@@ -64,7 +64,7 @@ public class OETLLoadTransformerTest extends OETLBaseTest {
     OVertex person = db.newVertex("Person");
     person.setProperty("num", 10000);
     person.setProperty("name", "FirstName");
-    person.save();
+    db.save(person);
     db.commit();
     db.close();
 
@@ -175,23 +175,23 @@ public class OETLLoadTransformerTest extends OETLBaseTest {
 
     OVertex vBK = db.newVertex("SupplyChainNode");
     vBK.setProperty("id", "BK");
-    vBK.save();
+    db.save(vBK);
 
     OVertex vDL = db.newVertex("SupplyChainNode");
     vDL.setProperty("id", "DL");
-    vDL.save();
+    db.save(vDL);
 
     OVertex v1431 = db.newVertex("SupplyChainNode");
     v1431.setProperty("id", "1431");
-    v1431.save();
+    db.save(v1431);
 
     OVertex v1432 = db.newVertex("SupplyChainNode");
     v1432.setProperty("id", "1432");
-    v1432.save();
+    db.save(v1432);
 
     OVertex v1438 = db.newVertex("SupplyChainNode");
     v1438.setProperty("id", "1438");
-    v1438.save();
+    db.save(v1438);
 
     db.commit();
     db.close();

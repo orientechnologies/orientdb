@@ -118,7 +118,7 @@ public class OrientDbCreationHelper {
         articles.add(article);
       }
 
-      author.save();
+      db.save(author);
     }
   }
 
@@ -215,6 +215,7 @@ public class OrientDbCreationHelper {
       database.save(recordChunk);
       binaryChuncks.add(recordChunk.getIdentity());
     }
+    binaryStream.close();
 
     return binaryChuncks;
   }

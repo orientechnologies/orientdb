@@ -484,7 +484,7 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         // FORMAT FLOAT LOCALE AGNOSTIC
         final String cmd =
-            String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
+            String.format("alter class `%s` oversize %s", name, Float.valueOf(overSize).toString());
         owner.sendCommand(database, cmd);
       } else setOverSizeInternal(database, overSize);
     } finally {

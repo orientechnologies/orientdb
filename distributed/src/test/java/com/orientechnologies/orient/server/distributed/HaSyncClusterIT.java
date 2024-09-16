@@ -108,7 +108,7 @@ public class HaSyncClusterIT extends AbstractServerClusterTest {
               @Override
               public Long call() throws Exception {
 
-                Long countRecors = new Long(0);
+                Long countRecors = Long.valueOf(0);
 
                 ODatabaseDocument db =
                     server

@@ -65,8 +65,8 @@ public class LuceneContextTest extends BaseLuceneTest {
                 + " \"(title:man)\" limit 1");
 
     OResult doc = docs.next();
-    Assert.assertEquals(new Long(14), doc.<Long>getProperty("$totalHits"));
-    Assert.assertEquals(new Long(14), doc.<Long>getProperty("$Song_title_totalHits"));
+    Assert.assertEquals(Long.valueOf(14), doc.<Long>getProperty("$totalHits"));
+    Assert.assertEquals(Long.valueOf(14), doc.<Long>getProperty("$Song_title_totalHits"));
     assertFalse(docs.hasNext());
   }
 }

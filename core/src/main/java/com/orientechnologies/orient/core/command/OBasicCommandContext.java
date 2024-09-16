@@ -242,7 +242,7 @@ public class OBasicCommandContext implements OCommandContext {
     init();
     Long value = (Long) variables.get(iName);
     if (value == null) value = iValue;
-    else value = new Long(value.longValue() + iValue);
+    else value = Long.valueOf(value.longValue() + iValue);
     variables.put(iName, value);
     return value.longValue();
   }
