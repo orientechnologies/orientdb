@@ -92,7 +92,12 @@ public class OPropertyRidBagIndexDefinition extends OPropertyIndexDefinition
   public Object createValue(final Object... params) {
     if (!(params[0] instanceof ORidBag)) {
       try {
-        return OType.convert(params[0], keyType.getDefaultJavaType());
+        Object value = OType.convert(params[0], keyType.getDefaultJavaType());
+        if (value != null && keyType.getDefaultJavaType().isAssignableFrom(value.getClass())) {
+          return value;
+        } else {
+          return null;
+        }
       } catch (Exception e) {
         return null;
       }
