@@ -5,8 +5,12 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
+import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,6 +18,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OContainsCondition extends OBooleanExpression {
@@ -451,6 +456,66 @@ public class OContainsCondition extends OBooleanExpression {
       return false;
     }
     return true;
+  }
+
+  @Override
+  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
+    if (left.isBaseIdentifier()) {
+      if (info.getField().equals(left.getDefaultAlias().getStringValue())) {
+        if (right.isEarlyCalculated(info.getCtx())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    Optional<OPath> path = left.getPath();
+    if (path.isPresent()) {
+      if (right != null && right.isEarlyCalculated(ctx)) {
+        Object value = right.execute((OResult) null, ctx);
+        return info.findExactIndex(path.get(), value, ctx);
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  @Override
+  public OExpression resolveKeyFrom(OBinaryCondition additional) {
+    if (right != null) {
+      return right;
+    } else {
+      throw new UnsupportedOperationException("Cannot execute index query with " + this);
+    }
+  }
+
+  @Override
+  public OExpression resolveKeyTo(OBinaryCondition additional) {
+    if (right != null) {
+      return right;
+    } else {
+      throw new UnsupportedOperationException("Cannot execute index query with " + this);
+    }
+  }
+
+  @Override
+  public boolean isKeyFromIncluded(OBinaryCondition additional) {
+    if (additional != null && additional.getOperator() != null) {
+      return additional.getOperator().isGreaterInclude();
+    } else {
+      return true;
+    }
+  }
+
+  @Override
+  public boolean isKeyToIncluded(OBinaryCondition additional) {
+    if (additional != null && additional.getOperator() != null) {
+      return additional.getOperator().isLessInclude();
+    } else {
+      return true;
+    }
   }
 }
 /* JavaCC - OriginalChecksum=bad1118296ea74860e88d66bfe9fa222 (do not edit this line) */

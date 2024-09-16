@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 import com.orientechnologies.orient.core.sql.parser.OCollection;
+import com.orientechnologies.orient.core.sql.parser.OContainsCondition;
 import com.orientechnologies.orient.core.sql.parser.OContainsKeyOperator;
 import com.orientechnologies.orient.core.sql.parser.OContainsValueCondition;
 import com.orientechnologies.orient.core.sql.parser.OContainsValueOperator;
@@ -546,7 +547,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
             && !(((OBinaryCondition) exp).getOperator() instanceof OContainsValueOperator)) {
           return false;
         }
-      } else if (!(exp instanceof OInCondition)) {
+      } else if (!(exp instanceof OInCondition)
+          && !(exp instanceof OContainsValueCondition)
+          && !(exp instanceof OContainsCondition)) {
         return false;
       } // OK
     }
