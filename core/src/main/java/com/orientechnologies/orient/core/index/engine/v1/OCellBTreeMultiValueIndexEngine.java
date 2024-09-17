@@ -527,7 +527,7 @@ public final class OCellBTreeMultiValueIndexEngine
       final Object firstKey = mvTree.firstKey();
       final Object lastKey = mvTree.lastKey();
 
-      int counter = 0;
+      long counter = 0;
 
       try (Stream<ORID> oridStream = mvTree.get(null)) {
         if (oridStream.iterator().hasNext()) {
