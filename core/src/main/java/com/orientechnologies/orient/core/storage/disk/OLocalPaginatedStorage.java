@@ -245,7 +245,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected Path checkAndCleanPath(String zipPath) {
-    Path rootDirectory = getStoragePath();
+    Path rootDirectory = getStoragePath().normalize();
     Path zipEntryPath = rootDirectory.resolve(zipPath).normalize();
 
     if (!zipEntryPath.startsWith(rootDirectory)) {
