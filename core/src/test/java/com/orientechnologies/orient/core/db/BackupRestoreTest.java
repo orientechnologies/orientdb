@@ -10,8 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.junit.AfterClass;
-import org.junit.Ignore;
+import org.junit.After;
 import org.junit.Test;
 
 public class BackupRestoreTest {
@@ -21,8 +20,8 @@ public class BackupRestoreTest {
 
   public final File backupFile = new File(basePath, "backup.zip");
 
-  @AfterClass
-  public static void clean() throws IOException {
+  @After
+  public void clean() throws IOException {
     OFileUtils.deleteRecursively(new File(basePath));
   }
 
@@ -72,7 +71,6 @@ public class BackupRestoreTest {
   }
 
   @Test
-  @Ignore
   public void testBackupLocalToMemory() throws IOException {
     try (OrientDB db = new OrientDB("embedded:" + basePath, OrientDBConfig.defaultConfig())) {
       db.execute("create database testdb plocal users (admin identified by 'adminpwd' role admin) ")
@@ -90,7 +88,6 @@ public class BackupRestoreTest {
   }
 
   @Test
-  @Ignore
   public void testBackupMemoryToLocal() throws IOException {
     try (OrientDB db = new OrientDB("embedded:" + basePath, OrientDBConfig.defaultConfig())) {
       db.execute("create database testdb memory users (admin identified by 'adminpwd' role admin) ")

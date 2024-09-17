@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.cache.local;
 
-final class NameFileIdEntry {
+public final class NameFileIdEntry {
   private final String name;
   private final int fileId;
   private final String fileSystemName;

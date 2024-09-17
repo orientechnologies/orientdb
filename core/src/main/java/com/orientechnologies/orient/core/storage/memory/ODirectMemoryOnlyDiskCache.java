@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.memory;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -31,13 +32,18 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.local.NameFileIdEntry;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -592,6 +598,22 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   @Override
   public final String restoreFileById(final long fileId) {
     return null;
+  }
+
+  public void writeEntries(OutputStream entries) throws IOException {
+    metadataLock.lock();
+    try {
+      for (Entry<String, Integer> entry : fileNameIdMap.entrySet()) {
+        String highName = entry.getKey();
+        int fileId = extractFileId(entry.getValue());
+        String fsName = OWOWCache.createInternalFileName(highName, fileId);
+        NameFileIdEntry x = new NameFileIdEntry(highName, fileId, fsName);
+        ByteBuffer buffer = OWOWCache.serializeEntry(x, OStringSerializer.INSTANCE);
+        entries.write(buffer.array());
+      }
+    } finally {
+      metadataLock.unlock();
+    }
   }
 
   @Override

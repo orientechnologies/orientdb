@@ -33,6 +33,8 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
+import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
@@ -50,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
@@ -208,8 +211,8 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
           OException.wrapException(new OStorageException("Error on memory file backup"), e);
         } finally {
           try {
-            zipOutputStream.finish();
             zipOutputStream.flush();
+            zipOutputStream.finish();
           } catch (IOException e) {
             logger.warn("Failed to flush resource " + zipOutputStream);
           }
@@ -229,20 +232,28 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
     final Map<String, Long> files = writeCache.files();
     final int pageSize = writeCache.pageSize();
+    stream.putNextEntry(new ZipEntry(OWOWCache.NAME_ID_MAP_V3));
+    ((ODirectMemoryOnlyDiskCache) writeCache).writeEntries(stream);
+    stream.closeEntry();
 
     for (Map.Entry<String, Long> entry : files.entrySet()) {
       final String fileName = entry.getKey();
 
       long fileId = entry.getValue();
       int internalId = writeCache.internalFileId(fileId);
-      String entryName = OWOWCache.createInternalFileName(fileName, internalId);
+      String entryName =
+          OWOWCache.createInternalFileName(fileName, OAbstractWriteCache.extractFileId(fileId));
       fileId = writeCache.externalFileId(internalId);
 
       final long filledUpTo = writeCache.getFilledUpTo(fileId);
 
-      final ZipEntry zipEntry = new ZipEntry(entryName);
-
-      stream.putNextEntry(zipEntry);
+      stream.putNextEntry(new ZipEntry(entryName));
+      final byte[] header = new byte[1024];
+      Arrays.fill(header, (byte) 0);
+      if (aesKey != null) {
+        doEncryptionDecryption(Cipher.ENCRYPT_MODE, aesKey, fileId, 0, header, encryptionIv);
+      }
+      stream.write(header);
 
       for (int pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
         final OCacheEntry cacheEntry =
@@ -251,7 +262,14 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
         try {
           final byte[] data = new byte[pageSize];
           ODurablePage.getPageData(cacheEntry.getCachePointer().getBuffer(), data, 0, pageSize);
-
+          OChecksumMode mode =
+              (OChecksumMode)
+                  getConfiguration()
+                      .getContextConfiguration()
+                      .getValue(OGlobalConfiguration.STORAGE_CHECKSUM_MODE);
+          ByteBuffer bufferWrap = ByteBuffer.wrap(data);
+          bufferWrap.order(ByteOrder.nativeOrder());
+          OWOWCache.addMagicChecksumBackup(internalId, pageIndex, mode, bufferWrap);
           if (aesKey != null) {
             doEncryptionDecryption(
                 Cipher.ENCRYPT_MODE, aesKey, fileId, pageIndex, data, encryptionIv);
@@ -265,6 +283,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
         }
       }
 
+      stream.flush();
       stream.closeEntry();
     }
   }
@@ -510,7 +529,8 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
           fileId = writeCache.externalFileId(internalId);
         }
         fileId = readCache.addFile(fileName, fileId, writeCache);
-
+        // Skip Header
+        zipInputStream.read(new byte[1024]);
         int pageIndex = 0;
         while (true) {
           final byte[] data = new byte[pageSize];

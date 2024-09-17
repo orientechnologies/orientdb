@@ -103,11 +103,9 @@ public final class AsyncFile implements OFile {
       fileChannel.truncate(currentSize + HEADER_SIZE);
 
       logger.warnNoDb(
-          "Data page in file {} was partially written and will be truncated, "
-              + "initial size {}, truncated size {}",
-          osFile,
-          initialSize,
-          currentSize);
+          "Data page in file %s was partially written and will be truncated, "
+              + "initial size %s, truncated size %s",
+          osFile, initialSize, currentSize + HEADER_SIZE);
     }
 
     if (size.get() < 0) {

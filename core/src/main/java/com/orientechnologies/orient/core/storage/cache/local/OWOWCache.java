@@ -183,7 +183,7 @@ public final class OWOWCache extends OAbstractWriteCache
    * information is wrapped by XX_HASH code which followed by content length, so any damaged records
    * are filtered out during loading of storage.
    */
-  private static final String NAME_ID_MAP_V3 = "name_id_map_v3" + NAME_ID_MAP_EXTENSION;
+  public static final String NAME_ID_MAP_V3 = "name_id_map_v3" + NAME_ID_MAP_EXTENSION;
 
   /**
    * Name of file temporary which contains third version of binary format. Temporary file is used to
@@ -2044,7 +2044,7 @@ public final class OWOWCache extends OAbstractWriteCache
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
-          final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
+          final Path path = storagePath.resolve(idFileNameMap.get(nameIdEntry.getValue()));
           final AsyncFile file = new AsyncFile(path, pageSize, this.executor);
 
           if (file.exists()) {
@@ -2347,6 +2347,19 @@ public final class OWOWCache extends OAbstractWriteCache
   private void writeNameIdEntry(
       final FileChannel nameIdMapHolder, final NameFileIdEntry nameFileIdEntry, final boolean sync)
       throws IOException {
+    final ByteBuffer serializedRecord = serializeEntry(nameFileIdEntry, stringSerializer);
+
+    OIOUtils.writeByteBuffer(serializedRecord, nameIdMapHolder, nameIdMapHolder.size());
+    //noinspection ResultOfMethodCallIgnored
+    nameIdMapHolder.write(serializedRecord);
+
+    if (sync) {
+      nameIdMapHolder.force(true);
+    }
+  }
+
+  public static ByteBuffer serializeEntry(
+      final NameFileIdEntry nameFileIdEntry, final OBinarySerializer<String> stringSerializer) {
     final int xxHashSize = 8;
     final int recordLenSize = 4;
 
@@ -2386,14 +2399,7 @@ public final class OWOWCache extends OAbstractWriteCache
     serializedRecord.putLong(0, xxHash);
 
     serializedRecord.position(0);
-
-    OIOUtils.writeByteBuffer(serializedRecord, nameIdMapHolder, nameIdMapHolder.size());
-    //noinspection ResultOfMethodCallIgnored
-    nameIdMapHolder.write(serializedRecord);
-
-    if (sync) {
-      nameIdMapHolder.force(true);
-    }
+    return serializedRecord;
   }
 
   private void removeCachedPages(final int fileId) {
@@ -2542,6 +2548,27 @@ public final class OWOWCache extends OAbstractWriteCache
               ? MAGIC_NUMBER_WITHOUT_CHECKSUM
               : MAGIC_NUMBER_WITH_CHECKSUM);
     }
+  }
+
+  public static void addMagicChecksumBackup(
+      final int intId, final int pageIndex, OChecksumMode checksumMode, final ByteBuffer buffer) {
+    assert buffer.order() == ByteOrder.nativeOrder();
+
+    if (checksumMode != OChecksumMode.Off) {
+      buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
+      final CRC32 crc32 = new CRC32();
+      crc32.update(buffer);
+      final int computedChecksum = (int) crc32.getValue();
+
+      buffer.position(CHECKSUM_OFFSET);
+      buffer.putInt(computedChecksum);
+    }
+
+    buffer.putLong(
+        MAGIC_NUMBER_OFFSET,
+        checksumMode == OChecksumMode.Off
+            ? MAGIC_NUMBER_WITHOUT_CHECKSUM
+            : MAGIC_NUMBER_WITH_CHECKSUM);
   }
 
   private void doEncryptionDecryption(
