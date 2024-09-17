@@ -194,6 +194,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -6213,37 +6214,40 @@ public abstract class OAbstractPaginatedStorage
 
       entryLoop:
       while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-        if (zipEntry.getName().equals(IV_NAME)) {
+
+        String zipPath = zipEntry.getName();
+        String fileName = checkAndCleanPath(zipPath).toString();
+
+        if (fileName.equals(IV_NAME)) {
           walIv = restoreIv(zipInputStream);
           continue;
         }
 
-        if (zipEntry.getName().equals(ENCRYPTION_IV)) {
+        if (fileName.equals(ENCRYPTION_IV)) {
           encryptionIv = restoreEncryptionIv(zipInputStream);
           continue;
         }
 
-        if (zipEntry.getName().equals(CONF_ENTRY_NAME)) {
+        if (fileName.equals(CONF_ENTRY_NAME)) {
           replaceConfiguration(zipInputStream);
 
           continue;
         }
 
-        if (zipEntry.getName().equalsIgnoreCase("database_instance.uuid")) {
+        if (fileName.equalsIgnoreCase("database_instance.uuid")) {
           continue;
         }
 
-        if (zipEntry.getName().equals(CONF_UTF_8_ENTRY_NAME)) {
+        if (fileName.equals(CONF_UTF_8_ENTRY_NAME)) {
           replaceConfiguration(zipInputStream);
 
           continue;
         }
 
-        if (zipEntry
-            .getName()
+        if (fileName
             .toLowerCase(serverLocale)
             .endsWith(CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION)) {
-          final String walName = zipEntry.getName();
+          final String walName = fileName;
           final int segmentIndex =
               walName.lastIndexOf(
                   ".", walName.length() - CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION.length() - 1);
@@ -6268,10 +6272,10 @@ public abstract class OAbstractPaginatedStorage
         final long expectedFileId = OLongSerializer.INSTANCE.deserialize(binaryFileId, 0);
         long fileId;
 
-        if (!writeCache.exists(zipEntry.getName())) {
-          fileId = readCache.addFile(zipEntry.getName(), expectedFileId, writeCache);
+        if (!writeCache.exists(fileName)) {
+          fileId = readCache.addFile(fileName, expectedFileId, writeCache);
         } else {
-          fileId = writeCache.fileIdByName(zipEntry.getName());
+          fileId = writeCache.fileIdByName(fileName);
         }
 
         if (!writeCache.fileIdsAreEqual(expectedFileId, fileId))
@@ -6288,10 +6292,9 @@ public abstract class OAbstractPaginatedStorage
             final int b = zipInputStream.read(data, rb, data.length - rb);
 
             if (b == -1) {
-              if (rb > 0)
-                throw new OStorageException("Can not read data from file " + zipEntry.getName());
+              if (rb > 0) throw new OStorageException("Can not read data from file " + fileName);
               else {
-                processedFiles.add(zipEntry.getName());
+                processedFiles.add(fileName);
                 continue entryLoop;
               }
             }
@@ -6374,6 +6377,8 @@ public abstract class OAbstractPaginatedStorage
       stateLock.writeLock().unlock();
     }
   }
+
+  protected abstract Path checkAndCleanPath(String path);
 
   private byte[] restoreEncryptionIv(final ZipInputStream zipInputStream) throws IOException {
     final byte[] iv = new byte[16];

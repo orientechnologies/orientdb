@@ -244,6 +244,20 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
+  protected Path checkAndCleanPath(String zipPath) {
+    Path rootDirectory = getStoragePath();
+    Path zipEntryPath = rootDirectory.resolve(zipPath).normalize();
+
+    if (!zipEntryPath.startsWith(rootDirectory)) {
+      throw new IllegalStateException("Bad zip entry " + zipPath);
+    }
+    if (!zipEntryPath.getParent().equals(rootDirectory)) {
+      throw new IllegalStateException("Bad zip entry " + zipPath);
+    }
+    return zipEntryPath.getFileName();
+  }
+
+  @Override
   public String getType() {
     return OEngineLocalPaginated.NAME;
   }

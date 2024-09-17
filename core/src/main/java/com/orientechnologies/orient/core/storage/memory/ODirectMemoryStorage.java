@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -193,6 +194,20 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void checkBackupRunning() {}
+
+  @Override
+  protected Path checkAndCleanPath(String zipPath) {
+    Path rootDirectory = Path.of(context.getBasePath());
+    Path zipEntryPath = rootDirectory.resolve(zipPath).normalize();
+
+    if (!zipEntryPath.startsWith(rootDirectory)) {
+      throw new IllegalStateException("Bad zip entry " + zipPath);
+    }
+    if (!zipEntryPath.getParent().equals(rootDirectory)) {
+      throw new IllegalStateException("Bad zip entry " + zipPath);
+    }
+    return zipEntryPath.getFileName();
+  }
 
   @Override
   public boolean isMemory() {
