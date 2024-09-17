@@ -24,7 +24,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.context.OETLContext;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @author Gabriele Ponzi
@@ -49,7 +51,7 @@ public class OMigrationConfigManager {
     String outDBConfigPath = prepareConfigDirectoryForWriting(outOrientGraphUri, configName);
     String jsonSourcesInfo = migrationConfig.toJSON("prettyPrint");
     try {
-      OFileManager.writeFileFromText(jsonSourcesInfo, outDBConfigPath, false);
+      writeFileFromText(jsonSourcesInfo, outDBConfigPath, false);
     } catch (IOException e) {
       String mess = "";
       ((OETLContext) OETLContextWrapper.getInstance().getContext())
@@ -72,7 +74,7 @@ public class OMigrationConfigManager {
       String migrationConfig, String outOrientGraphUri, String configName) throws IOException {
 
     String outDBConfigPath = prepareConfigDirectoryForWriting(outOrientGraphUri, configName);
-    OFileManager.writeFileFromText(migrationConfig, outDBConfigPath, false);
+    writeFileFromText(migrationConfig, outDBConfigPath, false);
 
     return outDBConfigPath;
   }
@@ -113,5 +115,16 @@ public class OMigrationConfigManager {
     String outDBConfigPath = outOrientGraphUri + configurationDirectoryName + configFileName;
     outDBConfigPath = outDBConfigPath.replace("plocal:", "");
     return outDBConfigPath;
+  }
+
+  public static void writeFileFromText(String text, String outFilePath, boolean append)
+      throws IOException {
+
+    File outFile = new File(outFilePath);
+    outFile.getParentFile().mkdirs();
+    outFile.createNewFile();
+    PrintWriter out = new PrintWriter(new FileWriter(outFile, append));
+    out.println(text);
+    out.close();
   }
 }
