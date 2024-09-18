@@ -327,7 +327,7 @@ public class OrientGraphTest {
 
     graph.addVertex(T.label, "V", "name", "Foo");
 
-    Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
+    Assert.assertEquals(Long.valueOf(1), graph.traversal().V().count().toList().iterator().next());
 
     graph.drop();
   }
@@ -340,7 +340,8 @@ public class OrientGraphTest {
     try {
       graph.addVertex(T.label, "V", "name", "Foo");
 
-      Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
+      Assert.assertEquals(
+          Long.valueOf(1), graph.traversal().V().count().toList().iterator().next());
     } finally {
       graph.drop();
     }
@@ -354,7 +355,8 @@ public class OrientGraphTest {
     try {
       graph.addVertex(T.label, "V", "name", "Foo");
 
-      Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
+      Assert.assertEquals(
+          Long.valueOf(1), graph.traversal().V().count().toList().iterator().next());
     } finally {
       graph.drop();
     }
@@ -378,7 +380,8 @@ public class OrientGraphTest {
       Assert.assertEquals(true, graph.tx().isOpen());
       Assert.assertEquals(true, vertex.getRawElement().getIdentity().isNew());
       graph.tx().commit();
-      Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
+      Assert.assertEquals(
+          Long.valueOf(1), graph.traversal().V().count().toList().iterator().next());
     } finally {
       graph.drop();
     }
@@ -392,7 +395,7 @@ public class OrientGraphTest {
     OrientGraph graph = factory.getNoTx();
     graph.addVertex(T.label, "V", "name", "Foo");
 
-    Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
+    Assert.assertEquals(Long.valueOf(1), graph.traversal().V().count().toList().iterator().next());
 
     factory.drop();
   }

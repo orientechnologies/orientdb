@@ -73,7 +73,7 @@ public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
     Assert.assertEquals(true, iterator.hasNext());
     OGremlinResult result = iterator.next();
     Long count = result.getProperty("value");
-    Assert.assertEquals(new Long(2), count);
+    Assert.assertEquals(Long.valueOf(2), count);
   }
 
   @Test

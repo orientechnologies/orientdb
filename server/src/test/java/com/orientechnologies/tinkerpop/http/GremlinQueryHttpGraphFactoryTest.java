@@ -58,6 +58,6 @@ public class GremlinQueryHttpGraphFactoryTest extends BaseGremlinHttpGraphFactor
 
     Map next = res.iterator().next();
 
-    Assert.assertEquals(new Long(2).intValue(), next.get("value"));
+    Assert.assertEquals(Long.valueOf(2).intValue(), next.get("value"));
   }
 }

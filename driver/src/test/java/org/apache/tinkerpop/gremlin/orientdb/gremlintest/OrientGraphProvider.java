@@ -121,7 +121,7 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     if (id instanceof String) {
       Integer numericId;
       try {
-        numericId = new Integer(id.toString());
+        numericId = Integer.valueOf(id.toString());
       } catch (NumberFormatException e) {
         return new MockORID("Invalid id: " + id + " for " + c);
       }

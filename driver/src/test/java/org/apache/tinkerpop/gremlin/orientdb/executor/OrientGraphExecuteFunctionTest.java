@@ -78,7 +78,7 @@ public class OrientGraphExecuteFunctionTest extends OrientGraphBaseTest {
 
     Assert.assertEquals(true, gremlin.hasNext());
     Object result = gremlin.next();
-    Assert.assertEquals(new Long(2), result);
+    Assert.assertEquals(Long.valueOf(2), result);
   }
 
   @Test
