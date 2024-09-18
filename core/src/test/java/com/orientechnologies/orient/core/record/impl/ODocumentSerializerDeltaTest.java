@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -1624,12 +1625,12 @@ public class ODocumentSerializerDeltaTest {
     serializerDelta.deserialize(res, extr);
 
     assertEquals(extr.fields(), document.fields());
-    assertEquals(((List) extr.field("listStrings")).toArray(), document.field("listStrings"));
-    assertEquals(((List) extr.field("integers")).toArray(), document.field("integers"));
-    assertEquals(((List) extr.field("doubles")).toArray(), document.field("doubles"));
-    assertEquals(((List) extr.field("dates")).toArray(), document.field("dates"));
-    assertEquals(((List) extr.field("bytes")).toArray(), document.field("bytes"));
-    assertEquals(((List) extr.field("booleans")).toArray(), document.field("booleans"));
+    assertArrayEquals(((List) extr.field("listStrings")).toArray(), document.field("listStrings"));
+    assertArrayEquals(((List) extr.field("integers")).toArray(), document.field("integers"));
+    assertArrayEquals(((List) extr.field("doubles")).toArray(), document.field("doubles"));
+    assertArrayEquals(((List) extr.field("dates")).toArray(), document.field("dates"));
+    assertArrayEquals(((List) extr.field("bytes")).toArray(), document.field("bytes"));
+    assertArrayEquals(((List) extr.field("booleans")).toArray(), document.field("booleans"));
     // assertEquals(((List) extr.field("arrayNulls")).toArray(), document.field("arrayNulls"));
     // assertEquals(extr.field("listMixed"), document.field("listMixed"));
   }

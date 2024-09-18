@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.ODatabasePool;
@@ -35,7 +36,6 @@ import com.orientechnologies.orient.setup.ServerRun;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import junit.framework.Assert;
 
 /** Test distributed TX */
 public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerClusterInsertTest {
@@ -80,18 +80,18 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
 
               OEdge knows = createEdge(graph, person1, person2);
 
-              Assert.assertEquals(knows.getFrom(), person1.getIdentity());
-              Assert.assertEquals(knows.getTo(), person2.getIdentity());
+              assertEquals(knows.getFrom(), person1.getIdentity());
+              assertEquals(knows.getTo(), person2.getIdentity());
 
               graph.commit();
 
               updateVertex(graph, person1);
               checkVertex(graph, person1);
-              Assert.assertTrue(person1.getIdentity().isPersistent());
+              assertTrue(person1.getIdentity().isPersistent());
 
               updateVertex(graph, person2);
               checkVertex(graph, person2);
-              Assert.assertTrue(person2.getIdentity().isPersistent());
+              assertTrue(person2.getIdentity().isPersistent());
             } catch (Exception e) {
               graph.rollback();
               throw e;

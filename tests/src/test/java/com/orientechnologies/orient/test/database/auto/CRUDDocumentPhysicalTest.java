@@ -818,7 +818,6 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   }
 
   public void testSerialization() {
-    @SuppressWarnings("deprecation")
     ORecordSerializer current = ODatabaseDocumentAbstract.getDefaultSerializer();
     //noinspection deprecation
     ODatabaseDocumentAbstract.setDefaultSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);

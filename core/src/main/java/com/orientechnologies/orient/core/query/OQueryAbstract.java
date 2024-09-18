@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.query;
 import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 
-@SuppressWarnings("serial")
 public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract
     implements OQuery<T> {
   public OQueryAbstract() {

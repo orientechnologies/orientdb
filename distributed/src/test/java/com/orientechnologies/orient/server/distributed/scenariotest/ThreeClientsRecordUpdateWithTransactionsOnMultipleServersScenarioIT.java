@@ -102,15 +102,15 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioIT
       // retrieves record1 from server2 and server 3 and checks they're equal
       ODocument record1Server2 = retrieveRecord(serverInstance.get(1), RECORD_ID);
       assertEquals(record1Server2.getVersion(), record1Server1.getVersion());
-      assertEquals(record1Server2.field("id"), record1Server1.field("id"));
-      assertEquals(record1Server2.field("firstName"), record1Server1.field("firstName"));
-      assertEquals(record1Server2.field("lastName"), record1Server1.field("lastName"));
+      assertEquals((Object) record1Server2.field("id"), record1Server1.field("id"));
+      assertEquals((Object) record1Server2.field("firstName"), record1Server1.field("firstName"));
+      assertEquals((Object) record1Server2.field("lastName"), record1Server1.field("lastName"));
 
       ODocument record1Server3 = retrieveRecord(serverInstance.get(2), RECORD_ID);
       assertEquals(record1Server3.getVersion(), record1Server1.getVersion());
-      assertEquals(record1Server3.field("id"), record1Server1.field("id"));
-      assertEquals(record1Server3.field("firstName"), record1Server1.field("firstName"));
-      assertEquals(record1Server3.field("lastName"), record1Server1.field("lastName"));
+      assertEquals((Object) (Object) record1Server3.field("id"), record1Server1.field("id"));
+      assertEquals((Object) record1Server3.field("firstName"), record1Server1.field("firstName"));
+      assertEquals((Object) record1Server3.field("lastName"), record1Server1.field("lastName"));
 
       // gets the actual version of the record1
       int actualVersion = record1Server1.getVersion();

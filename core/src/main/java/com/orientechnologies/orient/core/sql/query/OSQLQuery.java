@@ -50,7 +50,6 @@ import java.util.Set;
  * @param <T> Record type to return.
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-@SuppressWarnings("serial")
 public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommandRequestText {
   protected String text;
 

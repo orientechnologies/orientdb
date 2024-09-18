@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.index;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -124,7 +126,7 @@ public class OSimpleKeyIndexDefinitionTest {
 
   @Test
   public void testGetKeyTypes() {
-    Assert.assertEquals(
+    assertArrayEquals(
         simpleKeyIndexDefinition.getTypes(), new OType[] {OType.INTEGER, OType.STRING});
   }
 
@@ -133,7 +135,7 @@ public class OSimpleKeyIndexDefinitionTest {
     final OSimpleKeyIndexDefinition keyIndexDefinition =
         new OSimpleKeyIndexDefinition(OType.BOOLEAN);
 
-    Assert.assertEquals(keyIndexDefinition.getTypes(), new OType[] {OType.BOOLEAN});
+    assertArrayEquals(keyIndexDefinition.getTypes(), new OType[] {OType.BOOLEAN});
   }
 
   @Test
