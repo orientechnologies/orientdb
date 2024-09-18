@@ -46,9 +46,9 @@ public class OGitHubIssuesIT extends OSingleOrientDBServerWithDatabasePerTestMet
     db.command("INSERT INTO OtherClass SET OtherCS='AbC', OtherCI='AbC';");
 
     OResultSet results = db.query("SELECT FROM OtherClass WHERE OtherCS='abc'");
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results = db.query("SELECT FROM OtherClass WHERE OtherCI='abc'");
-    assertThat(results).hasSize(8);
+    assertThat(results.stream()).hasSize(8);
 
     OClass oClassCS = db.createVertexClass("CaseSensitiveCollationIndex");
 
@@ -74,37 +74,37 @@ public class OGitHubIssuesIT extends OSingleOrientDBServerWithDatabasePerTestMet
     results =
         db.query(
             "SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND `Group` = '1' AND Name='abc'");
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     results =
         db.query(
             "SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = '1'");
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     results =
         db.query(
             "SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = '1' AND Name='abc' AND Version='1'");
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     results =
         db.query(
             "SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = '1' AND Version='1' AND Name='abc'");
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     results =
         db.query(
             "SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = '1'");
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     results =
         db.query(
             "SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND `Group` = '1' AND Version='1'");
-    assertThat(results).hasSize(1);
+    assertThat(results.stream()).hasSize(1);
     results.close();
 
     OClass oClassCI = db.createVertexClass("CaseInsensitiveCollationIndex");
@@ -139,45 +139,45 @@ public class OGitHubIssuesIT extends OSingleOrientDBServerWithDatabasePerTestMet
     results =
         db.query(
             "SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND `Group` = '1' AND Name='abc'");
-    assertThat(results).hasSize(8);
+    assertThat(results.stream()).hasSize(8);
     results.close();
 
     results =
         db.query(
             "SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = '1'");
-    assertThat(results).hasSize(8);
+    assertThat(results.stream()).hasSize(8);
     results.close();
 
     results =
         db.query(
             "SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = '1' AND Name='abc' AND Version='1'");
 
-    assertThat(results).hasSize(8);
+    assertThat(results.stream()).hasSize(8);
     results.close();
 
     results =
         db.query(
             "SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = '1' AND Version='1' AND Name='abc'");
-    assertThat(results).hasSize(8);
+    assertThat(results.stream()).hasSize(8);
     results.close();
 
     results =
         db.query(
             "SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = '1'");
-    assertThat(results).hasSize(8);
+    assertThat(results.stream()).hasSize(8);
     results.close();
 
     results =
         db.query(
             "SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND `Group` = '1' AND Version='1'");
-    assertThat(results).hasSize(8);
+    assertThat(results.stream()).hasSize(8);
     results.close();
 
     // test that Group = 1 (integer) is correctly converted to String
     results =
         db.query(
             "SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND `Group` = 1 AND Version='1'");
-    assertThat(results).hasSize(8);
+    assertThat(results.stream()).hasSize(8);
     results.close();
   }
 
@@ -264,7 +264,7 @@ public class OGitHubIssuesIT extends OSingleOrientDBServerWithDatabasePerTestMet
         db.query(
             "MATCH {class: t7265Customers, as: customer, where: (OrderedId=1)}--{Class: t7265Services, as: service} RETURN service.Name");
 
-    assertThat(results).hasSize(2);
+    assertThat(results.stream()).hasSize(2);
     results.close();
   }
 }

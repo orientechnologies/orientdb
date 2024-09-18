@@ -17,7 +17,7 @@ public class ODemoDbGroupByTestIT extends OIntegrationTestTemplate {
     OResultSet resultSet =
         db.query("SELECT count(*) FROM Orders GROUP BY OrderDate.format('yyyy')");
 
-    assertThat(resultSet).hasSize(7);
+    assertThat(resultSet.stream()).hasSize(7);
     resultSet.close();
     db.close();
   }
@@ -28,7 +28,7 @@ public class ODemoDbGroupByTestIT extends OIntegrationTestTemplate {
     OResultSet resultSet =
         db.query("SELECT count(*), OrderDate.format('yyyy') as year FROM Orders GROUP BY year");
 
-    assertThat(resultSet).hasSize(7);
+    assertThat(resultSet.stream()).hasSize(7);
     resultSet.close();
     db.close();
   }
@@ -40,7 +40,7 @@ public class ODemoDbGroupByTestIT extends OIntegrationTestTemplate {
         db.query(
             "SELECT count(*), OrderDate.format('yyyy') FROM Orders GROUP BY OrderDate.format('yyyy')");
 
-    assertThat(resultSet).hasSize(7);
+    assertThat(resultSet.stream()).hasSize(7);
     resultSet.close();
     db.close();
   }
@@ -52,7 +52,7 @@ public class ODemoDbGroupByTestIT extends OIntegrationTestTemplate {
         db.query(
             "SELECT count(*), OrderDate.format('yyyy') as year FROM Orders GROUP BY OrderDate.format('yyyy')");
 
-    assertThat(resultSet).hasSize(7);
+    assertThat(resultSet.stream()).hasSize(7);
     resultSet.close();
     db.close();
   }

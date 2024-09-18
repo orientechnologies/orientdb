@@ -25,7 +25,7 @@ public class ODemoDbFromDocumentationShortestPathsIT extends OIntegrationTestTem
                 + "  UNWIND path\n"
                 + ")");
 
-    assertThat(resultSet).hasSize(4);
+    assertThat(resultSet.stream()).hasSize(4);
 
     resultSet.close();
     db.close();
@@ -44,7 +44,7 @@ public class ODemoDbFromDocumentationShortestPathsIT extends OIntegrationTestTem
                 + "  UNWIND path\n"
                 + ")");
 
-    assertThat(resultSet).hasSize(4);
+    assertThat(resultSet.stream()).hasSize(4);
 
     resultSet.close();
     db.close();

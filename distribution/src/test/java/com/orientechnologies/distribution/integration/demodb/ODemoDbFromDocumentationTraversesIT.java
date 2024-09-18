@@ -21,7 +21,7 @@ public class ODemoDbFromDocumentationTraversesIT extends OIntegrationTestTemplat
                 + "  SELECT FROM Profiles WHERE Name='Santo' and Surname='OrientDB'\n"
                 + ") MAXDEPTH 3");
 
-    assertThat(resultSet).hasSize(85);
+    assertThat(resultSet.stream()).hasSize(85);
 
     resultSet.close();
     db.close();
@@ -36,7 +36,7 @@ public class ODemoDbFromDocumentationTraversesIT extends OIntegrationTestTemplat
                 + "  SELECT FROM Countries WHERE Name='Italy'\n"
                 + ") MAXDEPTH 3\n");
 
-    assertThat(resultSet).hasSize(135);
+    assertThat(resultSet.stream()).hasSize(135);
 
     resultSet.close();
     db.close();
