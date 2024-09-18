@@ -64,7 +64,7 @@
     "spin.js": "^2.3.2",
     "string": "^3.3.1",
     "ui-select": "^0.19.8",
-    "underscore": "^1.8.3",
+    "underscore": "^1.12.1",
     "zone.js": "^0.7.2"
   },
   "scripts": {
