@@ -139,7 +139,7 @@ public class OGraphImporterMTAPITest {
                 }
 
                 Map<String, Object> properties = new HashMap<String, Object>();
-                properties.put("score", new Float(parts[2]).intValue());
+                properties.put("score", Float.valueOf(parts[2]).intValue());
                 properties.put("date", Long.parseLong(parts[3]));
 
                 for (int localRetry = 0; localRetry < 100; ++localRetry) {

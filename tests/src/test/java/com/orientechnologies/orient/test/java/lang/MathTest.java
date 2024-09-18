@@ -39,7 +39,7 @@ public class MathTest {
 
     System.out.println(value);
 
-    Assert.assertEquals(new Double(28.23), new Float(28.23).doubleValue());
-    Assert.assertEquals(new Float(28.23), new Double(28.23).floatValue());
+    Assert.assertEquals(Double.valueOf(28.23), Float.valueOf(28.23f).doubleValue());
+    Assert.assertEquals(Float.valueOf(28.23f), Double.valueOf(28.23).floatValue());
   }
 }

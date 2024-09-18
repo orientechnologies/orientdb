@@ -93,7 +93,7 @@ public class OGraphBatchInsertTest extends TestCase {
     boolean found0 = false;
     for (Object o : result) {
       ODocument doc = ((ODocument) o);
-      if (new Long(0).equals(doc.field("uid"))) {
+      if (Long.valueOf(0).equals(doc.field("uid"))) {
         found0 = true;
         assertEquals("foo", doc.field("foo"));
         assertEquals(3, doc.<Object>field("bar"));

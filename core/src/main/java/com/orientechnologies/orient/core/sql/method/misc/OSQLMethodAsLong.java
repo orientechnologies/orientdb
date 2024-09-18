@@ -44,7 +44,7 @@ public class OSQLMethodAsLong extends OAbstractSQLMethod {
     } else if (ioResult instanceof Date) {
       ioResult = ((Date) ioResult).getTime();
     } else {
-      ioResult = ioResult != null ? new Long(ioResult.toString().trim()) : null;
+      ioResult = ioResult != null ? Long.valueOf(ioResult.toString().trim()) : null;
     }
     return ioResult;
   }

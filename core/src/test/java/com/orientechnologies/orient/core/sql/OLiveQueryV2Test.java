@@ -185,7 +185,7 @@ public class OLiveQueryV2Test {
       }
       Assert.assertEquals(listener.ops.size(), 1);
       for (OResult doc : listener.ops) {
-        Assert.assertEquals(doc.getProperty("id"), new Integer(1));
+        Assert.assertEquals(doc.getProperty("id"), Integer.valueOf(1));
         ORID rid = doc.getProperty("@rid");
         Assert.assertTrue(rid.isPersistent());
         Assert.assertNotNull(rid);

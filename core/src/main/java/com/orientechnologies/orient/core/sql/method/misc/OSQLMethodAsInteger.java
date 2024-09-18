@@ -41,7 +41,7 @@ public class OSQLMethodAsInteger extends OAbstractSQLMethod {
     if (ioResult instanceof Number) {
       ioResult = ((Number) ioResult).intValue();
     } else {
-      ioResult = ioResult != null ? new Integer(ioResult.toString().trim()) : null;
+      ioResult = ioResult != null ? Integer.valueOf(ioResult.toString().trim()) : null;
     }
     return ioResult;
   }

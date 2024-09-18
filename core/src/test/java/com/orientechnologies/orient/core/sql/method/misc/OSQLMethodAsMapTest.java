@@ -93,7 +93,7 @@ public class OSQLMethodAsMapTest {
 
   public void testOtherValue() {
     // The expected behavior is to return null.
-    Object result = function.execute(null, null, null, new Integer(4), null);
+    Object result = function.execute(null, null, null, Integer.valueOf(4), null);
     assertEquals(result, null);
   }
 }

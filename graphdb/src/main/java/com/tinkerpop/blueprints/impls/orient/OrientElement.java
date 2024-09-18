@@ -235,7 +235,7 @@ public abstract class OrientElement
     final OrientBaseGraph graph = getGraph();
     if (key.equals("_class"))
       return (T) ODocumentInternal.getImmutableSchemaClass(getRecord()).getName();
-    else if (key.equals("_version")) return (T) new Integer(getRecord().getVersion());
+    else if (key.equals("_version")) return (T) Integer.valueOf(getRecord().getVersion());
     else if (key.equals("_rid")) return (T) rawElement.getIdentity().toString();
 
     final ODocument record = getRecord();

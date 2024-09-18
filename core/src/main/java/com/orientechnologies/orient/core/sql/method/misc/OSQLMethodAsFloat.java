@@ -41,7 +41,7 @@ public class OSQLMethodAsFloat extends OAbstractSQLMethod {
     if (ioResult instanceof Number) {
       ioResult = ((Number) ioResult).floatValue();
     } else {
-      ioResult = ioResult != null ? new Float(ioResult.toString().trim()) : null;
+      ioResult = ioResult != null ? Float.valueOf(ioResult.toString().trim()) : null;
     }
     return ioResult;
   }

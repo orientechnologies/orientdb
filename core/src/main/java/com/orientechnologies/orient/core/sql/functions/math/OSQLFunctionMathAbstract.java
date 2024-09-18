@@ -36,10 +36,10 @@ public abstract class OSQLFunctionMathAbstract extends OSQLFunctionConfigurableA
   protected Number getContextValue(Object iContext, final Class<? extends Number> iClass) {
     if (iClass != iContext.getClass()) {
       // CHANGE TYPE
-      if (iClass == Long.class) iContext = new Long(((Number) iContext).longValue());
-      else if (iClass == Short.class) iContext = new Short(((Number) iContext).shortValue());
-      else if (iClass == Float.class) iContext = new Float(((Number) iContext).floatValue());
-      else if (iClass == Double.class) iContext = new Double(((Number) iContext).doubleValue());
+      if (iClass == Long.class) iContext = Long.valueOf(((Number) iContext).longValue());
+      else if (iClass == Short.class) iContext = Short.valueOf(((Number) iContext).shortValue());
+      else if (iClass == Float.class) iContext = Float.valueOf(((Number) iContext).floatValue());
+      else if (iClass == Double.class) iContext = Double.valueOf(((Number) iContext).doubleValue());
     }
 
     return (Number) iContext;

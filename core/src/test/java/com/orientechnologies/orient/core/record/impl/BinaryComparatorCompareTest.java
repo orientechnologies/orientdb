@@ -246,80 +246,82 @@ public class BinaryComparatorCompareTest extends AbstractComparatorTest {
 
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.SHORT, new Short((short) 10))),
+            field(OType.DECIMAL, new BigDecimal(10)),
+            field(OType.SHORT, Short.valueOf((short) 10))),
         0);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.SHORT, new Short((short) 11))),
+            field(OType.DECIMAL, new BigDecimal(10)),
+            field(OType.SHORT, Short.valueOf((short) 11))),
         -1);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.SHORT, new Short((short) 9))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.SHORT, Short.valueOf((short) 9))),
         1);
 
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.INTEGER, new Integer(10))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.INTEGER, Integer.valueOf(10))),
         0);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.INTEGER, new Integer(11))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.INTEGER, Integer.valueOf(11))),
         -1);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.INTEGER, new Integer(9))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.INTEGER, Integer.valueOf(9))),
         1);
 
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.LONG, new Long(10))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.LONG, Long.valueOf(10))),
         0);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.LONG, new Long(11))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.LONG, Long.valueOf(11))),
         -1);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.LONG, new Long(9))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.LONG, Long.valueOf(9))),
         1);
 
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.FLOAT, new Float(10))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.FLOAT, Float.valueOf(10))),
         0);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.FLOAT, new Float(11))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.FLOAT, Float.valueOf(11))),
         -1);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.FLOAT, new Float(9))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.FLOAT, Float.valueOf(9))),
         1);
 
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.DOUBLE, new Double(10))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.DOUBLE, Double.valueOf(10))),
         0);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.DOUBLE, new Double(11))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.DOUBLE, Double.valueOf(11))),
         -1);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.DOUBLE, new Double(9))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.DOUBLE, Double.valueOf(9))),
         1);
 
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.BYTE, new Byte((byte) 10))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.BYTE, Byte.valueOf((byte) 10))),
         0);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.BYTE, new Byte((byte) 11))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.BYTE, Byte.valueOf((byte) 11))),
         -1);
     Assert.assertEquals(
         comparator.compare(
-            field(OType.DECIMAL, new BigDecimal(10)), field(OType.BYTE, new Byte((byte) 9))),
+            field(OType.DECIMAL, new BigDecimal(10)), field(OType.BYTE, Byte.valueOf((byte) 9))),
         1);
 
     Assert.assertEquals(

@@ -835,8 +835,8 @@ public class ODocumentHelper {
     else if (function.startsWith("VALUES("))
       result = currentValue instanceof Map<?, ?> ? ((Map<?, ?>) currentValue).values() : null;
     else if (function.startsWith("ASSTRING(")) result = currentValue.toString();
-    else if (function.startsWith("ASINTEGER(")) result = new Integer(currentValue.toString());
-    else if (function.startsWith("ASFLOAT(")) result = new Float(currentValue.toString());
+    else if (function.startsWith("ASINTEGER(")) result = Integer.valueOf(currentValue.toString());
+    else if (function.startsWith("ASFLOAT(")) result = Float.valueOf(currentValue.toString());
     else if (function.startsWith("ASBOOLEAN(")) {
       if (currentValue instanceof String) result = new Boolean((String) currentValue);
       else if (currentValue instanceof Number) {

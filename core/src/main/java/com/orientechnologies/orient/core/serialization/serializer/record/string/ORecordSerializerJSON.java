@@ -503,7 +503,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             if (ORecordId.isA(iFieldValue)) iType = OType.LINK;
             else if (iFieldValue.matches(".*[\\.Ee].*")) {
               // DECIMAL FORMAT: DETERMINE IF DOUBLE OR FLOAT
-              final Double v = new Double(OIOUtils.getStringContent(iFieldValue));
+              final Double v = Double.valueOf(OIOUtils.getStringContent(iFieldValue));
 
               return v;
               // REMOVED TRUNK to float
@@ -512,7 +512,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
               // else
               // return v;
             } else {
-              final Long v = new Long(OIOUtils.getStringContent(iFieldValue));
+              final Long v = Long.valueOf(OIOUtils.getStringContent(iFieldValue));
               // INTEGER FORMAT: DETERMINE IF DOUBLE OR FLOAT
 
               if (canBeTrunkedToInt(v)) return v.intValue();
