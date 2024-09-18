@@ -59,7 +59,6 @@
                     -Dstorage.diskCache.bufferSize=4096
                     -Dmemory.directMemory.trackMode=true
                     -Dserver.backwardCompatibility=false
-                    -Dstorage.configuration.syncOnUpdate=false
                     -Dhazelcast.wait.seconds.before.join=3
                     -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
                     -Dstorage.diskCache.checksumMode=storeAndThrow

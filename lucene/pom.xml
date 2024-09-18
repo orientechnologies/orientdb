@@ -244,10 +244,6 @@
                 <argLine>-ea
                     -Xmx${heapSize}
                     -Dstorage.diskCache.bufferSize=4096
-                    -Dindex.flushAfterCreate=false
-                    -Dstorage.makeFullCheckpointAfterCreate=false
-                    -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
-                    -Dstorage.configuration.syncOnUpdate=false
                     -Dmemory.directMemory.trackMode=true
                     -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
                     -Dstorage.diskCache.checksumMode=storeAndThrow

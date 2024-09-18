@@ -148,7 +148,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire.version}</version>
                 <configuration>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
@@ -185,15 +184,7 @@
                     -ea
                     -Xmx${heapSize}
                     -Dstorage.diskCache.bufferSize=4096
-                    -Dindex.flushAfterCreate=false
                     -Dmemory.directMemory.trackMode=true
-                    -Dstorage.makeFullCheckpointAfterCreate=false
-                    -Dstorage.makeFullCheckpointAfterOpen=false
-                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
-                    -Dstorage.wal.syncOnPageFlush=false
-                    -Dstorage.configuration.syncOnUpdate=false
-                    -Ddb.makeFullCheckpointOnIndexChange=false
-                    -Ddb.makeFullCheckpointOnSchemaChange=false
                     -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
                     -Dstorage.diskCache.checksumMode=storeAndThrow
                     -Dsecurity.warningDefaultUsers=false
@@ -211,15 +202,7 @@
                     -ea
                     -Xmx${heapSize}
                     -Dstorage.diskCache.bufferSize=4096
-                    -Dindex.flushAfterCreate=false
                     -Dmemory.directMemory.trackMode=true
-                    -Dstorage.makeFullCheckpointAfterCreate=false
-                    -Dstorage.makeFullCheckpointAfterOpen=false
-                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
-                    -Dstorage.wal.syncOnPageFlush=false
-                    -Dstorage.configuration.syncOnUpdate=false
-                    -Ddb.makeFullCheckpointOnIndexChange=false
-                    -Ddb.makeFullCheckpointOnSchemaChange=false
                     -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
                     -Dstorage.diskCache.checksumMode=storeAndThrow
                     -Dsecurity.warningDefaultUsers=false

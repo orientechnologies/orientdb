@@ -151,15 +151,7 @@
             </activation>
             <properties>
                 <argLine>-ea -Xmx${heapSize} -Dstorage.diskCache.bufferSize=4096
-                    -Dindex.flushAfterCreate=false
-                    -Dstorage.makeFullCheckpointAfterCreate=false
-                    -Dstorage.makeFullCheckpointAfterOpen=false
-                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
                     -Dmemory.directMemory.trackMode=true
-                    -Dstorage.wal.syncOnPageFlush=false
-                    -Dstorage.configuration.syncOnUpdate=false
-                    -Ddb.makeFullCheckpointOnIndexChange=false
-                    -Ddb.makeFullCheckpointOnSchemaChange=false
                     -Dsecurity.userPasswordSaltIterations=10
                     -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
                     -Dstorage.diskCache.checksumMode=storeAndThrow
