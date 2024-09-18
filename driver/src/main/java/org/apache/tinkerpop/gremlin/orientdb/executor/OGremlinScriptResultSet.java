@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSetInternal;
 import java.nio.channels.ClosedChannelException;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
@@ -24,9 +25,9 @@ public class OGremlinScriptResultSet implements OResultSetInternal, OQueryMetric
   private OScriptTransformer transformer;
   private boolean closeGraph;
   private boolean closing = false;
-
-  long startTime;
-  long totalExecutionTime = 0;
+  private boolean closed = false;
+  private long startTime;
+  private long totalExecutionTime = 0;
 
   public OGremlinScriptResultSet(
       String iText, Traversal traversal, OScriptTransformer transformer) {
@@ -44,16 +45,20 @@ public class OGremlinScriptResultSet implements OResultSetInternal, OQueryMetric
 
   @Override
   public boolean hasNext() {
-    try {
-      return traversal.hasNext();
-    } catch (TraversalInterruptedException e) {
-      throw new OInterruptedException("Timeout expired");
-    } catch (OStorageException se) {
-      if (se.getCause() instanceof TraversalInterruptedException
-          || se.getCause() instanceof ClosedChannelException) {
+    if (closed) {
+      return false;
+    } else {
+      try {
+        return traversal.hasNext();
+      } catch (TraversalInterruptedException e) {
         throw new OInterruptedException("Timeout expired");
+      } catch (OStorageException se) {
+        if (se.getCause() instanceof TraversalInterruptedException
+            || se.getCause() instanceof ClosedChannelException) {
+          throw new OInterruptedException("Timeout expired");
+        }
+        throw se;
       }
-      throw se;
     }
   }
 
@@ -61,48 +66,54 @@ public class OGremlinScriptResultSet implements OResultSetInternal, OQueryMetric
   public OResult next() {
 
     long begin = System.currentTimeMillis();
-
-    try {
-      Object next = traversal.next();
-      return transformer.toResult(next);
-    } catch (TraversalInterruptedException e) {
-      throw new OInterruptedException("Timeout expired");
-    } catch (OStorageException se) {
-      if (se.getCause() instanceof TraversalInterruptedException
-          || se.getCause() instanceof ClosedChannelException) {
+    if (closed) {
+      throw new NoSuchElementException();
+    } else {
+      try {
+        Object next = traversal.next();
+        return transformer.toResult(next);
+      } catch (TraversalInterruptedException e) {
         throw new OInterruptedException("Timeout expired");
+      } catch (OStorageException se) {
+        if (se.getCause() instanceof TraversalInterruptedException
+            || se.getCause() instanceof ClosedChannelException) {
+          throw new OInterruptedException("Timeout expired");
+        }
+        throw se;
+      } finally {
+        totalExecutionTime += (System.currentTimeMillis() - begin);
       }
-      throw se;
-    } finally {
-      totalExecutionTime += (System.currentTimeMillis() - begin);
     }
   }
 
   @Override
   public void close() {
-    try {
-      traversal.close();
-      if (closeGraph) {
-        traversal
-            .asAdmin()
-            .getGraph()
-            .ifPresent(
-                graph -> {
-                  try {
-                    OrientGraph g = (OrientGraph) graph;
-                    if (!closing) {
-                      closing = true;
-                      g.close();
+    if (!closed) {
+      try {
+        traversal.close();
+        if (closeGraph) {
+          traversal
+              .asAdmin()
+              .getGraph()
+              .ifPresent(
+                  graph -> {
+                    try {
+                      OrientGraph g = (OrientGraph) graph;
+                      if (!closing) {
+                        closing = true;
+                        g.close();
+                      }
+                    } catch (Exception e) {
+                      throw OException.wrapException(
+                          new OCommandExecutionException("Error closing the Graph "), e);
                     }
-                  } catch (Exception e) {
-                    throw OException.wrapException(
-                        new OCommandExecutionException("Error closing the Graph "), e);
-                  }
-                });
+                  });
+        }
+      } catch (Exception e) {
+        throw OException.wrapException(
+            new OCommandExecutionException("Error closing the gremlin Result Set"), e);
       }
-    } catch (Exception e) {
-      throw OException.wrapException(
-          new OCommandExecutionException("Error closing the gremlin Result Set"), e);
+      closed = true;
     }
   }
 
