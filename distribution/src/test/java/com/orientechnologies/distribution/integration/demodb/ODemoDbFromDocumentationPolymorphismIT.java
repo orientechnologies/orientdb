@@ -20,7 +20,7 @@ public class ODemoDbFromDocumentationPolymorphismIT extends OIntegrationTestTemp
             "MATCH {class: Customers, as: customer, where: (OrderedId=1)}--{Class: Locations, as:"
                 + " location}  RETURN $pathelements");
 
-    assertThat(resultSet).hasSize(16);
+    assertThat(resultSet.stream()).hasSize(16);
 
     resultSet.close();
     db.close();

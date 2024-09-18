@@ -192,7 +192,7 @@ public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
         db.query(
             "MATCH {class: Customers, as: customer}-IsFromCountry->{class: Countries, as: country}"
                 + " RETURN  customer");
-    assertThat(resultSet).hasSize(customersCount);
+    assertThat(resultSet.stream()).hasSize(customersCount);
     resultSet.close();
 
     // all customers have a profile
@@ -200,7 +200,7 @@ public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
         db.query(
             "MATCH {class: Customers, as: customer}-HasProfile->{class: Profiles, as: profile}"
                 + " RETURN customer");
-    assertThat(resultSet).hasSize(customersCount);
+    assertThat(resultSet.stream()).hasSize(customersCount);
     resultSet.close();
 
     // all customers have at least 1 order
