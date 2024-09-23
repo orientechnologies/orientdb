@@ -32,7 +32,7 @@
     "babel-polyfill": "^6.26.0",
     "babel-preset-angular2": "0.0.2",
     "bootstrap-switch": "^3.3.4",
-    "c3": "^0.4.18",
+    "c3": "^0.7.20",
     "codemirror": "^5.31.0",
     "core-js": "^2.5.1",
     "d3": "^3.5.17",
