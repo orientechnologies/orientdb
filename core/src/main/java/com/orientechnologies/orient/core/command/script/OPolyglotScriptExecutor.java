@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.command.script;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.command.traverse.OAbstractScriptExecutor;
@@ -25,6 +26,7 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.io.IOAccess;
 
 /** Created by Luca Garulli */
 public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
@@ -71,7 +73,7 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
             .allowNativeAccess(false)
             .allowCreateProcess(false)
             .allowCreateThread(false)
-            .allowIO(false)
+            .allowIO(IOAccess.NONE)
             .allowHostClassLoading(false)
             .allowHostClassLookup(
                 s -> {
@@ -81,6 +83,7 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
                   if (pos > -1) return allowedPackaged.contains(s.substring(0, pos) + ".*");
                   return false;
                 })
+            .logHandler(new OPoliglotLogger(OLogManager.instance()))
             .build();
 
     OPolyglotScriptBinding bindings = new OPolyglotScriptBinding(ctx.getBindings(language));
