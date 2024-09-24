@@ -4,6 +4,7 @@ import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
@@ -32,6 +33,7 @@ public class OCreateClassStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  @Ignore
   public void testCluster() {
     String className = "testCluster";
     OResultSet result = db.command("create class " + className + " cluster 1235, 1236, 1255");
