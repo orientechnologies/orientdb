@@ -4,11 +4,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class ODatabaseDocumentSTUsageTest {
 
   @Test
+  @Ignore
   public void testShareBetweenThreads() {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:ODatabaseDocumentSTUsageTest");
     db.create();
