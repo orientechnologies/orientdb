@@ -253,6 +253,13 @@
             <version>1.37</version>
             <scope>test</scope>
         </dependency>
+        <!-- plotting -->
+        <dependency>
+            <groupId>org.knowm.xchart</groupId>
+            <artifactId>xchart</artifactId>
+            <version>3.8.7</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

@@ -16,19 +16,20 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.benchmark.Plotter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Warmup;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.style.Styler;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.results.Result;
+import org.openjdk.jmh.results.RunResult;
+import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -51,7 +52,36 @@ public class JSONTestBenchmark extends DocumentDBBaseTest {
             // .param("offHeapMessages", "true""
             // .resultFormat(ResultFormatType.CSV)
             .build();
+    postProcessRunResult(new Runner(opt).run());
     return;
+  }
+
+  private static void postProcessRunResult(final Collection<RunResult> results) throws IOException {
+    final Plotter plotter = new Plotter();
+    final XYChart chart =
+        plotter.getXYChart(
+            "String vs. Stream", "Test", "Average time (us)", Styler.LegendPosition.InsideNW);
+    final List<Integer> xData = new ArrayList<>();
+    final List<Double> yData = new ArrayList<>();
+
+    final List<Integer> xDataStream = new ArrayList<>();
+    final List<Double> yDataStream = new ArrayList<>();
+    for (int i = 0; i < results.size(); i++) {
+      final RunResult runResult = (RunResult) results.toArray()[i];
+      final Result result = runResult.getPrimaryResult();
+      final double score = result.getScore();
+      if (!result.getLabel().contains("Stream")) {
+        xData.add(i);
+        yData.add(score);
+      } else {
+        xDataStream.add(i - 1);
+        yDataStream.add(score);
+      }
+    }
+    plotter.addSeriesToLineChart(chart, "String", xData, yData);
+    plotter.addSeriesToLineChart(chart, "Stream", xDataStream, yDataStream);
+
+    plotter.exportChartAsPDF(chart, "tests/target/stringVsStreamParsing");
   }
 
   @Benchmark
