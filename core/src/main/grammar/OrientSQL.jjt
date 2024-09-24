@@ -212,7 +212,7 @@ TOKEN [ IGNORE_CASE ] :
 | < NONE : "none" >
 | < FUNCTION : "function" >
 | < PARAMETERS : "parameters" >
-| < IDEMPOTENT : "idenpotent" >
+| < IDEMPOTENT : "idempotent" >
 | < LANGUAGE : "language" >
 | < BEGIN : "begin" >
 | < COMMIT : "commit" >
@@ -449,7 +449,7 @@ TOKEN [IGNORE_CASE] :
 | < CLUSTER: "cluster" >
 }
 
-TOKEN :
+TOKEN[IGNORE_CASE] :
 {
   < IDENTIFIER: ( ((<DOLLAR>) | <LETTER>) (<PART_LETTER>)* ) >
 |
@@ -457,11 +457,11 @@ TOKEN :
 |
   < INDEX_COLON: <INDEX> ":" >
 |
-  < INDEXVALUES_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
+  < INDEXVALUES_IDENTIFIER: "indexvalues:" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
 |
-  < INDEXVALUESASC_IDENTIFIER:( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "A" | "a") ( "S" | "s") ( "C" | "c") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
+  < INDEXVALUESASC_IDENTIFIER: "indexvaluesasc:" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
 |
-  < INDEXVALUESDESC_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "D" | "d") ( "E" | "e") ( "S" | "s") ( "C" | "c") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
+  < INDEXVALUESDESC_IDENTIFIER: "indexvaluesdesc:" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
 |
   < CLUSTER_IDENTIFIER: <CLUSTER> <COLON> <IDENTIFIER>  >
 |

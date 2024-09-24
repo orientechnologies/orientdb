@@ -9,7 +9,8 @@ public class TestReaderDropClass extends BaseMemoryDatabase {
   @Test
   public void testReaderDropClass() {
     db.getMetadata().getSchema().createClass("Test");
-    reOpen("reader", "reader");
+    db.command("create user reader identified by 'readerpwd' role reader");
+    reOpen("reader", "readerpwd");
     try {
       db.getMetadata().getSchema().dropClass("Test");
       Assert.fail("reader should not be able to drop a class");

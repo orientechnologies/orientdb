@@ -934,7 +934,7 @@ public interface OrientSqlConstants {
     "\"none\"",
     "\"function\"",
     "\"parameters\"",
-    "\"idenpotent\"",
+    "\"idempotent\"",
     "\"language\"",
     "\"begin\"",
     "\"commit\"",

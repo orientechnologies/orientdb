@@ -5,7 +5,6 @@ import static org.junit.Assert.assertArrayEquals;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.tool.TestSchemaImportExport;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Arrays;
@@ -146,7 +145,7 @@ public class OSimpleKeyIndexDefinitionTest {
             + " role admin)");
 
     try (ODatabaseDocument db =
-        orientdb.open(TestSchemaImportExport.class.getSimpleName(), "admin", "adminpwd")) {
+        orientdb.open("osimplekeyindexdefinitiontest", "admin", "adminpwd")) {
 
       final ODocument storeDocument = simpleKeyIndexDefinition.toStream();
       storeDocument.save(db.getClusterNameById(db.getDefaultClusterId()));
