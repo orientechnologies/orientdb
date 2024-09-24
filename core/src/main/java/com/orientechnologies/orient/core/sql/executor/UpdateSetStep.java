@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
 import java.util.List;
@@ -26,14 +25,6 @@ public class UpdateSetStep extends AbstractExecutionStep {
   private OResult mapResult(OResult result, OCommandContext ctx) {
     if (result instanceof OResultInternal) {
       for (OUpdateItem item : items) {
-        OClass type = result.getElement().flatMap(x -> x.getSchemaType()).orElse(null);
-        if (type == null) {
-          Object clazz = result.getProperty("@view");
-          if (clazz instanceof String) {
-            type = ctx.getDatabase().getMetadata().getSchema().getView((String) clazz);
-          }
-        }
-
         item.applyUpdate((OResultInternal) result, ctx);
       }
     }
