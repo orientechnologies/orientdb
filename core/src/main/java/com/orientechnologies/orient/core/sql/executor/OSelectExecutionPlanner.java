@@ -1793,6 +1793,7 @@ public class OSelectExecutionPlanner {
       items = sortLet(items, this.statement.getLetClause());
       List<String> scriptVars = new ArrayList<>();
       for (OLetItem item : items) {
+        ctx.declareScriptVariable(item.getVarName().getStringValue());
         if (item.getExpression() != null) {
           result.chain(
               new GlobalLetExpressionStep(
