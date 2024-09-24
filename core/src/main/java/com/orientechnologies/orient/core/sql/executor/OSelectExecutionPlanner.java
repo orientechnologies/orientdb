@@ -2793,6 +2793,7 @@ public class OSelectExecutionPlanner {
               ctx);
       blockIterator = blockCopy.getSubBlocks().iterator();
       boolean indexFieldFound = false;
+      boolean rangeOp = false;
       while (blockIterator.hasNext()) {
         OBooleanExpression singleExp = blockIterator.next();
         if (singleExp.isIndexAware(info, ctx)) {
@@ -2800,8 +2801,10 @@ public class OSelectExecutionPlanner {
           indexKeyValue.getSubBlocks().add(singleExp.copy());
           blockIterator.remove();
           if (singleExp instanceof OBinaryCondition
-              && info.allowsRange()
               && ((OBinaryCondition) singleExp).getOperator().isRange()) {
+            rangeOp = true;
+          }
+          if (rangeOp && info.allowsRange()) {
             // look for the opposite condition, on the same field, for range queries (the other
             // side of the range)
             while (blockIterator.hasNext()) {
@@ -2820,7 +2823,7 @@ public class OSelectExecutionPlanner {
       if (indexFieldFound) {
         found = true;
       }
-      if (!indexFieldFound) {
+      if (!indexFieldFound || rangeOp) {
         break;
       }
     }
