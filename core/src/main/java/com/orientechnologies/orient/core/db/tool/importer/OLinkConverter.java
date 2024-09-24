@@ -26,7 +26,12 @@ public final class OLinkConverter implements OValuesConverter<OIdentifiable> {
             "select value from " + ODatabaseImport.EXPORT_IMPORT_CLASS_NAME + " where key = ?",
             rid.toString())) {
       if (resultSet.hasNext()) {
-        return new ORecordId((String) resultSet.next().getProperty("value"));
+        Object id = resultSet.next().getProperty("value");
+        if (id instanceof OIdentifiable) {
+          return (OIdentifiable) id;
+        } else if (id instanceof String) {
+          return new ORecordId((String) id);
+        }
       }
       return value;
     }
