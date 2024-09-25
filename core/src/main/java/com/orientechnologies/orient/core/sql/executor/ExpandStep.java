@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Expands a result-set. The pre-requisite is that the input element contains only one field (no
@@ -60,14 +59,10 @@ public class ExpandStep extends AbstractExecutionStep {
       return nestedExpand((Iterator) projValue);
     } else if (projValue instanceof Iterable) {
       return nestedExpand(((Iterable) projValue).iterator());
-    } else if (projValue instanceof Map) {
-      OResultInternal res = new OResultInternal();
-      for (Map.Entry<Object, Object> e : ((Map<Object, Object>) projValue).entrySet()) {
-        res.setProperty(e.getKey().toString(), e.getValue());
-      }
-      return OExecutionStream.singleton(res);
     } else {
-      return OExecutionStream.empty();
+      OResultInternal res = new OResultInternal();
+      res.setProperty("value", projValue);
+      return OExecutionStream.singleton(res);
     }
   }
 
