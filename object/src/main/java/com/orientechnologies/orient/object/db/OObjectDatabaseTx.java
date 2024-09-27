@@ -249,7 +249,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
       }
     } catch (Exception e) {
       final String message = "Error on creating object of class " + iClassName;
-      logger.error(message, e);
+      logger.error("%s", e, message);
 
       throw OException.wrapException(new ODatabaseException(message), e);
     }
@@ -287,7 +287,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
       }
     } catch (Exception e) {
       final String message = "Error on creating object of class " + iClassName;
-      logger.error(message, e);
+      logger.error("%s", e, message);
 
       throw OException.wrapException(new ODatabaseException(message), e);
     }

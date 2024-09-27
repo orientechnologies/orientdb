@@ -509,7 +509,7 @@ public abstract class OAbstractPaginatedStorage
       doShutdown();
     } catch (final IOException e) {
       final String message = "Error on closing of storage '" + name;
-      logger.error(message, e);
+      logger.error("%s", e, message);
 
       throw OException.wrapException(new OStorageException(message), e);
     } finally {
@@ -838,14 +838,9 @@ public abstract class OAbstractPaginatedStorage
           }
         } catch (final FileNotFoundException e) {
           logger.warn(
-              "Error on loading cluster '"
-                  + configurationClusters.get(i).getName()
-                  + "' ("
-                  + i
-                  + "): file not found. It will be excluded from current database '"
-                  + getName()
-                  + "'.",
-              e);
+              "Error on loading cluster '%s' (%d): file not found. It will be excluded from current"
+                  + " database '%s'.",
+              e, configurationClusters.get(i).getName(), i, getName());
 
           clusterMap.remove(configurationClusters.get(i).getName().toLowerCase());
 
@@ -1969,7 +1964,7 @@ public abstract class OAbstractPaginatedStorage
 
         return new ORecordMetadata(rid, ppos.recordVersion);
       } catch (final IOException ioe) {
-        logger.error("Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
+        logger.error("Retrieval of record  '%s' cause: %s", ioe, rid, ioe.getMessage());
       } finally {
         stateLock.readLock().unlock();
       }
@@ -2002,7 +1997,7 @@ public abstract class OAbstractPaginatedStorage
         return cluster.isDeleted(new OPhysicalPosition(rid.getClusterPosition()));
 
       } catch (final IOException ioe) {
-        logger.error("Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
+        logger.error("Retrieval of record  '%s' cause: %s", ioe, rid, ioe.getMessage());
       } finally {
         stateLock.readLock().unlock();
       }
@@ -4712,15 +4707,9 @@ public abstract class OAbstractPaginatedStorage
       }
 
       logger.debugNoDb(
-          "Before fuzzy checkpoint: min LSN segment is "
-              + minLSNSegment
-              + ", WAL begin is "
-              + beginLSN
-              + ", WAL end is "
-              + endLSN
-              + ", fuzzy segment is "
-              + fuzzySegment,
-          null);
+          "Before fuzzy checkpoint: min LSN segment is %d , WAL begin is %s"
+              + ", WAL end is %s, fuzzy segment is %d",
+          null, minLSNSegment, beginLSN, endLSN, fuzzySegment);
 
       if (fuzzySegment > beginLSN.getSegment() && beginLSN.getSegment() < endLSN.getSegment()) {
         logger.debugNoDb("Making fuzzy checkpoint", null);
@@ -4730,7 +4719,7 @@ public abstract class OAbstractPaginatedStorage
         endLSN = writeAheadLog.end();
 
         logger.debugNoDb(
-            "After fuzzy checkpoint: WAL begin is " + beginLSN + " WAL end is " + endLSN, null);
+            "After fuzzy checkpoint: WAL begin is %s" + " WAL end is %s", null, beginLSN, endLSN);
       } else {
         logger.debugNoDb("No reason to make fuzzy checkpoint", null);
       }
@@ -5000,9 +4989,7 @@ public abstract class OAbstractPaginatedStorage
   private void recoverIfNeeded() throws Exception {
     if (isDirty()) {
       logger.warn(
-          "Storage '"
-              + name
-              + "' was not closed properly. Will try to recover from write ahead log");
+          "Storage '%s' was not closed properly. Will try to recover from write ahead log", name);
       try {
         final String openedAtVersion = getOpenedAtVersion();
 
@@ -5061,7 +5048,7 @@ public abstract class OAbstractPaginatedStorage
         context.executeOperations(atomicOperation, this);
       }
     } catch (final Exception e) {
-      logger.error("Error on creating record in cluster: " + cluster, e);
+      logger.error("Error on creating record in cluster: %s", e, cluster);
       throw ODatabaseException.wrapException(
           new OStorageException("Error during creation of record"), e);
     }
@@ -5588,10 +5575,10 @@ public abstract class OAbstractPaginatedStorage
       migration = new CountDownLatch(1);
       status = STATUS.CLOSED;
     } catch (final IOException e) {
-      final String message = "Error on closing of storage '" + name;
-      logger.error(message, e);
+      logger.error("Error on closing of storage '%s'", e, name);
 
-      throw OException.wrapException(new OStorageException(message), e);
+      throw OException.wrapException(
+          new OStorageException("Error on closing of storage '" + name + "'"), e);
     }
   }
 
@@ -5614,7 +5601,7 @@ public abstract class OAbstractPaginatedStorage
           try {
             engine.delete(atomicOperation);
           } catch (final IOException e) {
-            logger.error("Can not delete index engine " + engine.getName(), e);
+            logger.error("Can not delete index engine %s", e, engine.getName());
           }
         } else {
           engine.close();
@@ -5979,7 +5966,7 @@ public abstract class OAbstractPaginatedStorage
             }
             zipOutputStream.flush();
           } catch (IOException e) {
-            logger.warn("Failed to flush resource " + zipOutputStream);
+            logger.warn("Failed to flush resource %s", e, zipOutputStream);
           }
         }
       } finally {
@@ -6647,9 +6634,8 @@ public abstract class OAbstractPaginatedStorage
       }
 
       logger.warn(
-          "Transaction can be restored only partially for storage "
-              + this.name
-              + ", restore process is aborted.");
+          "Transaction can be restored only partially for storage %s, restore process is aborted.",
+          this.name);
       return false;
     }
 
@@ -6677,9 +6663,9 @@ public abstract class OAbstractPaginatedStorage
                     + " was deleted from storage, the rest of operations can not be restored");
           } else {
             logger.warn(
-                "Previously deleted file with name "
-                    + fileName
-                    + " was deleted but new empty file was added to continue restore process");
+                "Previously deleted file with name %s was deleted but new empty file was added to"
+                    + " continue restore process",
+                fileName);
           }
         }
 

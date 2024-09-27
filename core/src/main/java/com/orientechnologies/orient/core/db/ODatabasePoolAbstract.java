@@ -306,9 +306,9 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
               logger.debug("Closing pooled database '%s'...", db.getName());
               db.activateOnCurrentThread();
               ((ODatabasePooled) db).forceClose();
-              logger.debug("OK", db.getName());
+              logger.debug("OK %s", db.getName());
             } catch (Exception e) {
-              logger.debug("Error: %d", e.toString());
+              logger.debug("Error: %s", e.toString());
             }
         }
         pool.close();

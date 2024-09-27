@@ -1694,14 +1694,14 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
             connectionManager.remove(network);
           }
 
-          logger.error("Cannot open database with url " + currentURL, e);
+          logger.error("Cannot open database with url %s", e, currentURL);
         } catch (OOfflineNodeException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             connectionManager.remove(network);
           }
 
-          logger.debug("Cannot open database with url " + currentURL, e);
+          logger.debug("Cannot open database with url %s", e, currentURL);
         } catch (OSecurityException ex) {
           logger.debug("Invalidate token for url=%s", ex, currentURL);
           OStorageRemoteSession session = getCurrentSession();
@@ -1713,7 +1713,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
               connectionManager.remove(network);
             } catch (Exception e) {
               // IGNORE ANY EXCEPTION
-              logger.debug("Cannot remove connection or database url=" + currentURL, e);
+              logger.debug("Cannot remove connection or database url=%s", e, currentURL);
             }
           }
         } catch (OException e) {
@@ -1722,14 +1722,14 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
           throw e;
 
         } catch (Exception e) {
-          logger.debug("Cannot open database with url " + currentURL, e);
+          logger.debug("Cannot open database with url %s", e, currentURL);
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             try {
               connectionManager.remove(network);
             } catch (Exception ex) {
               // IGNORE ANY EXCEPTION
-              logger.debug("Cannot remove connection or database url=" + currentURL, e);
+              logger.debug("Cannot remove connection or database url=%s", e, currentURL);
             }
           }
         }
@@ -1874,7 +1874,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
             connectionManager.remove(network);
           }
 
-          logger.debug("Cannot open database with url " + currentURL, e);
+          logger.debug("Cannot open database with url %s", e, currentURL);
 
         } catch (OException e) {
           connectionManager.release(network);
@@ -2000,9 +2000,8 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
 
     boolean retry;
     logger.warn(
-        "DB is frozen will wait for "
-            + getClientConfiguration().getValue(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT)
-            + " ms. and then retry.");
+        "DB is frozen will wait for %d ms. and then retry.",
+        getClientConfiguration().getValue(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT));
     retry = true;
     try {
       Thread.sleep(

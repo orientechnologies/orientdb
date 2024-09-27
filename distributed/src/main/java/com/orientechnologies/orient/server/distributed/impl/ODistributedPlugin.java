@@ -2040,7 +2040,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     if (iText.startsWith("\r\n")) iText = iText.substring(2);
     else if (iText.startsWith("\n")) iText = iText.substring(1);
 
-    logger.debug(iText);
+    logger.debug("%s", iText);
   }
 
   public void stopNode(final String iNode) throws IOException {

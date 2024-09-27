@@ -310,7 +310,7 @@ public abstract class OSequence {
       try {
         return sendSequenceActionOverCluster(OSequenceAction.UPDATE, params);
       } catch (InterruptedException | ExecutionException exc) {
-        logger.error(exc.getMessage(), exc, (Object[]) null);
+        logger.error("%s", exc, exc.getMessage());
         throw new ODatabaseException(exc.getMessage());
       }
     }
@@ -487,7 +487,7 @@ public abstract class OSequence {
       try {
         retVal = sendSequenceActionOverCluster(OSequenceAction.NEXT, null);
       } catch (InterruptedException | ExecutionException exc) {
-        logger.error(exc.getMessage(), exc, (Object[]) null);
+        logger.error("%s", exc, exc.getMessage());
         throw new ODatabaseException(exc.getMessage());
       }
     } else {
@@ -514,7 +514,7 @@ public abstract class OSequence {
       try {
         retVal = sendSequenceActionOverCluster(OSequenceAction.CURRENT, null);
       } catch (InterruptedException | ExecutionException exc) {
-        logger.error(exc.getMessage(), exc, (Object[]) null);
+        logger.error("%s", exc, exc.getMessage());
         throw new ODatabaseException(exc.getMessage());
       }
     } else {
@@ -539,7 +539,7 @@ public abstract class OSequence {
       try {
         retVal = sendSequenceActionOverCluster(OSequenceAction.RESET, null);
       } catch (InterruptedException | ExecutionException exc) {
-        logger.error(exc.getMessage(), exc, (Object[]) null);
+        logger.error("%s", exc, exc.getMessage());
         throw new ODatabaseException(exc.getMessage());
       }
     } else {

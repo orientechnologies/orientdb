@@ -82,7 +82,7 @@ public class OTraverseContext extends OBasicCommandContext {
   public void pop(final OIdentifiable currentRecord) {
     if (currentRecord != null) {
       final ORID rid = currentRecord.getIdentity();
-      if (!history.remove(rid)) logger.warn("Element '" + rid + "' not found in traverse history");
+      if (!history.remove(rid)) logger.warn("Element '%s' not found in traverse history", rid);
     }
 
     try {

@@ -134,7 +134,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       final ODatabaseDocumentInternal internal = (ODatabaseDocumentInternal) db;
       internal.getMetadata().getIndexManagerInternal().getIndexes(internal).stream()
           .filter(idx -> idx.getInternal() instanceof OLuceneFullTextIndex)
-          .peek(idx -> logger.debug("deleting index " + idx.getName()))
+          .peek(idx -> logger.debug("deleting index %s", idx.getName()))
           .forEach(idx -> idx.delete());
 
     } catch (Exception e) {

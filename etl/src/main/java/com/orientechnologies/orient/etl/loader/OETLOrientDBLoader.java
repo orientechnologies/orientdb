@@ -238,7 +238,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader {
     if (clusterName != null) {
       int clusterIdByName = db.getClusterIdByName(clusterName);
       if (clusterIdByName == -1) {
-        debug("add cluster :: " + clusterName);
+        debug("add cluster : %s", clusterName);
         cls.addCluster(clusterName);
       }
     }

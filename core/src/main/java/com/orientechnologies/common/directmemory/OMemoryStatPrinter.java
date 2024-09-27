@@ -23,7 +23,7 @@ public final class OMemoryStatPrinter implements Runnable {
     }
 
     final String memoryStat = printMemoryStatistics(accumulator);
-    logger.infoNoDb(memoryStat);
+    logger.infoNoDb("%s", memoryStat);
   }
 
   private static String printMemoryStatistics(

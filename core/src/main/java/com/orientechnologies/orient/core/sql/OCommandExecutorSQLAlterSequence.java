@@ -89,7 +89,7 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
       //      sequence.reset();
     } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
-      logger.error(message, exc, (Object) null);
+      logger.error("%s", exc, message);
       throw new OCommandExecutionException(message);
     }
     // TODO check if save shouldn't be here update is enough

@@ -53,7 +53,7 @@ public class OClusterSelectionFactory
           register(key, clz);
         } else logger.error("getName() funciton missing", null);
       } catch (Exception ex) {
-        logger.error("failed to register class - " + clz.getName(), ex);
+        logger.error("failed to register class - %s", ex, clz.getName());
       }
     }
   }

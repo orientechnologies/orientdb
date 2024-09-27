@@ -338,7 +338,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         engine = engines.next();
         registerEngine(engine);
       } catch (IllegalArgumentException e) {
-        if (engine != null) logger.debug("Failed to replace engine " + engine.getName(), e);
+        if (engine != null) logger.debug("Failed to replace engine %s", e, engine.getName());
       }
     }
   }
@@ -397,10 +397,10 @@ public class Orient extends OListenerManger<OOrientListener> {
                 task.run();
               } catch (Exception e) {
                 logger.error(
-                    "Error during execution of task " + task.getClass().getSimpleName(), e);
+                    "Error during execution of task %s", e, task.getClass().getSimpleName());
               } catch (Error e) {
                 logger.error(
-                    "Error during execution of task " + task.getClass().getSimpleName(), e);
+                    "Error during execution of task %s", e, task.getClass().getSimpleName());
                 throw e;
               }
             }
@@ -433,10 +433,10 @@ public class Orient extends OListenerManger<OOrientListener> {
                 task.run();
               } catch (Exception e) {
                 logger.error(
-                    "Error during execution of task " + task.getClass().getSimpleName(), e);
+                    "Error during execution of task %s", e, task.getClass().getSimpleName());
               } catch (Error e) {
                 logger.error(
-                    "Error during execution of task " + task.getClass().getSimpleName(), e);
+                    "Error during execution of task %s", e, task.getClass().getSimpleName());
                 throw e;
               }
             }

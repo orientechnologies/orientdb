@@ -147,7 +147,7 @@ public class OSequenceCached extends OSequence {
       try {
         return sendSequenceActionSetAndNext(currentValue);
       } catch (InterruptedException | ExecutionException exc) {
-        logger.error(exc.getMessage(), exc, (Object[]) null);
+        logger.error("%s", exc, exc.getMessage());
         throw new ODatabaseException(exc.getMessage());
       }
     }
@@ -243,15 +243,9 @@ public class OSequenceCached extends OSequence {
                     // warning on 1%
                     if ((float) tillEnd <= ((float) delta / 100.f) || tillEnd <= 1) {
                       String warningMessage =
-                          "Non-recyclable sequence: "
-                              + name
-                              + " reaching limt, current value: "
-                              + cacheStart
-                              + " limit value: "
-                              + limitValue
-                              + " with step: "
-                              + increment;
-                      logger.warn(warningMessage);
+                          "Non-recyclable sequence:%s reaching limt, current value: %d limit value:"
+                              + " %d with step: %d";
+                      logger.warn(warningMessage, name, cacheStart, limitValue, increment);
                     }
                   }
 

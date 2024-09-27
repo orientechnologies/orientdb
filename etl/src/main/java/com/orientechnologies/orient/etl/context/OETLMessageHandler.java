@@ -55,7 +55,7 @@ public class OETLMessageHandler implements OPluginMessageHandler {
 
   @Override
   public synchronized void debug(Object requester, String message) {
-    OLogManager.instance().logger(requester.getClass()).debug(message);
+    OLogManager.instance().logger(requester.getClass()).debug("%s", message);
     message += "\n";
     this.outputManager.debug(message);
   }
@@ -69,7 +69,7 @@ public class OETLMessageHandler implements OPluginMessageHandler {
 
   @Override
   public synchronized void info(Object requester, String message) {
-    OLogManager.instance().logger(requester.getClass()).info(message);
+    OLogManager.instance().logger(requester.getClass()).info("%s", message);
     message += "\n";
     this.outputManager.info(message);
   }
@@ -83,7 +83,7 @@ public class OETLMessageHandler implements OPluginMessageHandler {
 
   @Override
   public synchronized void warn(Object requester, String message) {
-    OLogManager.instance().logger(requester.getClass()).warn(message);
+    OLogManager.instance().logger(requester.getClass()).warn("%s", message);
     message += "\n";
     this.outputManager.warn(message);
   }
@@ -97,7 +97,7 @@ public class OETLMessageHandler implements OPluginMessageHandler {
 
   @Override
   public synchronized void error(Object requester, String message) {
-    OLogManager.instance().logger(requester.getClass()).error(message, null);
+    OLogManager.instance().logger(requester.getClass()).error("%s", null, message);
     message += "\n";
     this.outputManager.error(message);
   }

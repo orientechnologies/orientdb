@@ -61,7 +61,7 @@ public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
       database.getMetadata().getSequenceLibrary().dropSequence(this.sequenceName);
     } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
-      logger.error(message, exc, (Object) null);
+      logger.error("%s", exc, message);
       throw new OCommandExecutionException(message);
     }
     return true;

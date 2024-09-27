@@ -249,7 +249,7 @@ public class OJSONWriter {
 
                 buffer.append(objectJson);
               } catch (Exception e) {
-                logger.error("Error transforming record " + rec.getIdentity() + " to JSON", e);
+                logger.error("Error transforming record %s to JSON", e, rec.getIdentity());
               }
           }
         }

@@ -99,7 +99,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
             try {
               database.command("CREATE USER admin IDENTIFIED BY ? ROLE admin", adminPwd);
             } catch (Exception e) {
-              logger.warn("Could not create admin user for database " + databaseName, e);
+              logger.warn("Could not create admin user for database %s", e, databaseName);
             }
           }
 
@@ -145,7 +145,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
             exportClass(db, json, cls);
             exportedNames.add(cls.getName());
           } catch (Exception e) {
-            logger.error("Error on exporting class '" + cls + "'", e);
+            logger.error("Error on exporting class '%s'", e, cls);
           }
       }
       json.endCollection(1, true);

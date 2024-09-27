@@ -93,7 +93,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
         } catch (OSecurityAccessException e) {
           // WRONG USER/PASSWD
         } catch (OLockException e) {
-          logger.error("Cannot access to the database '" + iRequest.getDatabaseName() + "'", e);
+          logger.error("Cannot access to the database '%s'", e, iRequest.getDatabaseName());
         } finally {
           if (db != null) {
             db.close();
@@ -130,7 +130,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     } catch (OSecurityAccessException e) {
       // WRONG USER/PASSWD
     } catch (OLockException e) {
-      logger.error("Cannot access to the database '" + iDatabaseName + "'", e);
+      logger.error("Cannot access to the database '%s'", e, iDatabaseName);
     } finally {
       if (db != null) {
         db.close();

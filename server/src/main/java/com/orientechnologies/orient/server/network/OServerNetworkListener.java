@@ -82,7 +82,7 @@ public class OServerNetworkListener extends Thread {
       protocolVersion = iProtocol.getConstructor(OServer.class).newInstance(server).getVersion();
     } catch (Exception e) {
       final String message = "Error on reading protocol version for " + iProtocol;
-      logger.error(message, e);
+      logger.error("%s", e, message);
 
       throw OException.wrapException(new ONetworkProtocolException(message), e);
     }
@@ -355,17 +355,13 @@ public class OServerNetworkListener extends Thread {
 
         if (serverSocket.isBound()) {
           logger.info(
-              "Listening $ANSI{green "
-                  + iProtocolName
-                  + "} connections on $ANSI{green "
-                  + inboundAddr.getAddress().getHostAddress()
-                  + ":"
-                  + inboundAddr.getPort()
-                  + "} (protocol v."
-                  + protocolVersion
-                  + ", socket="
-                  + socketFactory.getName()
-                  + ")");
+              "Listening $ANSI{green %s} connections on $ANSI{green %s:%d} (protocol v.%d,"
+                  + " socket=%s)",
+              iProtocolName,
+              inboundAddr.getAddress().getHostAddress(),
+              inboundAddr.getPort(),
+              protocolVersion,
+              socketFactory.getName());
 
           return;
         }

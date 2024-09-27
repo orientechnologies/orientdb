@@ -189,7 +189,7 @@ public class OClassTrigger {
                         .getFunction((String) funcDoc.field("name"));
               }
             } catch (Exception ex) {
-              logger.error("illegal record id : ", ex);
+              logger.error("illegal record id ", ex);
             }
           }
         }
@@ -223,7 +223,7 @@ public class OClassTrigger {
       Method method = clz.getMethod(methodName, ODocument.class);
       return new Object[] {clz, method};
     } catch (Exception ex) {
-      logger.error("illegal class or method : " + clzName + "/" + methodName, ex);
+      logger.error("illegal class or method : %s/%s", ex, clzName, methodName);
       return null;
     }
   }

@@ -124,7 +124,7 @@ public class ORemoteConnectionManager {
       throw e;
     } catch (Exception e) {
       // ERROR ON RETRIEVING THE INSTANCE FROM THE POOL
-      logger.debug("Error on retrieving the connection from pool: " + iServerURL, e);
+      logger.debug("Error on retrieving the connection from pool: %s", e, iServerURL);
     }
     return null;
   }

@@ -346,10 +346,8 @@ public class OrientGraphNoTx extends OrientBaseGraph {
                     outVertexRecord.field(outFieldName));
           } else
             logger.debug(
-                "Found broken link to outgoing vertex "
-                    + outVertex.getIdentity()
-                    + " while removing edge "
-                    + edge.getId());
+                "Found broken link to outgoing vertex %s  while removing edge %s",
+                outVertex.getIdentity(), edge.getId());
         }
 
         // IN VERTEX
@@ -371,10 +369,8 @@ public class OrientGraphNoTx extends OrientBaseGraph {
                     outVertexEdge, inVertexRecord, inFieldName, inVertexRecord.field(inFieldName));
           } else
             logger.debug(
-                "Found broken link to incoming vertex "
-                    + inVertex.getIdentity()
-                    + " while removing edge "
-                    + edge.getId());
+                "Found broken link to incoming vertex %s while removing edge ",
+                inVertex.getIdentity(), edge.getId());
         }
 
         if (outVertexChanged) outVertexRecord.save();

@@ -253,12 +253,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
       else {
         try {
           logger.warn(
-              "->"
-                  + channel.socket.getInetAddress().getHostAddress()
-                  + ": Command not found: "
-                  + request.getHttpMethod()
-                  + "."
-                  + URLDecoder.decode(command, "UTF-8"));
+              "->%s: Command not found: %s.%s",
+              channel.socket.getInetAddress().getHostAddress(),
+              request.getHttpMethod(),
+              URLDecoder.decode(command, "UTF-8"));
 
           sendError(
               OHttpUtils.STATUS_INVALIDMETHOD_CODE,
@@ -620,12 +618,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
                 Integer.parseInt(line.substring(OHttpUtils.HEADER_CONTENT_LENGTH.length()));
             if (contentLength > requestMaxContentLength)
               logger.warn(
-                  "->"
-                      + channel.socket.getInetAddress().getHostAddress()
-                      + ": Error on content size "
-                      + contentLength
-                      + ": the maximum allowed is "
-                      + requestMaxContentLength);
+                  "->%s:Error on content size :%s the maximum allowed is %s",
+                  channel.socket.getInetAddress().getHostAddress(),
+                  contentLength,
+                  requestMaxContentLength);
 
           } else if (OStringSerializerHelper.startsWithIgnoreCase(
               line, OHttpUtils.HEADER_CONTENT_TYPE)) {
@@ -750,10 +746,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
           final String[] words = requestContent.toString().split(" ");
           if (words.length < 3) {
             logger.warn(
-                "->"
-                    + channel.socket.getInetAddress().getHostAddress()
-                    + ": Error on invalid content:\n"
-                    + requestContent);
+                "-> %s : Error on invalid content:\n %s",
+                channel.socket.getInetAddress().getHostAddress(), requestContent);
             while (channel.inStream.available() > 0) {
               channel.read();
             }
@@ -805,10 +799,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
 
       if (logger.isDebugEnabled())
         logger.debug(
-            "Parsing request from client "
-                + channel.socket.getInetAddress().getHostAddress()
-                + ":\n"
-                + requestContent);
+            "Parsing request from client %s:%s",
+            channel.socket.getInetAddress().getHostAddress(), requestContent);
 
     } catch (SocketException e) {
       connectionError();

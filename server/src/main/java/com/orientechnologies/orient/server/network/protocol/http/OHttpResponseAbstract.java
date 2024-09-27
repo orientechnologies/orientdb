@@ -453,7 +453,7 @@ public abstract class OHttpResponseAbstract implements OHttpResponse {
 
                 buffer.append(objectJson);
               } catch (Exception e) {
-                logger.error("Error transforming record " + rec.getIdentity() + " to JSON", e);
+                logger.error("Error transforming record %s to JSON", e, rec.getIdentity());
               }
             }
           } else if (OMultiValue.isMultiValue(entry)) {

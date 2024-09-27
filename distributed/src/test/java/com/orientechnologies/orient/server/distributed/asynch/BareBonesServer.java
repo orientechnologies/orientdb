@@ -13,7 +13,7 @@ public class BareBonesServer {
   private OServer server;
 
   public void createDB(String databaseName) {
-    logger.info("creating the database:" + databaseName);
+    logger.info("creating the database: %s", databaseName);
     if (!server.getContext().exists(databaseName)) {
       server
           .getContext()
@@ -35,7 +35,7 @@ public class BareBonesServer {
   }
 
   public void start(String configFileDir, String configFileName) {
-    logger.info("starting the database based on: " + configFileName);
+    logger.info("starting the database based on: %s", configFileName);
     try {
       server = new OServer(false);
       server.startup(new File(configFileDir, configFileName));
@@ -53,7 +53,7 @@ public class BareBonesServer {
   }
 
   public void deleteRecursively(final File iRootFile) {
-    logger.info("deleting recursively: " + iRootFile.getAbsolutePath());
+    logger.info("deleting recursively: %s", iRootFile.getAbsolutePath());
     OFileUtils.deleteRecursively(iRootFile);
   }
 

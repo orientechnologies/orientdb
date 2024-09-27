@@ -1008,7 +1008,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
               connection.getDatabase(),
               request.getImporPath(),
               iText -> {
-                logger.debug(iText);
+                logger.debug("%s", iText);
                 if (iText != null) result.add(iText);
               });
       imp.setOptions(request.getOptions());

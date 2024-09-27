@@ -129,10 +129,8 @@ public class OStatementCache {
                   statement.getBytes(db.getStorageInfo().getConfiguration().getCharset()));
         } catch (UnsupportedEncodingException e2) {
           logger.warn(
-              "Unsupported charset for database "
-                  + db
-                  + " "
-                  + db.getStorageInfo().getConfiguration().getCharset());
+              "Unsupported charset for database %s %s ",
+              db, db.getStorageInfo().getConfiguration().getCharset());
           is = new ByteArrayInputStream(statement.getBytes());
         }
       }

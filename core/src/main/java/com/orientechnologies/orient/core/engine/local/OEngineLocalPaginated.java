@@ -92,7 +92,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
     if (OGlobalConfiguration.DIRECT_MEMORY_PREALLOCATE.getValueAsBoolean()) {
       final int pageCount = (int) (diskCacheSize / pageSize);
-      logger.info("Allocation of " + pageCount + " pages.");
+      logger.info("Allocation of %d pages.", pageCount);
 
       final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
       final List<OPointer> pages = new ArrayList<>(pageCount);
@@ -151,7 +151,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
               + dbName
               + ". Current location is: "
               + new java.io.File(".").getAbsolutePath();
-      logger.error(message, e);
+      logger.error("%s", e, message);
 
       throw OException.wrapException(new ODatabaseException(message), e);
     }

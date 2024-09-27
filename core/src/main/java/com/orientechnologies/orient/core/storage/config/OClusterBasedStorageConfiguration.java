@@ -445,7 +445,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
           } else {
             write(buffer, null);
             logger.warn(
-                "Storing configuration for property:'" + k + "' not existing in current version");
+                "Storing configuration for property:'%s' not existing in current version", k);
           }
         }
       }
@@ -905,8 +905,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         totalSize += value.length;
         entries.add(value);
 
-        logger.warn(
-            "Storing configuration for property:'" + k + "' not existing in current version");
+        logger.warn("Storing configuration for property:'%s' not existing in current version", k);
       }
     }
 
@@ -1209,9 +1208,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       final ORID identifiable = btree.get(ENGINE_PREFIX_PROPERTY + name);
       if (identifiable != null) {
         logger.warn(
-            "Index engine with name '"
-                + engineData.getName()
-                + "' already contained in database configuration");
+            "Index engine with name '%s' already contained in database configuration",
+            engineData.getName());
       } else {
         storeProperty(
             atomicOperation,

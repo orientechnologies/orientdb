@@ -1395,14 +1395,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
         if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
           logger.warn(
-              "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                  + lockingStrategy);
+              "You use deprecated record locking strategy: %s it may lead to deadlocks ",
+              lockingStrategy);
           record.lock(false);
 
         } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
           logger.warn(
-              "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                  + lockingStrategy);
+              "You use deprecated record locking strategy: %s it may lead to deadlocks ",
+              lockingStrategy);
           record.lock(true);
         }
 
@@ -1905,7 +1905,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     OStorage s = getStorage();
     if (s instanceof OFreezableStorageComponent) return (OFreezableStorageComponent) s;
     else {
-      logger.error("Storage of type " + s.getType() + " does not support freeze operation", null);
+      logger.error("Storage of type %s does not support freeze operation", null, s.getType());
       return null;
     }
   }

@@ -687,7 +687,7 @@ public class ViewManager {
 
     @Override
     public void onError(ODatabaseDocument database, OException exception) {
-      logger.error("Error updating view " + viewName, exception);
+      logger.error("Error updating view %s", exception, viewName);
     }
 
     @Override

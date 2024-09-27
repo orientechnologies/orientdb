@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -163,6 +162,6 @@ public class OServerCommandPostImportDatabase
   @Override
   public void onMessage(String iText) {
     final String msg = iText.startsWith("\n") ? iText.substring(1) : iText;
-    logger.info(msg, OCommonConst.EMPTY_OBJECT_ARRAY);
+    logger.info("%s", msg);
   }
 }

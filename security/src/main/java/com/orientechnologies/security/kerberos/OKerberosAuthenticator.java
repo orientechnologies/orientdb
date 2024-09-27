@@ -86,7 +86,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
         clientPeriod * 1000 * 60,
         clientPeriod * 1000 * 60); // Wait 30 seconds before starting
 
-    logger.debug("OrientDB Kerberos Authenticator Is Active Version: " + kerberosPluginVersion);
+    logger.debug("OrientDB Kerberos Authenticator Is Active Version: %s", kerberosPluginVersion);
   }
 
   // OSecurityAuthenticator
@@ -188,7 +188,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
       krb5Config =
           OSystemVariableResolver.resolveSystemVariables((String) kerbConfig.field("krb5_config"));
 
-      logger.info("Krb5Config = " + krb5Config);
+      logger.info("Krb5Config = %s", krb5Config);
     }
 
     // service
@@ -199,13 +199,13 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
         serviceKTName =
             OSystemVariableResolver.resolveSystemVariables((String) serviceDoc.field("ktname"));
 
-        logger.info("Svc ktname = " + serviceKTName);
+        logger.info("Svc ktname = %s", serviceKTName);
       }
 
       if (serviceDoc.containsField("principal")) {
         servicePrincipal = serviceDoc.field("principal");
 
-        logger.info("Svc princ = " + servicePrincipal);
+        logger.info("Svc princ = %s", servicePrincipal);
       }
     }
 
@@ -217,13 +217,13 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
         spnegoKTName =
             OSystemVariableResolver.resolveSystemVariables((String) spnegoDoc.field("ktname"));
 
-        logger.info("SPNEGO ktname = " + spnegoKTName);
+        logger.info("SPNEGO ktname = %s", spnegoKTName);
       }
 
       if (spnegoDoc.containsField("principal")) {
         spnegoPrincipal = spnegoDoc.field("principal");
 
-        logger.info("SPNEGO princ = " + spnegoPrincipal);
+        logger.info("SPNEGO princ = %s", spnegoPrincipal);
       }
     }
 
@@ -234,27 +234,27 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
       if (clientDoc.containsField("useTicketCache")) {
         clientUseTicketCache = (Boolean) clientDoc.field("useTicketCache", OType.BOOLEAN);
 
-        logger.info("Client useTicketCache = " + clientUseTicketCache);
+        logger.info("Client useTicketCache = %s", clientUseTicketCache);
       }
 
       if (clientDoc.containsField("principal")) {
         clientPrincipal = clientDoc.field("principal");
 
-        logger.info("Client princ = " + clientPrincipal);
+        logger.info("Client princ = %s", clientPrincipal);
       }
 
       if (clientDoc.containsField("ccname")) {
         clientCCName =
             OSystemVariableResolver.resolveSystemVariables((String) clientDoc.field("ccname"));
 
-        logger.info("Client ccname = " + clientCCName);
+        logger.info("Client ccname = %s", clientCCName);
       }
 
       if (clientDoc.containsField("ktname")) {
         clientKTName =
             OSystemVariableResolver.resolveSystemVariables((String) clientDoc.field("ktname"));
 
-        logger.info("Client ktname = " + clientKTName);
+        logger.info("Client ktname = %s", clientKTName);
       }
 
       if (clientDoc.containsField("renewalPeriod")) {
@@ -345,7 +345,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
     try {
       Configuration cfg = new OKrb5LoginModuleConfig(servicePrincipal, serviceKTName);
 
-      logger.info("createServiceSubject() Service Principal: " + servicePrincipal);
+      logger.info("createServiceSubject() Service Principal: %s", servicePrincipal);
 
       LoginContext lc = new LoginContext("ignore", null, null, cfg);
       lc.login();
@@ -377,7 +377,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
     try {
       Configuration cfg = new OKrb5LoginModuleConfig(spnegoPrincipal, spnegoKTName);
 
-      logger.info("createSpnegoSubject() SPNEGO Principal: " + spnegoPrincipal);
+      logger.info("createSpnegoSubject() SPNEGO Principal: %s", spnegoPrincipal);
 
       LoginContext lc = new LoginContext("ignore", null, null, cfg);
       lc.login();
@@ -416,7 +416,7 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
           new OKrb5ClientLoginModuleConfig(
               clientPrincipal, clientUseTicketCache, clientCCName, clientKTName);
 
-      logger.info("createClientSubject() Client Principal: " + clientPrincipal);
+      logger.info("createClientSubject() Client Principal: %s", clientPrincipal);
 
       LoginContext lc = new LoginContext("ignore", null, null, cfg);
       lc.login();

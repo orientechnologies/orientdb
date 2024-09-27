@@ -148,7 +148,7 @@ public final class OCommandResponse implements OBinaryResponse {
 
           OMessageHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
         } catch (Exception e) {
-          logger.warn("Cannot serialize record: " + o);
+          logger.warn("Cannot serialize record: %s", e, o);
           OMessageHelper.writeIdentifiable(channel, null, recordSerializer);
           // WRITE NULL RECORD TO AVOID BREAKING PROTOCOL
         }
@@ -164,7 +164,7 @@ public final class OCommandResponse implements OBinaryResponse {
             channel.writeByte((byte) 1); // ONE MORE RECORD
             OMessageHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
           } catch (Exception e) {
-            logger.warn("Cannot serialize record: " + o);
+            logger.warn("Cannot serialize record: %s", e, o);
           }
         }
         channel.writeByte((byte) 0); // NO MORE RECORD
@@ -180,7 +180,7 @@ public final class OCommandResponse implements OBinaryResponse {
 
             OMessageHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
           } catch (Exception e) {
-            logger.warn("Cannot serialize record: " + o);
+            logger.warn("Cannot serialize record:%s ", e, o);
           }
         }
       }

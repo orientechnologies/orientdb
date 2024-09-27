@@ -45,10 +45,10 @@ public class OEngineMemory extends OEngineAbstract {
     try {
       return new ODirectMemoryStorage(url, url, storageId, context);
     } catch (Exception e) {
-      final String message = "Error on opening in memory storage: " + url;
-      logger.error(message, e);
+      logger.error("Error on opening in memory storage: %s", e, url);
 
-      throw OException.wrapException(new ODatabaseException(message), e);
+      throw OException.wrapException(
+          new ODatabaseException("Error on opening in memory storage:" + url), e);
     }
   }
 

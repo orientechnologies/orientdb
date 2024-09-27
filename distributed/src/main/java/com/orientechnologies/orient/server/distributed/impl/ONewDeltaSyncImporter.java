@@ -25,9 +25,7 @@ public class ONewDeltaSyncImporter {
             @Override
             public Object call() throws Exception {
               logger.infoIn(
-                  nodeName,
-                  targetNode,
-                  "Started import of delta for database '" + databaseName + "'");
+                  nodeName, targetNode, "Started import of delta for database '%s'", databaseName);
               final ODatabaseDocumentInternal db = serverInstance.openDatabase(databaseName);
               ((ODatabaseDocumentDistributed) db).getDistributedShared().fillStatus();
               DataInput dataInput = new DataInputStream(in);

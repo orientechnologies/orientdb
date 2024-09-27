@@ -72,7 +72,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
     } catch (Exception e) {
       final String message =
           "Error on unmarshalling object in binary format: " + iSource.getIdentity();
-      logger.error(message, e);
+      logger.error("%s", e, message);
       throw OException.wrapException(new OSerializationException(message), e);
     }
   }

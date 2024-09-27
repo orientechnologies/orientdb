@@ -90,7 +90,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
               logger.info("increment lockExceptions %d", lockExceptions.get());
 
             } catch (ONeedRetryException e) {
-              logger.debug("Concurrent Exceptions " + e);
+              logger.debug("Concurrent Exceptions ", e);
 
             } catch (Exception e) {
               graph.rollback();

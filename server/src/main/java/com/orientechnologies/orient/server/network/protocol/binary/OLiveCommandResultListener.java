@@ -135,10 +135,10 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener
       if (connections.size() == 0) {
         try {
           ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-          logger.warn("Unsubscribing live query for connection " + connection);
+          logger.warn("Unsubscribing live query for connection %s", null, connection);
           OLiveQueryHook.unsubscribe(iToken, db);
         } catch (Exception e) {
-          logger.warn("Unsubscribing live query for connection " + connection, e);
+          logger.warn("Unsubscribing live query for connection %s", e, connection);
         }
         break;
       }

@@ -63,7 +63,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       executeInternal(ctx, result);
     } catch (ExecutionException | InterruptedException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
-      logger.error(message, exc, (Object) null);
+      logger.error("%s", exc, message);
       throw new OCommandExecutionException(message);
     }
 

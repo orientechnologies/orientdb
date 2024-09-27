@@ -1188,11 +1188,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
           if (vertexDoc == null) {
             logger.warn(
-                "Cannot load edge "
-                    + fieldRecord
-                    + " to get the "
-                    + connection.getKey().opposite()
-                    + " vertex");
+                "Cannot load edge %s to get the %s vertex",
+                fieldRecord, connection.getKey().opposite());
             return;
           }
         }

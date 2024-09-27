@@ -862,7 +862,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       } catch (Exception e) {
         final String message = "Error before the transaction begin";
 
-        logger.error(message, e);
+        logger.error("%s", e, message);
         throw OException.wrapException(new OTransactionBlockedException(message), e);
       }
 
@@ -1670,11 +1670,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       } catch (Exception e) {
         final String message =
             "Error after the transaction has been committed. The transaction remains valid. The"
-                + " exception caught was on execution of "
-                + listener.getClass()
+                + " exception caught was on execution of %s"
                 + ".onAfterTxCommit() `%08X`";
 
-        logger.error(message, e, System.identityHashCode(e));
+        logger.error(message, e, "" + listener.getClass(), System.identityHashCode(e));
 
         throw OException.wrapException(new OTransactionBlockedException(message), e);
       }
@@ -2007,7 +2006,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         activeQueries.values().stream()
             .map(pendingQuery -> pendingQuery.getResultSet().getExecutionPlan())
             .filter(plan -> plan != null)
-            .forEach(plan -> logger.debug(plan.toString()));
+            .forEach(plan -> logger.debug("%s", plan.toString()));
       }
     }
     this.activeQueries.put(id, state);

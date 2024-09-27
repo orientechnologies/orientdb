@@ -155,7 +155,7 @@ public class OETLFileSource extends OETLAbstractSource {
         getContext().getMessageHandler().error(this, "Error on locking file: %s", e, fileName);
       }
 
-    info("Reading from file " + path + " with encoding " + encoding.displayName());
+    info("Reading from file %s with encoding %s", path, encoding.displayName());
   }
 
   public boolean isClosed() {

@@ -99,7 +99,7 @@ public class OKerberosLibrary {
 
       if (useNativeJgss) {
         logger.info(
-            null, "OKerberosLibrary.checkNativeJGSS() Using Native JGSS, Principal = " + principal);
+            "OKerberosLibrary.checkNativeJGSS() Using Native JGSS, Principal = %s ", principal);
 
         int usage = GSSCredential.INITIATE_ONLY;
 
@@ -113,7 +113,7 @@ public class OKerberosLibrary {
         Oid krb5Oid = new Oid("1.2.840.113554.1.2.2");
 
         logger.info(
-            null, "OKerberosLibrary.checkNativeJGSS() calling createCredential() for Kerberos OID");
+            "OKerberosLibrary.checkNativeJGSS() calling createCredential() for Kerberos OID");
 
         // null: indicates using the default principal.
         GSSCredential kerbCreds =
@@ -121,15 +121,13 @@ public class OKerberosLibrary {
         subject.getPrivateCredentials().add(kerbCreds);
 
         logger.info(
-            null,
-            "OKerberosLibrary.checkNativeJGSS() Kerberos credential name = "
-                + kerbCreds.getName().toString());
+            "OKerberosLibrary.checkNativeJGSS() Kerberos credential name = %s",
+            kerbCreds.getName().toString());
 
         // SPNEGO
         Oid spnegoOid = new Oid("1.3.6.1.5.5.2");
 
-        logger.info(
-            null, "OKerberosLibrary.checkNativeJGSS() calling createCredential() for SPNEGO OID");
+        logger.info("OKerberosLibrary.checkNativeJGSS() calling createCredential() for SPNEGO OID");
 
         // null: indicates using the default principal.
         GSSCredential spnegoCreds =
@@ -137,9 +135,8 @@ public class OKerberosLibrary {
         subject.getPrivateCredentials().add(spnegoCreds);
 
         logger.info(
-            null,
-            "OKerberosLibrary.checkNativeJGSS() Kerberos credential name = "
-                + spnegoCreds.getName().toString());
+            "OKerberosLibrary.checkNativeJGSS() Kerberos credential name = %s",
+            spnegoCreds.getName().toString());
       }
     } catch (Exception ex) {
       logger.error("OKerberosLibrary.checkNativeJGSS() Exception: ", ex);
@@ -178,9 +175,8 @@ public class OKerberosLibrary {
                       GSSCredential.ACCEPT_ONLY);
 
               logger.info(
-                  null,
-                  "OKerberosLibrary.getSPNegoSource() Kerberos credential name = "
-                      + serverCreds.getName().toString());
+                  "OKerberosLibrary.getSPNegoSource() Kerberos credential name = %s",
+                  serverCreds.getName().toString());
 
               // Default acceptor.
               GSSContext context = manager.createContext((GSSCredential) serverCreds);
@@ -192,8 +188,8 @@ public class OKerberosLibrary {
 
                 if (context.getSrcName() != null) {
                   logger.info(
-                      "OKerberosLibrary.getSPNegoSource() context srcName = "
-                          + context.getSrcName());
+                      "OKerberosLibrary.getSPNegoSource() context srcName = %s",
+                      context.getSrcName());
 
                   source = context.getSrcName().toString();
                 }
@@ -238,9 +234,8 @@ public class OKerberosLibrary {
                       GSSCredential.ACCEPT_ONLY);
 
               logger.info(
-                  null,
-                  "OKerberosLibrary.getKerberosSource() Kerberos credential name = "
-                      + serverCreds.getName().toString());
+                  "OKerberosLibrary.getKerberosSource() Kerberos credential name = %s",
+                  serverCreds.getName().toString());
 
               // Default acceptor.
               GSSContext context = manager.createContext((GSSCredential) serverCreds);

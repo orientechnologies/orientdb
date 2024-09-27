@@ -211,7 +211,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     } catch (OSecurityAccessException e) {
       // WRONG USER/PASSWD
     } catch (OLockException e) {
-      logger.error("Cannot access to the database '" + iDatabaseName + "'", e);
+      logger.error("Cannot access to the database '%s'", e, iDatabaseName);
     } finally {
       if (db == null) {
         // WRONG USER/PASSWD

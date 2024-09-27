@@ -186,7 +186,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
                       }
                       if (!closed.get()) {
 
-                        logger.debug("Flushing index: " + indexName());
+                        logger.debug("Flushing index: %s", indexName());
                         flush();
                       }
                     });
@@ -455,7 +455,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
       try {
         reOpen();
       } catch (final IOException e) {
-        logger.error("error while opening closed index:: " + indexName(), e);
+        logger.error("error while opening closed index: %s ", e, indexName());
       }
     }
   }
@@ -609,7 +609,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
       cancelCommitTask();
       commitAndCloseWriter();
     } catch (IOException e) {
-      logger.error("Error on freezing Lucene index:: " + indexName(), e);
+      logger.error("Error on freezing Lucene index: %s", e, indexName());
     }
   }
 
@@ -619,7 +619,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
       close();
       reOpen();
     } catch (IOException e) {
-      logger.error("Error on releasing Lucene index:: " + indexName(), e);
+      logger.error("Error on releasing Lucene index: %s", e, indexName());
     }
   }
 }

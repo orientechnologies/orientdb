@@ -125,10 +125,9 @@ public final class OperationsFreezer {
             | SecurityException
             | InvocationTargetException ie) {
           logger.error(
-              "Can not create instance of exception "
-                  + freezeParameters.exceptionClass
+              "Can not create instance of exception %s "
                   + " with message will try empty constructor instead",
-              ie);
+              ie, freezeParameters.exceptionClass);
           throwFreezeExceptionWithoutMessage(freezeParameters);
         }
       } else {
@@ -143,10 +142,9 @@ public final class OperationsFreezer {
       throw freezeParameters.exceptionClass.newInstance();
     } catch (InstantiationException | IllegalAccessException ie) {
       logger.error(
-          "Can not create instance of exception "
-              + freezeParameters.exceptionClass
+          "Can not create instance of exception %s"
               + " will park thread instead of throwing of exception",
-          ie);
+          ie, freezeParameters.exceptionClass);
     }
   }
 

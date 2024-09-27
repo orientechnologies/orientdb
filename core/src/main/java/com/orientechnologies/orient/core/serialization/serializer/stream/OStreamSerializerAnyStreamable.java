@@ -63,7 +63,7 @@ public class OStreamSerializerAnyStreamable {
     if (classNameSize <= 0) {
       final String message =
           "Class signature not found in ANY element: " + Arrays.toString(iStream);
-      logger.error(message, null);
+      logger.error("%s", null, message);
 
       throw new OSerializationException(message);
     }

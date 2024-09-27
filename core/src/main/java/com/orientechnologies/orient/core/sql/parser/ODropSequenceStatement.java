@@ -44,7 +44,7 @@ public class ODropSequenceStatement extends ODDLStatement {
       database.getMetadata().getSequenceLibrary().dropSequence(name.getStringValue());
     } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
-      logger.error(message, exc, (Object) null);
+      logger.error("%s", exc, message);
       throw new OCommandExecutionException(message);
     }
 

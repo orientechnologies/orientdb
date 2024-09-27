@@ -107,7 +107,7 @@ public class ObjectEnhancingTestSchemaFull extends ObjectDBBaseTest {
   @AfterClass
   public void end() throws IOException {
     String prefix = url.substring(0, url.indexOf(':') + 1);
-    logger.info("deleting database " + url);
+    logger.info("deleting database %s", url);
     ODatabaseHelper.dropDatabase(
         OObjectDatabasePool.global().acquire(url, "admin", "admin"), prefix);
   }

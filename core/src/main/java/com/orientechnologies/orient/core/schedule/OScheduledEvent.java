@@ -71,7 +71,7 @@ public class OScheduledEvent {
     try {
       cron = new OCronExpression(getRule());
     } catch (ParseException e) {
-      logger.error("Error on compiling cron expression " + getRule(), e);
+      logger.error("Error on compiling cron expression %s", e, getRule());
     }
   }
 
@@ -148,7 +148,7 @@ public class OScheduledEvent {
     try {
       cron.buildExpression(getRule());
     } catch (ParseException e) {
-      logger.error("Error on compiling cron expression " + getRule(), e);
+      logger.error("Error on compiling cron expression %s", e, getRule());
     }
   }
 
@@ -215,15 +215,13 @@ public class OScheduledEvent {
       event.reload();
 
       if (event.running.get()) {
-        logger.error(
-            "Error: The scheduled event '" + event.getName() + "' is already running", null);
+        logger.error("Error: The scheduled event '%s' is already running", null, event.getName());
         return;
       }
 
       if (event.function == null) {
         logger.error(
-            "Error: The scheduled event '" + event.getName() + "' has no configured function",
-            null);
+            "Error: The scheduled event '%s' has no configured function", null, event.getName());
         return;
       }
 

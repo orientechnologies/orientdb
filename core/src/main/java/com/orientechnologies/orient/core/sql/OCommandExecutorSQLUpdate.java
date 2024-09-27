@@ -194,7 +194,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
         else if (word.equals(KEYWORD_UPSERT)) upsertMode = true;
         else if (word.equals(KEYWORD_RETURN)) parseReturn();
         else if (word.equals(KEYWORD_RETRY)) {
-          logger.warn("RETRY keyword will be ignored in " + originalQuery);
+          logger.warn("RETRY keyword will be ignored in %s", originalQuery);
           parseRetry();
         } else break;
 

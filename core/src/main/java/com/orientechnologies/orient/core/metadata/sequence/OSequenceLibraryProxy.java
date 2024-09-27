@@ -80,7 +80,7 @@ public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
         String sequenceName = database.sendSequenceAction(action);
         return delegate.getSequence(database, sequenceName);
       } catch (InterruptedException | ExecutionException exc) {
-        logger.error(exc.getMessage(), exc, (Object[]) null);
+        logger.error("%s", exc, exc.getMessage());
         throw new ODatabaseException(exc.getMessage());
       }
     } else {
@@ -103,7 +103,7 @@ public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
       try {
         database.sendSequenceAction(action);
       } catch (InterruptedException | ExecutionException exc) {
-        logger.error(exc.getMessage(), exc, (Object[]) null);
+        logger.error("%s", exc, exc.getMessage());
         throw new ODatabaseException(exc.getMessage());
       }
     } else {

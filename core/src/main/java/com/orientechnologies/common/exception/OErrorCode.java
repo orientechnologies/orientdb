@@ -92,7 +92,7 @@ public enum OErrorCode {
         | IllegalAccessException
         | NoSuchMethodException
         | InvocationTargetException e) {
-      logger.warn("Cannot instantiate exception " + exceptionClass);
+      logger.warn("Cannot instantiate exception %s", e, exceptionClass);
     }
     return null;
   }

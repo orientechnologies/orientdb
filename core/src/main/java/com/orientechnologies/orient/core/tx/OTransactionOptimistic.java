@@ -82,11 +82,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     if (txStartCounter > 1) {
       logger.debug(
-          "Transaction with ID "
-              + getId()
-              + " was already started "
-              + txStartCounter
-              + " times, and will be reused.");
+          "Transaction with ID %d" + " was already started %d" + " times, and will be reused.",
+          getId(), txStartCounter);
     }
   }
 

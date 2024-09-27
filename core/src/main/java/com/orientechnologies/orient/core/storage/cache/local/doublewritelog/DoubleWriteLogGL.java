@@ -537,9 +537,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
   private void printSegmentIsBroken(Path segment) {
     logger.warnNoDb(
-        "DWL Segment "
-            + segment
-            + " is broken and only part of its content will be used during data restore");
+        "DWL Segment %s is broken and only part of its content will be used during data restore",
+        segment);
   }
 
   @Override

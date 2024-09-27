@@ -125,7 +125,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       try {
         this.partitionSize = Integer.parseInt(partitionsProperty);
       } catch (NumberFormatException e) {
-        logger.error("Invalid value of 'partitions' property : `" + partitionsProperty + "`", e);
+        logger.error("Invalid value of 'partitions' property : `%s`", e, partitionsProperty);
       }
       engineProperties = new HashMap<>();
       engineProperties.put("partitions", String.valueOf(partitionSize));

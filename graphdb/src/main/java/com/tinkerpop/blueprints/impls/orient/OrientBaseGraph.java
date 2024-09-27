@@ -380,7 +380,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     try {
       return URLEncoder.encode(iClassName, "UTF-8").replaceAll("\\.", "%2E"); // encode invalid '.'
     } catch (UnsupportedEncodingException e) {
-      logger.error("Error on encoding class name using encoding '%s'", e, "UTF-8");
+      logger.error("Error on encoding class name using encoding 'UTF-8'", e);
       return iClassName;
     }
   }
@@ -394,7 +394,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     try {
       return URLDecoder.decode(iClassName, "UTF-8");
     } catch (UnsupportedEncodingException e) {
-      logger.error("Error on decoding class name using encoding '%s'", e, "UTF-8");
+      logger.error("Error on decoding class name using encoding 'UTF-8'", e);
       return iClassName;
     }
   }
@@ -1132,10 +1132,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     } catch (ONeedRetryException e) {
       throw e;
     } catch (RuntimeException e) {
-      logger.error("Error during context close for db " + url, e);
+      logger.error("Error during context close for db %s", e, url);
       throw e;
     } catch (Exception e) {
-      logger.error("Error during context close for db " + url, e);
+      logger.error("Error during context close for db %s", e, url);
       throw OException.wrapException(
           new ODatabaseException("Error during context close for db " + url), e);
     } finally {
@@ -1148,7 +1148,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
         }
         pollGraphFromStack(closeDb);
       } catch (Exception e) {
-        logger.error("Error during context close for db " + url, e);
+        logger.error("Error during context close for db %s", e, url);
       }
     }
 
@@ -2282,7 +2282,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
       graph.getDatabase().getMetadata().reload();
       klass = graph.getDatabase().getMetadata().getSchema().getClass(inverseFieldName);
       if (klass == null) {
-        logger.warn(null, "Removing edge, schema class not found for " + r);
+        logger.warn("Removing edge, schema class not found for %s", r);
         return;
       }
     }

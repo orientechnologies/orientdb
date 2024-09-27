@@ -118,12 +118,10 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
 
       if (srvProtocolVersion != protocolVersion) {
         logger.warn(
-            "The Client driver version is different than Server version: client="
-                + protocolVersion
-                + ", server="
-                + srvProtocolVersion
-                + ". You could not use the full features of the newer version. Assure to have"
-                + " the same versions on both");
+            "The Client driver version is different than Server version: client=%d, server=%d. You"
+                + " could not use the full features of the newer version. Assure to have the same"
+                + " versions on both",
+            protocolVersion, srvProtocolVersion);
       }
 
     } catch (RuntimeException e) {
@@ -298,9 +296,8 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
       String exceptionType = throwable != null ? throwable.getClass().getName() : "null";
       logger.error(
           "Error during exception serialization, serialized exception is not Throwable,"
-              + " exception type is "
-              + exceptionType,
-          null);
+              + " exception type is %s",
+          null, exceptionType);
     }
   }
 }

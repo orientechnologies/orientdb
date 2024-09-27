@@ -104,7 +104,7 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioIT extends AbstractSc
 
       // gets the actual version of the record
       int actualVersion = recordServer0.getVersion();
-      logger.error("Actual version: " + actualVersion, null);
+      logger.error("Actual version: %d", null, actualVersion);
 
       // sets a delay for operations on distributed storage of server0 and server1
 

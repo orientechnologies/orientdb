@@ -633,7 +633,8 @@ public final class OWOWCache extends OAbstractWriteCache
         try {
           listener.pageIsBroken(fileName, pageIndex);
         } catch (final Exception e) {
-          logger.error("Error during notification of page is broken for storage " + storageName, e);
+          logger.error(
+              "Error during notification of page is broken for storage %s", e, storageName);
         }
       }
     }
@@ -718,10 +719,9 @@ public final class OWOWCache extends OAbstractWriteCache
       } else {
         // REGISTER THE FILE
         logger.debug(
-            "File '"
-                + fileName
-                + "' is not registered in 'file name - id' map, but exists in file system."
-                + " Registering it");
+            "File '%s' is not registered in 'file name - id' map, but exists in file system."
+                + " Registering it",
+            fileName);
 
         openFile(fileClassic);
 
@@ -2181,7 +2181,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
     if (!fixedFiles.isEmpty()) {
       logger.warn(
-          "Removed files " + fixedFiles + " had duplicated ids. Problem is fixed automatically.");
+          "Removed files %s had duplicated ids. Problem is fixed automatically.", fixedFiles);
     }
   }
 
@@ -2589,7 +2589,7 @@ public final class OWOWCache extends OAbstractWriteCache
     exception.printStackTrace(printWriter);
     printWriter.flush();
 
-    logger.error(stringWriter.toString(), null);
+    logger.error("%s", null, stringWriter.toString());
   }
 
   private void fsyncFiles() throws InterruptedException, IOException {

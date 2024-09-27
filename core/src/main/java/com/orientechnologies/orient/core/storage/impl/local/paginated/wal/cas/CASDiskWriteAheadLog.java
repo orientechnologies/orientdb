@@ -1429,7 +1429,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
       final Cursor<OWALRecord> nextCursor = MPSCFAAArrayDequeue.prev(cursor);
       if (nextCursor == null && record.getLsn().getPosition() < 0) {
-        logger.warn(cursor.toString());
+        logger.warn("%s", cursor.toString());
         throw new IllegalStateException("Invalid last record");
       }
 

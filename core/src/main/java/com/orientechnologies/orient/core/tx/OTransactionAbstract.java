@@ -130,7 +130,7 @@ public abstract class OTransactionAbstract implements OTransaction {
           ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseReadLock(lock.getKey());
         }
       } catch (Exception e) {
-        logger.debug("Error on releasing lock against record " + lock.getKey(), e);
+        logger.debug("Error on releasing lock against record %s", e, lock.getKey());
       }
     }
     locks.clear();

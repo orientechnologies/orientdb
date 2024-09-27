@@ -79,9 +79,8 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
           ((ODatabaseDocument) database.getUnderlying()).load((ORID) value, iFetchPlan);
       if (record == null) {
         logger.warn(
-            "Record "
-                + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
-                + " references a deleted instance");
+            "Record %s references a deleted instance",
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity());
         return null;
       }
       TYPE o = (TYPE) database.getUserObjectByRecord(record, iFetchPlan);

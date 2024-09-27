@@ -260,10 +260,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     } catch (UnsupportedEncodingException e) {
       logger.warn(
-          "Invalid charset for database "
-              + getDatabase()
-              + " "
-              + getDatabase().getStorageInfo().getConfiguration().getCharset());
+          "Invalid charset for database %s %s",
+          getDatabase(), getDatabase().getStorageInfo().getConfiguration().getCharset());
       osql = new OrientSql(is);
     }
 

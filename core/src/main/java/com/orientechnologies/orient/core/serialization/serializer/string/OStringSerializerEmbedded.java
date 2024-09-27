@@ -62,7 +62,7 @@ public class OStringSerializerEmbedded implements OStringSerializer {
     try {
       clazz = Class.forName(className);
     } catch (ClassNotFoundException e) {
-      logger.debug("Class name provided in embedded document " + className + " does not exist.", e);
+      logger.debug("Class name provided in embedded document %s does not exist.", e, className);
     }
 
     if (clazz == null) return instance;

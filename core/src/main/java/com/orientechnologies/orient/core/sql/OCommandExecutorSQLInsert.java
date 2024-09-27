@@ -323,9 +323,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
 
       if (oldClass != null && oldClass.isSubClassOf("V")) {
         logger.warn(
-            "WARNING: copying vertex record "
-                + doc
-                + " with INSERT/SELECT, the edge pointers won't be copied");
+            "copying vertex record %s with INSERT/SELECT, the edge pointers won't be copied", doc);
         String[] fields = ((ODocument) rec).fieldNames();
         for (String field : fields) {
           if (field.startsWith("out_") || field.startsWith("in_")) {

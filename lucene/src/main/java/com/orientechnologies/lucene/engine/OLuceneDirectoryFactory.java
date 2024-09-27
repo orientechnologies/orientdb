@@ -64,7 +64,7 @@ public class OLuceneDirectoryFactory {
       }
       return new OLuceneDirectory(dir, luceneIndexPath.toString());
     } catch (final IOException e) {
-      logger.error("unable to create Lucene Directory with type " + luceneType, e);
+      logger.error("unable to create Lucene Directory with type %s", e, luceneType);
     }
     logger.warn("unable to create Lucene Directory, FALL BACK to ramDir");
     return new OLuceneDirectory(new ByteBuffersDirectory(), null);

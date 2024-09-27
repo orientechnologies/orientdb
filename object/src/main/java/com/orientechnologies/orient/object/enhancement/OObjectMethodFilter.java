@@ -109,15 +109,9 @@ public class OObjectMethodFilter implements MethodFilter {
     Field f = OObjectEntitySerializer.getField(getFieldName(m), m.getDeclaringClass());
     if (!f.getType().isAssignableFrom(parameters[0])) {
       logger.warn(
-          "Setter method "
-              + m.toString()
-              + " for field "
-              + f.getName()
-              + " in class "
-              + m.getDeclaringClass().toString()
-              + " cannot be bound to proxied instance: parameter class don't match with field"
-              + " type "
-              + f.getType().toString());
+          "Setter method %s for field % in class %d cannot be bound to proxied instance: parameter"
+              + " class don't match with field type %s",
+          m.toString(), f.getName(), m.getDeclaringClass().toString(), f.getType().toString());
       isSetterCache.put(m, false);
       return false;
     }

@@ -96,12 +96,12 @@ public class OSystemDBImporter extends Thread {
 
     try {
       db = context.openNoAuthorization(dbName);
-      db.setProperty(ODefaultAuditing.IMPORTER_FLAG, true);
 
       if (db == null) {
         logger.error("importDB() Unable to import auditing log for database: %s", null, dbName);
         return;
       }
+      db.setProperty(ODefaultAuditing.IMPORTER_FLAG, true);
 
       sysdb = context.getSystemDatabase().openSystemDatabase();
 

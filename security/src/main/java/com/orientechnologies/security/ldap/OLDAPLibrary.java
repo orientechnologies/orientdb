@@ -89,26 +89,25 @@ public class OLDAPLibrary {
     String realURL = ldap.getURL();
 
     if (ldap.isAlias()) {
-      if (debug)
-        logger.info(null, "OLDAPLibrary.getRealURL() Alias hostname = " + ldap.getHostname());
+      if (debug) logger.info("OLDAPLibrary.getRealURL() Alias hostname = %s", ldap.getHostname());
 
       // Get the returned IP address from the alias.
       // May throw an UnknownHostException
       InetAddress ipAddress = InetAddress.getByName(ldap.getHostname());
 
       if (debug)
-        logger.info(null, "OLDAPLibrary.getRealURL() IP Address = " + ipAddress.getHostAddress());
+        logger.info("OLDAPLibrary.getRealURL() IP Address = %s", ipAddress.getHostAddress());
 
       // Now that we have the IP address, use it to get the real hostname.
       // We create a new InetAddress object, because hostnames are cached.
       InetAddress realAddress = InetAddress.getByName(ipAddress.getHostAddress());
 
       if (debug)
-        logger.info(null, "OLDAPLibrary.getRealURL() Real hostname = " + realAddress.getHostName());
+        logger.info("OLDAPLibrary.getRealURL() Real hostname = %s", realAddress.getHostName());
 
       realURL = ldap.getURL(realAddress.getHostName());
 
-      if (debug) logger.info(null, "OLDAPLibrary.getRealURL() Real URL = " + realURL);
+      if (debug) logger.info("OLDAPLibrary.getRealURL() Real URL = %s", realURL);
     }
 
     return realURL;
@@ -252,10 +251,8 @@ public class OLDAPLibrary {
 
             if (debug)
               logger.info(
-                  "OLDAPLibrary.findMembers() StartingDN: "
-                      + startingDN
-                      + ", userPrincipalName: "
-                      + upn);
+                  "OLDAPLibrary.findMembers() StartingDN: %s, userPrincipalName: %s",
+                  startingDN, upn);
 
             if (upn != null) {
               // Some UPNs, especially in 'altSecurityIdentities' will store the UPNs as such
@@ -311,7 +308,7 @@ public class OLDAPLibrary {
         }
       }
     } catch (Exception ex) {
-      logger.error("OLDAPLibrary fillAttributeList(" + name + ")", ex);
+      logger.error("OLDAPLibrary fillAttributeList(%s)", ex, name);
     }
   }
 
@@ -323,7 +320,7 @@ public class OLDAPLibrary {
         return (String) attribute.get(0);
       }
     } catch (Exception ex) {
-      logger.error("OLDAPLibrary.getFirstValue(" + name + ") ", ex);
+      logger.error("OLDAPLibrary.getFirstValue(%s) ", ex, name);
     }
 
     return null;

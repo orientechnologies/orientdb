@@ -104,7 +104,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
             wal.removeCutTillLimit(lsn);
           }
           finished.countDown();
-          logger.info("Sending Enterprise backup (" + database.getName() + ") for node sync");
+          logger.info("Sending Enterprise backup (%s) for node sync", database.getName());
 
         } else {
           try {
@@ -116,7 +116,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
                     public void onMessage(String iText) {
                       if (iText.startsWith("\n")) iText = iText.substring(1);
 
-                      logger.debug(iText);
+                      logger.debug("%s", iText);
                     }
                   };
             }

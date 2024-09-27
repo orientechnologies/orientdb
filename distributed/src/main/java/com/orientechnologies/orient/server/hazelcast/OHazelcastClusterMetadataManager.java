@@ -622,11 +622,11 @@ public class OHazelcastClusterMetadataManager
             logger.errorIn(
                 joinedNodeName,
                 eventNodeName,
-                "Found a new node (%s) with the same name as current: '"
-                    + joinedNodeName
-                    + "'. The node has been excluded. Change the name in its"
+                "Found a new node (%s) with the same name as current: '%s'. "
+                    + "The node has been excluded. Change the name in its"
                     + " config/orientdb-dserver-config.xml file",
-                iEvent.getMember());
+                iEvent.getMember(),
+                joinedNodeName);
 
             throw new ODistributedException(
                 "Found a new node ("

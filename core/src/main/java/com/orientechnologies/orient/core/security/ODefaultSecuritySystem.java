@@ -720,8 +720,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
             }
           } else {
             logger.error(
-                "ODefaultServerSecurity.loadAuthenticators() authentication object is missing"
-                    + " name",
+                "ODefaultServerSecurity.loadAuthenticators() authentication object is missing",
                 null);
           }
         } catch (Exception ex) {

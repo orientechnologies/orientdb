@@ -386,7 +386,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
     AtomicInteger counter = getTip(iMessage);
     if (counter == null) {
       // DUMP THE MESSAGE ONLY THE FIRST TIME
-      logger.info("[TIP] " + iMessage);
+      logger.info("[TIP] %s", iMessage);
 
       counter = new AtomicInteger(0);
     }
@@ -522,7 +522,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
                         "\n"
                             + "*******************************************************************************************************************************************");
 
-                    logger.info(null, output.toString());
+                    logger.info("%s", output.toString());
                   },
                   ms,
                   ms);

@@ -746,7 +746,7 @@ public class OClassEmbedded extends OClassImpl {
           if (clazz instanceof OClassImpl) {
             addPolymorphicClusterIds((OClassImpl) clazz);
           } else {
-            logger.warn("Warning: cannot set polymorphic cluster IDs for class " + name);
+            logger.warn("Warning: cannot set polymorphic cluster IDs for class %s", name);
           }
         }
       }

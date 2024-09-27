@@ -473,8 +473,7 @@ public class OIOUtils {
       return (int) fileStore.getBlockSize();
     } catch (IOException | UnsupportedOperationException e) {
       logger.errorNoDb(
-          "Error during calculation file system " + "block size, falling back to default one - 4K",
-          e);
+          "Error during calculation file system block size, falling back to default one - 4K", e);
       return 4 * 1024;
     }
   }

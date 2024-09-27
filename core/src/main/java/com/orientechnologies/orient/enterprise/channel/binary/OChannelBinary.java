@@ -349,7 +349,7 @@ public abstract class OChannelBinary extends OChannel
             + dirtyBuffer
             + (i > dirtyBuffer.length() ? "..." : "")
             + "]";
-    logger.error(message, null);
+    logger.error("%s", null, message);
     throw new OIOException(message);
   }
 

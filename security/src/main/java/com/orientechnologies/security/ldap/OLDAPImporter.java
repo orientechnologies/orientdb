@@ -114,7 +114,7 @@ public class OLDAPImporter implements OSecurityComponent {
       if (importDoc.containsField("period")) {
         importPeriod = importDoc.field("period");
 
-        if (debug) logger.info("Import Period = " + importPeriod);
+        if (debug) logger.info("Import Period = %d", importPeriod);
       }
 
       if (importDoc.containsField("databases")) {

@@ -127,10 +127,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
     if (directoryPath.length() != 0) {
       final File dirFile = new File(directoryPath);
       if (!dirFile.exists()) {
-        logger.infoNoDb("Directory " + dirFile + " does not exist, try to create it.");
+        logger.infoNoDb("Directory %s does not exist, try to create it.", dirFile);
 
         if (!dirFile.mkdirs()) {
-          logger.errorNoDb("Can not create directory " + dirFile, null);
+          logger.errorNoDb("Can not create directory %s", null, dirFile);
         }
       }
       this.basePath = dirFile.getAbsolutePath();
@@ -237,7 +237,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     int size = getIntConfig(config);
     if (size == 0) {
       logger.warn(
-          "Configuration " + config.getKey() + " has a value 0 using number of CPUs as base value");
+          "Configuration %s has a value 0 using number of CPUs as base value", config.getKey());
       size = Runtime.getRuntime().availableProcessors();
     } else if (size <= -1) {
       size = Runtime.getRuntime().availableProcessors();

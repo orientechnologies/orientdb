@@ -220,7 +220,7 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
     if (iText.startsWith("\r\n")) iText = iText.substring(2);
     if (iText.startsWith("\n")) iText = iText.substring(1);
 
-    logger.info(iText);
+    logger.info("%s", iText);
   }
 
   @Override

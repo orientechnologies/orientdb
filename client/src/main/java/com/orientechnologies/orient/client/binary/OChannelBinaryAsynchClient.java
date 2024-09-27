@@ -112,12 +112,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
       if (srvProtocolVersion != iProtocolVersion) {
         logger.warn(
-            "The Client driver version is different than Server version: client="
-                + iProtocolVersion
-                + ", server="
-                + srvProtocolVersion
-                + ". You could not use the full features of the newer version. Assure to have"
-                + " the same versions on both");
+            "The Client driver version is different than Server version: client=%d, server=%d. You"
+                + " could not use the full features of the newer version. Assure to have the same"
+                + " versions on both",
+            iProtocolVersion, srvProtocolVersion);
       }
 
     } catch (RuntimeException e) {

@@ -297,8 +297,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         try {
           db.create();
         } catch (OStorageExistsException ex) {
-          logger.debug(
-              "Can not create storage " + db.getStorage() + " because it already exists.", ex);
+          logger.debug("Can not create storage %s because it already exists.", ex, db.getStorage());
           db.internalOpen();
         }
       } else {

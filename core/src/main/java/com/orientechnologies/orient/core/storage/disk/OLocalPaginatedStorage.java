@@ -646,11 +646,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           // TRY TO DELETE ALSO THE DIRECTORY IF IT'S EMPTY
           if (!dbDir.delete()) {
             logger.error(
-                "Cannot delete storage directory with path "
-                    + dbDir.getAbsolutePath()
-                    + " because directory is not empty. Files: "
-                    + Arrays.toString(dbDir.listFiles()),
-                null);
+                "Cannot delete storage directory with path %s"
+                    + " because directory is not empty. Files: %s",
+                null, dbDir.getAbsolutePath(), Arrays.toString(dbDir.listFiles()));
           }
           return;
         }

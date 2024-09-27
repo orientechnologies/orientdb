@@ -348,7 +348,7 @@ public final class AsyncFile implements OFile {
     try {
       doClose();
 
-      logger.debugNoDb("File " + osFile + " has been deleted.", null);
+      logger.debugNoDb("File %s has been deleted.", null, osFile);
       Files.delete(osFile);
     } finally {
       lock.exclusiveUnlock();

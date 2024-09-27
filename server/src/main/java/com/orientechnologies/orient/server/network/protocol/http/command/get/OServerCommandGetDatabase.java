@@ -231,7 +231,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
           try {
             exportClass(db, json, cls);
           } catch (Exception e) {
-            logger.error("Error on exporting class '" + cls + "'", e);
+            logger.error("Error on exporting class '%s'", e, cls);
           }
         }
         json.endCollection();

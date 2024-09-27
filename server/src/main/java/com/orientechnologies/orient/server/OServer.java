@@ -321,7 +321,7 @@ public class OServer {
     } catch (IOException e) {
       final String message =
           "Error on reading server configuration from file: " + iConfigurationFile;
-      logger.error(message, e);
+      logger.error("%s", e, message);
       throw OException.wrapException(new OConfigurationException(message), e);
     }
   }
@@ -346,7 +346,7 @@ public class OServer {
   }
 
   public OServer startupFromConfiguration() throws IOException {
-    logger.info("OrientDB Server v" + OConstants.getVersion() + " is starting up...");
+    logger.info("OrientDB Server v%s is starting up...", OConstants.getVersion());
 
     Orient.instance();
 
@@ -420,7 +420,7 @@ public class OServer {
 
     context = databases.newOrientDB();
 
-    logger.info("Databases directory: " + new File(databaseDirectory).getAbsolutePath());
+    logger.info("Databases directory: %s", new File(databaseDirectory).getAbsolutePath());
 
     Orient.instance()
         .getProfiler()

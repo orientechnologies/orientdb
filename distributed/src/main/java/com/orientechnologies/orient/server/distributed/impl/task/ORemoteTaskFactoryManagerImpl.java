@@ -87,11 +87,8 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
 
     } catch (IOException e) {
       logger.warn(
-          "Cannot determine protocol version for server "
-              + serverName
-              + " error: "
-              + e.getMessage(),
-          e);
+          "Cannot determine protocol version for server %s  error: %s",
+          e, serverName, e.getMessage());
       dManager.removeServer(serverName, true);
       return null;
     }

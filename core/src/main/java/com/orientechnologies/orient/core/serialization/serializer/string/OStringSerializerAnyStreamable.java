@@ -57,7 +57,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
         instance = (OSerializableStream) clazz.newInstance();
       } catch (Exception e) {
         final String message = "Error on unmarshalling content. Class: " + className;
-        logger.error(message, e);
+        logger.error("%s", e, message);
         throw OException.wrapException(new OSerializationException(message), e);
       }
     }

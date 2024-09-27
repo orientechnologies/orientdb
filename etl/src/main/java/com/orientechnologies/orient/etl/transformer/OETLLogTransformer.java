@@ -61,7 +61,7 @@ public class OETLLogTransformer extends OETLAbstractTransformer {
 
     if (postfix != null && !postfix.isEmpty()) buffer.append(resolve(postfix));
 
-    info(buffer.toString());
+    info("%s", buffer.toString());
 
     return input;
   }

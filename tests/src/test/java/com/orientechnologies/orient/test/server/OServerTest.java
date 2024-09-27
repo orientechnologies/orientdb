@@ -18,11 +18,11 @@ public class OServerTest {
     System.setProperty(
         "ORIENTDB_HOME", buildDirectory + File.separator + OServerTest.class.getSimpleName());
 
-    logger.info("ORIENTDB_HOME: " + System.getProperty("ORIENTDB_HOME"));
+    logger.info("ORIENTDB_HOME: %s", System.getProperty("ORIENTDB_HOME"));
 
     // loop for start & stop server
     for (int i = 0; i < 5; i++) {
-      logger.info("Iteration " + i);
+      logger.info("Iteration %d", i);
       OServer server = new OServer(false).activate();
       // create database if does not exist
       OObjectDatabaseTx database =

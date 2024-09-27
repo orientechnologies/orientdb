@@ -17,7 +17,7 @@ public class OBinaryProtocolHelper {
           String.format(
               "Backward compatibility support available from to version %d your version is %d",
               OLDEST_SUPPORTED_PROTOCOL_VERSION, protocolVersion);
-      logger.error(message, null);
+      logger.error("%s", null, message);
       throw new ODatabaseException(message);
     }
 
@@ -29,7 +29,7 @@ public class OBinaryProtocolHelper {
               NETWORK_BINARY_MIN_PROTOCOL_VERSION.getValueAsInteger(),
               protocolVersion,
               NETWORK_BINARY_MIN_PROTOCOL_VERSION.getKey());
-      logger.error(message, null);
+      logger.error("%s", null, message);
       throw new ODatabaseException(message);
     }
   }

@@ -423,16 +423,14 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
         if (localeLanguage == null)
           logger.warn(
               "Information about storage locale is undefined (language is undefined) default"
-                  + " locale "
-                  + locale
-                  + " will be used");
+                  + " locale %s will be used",
+              locale);
 
         if (localeCountry == null)
           logger.warn(
               "Information about storage locale is undefined (country is undefined) default"
-                  + " locale "
-                  + locale
-                  + " will be used");
+                  + " locale %s will be used",
+              locale);
       }
 
       dateFormat = read(values[index++]);
@@ -771,7 +769,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
           } else {
             write(buffer, null);
             logger.warn(
-                "Storing configuration for property:'" + k + "' not existing in current version");
+                "Storing configuration for property:'%s' not existing in current version", k);
           }
         }
       }
@@ -905,9 +903,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
       if (oldEngine != null)
         logger.warn(
-            "Index engine with name '"
-                + engineData.getName()
-                + "' already contained in database configuration");
+            "Index engine with name '%s' already contained in database configuration",
+            engineData.getName());
 
       update();
     } finally {

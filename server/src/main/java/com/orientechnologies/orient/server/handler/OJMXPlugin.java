@@ -82,7 +82,7 @@ public class OJMXPlugin extends OServerPluginAbstract {
         if (mBeanServer.isRegistered(onProfiler)) mBeanServer.unregisterMBean(onProfiler);
 
     } catch (Exception e) {
-      logger.error("OrientDB Server v" + OConstants.getVersion() + " unregisterMBean error", e);
+      logger.error("OrientDB Server v%s unregisterMBean error", e, OConstants.getVersion());
     }
   }
 

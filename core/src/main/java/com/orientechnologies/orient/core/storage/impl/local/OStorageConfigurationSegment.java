@@ -145,7 +145,7 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
             return this;
           }
 
-          logger.errorNoDb("Backup configuration file %s is broken too", null);
+          logger.errorNoDb("Backup configuration file %s is broken too", null, file);
           throw new OStorageException(
               "Invalid format for configuration file " + file + " for storage" + storageName);
         } else {

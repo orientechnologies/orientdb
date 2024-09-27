@@ -1057,7 +1057,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               }
             }
           } catch (RuntimeException e) {
-            logger.error("Error during data comparison of records with rid " + rid, e);
+            logger.error("Error during data comparison of records with rid %s", e, rid);
             throw e;
           }
         }

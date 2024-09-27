@@ -192,11 +192,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
                         fullBackupDatabase(dbURL, targetDirectory + getFileName(database), db);
 
                         logger.info(
-                            "Full Backup of database '"
-                                + dbURL
-                                + "' completed in "
-                                + (System.currentTimeMillis() - begin)
-                                + "ms");
+                            "Full Backup of database '%s' completed in %d ms",
+                            dbURL, (System.currentTimeMillis() - begin));
 
                         break;
 
@@ -204,22 +201,16 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
                         incrementalBackupDatabase(dbURL, targetDirectory, db);
 
                         logger.info(
-                            "Incremental Backup of database '"
-                                + dbURL
-                                + "' completed in "
-                                + (System.currentTimeMillis() - begin)
-                                + "ms");
+                            "Incremental Backup of database '%s' completed in %d ms",
+                            dbURL, (System.currentTimeMillis() - begin));
                         break;
 
                       case EXPORT:
                         exportDatabase(dbURL, targetDirectory + getFileName(database), db);
 
                         logger.info(
-                            "Export of database '"
-                                + dbURL
-                                + "' completed in "
-                                + (System.currentTimeMillis() - begin)
-                                + "ms");
+                            "Export of database '%s' completed in %d ms",
+                            dbURL, (System.currentTimeMillis() - begin));
                         break;
                     }
 
@@ -229,25 +220,22 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
                         listener.onBackupCompleted(dbName);
                       }
                     } catch (Exception e) {
-                      logger.error("Error on listener for database '" + dbURL, e);
+                      logger.error("Error on listener for database '%s'", e, dbURL);
                     }
                     ok++;
 
                   } catch (Exception e) {
 
                     logger.error(
-                        "Error on backup of database '"
-                            + dbURL
-                            + "' to directory: "
-                            + targetDirectory,
-                        e);
+                        "Error on backup of database '%s' to directory: %s",
+                        e, dbURL, targetDirectory);
 
                     try {
                       for (OAutomaticBackupListener listener : listeners) {
                         listener.onBackupError(dbName, e);
                       }
                     } catch (Exception l) {
-                      logger.error("Error on listener for database '" + dbURL, l);
+                      logger.error("Error on listener for database '%s'", l, dbURL);
                     }
                     errors++;
 
@@ -412,7 +400,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
             new OCommandOutputListener() {
               @Override
               public void onMessage(String iText) {
-                logger.info(iText);
+                logger.info("%s", iText);
               }
             },
             compressionLevel,
@@ -441,7 +429,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
             new OCommandOutputListener() {
               @Override
               public void onMessage(String iText) {
-                logger.info(iText);
+                logger.info("%s", iText);
               }
             });
 

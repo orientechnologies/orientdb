@@ -54,12 +54,8 @@ public class OCommandExecutorSQLLiveUnsubscribe extends OCommandExecutorSQLAbstr
       return result;
     } catch (Exception e) {
       logger.warn(
-          "error unsubscribing token "
-              + unsubscribeToken
-              + ": "
-              + e.getClass().getName()
-              + " - "
-              + e.getMessage());
+          "error unsubscribing token %s:%s  - %s",
+          unsubscribeToken, e.getClass().getName(), e.getMessage());
       ODocument result = new ODocument();
       result.field("error-unsubscribe", unsubscribeToken);
       result.field("error-description", e.getMessage());

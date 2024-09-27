@@ -98,15 +98,9 @@ public class OSequenceOrdered extends OSequence {
                   // warning on 1%
                   if ((float) tillEnd <= ((float) delta / 100.f) || tillEnd <= 1) {
                     String warningMessage =
-                        "Non-recyclable sequence: "
-                            + getName()
-                            + " reaching limt, current value: "
-                            + newValue
-                            + " limit value: "
-                            + limitValue
-                            + " with step: "
-                            + increment;
-                    logger.warn(warningMessage);
+                        "Non-recyclable sequence: %s reaching limt, current value: %d limit value:"
+                            + " %d with step: %d";
+                    logger.warn(warningMessage, getName(), newValue, limitValue);
                   }
                 }
 

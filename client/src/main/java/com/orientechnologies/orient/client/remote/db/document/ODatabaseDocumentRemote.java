@@ -719,14 +719,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
         if (lockingStrategy == KEEP_SHARED_LOCK) {
           logger.warn(
-              "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                  + lockingStrategy);
+              "You use deprecated record locking strategy: %s it may lead to deadlocks ",
+              lockingStrategy);
           record.lock(false);
 
         } else if (lockingStrategy == KEEP_EXCLUSIVE_LOCK) {
           logger.warn(
-              "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                  + lockingStrategy);
+              "You use deprecated record locking strategy: %s it may lead to deadlocks ",
+              lockingStrategy);
           record.lock(true);
         }
 

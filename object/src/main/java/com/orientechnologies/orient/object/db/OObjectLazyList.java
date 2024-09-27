@@ -169,9 +169,8 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
       OIdentifiable record = (OIdentifiable) recordList.get(index);
       if (record == null || record.getRecord() == null) {
         logger.warn(
-            "Record "
-                + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
-                + " references a deleted instance");
+            "Record %s references a deleted instance",
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity());
         return null;
       }
       o =
@@ -453,9 +452,8 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
       }
       if (o == null) {
         logger.warn(
-            "Record "
-                + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
-                + " references a deleted instance");
+            "Record %s references a deleted instance ",
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity());
         return;
       }
       super.set(
@@ -507,9 +505,8 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
       }
       if (o == null) {
         logger.warn(
-            "Record "
-                + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
-                + " references a deleted instance");
+            "Record %s references a deleted instance",
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity());
         return;
       }
       o =

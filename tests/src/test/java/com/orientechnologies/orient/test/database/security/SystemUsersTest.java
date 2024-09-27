@@ -17,7 +17,7 @@ public class SystemUsersTest {
     System.setProperty(
         "ORIENTDB_HOME", buildDirectory + File.separator + SystemUsersTest.class.getSimpleName());
 
-    logger.info("ORIENTDB_HOME: " + System.getProperty("ORIENTDB_HOME"));
+    logger.info("ORIENTDB_HOME: %s", System.getProperty("ORIENTDB_HOME"));
 
     OrientDB orient =
         new OrientDB(

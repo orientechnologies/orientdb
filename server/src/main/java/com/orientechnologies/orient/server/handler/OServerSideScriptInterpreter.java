@@ -105,8 +105,8 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
         .forEach(e -> e.getValue().registerInterceptor(interceptor));
     logger.warn(
         "Authenticated clients can execute any kind of code into the server by using the"
-            + " following allowed languages: "
-            + allowedLanguages);
+            + " following allowed languages: %s",
+        allowedLanguages);
   }
 
   @Override

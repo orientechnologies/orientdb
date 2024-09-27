@@ -1150,9 +1150,9 @@ public class OObjectEntitySerializer {
     try {
       return ((Class<T>) iObject.getClass().getSuperclass()).newInstance();
     } catch (InstantiationException ie) {
-      logger.error("Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
+      logger.error("Error creating instance for class %s", ie, iObject.getClass().getSuperclass());
     } catch (IllegalAccessException ie) {
-      logger.error("Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
+      logger.error("Error creating instance for class %s", ie, iObject.getClass().getSuperclass());
     }
     return null;
   }

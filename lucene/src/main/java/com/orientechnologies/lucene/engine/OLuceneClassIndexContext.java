@@ -33,7 +33,7 @@ public class OLuceneClassIndexContext {
     this.automatic = automatic;
     this.metadata = metadata;
 
-    logger.info("index definition:: " + definition);
+    logger.info("index definition: %s", definition);
 
     indexClass = schema.getClass(definition.getClassName());
 

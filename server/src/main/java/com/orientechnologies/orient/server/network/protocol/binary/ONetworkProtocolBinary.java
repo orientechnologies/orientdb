@@ -295,7 +295,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     long timer = 0;
 
     timer = Orient.instance().getProfiler().startChrono();
-    logger.debug("Request id:" + clientTxId + " type:" + requestType);
+    logger.debug("Request id: %d  type: %d", clientTxId, requestType);
 
     try {
       OBinaryRequest<? extends OBinaryResponse> request = factory.apply(requestType);
@@ -418,7 +418,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         }
         if (connection != null) tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
       } else {
-        logger.error("Request not supported. Code: " + requestType, null);
+        logger.error("Request not supported. Code: %d", null, requestType);
         handleConnectionError(
             connection,
             new ONetworkProtocolException("Request not supported. Code: " + requestType));
@@ -492,7 +492,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       timer = Orient.instance().getProfiler().startChrono();
       byte[] tokenBytes = channel.readBytes();
       connection = onBeforeOperationalRequest(connection, tokenBytes);
-      logger.debug("Request id:" + clientTxId + " type:" + requestType);
+      logger.debug("Request id: %d type: %s", clientTxId, requestType);
 
       try {
         switch (requestType) {

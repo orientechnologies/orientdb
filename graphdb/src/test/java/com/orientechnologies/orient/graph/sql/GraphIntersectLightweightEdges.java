@@ -57,7 +57,7 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
       }
     }
 
-    logger.info("Created root1 with " + TOT + " children");
+    logger.info("Created root1 with %d children", TOT);
 
     // CREATE SUPER NODE2
     final OrientVertex root2 = graph.addVertex(null, "name", "root2");
@@ -72,7 +72,7 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
       }
     }
 
-    logger.info("Created root2 with " + TOT + " children");
+    logger.info("Created root2 with %d children", TOT);
 
     // CREATE THE VERTEX IN COMMON
     final OrientVertex common = graph.addVertex(null, "common", true);

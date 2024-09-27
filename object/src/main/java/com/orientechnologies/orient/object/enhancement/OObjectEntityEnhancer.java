@@ -174,17 +174,17 @@ public class OObjectEntityEnhancer {
       OObjectEntitySerializer.setVersionField(iClass, newEntity, doc.getVersion());
       return newEntity;
     } catch (InstantiationException ie) {
-      logger.error("Error creating proxied instance for class " + iClass.getName(), ie);
+      logger.error("Error creating proxied instance for class %s", ie, iClass.getName());
     } catch (IllegalAccessException iae) {
-      logger.error("Error creating proxied instance for class " + iClass.getName(), iae);
+      logger.error("Error creating proxied instance for class %s", iae, iClass.getName());
     } catch (IllegalArgumentException iae) {
-      logger.error("Error creating proxied instance for class " + iClass.getName(), iae);
+      logger.error("Error creating proxied instance for class %s", iae, iClass.getName());
     } catch (SecurityException se) {
-      logger.error("Error creating proxied instance for class " + iClass.getName(), se);
+      logger.error("Error creating proxied instance for class %s", se, iClass.getName());
     } catch (InvocationTargetException ite) {
-      logger.error("Error creating proxied instance for class " + iClass.getName(), ite);
+      logger.error("Error creating proxied instance for class %s", ite, iClass.getName());
     } catch (NoSuchMethodException nsme) {
-      logger.error("Error creating proxied instance for class " + iClass.getName(), nsme);
+      logger.error("Error creating proxied instance for class %s", nsme, iClass.getName());
     }
     return null;
   }

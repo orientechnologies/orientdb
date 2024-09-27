@@ -160,7 +160,7 @@ public class ORole extends OIdentity implements OSecurityRole {
       }
 
     } catch (Exception ex) {
-      logger.error("illegal mode " + ex.getMessage(), ex);
+      logger.error("illegal mode %s", ex, ex.getMessage());
       mode = ALLOW_MODES.DENY_ALL_BUT;
     }
 

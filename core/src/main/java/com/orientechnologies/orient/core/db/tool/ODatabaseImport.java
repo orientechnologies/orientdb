@@ -1359,14 +1359,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     } catch (Exception t) {
       logger.error(
-          "Error importing record "
-              + ". Source line "
-              + jsonReader.getLineNumber()
-              + ", column "
-              + jsonReader.getColumnNumber()
-              + " content "
-              + value,
-          t);
+          "Error importing record. Source line %d, column %d content %s",
+          t, jsonReader.getLineNumber(), jsonReader.getColumnNumber(), value);
 
       listener.onMessage(
           "Error importing record: '" + t.getMessage() + "' content:'" + value + "' \n");
@@ -1415,7 +1409,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     long last = begin;
     Set<String> involvedClusters = new HashSet<>();
 
-    logger.debug("Detected exporter version " + exporterVersion + ".");
+    logger.debug("Detected exporter version %d.", exporterVersion);
     while (jsonReader.lastChar() != ']') {
       // TODO: add special handling for `exporterVersion` / `ODatabaseExport.EXPORTER_VERSION` >= 13
       rid = importRecord(recordsBeforeImport);
