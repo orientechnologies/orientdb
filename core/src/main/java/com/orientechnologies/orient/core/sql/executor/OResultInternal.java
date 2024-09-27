@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
@@ -293,6 +294,10 @@ public class OResultInternal implements OResult, Comparable<OResultInternal> {
   public OElement toElement() {
     if (isElement()) {
       return getElement().get();
+    }
+    if (hasProperty("@rid") && ODatabaseRecordThreadLocal.instance().isDefined()) {
+      ODocument doc = ODatabaseRecordThreadLocal.instance().get().load((ORID) getProperty("@rid"));
+      return doc;
     }
     ODocument doc = new ODocument();
     for (String s : getPropertyNames()) {
