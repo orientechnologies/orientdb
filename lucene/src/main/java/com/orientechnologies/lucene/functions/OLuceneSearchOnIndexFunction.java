@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -58,10 +57,6 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
     }
     OResult result = (OResult) iThis;
 
-    if (!result.getElement().isPresent()) return false;
-    OElement element = result.getElement().get();
-    if (!element.getSchemaType().isPresent()) return false;
-
     String indexName = (String) params[0];
 
     OLuceneFullTextIndex index = searchForIndex(ctx, indexName);
@@ -74,7 +69,7 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
 
     List<Object> key =
         index.getDefinition().getFields().stream()
-            .map(s -> element.getProperty(s))
+            .map(s -> result.getProperty(s))
             .collect(Collectors.toList());
 
     for (IndexableField field : index.buildDocument(key).getFields()) {
