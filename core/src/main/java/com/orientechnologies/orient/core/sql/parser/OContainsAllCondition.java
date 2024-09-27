@@ -49,7 +49,7 @@ public class OContainsAllCondition extends OBooleanExpression {
             found = true;
           } else if (next instanceof OResult
               && ((OResult) next).isElement()
-              && ((Collection) left).contains(((OResult) next).toElement())) {
+              && ((Collection) left).contains(((OResult) next).getElement().get())) {
             found = true;
           }
           if (!found) {

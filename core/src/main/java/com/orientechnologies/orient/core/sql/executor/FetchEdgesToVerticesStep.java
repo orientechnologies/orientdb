@@ -112,8 +112,8 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
         }
         if (this.toIter.hasNext()) {
           Object from = toIter.next();
-          if (from instanceof OResult) {
-            from = ((OResult) from).toElement();
+          if (from instanceof OResult && ((OResult) from).isElement()) {
+            from = ((OResult) from).getElement().get();
           }
           if (from instanceof OIdentifiable && !(from instanceof OElement)) {
             from = ((OIdentifiable) from).getRecord();

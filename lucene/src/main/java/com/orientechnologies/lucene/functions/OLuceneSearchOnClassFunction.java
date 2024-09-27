@@ -66,7 +66,9 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
       result = new OResultInternal((OIdentifiable) iThis);
     }
 
-    OElement element = result.toElement();
+    if (!result.getElement().isPresent()) return false;
+    OElement element = result.getElement().get();
+    if (!element.getSchemaType().isPresent()) return false;
 
     String className = element.getSchemaType().get().getName();
 

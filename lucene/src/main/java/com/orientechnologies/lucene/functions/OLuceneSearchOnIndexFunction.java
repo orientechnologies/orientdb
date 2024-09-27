@@ -9,9 +9,9 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
@@ -49,7 +49,13 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
       Object iCurrentResult,
       Object[] params,
       OCommandContext ctx) {
-    OElement element = iThis instanceof OElement ? (OElement) iThis : ((OResult) iThis).toElement();
+    if (iThis instanceof ORID) {
+      iThis = ((ORID) iThis).getRecord();
+    }
+    if (iThis instanceof OIdentifiable) {
+      iThis = new OResultInternal((OIdentifiable) iThis);
+    }
+    OResult result = (OResult) iThis;
 
     String indexName = (String) params[0];
 
@@ -63,7 +69,7 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
 
     List<Object> key =
         index.getDefinition().getFields().stream()
-            .map(s -> element.getProperty(s))
+            .map(s -> result.getProperty(s))
             .collect(Collectors.toList());
 
     for (IndexableField field : index.buildDocument(key).getFields()) {

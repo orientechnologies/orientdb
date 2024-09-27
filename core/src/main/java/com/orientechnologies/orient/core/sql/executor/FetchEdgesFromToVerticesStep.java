@@ -144,8 +144,8 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
       toList = new HashSet<ORID>();
       while (toIter.hasNext()) {
         Object elem = toIter.next();
-        if (elem instanceof OResult) {
-          elem = ((OResult) elem).toElement();
+        if (elem instanceof OResult && ((OResult) elem).isElement()) {
+          elem = ((OResult) elem).getElement().get();
         }
         if (elem instanceof OIdentifiable && !(elem instanceof OElement)) {
           elem = ((OIdentifiable) elem).getRecord();
@@ -171,8 +171,8 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
         }
         if (this.fromIter.hasNext()) {
           Object from = fromIter.next();
-          if (from instanceof OResult) {
-            from = ((OResult) from).toElement();
+          if (from instanceof OResult && ((OResult) from).isElement()) {
+            from = ((OResult) from).getElement().get();
           }
           if (from instanceof OIdentifiable && !(from instanceof OElement)) {
             from = ((OIdentifiable) from).getRecord();
