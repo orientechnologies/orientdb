@@ -101,10 +101,21 @@ public class MatchEdgeTraverser {
   protected OExecutionStream executeTraversal(
       OCommandContext iCommandContext,
       OMatchPathItem item,
-      OIdentifiable startingPoint,
+      Object startingPoint,
       int depth,
       List<OIdentifiable> pathToHere) {
-
+    OResult startResult;
+    OIdentifiable startingPointId;
+    if (startingPoint instanceof OResult) {
+      startResult = (OResult) startingPoint;
+      startingPointId = startResult.getElement().orElse(null);
+    } else if (startingPoint != null) {
+      startingPointId = (OIdentifiable) startingPoint;
+      startResult = new OResultInternal(startingPointId);
+    } else {
+      startResult = null;
+      startingPointId = null;
+    }
     OWhereClause filter = null;
     OWhereClause whileCondition = null;
     Integer maxDepth = null;
@@ -128,7 +139,7 @@ public class MatchEdgeTraverser {
             == null) { // in this case starting point is not returned and only one level depth is
       // evaluated
 
-      OExecutionStream queryResult = traversePatternEdge(startingPoint, iCommandContext);
+      OExecutionStream queryResult = traversePatternEdge(startingPointId, iCommandContext);
       final OWhereClause theFilter = filter;
       final String theClassName = className;
       final Integer theClusterId = clusterId;
@@ -144,11 +155,11 @@ public class MatchEdgeTraverser {
       Object previousMatch = iCommandContext.getVariable("$currentMatch");
       iCommandContext.setVariable("$currentMatch", startingPoint);
 
-      if (matchesFilters(iCommandContext, filter, startingPoint)
-          && matchesClass(iCommandContext, className, startingPoint)
-          && matchesCluster(iCommandContext, clusterId, startingPoint)
-          && matchesRid(iCommandContext, targetRid, startingPoint)) {
-        OResultInternal rs = new OResultInternal(startingPoint);
+      if (matchesFilters(iCommandContext, filter, startResult)
+          && matchesClass(iCommandContext, className, startResult)
+          && matchesCluster(iCommandContext, clusterId, startResult)
+          && matchesRid(iCommandContext, targetRid, startResult)) {
+        OResultInternal rs = new OResultInternal(startingPointId);
         // set traversal depth in the metadata
         rs.setMetadata("$depth", depth);
         // set traversal path in the metadata
@@ -159,9 +170,9 @@ public class MatchEdgeTraverser {
 
       if ((maxDepth == null || depth < maxDepth)
           && (whileCondition == null
-              || whileCondition.matchesFilters(startingPoint, iCommandContext))) {
+              || whileCondition.matchesFilters(startResult, iCommandContext))) {
 
-        OExecutionStream queryResult = traversePatternEdge(startingPoint, iCommandContext);
+        OExecutionStream queryResult = traversePatternEdge(startingPointId, iCommandContext);
 
         while (queryResult.hasNext(iCommandContext)) {
           OResult origin = queryResult.next(iCommandContext);
@@ -207,10 +218,10 @@ public class MatchEdgeTraverser {
     }
     OElement elem = next.toElement();
     iCommandContext.setVariable("$currentMatch", elem);
-    if (matchesFilters(iCommandContext, theFilter, elem)
-        && matchesClass(iCommandContext, theClassName, elem)
-        && matchesCluster(iCommandContext, theClusterId, elem)
-        && matchesRid(iCommandContext, theTargetRid, elem)) {
+    if (matchesFilters(iCommandContext, theFilter, next)
+        && matchesClass(iCommandContext, theClassName, next)
+        && matchesCluster(iCommandContext, theClusterId, next)
+        && matchesRid(iCommandContext, theTargetRid, next)) {
       ctx.setVariable("$currentMatch", previousMatch);
       return next;
     } else {
@@ -235,22 +246,13 @@ public class MatchEdgeTraverser {
     return item.getFilter().getRid(iCommandContext);
   }
 
-  private boolean matchesClass(
-      OCommandContext iCommandContext, String className, OIdentifiable origin) {
+  private boolean matchesClass(OCommandContext iCommandContext, String className, OResult origin) {
     if (className == null) {
       return true;
     }
-    OElement element = null;
-    if (origin instanceof OElement) {
-      element = (OElement) origin;
-    } else if (origin != null) {
-      Object record = origin.getRecord();
-      if (record instanceof OElement) {
-        element = (OElement) record;
-      }
-    }
-    if (element != null) {
-      Optional<OClass> clazz = element.getSchemaType();
+
+    if (origin.getElement().isPresent()) {
+      Optional<OClass> clazz = origin.getElement().get().getSchemaType();
       if (!clazz.isPresent()) {
         return false;
       }
@@ -260,7 +262,7 @@ public class MatchEdgeTraverser {
   }
 
   private boolean matchesCluster(
-      OCommandContext iCommandContext, Integer clusterId, OIdentifiable origin) {
+      OCommandContext iCommandContext, Integer clusterId, OResult origin) {
     if (clusterId == null) {
       return true;
     }
@@ -268,13 +270,13 @@ public class MatchEdgeTraverser {
       return false;
     }
 
-    if (origin.getIdentity() == null) {
+    if (origin.getIdentity().isEmpty()) {
       return false;
     }
-    return clusterId.equals(origin.getIdentity().getClusterId());
+    return clusterId.equals(origin.getIdentity().get().getClusterId());
   }
 
-  private boolean matchesRid(OCommandContext iCommandContext, ORid rid, OIdentifiable origin) {
+  private boolean matchesRid(OCommandContext iCommandContext, ORid rid, OResult origin) {
     if (rid == null) {
       return true;
     }
@@ -282,14 +284,14 @@ public class MatchEdgeTraverser {
       return false;
     }
 
-    if (origin.getIdentity() == null) {
+    if (origin.getIdentity().isEmpty()) {
       return false;
     }
-    return origin.getIdentity().equals(rid.toRecordId(origin, iCommandContext));
+    return origin.getIdentity().get().equals(rid.toRecordId(origin, iCommandContext));
   }
 
   protected boolean matchesFilters(
-      OCommandContext iCommandContext, OWhereClause filter, OIdentifiable origin) {
+      OCommandContext iCommandContext, OWhereClause filter, OResult origin) {
     return filter == null || filter.matchesFilters(origin, iCommandContext);
   }
 

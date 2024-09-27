@@ -1415,8 +1415,8 @@ public abstract class OClassImpl implements OClass {
   }
 
   protected boolean matchesType(Object x, OClass linkedClass) {
-    if (x instanceof OResult) {
-      x = ((OResult) x).toElement();
+    if (x instanceof OResult && ((OResult) x).isElement()) {
+      x = ((OResult) x).getElement().get();
     }
     if (x instanceof ORID) {
       x = ((ORID) x).getRecord();

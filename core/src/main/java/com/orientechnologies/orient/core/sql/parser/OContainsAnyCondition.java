@@ -50,7 +50,7 @@ public class OContainsAnyCondition extends OBooleanExpression {
           }
           if (next instanceof OResult
               && ((OResult) next).isElement()
-              && ((Collection) left).contains(((OResult) next).toElement())) {
+              && ((Collection) left).contains(((OResult) next).getElement().get())) {
             return true;
           }
         }

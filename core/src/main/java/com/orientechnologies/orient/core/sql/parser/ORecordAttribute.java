@@ -80,9 +80,22 @@ public class ORecordAttribute extends SimpleNode {
       }
       return identity;
     } else if (name.equalsIgnoreCase("@class")) {
-      return iCurrentRecord.toElement().getSchemaType().map(x -> x.getName()).orElse(null);
+      return iCurrentRecord
+          .getElement()
+          .flatMap(e -> e.getSchemaType())
+          .map(x -> x.getName())
+          .orElseGet(
+              () -> {
+                return iCurrentRecord.getProperty(name);
+              });
     } else if (name.equalsIgnoreCase("@version")) {
-      return iCurrentRecord.getRecord().map(r -> r.getVersion()).orElse(null);
+      iCurrentRecord
+          .getRecord()
+          .map(r -> r.getVersion())
+          .orElseGet(
+              () -> {
+                return iCurrentRecord.getProperty(name);
+              });
     }
     return null;
   }

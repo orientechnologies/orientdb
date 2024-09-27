@@ -176,8 +176,7 @@ public class OUpdateItem extends SimpleNode {
   }
 
   private OType calculateTypeForThisItem(OResultInternal doc, OCommandContext ctx) {
-    OElement elem = doc.toElement();
-    OClass clazz = elem.getSchemaType().orElse(null);
+    OClass clazz = doc.getElement().flatMap(x -> x.getSchemaType()).orElse(null);
     if (clazz == null) {
       return null;
     }
@@ -247,8 +246,7 @@ public class OUpdateItem extends SimpleNode {
 
   public static Object convertToPropertyType(
       OResultInternal res, OIdentifier attrName, Object newValue, OCommandContext ctx) {
-    OElement doc = res.toElement();
-    Optional<OClass> optSchema = doc.getSchemaType();
+    Optional<OClass> optSchema = res.getElement().flatMap(x -> x.getSchemaType());
     if (!optSchema.isPresent()) {
       return newValue;
     }

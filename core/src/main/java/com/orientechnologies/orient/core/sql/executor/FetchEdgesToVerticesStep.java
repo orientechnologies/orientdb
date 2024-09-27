@@ -54,8 +54,8 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
   }
 
   private OExecutionStream edges(Object from, OCommandContext ctx) {
-    if (from instanceof OResult) {
-      from = ((OResult) from).toElement();
+    if (from instanceof OResult && ((OResult) from).isElement()) {
+      from = ((OResult) from).getElement().get();
     }
     if (from instanceof OIdentifiable && !(from instanceof OElement)) {
       from = ((OIdentifiable) from).getRecord();
