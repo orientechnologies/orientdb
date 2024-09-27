@@ -297,7 +297,7 @@ public class MatchEdgeTraverser {
       return false;
     }
 
-    if (origin.getIdentity().isEmpty()) {
+    if (!origin.getIdentity().isPresent()) {
       return false;
     }
     return clusterId.equals(origin.getIdentity().get().getClusterId());
@@ -311,7 +311,7 @@ public class MatchEdgeTraverser {
       return false;
     }
 
-    if (origin.getIdentity().isEmpty()) {
+    if (!origin.getIdentity().isPresent()) {
       return false;
     }
     return origin.getIdentity().get().equals(rid.toRecordId(origin, iCommandContext));
