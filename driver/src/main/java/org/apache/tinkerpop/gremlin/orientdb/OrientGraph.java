@@ -595,7 +595,7 @@ public final class OrientGraph implements OGraph {
           }
         }
       } catch (Exception e) {
-        logger.error("Error during context close for db " + url, e);
+        logger.error("Error during context close for db %s", e, url);
       }
     }
   }
@@ -649,7 +649,7 @@ public final class OrientGraph implements OGraph {
       } catch (OException e) {
         throw new IllegalArgumentException(e);
       }
-      logger.info("created class '" + className + "' as subclass of '" + superClass + "'");
+      logger.info("created class '%s' as subclass of '%s'", className, className);
     } else {
       if (!cls.isSubClassOf(superClass)) {
         throw new IllegalArgumentException(
@@ -754,7 +754,7 @@ public final class OrientGraph implements OGraph {
       for (String s : iOperationStrings) msg.append(s);
 
       // ASSURE PENDING TX IF ANY IS COMMITTED
-      logger.warn(msg.toString());
+      logger.warn("%s", msg.toString());
     }
     return iCallable.call(this);
   }

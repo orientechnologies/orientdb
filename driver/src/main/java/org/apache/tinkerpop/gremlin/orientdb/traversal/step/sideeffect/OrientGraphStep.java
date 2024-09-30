@@ -205,8 +205,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>
                         // TODO: select best index if there are multiple options
                         indexedQueries.add(new OrientIndexQuery(keyIndexes.next(), values));
                       } else {
-                        logger.warn(
-                            "no index found for class=[" + className + "] and key=[" + key + "]");
+                        logger.warn("no index found for class=[%s] and key=[%s]", className, key);
                       }
                     });
               });
