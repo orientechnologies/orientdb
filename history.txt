@@ -28,6 +28,29 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.34 - (October, 1 2024)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3233---01-October-2024
+
+# Core
+
+- deprecated some record methods that will be remove next version
+- Fix handling of group by without aggregations
+- Avoid internal double close of result sets
+- Fix traverse with variables usages
+- Fix use of index on graph in and out collections
+- Fix in storage count implementation
+- Fix avoid to create new instance of ODocument in query engine for existing records, issue #10268
+
+# Distributed
+
+- Make sure run the distributed transaction expiry task.
+
+# Console
+
+- Support debug mode on all console exceptions.
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.33 - (August, 29 2024)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3233---29-August-2024
 
