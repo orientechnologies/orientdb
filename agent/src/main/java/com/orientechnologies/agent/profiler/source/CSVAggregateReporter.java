@@ -363,7 +363,7 @@ public class CSVAggregateReporter {
           try {
             writer.close();
           } catch (IOException e) {
-            logger.warn("Failed to close resource " + writer);
+            logger.warn("Failed to close resource %s", e, writer);
           }
         }
       }

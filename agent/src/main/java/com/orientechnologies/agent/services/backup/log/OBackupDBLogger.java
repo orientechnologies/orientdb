@@ -309,7 +309,7 @@ public class OBackupDBLogger implements OBackupLogger {
                 try {
                   deleteByUUIDAndUnitId(uuid, unit);
                 } catch (IOException e) {
-                  logger.error("Error deleting backup unit " + uuid, e);
+                  logger.error("Error deleting backup unit %s", e, uuid);
                 }
               }
               return null;
@@ -426,14 +426,14 @@ public class OBackupDBLogger implements OBackupLogger {
       File f = new File(path);
       boolean deleted = f.delete();
       if (!deleted) {
-        logger.warn("Error deleting file: " + f.getName());
+        logger.warn("Error deleting file: %s", f.getName());
       }
       File dir = new File(directory);
       if (dir.isDirectory()) {
         if (dir.listFiles().length == 0) {
           deleted = dir.delete();
           if (!deleted) {
-            logger.warn("Error deleting file: " + f.getName());
+            logger.warn("Error deleting file: %s", f.getName());
           }
         }
       }

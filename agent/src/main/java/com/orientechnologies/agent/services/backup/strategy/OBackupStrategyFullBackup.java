@@ -71,7 +71,7 @@ public class OBackupStrategyFullBackup extends OBackupStrategy {
         listener.onEvent(cfg, log);
         return nextExecution;
       } catch (ParseException e) {
-        log.warn("Parse exception: " + e.getMessage(), e);
+        log.warn("Parse exception: %s", e, e.getMessage());
       }
     } else {
       return new Date(last.nextExecution);

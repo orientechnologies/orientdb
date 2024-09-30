@@ -60,31 +60,26 @@ public class OBackupTask implements OBackupListener {
                                 strategy.doBackup(OBackupTask.this);
                                 tickEnd(start);
                               } catch (final IOException e) {
-                                logger.error("Error " + e.getMessage(), e);
+                                logger.error("Error %s", e, e.getMessage());
                               }
                             });
                   },
                   nextExecution,
                   0);
       logger.info(
-          "Scheduled ["
-              + strategy.getMode()
-              + "] task : "
-              + strategy.getUUID()
-              + ". Next execution will be "
-              + nextExecution);
+          "Scheduled [%s] task :%s. Next execution will be %s ",
+          strategy.getMode(), strategy.getUUID(), nextExecution);
     }
     strategy.retainLogs();
   }
 
   private long tickStart() {
-    logger.info("Backup started " + strategy.getMode());
+    logger.info("Backup started %s ", strategy.getMode());
     return System.currentTimeMillis();
   }
 
   private void tickEnd(long start) {
-    logger.info(
-        "Backup " + strategy.getMode() + " in (ms):" + (System.currentTimeMillis() - start));
+    logger.info("Backup %s in (ms): %d", strategy.getMode(), (System.currentTimeMillis() - start));
   }
 
   public OBackupStrategy getStrategy() {
@@ -122,7 +117,7 @@ public class OBackupTask implements OBackupListener {
       try {
         return listener.onEvent(cfg, log);
       } catch (Exception e) {
-        logger.info("Error invoking listener on event  [" + log.getType() + "] ");
+        logger.info("Error invoking listener on event  [%s] ", log.getType());
       }
     }
     return true;
@@ -131,7 +126,7 @@ public class OBackupTask implements OBackupListener {
   public void stop() {
     if (task != null) {
       task.cancel();
-      logger.info("Cancelled schedule backup on database  [" + strategy.getDbName() + "] ");
+      logger.info("Cancelled schedule backup on database  [%s] ", strategy.getDbName());
     }
   }
 

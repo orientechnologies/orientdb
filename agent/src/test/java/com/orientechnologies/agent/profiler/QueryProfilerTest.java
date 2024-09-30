@@ -66,7 +66,7 @@ public class QueryProfilerTest {
                 endLatch.await();
                 result.close();
               } catch (InterruptedException e) {
-                logger.warn("Thread interrupted: " + e.getMessage(), e);
+                logger.warn("Thread interrupted: %s", e, e.getMessage());
               }
             })
         .start();
@@ -88,7 +88,7 @@ public class QueryProfilerTest {
                 endLatch.await();
                 result.close();
               } catch (InterruptedException e) {
-                logger.warn("Thread interrupted: " + e.getMessage(), e);
+                logger.warn("Thread interrupted: %s", e, e.getMessage());
               }
             })
         .start();

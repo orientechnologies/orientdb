@@ -14,7 +14,7 @@ public class Utils {
           try {
             closeable.close();
           } catch (Exception e) {
-            logger.info("Failed to close output stream " + closeable);
+            logger.info("Failed to close output stream %s", closeable.toString());
           }
         }
       }

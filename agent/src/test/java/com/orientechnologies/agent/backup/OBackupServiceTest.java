@@ -18,10 +18,11 @@
 
 package com.orientechnologies.agent.backup;
 
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.fail;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.services.backup.OBackupService;
@@ -116,8 +117,7 @@ public class OBackupServiceTest {
     OFileUtils.deleteRecursively(new File(BACKUP_PATH));
   }
 
-  private int calculateToDelete(
-      List<ODocument> list, @SuppressWarnings("SameParameterValue") int start) {
+  private int calculateToDelete(List<ODocument> list, int start) {
 
     int counter = 0;
     Long last = null;
@@ -380,13 +380,12 @@ public class OBackupServiceTest {
     } else {
       query = "select count(*) as count from OBackupLog";
     }
-    @SuppressWarnings("unchecked")
     List<OResult> execute =
         (List<OResult>)
             server
                 .getSystemDatabase()
                 .execute(iArgument -> iArgument.stream().collect(Collectors.toList()), query, uuid);
-    assertThat(execute.get(0).<Long>getProperty("count")).isEqualTo(expected);
+    assertEquals((long) execute.get(0).<Long>getProperty("count"), expected);
   }
 
   private void checkSameUnitUids(Collection<ODocument> list) {

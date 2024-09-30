@@ -249,7 +249,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             rndIBUFile.close();
 
             if (!ibuFile.delete()) {
-              logger.error(ibuFile.getAbsolutePath() + " is closed but can not be deleted", null);
+              logger.error("%s is closed but can not be deleted", null, ibuFile.getAbsolutePath());
             }
 
             throw e;
@@ -518,14 +518,12 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               try {
                 rndIBUFile.close();
               } catch (IOException e) {
-                logger.warn("Failed to close resource " + rndIBUFile);
+                logger.warn("Failed to close resource %s", e, rndIBUFile);
               }
             }
           } else {
             logger.warn(
-                "Skipped file '"
-                    + file
-                    + "' is not a backup of the same database of previous backups");
+                "Skipped file '%s' is not a backup of the same database of previous backups", file);
           }
 
           postProcessIncrementalRestore(contextConfiguration);

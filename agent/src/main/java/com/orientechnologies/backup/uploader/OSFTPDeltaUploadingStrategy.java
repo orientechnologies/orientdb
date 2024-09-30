@@ -271,7 +271,7 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
 
       return tempDir.toString();
     } catch (Exception e) {
-      logger.error("Error " + e.getMessage(), e);
+      logger.error("Error %s", e, e.getMessage());
     }
     return null;
   }

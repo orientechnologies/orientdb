@@ -157,7 +157,7 @@ public abstract class OBackupStrategy {
       new Thread(() -> startRestoreBackup(logger.getServer(), finished, databaseName, listener))
           .start();
     } catch (final IOException e) {
-      log.error("Error finding backup log for " + getUUID(), e);
+      log.error("Error finding backup log for %s", e, getUUID());
     }
   }
 
@@ -331,11 +331,12 @@ public abstract class OBackupStrategy {
         if (lastBackup != null && lastBackup.getTxId() == lastSchedule.getTxId()) {
           lastSchedule = null;
           log.debug(
-              "Last backup not null, but set to null due to equal TX ids: " + lastBackup.getMode());
+              "Last backup not null, but set to null due to equal TX ids: %s",
+              "" + lastBackup.getMode());
         }
       }
     } catch (final Exception e) {
-      log.error("Error finding last unfired schedule for UUID : " + getUUID(), e);
+      log.error("Error finding last unfired schedule for UUID : %s", e, getUUID());
     }
     return (OBackupScheduledLog) lastSchedule;
   }
@@ -344,7 +345,7 @@ public abstract class OBackupStrategy {
     try {
       logger.deleteByUUIDAndUnitIdAndTx(getUUID(), unitId, tx);
     } catch (IOException e) {
-      log.error("Error deleting backups for UUID : " + getUUID(), e);
+      log.error("Error deleting backups for UUID : %s", e, getUUID());
     }
   }
 
@@ -364,7 +365,7 @@ public abstract class OBackupStrategy {
     try {
       logger.deleteByUUIDAndTimestamp(getUUID(), time);
     } catch (IOException e) {
-      log.error("Error deleting backups for UUID : " + getUUID(), e);
+      log.error("Error deleting backups for UUID : %s", e, getUUID());
     }
   }
 
@@ -402,7 +403,7 @@ public abstract class OBackupStrategy {
       }
 
     } catch (IOException e) {
-      log.error("Error updating lob backups for UUID : " + getUUID(), e);
+      log.error("Error updating lob backups for UUID : %s", e, getUUID());
     }
   }
 }

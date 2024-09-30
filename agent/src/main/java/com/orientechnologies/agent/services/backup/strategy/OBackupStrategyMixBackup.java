@@ -62,7 +62,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
     try {
       last = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
     } catch (Exception e) {
-      log.error("Error " + e.getMessage(), e);
+      log.error("Error %s", e, e.getMessage());
     }
     try {
       if (last != null
@@ -86,7 +86,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
         begin = last.getUnitId();
       }
     } catch (IOException e) {
-      log.error("Error " + e.getMessage(), e);
+      log.error("Error %s", e, e.getMessage());
     }
     String basePath = cfg.field(OBackupConfig.DIRECTORY);
     String dbName = cfg.field(OBackupConfig.DBNAME);
@@ -140,7 +140,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
             skippedFull = null;
           }
         } catch (final IOException e) {
-          log.error("Error " + e.getMessage(), e);
+          log.error("Error %s", e, e.getMessage());
         }
         final Date nextExecution = nextIncremental.before(nextFull) ? nextIncremental : nextFull;
         final OBackupScheduledLog log =
@@ -151,7 +151,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
         listener.onEvent(cfg, log);
         return nextExecution;
       } catch (final ParseException e) {
-        log.error("Parse exception: " + e.getMessage(), e);
+        log.error("Parse exception: %s", e, e.getMessage());
         return null;
       }
     } else {

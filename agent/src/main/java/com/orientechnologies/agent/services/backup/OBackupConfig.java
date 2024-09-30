@@ -219,7 +219,7 @@ public class OBackupConfig {
     try {
       final File f = new File(filePath);
       OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
-      logger.info("Write backup config to " + filePath);
+      logger.info("Write backup config to %s", filePath);
     } catch (final IOException e) {
       throw OException.wrapException(
           new OConfigurationException(

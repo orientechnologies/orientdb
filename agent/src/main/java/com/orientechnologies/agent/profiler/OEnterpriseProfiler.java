@@ -508,7 +508,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler
                   "\n"
                       + "*******************************************************************************************************************************************");
 
-              logger.info(null, output.toString());
+              logger.info("%s", output.toString());
             }
           },
           ms,

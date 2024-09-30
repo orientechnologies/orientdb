@@ -53,7 +53,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
     try {
       last = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
     } catch (Exception e) {
-      log.warn("Error getting last backup log: " + e.getMessage(), e);
+      log.warn("Error getting last backup log: %s", e, e.getMessage());
     }
 
     if (last != null && !Boolean.TRUE.equals(last.getPrevChange())) {
@@ -77,7 +77,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
         begin = lastScheduled.getUnitId();
       }
     } catch (IOException e) {
-      log.warn("Error getting last backup log: " + e.getMessage(), e);
+      log.warn("Error getting last backup log: %s", e, e.getMessage());
     }
     String basePath = cfg.field(OBackupConfig.DIRECTORY);
     String dbName = cfg.field(OBackupConfig.DBNAME);
@@ -105,7 +105,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
             unitId = lastCompleted.getUnitId();
           }
         } catch (Exception e) {
-          log.warn("Error getting last backup log: " + e.getMessage(), e);
+          log.warn("Error getting last backup log: %s", e, e.getMessage());
         }
         OBackupScheduledLog log =
             new OBackupScheduledLog(
@@ -115,7 +115,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
         listener.onEvent(cfg, log);
         return nextExecution;
       } catch (ParseException e) {
-        log.warn("Parse error: " + e.getMessage(), e);
+        log.warn("Parse error: %s", e, e.getMessage());
       }
 
     } else {

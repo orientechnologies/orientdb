@@ -229,7 +229,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       try {
         inputStream.close();
       } catch (IOException e) {
-        logger.warn("Failed to close input stream " + inputStream);
+        logger.warn("Failed to close input stream %s", e, inputStream);
       }
     }
   }

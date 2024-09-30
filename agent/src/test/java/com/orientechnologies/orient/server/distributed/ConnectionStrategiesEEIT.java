@@ -234,7 +234,7 @@ public class ConnectionStrategiesEEIT {
     Thread.sleep(20000);
 
     for (int i = 0; i < 1000; i++) {
-      logger.error("phase 3 opening session " + i, null);
+      logger.error("phase 3 opening session %d", null, i);
       ODatabaseSession session2 =
           remote1.open(ConnectionStrategiesEEIT.class.getSimpleName(), "admin", "admin");
       try (OResultSet res = session2.query("select count(*) as count from V")) {

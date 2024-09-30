@@ -222,7 +222,7 @@ public abstract class AbstractEnterpriseServerClusterTest {
   }
 
   protected void log(final String iMessage) {
-    logger.info(iMessage);
+    logger.info("%s", iMessage);
   }
 
   protected void onServerStarting(ServerRun server) {}
@@ -364,8 +364,7 @@ public abstract class AbstractEnterpriseServerClusterTest {
         .isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        logger.error(
-            "TIMEOUT on waitForDatabaseIsOffline condition (timeout=" + timeout + ")", null);
+        logger.error("TIMEOUT on waitForDatabaseIsOffline condition (timeout=%d)", null, timeout);
         break;
       }
 
@@ -387,7 +386,7 @@ public abstract class AbstractEnterpriseServerClusterTest {
         .isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        logger.error("TIMEOUT on waitForDatabaseIsOnLine (timeout=" + timeout + ")", null);
+        logger.error("TIMEOUT on waitForDatabaseIsOnLine (timeout=%d)", null, timeout);
         break;
       }
 
@@ -417,7 +416,7 @@ public abstract class AbstractEnterpriseServerClusterTest {
           }
 
           if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-            logger.error("TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
+            logger.error("TIMEOUT on wait-for condition (timeout=%d)", null, timeout);
             break;
           }
 

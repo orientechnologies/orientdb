@@ -178,7 +178,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
       File outputDir = new File(directory);
       if (!outputDir.exists()) {
         if (!outputDir.mkdirs()) {
-          logger.warn("Failed to create CSV Aggregates metrics dir {}", outputDir);
+          logger.warn("Failed to create CSV Aggregates metrics dir %s", outputDir);
         }
       }
 
@@ -203,7 +203,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
       File outputDir = new File(directory);
       if (!outputDir.exists()) {
         if (!outputDir.mkdirs()) {
-          logger.warn("Failed to create CSV metrics dir {}", outputDir);
+          logger.warn("Failed to create CSV metrics dir %s", outputDir);
         }
       }
 

@@ -43,7 +43,7 @@ public class OLocalBackupUploader {
     }
     String uploadStrategy = cfg.field("strategy");
     if (uploadStrategy == null) {
-      logger.warn("Cannot configure the cloud uploader, strategy parameters is missing", null);
+      logger.warn("Cannot configure the cloud uploader, strategy parameters is missing");
       return Optional.empty();
     }
     OLocalBackupUploader uploader = new OLocalBackupUploader(uploadStrategy);

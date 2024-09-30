@@ -186,7 +186,7 @@ public class OrientDBMetricsService implements OEnterpriseService {
       this.registry.toJSON(buffer);
       return buffer.toString();
     } catch (IOException e) {
-      logger.error("Error " + e.getMessage(), e);
+      logger.error("Error %s", e, e.getMessage());
     }
     return null;
   }
