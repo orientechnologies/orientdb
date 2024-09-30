@@ -245,17 +245,19 @@ angular-strap@2.3.12:
   version "2.3.12"
   resolved "https://registry.yarnpkg.com/angular-strap/-/angular-strap-2.3.12.tgz#fae21655cd77079671bf918ab7ed6227783062fa"
 
-angular-translate-loader-partial@^2.15.2:
-  version "2.15.2"
-  resolved "https://registry.yarnpkg.com/angular-translate-loader-partial/-/angular-translate-loader-partial-2.15.2.tgz#a6507d39dca23968cc258097db545be331246644"
+angular-translate-loader-partial@^2.19.1:
+  version "2.19.1"
+  resolved "https://registry.yarnpkg.com/angular-translate-loader-partial/-/angular-translate-loader-partial-2.19.1.tgz#c493bc8e7a96cf9661e5014a98bd7d4d1e0473e9"
+  integrity sha512-1rDe314zG09gwl/2qsLPwrxp5yehSsRi2vNJn/UwIJq20n0E0Fia/1K0nW9QAv67UFyvFuBOhl34n59I1qEHog==
   dependencies:
-    angular-translate "~2.15.2"
+    angular-translate "~2.19.1"
 
-angular-translate@^2.15.2, angular-translate@~2.15.2:
-  version "2.15.2"
-  resolved "https://registry.yarnpkg.com/angular-translate/-/angular-translate-2.15.2.tgz#f9a3c2b8d5daeb7d76c9e2c01ff3c3d57fe12b90"
+angular-translate@^2.15.2, angular-translate@~2.19.1:
+  version "2.19.1"
+  resolved "https://registry.yarnpkg.com/angular-translate/-/angular-translate-2.19.1.tgz#8636236f6a24d9dfbf11b88ad958c2246f72a3ce"
+  integrity sha512-SrU40ndnL422vXiVoqVveCmSnCzMcIXxQgnl7Cv9krOKUg6B8KZK3ddYzidHR/rxVuySezYHNDgRvzQNKwAdNQ==
   dependencies:
-    angular ">=1.2.26 <=1.6"
+    angular "^1.8.0"
 
 angular2-router-loader@^0.3.5:
   version "0.3.5"
@@ -273,9 +275,14 @@ angular2-template-loader@^0.6.2:
   dependencies:
     loader-utils "^0.2.15"
 
-angular@1.5.9, "angular@>=1.2.26 <=1.6", angular@>=1.4.0, angular@^1.2.8:
+angular@1.5.9, angular@>=1.4.0, angular@^1.2.8:
   version "1.5.9"
   resolved "https://registry.yarnpkg.com/angular/-/angular-1.5.9.tgz#b7aeff42dad87881e06be16b6690fe766d868b51"
+
+angular@^1.8.0:
+  version "1.8.3"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.8.3.tgz#851ad75d5163c105a7e329555ef70c90aa706894"
+  integrity sha512-5qjkWIQQVsHj4Sb5TcEs4WZWpFeVFHXwxEBHUhrny41D8UrBAd6T/6nPPAsLngJCReIOqi95W3mxdveveutpZw==
 
 ansi-html@0.0.7:
   version "0.0.7"
