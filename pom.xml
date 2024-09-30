@@ -19,11 +19,11 @@
 
     <name>OrientDB</name>
     <description>OrientDB NoSQL document graph dbms</description>
-    <url>http://www.orientdb.com</url>
+    <url>http://orientdb.dev</url>
     <inceptionYear>2009</inceptionYear>
     <organization>
         <name>OrientDB</name>
-        <url>https://www.orientdb.com</url>
+        <url>https://orientdb.dev</url>
     </organization>
     <licenses>
         <license>
@@ -83,13 +83,6 @@
         </developer>
     </developers>
 
-    <mailingLists>
-        <mailingList>
-            <name>google groups</name>
-            <archive>http://groups.google.com/group/orient-database/topics</archive>
-        </mailingList>
-    </mailingLists>
-
     <modules>
         <module>test-commons</module>
         <module>client</module>
@@ -119,8 +112,8 @@
         <url>https://github.com/orientechnologies/orientdb/issues</url>
     </issueManagement>
     <ciManagement>
-        <system>jenkins</system>
-        <url>http://helios.orientdb.com/</url>
+        <system>github</system>
+        <url>https://github.com/orientechnologies/orientdb/actions</url>
     </ciManagement>
     <distributionManagement>
         <repository>
