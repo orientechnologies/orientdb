@@ -19,11 +19,11 @@
 
     <name>OrientDB</name>
     <description>OrientDB NoSQL document graph dbms</description>
-    <url>http://www.orientdb.com</url>
+    <url>http://orientdb.dev</url>
     <inceptionYear>2009</inceptionYear>
     <organization>
         <name>OrientDB</name>
-        <url>https://www.orientdb.com</url>
+        <url>https://orientdb.dev</url>
     </organization>
     <licenses>
         <license>
@@ -108,6 +108,10 @@
         <system>GitHub Issues</system>
         <url>https://github.com/orientechnologies/orientdb/issues</url>
     </issueManagement>
+    <ciManagement>
+        <system>GitHub</system>
+        <url>https://github.com/orientechnologies/orientdb/actions</url>
+    </ciManagement>
     <distributionManagement>
         <repository>
             <id>sonatype-nexus-staging</id>
