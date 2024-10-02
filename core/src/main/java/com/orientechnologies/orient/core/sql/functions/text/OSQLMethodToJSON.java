@@ -65,9 +65,9 @@ public class OSQLMethodToJSON extends OAbstractSQLMethod {
     }
     if (iThis instanceof OResult) {
       if (format != null) {
-        return ((OResult) iThis).toJSON();
+        return ((OResult) iThis).toElement().toJSON(format);
       } else {
-        ((OResult) iThis).toElement().toJSON(format);
+        return ((OResult) iThis).toJSON();
       }
     } else if (iThis instanceof ORecord) {
 
