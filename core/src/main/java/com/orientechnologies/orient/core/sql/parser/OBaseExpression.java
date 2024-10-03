@@ -304,7 +304,32 @@ public class OBaseExpression extends OMathExpression {
       if (splitResult instanceof OBaseIdentifier) {
         OBaseExpression result = new OBaseExpression(-1);
         result.identifier = (OBaseIdentifier) splitResult;
+        if (modifier != null) {
+          result.modifier = modifier.copy();
+        }
         return result;
+      }
+      if (modifier != null) {
+        if (splitResult instanceof OBaseExpression) {
+          ((OBaseExpression) splitResult).modifier = modifier.copy();
+        } else if (splitResult instanceof OExpression
+            && ((OExpression) splitResult).getMathExpression() != null) {
+          OMathExpression math = ((OExpression) splitResult).getMathExpression();
+          if (math instanceof OBaseExpression) {
+            ((OBaseExpression) math).modifier = modifier.copy();
+          } else {
+            throw new UnsupportedOperationException(
+                "not supported modifier on split for aggregation");
+          }
+        } else if (splitResult instanceof OBaseIdentifier) {
+          OBaseExpression result = new OBaseExpression(-1);
+          result.identifier = (OBaseIdentifier) splitResult;
+          result.modifier = modifier.copy();
+          splitResult = result;
+        } else {
+          throw new UnsupportedOperationException(
+              "not supported modifier on split for aggregation");
+        }
       }
       return splitResult;
     } else {
