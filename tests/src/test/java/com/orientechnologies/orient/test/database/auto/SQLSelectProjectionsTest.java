@@ -19,16 +19,14 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -44,25 +42,24 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryProjectionOk() {
-    List<ODocument> result =
+    List<OResult> result =
         database
             .command(
-                new OSQLSynchQuery<ODocument>(
-                    " select nick, followings, followers from Profile where nick is defined and"
-                        + " followings is defined and followers is defined"))
-            .execute();
+                " select nick, followings, followers from Profile where nick is defined and"
+                    + " followings is defined and followers is defined")
+            .stream()
+            .toList();
 
     Assert.assertTrue(result.size() != 0);
 
-    for (ODocument d : result) {
-      String[] colNames = d.fieldNames();
+    for (OResult d : result) {
+      String[] colNames = d.getPropertyNames().toArray(new String[] {});
       Assert.assertEquals(colNames.length, 3, "document: " + d);
       Assert.assertEquals(colNames[0], "nick", "document: " + d);
       Assert.assertEquals(colNames[1], "followings", "document: " + d);
       Assert.assertEquals(colNames[2], "followers", "document: " + d);
 
-      Assert.assertNull(d.getClassName());
-      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
+      Assert.assertFalse(d.getElement().isPresent());
     }
   }
 
@@ -71,17 +68,15 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
     ODatabaseObject db = new OObjectDatabaseTx(url);
     db.open("admin", "admin");
 
-    List<ODocument> result =
-        db.getUnderlying()
-            .query(
-                new OSQLSynchQuery<ODocument>(" select nick, followings, followers from Profile "));
+    List<OResult> result =
+        db.getUnderlying().query(" select nick, followings, followers from Profile ").stream()
+            .toList();
 
     Assert.assertTrue(result.size() != 0);
 
-    for (ODocument d : result) {
-      Assert.assertTrue(d.fieldNames().length <= 3);
-      Assert.assertNull(d.getClassName());
-      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
+    for (OResult d : result) {
+      Assert.assertTrue(d.getPropertyNames().size() <= 3);
+      Assert.assertFalse(d.getElement().isPresent());
     }
 
     db.close();
@@ -89,110 +84,106 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryProjectionLinkedAndFunction() {
-    List<ODocument> result =
+    List<OResult> result =
         database
             .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select name.toUpperCase(Locale.ENGLISH), address.city.country.name from"
-                        + " Profile"))
-            .execute();
+                "select name.toUpperCase(Locale.ENGLISH), address.city.country.name from"
+                    + " Profile")
+            .stream()
+            .toList();
 
     Assert.assertTrue(result.size() != 0);
 
-    for (ODocument d : result) {
-      Assert.assertTrue(d.fieldNames().length <= 2);
-      if (d.field("name") != null)
+    for (OResult d : result) {
+      Assert.assertTrue(d.getPropertyNames().size() <= 2);
+      if (d.getProperty("name") != null)
         Assert.assertTrue(
-            d.field("name").equals(((String) d.field("name")).toUpperCase(Locale.ENGLISH)));
+            d.getProperty("name")
+                .equals(((String) d.getProperty("name")).toUpperCase(Locale.ENGLISH)));
 
-      Assert.assertNull(d.getClassName());
-      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
+      Assert.assertFalse(d.getElement().isPresent());
     }
   }
 
   @Test
   public void queryProjectionSameFieldTwice() {
-    List<ODocument> result =
+    List<OResult> result =
         database
             .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select name, name.toUpperCase(Locale.ENGLISH) from Profile where name is not"
-                        + " null"))
-            .execute();
+                "select name, name.toUpperCase(Locale.ENGLISH) as name2 from Profile where name is"
+                    + " not null")
+            .stream()
+            .toList();
 
     Assert.assertTrue(result.size() != 0);
 
-    for (ODocument d : result) {
-      Assert.assertTrue(d.fieldNames().length <= 2);
-      Assert.assertNotNull(d.field("name"));
-      Assert.assertNotNull(d.field("name2"));
+    for (OResult d : result) {
+      Assert.assertTrue(d.getPropertyNames().size() <= 2);
+      Assert.assertNotNull(d.getProperty("name"));
+      Assert.assertNotNull(d.getProperty("name2"));
 
-      Assert.assertNull(d.getClassName());
-      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
+      Assert.assertFalse(d.getElement().isPresent());
     }
   }
 
   @Test
   public void queryProjectionStaticValues() {
-    List<ODocument> result =
+    List<OResult> result =
         database
             .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select location.city.country.name, address.city.country.name from Profile"
-                        + " where location.city.country.name is not null"))
-            .execute();
+                "select location.city.country.name as location, address.city.country.name from"
+                    + " Profile where location.city.country.name is not null")
+            .stream()
+            .toList();
 
     Assert.assertTrue(result.size() != 0);
 
-    for (ODocument d : result) {
+    for (OResult d : result) {
 
-      Assert.assertNotNull(d.field("location"));
-      Assert.assertNull(d.field("address"));
+      Assert.assertNotNull(d.getProperty("location"));
+      Assert.assertNull(d.getProperty("address"));
 
-      Assert.assertNull(d.getClassName());
-      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
+      Assert.assertFalse(d.getElement().isPresent());
     }
   }
 
   @Test
   public void queryProjectionPrefixAndAppend() {
-    List<ODocument> result =
+    List<OResult> result =
         database
             .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select *, name.prefix('Mr. ').append(' ').append(surname).append('!') as test"
-                        + " from Profile where name is not null"))
-            .execute();
+                "select *, name.prefix('Mr. ').append(' ').append(surname).append('!') as test"
+                    + " from Profile where name is not null")
+            .stream()
+            .toList();
 
     Assert.assertTrue(result.size() != 0);
 
-    for (ODocument d : result) {
+    for (OResult d : result) {
       Assert.assertEquals(
-          d.field("test").toString(), "Mr. " + d.field("name") + " " + d.field("surname") + "!");
-
-      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
+          d.getProperty("test").toString(),
+          "Mr. " + d.getProperty("name") + " " + d.getProperty("surname") + "!");
     }
   }
 
   @Test
   public void queryProjectionFunctionsAndFieldOperators() {
-    List<ODocument> result =
+    List<OResult> result =
         database
             .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select name.append('.').prefix('Mr. ') as name from Profile where name is not"
-                        + " null"))
-            .execute();
+                "select name.append('.').prefix('Mr. ') as name from Profile where name is not"
+                    + " null")
+            .stream()
+            .toList();
 
     Assert.assertTrue(result.size() != 0);
 
-    for (ODocument d : result) {
-      Assert.assertTrue(d.fieldNames().length <= 1);
-      Assert.assertTrue(d.field("name").toString().startsWith("Mr. "));
-      Assert.assertTrue(d.field("name").toString().endsWith("."));
+    for (OResult d : result) {
+      Assert.assertTrue(d.getPropertyNames().size() <= 1);
+      Assert.assertTrue(d.getProperty("name").toString().startsWith("Mr. "));
+      Assert.assertTrue(d.getProperty("name").toString().endsWith("."));
 
-      Assert.assertNull(d.getClassName());
-      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
+      Assert.assertFalse(d.getElement().isPresent());
     }
   }
 
@@ -218,50 +209,44 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryProjectionSimpleValues() {
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select 10, 'ciao' from Profile LIMIT 1"))
-            .execute();
+    List<OResult> result =
+        database.command("select 10, 'ciao' from Profile LIMIT 1").stream().toList();
 
     Assert.assertTrue(result.size() != 0);
 
-    for (ODocument d : result) {
-      Assert.assertTrue(d.fieldNames().length <= 2);
-      Assert.assertEquals(((Integer) d.field("10")).intValue(), 10l);
-      Assert.assertEquals(d.field("ciao"), "ciao");
+    for (OResult d : result) {
+      Assert.assertTrue(d.getPropertyNames().size() <= 2);
+      Assert.assertEquals(((Integer) d.getProperty("10")).intValue(), 10l);
+      Assert.assertEquals(d.getProperty("'ciao'"), "ciao");
 
-      Assert.assertNull(d.getClassName());
-      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
+      Assert.assertFalse(d.getElement().isPresent());
     }
   }
 
   @Test
   public void queryProjectionJSON() {
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select @this.toJson() as json from Profile"))
-            .execute();
+    List<OResult> result =
+        database.command("select @this.toJson() as json from Profile").stream().toList();
 
     Assert.assertTrue(result.size() != 0);
 
-    for (ODocument d : result) {
-      Assert.assertTrue(d.fieldNames().length <= 1);
-      Assert.assertNotNull(d.field("json"));
+    for (OResult d : result) {
+      Assert.assertTrue(d.getPropertyNames().size() <= 1);
+      Assert.assertNotNull(d.getProperty("json"));
 
-      new ODocument().fromJSON((String) d.field("json"));
+      new ODocument().fromJSON((String) d.getProperty("json"));
     }
   }
 
   public void queryProjectionRid() {
-    List<ODocument> result =
-        database.command(new OSQLSynchQuery<ODocument>("select @rid FROM V")).execute();
+    List<OResult> result = database.command("select @rid as rid FROM V").stream().toList();
     Assert.assertTrue(result.size() != 0);
 
-    for (ODocument d : result) {
-      Assert.assertTrue(d.fieldNames().length <= 1);
-      Assert.assertNotNull(d.field("rid"));
+    for (OResult d : result) {
+      Assert.assertTrue(d.getPropertyNames().size() <= 1);
+      Assert.assertNotNull(d.getProperty("rid"));
 
-      final ORID rid = d.field("rid", ORID.class);
+      final ORID rid = d.getProperty("rid");
       Assert.assertTrue(rid.isValid());
     }
   }
@@ -278,14 +263,12 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
   }
 
   public void queryProjectionEval() {
-    List<ODocument> result =
-        database.command(new OSQLSynchQuery<ODocument>("select eval('1 + 4') as result")).execute();
+    List<OResult> result = database.command("select eval('1 + 4') as result").stream().toList();
     Assert.assertEquals(result.size(), 1);
 
-    for (ODocument d : result) Assert.assertEquals(d.<Object>field("result"), 5);
+    for (OResult d : result) Assert.assertEquals(d.<Object>getProperty("result"), 5);
   }
 
-  @SuppressWarnings("unchecked")
   public void queryProjectionContextArray() {
     List<ODocument> result =
         database
@@ -309,87 +292,69 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
   }
 
   public void ifNullFunction() {
-    List<ODocument> result =
-        database.command(new OSQLSynchQuery<ODocument>("SELECT ifnull('a', 'b')")).execute();
+    List<OResult> result = database.command("SELECT ifnull('a', 'b') as ifnull").stream().toList();
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(result.get(0).field("ifnull"), "a");
+    Assert.assertEquals(result.get(0).getProperty("ifnull"), "a");
 
-    result =
-        database.command(new OSQLSynchQuery<ODocument>("SELECT ifnull('a', 'b', 'c')")).execute();
+    result = database.command("SELECT ifnull('a', 'b', 'c') as ifnull ").stream().toList();
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(result.get(0).field("ifnull"), "c");
+    Assert.assertEquals(result.get(0).getProperty("ifnull"), "c");
 
-    result = database.command(new OSQLSynchQuery<ODocument>("SELECT ifnull(null, 'b')")).execute();
+    result = database.command("SELECT ifnull(null, 'b') as ifnull").stream().toList();
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(result.get(0).field("ifnull"), "b");
+    Assert.assertEquals(result.get(0).getProperty("ifnull"), "b");
   }
 
   public void filteringArrayInChain() {
-    List<ODocument> result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0-1] as set from OUser"))
-            .execute();
+    List<OResult> result =
+        database.command("SELECT set(name)[0..1] as set from OUser").stream().toList();
     Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertTrue(OMultiValue.isMultiValue(d.<Object>field("set")));
-      Assert.assertTrue(OMultiValue.getSize(d.field("set")) <= 2);
+    for (OResult d : result) {
+      Assert.assertTrue(OMultiValue.isMultiValue(d.<Object>getProperty("set")));
+      Assert.assertTrue(OMultiValue.getSize(d.getProperty("set")) <= 2);
     }
 
-    result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0,1] as set from OUser"))
-            .execute();
+    result = database.command("SELECT set(name)[0,1] as set from OUser").stream().toList();
     Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertTrue(OMultiValue.isMultiValue(d.<Object>field("set")));
-      Assert.assertTrue(OMultiValue.getSize(d.field("set")) <= 2);
+    for (OResult d : result) {
+      Assert.assertTrue(OMultiValue.isMultiValue(d.<Object>getProperty("set")));
+      Assert.assertTrue(OMultiValue.getSize(d.getProperty("set")) <= 2);
     }
 
-    result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0] as unique from OUser"))
-            .execute();
+    result = database.command("SELECT set(name)[0] as unique from OUser").stream().toList();
     Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertFalse(OMultiValue.isMultiValue(d.<Object>field("unique")));
+    for (OResult d : result) {
+      Assert.assertFalse(OMultiValue.isMultiValue(d.<Object>getProperty("unique")));
     }
   }
 
   public void projectionWithNoTarget() {
-    List<ODocument> result =
-        database.command(new OSQLSynchQuery<ODocument>("select 'Ay' as a , 'bEE'")).execute();
+    List<OResult> result = database.command("select 'Ay' as a , 'bEE'").stream().toList();
     Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.field("a").equals("Ay"));
-      Assert.assertTrue(d.field("bEE").equals("bEE"));
+    for (OResult d : result) {
+      Assert.assertTrue(d.getProperty("a").equals("Ay"));
+      Assert.assertTrue(d.getProperty("'bEE'").equals("bEE"));
     }
 
-    result =
-        database.command(new OSQLSynchQuery<ODocument>("select 'Ay' as a , 'bEE' as b")).execute();
+    result = database.command("select 'Ay' as a , 'bEE' as b").stream().toList();
     Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.field("a").equals("Ay"));
-      Assert.assertTrue(d.field("b").equals("bEE"));
+    for (OResult d : result) {
+      Assert.assertTrue(d.getProperty("a").equals("Ay"));
+      Assert.assertTrue(d.getProperty("b").equals("bEE"));
     }
 
-    result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select 'Ay' as a , 'bEE' as b fetchplan *:1"))
-            .execute();
+    result = database.command("select 'Ay' as a , 'bEE' as b fetchplan *:1").stream().toList();
     Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.field("a").equals("Ay"));
-      Assert.assertTrue(d.field("b").equals("bEE"));
+    for (OResult d : result) {
+      Assert.assertTrue(d.getProperty("a").equals("Ay"));
+      Assert.assertTrue(d.getProperty("b").equals("bEE"));
     }
 
-    result =
-        database
-            .command(new OSQLSynchQuery<ODocument>("select 'Ay' as a , 'bEE' fetchplan *:1"))
-            .execute();
+    result = database.command("select 'Ay' as a , 'bEE' fetchplan *:1").stream().toList();
     Assert.assertEquals(result.size(), 1);
-    for (ODocument d : result) {
-      Assert.assertTrue(d.field("a").equals("Ay"));
-      Assert.assertTrue(d.field("bEE").equals("bEE"));
+    for (OResult d : result) {
+      Assert.assertTrue(d.getProperty("a").equals("Ay"));
+      Assert.assertTrue(d.getProperty("'bEE'").equals("bEE"));
     }
   }
 
@@ -481,37 +446,6 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       database.command("drop class A unsafe ").close();
       database.command("drop class B unsafe ").close();
       database.command("drop class C unsafe ").close();
-    }
-  }
-
-  @Test
-  public void testTempRIDsAreNotRecycledInResultSet() {
-    final List<OIdentifiable> resultset =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select name, $l as l from OUser let $l = (select name from OuSer)"));
-
-    Assert.assertNotNull(resultset);
-
-    Set<ORID> rids = new HashSet<ORID>();
-    for (OIdentifiable d : resultset) {
-      final ORID rid = d.getIdentity();
-      Assert.assertFalse(rids.contains(rid));
-
-      rids.add(rid);
-
-      final List<OIdentifiable> embeddedList = ((ODocument) d.getRecord()).field("l");
-      Assert.assertNotNull(embeddedList);
-      Assert.assertFalse(embeddedList.isEmpty());
-
-      for (OIdentifiable embedded : embeddedList) {
-        if (embedded != null) {
-          final ORID embeddedRid = embedded.getIdentity();
-
-          Assert.assertFalse(rids.contains(embeddedRid));
-          rids.add(rid);
-        }
-      }
     }
   }
 }
