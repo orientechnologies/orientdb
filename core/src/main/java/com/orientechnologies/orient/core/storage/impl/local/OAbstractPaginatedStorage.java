@@ -99,6 +99,7 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
+import com.orientechnologies.orient.core.index.OIndexOneValue;
 import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
@@ -2568,7 +2569,7 @@ public abstract class OAbstractPaginatedStorage
             }
             lockIndexes(indexOperations);
 
-            commitIndexes(indexOperations);
+            commitIndexes(atomicOperation, indexOperations);
           } catch (final IOException | RuntimeException e) {
             error = e;
             if (e instanceof RuntimeException) {
@@ -2629,45 +2630,69 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  private void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
+  private void commitIndexes(
+      OAtomicOperation atomicOperation,
+      final Map<String, OTransactionIndexChanges> indexesToCommit) {
     for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
       final OIndexInternal index = changes.getAssociatedIndex();
 
       try {
-        final int indexId = index.getIndexId();
+        int indexId = index.getIndexId();
+        indexId = extractInternalId(indexId);
         if (changes.cleared) {
           clearIndex(indexId);
         }
+        checkIndexId(indexId);
+
+        final OBaseIndexEngine engine = indexEngines.get(indexId);
+        assert engine.getId() == indexId;
+
         for (final OTransactionIndexChangesPerKey changesPerKey : changes.changesPerKey.values()) {
-          applyTxChanges(changesPerKey, index);
+          applyTxChanges(atomicOperation, changesPerKey, engine, index);
         }
-        applyTxChanges(changes.nullKeyChanges, index);
+        applyTxChanges(atomicOperation, changes.nullKeyChanges, engine, index);
       } catch (final OInvalidIndexEngineIdException e) {
         throw OException.wrapException(new OStorageException("Error during index commit"), e);
       }
     }
   }
 
-  private void applyTxChanges(OTransactionIndexChangesPerKey changes, OIndexInternal index)
+  private void applyTxChanges(
+      OAtomicOperation atomicOperation,
+      OTransactionIndexChangesPerKey changes,
+      OBaseIndexEngine engine,
+      OIndexInternal index)
       throws OInvalidIndexEngineIdException {
+
+    IndexEngineValidator<Object, ORID> uniqueValidator = null;
+    if (index.isUnique()) {
+      uniqueValidator = ((OIndexOneValue) index).getUniqueValidator();
+    }
     for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op :
         index.interpretTxKeyChanges(changes)) {
       switch (op.getOperation()) {
         case PUT:
-          index.doPut(this, changes.key, op.getValue().getIdentity());
+          if (uniqueValidator != null) {
+            engine.validatedPut(
+                atomicOperation, changes.key, op.getValue().getIdentity(), uniqueValidator);
+          } else {
+            engine.put(atomicOperation, changes.key, op.getValue().getIdentity());
+          }
           break;
         case REMOVE:
           if (op.getValue() != null) {
-            index.doRemove(this, changes.key, op.getValue().getIdentity());
+            engine.remove(atomicOperation, changes.key, op.getValue().getIdentity());
           } else {
-            index.doRemove(this, changes.key);
+            engine.remove(atomicOperation, changes.key);
           }
           break;
         case CLEAR:
           // SHOULD NEVER BE THE CASE HANDLE BY cleared FLAG
           break;
       }
-      applyUniqueIndexChange(index.getName(), changes.key);
+      if (!isDistributedMode(lastMetadata)) {
+        engine.updateUniqueIndexVersion(changes.key);
+      }
     }
   }
 
@@ -7442,13 +7467,6 @@ public abstract class OAbstractPaginatedStorage
         || indexType.equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
         || indexType.equals(OClass.INDEX_TYPE.DICTIONARY.name())
         || indexType.equals(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name());
-  }
-
-  private void applyUniqueIndexChange(final String indexName, final Object key) {
-    if (!isDistributedMode(lastMetadata)) {
-      final OBaseIndexEngine indexEngine = indexEngineNameMap.get(indexName);
-      indexEngine.updateUniqueIndexVersion(key);
-    }
   }
 
   @Override
