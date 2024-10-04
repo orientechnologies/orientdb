@@ -298,7 +298,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
     try {
       getPartition(key).put(atomicOperation, key, value);
     } catch (IOException e) {
@@ -322,8 +322,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value)
-      throws IOException {
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
 
     Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);
 
@@ -361,15 +360,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       Object key,
       ORID value,
       IndexEngineValidator<Object, ORID> validator) {
-    try {
-      return getPartition(key)
-          .validatedPut(atomicOperation, key, value, (IndexEngineValidator) validator);
-    } catch (IOException e) {
-      throw OException.wrapException(
-          new OIndexException(
-              "Error during insertion of key " + key + " of index with name " + name),
-          e);
-    }
+    return getPartition(key)
+        .validatedPut(atomicOperation, key, value, (IndexEngineValidator) validator);
   }
 
   @Override

@@ -54,8 +54,7 @@ public interface OHashTable<K, V> {
    * @see IndexEngineValidator#validate(Object, Object, Object)
    */
   boolean validatedPut(
-      OAtomicOperation atomicOperation, K key, V value, IndexEngineValidator<K, V> validator)
-      throws IOException;
+      OAtomicOperation atomicOperation, K key, V value, IndexEngineValidator<K, V> validator);
 
   void put(OAtomicOperation atomicOperation, K key, V value) throws IOException;
 

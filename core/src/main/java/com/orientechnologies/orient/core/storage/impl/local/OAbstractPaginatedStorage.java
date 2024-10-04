@@ -3044,26 +3044,20 @@ public abstract class OAbstractPaginatedStorage
   private boolean removeKeyFromIndexInternal(
       final OAtomicOperation atomicOperation, final int indexId, final Object key)
       throws OInvalidIndexEngineIdException {
-    try {
-      checkIndexId(indexId);
+    checkIndexId(indexId);
 
-      final OBaseIndexEngine engine = indexEngines.get(indexId);
-      if (engine.getEngineAPIVersion() == OIndexEngine.VERSION) {
-        return ((OIndexEngine) engine).remove(atomicOperation, key);
+    final OBaseIndexEngine engine = indexEngines.get(indexId);
+    if (engine.getEngineAPIVersion() == OIndexEngine.VERSION) {
+      return ((OIndexEngine) engine).remove(atomicOperation, key);
+    } else {
+      final OV1IndexEngine v1IndexEngine = (OV1IndexEngine) engine;
+      if (!v1IndexEngine.isMultiValue()) {
+        return ((OSingleValueIndexEngine) engine).remove(atomicOperation, key);
       } else {
-        final OV1IndexEngine v1IndexEngine = (OV1IndexEngine) engine;
-        if (!v1IndexEngine.isMultiValue()) {
-          return ((OSingleValueIndexEngine) engine).remove(atomicOperation, key);
-        } else {
-          throw new OStorageException(
-              "To remove entry from multi-value index not only key but value also should be"
-                  + " provided");
-        }
+        throw new OStorageException(
+            "To remove entry from multi-value index not only key but value also should be"
+                + " provided");
       }
-    } catch (final IOException e) {
-      throw OException.wrapException(
-          new OStorageException("Error during removal of entry with key " + key + " from index "),
-          e);
     }
   }
 
@@ -3470,29 +3464,21 @@ public abstract class OAbstractPaginatedStorage
       final ORID value,
       final IndexEngineValidator<Object, ORID> validator)
       throws OInvalidIndexEngineIdException {
-    try {
-      checkIndexId(indexId);
+    checkIndexId(indexId);
 
-      final OBaseIndexEngine engine = indexEngines.get(indexId);
-      assert indexId == engine.getId();
+    final OBaseIndexEngine engine = indexEngines.get(indexId);
+    assert indexId == engine.getId();
 
-      if (engine instanceof OIndexEngine) {
-        return ((OIndexEngine) engine).validatedPut(atomicOperation, key, value, validator);
-      }
-
-      if (engine instanceof OSingleValueIndexEngine) {
-        return ((OSingleValueIndexEngine) engine)
-            .validatedPut(atomicOperation, key, value.getIdentity(), validator);
-      }
-
-      throw new IllegalStateException(
-          "Invalid type of index engine " + engine.getClass().getName());
-    } catch (final IOException e) {
-      throw OException.wrapException(
-          new OStorageException(
-              "Cannot put key " + key + " value " + value + " entry to the index"),
-          e);
+    if (engine instanceof OIndexEngine) {
+      return ((OIndexEngine) engine).validatedPut(atomicOperation, key, value, validator);
     }
+
+    if (engine instanceof OSingleValueIndexEngine) {
+      return ((OSingleValueIndexEngine) engine)
+          .validatedPut(atomicOperation, key, value.getIdentity(), validator);
+    }
+
+    throw new IllegalStateException("Invalid type of index engine " + engine.getClass().getName());
   }
 
   public Stream<ORawPair<Object, ORID>> iterateIndexEntriesBetween(

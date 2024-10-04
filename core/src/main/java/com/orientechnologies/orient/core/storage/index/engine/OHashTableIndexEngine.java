@@ -242,8 +242,13 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean remove(OAtomicOperation atomicOperation, Object key) throws IOException {
-    return hashTable.remove(atomicOperation, key) != null;
+  public boolean remove(OAtomicOperation atomicOperation, Object key) {
+    try {
+      return hashTable.remove(atomicOperation, key) != null;
+    } catch (final IOException e) {
+      throw OException.wrapException(
+          new OIndexException("Error during key remove on index " + getName()), e);
+    }
   }
 
   @Override
@@ -262,7 +267,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
     int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
     final OIndexKeyUpdater<Object> creator =
         new OMultivalueIndexKeyUpdaterImpl(
@@ -277,8 +282,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value)
-      throws IOException {
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
 
     Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);
 
@@ -296,17 +300,22 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater)
-      throws IOException {
-    Object value = get(key);
-    OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
-    if (updated.isChange()) {
-      put(atomicOperation, key, updated.getValue());
-    } else if (updated.isRemove()) {
-      remove(atomicOperation, key);
-    } else //noinspection StatementWithEmptyBody
-    if (updated.isNothing()) {
-      // Do nothing
+  public void update(
+      OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
+    try {
+      Object value = get(key);
+      OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
+      if (updated.isChange()) {
+        put(atomicOperation, key, updated.getValue());
+      } else if (updated.isRemove()) {
+        remove(atomicOperation, key);
+      } else //noinspection StatementWithEmptyBody
+      if (updated.isNothing()) {
+        // Do nothing
+      }
+    } catch (IOException e) {
+      throw OException.wrapException(
+          new OIndexException("Error during updating of key " + key + " in index " + name), e);
     }
   }
 
@@ -316,8 +325,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       OAtomicOperation atomicOperation,
       Object key,
       ORID value,
-      IndexEngineValidator<Object, ORID> validator)
-      throws IOException {
+      IndexEngineValidator<Object, ORID> validator) {
     return hashTable.validatedPut(atomicOperation, key, value, (IndexEngineValidator) validator);
   }
 

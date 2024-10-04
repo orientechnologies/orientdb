@@ -250,7 +250,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
     int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
     final OIndexKeyUpdater<Object> creator =
         new OMultivalueIndexKeyUpdaterImpl(
@@ -270,8 +270,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value)
-      throws IOException {
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
 
     Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);
 

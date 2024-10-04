@@ -247,6 +247,11 @@ public final class OCellBTreeMultiValueIndexEngine
   }
 
   @Override
+  public boolean remove(OAtomicOperation atomicOperation, Object key) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean remove(final OAtomicOperation atomicOperation, Object key, ORID value) {
     try {
       if (mvTree != null) {

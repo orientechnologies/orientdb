@@ -36,14 +36,13 @@ public interface OIndexEngine extends OBaseIndexEngine {
 
   void put(OAtomicOperation atomicOperation, Object key, Object value) throws IOException;
 
-  void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException;
+  void put(OAtomicOperation atomicOperation, Object key, ORID value);
 
-  void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater)
-      throws IOException;
+  void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater);
 
-  boolean remove(OAtomicOperation atomicOperation, Object key) throws IOException;
+  boolean remove(OAtomicOperation atomicOperation, Object key);
 
-  boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException;
+  boolean remove(OAtomicOperation atomicOperation, Object key, ORID value);
 
   /**
    * Puts the given value under the given key into this index engine. Validates the operation using
@@ -60,8 +59,7 @@ public interface OIndexEngine extends OBaseIndexEngine {
       OAtomicOperation atomicOperation,
       Object key,
       ORID value,
-      IndexEngineValidator<Object, ORID> validator)
-      throws IOException;
+      IndexEngineValidator<Object, ORID> validator);
 
   @Override
   default int getEngineAPIVersion() {

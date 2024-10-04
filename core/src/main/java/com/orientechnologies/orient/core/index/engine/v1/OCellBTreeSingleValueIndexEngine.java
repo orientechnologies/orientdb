@@ -142,6 +142,16 @@ public final class OCellBTreeSingleValueIndexEngine
   }
 
   @Override
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
+    try {
+      return sbTree.remove(atomicOperation, key) != null;
+    } catch (IOException e) {
+      throw OException.wrapException(
+          new OIndexException("Error during removal of key " + key + " from index " + name), e);
+    }
+  }
+
+  @Override
   public void clear(OAtomicOperation atomicOperation) {
     try {
       doClearTree(atomicOperation);

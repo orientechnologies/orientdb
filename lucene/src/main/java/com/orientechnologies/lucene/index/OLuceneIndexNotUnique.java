@@ -147,17 +147,12 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
             false,
             indexId,
             engine -> {
-              try {
-                OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
 
-                OAtomicOperation atomicOperation =
-                    storage.getAtomicOperationsManager().getCurrentOperation();
-                indexEngine.put(atomicOperation, decodeKey(key), rid);
-                return null;
-              } catch (IOException e) {
-                throw OException.wrapException(
-                    new OIndexException("Error during commit of index changes"), e);
-              }
+              OAtomicOperation atomicOperation =
+                  storage.getAtomicOperationsManager().getCurrentOperation();
+              indexEngine.put(atomicOperation, decodeKey(key), rid);
+              return null;
             });
         break;
       } catch (OInvalidIndexEngineIdException e) {

@@ -204,7 +204,7 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
     if (key instanceof OCompositeKey) {
       updateLastAccess();
       openIfClosed();

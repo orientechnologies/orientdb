@@ -83,4 +83,10 @@ public interface OBaseIndexEngine {
   default boolean hasRidBagTreesSupport() {
     return false;
   }
+
+  void put(OAtomicOperation atomicOperation, Object key, ORID value);
+
+  boolean remove(OAtomicOperation atomicOperation, Object key);
+
+  boolean remove(OAtomicOperation atomicOperation, Object key, ORID value);
 }

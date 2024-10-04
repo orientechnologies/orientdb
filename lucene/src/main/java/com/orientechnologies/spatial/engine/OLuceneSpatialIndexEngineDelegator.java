@@ -138,12 +138,7 @@ public class OLuceneSpatialIndexEngineDelegator
   @Override
   public void update(
       OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
-    try {
-      delegate.update(atomicOperation, key, updater);
-    } catch (IOException e) {
-      throw OException.wrapException(
-          new OIndexException("Error during update of key " + key + " in index " + indexName), e);
-    }
+    delegate.update(atomicOperation, key, updater);
   }
 
   @Override
@@ -331,13 +326,12 @@ public class OLuceneSpatialIndexEngineDelegator
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
     delegate.put(atomicOperation, key, value);
   }
 
   @Override
-  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value)
-      throws IOException {
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
     return delegate.remove(atomicOperation, key, value);
   }
 
