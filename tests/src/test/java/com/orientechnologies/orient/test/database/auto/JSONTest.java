@@ -461,14 +461,14 @@ public class JSONTest extends DocumentDBBaseTest {
       String jsonFull = doc.toJSON();
       ORID rid = doc.getIdentity();
       database.close();
-      database.open("admin", "admin");
+      reopendb("admin", "admin");
       doc = database.load(rid);
       doc.setLazyLoad(false);
       doc.reload("*:0");
       database.close();
       String jsonLoaded = doc.toJSON();
       Assert.assertEquals(jsonLoaded, jsonFull);
-      database.open("admin", "admin");
+      reopendb("admin", "admin");
       doc = database.load(rid);
       doc.setLazyLoad(false);
       doc.load("*:0");
@@ -478,14 +478,14 @@ public class JSONTest extends DocumentDBBaseTest {
       Assert.assertEquals(jsonLoaded, jsonFull);
     }
 
-    if (database.isClosed()) database.open("admin", "admin");
+    if (database.isClosed()) reopendb("admin", "admin");
 
     for (ODocument doc : result) {
       doc.reload("*:1");
       String jsonFull = doc.toJSON();
       ORID rid = doc.getIdentity();
       database.close();
-      database.open("admin", "admin");
+      reopendb("admin", "admin");
       doc = database.load(rid);
       doc.setLazyLoad(false);
       doc.reload("*:1");

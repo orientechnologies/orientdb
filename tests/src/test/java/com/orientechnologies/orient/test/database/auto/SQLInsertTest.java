@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -73,7 +72,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
     for (int i = 0; i < 30; i++) {
-      new ODocument("Address").save();
+      database.save(new ODocument("Address"));
     }
     List<Long> positions = getValidPositions(addressId);
 
@@ -179,7 +178,6 @@ public class SQLInsertTest extends DocumentDBBaseTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void insertMap() {
     OElement doc =
         database
@@ -231,7 +229,6 @@ public class SQLInsertTest extends DocumentDBBaseTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void insertList() {
     OElement doc =
         database
@@ -386,12 +383,11 @@ public class SQLInsertTest extends DocumentDBBaseTest {
             .count();
     Assert.assertEquals(inserted, 2);
 
-    List<OIdentifiable> result =
-        database.query(new OSQLSynchQuery<OIdentifiable>("select from UserCopy"));
+    List<OResult> result = database.query("select from UserCopy").stream().toList();
     Assert.assertEquals(result.size(), 2);
-    for (OIdentifiable r : result) {
-      Assert.assertEquals(((ODocument) r.getRecord()).getClassName(), "UserCopy");
-      Assert.assertNotSame(((ODocument) r.getRecord()).field("name"), "admin");
+    for (OResult r : result) {
+      Assert.assertEquals(r.getElement().get().getSchemaType().get().getName(), "UserCopy");
+      Assert.assertNotSame(r.getProperty("name"), "admin");
     }
   }
 
