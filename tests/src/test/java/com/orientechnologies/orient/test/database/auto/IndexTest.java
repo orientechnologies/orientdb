@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -444,13 +443,10 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final List<Profile> result =
-        database
-            .command(
-                new OSQLSynchQuery<Profile>(
-                    "select * from Profile where (name = 'Giuseppe' OR name <> 'Napoleone') AND"
-                        + " (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND"
-                        + " (nick >= 'ZZZJayLongNickIndex3'))"))
-            .execute();
+        database.objectQuery(
+            "select * from Profile where (name = 'Giuseppe' OR name <> 'Napoleone') AND"
+                + " (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND"
+                + " (nick >= 'ZZZJayLongNickIndex3'))");
     if (!oldRecording) {
       Orient.instance().getProfiler().stopRecording();
     }
@@ -486,13 +482,10 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final List<Profile> result =
-        database
-            .command(
-                new OSQLSynchQuery<Profile>(
-                    "select * from Profile where ((name = 'Giuseppe' OR name <> 'Napoleone') AND"
-                        + " (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND"
-                        + " (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))"))
-            .execute();
+        database.objectQuery(
+            "select * from Profile where ((name = 'Giuseppe' OR name <> 'Napoleone') AND"
+                + " (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND"
+                + " (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))");
     if (!oldRecording) {
       Orient.instance().getProfiler().stopRecording();
     }
@@ -507,7 +500,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     Assert.assertEquals(expectedNicks.size(), 0);
     long newIndexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
-    Assert.assertEquals(newIndexQueries, indexQueries);
+    Assert.assertEquals(newIndexQueries, indexQueries + 1);
   }
 
   public void populateIndexDocuments() {
