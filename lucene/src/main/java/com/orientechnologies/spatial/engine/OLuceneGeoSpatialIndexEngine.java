@@ -117,16 +117,6 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, Object value) {
-    if (key instanceof OIdentifiable) {
-      openIfClosed();
-      ODocument location = ((OIdentifiable) key).getRecord();
-      updateLastAccess();
-      addDocument(newGeoDocument((OIdentifiable) value, factory.fromDoc(location), location));
-    }
-  }
-
-  @Override
   public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
     key = decodeKey(key);
     if (key instanceof OIdentifiable) {

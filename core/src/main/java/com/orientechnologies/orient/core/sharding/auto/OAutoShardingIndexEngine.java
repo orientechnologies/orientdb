@@ -324,18 +324,6 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, final Object key, final Object value) {
-    try {
-      getPartition(key).put(atomicOperation, key, value);
-    } catch (IOException e) {
-      throw OException.wrapException(
-          new OIndexException(
-              "Error during insertion of key " + key + " of index with name " + name),
-          e);
-    }
-  }
-
-  @Override
   public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
     if (valueContainerAlgorithm != null) {
       Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);
@@ -361,7 +349,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
     Object value = get(key);
     OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
-    if (updated.isChange()) put(atomicOperation, key, updated.getValue());
+    if (updated.isChange()) put(atomicOperation, key, (ORID) updated.getValue());
     else if (updated.isRemove()) {
       remove(atomicOperation, key);
     } else //noinspection StatementWithEmptyBody

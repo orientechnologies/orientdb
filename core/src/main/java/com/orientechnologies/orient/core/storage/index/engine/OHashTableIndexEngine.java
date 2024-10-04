@@ -288,11 +288,6 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, Object value) throws IOException {
-    hashTable.put(atomicOperation, key, value);
-  }
-
-  @Override
   public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
     if (valueContainerAlgorithm != null) {
 
@@ -317,20 +312,15 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   @Override
   public void update(
       OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
-    try {
-      Object value = get(key);
-      OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
-      if (updated.isChange()) {
-        put(atomicOperation, key, updated.getValue());
-      } else if (updated.isRemove()) {
-        remove(atomicOperation, key);
-      } else //noinspection StatementWithEmptyBody
-      if (updated.isNothing()) {
-        // Do nothing
-      }
-    } catch (IOException e) {
-      throw OException.wrapException(
-          new OIndexException("Error during updating of key " + key + " in index " + name), e);
+    Object value = get(key);
+    OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
+    if (updated.isChange()) {
+      put(atomicOperation, key, (ORID) updated.getValue());
+    } else if (updated.isRemove()) {
+      remove(atomicOperation, key);
+    } else //noinspection StatementWithEmptyBody
+    if (updated.isNothing()) {
+      // Do nothing
     }
   }
 

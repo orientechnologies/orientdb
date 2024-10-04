@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.index.engine;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import java.io.IOException;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -33,8 +32,6 @@ public interface OIndexEngine extends OBaseIndexEngine {
   int VERSION = 0;
 
   Object get(Object key);
-
-  void put(OAtomicOperation atomicOperation, Object key, Object value) throws IOException;
 
   void put(OAtomicOperation atomicOperation, Object key, ORID value);
 

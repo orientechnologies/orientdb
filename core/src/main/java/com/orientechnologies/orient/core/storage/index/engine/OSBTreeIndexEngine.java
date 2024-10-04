@@ -271,16 +271,6 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, Object value) {
-    try {
-      sbTree.put(atomicOperation, key, value);
-    } catch (IOException e) {
-      throw OException.wrapException(
-          new OIndexException("Error during insertion of key " + key + " in index " + name), e);
-    }
-  }
-
-  @Override
   public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
     if (valueContainerAlgorithm != null) {
       Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);

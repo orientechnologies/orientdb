@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
-import com.orientechnologies.orient.core.index.engine.OSingleValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -22,8 +21,7 @@ import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositi
 import java.io.IOException;
 import java.util.stream.Stream;
 
-public final class OCellBTreeSingleValueIndexEngine
-    implements OSingleValueIndexEngine, OCellBTreeIndexEngine {
+public final class OCellBTreeSingleValueIndexEngine implements OCellBTreeIndexEngine {
   private static final String DATA_FILE_EXTENSION = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
@@ -282,5 +280,10 @@ public final class OCellBTreeSingleValueIndexEngine
   public int getUniqueIndexVersion(final Object key) {
     final int keyHash = versionPositionMap.getKeyHash(key);
     return versionPositionMap.getVersion(keyHash);
+  }
+
+  @Override
+  public boolean isMultiValue() {
+    return false;
   }
 }

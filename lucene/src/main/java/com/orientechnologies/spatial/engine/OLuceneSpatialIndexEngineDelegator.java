@@ -14,7 +14,6 @@
  */
 package com.orientechnologies.spatial.engine;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
@@ -23,7 +22,6 @@ import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
@@ -121,18 +119,6 @@ public class OLuceneSpatialIndexEngineDelegator
   @Override
   public Object get(Object key) {
     return delegate.get(key);
-  }
-
-  @Override
-  public void put(OAtomicOperation atomicOperation, Object key, Object value) {
-
-    try {
-      delegate.put(atomicOperation, key, value);
-    } catch (IOException e) {
-      throw OException.wrapException(
-          new OIndexException("Error during insertion of key " + key + " in index " + indexName),
-          e);
-    }
   }
 
   @Override

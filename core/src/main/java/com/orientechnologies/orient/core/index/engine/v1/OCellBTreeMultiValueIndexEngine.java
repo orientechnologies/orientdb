@@ -14,7 +14,6 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
-import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OCompactedLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.CompositeKeySerializer;
@@ -30,8 +29,7 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public final class OCellBTreeMultiValueIndexEngine
-    implements OMultiValueIndexEngine, OCellBTreeIndexEngine {
+public final class OCellBTreeMultiValueIndexEngine implements OCellBTreeIndexEngine {
 
   public static final String DATA_FILE_EXTENSION = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
@@ -643,5 +641,10 @@ public final class OCellBTreeMultiValueIndexEngine
       key = new OCompositeKey(keys.subList(0, keys.size() - 1));
     }
     return key;
+  }
+
+  @Override
+  public boolean isMultiValue() {
+    return true;
   }
 }

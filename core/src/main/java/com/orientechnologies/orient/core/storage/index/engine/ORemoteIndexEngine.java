@@ -100,9 +100,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, Object value) {}
-
-  @Override
   public void update(
       OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {}
 

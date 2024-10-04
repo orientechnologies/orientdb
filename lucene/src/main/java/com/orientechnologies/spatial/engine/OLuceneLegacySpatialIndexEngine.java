@@ -189,21 +189,6 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, Object value) {
-
-    if (key instanceof OCompositeKey) {
-      updateLastAccess();
-      openIfClosed();
-      OCompositeKey compositeKey = (OCompositeKey) key;
-      addDocument(
-          newGeoDocument(
-              (OIdentifiable) value,
-              legacyBuilder.makeShape(compositeKey, ctx),
-              ((OCompositeKey) key).toDocument()));
-    }
-  }
-
-  @Override
   public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
     if (key instanceof OCompositeKey) {
       updateLastAccess();

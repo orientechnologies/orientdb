@@ -136,15 +136,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       final OAtomicOperation atomicOperation,
       final Object key,
       final OIndexKeyUpdater<Object> updater) {
-    put(atomicOperation, key, updater.update(null, bonsayFileId).getValue());
-  }
-
-  @Override
-  public void put(final OAtomicOperation atomicOperation, final Object key, final Object value) {
-    updateLastAccess();
-    openIfClosed();
-    final Document doc = buildDocument(key, (OIdentifiable) value);
-    addDocument(doc);
+    put(atomicOperation, key, (ORID) updater.update(null, bonsayFileId).getValue());
   }
 
   @Override
