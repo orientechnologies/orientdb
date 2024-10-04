@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.spatial.query.OSpatialQueryContext;
 import com.orientechnologies.spatial.shape.OShapeBuilder;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -114,7 +115,16 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
 
   @Override
   public void put(OAtomicOperation atomicOperation, Object key, Object value) {
+    if (key instanceof OIdentifiable) {
+      openIfClosed();
+      ODocument location = ((OIdentifiable) key).getRecord();
+      updateLastAccess();
+      addDocument(newGeoDocument((OIdentifiable) value, factory.fromDoc(location), location));
+    }
+  }
 
+  @Override
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
     if (key instanceof OIdentifiable) {
       openIfClosed();
       ODocument location = ((OIdentifiable) key).getRecord();

@@ -23,6 +23,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.IndexEngineData;
@@ -36,6 +37,7 @@ import com.orientechnologies.orient.core.index.OIndexUpdateAction;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
+import com.orientechnologies.orient.core.index.multivalue.OMultivalueEntityRemover;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -52,6 +54,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -295,6 +298,18 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
+    try {
+      getPartition(key).put(atomicOperation, key, value);
+    } catch (IOException e) {
+      throw OException.wrapException(
+          new OIndexException(
+              "Error during insertion of key " + key + " of index with name " + name),
+          e);
+    }
+  }
+
+  @Override
   public void put(OAtomicOperation atomicOperation, final Object key, final Object value) {
     try {
       getPartition(key).put(atomicOperation, key, value);
@@ -304,6 +319,25 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
               "Error during insertion of key " + key + " of index with name " + name),
           e);
     }
+  }
+
+  @Override
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value)
+      throws IOException {
+
+    Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);
+
+    if (values == null) {
+      return false;
+    }
+
+    final OModifiableBoolean removed = new OModifiableBoolean(false);
+
+    final OIndexKeyUpdater<Object> creator = new OMultivalueEntityRemover(value, removed);
+
+    update(atomicOperation, key, creator);
+
+    return removed.getValue();
   }
 
   @Override

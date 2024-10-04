@@ -107,6 +107,15 @@ public class ORemoteIndexEngine implements OIndexEngine {
       OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {}
 
   @Override
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {}
+
+  @Override
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value)
+      throws IOException {
+    return false;
+  }
+
+  @Override
   public boolean validatedPut(
       OAtomicOperation atomicOperation,
       Object key,

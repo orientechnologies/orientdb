@@ -331,6 +331,17 @@ public class OLuceneSpatialIndexEngineDelegator
   }
 
   @Override
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
+    delegate.put(atomicOperation, key, value);
+  }
+
+  @Override
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value)
+      throws IOException {
+    return delegate.remove(atomicOperation, key, value);
+  }
+
+  @Override
   public void updateUniqueIndexVersion(final Object key) {
     // not implemented
   }

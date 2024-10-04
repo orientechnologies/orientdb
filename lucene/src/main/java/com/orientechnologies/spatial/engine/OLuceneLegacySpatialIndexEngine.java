@@ -204,6 +204,20 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
   }
 
   @Override
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
+    if (key instanceof OCompositeKey) {
+      updateLastAccess();
+      openIfClosed();
+      OCompositeKey compositeKey = (OCompositeKey) key;
+      addDocument(
+          newGeoDocument(
+              (OIdentifiable) value,
+              legacyBuilder.makeShape(compositeKey, ctx),
+              ((OCompositeKey) key).toDocument()));
+    }
+  }
+
+  @Override
   public void update(
       OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
     throw new UnsupportedOperationException();

@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.storage.index.engine;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.IndexEngineData;
@@ -34,6 +35,8 @@ import com.orientechnologies.orient.core.index.OIndexUpdateAction;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
+import com.orientechnologies.orient.core.index.multivalue.OMultivalueEntityRemover;
+import com.orientechnologies.orient.core.index.multivalue.OMultivalueIndexKeyUpdaterImpl;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -48,6 +51,7 @@ import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositi
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -76,6 +80,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   private final OVersionPositionMap versionPositionMap;
 
   private OAbstractPaginatedStorage storage;
+
+  private String valueContainerAlgorithm;
 
   public OHashTableIndexEngine(
       String name, int id, OAbstractPaginatedStorage storage, int version) {
@@ -116,7 +122,9 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void init(OIndexMetadata metadata) {}
+  public void init(OIndexMetadata metadata) {
+    this.valueContainerAlgorithm = metadata.getValueContainerAlgorithm();
+  }
 
   @Override
   public String getName() {
@@ -254,8 +262,37 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
+    int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
+    final OIndexKeyUpdater<Object> creator =
+        new OMultivalueIndexKeyUpdaterImpl(
+            value, valueContainerAlgorithm, binaryFormatVersion, name);
+
+    update(atomicOperation, key, creator);
+  }
+
+  @Override
   public void put(OAtomicOperation atomicOperation, Object key, Object value) throws IOException {
     hashTable.put(atomicOperation, key, value);
+  }
+
+  @Override
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value)
+      throws IOException {
+
+    Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);
+
+    if (values == null) {
+      return false;
+    }
+
+    final OModifiableBoolean removed = new OModifiableBoolean(false);
+
+    final OIndexKeyUpdater<Object> creator = new OMultivalueEntityRemover(value, removed);
+
+    update(atomicOperation, key, creator);
+
+    return removed.getValue();
   }
 
   @Override

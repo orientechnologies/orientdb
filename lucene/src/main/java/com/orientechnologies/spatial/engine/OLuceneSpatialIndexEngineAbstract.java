@@ -89,7 +89,13 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
 
   @Override
   public boolean remove(OAtomicOperation atomicOperation, Object key) {
-    return false;
+    return remove(key);
+  }
+
+  @Override
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value)
+      throws IOException {
+    return remove(key, value);
   }
 
   @Override

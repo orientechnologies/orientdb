@@ -22,8 +22,10 @@ package com.orientechnologies.orient.core.storage.index.engine;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.IndexEngineData;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -32,6 +34,8 @@ import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
+import com.orientechnologies.orient.core.index.multivalue.OMultivalueEntityRemover;
+import com.orientechnologies.orient.core.index.multivalue.OMultivalueIndexKeyUpdaterImpl;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
@@ -40,6 +44,7 @@ import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
 import java.io.IOException;
+import java.util.Set;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -61,6 +66,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   private final int id;
 
   private OAbstractPaginatedStorage storage;
+  private String valueContainerAlgorithm;
 
   public OSBTreeIndexEngine(
       final int id, String name, OAbstractPaginatedStorage storage, int version) {
@@ -86,7 +92,9 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void init(OIndexMetadata metadata) {}
+  public void init(OIndexMetadata metadata) {
+    this.valueContainerAlgorithm = metadata.getValueContainerAlgorithm();
+  }
 
   @Override
   public String getName() {
@@ -242,6 +250,16 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
+    int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
+    final OIndexKeyUpdater<Object> creator =
+        new OMultivalueIndexKeyUpdaterImpl(
+            value, valueContainerAlgorithm, binaryFormatVersion, name);
+
+    update(atomicOperation, key, creator);
+  }
+
+  @Override
   public void put(OAtomicOperation atomicOperation, Object key, Object value) {
     try {
       sbTree.put(atomicOperation, key, value);
@@ -249,6 +267,25 @@ public class OSBTreeIndexEngine implements OIndexEngine {
       throw OException.wrapException(
           new OIndexException("Error during insertion of key " + key + " in index " + name), e);
     }
+  }
+
+  @Override
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value)
+      throws IOException {
+
+    Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);
+
+    if (values == null) {
+      return false;
+    }
+
+    final OModifiableBoolean removed = new OModifiableBoolean(false);
+
+    final OIndexKeyUpdater<Object> creator = new OMultivalueEntityRemover(value, removed);
+
+    update(atomicOperation, key, creator);
+
+    return removed.getValue();
   }
 
   @Override

@@ -122,6 +122,12 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value)
+      throws IOException {
+    return remove(key, value);
+  }
+
+  @Override
   public Object get(final Object key) {
     return getInTx(key, null);
   }
@@ -139,6 +145,14 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     updateLastAccess();
     openIfClosed();
     final Document doc = buildDocument(key, (OIdentifiable) value);
+    addDocument(doc);
+  }
+
+  @Override
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) throws IOException {
+    updateLastAccess();
+    openIfClosed();
+    final Document doc = buildDocument(key, value);
     addDocument(doc);
   }
 
