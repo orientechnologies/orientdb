@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.stream.Streams;
-import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -32,11 +31,8 @@ import com.orientechnologies.orient.core.index.comparator.DescComparator;
 import com.orientechnologies.orient.core.index.iterator.PureTxMultiValueBetweenIndexBackwardSplititerator;
 import com.orientechnologies.orient.core.index.iterator.PureTxMultiValueBetweenIndexForwardSpliterator;
 import com.orientechnologies.orient.core.index.multivalue.MultiValuesTransformer;
-import com.orientechnologies.orient.core.index.multivalue.OMultivalueEntityRemover;
-import com.orientechnologies.orient.core.index.multivalue.OMultivalueIndexKeyUpdaterImpl;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -169,42 +165,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   }
 
   @Override
-  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid)
-      throws OInvalidIndexEngineIdException {
-    if (apiVersion == 0) {
-      doPutV0(indexId, storage, im.getValueContainerAlgorithm(), getName(), key, rid);
-    } else if (apiVersion == 1) {
-      doPutV1(storage, indexId, key, rid);
-    } else {
-      throw new IllegalStateException("Invalid API version, " + apiVersion);
-    }
-  }
-
-  @Override
   public boolean isNativeTxSupported() {
     return true;
-  }
-
-  private static void doPutV0(
-      final int indexId,
-      final OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm,
-      String indexName,
-      Object key,
-      ORID identity)
-      throws OInvalidIndexEngineIdException {
-    int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
-    final OIndexKeyUpdater<Object> creator =
-        new OMultivalueIndexKeyUpdaterImpl(
-            identity, valueContainerAlgorithm, binaryFormatVersion, indexName);
-
-    storage.updateIndexEntry(indexId, key, creator);
-  }
-
-  private static void doPutV1(
-      OAbstractPaginatedStorage storage, int indexId, Object key, ORID identity)
-      throws OInvalidIndexEngineIdException {
-    storage.putRidIndexEntry(indexId, key, identity);
   }
 
   @Override
@@ -220,46 +182,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       database.commit();
     }
     return true;
-  }
-
-  @Override
-  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid)
-      throws OInvalidIndexEngineIdException {
-    if (apiVersion == 0) {
-      return doRemoveV0(indexId, storage, key, rid);
-    }
-
-    if (apiVersion == 1) {
-      return doRemoveV1(indexId, storage, key, rid);
-    }
-
-    throw new IllegalStateException("Invalid API version, " + apiVersion);
-  }
-
-  private static boolean doRemoveV0(
-      int indexId, OAbstractPaginatedStorage storage, Object key, OIdentifiable value)
-      throws OInvalidIndexEngineIdException {
-    Set<OIdentifiable> values;
-    //noinspection unchecked
-    values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
-
-    if (values == null) {
-      return false;
-    }
-
-    final OModifiableBoolean removed = new OModifiableBoolean(false);
-
-    final OIndexKeyUpdater<Object> creator = new OMultivalueEntityRemover(value, removed);
-
-    storage.updateIndexEntry(indexId, key, creator);
-
-    return removed.getValue();
-  }
-
-  private static boolean doRemoveV1(
-      int indexId, OAbstractPaginatedStorage storage, Object key, OIdentifiable value)
-      throws OInvalidIndexEngineIdException {
-    return storage.removeRidIndexEntry(indexId, key, value.getIdentity());
   }
 
   @Override

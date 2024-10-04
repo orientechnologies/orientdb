@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.UniqueIndexEngineValidator;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 /**
@@ -44,12 +43,6 @@ public class OIndexUnique extends OIndexOneValue {
   @Override
   public boolean isNativeTxSupported() {
     return true;
-  }
-
-  @Override
-  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid)
-      throws OInvalidIndexEngineIdException {
-    storage.validatedPutIndexValue(indexId, key, rid, uniqueValidator);
   }
 
   @Override

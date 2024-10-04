@@ -96,7 +96,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.OIndexOneValue;
@@ -106,8 +105,6 @@ import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
-import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
-import com.orientechnologies.orient.core.index.engine.OSingleValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OV1IndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeSingleValueIndexEngine;
@@ -3047,45 +3044,6 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  public boolean removeKeyFromIndex(final int indexId, final Object key)
-      throws OInvalidIndexEngineIdException {
-    final int internalIndexId = extractInternalId(indexId);
-
-    try {
-      assert transaction.get() != null;
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      return removeKeyFromIndexInternal(atomicOperation, internalIndexId, key);
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  private boolean removeKeyFromIndexInternal(
-      final OAtomicOperation atomicOperation, final int indexId, final Object key)
-      throws OInvalidIndexEngineIdException {
-    checkIndexId(indexId);
-
-    final OBaseIndexEngine engine = indexEngines.get(indexId);
-    if (engine.getEngineAPIVersion() == OIndexEngine.VERSION) {
-      return ((OIndexEngine) engine).remove(atomicOperation, key);
-    } else {
-      final OV1IndexEngine v1IndexEngine = (OV1IndexEngine) engine;
-      if (!v1IndexEngine.isMultiValue()) {
-        return ((OSingleValueIndexEngine) engine).remove(atomicOperation, key);
-      } else {
-        throw new OStorageException(
-            "To remove entry from multi-value index not only key but value also should be"
-                + " provided");
-      }
-    }
-  }
-
   public void clearIndex(final int indexId) throws OInvalidIndexEngineIdException {
     try {
       if (transaction.get() != null) {
@@ -3248,32 +3206,6 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  public void updateIndexEntry(
-      int indexId, final Object key, final OIndexKeyUpdater<Object> valueCreator)
-      throws OInvalidIndexEngineIdException {
-    final int engineAPIVersion = extractEngineAPIVersion(indexId);
-
-    if (engineAPIVersion != 0) {
-      throw new IllegalStateException(
-          "Unsupported version of index engine API. Required 0 but found " + engineAPIVersion);
-    }
-
-    try {
-      assert transaction.get() != null;
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      assert atomicOperation != null;
-      doUpdateIndexEntry(atomicOperation, indexId, key, valueCreator);
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
   public <T> T callIndexEngine(
       final boolean readOperation, int indexId, final OIndexEngineCallback<T> callback)
       throws OInvalidIndexEngineIdException {
@@ -3311,199 +3243,6 @@ public abstract class OAbstractPaginatedStorage
     final OBaseIndexEngine engine = indexEngines.get(indexId);
 
     return callback.callEngine(engine);
-  }
-
-  private void doUpdateIndexEntry(
-      final OAtomicOperation atomicOperation,
-      final int indexId,
-      final Object key,
-      final OIndexKeyUpdater<Object> valueCreator)
-      throws OInvalidIndexEngineIdException, IOException {
-    checkIndexId(indexId);
-
-    final OBaseIndexEngine engine = indexEngines.get(indexId);
-    assert indexId == engine.getId();
-
-    ((OIndexEngine) engine).update(atomicOperation, key, valueCreator);
-  }
-
-  public void putRidIndexEntry(int indexId, final Object key, final ORID value)
-      throws OInvalidIndexEngineIdException {
-    final int engineAPIVersion = extractEngineAPIVersion(indexId);
-    final int internalIndexId = extractInternalId(indexId);
-
-    if (engineAPIVersion != 1) {
-      throw new IllegalStateException(
-          "Unsupported version of index engine API. Required 1 but found " + engineAPIVersion);
-    }
-
-    try {
-      assert transaction.get() != null;
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      assert atomicOperation != null;
-      putRidIndexEntryInternal(atomicOperation, internalIndexId, key, value);
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  private void putRidIndexEntryInternal(
-      final OAtomicOperation atomicOperation, final int indexId, final Object key, final ORID value)
-      throws OInvalidIndexEngineIdException {
-    checkIndexId(indexId);
-
-    final OBaseIndexEngine engine = indexEngines.get(indexId);
-    assert engine.getId() == indexId;
-
-    ((OV1IndexEngine) engine).put(atomicOperation, key, value);
-  }
-
-  public boolean removeRidIndexEntry(int indexId, final Object key, final ORID value)
-      throws OInvalidIndexEngineIdException {
-    final int engineAPIVersion = extractEngineAPIVersion(indexId);
-    final int internalIndexId = extractInternalId(indexId);
-
-    if (engineAPIVersion != 1) {
-      throw new IllegalStateException(
-          "Unsupported version of index engine API. Required 1 but found " + engineAPIVersion);
-    }
-
-    try {
-      assert transaction.get() != null;
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      assert atomicOperation != null;
-      return removeRidIndexEntryInternal(atomicOperation, internalIndexId, key, value);
-
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  private boolean removeRidIndexEntryInternal(
-      final OAtomicOperation atomicOperation, final int indexId, final Object key, final ORID value)
-      throws OInvalidIndexEngineIdException {
-    checkIndexId(indexId);
-
-    final OBaseIndexEngine engine = indexEngines.get(indexId);
-    assert engine.getId() == indexId;
-
-    return ((OMultiValueIndexEngine) engine).remove(atomicOperation, key, value);
-  }
-
-  public void putIndexValue(int indexId, final Object key, final Object value)
-      throws OInvalidIndexEngineIdException {
-    final int engineAPIVersion = extractEngineAPIVersion(indexId);
-
-    if (engineAPIVersion != 0) {
-      throw new IllegalStateException(
-          "Unsupported version of index engine API. Required 0 but found " + engineAPIVersion);
-    }
-
-    try {
-      assert transaction.get() != null;
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      assert atomicOperation != null;
-      putIndexValueInternal(atomicOperation, indexId, key, value);
-
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  private void putIndexValueInternal(
-      OAtomicOperation atomicOperation, final int indexId, final Object key, final Object value)
-      throws OInvalidIndexEngineIdException {
-    try {
-      checkIndexId(indexId);
-
-      final OBaseIndexEngine engine = indexEngines.get(indexId);
-      assert engine.getId() == indexId;
-
-      ((OIndexEngine) engine).put(atomicOperation, key, value);
-    } catch (final IOException e) {
-      throw OException.wrapException(
-          new OStorageException(
-              "Cannot put key " + key + " value " + value + " entry to the index"),
-          e);
-    }
-  }
-
-  /**
-   * Puts the given value under the given key into this storage for the index with the given index
-   * id. Validates the operation using the provided validator.
-   *
-   * @param indexId the index id of the index to put the value into.
-   * @param key the key to put the value under.
-   * @param value the value to put.
-   * @param validator the operation validator.
-   * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   * @see IndexEngineValidator#validate(Object, Object, Object)
-   */
-  @SuppressWarnings("UnusedReturnValue")
-  public boolean validatedPutIndexValue(
-      final int indexId,
-      final Object key,
-      final ORID value,
-      final IndexEngineValidator<Object, ORID> validator)
-      throws OInvalidIndexEngineIdException {
-    final int internalIndexId = extractInternalId(indexId);
-
-    try {
-      assert transaction.get() != null;
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      assert atomicOperation != null;
-      return doValidatedPutIndexValue(atomicOperation, internalIndexId, key, value, validator);
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  private boolean doValidatedPutIndexValue(
-      OAtomicOperation atomicOperation,
-      final int indexId,
-      final Object key,
-      final ORID value,
-      final IndexEngineValidator<Object, ORID> validator)
-      throws OInvalidIndexEngineIdException {
-    checkIndexId(indexId);
-
-    final OBaseIndexEngine engine = indexEngines.get(indexId);
-    assert indexId == engine.getId();
-
-    if (engine instanceof OIndexEngine) {
-      return ((OIndexEngine) engine).validatedPut(atomicOperation, key, value, validator);
-    }
-
-    if (engine instanceof OSingleValueIndexEngine) {
-      return ((OSingleValueIndexEngine) engine)
-          .validatedPut(atomicOperation, key, value.getIdentity(), validator);
-    }
-
-    throw new IllegalStateException("Invalid type of index engine " + engine.getClass().getName());
   }
 
   public Stream<ORawPair<Object, ORID>> iterateIndexEntriesBetween(

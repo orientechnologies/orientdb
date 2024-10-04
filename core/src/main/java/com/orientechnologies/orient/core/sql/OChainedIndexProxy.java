@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -722,21 +721,6 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
   @Override
   public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public boolean doRemove(OAbstractPaginatedStorage storage, Object key) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

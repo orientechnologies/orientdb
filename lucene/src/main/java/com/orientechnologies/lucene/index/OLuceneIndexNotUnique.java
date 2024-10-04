@@ -34,8 +34,6 @@ import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -137,67 +135,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   public Iterable<OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
     return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.NonUnique);
-  }
-
-  @Override
-  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) {
-    while (true)
-      try {
-        storage.callIndexEngine(
-            false,
-            indexId,
-            engine -> {
-              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-
-              OAtomicOperation atomicOperation =
-                  storage.getAtomicOperationsManager().getCurrentOperation();
-              indexEngine.put(atomicOperation, decodeKey(key), rid);
-              return null;
-            });
-        break;
-      } catch (OInvalidIndexEngineIdException e) {
-        doReloadIndexEngine();
-      }
-  }
-
-  @Override
-  public boolean doRemove(OAbstractPaginatedStorage storage, Object key)
-      throws OInvalidIndexEngineIdException {
-    while (true)
-      try {
-        storage.callIndexEngine(
-            false,
-            indexId,
-            engine -> {
-              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-              indexEngine.remove(decodeKey(key));
-              return true;
-            });
-        break;
-      } catch (OInvalidIndexEngineIdException e) {
-        doReloadIndexEngine();
-      }
-    return false;
-  }
-
-  @Override
-  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid)
-      throws OInvalidIndexEngineIdException {
-    while (true)
-      try {
-        storage.callIndexEngine(
-            false,
-            indexId,
-            engine -> {
-              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-              indexEngine.remove(decodeKey(key), rid);
-              return true;
-            });
-        break;
-      } catch (OInvalidIndexEngineIdException e) {
-        doReloadIndexEngine();
-      }
-    return false;
   }
 
   @Override

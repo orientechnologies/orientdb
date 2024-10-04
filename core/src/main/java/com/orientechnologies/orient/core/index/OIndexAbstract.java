@@ -548,12 +548,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     return documentIndexed;
   }
 
-  @Override
-  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid)
-      throws OInvalidIndexEngineIdException {
-    return doRemove(storage, key);
-  }
-
   public boolean remove(Object key, final OIdentifiable rid) {
     key = getCollatingValue(key);
 
@@ -580,12 +574,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
       database.commit();
     }
     return true;
-  }
-
-  @Override
-  public boolean doRemove(OAbstractPaginatedStorage storage, Object key)
-      throws OInvalidIndexEngineIdException {
-    return storage.removeKeyFromIndex(indexId, key);
   }
 
   /**
