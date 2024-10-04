@@ -33,16 +33,20 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.spatial.query.OSpatialQueryContext;
 import com.orientechnologies.spatial.shape.OShapeBuilder;
+import com.orientechnologies.spatial.shape.OShapeFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.spatial.SpatialStrategy;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.spatial4j.distance.DistanceUtils;
 import org.locationtech.spatial4j.shape.Point;
+import org.locationtech.spatial4j.shape.Shape;
 
 public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstract {
+  private final OShapeFactory shapeFactory = OShapeFactory.INSTANCE;
 
   public OLuceneGeoSpatialIndexEngine(
       OStorage storage, String name, int id, OShapeBuilder factory) {
@@ -124,6 +128,7 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
 
   @Override
   public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
+    key = decodeKey(key);
     if (key instanceof OIdentifiable) {
       openIfClosed();
       ODocument location = ((OIdentifiable) key).getRecord();
@@ -152,6 +157,23 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
   public Document buildDocument(Object key, OIdentifiable value) {
     ODocument location = ((OIdentifiable) key).getRecord();
     return newGeoDocument(value, factory.fromDoc(location), location);
+  }
+
+  protected Object encodeKey(Object key) {
+    if (key instanceof ODocument) {
+      Shape shape = shapeFactory.fromDoc((ODocument) key);
+      return shapeFactory.toGeometry(shape);
+    }
+    return key;
+  }
+
+  protected Object decodeKey(Object key) {
+
+    if (key instanceof Geometry) {
+      Geometry geom = (Geometry) key;
+      return shapeFactory.toDoc(geom);
+    }
+    return key;
   }
 
   @Override

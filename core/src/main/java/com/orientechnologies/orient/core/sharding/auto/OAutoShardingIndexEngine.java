@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.index.multivalue.OMultivalueEntityRemover;
+import com.orientechnologies.orient.core.index.multivalue.OMultivalueIndexKeyUpdaterImpl;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -82,6 +83,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   private int partitionSize;
   private final AtomicLong bonsayFileId = new AtomicLong(0);
   private final int id;
+  private String valueContainerAlgorithm;
 
   OAutoShardingIndexEngine(
       final String iName, int id, final OAbstractPaginatedStorage iStorage, final int iVersion) {
@@ -245,7 +247,11 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void init(OIndexMetadata metadata) {}
+  public void init(OIndexMetadata metadata) {
+    if (metadata.isMultivalue()) {
+      this.valueContainerAlgorithm = metadata.getValueContainerAlgorithm();
+    }
+  }
 
   private void init() {
     if (partitions != null) return;
@@ -299,13 +305,21 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
   @Override
   public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
-    try {
-      getPartition(key).put(atomicOperation, key, value);
-    } catch (IOException e) {
-      throw OException.wrapException(
-          new OIndexException(
-              "Error during insertion of key " + key + " of index with name " + name),
-          e);
+
+    if (valueContainerAlgorithm != null) {
+      int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
+      final OIndexKeyUpdater<Object> creator =
+          new OMultivalueIndexKeyUpdaterImpl(
+              value, valueContainerAlgorithm, binaryFormatVersion, name);
+
+      update(atomicOperation, key, creator);
+    } else {
+      try {
+        getPartition(key).put(atomicOperation, key, value);
+      } catch (IOException e) {
+        throw OException.wrapException(
+            new OIndexException("Error during updating of key " + key + " in index " + name), e);
+      }
     }
   }
 
@@ -323,20 +337,23 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
   @Override
   public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
+    if (valueContainerAlgorithm != null) {
+      Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);
 
-    Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);
+      if (values == null) {
+        return false;
+      }
 
-    if (values == null) {
-      return false;
+      final OModifiableBoolean removed = new OModifiableBoolean(false);
+
+      final OIndexKeyUpdater<Object> creator = new OMultivalueEntityRemover(value, removed);
+
+      update(atomicOperation, key, creator);
+
+      return removed.getValue();
+    } else {
+      return remove(atomicOperation, key);
     }
-
-    final OModifiableBoolean removed = new OModifiableBoolean(false);
-
-    final OIndexKeyUpdater<Object> creator = new OMultivalueEntityRemover(value, removed);
-
-    update(atomicOperation, key, creator);
-
-    return removed.getValue();
   }
 
   @Override

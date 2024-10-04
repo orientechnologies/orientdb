@@ -147,13 +147,7 @@ public class OLuceneSpatialIndexEngineDelegator
       Object key,
       ORID value,
       IndexEngineValidator<Object, ORID> validator) {
-    try {
-      return delegate.validatedPut(atomicOperation, key, value, validator);
-    } catch (IOException e) {
-      throw OException.wrapException(
-          new OIndexException("Error during insertion of key " + key + " in index " + indexName),
-          e);
-    }
+    return delegate.validatedPut(atomicOperation, key, value, validator);
   }
 
   @Override

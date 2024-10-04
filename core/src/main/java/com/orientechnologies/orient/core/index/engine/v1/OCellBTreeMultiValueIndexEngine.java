@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -403,6 +404,15 @@ public final class OCellBTreeMultiValueIndexEngine
     assert svTree != null;
     //noinspection resource
     return svTree.keyStream().map(OCellBTreeMultiValueIndexEngine::extractKey);
+  }
+
+  @Override
+  public boolean validatedPut(
+      OAtomicOperation atomicOperation,
+      Object key,
+      ORID value,
+      IndexEngineValidator<Object, ORID> validator) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

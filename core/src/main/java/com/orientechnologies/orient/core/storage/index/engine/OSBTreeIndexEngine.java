@@ -93,7 +93,9 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void init(OIndexMetadata metadata) {
-    this.valueContainerAlgorithm = metadata.getValueContainerAlgorithm();
+    if (metadata.isMultivalue()) {
+      this.valueContainerAlgorithm = metadata.getValueContainerAlgorithm();
+    }
   }
 
   @Override
@@ -251,12 +253,21 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
-    int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
-    final OIndexKeyUpdater<Object> creator =
-        new OMultivalueIndexKeyUpdaterImpl(
-            value, valueContainerAlgorithm, binaryFormatVersion, name);
+    if (valueContainerAlgorithm != null) {
+      int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
+      final OIndexKeyUpdater<Object> creator =
+          new OMultivalueIndexKeyUpdaterImpl(
+              value, valueContainerAlgorithm, binaryFormatVersion, name);
 
-    update(atomicOperation, key, creator);
+      update(atomicOperation, key, creator);
+    } else {
+      try {
+        sbTree.put(atomicOperation, key, value);
+      } catch (IOException e) {
+        throw OException.wrapException(
+            new OIndexException("Error during insertion of key " + key + " in index " + name), e);
+      }
+    }
   }
 
   @Override
@@ -271,20 +282,23 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
+    if (valueContainerAlgorithm != null) {
+      Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);
 
-    Set<OIdentifiable> values = (Set<OIdentifiable>) get(key);
+      if (values == null) {
+        return false;
+      }
 
-    if (values == null) {
-      return false;
+      final OModifiableBoolean removed = new OModifiableBoolean(false);
+
+      final OIndexKeyUpdater<Object> creator = new OMultivalueEntityRemover(value, removed);
+
+      update(atomicOperation, key, creator);
+
+      return removed.getValue();
+    } else {
+      return remove(atomicOperation, key);
     }
-
-    final OModifiableBoolean removed = new OModifiableBoolean(false);
-
-    final OIndexKeyUpdater<Object> creator = new OMultivalueEntityRemover(value, removed);
-
-    update(atomicOperation, key, creator);
-
-    return removed.getValue();
   }
 
   @Override

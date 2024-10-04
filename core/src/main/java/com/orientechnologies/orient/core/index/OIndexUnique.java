@@ -73,4 +73,9 @@ public class OIndexUnique extends OIndexOneValue {
       OTransactionIndexChangesPerKey changes) {
     return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.Unique);
   }
+
+  @Override
+  public IndexEngineValidator<Object, ORID> getUniqueValidator() {
+    return uniqueValidator;
+  }
 }

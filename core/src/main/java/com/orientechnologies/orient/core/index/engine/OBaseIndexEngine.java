@@ -89,4 +89,10 @@ public interface OBaseIndexEngine {
   boolean remove(OAtomicOperation atomicOperation, Object key);
 
   boolean remove(OAtomicOperation atomicOperation, Object key, ORID value);
+
+  boolean validatedPut(
+      OAtomicOperation atomicOperation,
+      Object key,
+      ORID value,
+      IndexEngineValidator<Object, ORID> validator);
 }

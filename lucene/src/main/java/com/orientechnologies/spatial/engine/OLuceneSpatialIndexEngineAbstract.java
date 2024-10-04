@@ -89,11 +89,13 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
 
   @Override
   public boolean remove(OAtomicOperation atomicOperation, Object key) {
+    key = decodeKey(key);
     return remove(key);
   }
 
   @Override
   public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
+    key = decodeKey(key);
     return remove(key, value);
   }
 
@@ -163,6 +165,14 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
             OLuceneIndexType.hashKey(shapeDoc),
             Field.Store.YES));
     return doc;
+  }
+
+  protected Object encodeKey(Object key) {
+    return key;
+  }
+
+  protected Object decodeKey(Object key) {
+    return key;
   }
 
   @Override

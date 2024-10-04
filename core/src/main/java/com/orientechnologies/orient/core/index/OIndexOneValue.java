@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdExceptio
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.comparator.AscComparator;
 import com.orientechnologies.orient.core.index.comparator.DescComparator;
+import com.orientechnologies.orient.core.index.engine.IndexEngineValidator;
 import com.orientechnologies.orient.core.index.iterator.PureTxBetweenIndexBackwardSpliterator;
 import com.orientechnologies.orient.core.index.iterator.PureTxBetweenIndexForwardSpliterator;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -552,4 +553,6 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     }
     return this;
   }
+
+  public abstract IndexEngineValidator<Object, ORID> getUniqueValidator();
 }
