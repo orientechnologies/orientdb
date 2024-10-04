@@ -20,9 +20,9 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
-import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeSingleValueIndexEngine;
+import com.orientechnologies.orient.core.index.engine.v1.OV1IndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -134,7 +134,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
       case SBTREE_ALGORITHM:
         return OSBTreeIndexEngine.VERSION;
       case CELL_BTREE_ALGORITHM:
-        return OCellBTreeIndexEngine.VERSION;
+        return OV1IndexEngine.VERSION;
     }
 
     throw new IllegalStateException("Invalid algorithm name " + algorithm);

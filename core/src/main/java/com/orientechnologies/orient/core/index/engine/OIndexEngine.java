@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
@@ -33,30 +32,7 @@ public interface OIndexEngine extends OBaseIndexEngine {
 
   Object get(Object key);
 
-  void put(OAtomicOperation atomicOperation, Object key, ORID value);
-
   void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater);
-
-  boolean remove(OAtomicOperation atomicOperation, Object key);
-
-  boolean remove(OAtomicOperation atomicOperation, Object key, ORID value);
-
-  /**
-   * Puts the given value under the given key into this index engine. Validates the operation using
-   * the provided validator.
-   *
-   * @param atomicOperation
-   * @param key the key to put the value under.
-   * @param value the value to put.
-   * @param validator the operation validator.
-   * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   * @see IndexEngineValidator#validate(Object, Object, Object)
-   */
-  boolean validatedPut(
-      OAtomicOperation atomicOperation,
-      Object key,
-      ORID value,
-      IndexEngineValidator<Object, ORID> validator);
 
   @Override
   default int getEngineAPIVersion() {

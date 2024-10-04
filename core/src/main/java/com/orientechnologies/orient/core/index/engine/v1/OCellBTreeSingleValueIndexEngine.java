@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositi
 import java.io.IOException;
 import java.util.stream.Stream;
 
-public final class OCellBTreeSingleValueIndexEngine implements OCellBTreeIndexEngine {
+public final class OCellBTreeSingleValueIndexEngine implements OV1IndexEngine {
   private static final String DATA_FILE_EXTENSION = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 

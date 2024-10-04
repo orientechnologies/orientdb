@@ -29,7 +29,7 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public final class OCellBTreeMultiValueIndexEngine implements OCellBTreeIndexEngine {
+public final class OCellBTreeMultiValueIndexEngine implements OV1IndexEngine {
 
   public static final String DATA_FILE_EXTENSION = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";

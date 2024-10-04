@@ -90,6 +90,17 @@ public interface OBaseIndexEngine {
 
   boolean remove(OAtomicOperation atomicOperation, Object key, ORID value);
 
+  /**
+   * Puts the given value under the given key into this index engine. Validates the operation using
+   * the provided validator.
+   *
+   * @param atomicOperation
+   * @param key the key to put the value under.
+   * @param value the value to put.
+   * @param validator the operation validator.
+   * @return {@code true} if the validator allowed the put, {@code false} otherwise.
+   * @see IndexEngineValidator#validate(Object, Object, Object)
+   */
   boolean validatedPut(
       OAtomicOperation atomicOperation,
       Object key,
