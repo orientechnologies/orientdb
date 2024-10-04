@@ -11,11 +11,11 @@ import java.util.List;
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
-public class OFuncitonAggregationContext implements AggregationContext {
+public class OFunctionAggregationContext implements AggregationContext {
   private OSQLFunction aggregateFunction;
   private List<OExpression> params;
 
-  public OFuncitonAggregationContext(OSQLFunction function, List<OExpression> params) {
+  public OFunctionAggregationContext(OSQLFunction function, List<OExpression> params) {
     this.aggregateFunction = function;
     this.params = params;
     if (this.params == null) {

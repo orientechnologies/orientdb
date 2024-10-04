@@ -51,7 +51,7 @@ public class OClusterSelectionFactory
         if (method != null) {
           String key = (String) method.invoke(clz.newInstance());
           register(key, clz);
-        } else logger.error("getName() funciton missing", null);
+        } else logger.error("getName() function missing", null);
       } catch (Exception ex) {
         logger.error("failed to register class - %s", ex, clz.getName());
       }

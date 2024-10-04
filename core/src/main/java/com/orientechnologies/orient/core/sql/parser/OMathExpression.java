@@ -945,12 +945,12 @@ public class OMathExpression extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed funciton AND that function can also be executed
+   * tests if current expression is an indexed function AND that function can also be executed
    * without using the index
    *
    * @param target the query target
    * @param context the execution context
-   * @return true if current expression is an indexed funciton AND that function can also be
+   * @return true if current expression is an indexed function AND that function can also be
    *     executed without using the index, false otherwise
    */
   public boolean canExecuteIndexedFunctionWithoutIndex(

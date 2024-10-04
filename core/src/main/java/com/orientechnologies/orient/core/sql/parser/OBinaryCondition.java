@@ -164,7 +164,7 @@ public class OBinaryCondition extends OBooleanExpression {
   }
 
   /**
-   * tests if current expression involves an indexed funciton AND that function can also be executed
+   * tests if current expression involves an indexed function AND that function can also be executed
    * without using the index
    *
    * @param target the query target

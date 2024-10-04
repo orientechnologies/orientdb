@@ -89,7 +89,7 @@ public interface OIndexableSQLFunction extends OSQLFunction {
    * @param ctx the command context for this query
    * @param args the function arguments, eg. in <code>select from Foo where myFunction(name) &gt; 4
    *     </code> the arguments are [name]
-   * @return true if the funciton can be calculated without the index. False otherwise
+   * @return true if the function can be calculated without the index. False otherwise
    */
   public boolean canExecuteInline(
       OFromClause target,
@@ -110,7 +110,7 @@ public interface OIndexableSQLFunction extends OSQLFunction {
    * @param ctx the command context for this query
    * @param args the function arguments, eg. in <code>select from Foo where myFunction(name) &gt; 4
    *     </code> the arguments are [name]
-   * @return True if the funciton can be used to fetch from an index. False otherwise
+   * @return True if the function can be used to fetch from an index. False otherwise
    */
   public boolean allowsIndexedExecution(
       OFromClause target,

@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
-import com.orientechnologies.orient.core.sql.executor.OFuncitonAggregationContext;
+import com.orientechnologies.orient.core.sql.executor.OFunctionAggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
@@ -161,7 +161,7 @@ public class OFunctionCall extends SimpleNode {
         throw new OCommandExecutionException("Invalid value for $current: " + record);
       }
     } else {
-      throw new OCommandExecutionException("Funciton not found: " + name);
+      throw new OCommandExecutionException("Function not found: " + name);
     }
   }
 
@@ -215,7 +215,7 @@ public class OFunctionCall extends SimpleNode {
    * @param target query target
    * @param ctx execution context
    * @param operator operator at the right of the function
-   * @param rightValue value to compare to funciton result
+   * @param rightValue value to compare to function result
    * @return the approximate number of items returned by the condition execution, -1 if the
    *     extimation cannot be executed
    */
@@ -238,7 +238,7 @@ public class OFunctionCall extends SimpleNode {
    * @param context the execution context
    * @param operator
    * @param right
-   * @return true if current function is an indexed funciton AND that function can also be executed
+   * @return true if current function is an indexed function AND that function can also be executed
    *     without using the index, false otherwise
    */
   public boolean canExecuteIndexedFunctionWithoutIndex(
@@ -418,7 +418,7 @@ public class OFunctionCall extends SimpleNode {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     function.config(this.params.toArray());
 
-    OFuncitonAggregationContext result = new OFuncitonAggregationContext(function, this.params);
+    OFunctionAggregationContext result = new OFunctionAggregationContext(function, this.params);
     return result;
   }
 

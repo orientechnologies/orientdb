@@ -4299,12 +4299,12 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testTimeout() {
     String className = "testTimeout";
-    final String funcitonName = getClass().getSimpleName() + "_sleep";
+    final String functionName = getClass().getSimpleName() + "_sleep";
     db.getMetadata().getSchema().createClass(className);
 
     OSQLEngine.getInstance()
         .registerFunction(
-            funcitonName,
+            functionName,
             new OSQLFunction() {
 
               @Override
@@ -4336,7 +4336,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
 
               @Override
               public String getName() {
-                return funcitonName;
+                return functionName;
               }
 
               @Override
@@ -4379,7 +4379,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       db.save(doc);
     }
     try (OResultSet result =
-        db.query("select " + funcitonName + "(), * from " + className + " timeout 1")) {
+        db.query("select " + functionName + "(), * from " + className + " timeout 1")) {
       while (result.hasNext()) {
         result.next();
       }
@@ -4389,7 +4389,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     }
 
     try (OResultSet result =
-        db.query("select " + funcitonName + "(), * from " + className + " timeout 100")) {
+        db.query("select " + functionName + "(), * from " + className + " timeout 100")) {
       while (result.hasNext()) {
         result.next();
       }
