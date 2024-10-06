@@ -144,31 +144,9 @@ public final class AsyncReadCache implements OReadCache {
         cacheEntry =
             data.compute(
                 pageKey,
-                (page, entry) -> {
-                  if (entry == null) {
-                    try {
-                      final OCachePointer pointer =
-                          writeCache.load(
-                              fileId, pageIndex, new OModifiableBoolean(), verifyChecksums);
-                      if (pointer == null) {
-                        return null;
-                      }
-
-                      updatedEntry[0] =
-                          new OCacheEntryImpl(
-                              page.getFileId(), page.getPageIndex(), pointer, false, this);
-                      return null;
-                    } catch (final IOException e) {
-                      throw OException.wrapException(
-                          new OStorageException(
-                              "Error during loading of page " + pageIndex + " for file " + fileId),
-                          e);
-                    }
-
-                  } else {
-                    return entry;
-                  }
-                });
+                (page, entry) ->
+                    internalNewCacheEntrySkipCache(
+                        writeCache, verifyChecksums, fileId, updatedEntry, page, entry));
 
         if (cacheEntry == null) {
           cacheEntry = updatedEntry[0];
@@ -181,6 +159,36 @@ public final class AsyncReadCache implements OReadCache {
       if (cacheEntry.acquireEntry()) {
         return cacheEntry;
       }
+    }
+  }
+
+  private OCacheEntry internalNewCacheEntrySkipCache(
+      final OWriteCache writeCache,
+      final boolean verifyChecksums,
+      final long fileId,
+      final OCacheEntry[] updatedEntry,
+      PageKey page,
+      OCacheEntry entry) {
+    if (entry == null) {
+      try {
+        final OCachePointer pointer =
+            writeCache.load(fileId, page.getPageIndex(), new OModifiableBoolean(), verifyChecksums);
+        if (pointer == null) {
+          return null;
+        }
+
+        updatedEntry[0] =
+            new OCacheEntryImpl(page.getFileId(), page.getPageIndex(), pointer, false, this);
+        return null;
+      } catch (final IOException e) {
+        throw OException.wrapException(
+            new OStorageException(
+                "Error during loading of page " + page.getPageIndex() + " for file " + fileId),
+            e);
+      }
+
+    } else {
+      return entry;
     }
   }
 
@@ -219,30 +227,8 @@ public final class AsyncReadCache implements OReadCache {
         cacheEntry =
             data.compute(
                 pageKey,
-                (page, entry) -> {
-                  if (entry == null) {
-                    try {
-                      final OCachePointer pointer =
-                          writeCache.load(
-                              fileId, pageIndex, new OModifiableBoolean(), verifyChecksums);
-                      if (pointer == null) {
-                        return null;
-                      }
-
-                      cacheSize.incrementAndGet();
-                      return new OCacheEntryImpl(
-                          page.getFileId(), page.getPageIndex(), pointer, true, this);
-                    } catch (final IOException e) {
-                      throw OException.wrapException(
-                          new OStorageException(
-                              "Error during loading of page " + pageIndex + " for file " + fileId),
-                          e);
-                    }
-                  } else {
-                    read[0] = true;
-                    return entry;
-                  }
-                });
+                (page, entry) ->
+                    internalNewCacheEntry(writeCache, verifyChecksums, fileId, read, page, entry));
 
         if (cacheEntry == null) {
           return null;
@@ -269,6 +255,35 @@ public final class AsyncReadCache implements OReadCache {
           return cacheEntry;
         }
       }
+    }
+  }
+
+  private OCacheEntry internalNewCacheEntry(
+      final OWriteCache writeCache,
+      final boolean verifyChecksums,
+      final long fileId,
+      final boolean[] read,
+      PageKey page,
+      OCacheEntry entry) {
+    if (entry == null) {
+      try {
+        final OCachePointer pointer =
+            writeCache.load(fileId, page.getPageIndex(), new OModifiableBoolean(), verifyChecksums);
+        if (pointer == null) {
+          return null;
+        }
+
+        cacheSize.incrementAndGet();
+        return new OCacheEntryImpl(page.getFileId(), page.getPageIndex(), pointer, true, this);
+      } catch (final IOException e) {
+        throw OException.wrapException(
+            new OStorageException(
+                "Error during loading of page " + page.getPageIndex() + " for file " + fileId),
+            e);
+      }
+    } else {
+      read[0] = true;
+      return entry;
     }
   }
 
