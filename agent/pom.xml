@@ -45,18 +45,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>buildnumber-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>create</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
@@ -65,43 +53,6 @@
                         <include>**/*IT.java</include>
                     </includes>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>failsafe-integration-tests</id>
-                        <phase>integration-test</phase>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>com.diffplug.spotless</groupId>
-                <artifactId>spotless-maven-plugin</artifactId>
-                <version>2.43.0</version>
-                <configuration>
-                    <java>
-                        <googleJavaFormat>
-                            <version>1.19.2</version>
-                            <style>GOOGLE</style>
-                            <reflowLongStrings>true</reflowLongStrings>
-                            <formatJavadoc>false</formatJavadoc>
-                        </googleJavaFormat>
-
-                        <removeUnusedImports/>
-                        <importOrder/>
-                    </java>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
