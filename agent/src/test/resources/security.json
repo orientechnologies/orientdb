@@ -1,0 +1,44 @@
+{
+  "server": {
+    "createDefaultUsers": true
+  },
+  "debug": false,
+  "auditing": {
+    "distributed": {
+      "onNodeJoinedEnabled": false,
+      "onNodeLeftMessage": "Node ${node} has left...",
+      "onNodeLeftEnabled": false,
+      "onNodeJoinedMessage": "Node ${node} has joined..."
+    },
+    "class": "com.orientechnologies.security.auditing.ODefaultAuditing",
+    "enabled": true
+  },
+  "enabled": true,
+  "authentication": {
+    "allowDefault": true,
+    "authenticators": [
+      {
+        "name": "Password",
+        "class": "com.orientechnologies.orient.server.security.authenticator.ODefaultPasswordAuthenticator",
+        "enabled": true,
+        "users": [
+          {
+            "resources": "server.listDatabases,server.dblist",
+            "username": "guest"
+          }
+        ]
+      },
+      {
+        "name": "ServerConfig",
+        "class": "com.orientechnologies.orient.server.security.authenticator.OServerConfigAuthenticator",
+        "enabled": true
+      },
+      {
+        "name": "SystemAuthenticator",
+        "class": "com.orientechnologies.orient.server.security.authenticator.OSystemUserAuthenticator",
+        "enabled": true
+      }
+    ],
+    "enabled": true
+  }
+}

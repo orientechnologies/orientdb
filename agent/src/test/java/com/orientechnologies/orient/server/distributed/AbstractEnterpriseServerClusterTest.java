@@ -1,0 +1,502 @@
+/*
+ * Copyright 2010-2013 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.orientechnologies.orient.server.distributed;
+
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.spi.properties.GroupProperty;
+import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.services.backup.OBackupService;
+import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import org.junit.Assert;
+
+/**
+ * Test class that creates and executes distributed operations against a cluster of servers created
+ * in the same JVM.
+ */
+public abstract class AbstractEnterpriseServerClusterTest {
+  private static final OLogger logger =
+      OLogManager.instance().logger(AbstractEnterpriseServerClusterTest.class);
+  protected int delayServerStartup = 0;
+  protected int delayServerAlign = 0;
+  protected boolean startupNodesInSequence = true;
+  protected boolean terminateAtShutdown = false;
+
+  protected String rootDirectory = "target/servers/";
+  protected AtomicLong totalVertices = new AtomicLong(0);
+
+  protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
+
+  private static void syntaxError() {
+    System.err.println(
+        "Syntax error. Usage: <class> <operation> [<servers>]\n"
+            + "Where <operation> can be: prepare|execute|prepare+execute");
+    System.exit(1);
+  }
+
+  public void init(final int servers) {
+    ODatabaseDocumentTx.closeAll();
+
+    GroupProperty.WAIT_SECONDS_BEFORE_JOIN.setSystemProperty("1");
+
+    Orient.setRegisterDatabaseByPath(true);
+    for (int i = 0; i < servers; ++i) serverInstance.add(new ServerRun(rootDirectory, "" + i));
+  }
+
+  public void execute(Integer servers, Callable<Void> test) throws Exception {
+    execute(servers, test, false);
+  }
+
+  public void execute(Integer servers, Callable<Void> test, boolean copyDatabase) throws Exception {
+
+    init(servers);
+    prepare(false);
+    System.out.println("Starting test against " + serverInstance.size() + " server nodes...");
+
+    try {
+
+      if (startupNodesInSequence) {
+        for (final ServerRun server : serverInstance) {
+          banner("STARTING SERVER -> " + server.getServerId() + "...");
+
+          server.startServer(getDistributedServerConfiguration(server));
+
+          if (delayServerStartup > 0)
+            try {
+              Thread.sleep(delayServerStartup * serverInstance.size());
+            } catch (InterruptedException e) {
+            }
+
+          onServerStarted(server);
+        }
+      } else {
+        for (final ServerRun server : serverInstance) {
+          final Thread thread =
+              new Thread(
+                  new Runnable() {
+                    @Override
+                    public void run() {
+                      banner("STARTING SERVER -> " + server.getServerId() + "...");
+                      try {
+                        onServerStarting(server);
+                        server.startServer(getDistributedServerConfiguration(server));
+                        onServerStarted(server);
+                      } catch (Exception e) {
+                        logger.error("", e);
+                      }
+                    }
+                  });
+          thread.start();
+        }
+      }
+
+      if (delayServerAlign > 0)
+        try {
+          System.out.println(
+              "Server started, waiting for synchronization ("
+                  + (delayServerAlign * serverInstance.size() / 1000)
+                  + "secs)...");
+          Thread.sleep(delayServerAlign * serverInstance.size());
+        } catch (InterruptedException e) {
+        }
+
+      for (ServerRun server : serverInstance) {
+        final ODistributedServerManager mgr = server.getServerInstance().getDistributedManager();
+        Assert.assertNotNull(mgr);
+        final ODocument cfg = mgr.getClusterConfiguration();
+        Assert.assertNotNull(cfg);
+      }
+
+      banner("Executing test...");
+
+      try {
+        test.call();
+      } finally {
+        onAfterExecution();
+      }
+    } catch (Exception e) {
+      logger.error("ERROR: ", e);
+      OLogManager.instance().flush();
+      throw e;
+    } finally {
+      banner("Test finished");
+
+      OLogManager.instance().flush();
+      banner("Shutting down nodes...");
+      for (ServerRun server : serverInstance) {
+        log("Shutting down node " + server.getServerId() + "...");
+
+        try {
+          deleteBackupConfig(getAgent(server.getNodeName()));
+        } catch (Exception e) {
+          log("Error removing backups: " + e.getMessage());
+        }
+        if (terminateAtShutdown) server.terminateServer();
+        else server.shutdownServer();
+      }
+
+      onTestEnded();
+
+      banner("Terminate HZ...");
+      for (HazelcastInstance in : Hazelcast.getAllHazelcastInstances()) {
+        if (terminateAtShutdown)
+          // TERMINATE (HARD SHUTDOWN)
+          in.getLifecycleService().terminate();
+        else
+          // SOFT SHUTDOWN
+          in.shutdown();
+      }
+
+      banner("Clean server directories...");
+      Orient.setRegisterDatabaseByPath(false);
+      deleteServers();
+    }
+  }
+
+  protected void executeOnMultipleThreads(
+      final int numOfThreads, final OCallable<Void, Integer> callback) {
+    final Thread[] threads = new Thread[numOfThreads];
+
+    for (int s = 0; s < numOfThreads; ++s) {
+      final int serverId = s;
+      threads[s] =
+          new Thread(
+              new Runnable() {
+                @Override
+                public void run() {
+                  callback.call(serverId);
+                }
+              });
+      threads[s].start();
+    }
+
+    for (int s = 0; s < numOfThreads; ++s) {
+      try {
+        threads[s].join();
+      } catch (InterruptedException e) {
+        logger.error("Thread interrupted", e);
+      }
+    }
+  }
+
+  protected void banner(final String iMessage) {
+    logger.error(
+        "\n"
+            + "**********************************************************************************************************",
+        null);
+    logger.error(iMessage, null);
+    logger.error(
+        "**********************************************************************************************************\n",
+        null);
+  }
+
+  protected void log(final String iMessage) {
+    logger.info("%s", iMessage);
+  }
+
+  protected void onServerStarting(ServerRun server) {}
+
+  protected void onServerStarted(ServerRun server) {}
+
+  protected void onTestEnded() {}
+
+  protected void onAfterExecution() throws Exception {}
+
+  protected abstract String getDatabaseName();
+
+  /**
+   * Event called right after the database has been created and right before to be replicated to the
+   * X servers
+   *
+   * @param db Current database
+   */
+  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {}
+
+  protected void prepare(final boolean iCopyDatabaseToNodes) throws IOException {
+    prepare(iCopyDatabaseToNodes, true);
+  }
+
+  /**
+   * Create the database on first node only
+   *
+   * @throws IOException
+   */
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase)
+      throws IOException {
+    prepare(iCopyDatabaseToNodes, iCreateDatabase, null);
+  }
+
+  /**
+   * Create the database on first node only
+   *
+   * @throws IOException
+   */
+  protected void prepare(
+      final boolean iCopyDatabaseToNodes,
+      final boolean iCreateDatabase,
+      final OCallable<Object, OrientGraphFactory> iCfgCallback)
+      throws IOException {
+    // CREATE THE DATABASE
+    final Iterator<ServerRun> it = serverInstance.iterator();
+    final ServerRun master = it.next();
+
+    if (iCreateDatabase) {
+      final OrientBaseGraph graph = master.createDatabase(getDatabaseName(), iCfgCallback);
+      try {
+        onAfterDatabaseCreation(graph);
+      } finally {
+        graph.shutdown();
+        ODatabaseDocumentTx.closeAll();
+      }
+    }
+
+    // COPY DATABASE TO OTHER SERVERS
+    while (it.hasNext()) {
+      final ServerRun replicaSrv = it.next();
+
+      replicaSrv.deleteNode();
+
+      if (iCopyDatabaseToNodes)
+        master.copyDatabase(getDatabaseName(), replicaSrv.getDatabasePath(getDatabaseName()));
+    }
+  }
+
+  protected void deleteServers() {
+    for (ServerRun s : serverInstance) s.deleteNode();
+  }
+
+  protected String getDistributedServerConfiguration(final ServerRun server) {
+    return "orientdb-dserver-config-" + server.getServerId() + ".xml";
+  }
+
+  protected void executeWhen(final Callable<Boolean> condition, final Callable action)
+      throws Exception {
+    while (true) {
+      if (condition.call()) {
+        action.call();
+        break;
+      }
+
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+  }
+
+  protected void executeWhen(
+      int serverId,
+      OCallable<Boolean, ODatabaseDocument> condition,
+      OCallable<Boolean, ODatabaseDocument> action)
+      throws Exception {
+    final ODatabaseDocument db =
+        new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId)))
+            .open("admin", "admin");
+    try {
+      executeWhen(db, condition, action);
+    } finally {
+      if (!db.isClosed()) {
+        ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) db);
+        db.close();
+        ODatabaseRecordThreadLocal.instance().set(null);
+      }
+    }
+  }
+
+  protected void executeWhen(
+      final ODatabaseDocument db,
+      OCallable<Boolean, ODatabaseDocument> condition,
+      OCallable<Boolean, ODatabaseDocument> action) {
+    while (true) {
+      db.activateOnCurrentThread();
+      if (condition.call(db)) {
+        action.call(db);
+        break;
+      }
+
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+  }
+
+  protected void waitForDatabaseIsOffline(
+      final String serverName, final String dbName, final long timeout) {
+    final long startTime = System.currentTimeMillis();
+    while (serverInstance
+        .get(0)
+        .getServerInstance()
+        .getDistributedManager()
+        .isNodeOnline(serverName, dbName)) {
+
+      if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
+        logger.error("TIMEOUT on waitForDatabaseIsOffline condition (timeout=%d)", null, timeout);
+        break;
+      }
+
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+  }
+
+  protected void waitForDatabaseIsOnline(
+      final String serverName, final String dbName, final long timeout) {
+    final long startTime = System.currentTimeMillis();
+    while (!serverInstance
+        .get(0)
+        .getServerInstance()
+        .getDistributedManager()
+        .isNodeOnline(serverName, dbName)) {
+
+      if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
+        logger.error("TIMEOUT on waitForDatabaseIsOnLine (timeout=%d)", null, timeout);
+        break;
+      }
+
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+  }
+
+  protected void waitFor(
+      final int serverId,
+      final OCallable<Boolean, ODatabaseDocument> condition,
+      final long timeout) {
+    try {
+      ODatabaseDocument db =
+          new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId)))
+              .open("admin", "admin");
+      try {
+
+        final long startTime = System.currentTimeMillis();
+
+        while (true) {
+          if (condition.call(db)) {
+            break;
+          }
+
+          if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
+            logger.error("TIMEOUT on wait-for condition (timeout=%d)", null, timeout);
+            break;
+          }
+
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException e) {
+            // IGNORE IT
+          }
+        }
+
+      } finally {
+        if (!db.isClosed()) {
+          ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) db);
+          db.close();
+          ODatabaseRecordThreadLocal.instance().set(null);
+        }
+      }
+    } catch (Exception e) {
+      // INGORE IT
+    }
+  }
+
+  protected void waitFor(
+      final long timeout, final OCallable<Boolean, Void> condition, final String message) {
+    final long startTime = System.currentTimeMillis();
+
+    while (true) {
+      if (condition.call(null)) {
+        // SUCCEED
+        break;
+      }
+
+      if (timeout > 0 && System.currentTimeMillis() - startTime > timeout)
+        throw new OTimeoutException("Timeout waiting for test condition: " + message);
+
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+  }
+
+  protected void deleteBackupConfig(OEnterpriseAgent agent) {
+    OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();
+    ODocument configuration = backupService.getConfiguration();
+
+    configuration.<List<ODocument>>field("backups").stream()
+        .map(cfg -> cfg.<String>field("uuid"))
+        .collect(Collectors.toList())
+        .forEach((b) -> backupService.removeAndStopBackup(b));
+  }
+
+  protected String getDatabaseURL(ServerRun server) {
+    return null;
+  }
+
+  protected OEnterpriseAgent getAgent(String server) {
+
+    return this.serverInstance.stream()
+        .filter(serverRun -> serverRun.getNodeName().equals(server))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format("Cannot find server with name %s", server)))
+        .getServerInstance()
+        .getPluginByClass(OEnterpriseAgent.class);
+  }
+
+  protected OBackupService getBackupService(String server) {
+
+    return this.serverInstance.stream()
+        .filter(serverRun -> serverRun.getNodeName().equals(server))
+        .findFirst()
+        .map(s -> s.getServerInstance().getPluginByClass(OEnterpriseAgent.class))
+        .map(a -> a.getServiceByClass(OBackupService.class).get())
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format("Cannot find server with name %s", server)));
+  }
+}

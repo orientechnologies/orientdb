@@ -1,0 +1,21 @@
+{
+  "classes": {
+    "*": {
+      "polymorphic": true,
+      "onCreateEnabled": true,
+      "onCreateMessage": "Created a record",
+      "onReadEnabled": true,
+      "onReadMessage": "Read a record",
+      "onUpdateEnabled": true,
+      "onUpdateMessage": "Updated a record",
+      "onDeleteEnabled": true,
+      "onDeleteMessage": "Deleted a record"
+    }
+  },
+  "schema": {
+    "onCreateClassEnabled": true,
+    "onCreateClassMessage": "I created a class: ${class}",
+    "onDropClassEnabled": true,
+    "onDropClassMessage": "I dropped a class: ${class}"  
+  }
+}

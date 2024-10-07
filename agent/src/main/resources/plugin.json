@@ -1,0 +1,12 @@
+{
+	"name" : "enterprise-agent",
+	"version" : "2.1",
+	"javaClass": "com.orientechnologies.agent.OEnterpriseAgent",
+	"parameters" : {
+		"license" : "@LICENSE@"
+	},
+	"description" : "This is the Enterprise Agent, part of the commercial OrientDB Enterprise suite",
+	"web" : "http://www.orientechnologies.com/enterprise.htm",
+	"copyrights" : "Orient Technologies LTD",
+	"license" : "Commercial"
+}

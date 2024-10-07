@@ -1,0 +1,11 @@
+{
+  "modes": {
+    "INCREMENTAL_BACKUP": {
+      "when": "0 0/1 * * * ?"
+    }
+  },
+  "retentionDays": -1,
+  "dbName": "demodb",
+  "directory": "/tmp/backups",
+  "enabled": false
+}
