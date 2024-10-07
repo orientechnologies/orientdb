@@ -1,9 +1,0 @@
-target/
-
-.project
-.classpath
-*.prefs
-*.iml
-.idea
-agent/generated/*
-orientechnologies-website/databases

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.orientechnologies</groupId>
-        <artifactId>orientdb-enterprise-parent</artifactId>
+        <artifactId>orientdb-parent</artifactId>
         <version>4.0.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
