@@ -201,6 +201,14 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   public void put(OAtomicOperation atomicOperation, Object key, Object value) {}
 
   @Override
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) {}
+
+  @Override
+  public boolean remove(OAtomicOperation atomicOperation, Object key, ORID value) {
+    return false;
+  }
+
+  @Override
   public void update(
       OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
     put(atomicOperation, key, updater.update(null, bonsayFileId).getValue());
