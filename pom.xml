@@ -713,7 +713,7 @@
         <profile>
             <id>java19-less</id>
             <activation>
-                <jdk>(,19]</jdk>
+                <jdk>(,17,18,19,20]</jdk>
             </activation>
             <modules>
                 <module>gremlin</module>
