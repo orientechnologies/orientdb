@@ -28,8 +28,8 @@ import org.junit.Test;
  */
 
 /** @author Luca Garulli */
-public class HaSetTest extends AbstractServerClusterTest {
-  private static final OLogger logger = OLogManager.instance().logger(HaSetTest.class);
+public class HaSetIT extends AbstractServerClusterTest {
+  private static final OLogger logger = OLogManager.instance().logger(HaSetIT.class);
   private static final int SERVERS = 2;
 
   public String getDatabaseName() {

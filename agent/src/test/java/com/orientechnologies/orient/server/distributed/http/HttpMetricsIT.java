@@ -7,7 +7,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class HttpMetricsTest extends EEBaseDistributedHttpTest {
+public class HttpMetricsIT extends EEBaseDistributedHttpTest {
 
   @Test
   public void getMetrics() throws Exception {

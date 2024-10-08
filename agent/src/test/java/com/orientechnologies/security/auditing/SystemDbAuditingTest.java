@@ -21,17 +21,11 @@ import org.junit.Test;
 
 /**
  * @author sdipro
- * @since 02/06/16 <<<<<<< HEAD
  *     <p>Launches a new OServer (using the security.json resource). Creates a test database.
  *     Creates a new class called 'TestClass'. Queries the system database auditing log for
  *     'TestClass'. Asserts that the "created class" event is there. Drops the 'TestClass' class.
  *     Queries the system database auditing log for 'TestClass'. Asserts that the "dropped class"
- *     event is there. =======
- *     <p>Launches a new OServer (using the security.json resource). Creates a test database.
- *     Creates a new class called 'TestClass'. Queries the system database auditing log for
- *     'TestClass'. Asserts that the "created class" event is there. Drops the 'TestClass' class.
- *     Queries the system database auditing log for 'TestClass'. Asserts that the "dropped class"
- *     event is there. >>>>>>> 064809e... Add a sleep on auditing test (after class create) to give
+ *     event is there. Add a sleep on auditing test (after class create) to give
  *     auditing mechanisms time to execute
  */
 public class SystemDbAuditingTest extends AbstractSecurityTest {

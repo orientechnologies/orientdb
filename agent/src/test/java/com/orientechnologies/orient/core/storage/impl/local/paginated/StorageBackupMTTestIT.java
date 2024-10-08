@@ -34,8 +34,8 @@ import org.junit.Test;
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 9/17/2015
  */
-public class StorageBackupMTTest {
-  private static final OLogger logger = OLogManager.instance().logger(StorageBackupMTTest.class);
+public class StorageBackupMTTestIT {
+  private static final OLogger logger = OLogManager.instance().logger(StorageBackupMTTestIT.class);
   private final CountDownLatch started = new CountDownLatch(1);
   private final Stack<CountDownLatch> backupIterationRecordCount = new Stack<>();
   private final CountDownLatch finished = new CountDownLatch(1);
@@ -52,11 +52,11 @@ public class StorageBackupMTTest {
     }
     String buildDirectory = System.getProperty("buildDirectory", "./target") + "/backupTest";
     OFileUtils.createDirectoryTree(buildDirectory);
-    dbName = StorageBackupMTTest.class.getSimpleName();
+    dbName = StorageBackupMTTestIT.class.getSimpleName();
     final String dbDirectory = buildDirectory + File.separator + dbName;
 
     final File backupDir = new File(buildDirectory, "backupDir");
-    final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
+    final String backupDbName = StorageBackupMTTestIT.class.getSimpleName() + "BackUp";
 
     OFileUtils.deleteRecursively(new File(dbDirectory));
 
@@ -153,11 +153,11 @@ public class StorageBackupMTTest {
     String buildDirectory = System.getProperty("buildDirectory", "./target") + "/backupTest";
     OFileUtils.createDirectoryTree(buildDirectory);
 
-    final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
+    final String backupDbName = StorageBackupMTTestIT.class.getSimpleName() + "BackUp";
     final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
     final File backupDir = new File(buildDirectory, "backupDir");
 
-    dbName = StorageBackupMTTest.class.getSimpleName();
+    dbName = StorageBackupMTTestIT.class.getSimpleName();
     String dbDirectory = buildDirectory + File.separator + dbName;
 
     final OrientDBConfig config =

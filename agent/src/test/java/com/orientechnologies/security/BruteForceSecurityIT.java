@@ -12,7 +12,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class BruteForceSecurityTest {
+public class BruteForceSecurityIT {
 
   private static final int BRUTE_FORCE_ATTEMPT = 100;
   private OServer server;
@@ -25,7 +25,7 @@ public class BruteForceSecurityTest {
         .getContext()
         .execute(
             "create database `"
-                + BruteForceSecurityTest.class.getSimpleName()
+                + BruteForceSecurityIT.class.getSimpleName()
                 + "` memory users(admin identified by 'adminpwd' role admin)");
   }
 
@@ -43,7 +43,7 @@ public class BruteForceSecurityTest {
 
                 for (int i = 0; i < BRUTE_FORCE_ATTEMPT; i++) {
                   try (ODatabaseSession session =
-                      context.open(BruteForceSecurityTest.class.getSimpleName(), "fake", "fake")) {
+                      context.open(BruteForceSecurityIT.class.getSimpleName(), "fake", "fake")) {
                     Assert.fail();
                   } catch (OSecurityAccessException e) {
 
@@ -63,7 +63,7 @@ public class BruteForceSecurityTest {
                 for (int i = 0; i < BRUTE_FORCE_ATTEMPT / 100; i++) {
                   try (ODatabaseSession session =
                       context.open(
-                          BruteForceSecurityTest.class.getSimpleName(), "admin", "fake" + i)) {
+                          BruteForceSecurityIT.class.getSimpleName(), "admin", "fake" + i)) {
                     Assert.fail();
                   } catch (OSecurityAccessException e) {
                   }
@@ -83,7 +83,7 @@ public class BruteForceSecurityTest {
                   long end;
                   try (ODatabaseSession open =
                       context.open(
-                          BruteForceSecurityTest.class.getSimpleName(), "admin", "adminpwd")) {
+                          BruteForceSecurityIT.class.getSimpleName(), "admin", "adminpwd")) {
                     open.query("select from OUser").close();
                     end = System.nanoTime() - start;
                     count.incrementAndGet();
@@ -106,7 +106,7 @@ public class BruteForceSecurityTest {
 
   @After
   public void deInit() {
-    server.getContext().drop(BruteForceSecurityTest.class.getSimpleName());
+    server.getContext().drop(BruteForceSecurityIT.class.getSimpleName());
     server.shutdown();
   }
 }

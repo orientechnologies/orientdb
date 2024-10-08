@@ -4,7 +4,7 @@ import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class HttpEEDistributedManagerTest extends EEBaseDistributedHttpTest {
+public class HttpEEDistributedManagerIT extends EEBaseDistributedHttpTest {
 
   @Test
   public void getTest() {

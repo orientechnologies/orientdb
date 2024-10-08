@@ -51,7 +51,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /** Created by Enrico Risa on 22/03/16. */
-public class OBackupServiceTest {
+public class OBackupServiceTestIT {
   private OServer server;
 
   private final String DB_NAME = "backupDBTest";

@@ -10,7 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /** Created by Enrico Risa on 04/08/16. */
-public class HttpEEDistributedTest extends AbstractServerClusterTest {
+public class HttpEEDistributedIT extends AbstractServerClusterTest {
 
   @Override
   protected String getDatabaseName() {
