@@ -9,4 +9,4 @@ import org.junit.runner.RunWith;
 
 @RunWith(StructureStandardSuite.class)
 @GraphProviderClass(provider = OrientStandardGraphProvider.class, graph = OrientStandardGraph.class)
-public class OrientStandardGraphStructureIntegrateTest {}
+public class OrientStandardGraphStructureIT {}
