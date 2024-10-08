@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.server.distributed.http.EEBaseServerHttpTest;
+import com.orientechnologies.security.EEBaseServerHttpTest;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Assert;

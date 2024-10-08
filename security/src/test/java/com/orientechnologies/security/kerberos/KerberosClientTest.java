@@ -10,12 +10,14 @@ import java.io.IOException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * @author sdipro
  * @since 10/06/16
  */
+@Ignore
 public class KerberosClientTest extends AbstractSecurityTest {
 
   private static final String kerbServer = "kerby.odbrealm.com";

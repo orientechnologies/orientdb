@@ -13,7 +13,6 @@
     <properties>
         <surefire.version>3.3.1</surefire.version>
         <metrics.version>4.2.26</metrics.version>
-        <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
@@ -34,9 +33,6 @@
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
-                    <excludes>
-                        <exclude>${exclude.kerberos.tests}</exclude>
-                    </excludes>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                         <ORIENTDB_HOME>${project.build.directory}</ORIENTDB_HOME>

@@ -44,8 +44,6 @@
         <javac.src.version>${maven.compiler.source}</javac.src.version>
         <javac.target.version>${maven.compiler.target}</javac.target.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!--Overrides parent pom's location-->
-        <license.location>https://github.com/orientechnologies/orientdb/raw/develop/ODB-ASL-LICENSE.txt</license.location>
     </properties>
 
     <dependencies>
@@ -53,20 +51,32 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-core</artifactId>
             <version>${project.parent.version}</version>
-            <scope>provided</scope>
         </dependency>
+		<dependency>
+			<groupId>com.orientechnologies</groupId>
+			<artifactId>orientdb-core</artifactId>
+			<version>${project.parent.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>
             <version>${project.parent.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.cloudbees</groupId>
             <artifactId>syslog-java-client</artifactId>
             <version>${cloudbees.syslog.version}</version>
         </dependency>
+		<dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
+    
     <profiles>
         <profile>
             <id>secondary-tests</id>
