@@ -6,12 +6,12 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
-import com.orientechnologies.security.EEBaseServerHttpTest;
+import com.orientechnologies.security.BaseServerSecurityTest;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class EnterprisePasswordTest extends EEBaseServerHttpTest {
+public class EnterprisePasswordTest extends BaseServerSecurityTest {
 
   @Ignore
   @Test

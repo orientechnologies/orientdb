@@ -8,16 +8,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-public abstract class EEBaseServerHttpTest {
+public abstract class BaseServerSecurityTest {
 
   @Rule public TestName name = new TestName();
 
   protected OServer server;
 
-  private String realm = "OrientDB-";
-  private String userName = "root";
-  private String userPassword = "root";
-  private Boolean keepAlive = null;
   protected OrientDB remote;
 
   @Before
@@ -43,43 +39,6 @@ public abstract class EEBaseServerHttpTest {
     remote.close();
 
     server.shutdown();
-  }
-
-  protected boolean isInDevelopmentMode() {
-    final String env = System.getProperty("orientdb.test.env");
-    return env == null || env.equals("dev");
-  }
-
-  protected EEBaseServerHttpTest setKeepAlive(final boolean iValue) {
-    keepAlive = iValue;
-    return this;
-  }
-
-  public String getUserName() {
-    return userName;
-  }
-
-  protected EEBaseServerHttpTest setUserName(final String userName) {
-    this.userName = userName;
-    return this;
-  }
-
-  protected String getUserPassword() {
-    return userPassword;
-  }
-
-  protected EEBaseServerHttpTest setUserPassword(final String userPassword) {
-    this.userPassword = userPassword;
-    return this;
-  }
-
-  protected String getRealm() {
-    return realm;
-  }
-
-  protected EEBaseServerHttpTest setRealm(String realm) {
-    this.realm = realm;
-    return this;
   }
 
   protected boolean shouldCreateDatabase() {

@@ -5,14 +5,14 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.security.EEBaseServerHttpTest;
+import com.orientechnologies.security.BaseServerSecurityTest;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class AuditingRetentionConfigTest extends EEBaseServerHttpTest {
+public class AuditingRetentionConfigTest extends BaseServerSecurityTest {
 
   @Test
   public void retentionGeneral() throws Exception {
