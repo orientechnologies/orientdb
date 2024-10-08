@@ -92,7 +92,6 @@
         <module>distributed</module>
         <module>graphdb</module>
         <module>lucene</module>
-        <module>lucene-cross-class</module>
         <module>agent</module>
         <module>jdbc</module>
         <module>etl</module>
