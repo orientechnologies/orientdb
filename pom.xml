@@ -97,7 +97,6 @@
         <module>jdbc</module>
         <module>etl</module>
         <module>distribution</module>
-        <module>gremlin</module>
         <module>tests</module>
     </modules>
 
@@ -711,6 +710,17 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>java19-less</id>
+            <activation>
+                <jdk>(,19]</jdk>
+            </activation>
+            <modules>
+                <module>gremlin</module>
+            </modules>
+        </profile>
+
 		<profile>
 			<id>all</id>
             <modules>
