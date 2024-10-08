@@ -37,8 +37,6 @@
 
     <properties>
         <hz.version>3.12.13</hz.version>
-        <javac.src.version>1.6</javac.src.version>
-        <javac.target.version>1.6</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <exclude.test.distributed>NONE</exclude.test.distributed>
