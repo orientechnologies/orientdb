@@ -36,6 +36,7 @@ public class OAuditingLoggingThread extends Thread {
   private volatile boolean running = true;
   private volatile boolean waitForAllLogs = true;
   private OrientDBInternal context;
+  private static final Object onceAtime = new Object();
 
   private String className;
   private OSecuritySystem security;
@@ -54,23 +55,19 @@ public class OAuditingLoggingThread extends Thread {
     this.security = security;
     setDaemon(true);
 
-    // This will create a cluster in the system database for logging auditing events for
-    // "databaseName", if it doesn't already
-    // exist.
-    // server.getSystemDatabase().createCluster(ODefaultAuditing.AUDITING_LOG_CLASSNAME,
-    // ODefaultAuditing.getClusterName(databaseName));
-
     className = ODefaultAuditing.getClassName(databaseName);
 
-    context.getSystemDatabase().executeInDBScope(this::extracted);
+    context.getSystemDatabase().executeInDBScope(this::createAuditingClass);
   }
 
-  private synchronized Void extracted(ODatabaseSession iArgument) {
-    OSchema schema = iArgument.getMetadata().getSchema();
-    if (!schema.existsClass(className)) {
-      OClass clazz = schema.getClass(ODefaultAuditing.AUDITING_LOG_CLASSNAME);
-      OClass cls = schema.createClass(className, clazz);
-      cls.createIndex(className + ".date", OClass.INDEX_TYPE.NOTUNIQUE, new String[] {"date"});
+  private Void createAuditingClass(ODatabaseSession iArgument) {
+    synchronized (onceAtime) {
+      OSchema schema = iArgument.getMetadata().getSchema();
+      if (!schema.existsClass(className)) {
+        OClass clazz = schema.getClass(ODefaultAuditing.AUDITING_LOG_CLASSNAME);
+        OClass cls = schema.createClass(className, clazz);
+        cls.createIndex(className + ".date", OClass.INDEX_TYPE.NOTUNIQUE, new String[] {"date"});
+      }
     }
     return null;
   }
