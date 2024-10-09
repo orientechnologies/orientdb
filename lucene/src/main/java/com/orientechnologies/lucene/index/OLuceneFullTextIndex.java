@@ -16,6 +16,7 @@
 
 package com.orientechnologies.lucene.index;
 
+import com.orientechnologies.lucene.OLuceneCrossClassIndexFactory;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
@@ -106,5 +107,11 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
         doReloadIndexEngine();
       }
     }
+  }
+
+  @Override
+  public boolean isAutomatic() {
+    return super.isAutomatic()
+        || OLuceneCrossClassIndexFactory.LUCENE_CROSS_CLASS.equals(im.getAlgorithm());
   }
 }

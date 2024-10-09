@@ -125,12 +125,12 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
 
   @Override
   public void onCreate(ODatabaseInternal db) {
-    createCrossClassSearchIndex(db);
+    // createCrossClassSearchIndex(db);
   }
 
   @Override
   public void onOpen(ODatabaseInternal db) {
-    createCrossClassSearchIndex(db);
+    // createCrossClassSearchIndex(db);
   }
 
   @Override

@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.lucene.analysis.Analyzer;
@@ -61,7 +59,6 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
       OLogManager.instance().logger(OLuceneCrossClassIndexEngine.class);
   private final OStorage storage;
   private final String indexName;
-  private final AtomicLong bonsayFileId = new AtomicLong(0);
   private final int indexId;
 
   public OLuceneCrossClassIndexEngine(int indexId, OStorage storage, String indexName) {
@@ -69,8 +66,6 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
 
     this.storage = storage;
     this.indexName = indexName;
-
-    OAbstractPaginatedStorage s = (OAbstractPaginatedStorage) storage;
   }
 
   @Override
@@ -210,9 +205,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
 
   @Override
   public void update(
-      OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
-    put(atomicOperation, key, updater.update(null, bonsayFileId).getValue());
-  }
+      OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {}
 
   @Override
   public boolean validatedPut(
@@ -231,7 +224,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
       boolean toInclusive,
       boolean ascSortOrder,
       IndexEngineValuesTransformer transformer) {
-    return null;
+    return Stream.empty();
   }
 
   @Override
@@ -240,7 +233,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
       boolean isInclusive,
       boolean ascSortOrder,
       IndexEngineValuesTransformer transformer) {
-    return null;
+    return Stream.empty();
   }
 
   @Override
@@ -249,22 +242,22 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
       boolean isInclusive,
       boolean ascSortOrder,
       IndexEngineValuesTransformer transformer) {
-    return null;
+    return Stream.empty();
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> stream(IndexEngineValuesTransformer valuesTransformer) {
-    return null;
+    return Stream.empty();
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> descStream(IndexEngineValuesTransformer valuesTransformer) {
-    return null;
+    return Stream.empty();
   }
 
   @Override
   public Stream<Object> keyStream() {
-    return null;
+    return Stream.empty();
   }
 
   @Override
@@ -294,7 +287,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
 
   @Override
   public String indexName() {
-    return null;
+    return indexName;
   }
 
   @Override

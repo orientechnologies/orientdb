@@ -50,6 +50,7 @@ public class OLuceneCrossClassIndexTest extends OLuceneBaseTest {
             + " {\"analyzer\":\""
             + StandardAnalyzer.class.getName()
             + "\"}");
+    db.command("CREATE INDEX CrossClassSearchIndex FULLTEXT ENGINE LUCENE_CROSS_CLASS").close();
   }
 
   @Test
