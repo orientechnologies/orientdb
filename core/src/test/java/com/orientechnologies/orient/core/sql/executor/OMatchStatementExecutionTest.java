@@ -1329,7 +1329,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
   @Test
   public void testManagedElements() {
     List<OIdentifiable> managedByB = getManagedElements("b");
-    assertEquals(6, managedByB.size());
+    assertEquals(10, managedByB.size());
     Set<String> expectedNames = new HashSet<String>();
     expectedNames.add("b");
     expectedNames.add("p2");
@@ -1355,13 +1355,15 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  }<-WorksAt-{as: managed}");
     query.append("  return $elements");
 
-    return db.command(new OCommandSQL(query.toString())).execute();
+    return db.command(query.toString()).stream()
+        .map((x) -> (OIdentifiable) x.getIdentity().get())
+        .toList();
   }
 
   @Test
   public void testManagedPathElements() {
     List<OIdentifiable> managedByB = getManagedPathElements("b");
-    assertEquals(10, managedByB.size());
+    assertEquals(20, managedByB.size());
     Set<String> expectedNames = new HashSet<String>();
     expectedNames.add("department1");
     expectedNames.add("department3");
@@ -1833,7 +1835,9 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     query.append("  }<-WorksAt-{as: managed}");
     query.append("  return $pathElements");
 
-    return db.command(new OCommandSQL(query.toString())).execute();
+    return db.command(query.toString()).stream()
+        .map((x) -> (OIdentifiable) x.getIdentity().get())
+        .toList();
   }
 
   private List<ODocument> collect(OResultSet set) {
