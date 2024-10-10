@@ -11,12 +11,11 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.testng.Assert;
@@ -56,18 +55,17 @@ public class CollateTest extends DocumentDBBaseTest {
       database.save(document);
     }
 
-    List<ODocument> result =
-        database.query(new OSQLSynchQuery<ODocument>("select from collateTest where csp = 'VAL'"));
+    List<OResult> result =
+        database.query("select from collateTest where csp = 'VAL'").stream().toList();
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result) Assert.assertEquals(document.field("csp"), "VAL");
+    for (OResult document : result) Assert.assertEquals(document.getProperty("csp"), "VAL");
 
-    result =
-        database.query(new OSQLSynchQuery<ODocument>("select from collateTest where cip = 'VaL'"));
+    result = database.query("select from collateTest where cip = 'VaL'").stream().toList();
     Assert.assertEquals(result.size(), 10);
 
-    for (ODocument document : result)
-      Assert.assertEquals((document.<String>field("cip")).toUpperCase(Locale.ENGLISH), "VAL");
+    for (OResult document : result)
+      Assert.assertEquals((document.<String>getProperty("cip")).toUpperCase(Locale.ENGLISH), "VAL");
   }
 
   public void testQueryNotNullCi() {
@@ -85,14 +83,12 @@ public class CollateTest extends DocumentDBBaseTest {
     document.field("nobar", true);
     database.save(document);
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select from collateTestNotNull where bar is null"));
+    List<OResult> result =
+        database.query("select from collateTestNotNull where bar is null").stream().toList();
     Assert.assertEquals(result.size(), 1);
 
     result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select from collateTestNotNull where bar is not null"));
+        database.query("select from collateTestNotNull where bar is not null").stream().toList();
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -124,24 +120,23 @@ public class CollateTest extends DocumentDBBaseTest {
     }
 
     String query = "select from collateIndexTest where csp = 'VAL'";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result) Assert.assertEquals(document.field("csp"), "VAL");
+    for (OResult document : result) Assert.assertEquals(document.getProperty("csp"), "VAL");
 
-    @SuppressWarnings("deprecation")
-    ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
-    Assert.assertTrue(explain.<Set<String>>field("involvedIndexes").contains("collateIndexCSP"));
+    OResultSet explain = database.command("explain " + query);
+    Assert.assertTrue(explain.getExecutionPlan().get().getIndexes().contains("collateIndexCSP"));
 
     query = "select from collateIndexTest where cip = 'VaL'";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().toList();
     Assert.assertEquals(result.size(), 10);
 
-    for (ODocument document : result)
-      Assert.assertEquals((document.<String>field("cip")).toUpperCase(Locale.ENGLISH), "VAL");
+    for (OResult document : result)
+      Assert.assertEquals((document.<String>getProperty("cip")).toUpperCase(Locale.ENGLISH), "VAL");
 
-    explain = database.command(new OCommandSQL("explain " + query)).execute();
-    Assert.assertTrue(explain.<Set<String>>field("involvedIndexes").contains("collateIndexCIP"));
+    explain = database.command("explain " + query);
+    Assert.assertTrue(explain.getExecutionPlan().get().getIndexes().contains("collateIndexCIP"));
   }
 
   public void testIndexQueryCollateWasChanged() {
@@ -163,29 +158,28 @@ public class CollateTest extends DocumentDBBaseTest {
     }
 
     String query = "select from collateWasChangedIndexTest where cp = 'VAL'";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result) Assert.assertEquals(document.field("cp"), "VAL");
+    for (OResult document : result) Assert.assertEquals(document.getProperty("cp"), "VAL");
 
-    @SuppressWarnings("deprecation")
-    ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    OResultSet explain = database.command("explain " + query);
     Assert.assertTrue(
-        explain.<Set<String>>field("involvedIndexes").contains("collateWasChangedIndex"));
+        explain.getExecutionPlan().get().getIndexes().contains("collateWasChangedIndex"));
 
     cp = clazz.getProperty("cp");
     cp.setCollate(OCaseInsensitiveCollate.NAME);
 
     query = "select from collateWasChangedIndexTest where cp = 'VaL'";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().toList();
     Assert.assertEquals(result.size(), 10);
 
-    for (ODocument document : result)
-      Assert.assertEquals((document.<String>field("cp")).toUpperCase(Locale.ENGLISH), "VAL");
+    for (OResult document : result)
+      Assert.assertEquals((document.<String>getProperty("cp")).toUpperCase(Locale.ENGLISH), "VAL");
 
-    explain = database.command(new OCommandSQL("explain " + query)).execute();
+    explain = database.command("explain " + query);
     Assert.assertTrue(
-        explain.<Set<String>>field("involvedIndexes").contains("collateWasChangedIndex"));
+        explain.getExecutionPlan().get().getIndexes().contains("collateWasChangedIndex"));
   }
 
   public void testCompositeIndexQueryCS() {
@@ -214,28 +208,27 @@ public class CollateTest extends DocumentDBBaseTest {
     }
 
     String query = "select from CompositeIndexQueryCSTest where csp = 'VAL'";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result) Assert.assertEquals(document.field("csp"), "VAL");
+    for (OResult document : result) Assert.assertEquals(document.getProperty("csp"), "VAL");
 
-    @SuppressWarnings("deprecation")
-    ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    OResultSet explain = database.command("explain " + query);
     Assert.assertTrue(
-        explain.<Set<String>>field("involvedIndexes").contains("collateCompositeIndexCS"));
+        explain.getExecutionPlan().get().getIndexes().contains("collateCompositeIndexCS"));
 
     query = "select from CompositeIndexQueryCSTest where csp = 'VAL' and cip = 'VaL'";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().toList();
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result) {
-      Assert.assertEquals(document.field("csp"), "VAL");
-      Assert.assertEquals((document.<String>field("cip")).toUpperCase(Locale.ENGLISH), "VAL");
+    for (OResult document : result) {
+      Assert.assertEquals(document.getProperty("csp"), "VAL");
+      Assert.assertEquals((document.<String>getProperty("cip")).toUpperCase(Locale.ENGLISH), "VAL");
     }
 
-    explain = database.command(new OCommandSQL("explain " + query)).execute();
+    explain = database.command("explain " + query);
     Assert.assertTrue(
-        explain.<Set<String>>field("involvedIndexes").contains("collateCompositeIndexCS"));
+        explain.getExecutionPlan().get().getIndexes().contains("collateCompositeIndexCS"));
 
     if (!database.getStorage().isRemote()) {
       final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
@@ -281,32 +274,35 @@ public class CollateTest extends DocumentDBBaseTest {
     }
 
     String query = "select from CompositeIndexQueryCollateWasChangedTest where csp = 'VAL'";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OResult> result = database.query(query).stream().toList();
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result) Assert.assertEquals(document.field("csp"), "VAL");
+    for (OResult document : result) Assert.assertEquals(document.getProperty("csp"), "VAL");
 
-    @SuppressWarnings("deprecation")
-    ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    OResultSet explain = database.command("explain " + query);
     Assert.assertTrue(
         explain
-            .<Set<String>>field("involvedIndexes")
+            .getExecutionPlan()
+            .get()
+            .getIndexes()
             .contains("collateCompositeIndexCollateWasChanged"));
-
+    explain.close();
     csp = clazz.getProperty("csp");
     csp.setCollate(OCaseInsensitiveCollate.NAME);
 
     query = "select from CompositeIndexQueryCollateWasChangedTest where csp = 'VaL'";
-    result = database.query(new OSQLSynchQuery<ODocument>(query));
+    result = database.query(query).stream().toList();
     Assert.assertEquals(result.size(), 10);
 
-    for (ODocument document : result)
-      Assert.assertEquals(document.<String>field("csp").toUpperCase(Locale.ENGLISH), "VAL");
+    for (OResult document : result)
+      Assert.assertEquals(document.<String>getProperty("csp").toUpperCase(Locale.ENGLISH), "VAL");
 
-    explain = database.command(new OCommandSQL("explain " + query)).execute();
+    explain = database.command("explain " + query);
     Assert.assertTrue(
         explain
-            .<Set<String>>field("involvedIndexes")
+            .getExecutionPlan()
+            .get()
+            .getIndexes()
             .contains("collateCompositeIndexCollateWasChanged"));
   }
 
@@ -319,10 +315,9 @@ public class CollateTest extends DocumentDBBaseTest {
 
     database
         .command(
-            new OCommandSQL(
-                "create index collateTestViaSQL.index on collateTestViaSQL (cip COLLATE CI)"
-                    + " NOTUNIQUE"))
-        .execute();
+            "create index collateTestViaSQL.index on collateTestViaSQL (cip COLLATE CI)"
+                + " NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument document = new ODocument("collateTestViaSQL");
@@ -338,19 +333,16 @@ public class CollateTest extends DocumentDBBaseTest {
       database.save(document);
     }
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select from collateTestViaSQL where csp = 'VAL'"));
+    List<OResult> result =
+        database.query("select from collateTestViaSQL where csp = 'VAL'").stream().toList();
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result) Assert.assertEquals(document.field("csp"), "VAL");
+    for (OResult document : result) Assert.assertEquals(document.getProperty("csp"), "VAL");
 
-    result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select from collateTestViaSQL where cip = 'VaL'"));
+    result = database.query("select from collateTestViaSQL where cip = 'VaL'").stream().toList();
     Assert.assertEquals(result.size(), 10);
 
-    for (ODocument document : result)
-      Assert.assertEquals((document.<String>field("cip")).toUpperCase(Locale.ENGLISH), "VAL");
+    for (OResult document : result)
+      Assert.assertEquals((document.<String>getProperty("cip")).toUpperCase(Locale.ENGLISH), "VAL");
   }
 }

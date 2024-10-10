@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.HashMap;
@@ -61,68 +62,68 @@ public class TraverseTest extends DocumentDBBaseTest {
 
     tomCruise = database.newVertex("Actor");
     tomCruise.setProperty("name", "Tom Cruise");
-    tomCruise.save();
+    database.save(tomCruise);
 
     totalElements++;
 
     megRyan = database.newVertex("Actor");
     megRyan.setProperty("name", "Meg Ryan");
-    megRyan.save();
+    database.save(megRyan);
 
     totalElements++;
     nicoleKidman = database.newVertex("Actor");
     nicoleKidman.setProperty("name", "Nicole Kidman");
     nicoleKidman.setProperty("attributeWithDotValue", "a.b");
-    nicoleKidman.save();
+    database.save(nicoleKidman);
 
     totalElements++;
 
     var topGun = database.newVertex("Movie");
     topGun.setProperty("name", "Top Gun");
     topGun.setProperty("year", 1986);
-    topGun.save();
+    database.save(topGun);
 
     totalElements++;
     var missionImpossible = database.newVertex("Movie");
     missionImpossible.setProperty("name", "Mission: Impossible");
     missionImpossible.setProperty("year", 1996);
-    missionImpossible.save();
+    database.save(missionImpossible);
 
     totalElements++;
     var youHaveGotMail = database.newVertex("Movie");
     youHaveGotMail.setProperty("name", "You've Got Mail");
     youHaveGotMail.setProperty("year", 1998);
-    youHaveGotMail.save();
+    database.save(youHaveGotMail);
 
     totalElements++;
 
     var e = database.newEdge(tomCruise, topGun, "actorIn");
-    e.save();
+    database.save(e);
 
     totalElements++;
 
     e = database.newEdge(megRyan, topGun, "actorIn");
-    e.save();
+    database.save(e);
 
     totalElements++;
 
     e = database.newEdge(tomCruise, missionImpossible, "actorIn");
-    e.save();
+    database.save(e);
 
     totalElements++;
 
     e = database.newEdge(megRyan, youHaveGotMail, "actorIn");
-    e.save();
+    database.save(e);
 
     totalElements++;
 
     e = database.newEdge(tomCruise, megRyan, "friend");
-    e.save();
+    database.save(e);
 
     totalElements++;
     e = database.newEdge(tomCruise, nicoleKidman, "married");
     e.setProperty("year", 1990);
-    e.save();
+    database.save(e);
 
     totalElements++;
   }
@@ -152,15 +153,12 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseSQLMoviesOnly() {
-    List<ODocument> result1 =
-        database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from ( traverse any() from Movie ) where @class = 'Movie'"))
-            .execute();
+    List<OResult> result1 =
+        database.query("select from ( traverse * from Movie ) where @class = 'Movie'").stream()
+            .toList();
     Assert.assertTrue(result1.size() > 0);
-    for (ODocument d : result1) {
-      Assert.assertEquals(d.getClassName(), "Movie");
+    for (OResult d : result1) {
+      Assert.assertEquals(d.getElement().get().getSchemaType().get().getName(), "Movie");
     }
   }
 
@@ -360,12 +358,9 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseNoConditionLimit1() {
-    List<ODocument> result1 =
-        database
-            .command(new OSQLSynchQuery<ODocument>("traverse any() from Movie limit 1"))
-            .execute();
+    OResultSet result1 = database.command("traverse * from Movie limit 1");
 
-    Assert.assertEquals(result1.size(), 1);
+    Assert.assertEquals(result1.stream().count(), 1);
   }
 
   @Test
