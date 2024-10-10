@@ -710,19 +710,10 @@
             </build>
         </profile>
 
-        <profile>
-            <id>java19-less</id>
-            <activation>
-                <jdk>(,17,18,19,20]</jdk>
-            </activation>
-            <modules>
-                <module>gremlin</module>
-            </modules>
-        </profile>
-
 		<profile>
 			<id>all</id>
             <modules>
+                <module>gremlin</module>
                 <module>studio</module>
             </modules>
         </profile>
