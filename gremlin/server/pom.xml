@@ -16,6 +16,8 @@
         <tinkerpop.version>3.7.2</tinkerpop.version>
         <slf4j.version>1.7.36</slf4j.version>
         <project.rootdir>${project.basedir}/../</project.rootdir>
+        <javac.src.version>${maven.compiler.source}</javac.src.version>
+        <javac.target.version>${maven.compiler.target}</javac.target.version>
     </properties>
 
     <dependencies>
