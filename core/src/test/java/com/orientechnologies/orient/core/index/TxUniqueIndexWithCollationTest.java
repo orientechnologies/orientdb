@@ -26,10 +26,9 @@ import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
+import java.util.List;
 import org.junit.Test;
 
 /** @author Sergey Sitnikov */
@@ -93,15 +92,13 @@ public class TxUniqueIndexWithCollationTest extends BaseMemoryDatabase {
 
     db.command("update user set name='abd' where name='Aby'").close();
 
-    final OLegacyResultSet<ODocument> r =
-        db.command(
-                new OCommandSQL(
-                    "select * from user where name in ['Abc', 'Abd', 'Abz'] order by name"))
-            .execute();
+    final List<OResult> r =
+        db.query("select * from user where name in ['Abc', 'Abd', 'Abz'] order by name").stream()
+            .toList();
     assertEquals(3, r.size());
-    assertEquals("abc", r.get(0).field("name"));
-    assertEquals("abd", r.get(1).field("name"));
-    assertEquals("abz", r.get(2).field("name"));
+    assertEquals("abc", r.get(0).getProperty("name"));
+    assertEquals("abd", r.get(1).getProperty("name"));
+    assertEquals("abz", r.get(2).getProperty("name"));
 
     db.commit();
   }

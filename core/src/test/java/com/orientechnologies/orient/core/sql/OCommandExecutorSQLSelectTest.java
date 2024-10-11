@@ -156,12 +156,12 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     // /*** from issue #2743
     OSchema schema = db.getMetadata().getSchema();
     if (!schema.existsClass("alphabet")) {
-      schema.createClass("alphabet", 1, null);
+      schema.createClass("alphabet", 1);
     }
 
     ORecordIteratorClass<ODocument> iter = db.browseClass("alphabet");
     while (iter.hasNext()) {
-      iter.next().delete();
+      db.delete(iter.next());
     }
 
     // add 26 entries: { "letter": "A", "number": 0 }, ... { "letter": "Z", "number": 25 }
@@ -172,7 +172,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
       String json = String.format(rowModel, l, i);
       ODocument doc = db.newInstance("alphabet");
       doc.fromJSON(json);
-      doc.save();
+      db.save(doc);
     }
 
     db.command("create class OCommandExecutorSQLSelectTest_aggregations").close();
@@ -190,11 +190,11 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
     ODocument doc = new ODocument("CollateOnLinked");
     doc.field("name", "foo");
-    doc.save();
+    db.save(doc);
 
     ODocument doc2 = new ODocument("CollateOnLinked2");
     doc2.field("linked", doc.getIdentity());
-    doc2.save();
+    db.save(doc2);
   }
 
   private static void initComplexFilterInSquareBrackets(ODatabaseDocument db) {
@@ -296,7 +296,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   }
 
   private static void initMassiveOrderSkipLimit(ODatabaseDocument db) {
-    db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit", 1, null);
+    db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit", 1);
     String fieldValue =
         "laskdf lkajsd flaksjdf laksjd flakjsd flkasjd flkajsd flkajsd flkajsd flkajsd flkajsd"
             + " flkjas;lkj a;ldskjf laksdj asdklasdjf lskdaj fladsd";
@@ -310,7 +310,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
       doc.field("dfgd", fieldValue);
       doc.field("dgd", fieldValue);
 
-      doc.save();
+      db.save(doc);
     }
   }
 
@@ -320,12 +320,12 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     for (int i = 0; i < 5; i++) {
       ODocument doc = new ODocument("ExpandSkipLimit");
       doc.field("nnum", i);
-      doc.save();
+      db.save(doc);
       ODocument parent = new ODocument("ExpandSkipLimit");
       parent.field("parent", true);
       parent.field("num", i);
       parent.field("linked", doc);
-      parent.save();
+      db.save(parent);
     }
   }
 
@@ -337,22 +337,19 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testUseIndexWithOrderBy2() throws Exception {
     long idxUsagesBefore = indexUsages(db);
 
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select * from foo where address.city = 'NY' order by name ASC"))
-            .execute();
-    assertEquals(qResult.size(), 1);
+    OResultSet qResult =
+        db.command("select * from foo where address.city = 'NY' order by name ASC");
+    assertEquals(qResult.stream().count(), 1);
   }
 
   @Test
   public void testUseIndexWithOr() throws Exception {
     long idxUsagesBefore = indexUsages(db);
 
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select * from foo where bar = 2 or name ='a' and bar >= 0"))
-            .execute();
+    OResultSet qResult = db.command("select * from foo where bar = 2 or name ='a' and bar >= 0");
 
-    assertEquals(qResult.size(), 2);
-    assertEquals(indexUsages(db), idxUsagesBefore + 2);
+    assertEquals(qResult.stream().count(), 2);
+    assertEquals(indexUsages(db), idxUsagesBefore + 1);
   }
 
   @Test
@@ -360,8 +357,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
     long idxUsagesBefore = indexUsages(db);
 
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select * from foo where bar = 2 or notIndexed = 3")).execute();
+    List<OResult> qResult =
+        db.command("select * from foo where bar = 2 or notIndexed = 3").stream().toList();
 
     assertEquals(indexUsages(db), idxUsagesBefore);
   }
@@ -370,8 +367,8 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testCompositeIndex() {
     long idxUsagesBefore = indexUsages(db);
 
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select * from foo where comp = 'a' and osite = 1")).execute();
+    List<OResult> qResult =
+        db.command("select * from foo where comp = 'a' and osite = 1").stream().toList();
 
     assertEquals(qResult.size(), 1);
     assertEquals(indexUsages(db), idxUsagesBefore + 1);
@@ -381,35 +378,34 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testProjection() {
     long idxUsagesBefore = indexUsages(db);
 
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select a from foo where name = 'a' or bar = 1")).execute();
+    List<OResult> qResult =
+        db.command("select a from foo where name = 'a' or bar = 1").stream().toList();
 
     assertEquals(qResult.size(), 1);
-    assertEquals(indexUsages(db), idxUsagesBefore + 2);
+    assertEquals(indexUsages(db), idxUsagesBefore + 1);
   }
 
   @Test
   public void testProjection2() {
     long idxUsagesBefore = indexUsages(db);
 
-    List<ODocument> qResult =
-        db.command(new OCommandSQL("select a from foo where name = 'a' or bar = 2")).execute();
+    List<OResult> qResult =
+        db.command("select a from foo where name = 'a' or bar = 2").stream().toList();
 
     assertEquals(qResult.size(), 2);
-    assertEquals(indexUsages(db), idxUsagesBefore + 2);
+    assertEquals(indexUsages(db), idxUsagesBefore + 1);
   }
 
   @Test
   public void testCompositeIndex2() {
     long idxUsagesBefore = indexUsages(db);
 
-    List<ODocument> qResult =
-        db.command(
-                new OCommandSQL("select * from foo where (comp = 'a' and osite = 1) or name = 'a'"))
-            .execute();
+    List<OResult> qResult =
+        db.command("select * from foo where (comp = 'a' and osite = 1) or name = 'a'").stream()
+            .toList();
 
     assertEquals(qResult.size(), 2);
-    assertEquals(indexUsages(db), idxUsagesBefore + 2);
+    assertEquals(indexUsages(db), idxUsagesBefore + 1);
   }
 
   @Test
@@ -938,21 +934,20 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testAggregations() {
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
-            "select data.size as collection_content, data.size() as collection_size, min(data.size)"
-                + " as collection_min, max(data.size) as collection_max, sum(data.size) as"
-                + " collection_sum, avg(data.size) as collection_avg from"
-                + " OCommandExecutorSQLSelectTest_aggregations");
-    List<ODocument> results = db.query(sql);
+    String sql =
+        "select data.size as collection_content, data.size() as collection_size, min(data.size)"
+            + " as collection_min, max(data.size) as collection_max, sum(data.size) as"
+            + " collection_sum, avg(data.size) as collection_avg from"
+            + " OCommandExecutorSQLSelectTest_aggregations";
+    List<OResult> results = db.query(sql).stream().toList();
     assertEquals(1, results.size());
-    ODocument doc = results.get(0);
+    OResult doc = results.get(0);
 
-    assertThat(doc.<Integer>field("collection_size")).isEqualTo(5);
-    assertThat(doc.<Integer>field("collection_sum")).isEqualTo(130);
-    assertThat(doc.<Integer>field("collection_avg")).isEqualTo(26);
-    assertThat(doc.<Integer>field("collection_min")).isEqualTo(0);
-    assertThat(doc.<Integer>field("collection_max")).isEqualTo(50);
+    assertThat(doc.<Integer>getProperty("collection_size")).isEqualTo(5);
+    assertThat(doc.<Integer>getProperty("collection_sum")).isEqualTo(130);
+    assertThat(doc.<Integer>getProperty("collection_avg")).isEqualTo(26);
+    assertThat(doc.<Integer>getProperty("collection_min")).isEqualTo(0);
+    assertThat(doc.<Integer>getProperty("collection_max")).isEqualTo(50);
 
     //
     //    assertEquals(5, doc.field("collection_size"));
@@ -1228,14 +1223,13 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   @Test
   public void testLinkListSequence2() {
     initLinkListSequence(db);
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
-            "select expand(children[0].children.children) from LinkListSequence where name ="
-                + " 'root'");
-    List<ODocument> results = db.query(sql);
+    String sql =
+        "select expand(children[0].children.children) from LinkListSequence where name ="
+            + " 'root'";
+    List<OResult> results = db.query(sql).stream().toList();
     assertEquals(results.size(), 4);
-    for (ODocument result : results) {
-      String value = result.field("name");
+    for (OResult result : results) {
+      String value = result.getProperty("name");
       assertEquals(value.length(), 5);
     }
   }
@@ -1358,18 +1352,20 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
             "insert into OCommandExecutorSqlSelectTest_collateOnCollections set"
                 + " categories=['a','b','c']")
         .close();
-    List<ODocument> results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
+    List<OResult> results =
+        db
+            .query(
                 "select from OCommandExecutorSqlSelectTest_collateOnCollections where 'Math' in"
-                    + " categories"));
+                    + " categories")
+            .stream()
+            .toList();
     assertEquals(results.size(), 1);
-    results =
+    List<ODocument> results1 =
         db.query(
             new OSQLSynchQuery<ODocument>(
                 "select from OCommandExecutorSqlSelectTest_collateOnCollections where 'math' in"
                     + " categories"));
-    assertEquals(results.size(), 1);
+    assertEquals(results1.size(), 1);
   }
 
   @Test
@@ -1411,16 +1407,14 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
   public void testCollateOnLinked() {
     initCollateOnLinked(db);
 
-    List<ODocument> results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from CollateOnLinked2 where linked.name = 'foo' "));
+    List<OResult> results =
+        db.query("select from CollateOnLinked2 where linked.name = 'foo' ").stream().toList();
     assertEquals(results.size(), 1);
-    results =
+    List<ODocument> results1 =
         db.query(
             new OSQLSynchQuery<ODocument>(
                 "select from CollateOnLinked2 where linked.name = 'FOO' "));
-    assertEquals(results.size(), 1);
+    assertEquals(results1.size(), 1);
   }
 
   @Test
@@ -1443,18 +1437,18 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
     db.command("insert into CompositeIndexWithoutNullValues set one = 'foo'").close();
     db.command("insert into CompositeIndexWithoutNullValues set one = 'foo', two = 'bar'").close();
-    List<ODocument> results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from CompositeIndexWithoutNullValues where one = ?"),
-            "foo");
+    List<OResult> results =
+        db.query("select from CompositeIndexWithoutNullValues where one = ?", "foo").stream()
+            .toList();
     assertEquals(results.size(), 2);
     results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from CompositeIndexWithoutNullValues where one = ? and two = ?"),
-            "foo",
-            "bar");
+        db
+            .query(
+                "select from CompositeIndexWithoutNullValues where one = ? and two = ?",
+                "foo",
+                "bar")
+            .stream()
+            .toList();
     assertEquals(results.size(), 1);
 
     db.command("create class CompositeIndexWithoutNullValues2").close();
@@ -1469,17 +1463,17 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
     db.command("insert into CompositeIndexWithoutNullValues2 set one = 'foo'").close();
     db.command("insert into CompositeIndexWithoutNullValues2 set one = 'foo', two = 'bar'").close();
     results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from CompositeIndexWithoutNullValues2 where one = ?"),
-            "foo");
+        db.query("select from CompositeIndexWithoutNullValues2 where one = ?", "foo").stream()
+            .toList();
     assertEquals(results.size(), 2);
     results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from CompositeIndexWithoutNullValues where one = ? and two = ?"),
-            "foo",
-            "bar");
+        db
+            .query(
+                "select from CompositeIndexWithoutNullValues where one = ? and two = ?",
+                "foo",
+                "bar")
+            .stream()
+            .toList();
     assertEquals(results.size(), 1);
   }
 
@@ -1690,12 +1684,10 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
                 + " SET tagz.foo = [{name:'a', surname:'b'}, {name:'c', surname:'d'}]")
         .close();
 
-    List<ODocument> results =
-        db.query(
-            new OSQLSynchQuery<ODocument>(
-                "select tagz.values()[0][name = 'a'] as t from " + className));
+    List<OResult> results =
+        db.query("select tagz.values()[0][name = 'a'] as t from " + className).stream().toList();
     assertEquals(results.size(), 1);
-    Map map = results.get(0).field("t");
+    Map map = (Map) ((List) results.get(0).getProperty("t")).get(0);
     assertEquals(map.get("surname"), "b");
   }
 
