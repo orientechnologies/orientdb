@@ -372,6 +372,9 @@ public class OSQLEngine {
   }
 
   public static OCollate getCollate(final String name) {
+    if (name == null) {
+      return null;
+    }
     for (Iterator<OCollateFactory> iter = getCollateFactories(); iter.hasNext(); ) {
       OCollateFactory f = iter.next();
       final OCollate c = f.getCollate(name.toLowerCase());
