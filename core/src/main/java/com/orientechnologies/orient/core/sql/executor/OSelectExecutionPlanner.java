@@ -2948,10 +2948,10 @@ public class OSelectExecutionPlanner {
       }
     }
 
-    if (indexKeyValue.getSubBlocks().size() < index.getDefinition().getFields().size()
-        && !index.supportsOrderedIterations()) {
-      // hash indexes do not support partial key match
-      return null;
+    if (indexKeyValue.getSubBlocks().size() < index.getDefinition().getFields().size()) {
+      if (!index.supportsOrderedIterations() || index.getDefinition().isNullValuesIgnored()) {
+        return null;
+      }
     }
 
     if (found) {
