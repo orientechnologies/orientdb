@@ -27,7 +27,7 @@
     "angular-spectrum-colorpicker": "^1.4.5",
     "angular-strap": "2.3.12",
     "angular-translate": "^2.15.2",
-    "angular-translate-loader-partial": "^2.15.2",
+    "angular-translate-loader-partial": "^2.19.1",
     "angular2-tag-input": "^1.2.3",
     "babel-polyfill": "^6.26.0",
     "babel-preset-angular2": "0.0.2",
