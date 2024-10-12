@@ -24,6 +24,7 @@ import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineUtils;
 import com.orientechnologies.lucene.exception.OLuceneIndexException;
+import com.orientechnologies.lucene.functions.OLuceneFunctionsUtils;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesAbstract;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -67,6 +68,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
   private int maxNumFragments;
   private TopDocs topDocs;
   private long deletedMatchCount = 0;
+  private long returnedHits = 0;
 
   private boolean closed = false;
 
@@ -99,6 +101,10 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
     highlighter = new Highlighter(formatter, scorer);
 
     maxNumFragments = (int) Optional.ofNullable(highlight.get("maxNumFragments")).orElse(2);
+
+    final Long queryMaxHits = OLuceneFunctionsUtils.getResultLimit(queryContext.getContext());
+    long maxHits = (queryMaxHits == null) ? Integer.MAX_VALUE : queryMaxHits;
+    this.returnedHits = Math.min(maxHits, topDocs.totalHits - deletedMatchCount);
   }
 
   protected void fetchFirstBatch() {
@@ -180,7 +186,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
 
   @Override
   public int size() {
-    return (int) Math.max(0, topDocs.totalHits - deletedMatchCount);
+    return (int) Math.max(0, this.returnedHits);
   }
 
   @Override
@@ -201,12 +207,15 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
       localIndex = 0;
       scoreDocs = topDocs.scoreDocs;
       OLuceneIndexEngineUtils.sendTotalHits(
-          indexName, queryContext.getContext(), topDocs.totalHits - deletedMatchCount);
+          indexName,
+          queryContext.getContext(),
+          topDocs.totalHits - deletedMatchCount,
+          returnedHits);
     }
 
     @Override
     public boolean hasNext() {
-      final boolean hasNext = index < (totalHits - deletedMatchCount);
+      final boolean hasNext = (index < returnedHits);
       if (!hasNext && !closed) {
         final IndexSearcher searcher = queryContext.getSearcher();
         engine.release(searcher);

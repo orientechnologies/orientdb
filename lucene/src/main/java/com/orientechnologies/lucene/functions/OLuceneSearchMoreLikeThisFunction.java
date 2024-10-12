@@ -88,6 +88,7 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
     OExpression expression = args[0];
 
     ODocument metadata = parseMetadata(args);
+    OLuceneFunctionsUtils.configureResultLimit(target, ctx, metadata);
 
     List<String> ridsAsString = parseRids(ctx, expression);
 
