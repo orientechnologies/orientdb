@@ -68,9 +68,10 @@
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/@angularclass/hmr/-/hmr-1.2.2.tgz#46a18f89a1e94d05c268b83c9480e005f73fc265"
 
-"@types/angular@^1.6.35":
-  version "1.6.35"
-  resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.35.tgz#895324e54da97c35c2722b8d7eda185e5363828f"
+"@types/angular@^1.8.9":
+  version "1.8.9"
+  resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.8.9.tgz#d1ae3e87a67f72342d55ff26e611df83df0fb176"
+  integrity sha512-Z0HukqZkx0fotsV3QO00yqU9NzcQI+tMcrum+8MvfB4ePqCawZctF/gz6QiuII+T1ax+LitNoPx/eICTgnF4sg==
 
 "@types/codemirror@0.0.60":
   version "0.0.60"
@@ -273,7 +274,12 @@ angular2-template-loader@^0.6.2:
   dependencies:
     loader-utils "^0.2.15"
 
-angular@1.5.9, "angular@>=1.2.26 <=1.6", angular@>=1.4.0, angular@^1.2.8:
+angular@1.8.3, angular@>=1.4.0, angular@^1.2.8:
+  version "1.8.3"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.8.3.tgz#851ad75d5163c105a7e329555ef70c90aa706894"
+  integrity sha512-5qjkWIQQVsHj4Sb5TcEs4WZWpFeVFHXwxEBHUhrny41D8UrBAd6T/6nPPAsLngJCReIOqi95W3mxdveveutpZw==
+
+"angular@>=1.2.26 <=1.6":
   version "1.5.9"
   resolved "https://registry.yarnpkg.com/angular/-/angular-1.5.9.tgz#b7aeff42dad87881e06be16b6690fe766d868b51"
 
