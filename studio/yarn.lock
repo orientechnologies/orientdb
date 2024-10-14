@@ -2742,12 +2742,10 @@ fsevents@~2.3.2:
   resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.3.tgz#cac6407785d03675a2a5e1a5305c697b347d90d6"
   integrity sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
 
-fullcalendar@^3.9.0:
-  version "3.9.0"
-  resolved "https://registry.yarnpkg.com/fullcalendar/-/fullcalendar-3.9.0.tgz#b608a9989f3416f0b1d526c6bdfeeaf2ac79eda5"
-  dependencies:
-    jquery "2 - 3"
-    moment "^2.20.1"
+fullcalendar@^3.10.5:
+  version "3.10.5"
+  resolved "https://registry.yarnpkg.com/fullcalendar/-/fullcalendar-3.10.5.tgz#57a3a64d7d744181582bb9e1be32d1846e1db53a"
+  integrity sha512-JGWpECKgza/344bbF5QT0hBJpx04DZ/7QGPlR1ZbAwrG6Yz6mWEkQd+NnZUh1sK6HCBIPnPRW2x53aJxeLGvvQ==
 
 function-bind@^1.0.2:
   version "1.1.0"
@@ -3567,7 +3565,7 @@ jquery-ui@1.12.1:
   version "1.12.1"
   resolved "https://registry.yarnpkg.com/jquery-ui/-/jquery-ui-1.12.1.tgz#bcb4045c8dd0539c134bc1488cdd3e768a7a9e51"
 
-"jquery@2 - 3", jquery@3.5.0, jquery@>=1.9.0:
+jquery@3.5.0, jquery@>=1.9.0:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.5.0.tgz#9980b97d9e4194611c36530e7dc46a58d7340fc9"
 
@@ -3974,10 +3972,6 @@ mkdirp@0.5.x, mkdirp@^0.5.1, mkdirp@~0.5.0, mkdirp@~0.5.1:
 moment@2.18.1:
   version "2.18.1"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.18.1.tgz#c36193dd3ce1c2eed2adb7c802dbbc77a81b1c0f"
-
-moment@^2.20.1:
-  version "2.29.4"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.4.tgz#3dbe052889fe7c1b2ed966fcb3a77328964ef108"
 
 moment@^2.30.1:
   version "2.30.1"
