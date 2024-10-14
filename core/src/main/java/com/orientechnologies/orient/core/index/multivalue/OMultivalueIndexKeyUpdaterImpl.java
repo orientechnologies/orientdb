@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexUpdateAction;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
 import java.util.Set;
@@ -14,11 +15,17 @@ public final class OMultivalueIndexKeyUpdaterImpl implements OIndexKeyUpdater<Ob
   private final ORID identity;
   private final String indexName;
   private final boolean mixedContainer;
+  private final OAbstractPaginatedStorage storage;
 
   public OMultivalueIndexKeyUpdaterImpl(
-      ORID identity, String valueContainerAlgorithm, int binaryFormatVersion, String indexName) {
+      ORID identity,
+      String valueContainerAlgorithm,
+      int binaryFormatVersion,
+      String indexName,
+      OAbstractPaginatedStorage storage) {
     this.identity = identity;
     this.indexName = indexName;
+    this.storage = storage;
     if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
       if (binaryFormatVersion >= 13) {
         mixedContainer = true;
@@ -35,9 +42,9 @@ public final class OMultivalueIndexKeyUpdaterImpl implements OIndexKeyUpdater<Ob
     Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
     if (toUpdate == null) {
       if (mixedContainer) {
-        toUpdate = new OMixedIndexRIDContainer(indexName, bonsayFileId);
+        toUpdate = new OMixedIndexRIDContainer(indexName, bonsayFileId, storage);
       } else {
-        toUpdate = new OIndexRIDContainer(indexName, true, bonsayFileId);
+        toUpdate = new OIndexRIDContainer(indexName, true, bonsayFileId, storage);
       }
     }
     if (toUpdate instanceof OIndexRIDContainer) {

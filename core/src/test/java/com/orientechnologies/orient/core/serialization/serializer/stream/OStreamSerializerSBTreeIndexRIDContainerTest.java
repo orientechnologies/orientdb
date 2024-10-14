@@ -30,7 +30,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest extends BaseMemoryInte
     try {
 
       final OIndexRIDContainer indexRIDContainer =
-          new OIndexRIDContainer("test", false, new AtomicLong(0));
+          new OIndexRIDContainer("test", false, new AtomicLong(0), storage);
 
       indexRIDContainer.setTopThreshold(100);
       for (int i = 0; i < 5; i++) {
@@ -82,7 +82,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest extends BaseMemoryInte
     try {
 
       final OIndexRIDContainer indexRIDContainer =
-          new OIndexRIDContainer("test", true, new AtomicLong(0));
+          new OIndexRIDContainer("test", true, new AtomicLong(0), storage);
 
       indexRIDContainer.setTopThreshold(100);
       for (int i = 0; i < 5; i++) {
@@ -134,7 +134,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest extends BaseMemoryInte
     try {
 
       final OIndexRIDContainer indexRIDContainer =
-          new OIndexRIDContainer("test", true, new AtomicLong(0));
+          new OIndexRIDContainer("test", true, new AtomicLong(0), storage);
 
       indexRIDContainer.setTopThreshold(100);
       for (int i = 0; i < 5; i++) {
@@ -189,7 +189,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest extends BaseMemoryInte
     try {
 
       final OIndexRIDContainer indexRIDContainer =
-          new OIndexRIDContainer("test", true, new AtomicLong(0));
+          new OIndexRIDContainer("test", true, new AtomicLong(0), storage);
 
       indexRIDContainer.setTopThreshold(1);
       for (int i = 0; i < 5; i++) {
@@ -241,7 +241,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest extends BaseMemoryInte
     try {
 
       final OIndexRIDContainer indexRIDContainer =
-          new OIndexRIDContainer("test", true, new AtomicLong(0));
+          new OIndexRIDContainer("test", true, new AtomicLong(0), storage);
 
       indexRIDContainer.setTopThreshold(1);
       for (int i = 0; i < 5; i++) {
@@ -295,7 +295,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest extends BaseMemoryInte
     atomicOperationsManager.startAtomicOperation(null);
     try {
       final OIndexRIDContainer indexRIDContainer =
-          new OIndexRIDContainer("test", false, new AtomicLong(0));
+          new OIndexRIDContainer("test", false, new AtomicLong(0), storage);
 
       indexRIDContainer.setTopThreshold(100);
       for (int i = 0; i < 5; i++) {
@@ -348,7 +348,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest extends BaseMemoryInte
     try {
 
       final OIndexRIDContainer indexRIDContainer =
-          new OIndexRIDContainer("test", true, new AtomicLong(0));
+          new OIndexRIDContainer("test", true, new AtomicLong(0), storage);
 
       indexRIDContainer.setTopThreshold(100);
       for (int i = 0; i < 5; i++) {
@@ -400,7 +400,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest extends BaseMemoryInte
     try {
 
       final OIndexRIDContainer indexRIDContainer =
-          new OIndexRIDContainer("test", false, new AtomicLong(0));
+          new OIndexRIDContainer("test", false, new AtomicLong(0), storage);
 
       indexRIDContainer.setTopThreshold(1);
       for (int i = 0; i < 5; i++) {
@@ -452,7 +452,7 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest extends BaseMemoryInte
     try {
 
       final OIndexRIDContainer indexRIDContainer =
-          new OIndexRIDContainer("test", true, new AtomicLong(0));
+          new OIndexRIDContainer("test", true, new AtomicLong(0), storage);
 
       indexRIDContainer.setTopThreshold(1);
       for (int i = 0; i < 5; i++) {

@@ -52,7 +52,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -189,8 +188,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
 
     if (database.isRemote()) {
-      final OStorage storage = database.getStorage();
-      ((OStorageProxy) storage).rollback(OTransactionOptimistic.this);
+      ((ODatabaseDocumentInternal) database).remoteRollback(OTransactionOptimistic.this);
     }
     internalRollback();
   }

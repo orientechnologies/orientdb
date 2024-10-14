@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1622,7 +1621,7 @@ public abstract class OClassImpl implements OClass {
   }
 
   private void removeClusterFromIndexes(final int iId) {
-    if (getDatabase().getStorage() instanceof OAbstractPaginatedStorage) {
+    if (!getDatabase().isRemote()) {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToRemove = new ArrayList<String>();
 

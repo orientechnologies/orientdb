@@ -442,7 +442,7 @@ public abstract class OSchemaShared implements OCloseable {
         // by sql commands and we need to reload local replica
 
         if (iSave) {
-          if (database.getStorage() instanceof OAbstractPaginatedStorage) {
+          if (!database.isRemote()) {
             saveInternal(database);
           } else {
             reload(database);

@@ -529,17 +529,7 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public OStorage getUnderlying() {
-          return null;
-        }
-
-        @Override
         public boolean isRemote() {
-          return false;
-        }
-
-        @Override
-        public boolean isDistributed() {
           return false;
         }
 

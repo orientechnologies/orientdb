@@ -1288,4 +1288,9 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public void internalCommitPreallocate(OTransactionOptimistic oTransactionOptimistic) {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void remoteRollback(OTransactionOptimistic oTransactionOptimistic) {
+    storage.rollback(oTransactionOptimistic);
+  }
 }

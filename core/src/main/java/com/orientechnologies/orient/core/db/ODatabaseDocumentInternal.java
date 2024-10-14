@@ -310,4 +310,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   void commitPreallocate();
 
   void internalCommitPreallocate(OTransactionOptimistic oTransactionOptimistic);
+
+  default void remoteRollback(OTransactionOptimistic oTransactionOptimistic) {
+    throw new UnsupportedOperationException();
+  }
 }

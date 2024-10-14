@@ -128,7 +128,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     database.command("delete from classIndexManagerTestClassTwo").close();
     database.command("delete from classIndexManagerTestSuperClass").close();
 
-    if (!database.getStorage().isRemote()) {
+    if (!database.isRemote()) {
       Assert.assertEquals(
           database
               .getMetadata()

@@ -219,9 +219,8 @@ public class OEnterpriseServerImpl
   @Override
   public void onOpen(final ODatabaseInternal iDatabase) {
     final OStorage storage = iDatabase.getStorage();
-    if (storage.getUnderlying() instanceof OEnterpriseLocalPaginatedStorage) {
-      OEnterpriseLocalPaginatedStorage s =
-          (OEnterpriseLocalPaginatedStorage) storage.getUnderlying();
+    if (storage instanceof OEnterpriseLocalPaginatedStorage) {
+      OEnterpriseLocalPaginatedStorage s = (OEnterpriseLocalPaginatedStorage) storage;
       if (storages.putIfAbsent(storage.getName(), s) == null) {
         storages.put(storage.getName(), s);
         dbListeners.forEach((l) -> l.onOpen(s));

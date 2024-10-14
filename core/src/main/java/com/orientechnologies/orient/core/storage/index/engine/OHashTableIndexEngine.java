@@ -274,7 +274,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
       final OIndexKeyUpdater<Object> creator =
           new OMultivalueIndexKeyUpdaterImpl(
-              value, valueContainerAlgorithm, binaryFormatVersion, name);
+              value, valueContainerAlgorithm, binaryFormatVersion, name, storage);
 
       update(atomicOperation, key, creator);
     } else {

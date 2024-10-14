@@ -1286,7 +1286,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               new ONewDistributedTxContextImpl(
                   ddb, new ODistributedRequestId(-1, -1), tx, data.getTransactionId());
           ddb.validate(data.getTransactionId());
-          ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(tx);
+          ((OAbstractPaginatedStorage) getStorage()).preallocateRids(tx);
           txContext.commit(this);
           return null;
         });
@@ -1320,7 +1320,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedDatabase localDistributedDatabase = getDistributedShared();
     ODDLContextImpl context =
         (ODDLContextImpl) localDistributedDatabase.popTxContext(confirmSentRequest);
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) getStorage().getUnderlying();
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) getStorage();
     if (apply) {
       ((ODistributedDatabaseImpl) localDistributedDatabase).resetLastValidBackup();
       if (context.getStatus() == SUCCESS) {

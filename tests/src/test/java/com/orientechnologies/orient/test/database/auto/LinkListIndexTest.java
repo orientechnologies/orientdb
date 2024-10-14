@@ -52,7 +52,7 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     OResultSet result = database.query("select from LinkListIndexTestClass");
     Assert.assertEquals(result.stream().count(), 0);
 
-    if (!database.getStorage().isRemote()) {
+    if (!database.isRemote()) {
       final OIndex index = getIndex("linkCollectionIndex");
       Assert.assertEquals(index.getInternal().size(), 0);
     }

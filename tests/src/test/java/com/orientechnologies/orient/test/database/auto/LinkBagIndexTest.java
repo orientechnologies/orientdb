@@ -62,7 +62,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     OResultSet result = database.query("select from RidBagIndexTestClass");
     Assert.assertEquals(result.stream().count(), 0);
 
-    if (!database.getStorage().isRemote()) {
+    if (!database.isRemote()) {
       final OIndex index = getIndex("ridBagIndex");
       Assert.assertEquals(index.getInternal().size(), 0);
     }

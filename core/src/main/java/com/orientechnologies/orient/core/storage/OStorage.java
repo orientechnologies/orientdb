@@ -222,12 +222,7 @@ public interface OStorage extends OBackupable, OStorageInfo {
   /** Returns the storage's type. */
   String getType();
 
-  OStorage getUnderlying();
-
   boolean isRemote();
-
-  @Deprecated
-  boolean isDistributed();
 
   boolean isAssigningClusterIds();
 

@@ -415,12 +415,6 @@ public abstract class OAbstractPaginatedStorage
   }
 
   @Override
-  @Deprecated
-  public OStorage getUnderlying() {
-    return this;
-  }
-
-  @Override
   public String getName() {
     return name;
   }
@@ -477,12 +471,6 @@ public abstract class OAbstractPaginatedStorage
   @Override
   public STATUS getStatus() {
     return status;
-  }
-
-  @Deprecated
-  @Override
-  public boolean isDistributed() {
-    return false;
   }
 
   @Override

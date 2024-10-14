@@ -162,7 +162,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -196,7 +195,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /** This object is bound to each remote ODatabase instances. */
-public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStorage {
+public class OStorageRemote implements ORemotePushHandler, OStorage {
   private static final OLogger logger = OLogManager.instance().logger(OStorageRemote.class);
   @Deprecated public static final String PARAM_CONNECTION_STRATEGY = "connectionStrategy";
 
@@ -2460,11 +2459,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
 
   public OCurrentStorageComponentsFactory getComponentsFactory() {
     return componentsFactory;
-  }
-
-  @Override
-  public OStorage getUnderlying() {
-    return null;
   }
 
   @Override

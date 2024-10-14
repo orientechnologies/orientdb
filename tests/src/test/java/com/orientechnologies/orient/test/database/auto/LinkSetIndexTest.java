@@ -56,7 +56,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     OResultSet result = database.command("select from LinkSetIndexTestClass");
     Assert.assertEquals(result.stream().count(), 0);
 
-    if (database.getStorage().isRemote()) {
+    if (database.isRemote()) {
       OIndex index =
           database.getMetadata().getIndexManagerInternal().getIndex(database, "linkSetIndex");
       Assert.assertEquals(index.getInternal().size(), 0);

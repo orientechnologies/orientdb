@@ -53,10 +53,14 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private final boolean durableNonTxMode;
 
   /** Should be called inside of lock to ensure uniqueness of entity on disk !!! */
-  public OIndexRIDContainer(String name, boolean durableNonTxMode, AtomicLong bonsayFileId) {
+  public OIndexRIDContainer(
+      String name,
+      boolean durableNonTxMode,
+      AtomicLong bonsayFileId,
+      final OAbstractPaginatedStorage storage) {
     long gotFileId = bonsayFileId.get();
     if (gotFileId == 0) {
-      gotFileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
+      gotFileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION, storage);
       bonsayFileId.set(gotFileId);
     }
     this.fileId = gotFileId;
@@ -77,9 +81,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     this.topThreshold = topThreshold;
   }
 
-  private static long resolveFileIdByName(String fileName) {
-    final OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
+  private static long resolveFileIdByName(
+      String fileName, final OAbstractPaginatedStorage storage) {
+
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     Objects.requireNonNull(atomicOperation);

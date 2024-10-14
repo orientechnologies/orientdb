@@ -2425,7 +2425,7 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       throws IOException {
     checkForDatabase();
 
-    if (currentDatabase.getStorage().isRemote()) {
+    if (currentDatabase.isRemote()) {
       message("\nCannot check integrity of non-local database. Connect to it using local mode.");
       return;
     }

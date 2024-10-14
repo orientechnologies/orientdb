@@ -22,20 +22,24 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
 
   private final long fileId;
   private final Set<ORID> embeddedSet;
+  private final OAbstractPaginatedStorage storage;
   private OIndexRIDContainerSBTree tree = null;
   private final int topThreshold =
       OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
 
-  /** Should be called inside of lock to ensure uniqueness of entity on disk !!! */
-  public OMixedIndexRIDContainer(String name, AtomicLong bonsayFileId) {
+  /** Should be called inside of lock to ensure uniqueness of entity on disk !!!
+   * @param storage TODO*/
+  public OMixedIndexRIDContainer(
+      String name, AtomicLong bonsayFileId, OAbstractPaginatedStorage storage) {
     long gotFileId = bonsayFileId.get();
     if (gotFileId == 0) {
-      gotFileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
+      gotFileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION, storage);
       bonsayFileId.set(gotFileId);
     }
     this.fileId = gotFileId;
 
     embeddedSet = new HashSet<>();
+    this.storage = storage;
   }
 
   public OMixedIndexRIDContainer(
@@ -43,11 +47,11 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     this.fileId = fileId;
     this.embeddedSet = embeddedSet;
     this.tree = tree;
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+    storage = (OAbstractPaginatedStorage) db.getStorage();
   }
 
-  private static long resolveFileIdByName(String fileName) {
-    final OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
+  private static long resolveFileIdByName(String fileName, OAbstractPaginatedStorage storage) {
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     Objects.requireNonNull(atomicOperation);
@@ -155,7 +159,6 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     return result;
   }
 
-  @SuppressWarnings("SuspiciousToArrayCall")
   @Override
   public <T> T[] toArray(T[] a) {
     if (tree == null) {
@@ -165,7 +168,6 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     final T[] embeddedArray = embeddedSet.toArray(a);
     final T[] treeArray = tree.toArray(a);
 
-    @SuppressWarnings("unchecked")
     final T[] result =
         (T[])
             java.lang.reflect.Array.newInstance(
@@ -188,8 +190,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     }
 
     if (tree == null) {
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage());
+      tree = new OIndexRIDContainerSBTree(fileId, storage);
     }
 
     return tree.add(oIdentifiable);
@@ -206,8 +207,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
 
     boolean treeWasCreated = false;
     if (tree == null) {
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage());
+      tree = new OIndexRIDContainerSBTree(fileId, storage);
       treeWasCreated = true;
     }
 
@@ -264,8 +264,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
 
     if (c.size() > sizeDiff) {
       if (tree == null) {
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-        tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage());
+        tree = new OIndexRIDContainerSBTree(fileId, storage);
       }
 
       while (iterator.hasNext()) {
@@ -312,8 +311,8 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
       tree.delete();
       tree = null;
     } else if (fileId > 0) {
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage());
+
+      tree = new OIndexRIDContainerSBTree(fileId, storage);
       tree.delete();
     }
   }
