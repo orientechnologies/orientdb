@@ -151,7 +151,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.5.1</version>
                 <configuration>
                     <forkedProcessTimeoutInSeconds>0</forkedProcessTimeoutInSeconds>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
