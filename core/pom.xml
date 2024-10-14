@@ -191,7 +191,7 @@
         <dependency>
             <groupId>com.github.jnr</groupId>
             <artifactId>jnr-posix</artifactId>
-            <version>3.1.19</version>
+            <version>3.1.20</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
