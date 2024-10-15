@@ -383,11 +383,10 @@ public class JSONStreamTest extends DocumentDBBaseTest {
 
       final List<ODocument> result =
           database
-              .getUnderlying()
-              .command(
-                  new OSQLSynchQuery<ODocument>(
-                      "select * from Profile where name = 'Barack' and surname = 'Obama'"))
-              .execute();
+              .command("select * from Profile where name = 'Barack' and surname = 'Obama'")
+              .stream()
+              .map(x -> (ODocument) x.toElement())
+              .toList();
 
       for (final ODocument doc : result) {
         final String jsonFull =

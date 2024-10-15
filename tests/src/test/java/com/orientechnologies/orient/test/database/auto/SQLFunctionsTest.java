@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -459,9 +458,7 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
   @Test(expectedExceptions = OCommandSQLParsingException.class)
   public void queryUndefinedFunction() {
-    database
-        .command(new OSQLSynchQuery<ODocument>("select blaaaa(salary) as max from Account"))
-        .execute();
+    database.command("select blaaaa(salary) as max from Account").next();
   }
 
   @Test

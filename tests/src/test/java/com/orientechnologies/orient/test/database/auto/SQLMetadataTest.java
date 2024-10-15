@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import static org.junit.Assert.assertTrue;
+
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
@@ -65,11 +65,11 @@ public class SQLMetadataTest extends DocumentDBBaseTest {
   @Test
   public void queryMetadataNotSupported() {
     try {
-      database
-          .command(new OSQLSynchQuery<ODocument>("select expand(indexes) from metadata:blaaa"))
-          .execute();
+      database.command("select expand(indexes) from metadata:blaaa").next();
       Assert.fail();
-    } catch (OQueryParsingException e) {
+    } catch (UnsupportedOperationException e) {
+    } catch (OStorageException e) {
+      assertTrue(e.getCause() instanceof UnsupportedOperationException);
     }
   }
 }

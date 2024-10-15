@@ -5,9 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Test;
 
 public class OCustomSQLFunctionsTest extends BaseMemoryDatabase {
@@ -43,7 +41,8 @@ public class OCustomSQLFunctionsTest extends BaseMemoryDatabase {
   }
 
   @Test(expected = OQueryParsingException.class)
-  public void testNonExistingFunction() {
-    db.query(new OSQLSynchQuery<ODocument>("select math_min('boom', 'boom') as boom"));
+  public void tresutestNonExistingFunction() {
+    OResultSet resut = db.query("select math_min('boom', 'boom') as boom");
+    resut.next();
   }
 }

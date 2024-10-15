@@ -959,31 +959,24 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
   @Test
   public void testLetOrder() {
-    OSQLSynchQuery sql =
-        new OSQLSynchQuery(
-            "SELECT"
-                + "      source,"
-                + "  $maxYear as maxYear"
-                + "              FROM"
-                + "      ("
-                + "          SELECT expand( $union ) "
-                + "  LET"
-                + "      $a = (SELECT 'A' as source, 2013 as year),"
-                + "  $b = (SELECT 'B' as source, 2012 as year),"
-                + "  $union = unionAll($a,$b) "
-                + "  ) "
-                + "  LET "
-                + "      $maxYear = max(year)"
-                + "  GROUP BY"
-                + "  source");
-    try {
-      List<ODocument> results = db.query(sql);
-      fail(
-          "Invalid query, usage of LET, aggregate functions and GROUP BY together is not"
-              + " supported");
-    } catch (OCommandSQLParsingException x) {
-
-    }
+    String sql =
+        "SELECT"
+            + "      source,"
+            + "  $maxYear as maxYear"
+            + "              FROM"
+            + "      ("
+            + "          SELECT expand( $union ) "
+            + "  LET"
+            + "      $a = (SELECT 'A' as source, 2013 as year),"
+            + "  $b = (SELECT 'B' as source, 2012 as year),"
+            + "  $union = unionAll($a,$b) "
+            + "  ) "
+            + "  LET "
+            + "      $maxYear = max(year)"
+            + "  GROUP BY"
+            + "  source";
+    List results = db.query(sql).stream().toList();
+    assertEquals(results.size(), 2);
   }
 
   @Test

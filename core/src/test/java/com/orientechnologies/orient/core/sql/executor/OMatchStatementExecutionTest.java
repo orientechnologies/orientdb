@@ -1713,26 +1713,25 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     // - far depends on baz
     // - baz depends on bar
     // - bar depends on far
-    OSQLSynchQuery query =
-        new OSQLSynchQuery(
-            "MATCH {\n"
-                + "    class: testCircularDependency_Foo,\n"
-                + "    as: foo\n"
-                + "}.out('testCircularDependency_Foo_Far') {\n"
-                + "    where: ($matched.baz IS NOT null),\n"
-                + "    as: far\n"
-                + "}, {\n"
-                + "    as: foo\n"
-                + "}.out('testCircularDependency_Foo_Bar') {\n"
-                + "    where: ($matched.far IS NOT null),\n"
-                + "    as: bar\n"
-                + "}.out('testCircularDependency_Bar_Baz') {\n"
-                + "    where: ($matched.bar IS NOT null),\n"
-                + "    as: baz\n"
-                + "} RETURN $matches");
+    String query =
+        "MATCH {\n"
+            + "    class: testCircularDependency_Foo,\n"
+            + "    as: foo\n"
+            + "}.out('testCircularDependency_Foo_Far') {\n"
+            + "    where: ($matched.baz IS NOT null),\n"
+            + "    as: far\n"
+            + "}, {\n"
+            + "    as: foo\n"
+            + "}.out('testCircularDependency_Foo_Bar') {\n"
+            + "    where: ($matched.far IS NOT null),\n"
+            + "    as: bar\n"
+            + "}.out('testCircularDependency_Bar_Baz') {\n"
+            + "    where: ($matched.bar IS NOT null),\n"
+            + "    as: baz\n"
+            + "} RETURN $matches";
 
     try {
-      db.query(query);
+      db.query(query).next();
       fail();
     } catch (OCommandExecutionException x) {
       // passed the test
@@ -1756,18 +1755,16 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
         .close();
 
     // "bar" in the following query declares a dependency on the alias "baz", which doesn't exist.
-    OSQLSynchQuery query =
-        new OSQLSynchQuery(
-            "MATCH {\n"
-                + "    class: testUndefinedAliasDependency_Foo,\n"
-                + "    as: foo\n"
-                + "}.out('testUndefinedAliasDependency_Foo_Bar') {\n"
-                + "    where: ($matched.baz IS NOT null),\n"
-                + "    as: bar\n"
-                + "} RETURN $matches");
-
+    String query =
+        "MATCH {\n"
+            + "    class: testUndefinedAliasDependency_Foo,\n"
+            + "    as: foo\n"
+            + "}.out('testUndefinedAliasDependency_Foo_Bar') {\n"
+            + "    where: ($matched.baz IS NOT null),\n"
+            + "    as: bar\n"
+            + "} RETURN $matches";
     try {
-      db.query(query);
+      db.query(query).next();
       fail();
     } catch (OCommandExecutionException x) {
       // passed the test

@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.IOException;
 import java.util.Collections;
@@ -128,8 +128,7 @@ public class MultipleDBTest extends DocumentDBBaseTest {
 
                 start = System.currentTimeMillis();
                 for (int j = 0; j < operations_read; j++) {
-                  List<DummyObject> l =
-                      tx.query(new OSQLSynchQuery<DummyObject>(" select * from DummyObject "));
+                  List<OResult> l = tx.query(" select * from DummyObject ").stream().toList();
                   Assert.assertEquals(l.size(), operations_write);
 
                   // if ((j + 1) % 20000 == 0) {
@@ -246,8 +245,7 @@ public class MultipleDBTest extends DocumentDBBaseTest {
 
                 start = System.currentTimeMillis();
                 for (int j = 0; j < operations_read; j++) {
-                  List<DummyObject> l =
-                      tx.query(new OSQLSynchQuery<DummyObject>(" select * from DummyObject "));
+                  List<OResult> l = tx.query(" select * from DummyObject ").stream().toList();
                   Assert.assertEquals(l.size(), operations_write);
 
                   // if ((j + 1) % 20000 == 0) {
