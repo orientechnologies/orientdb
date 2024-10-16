@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OChainedIndexProxy;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.Arrays;
 import java.util.List;
 import org.testng.annotations.AfterClass;
@@ -30,7 +30,6 @@ import org.testng.annotations.Test;
  *
  * <p>Prefix "lpirt" in class names means "LinkedPropertyIndexReuseTest".
  */
-@SuppressWarnings("SuspiciousMethodCalls")
 @Test(groups = {"index"})
 public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseTest {
 
@@ -71,14 +70,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtStudent where group.curator.name = 'Someone'"));
+    List<OResult> result =
+        database.query("select from lpirtStudent where group.curator.name = 'Someone'").stream()
+            .toList();
     assertEquals(result.size(), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -86,16 +84,15 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtStudent where group.curator.salary = 600"));
+    List<OResult> result =
+        database.query("select from lpirtStudent where group.curator.salary = 600").stream()
+            .toList();
     assertEquals(result.size(), 3);
     assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "Roger Connor"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "William James"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -103,16 +100,17 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtStudent where group.curator.name = 'Someone else' limit 1"));
+    List<OResult> result =
+        database
+            .query("select from lpirtStudent where group.curator.name = 'Someone else' limit 1")
+            .stream()
+            .toList();
     assertEquals(result.size(), 1);
     assertTrue(
         Arrays.asList("Jane Smith", "James Bell", "Roger Connor", "William James")
-            .contains(result.get(0).field("name")));
+            .contains(result.get(0).getProperty("name")));
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -120,17 +118,16 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtStudent where group.curator.salary < 1000"));
+    List<OResult> result =
+        database.query("select from lpirtStudent where group.curator.salary < 1000").stream()
+            .toList();
     assertEquals(result.size(), 4);
     assertEquals(containsDocumentWithFieldValue(result, "name", "Jane Smith"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "Roger Connor"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "William James"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 5);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -138,20 +135,21 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtStudent where group.curator.salary < 1000 limit 2"));
+    List<OResult> result =
+        database
+            .query("select from lpirtStudent where group.curator.salary < 1000 limit 2")
+            .stream()
+            .toList();
     assertEquals(result.size(), 2);
 
     final List<String> expectedNames =
         Arrays.asList("Jane Smith", "James Bell", "Roger Connor", "William James");
 
-    for (ODocument aResult : result) {
-      assertTrue(expectedNames.contains(aResult.field("name")));
+    for (OResult aResult : result) {
+      assertTrue(expectedNames.contains(aResult.getProperty("name")));
     }
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 5);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -159,15 +157,14 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select from lpirtStudent where diploma.GPA <= 4"));
+    List<OResult> result =
+        database.query("select from lpirtStudent where diploma.GPA <= 4").stream().toList();
     assertEquals(result.size(), 3);
     assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "William James"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -175,16 +172,14 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtStudent where diploma.GPA <= 4 limit 1"));
+    List<OResult> result =
+        database.query("select from lpirtStudent where diploma.GPA <= 4 limit 1").stream().toList();
     assertEquals(result.size(), 1);
     assertTrue(
         Arrays.asList("John Smith", "James Bell", "William James")
-            .contains(result.get(0).field("name")));
+            .contains(result.get(0).getProperty("name")));
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -192,14 +187,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtStudent where group.curator.salary > 1000"));
+    List<OResult> result =
+        database.query("select from lpirtStudent where group.curator.salary > 1000").stream()
+            .toList();
     assertEquals(result.size(), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -207,18 +201,17 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtStudent where group.curator.salary > 550 limit 1"));
+    List<OResult> result =
+        database.query("select from lpirtStudent where group.curator.salary > 550 limit 1").stream()
+            .toList();
     assertEquals(result.size(), 1);
     final List<String> expectedNames =
         Arrays.asList("John Smith", "James Bell", "Roger Connor", "William James");
-    for (ODocument aResult : result) {
-      assertTrue(expectedNames.contains(aResult.field("name")));
+    for (OResult aResult : result) {
+      assertTrue(expectedNames.contains(aResult.getProperty("name")));
     }
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -226,15 +219,14 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtGroup where curator.salary between 500 and 1000"));
+    List<OResult> result =
+        database.query("select from lpirtGroup where curator.salary between 500 and 1000").stream()
+            .toList();
     assertEquals(result.size(), 2);
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-2"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-3"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -242,18 +234,19 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtGroup where curator.salary between 500 and 1000 limit 1"));
+    List<OResult> result =
+        database
+            .query("select from lpirtGroup where curator.salary between 500 and 1000 limit 1")
+            .stream()
+            .toList();
     assertEquals(result.size(), 1);
 
     final List<String> expectedNames = Arrays.asList("PZ-08-2", "PZ-08-3");
-    for (ODocument aResult : result) {
-      assertTrue(expectedNames.contains(aResult.field("name")));
+    for (OResult aResult : result) {
+      assertTrue(expectedNames.contains(aResult.getProperty("name")));
     }
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -261,15 +254,14 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtGroup where curator.salary in [500, 600]"));
+    List<OResult> result =
+        database.query("select from lpirtGroup where curator.salary in [500, 600]").stream()
+            .toList();
     assertEquals(result.size(), 2);
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-2"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-3"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test
@@ -277,18 +269,17 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtGroup where curator.salary in [500, 600] limit 1"));
+    List<OResult> result =
+        database.query("select from lpirtGroup where curator.salary in [500, 600] limit 1").stream()
+            .toList();
     assertEquals(result.size(), 1);
 
     final List<String> expectedNames = Arrays.asList("PZ-08-2", "PZ-08-3");
-    for (ODocument aResult : result) {
-      assertTrue(expectedNames.contains(aResult.field("name")));
+    for (OResult aResult : result) {
+      assertTrue(expectedNames.contains(aResult.getProperty("name")));
     }
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   /**
@@ -299,40 +290,37 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   public void testUniquePartialSearch() {
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
-                "select from lpirtStudent where diploma.name = 'diploma3'"));
+    List<OResult> result =
+        database.query("select from lpirtStudent where diploma.name = 'diploma3'").stream()
+            .toList();
 
     assertEquals(result.size(), 2);
     final List<String> expectedNames = Arrays.asList("William James", "James Bell");
-    for (ODocument aResult : result) {
-      assertTrue(expectedNames.contains(aResult.field("name")));
+    for (OResult aResult : result) {
+      assertTrue(expectedNames.contains(aResult.getProperty("name")));
     }
 
-    assertEquals(indexUsages(), oldIndexUsage + 2);
+    assertEquals(indexUsages(), oldIndexUsage + 1);
   }
 
   @Test
   public void testHashIndexIsUsedAsBaseIndex() {
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select from lpirtStudent where transcript.id = '1'"));
+    List<OResult> result =
+        database.query("select from lpirtStudent where transcript.id = '1'").stream().toList();
 
     assertEquals(result.size(), 1);
 
-    assertEquals(indexUsages(), oldIndexUsage + 2);
+    assertEquals(indexUsages(), oldIndexUsage + 1);
   }
 
   @Test
   public void testCompositeHashIndexIgnored() {
     long oldIndexUsage = indexUsages();
 
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>("select from lpirtStudent where skill.name = 'math'"));
+    List<OResult> result =
+        database.query("select from lpirtStudent where skill.name = 'math'").stream().toList();
 
     assertEquals(result.size(), 1);
 
@@ -353,7 +341,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     final ODocument group1 = database.newInstance("lpirtGroup");
     group1.field("name", "PZ-08-1");
     group1.field("curator", curator1);
-    group1.save();
+    database.save(group1);
 
     final ODocument diploma1 = database.newInstance("lpirtDiploma");
     diploma1.field("GPA", 3.);
@@ -376,7 +364,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     student1.field("diploma", diploma1);
     student1.field("transcript", transcript);
     student1.field("skill", skill);
-    student1.save();
+    database.save(student1);
 
     ODocument curator2 = database.newInstance("lpirtCurator");
     curator2.field("name", "Someone else");
@@ -385,7 +373,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     final ODocument group2 = database.newInstance("lpirtGroup");
     group2.field("name", "PZ-08-2");
     group2.field("curator", curator2);
-    group2.save();
+    database.save(group2);
 
     final ODocument diploma2 = database.newInstance("lpirtDiploma");
     diploma2.field("GPA", 5.);
@@ -400,7 +388,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     student2.field("name", "Jane Smith");
     student2.field("group", group2);
     student2.field("diploma", diploma2);
-    student2.save();
+    database.save(student2);
 
     ODocument curator3 = database.newInstance("lpirtCurator");
     curator3.field("name", "Someone else");
@@ -409,7 +397,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     final ODocument group3 = database.newInstance("lpirtGroup");
     group3.field("name", "PZ-08-3");
     group3.field("curator", curator3);
-    group3.save();
+    database.save(group3);
 
     final ODocument diploma3 = database.newInstance("lpirtDiploma");
     diploma3.field("GPA", 4.);
@@ -423,18 +411,18 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     student3.field("name", "James Bell");
     student3.field("group", group3);
     student3.field("diploma", diploma3);
-    student3.save();
+    database.save(student3);
 
     final ODocument student4 = database.newInstance("lpirtStudent");
     student4.field("name", "Roger Connor");
     student4.field("group", group3);
-    student4.save();
+    database.save(student4);
 
     final ODocument student5 = database.newInstance("lpirtStudent");
     student5.field("name", "William James");
     student5.field("group", group3);
     student5.field("diploma", diploma3);
-    student5.save();
+    database.save(student5);
   }
 
   private void createSchemaForTest() {
@@ -515,10 +503,10 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   }
 
   private int containsDocumentWithFieldValue(
-      final List<ODocument> docList, final String fieldName, final Object fieldValue) {
+      final List<OResult> docList, final String fieldName, final Object fieldValue) {
     int count = 0;
-    for (final ODocument docItem : docList) {
-      if (fieldValue.equals(docItem.field(fieldName))) {
+    for (final OResult docItem : docList) {
+      if (fieldValue.equals(docItem.getProperty(fieldName))) {
         count++;
       }
     }
