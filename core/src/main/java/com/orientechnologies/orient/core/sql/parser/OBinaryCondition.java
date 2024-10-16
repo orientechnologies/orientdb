@@ -449,7 +449,12 @@ public class OBinaryCondition extends OBooleanExpression {
 
   @Override
   public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
-    if (operator instanceof OEqualsCompareOperator
+    if ((operator instanceof OEqualsCompareOperator
+            || operator instanceof OLtOperator
+            || operator instanceof OGtOperator
+            || operator instanceof OLeOperator
+            || operator instanceof OGeOperator
+            || operator instanceof OContainsKeyOperator)
         && right.isEarlyCalculated(ctx)
         && left.isIndexChain(ctx, clazz)) {
       OInCondition result = new OInCondition(-1);
@@ -471,14 +476,22 @@ public class OBinaryCondition extends OBooleanExpression {
               .getLinkedClass();
       result.rightStatement =
           indexChainToStatement(
-              ((OBaseExpression) left.mathExpression).modifier, nextClazz, right, ctx);
+              ((OBaseExpression) left.mathExpression).modifier,
+              nextClazz,
+              right,
+              ctx,
+              operator.copy());
       return result;
     }
     return this;
   }
 
   public static OSelectStatement indexChainToStatement(
-      OModifier modifier, OClass clazz, OExpression right, OCommandContext ctx) {
+      OModifier modifier,
+      OClass clazz,
+      OExpression right,
+      OCommandContext ctx,
+      OBinaryCompareOperator operator) {
     OClass queryClass = clazz;
 
     OSelectStatement result = new OSelectStatement(-1);
@@ -499,7 +512,7 @@ public class OBinaryCondition extends OBooleanExpression {
     ((OBaseExpression) base.left.mathExpression).modifier =
         modifier.next == null ? null : modifier.next.copy();
 
-    base.operator = new OEqualsCompareOperator(-1);
+    base.operator = operator;
     base.right = right.copy();
 
     return result;

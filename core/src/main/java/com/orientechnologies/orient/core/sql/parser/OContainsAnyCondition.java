@@ -300,7 +300,11 @@ public class OContainsAnyCondition extends OBooleanExpression {
       OParenthesisExpression newRight = new OParenthesisExpression(-1);
       newRight.statement =
           OBinaryCondition.indexChainToStatement(
-              ((OBaseExpression) left.mathExpression).modifier, nextClazz, right, ctx);
+              ((OBaseExpression) left.mathExpression).modifier,
+              nextClazz,
+              right,
+              ctx,
+              new OEqualsCompareOperator(-1));
       result.right = new OExpression(-1);
       result.right.mathExpression = newRight;
       return result;
