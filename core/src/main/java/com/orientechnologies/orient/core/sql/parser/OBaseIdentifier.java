@@ -387,14 +387,23 @@ public class OBaseIdentifier extends SimpleNode {
 
   public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
     if (suffix != null && suffix.isBaseIdentifier()) {
-      OProperty prop = clazz.getProperty(suffix.getIdentifier().getStringValue());
+      final String fieldName = suffix.getIdentifier().getStringValue();
+      OProperty prop = clazz.getProperty(fieldName);
       if (prop == null) {
         return false;
       }
       Collection<OIndex> allIndexes = prop.getAllIndexes();
 
       return allIndexes != null
-          && allIndexes.stream().anyMatch(idx -> idx.getDefinition().getFields().size() == 1);
+          && allIndexes.stream()
+              .anyMatch(
+                  idx -> {
+                    if (idx.supportsOrderedIterations()) {
+                      return idx.getDefinition().getFields().get(0).equals(fieldName);
+                    } else {
+                      return idx.getDefinition().getFields().size() == 1;
+                    }
+                  });
     }
     return false;
   }

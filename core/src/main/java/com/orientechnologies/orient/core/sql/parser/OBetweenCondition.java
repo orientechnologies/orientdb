@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -291,6 +292,68 @@ public class OBetweenCondition extends OBooleanExpression {
       return false;
     }
     return true;
+  }
+
+  @Override
+  public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
+    if (second.isEarlyCalculated(ctx)
+        && third.isEarlyCalculated(ctx)
+        && first.isIndexChain(ctx, clazz)) {
+      OInCondition result = new OInCondition(-1);
+
+      result.left = new OExpression(-1);
+      OBaseExpression base = new OBaseExpression(-1);
+      OBaseIdentifier identifier = new OBaseIdentifier(-1);
+      identifier.suffix = new OSuffixIdentifier(-1);
+      identifier.suffix.setIdentifier(
+          ((OBaseExpression) first.mathExpression).getIdentifier().suffix.getIdentifier());
+      base.setIdentifier(identifier);
+      result.left.mathExpression = base;
+
+      result.operator = new OInOperator(-1);
+
+      OClass nextClazz =
+          clazz
+              .getProperty(base.getIdentifier().suffix.getIdentifier().getStringValue())
+              .getLinkedClass();
+      result.rightStatement =
+          indexChainToStatement(
+              ((OBaseExpression) first.mathExpression).modifier, nextClazz, second, third, ctx);
+      return result;
+    }
+    return this;
+  }
+
+  public static OSelectStatement indexChainToStatement(
+      OModifier modifier,
+      OClass clazz,
+      OExpression second,
+      OExpression third,
+      OCommandContext ctx) {
+    OClass queryClass = clazz;
+
+    OSelectStatement result = new OSelectStatement(-1);
+    result.target = new OFromClause(-1);
+    result.target.setItem(new OFromItem(-1));
+    result.target.getItem().identifier = new OIdentifier(queryClass.getName());
+
+    result.whereClause = new OWhereClause(-1);
+    OBetweenCondition base = new OBetweenCondition(-1);
+    result.whereClause.baseExpression = new ONotBlock(-1);
+    ((ONotBlock) result.whereClause.baseExpression).sub = base;
+    ((ONotBlock) result.whereClause.baseExpression).negate = false;
+
+    base.first = new OExpression(-1);
+    base.first.mathExpression = new OBaseExpression(-1);
+    ((OBaseExpression) base.first.mathExpression)
+        .setIdentifier(new OBaseIdentifier(modifier.suffix.getIdentifier()));
+    ((OBaseExpression) base.first.mathExpression).modifier =
+        modifier.next == null ? null : modifier.next.copy();
+
+    base.second = second.copy();
+    base.third = third.copy();
+
+    return result;
   }
 
   @Override

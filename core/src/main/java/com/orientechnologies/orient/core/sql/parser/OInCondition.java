@@ -6,6 +6,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -470,6 +471,66 @@ public class OInCondition extends OBooleanExpression {
     } else {
       return true;
     }
+  }
+
+  @Override
+  public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
+    if (rightMathExpression != null
+        && rightMathExpression.isEarlyCalculated(ctx)
+        && left.isIndexChain(ctx, clazz)) {
+      OInCondition result = new OInCondition(-1);
+
+      result.left = new OExpression(-1);
+      OBaseExpression base = new OBaseExpression(-1);
+      OBaseIdentifier identifier = new OBaseIdentifier(-1);
+      identifier.suffix = new OSuffixIdentifier(-1);
+      identifier.suffix.setIdentifier(
+          ((OBaseExpression) left.mathExpression).getIdentifier().suffix.getIdentifier());
+      base.setIdentifier(identifier);
+      result.left.mathExpression = base;
+
+      result.operator = new OInOperator(-1);
+
+      OClass nextClazz =
+          clazz
+              .getProperty(base.getIdentifier().suffix.getIdentifier().getStringValue())
+              .getLinkedClass();
+      result.rightStatement =
+          indexChainToStatement(
+              ((OBaseExpression) left.mathExpression).modifier,
+              nextClazz,
+              rightMathExpression,
+              ctx);
+      return result;
+    }
+    return this;
+  }
+
+  public static OSelectStatement indexChainToStatement(
+      OModifier modifier, OClass clazz, OMathExpression right, OCommandContext ctx) {
+    OClass queryClass = clazz;
+
+    OSelectStatement result = new OSelectStatement(-1);
+    result.target = new OFromClause(-1);
+    result.target.setItem(new OFromItem(-1));
+    result.target.getItem().identifier = new OIdentifier(queryClass.getName());
+
+    result.whereClause = new OWhereClause(-1);
+    OInCondition base = new OInCondition(-1);
+    result.whereClause.baseExpression = new ONotBlock(-1);
+    ((ONotBlock) result.whereClause.baseExpression).sub = base;
+    ((ONotBlock) result.whereClause.baseExpression).negate = false;
+
+    base.left = new OExpression(-1);
+    base.left.mathExpression = new OBaseExpression(-1);
+    ((OBaseExpression) base.left.mathExpression)
+        .setIdentifier(new OBaseIdentifier(modifier.suffix.getIdentifier()));
+    ((OBaseExpression) base.left.mathExpression).modifier =
+        modifier.next == null ? null : modifier.next.copy();
+
+    base.rightMathExpression = right.copy();
+
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */
