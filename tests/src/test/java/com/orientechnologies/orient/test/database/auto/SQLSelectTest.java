@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -27,13 +26,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,7 +43,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -1371,9 +1367,8 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("p1", "a");
-    database.query(new OSQLSynchQuery<ODocument>("select from test where (f1 = :p1)"), parameters);
-    database.query(
-        new OSQLSynchQuery<ODocument>("select from test where f1 = :p1 and f2 = :p1"), parameters);
+    database.query("select from test where (f1 = :p1)", parameters);
+    database.query("select from test where f1 = :p1 and f2 = :p1", parameters);
   }
 
   @Test
@@ -1613,166 +1608,6 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   @Test
-  public void queryAsynch() {
-    final String sqlOne = "select * from company where id between 4 and 7";
-    final String sqlTwo =
-        "select $names let $names = (select EXPAND( addresses.city ) as city from Account where"
-            + " addresses.size() > 0 )";
-
-    final List<ODocument> synchResultOne =
-        database.command(new OSQLSynchQuery<ODocument>(sqlOne)).execute();
-    final List<ODocument> synchResultTwo =
-        database.command(new OSQLSynchQuery<ODocument>(sqlTwo)).execute();
-
-    Assert.assertTrue(synchResultOne.size() > 0);
-    Assert.assertTrue(synchResultTwo.size() > 0);
-
-    final List<ODocument> asynchResultOne = new ArrayList<ODocument>();
-    final List<ODocument> asynchResultTwo = new ArrayList<ODocument>();
-    final AtomicBoolean endOneCalled = new AtomicBoolean();
-    final AtomicBoolean endTwoCalled = new AtomicBoolean();
-
-    database
-        .command(
-            new OSQLAsynchQuery<ODocument>(
-                sqlOne,
-                new OCommandResultListener() {
-                  @Override
-                  public boolean result(Object iRecord) {
-                    asynchResultOne.add((ODocument) iRecord);
-                    return true;
-                  }
-
-                  @Override
-                  public void end() {
-                    endOneCalled.set(true);
-
-                    database
-                        .command(
-                            new OSQLAsynchQuery<ODocument>(
-                                sqlTwo,
-                                new OCommandResultListener() {
-                                  @Override
-                                  public boolean result(Object iRecord) {
-                                    asynchResultTwo.add((ODocument) iRecord);
-                                    return true;
-                                  }
-
-                                  @Override
-                                  public void end() {
-                                    endTwoCalled.set(true);
-                                  }
-
-                                  @Override
-                                  public Object getResult() {
-                                    return null;
-                                  }
-                                }))
-                        .execute();
-                  }
-
-                  @Override
-                  public Object getResult() {
-                    return null;
-                  }
-                }))
-        .execute();
-
-    Assert.assertTrue(endOneCalled.get());
-    Assert.assertTrue(endTwoCalled.get());
-
-    Assert.assertTrue(
-        ODocumentHelper.compareCollections(
-            database, synchResultTwo, database, asynchResultTwo, null),
-        "synchResultTwo=" + synchResultTwo.size() + " asynchResultTwo=" + asynchResultTwo.size());
-    Assert.assertTrue(
-        ODocumentHelper.compareCollections(
-            database, synchResultOne, database, asynchResultOne, null),
-        "synchResultOne=" + synchResultOne.size() + " asynchResultOne=" + asynchResultOne.size());
-  }
-
-  @Test
-  public void queryAsynchHalfForheFirstQuery() {
-    final String sqlOne = "select * from company where id between 4 and 7";
-    final String sqlTwo =
-        "select $names let $names = (select EXPAND( addresses.city ) as city from Account where"
-            + " addresses.size() > 0 )";
-
-    final List<ODocument> synchResultOne =
-        database.command(sqlOne).stream().map((x) -> (ODocument) x.toElement()).toList();
-    final List<ODocument> synchResultTwo =
-        database.command(sqlTwo).stream().map((x) -> (ODocument) x.toElement()).toList();
-
-    Assert.assertTrue(synchResultOne.size() > 0);
-    Assert.assertTrue(synchResultTwo.size() > 0);
-
-    final List<ODocument> asynchResultOne = new ArrayList<ODocument>();
-    final List<ODocument> asynchResultTwo = new ArrayList<ODocument>();
-    final AtomicBoolean endOneCalled = new AtomicBoolean();
-    final AtomicBoolean endTwoCalled = new AtomicBoolean();
-
-    database
-        .command(
-            new OSQLAsynchQuery<ODocument>(
-                sqlOne,
-                new OCommandResultListener() {
-                  @Override
-                  public boolean result(Object iRecord) {
-                    asynchResultOne.add((ODocument) iRecord);
-                    return asynchResultOne.size() < synchResultOne.size() / 2;
-                  }
-
-                  @Override
-                  public void end() {
-                    endOneCalled.set(true);
-
-                    database
-                        .command(
-                            new OSQLAsynchQuery<ODocument>(
-                                sqlTwo,
-                                new OCommandResultListener() {
-                                  @Override
-                                  public boolean result(Object iRecord) {
-                                    asynchResultTwo.add((ODocument) iRecord);
-                                    return true;
-                                  }
-
-                                  @Override
-                                  public void end() {
-                                    endTwoCalled.set(true);
-                                  }
-
-                                  @Override
-                                  public Object getResult() {
-                                    return null;
-                                  }
-                                }))
-                        .execute();
-                  }
-
-                  @Override
-                  public Object getResult() {
-                    return null;
-                  }
-                }))
-        .execute();
-
-    Assert.assertTrue(endOneCalled.get());
-    Assert.assertTrue(endTwoCalled.get());
-
-    Assert.assertTrue(
-        ODocumentHelper.compareCollections(
-            database,
-            synchResultOne.subList(0, synchResultOne.size() / 2),
-            database,
-            asynchResultOne,
-            null));
-    Assert.assertTrue(
-        ODocumentHelper.compareCollections(
-            database, synchResultTwo, database, asynchResultTwo, null));
-  }
-
-  @Test
   public void queryOrderByRidDesc() {
     List<ODocument> result = executeQuery("select from OUser order by @rid desc", database);
 
@@ -1798,16 +1633,22 @@ public class SQLSelectTest extends AbstractSelectTest {
     final List<ODocument> classResult =
         new ArrayList<ODocument>(
             (List<ODocument>)
-                database.query(
-                    new OSQLSynchQuery<ODocument>(
+                database
+                    .query(
                         "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name"
-                            + " is not null)")));
+                            + " is not null)")
+                    .stream()
+                    .map(x -> (ODocument) x.toElement())
+                    .toList());
 
     final List<ODocument> indexValuesResult =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+        database
+            .query(
                 "select from indexvalues:selectFromIndexValues where ((nick like 'J%') or (nick"
-                    + " like 'N%')) and (name is not null)"));
+                    + " like 'N%')) and (name is not null)")
+            .stream()
+            .map(x -> (ODocument) x.toElement())
+            .toList();
 
     Assert.assertEquals(indexValuesResult.size(), classResult.size());
 

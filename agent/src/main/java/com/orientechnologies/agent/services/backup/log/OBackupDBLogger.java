@@ -22,7 +22,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
-import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -31,7 +30,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -278,32 +276,10 @@ public class OBackupDBLogger implements OBackupLogger {
     getDatabase()
         .executeInDBScope(
             session -> {
-              final List<Long> units = new ArrayList<Long>();
-
-              session
-                  .command(
-                      new OSQLAsynchQuery(
-                          selectQuery,
-                          new OCommandResultListener() {
-                            @Override
-                            public boolean result(Object iRecord) {
-
-                              ODocument doc = (ODocument) iRecord;
-
-                              Long unitId = doc.field("unitId");
-                              units.add(unitId);
-                              return true;
-                            }
-
-                            @Override
-                            public void end() {}
-
-                            @Override
-                            public Object getResult() {
-                              return null;
-                            }
-                          }))
-                  .execute(queryParams);
+              final List<Long> units =
+                  session.command(selectQuery, queryParams).stream()
+                      .map(x -> (Long) x.getProperty("unitId"))
+                      .toList();
 
               for (Long unit : units) {
                 try {
@@ -337,28 +313,13 @@ public class OBackupDBLogger implements OBackupLogger {
     getDatabase()
         .executeInDBScope(
             session -> {
-              session
-                  .command(
-                      new OSQLAsynchQuery(
-                          selectQuery,
-                          new OCommandResultListener() {
-                            @Override
-                            public boolean result(Object iRecord) {
-
-                              ODocument doc = (ODocument) iRecord;
-                              dropFile(doc);
-                              return true;
-                            }
-
-                            @Override
-                            public void end() {}
-
-                            @Override
-                            public Object getResult() {
-                              return null;
-                            }
-                          }))
-                  .execute(queryParams);
+              List<ODocument> results =
+                  session.query(selectQuery, queryParams).stream()
+                      .map(x -> (ODocument) x.getElement().get())
+                      .toList();
+              for (ODocument doc : results) {
+                dropFile(doc);
+              }
               session.command(query, queryParams).close();
               return null;
             });
@@ -387,28 +348,13 @@ public class OBackupDBLogger implements OBackupLogger {
     getDatabase()
         .executeInDBScope(
             session -> {
-              session
-                  .command(
-                      new OSQLAsynchQuery(
-                          selectQuery,
-                          new OCommandResultListener() {
-                            @Override
-                            public boolean result(Object iRecord) {
-
-                              ODocument doc = (ODocument) iRecord;
-                              dropFile(doc);
-                              return true;
-                            }
-
-                            @Override
-                            public void end() {}
-
-                            @Override
-                            public Object getResult() {
-                              return null;
-                            }
-                          }))
-                  .execute(queryParams);
+              List<ODocument> results =
+                  session.command(selectQuery, queryParams).stream()
+                      .map(x -> (ODocument) x.getElement().get())
+                      .toList();
+              for (ODocument doc : results) {
+                dropFile(doc);
+              }
               session.command(query, queryParams).close();
               return null;
             });
