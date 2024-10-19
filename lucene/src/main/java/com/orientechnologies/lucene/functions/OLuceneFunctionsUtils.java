@@ -5,12 +5,17 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OFromClause;
+import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 import org.apache.lucene.index.memory.MemoryIndex;
 
 /** Created by frank on 13/02/2017. */
 public class OLuceneFunctionsUtils {
   public static final String MEMORY_INDEX = "_memoryIndex";
+
+  private static final String MAX_HITS = "luceneMaxHits";
 
   protected static OLuceneFullTextIndex searchForIndex(OExpression[] args, OCommandContext ctx) {
     final String indexName = (String) args[0].execute((OIdentifiable) null, ctx);
@@ -56,5 +61,33 @@ public class OLuceneFunctionsUtils {
       sb.append(c);
     }
     return sb.toString();
+  }
+
+  public static void configureResultLimit(
+      OFromClause target, OCommandContext ctx, ODocument metadata) {
+    Object limitType = metadata.getProperty("limit");
+
+    long maxHits = 0;
+    if ("select".equals(limitType) && target.jjtGetParent() instanceof OSelectStatement) {
+      OSelectStatement select = (OSelectStatement) target.jjtGetParent();
+      if (select.getLimit() != null) {
+        maxHits += ((Number) select.getLimit().getValue(ctx)).longValue();
+      }
+      if (select.getSkip() != null) {
+        maxHits += ((Number) select.getSkip().getValue(ctx)).longValue();
+      }
+    } else if (limitType instanceof Number) {
+      maxHits = ((Number) limitType).longValue();
+    }
+    if (maxHits != 0) {
+      ctx.setVariable(MAX_HITS, maxHits);
+    }
+  }
+
+  public static Long getResultLimit(OCommandContext ctx) {
+    if (ctx == null) {
+      return null;
+    }
+    return (Long) ctx.getVariable(OLuceneFunctionsUtils.MAX_HITS);
   }
 }

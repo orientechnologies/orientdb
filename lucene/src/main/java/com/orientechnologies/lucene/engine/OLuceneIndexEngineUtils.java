@@ -27,7 +27,8 @@ import org.apache.lucene.search.TopDocs;
 /** Created by frank on 04/05/2017. */
 public class OLuceneIndexEngineUtils {
 
-  public static void sendTotalHits(String indexName, OCommandContext context, long totalHits) {
+  public static void sendTotalHits(
+      String indexName, OCommandContext context, long totalHits, long returnedHits) {
     if (context != null) {
 
       if (context.getVariable("totalHits") == null) {
@@ -36,6 +37,12 @@ public class OLuceneIndexEngineUtils {
         context.setVariable("totalHits", null);
       }
       context.setVariable((indexName + ".totalHits").replace(".", "_"), totalHits);
+      if (context.getVariable("returnedHits") == null) {
+        context.setVariable("returnedHits", returnedHits);
+      } else {
+        context.setVariable("returnedHits", null);
+      }
+      context.setVariable((indexName + ".returnedHits").replace(".", "_"), returnedHits);
     }
   }
 
