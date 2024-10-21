@@ -170,7 +170,7 @@
         <javaassist.version>3.30.2-GA</javaassist.version>
         <jaxb.api.version>2.3.0</jaxb.api.version>
         <project.rootdir>${project.basedir}/</project.rootdir>
-        <graalvm.version>24.1.0</graalvm.version>
+        <graalvm.version>24.1.1</graalvm.version>
         <cloudbees.syslog.version>1.1.7</cloudbees.syslog.version>
     </properties>
 
