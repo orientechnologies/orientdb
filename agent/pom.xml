@@ -100,7 +100,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.12.773</version>
+            <version>1.12.776</version>
         </dependency>
 
         <!-- ODB CE -->
