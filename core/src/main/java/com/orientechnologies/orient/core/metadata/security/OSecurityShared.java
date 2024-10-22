@@ -659,7 +659,13 @@ public class OSecurityShared implements OSecurityInternal {
     writerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
     writerRole.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_READ);
     writerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
-    writerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(
+        ORule.ResourceGeneric.COMMAND,
+        null,
+        ORole.PERMISSION_CREATE
+            | ORole.PERMISSION_DELETE
+            | ORole.PERMISSION_READ
+            | ORole.PERMISSION_UPDATE);
     writerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_ALL);
     writerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
     writerRole.addRule(ORule.ResourceGeneric.CLASS, OSequence.CLASS_NAME, ORole.PERMISSION_READ);
