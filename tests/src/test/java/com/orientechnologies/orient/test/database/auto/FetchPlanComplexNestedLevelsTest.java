@@ -17,7 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -73,14 +73,16 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryAll2() {
-    final List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+    final List<OResult> result =
+        database
+            .query(
                 "select @this.toJSON('fetchPlan:*:2') as json from (select from PersonTest where"
-                    + " name='A')"));
+                    + " name='A')")
+            .stream()
+            .toList();
 
     Assert.assertEquals(result.size(), 1);
-    String json = result.get(0).rawField("json");
+    String json = result.get(0).getProperty("json");
 
     Assert.assertNotNull(json);
 
@@ -91,14 +93,16 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryOutWildcard2() {
-    final List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+    final List<OResult> result =
+        database
+            .query(
                 "select @this.toJSON('fetchPlan:out_*:2') as json from (select from PersonTest"
-                    + " where name='A')"));
+                    + " where name='A')")
+            .stream()
+            .toList();
 
     Assert.assertEquals(result.size(), 1);
-    String json = result.get(0).rawField("json");
+    String json = result.get(0).getProperty("json");
 
     Assert.assertNotNull(json);
 
@@ -109,14 +113,16 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
 
   @Test
   public void queryOutOneLevelOnly() {
-    final List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+    final List<OResult> result =
+        database
+            .query(
                 "select @this.toJSON('fetchPlan:[0]out_*:0') as json from (select from PersonTest"
-                    + " where name='A')"));
+                    + " where name='A')")
+            .stream()
+            .toList();
 
     Assert.assertEquals(result.size(), 1);
-    String json = result.get(0).field("json");
+    String json = result.get(0).getProperty("json");
 
     Assert.assertNotNull(json);
 
@@ -128,14 +134,16 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
 
   @Test
   public void startZeroGetOutStar2() {
-    final List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+    final List<OResult> result =
+        database
+            .query(
                 "select @this.toJSON('fetchPlan:[0]out_*:2') as json from (select from PersonTest"
-                    + " where name='A')"));
+                    + " where name='A')")
+            .stream()
+            .toList();
 
     Assert.assertEquals(result.size(), 1);
-    String json = result.get(0).field("json");
+    String json = result.get(0).getProperty("json");
 
     Assert.assertNotNull(json);
 
@@ -145,14 +153,16 @@ public class FetchPlanComplexNestedLevelsTest extends DocumentDBBaseTest {
 
   @Test
   public void start2GetOutStar2() {
-    final List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<ODocument>(
+    final List<OResult> result =
+        database
+            .query(
                 "select @this.toJSON('fetchPlan:[2]out_*:2') as json from (select from PersonTest"
-                    + " where name='A')"));
+                    + " where name='A')")
+            .stream()
+            .toList();
 
     Assert.assertEquals(result.size(), 1);
-    String json = result.get(0).field("json");
+    String json = result.get(0).getProperty("json");
 
     Assert.assertNotNull(json);
 

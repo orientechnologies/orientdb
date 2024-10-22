@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -1170,9 +1171,9 @@ public class JSONTest extends DocumentDBBaseTest {
 
     for (final ODocument o : database.browseClass("InnerDocCreation")) {
       final List<ORID> traverse = traverseMap.remove(o.getIdentity());
-      for (final OIdentifiable id :
-          new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
-        Assert.assertTrue(traverse.remove(id.getIdentity()));
+      for (OResult id :
+          database.query("traverse * from " + o.getIdentity().toString()).stream().toList()) {
+        Assert.assertTrue(traverse.remove(id.getIdentity().get()));
       }
       Assert.assertTrue(traverse.isEmpty());
     }
@@ -1225,9 +1226,9 @@ public class JSONTest extends DocumentDBBaseTest {
 
     for (ODocument o : database.browseClass("InnerDocCreationFieldTypes")) {
       List<ORID> traverse = traverseMap.remove(o.getIdentity());
-      for (OIdentifiable id :
-          new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
-        Assert.assertTrue(traverse.remove(id.getIdentity()));
+      for (OResult id :
+          database.query("traverse * from " + o.getIdentity().toString()).stream().toList()) {
+        Assert.assertTrue(traverse.remove(id.getIdentity().get()));
       }
 
       Assert.assertTrue(traverse.isEmpty());

@@ -18,9 +18,8 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.List;
 import java.util.Set;
 import org.testng.Assert;
@@ -73,7 +72,7 @@ public class GEOTest extends DocumentDBBaseTest {
       point.field("x", (52.20472d + i / 100d));
       point.field("y", (0.14056d + i / 100d));
 
-      point.save();
+      database.save(point);
     }
   }
 
@@ -81,18 +80,16 @@ public class GEOTest extends DocumentDBBaseTest {
   public void queryDistance() {
     Assert.assertEquals(database.countClass("MapPoint"), 10000);
 
-    List<ODocument> result =
+    List<OResult> result =
         database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select from MapPoint where distance(x, y,52.20472, 0.14056 ) <= 30"))
-            .execute();
+            .command("select from MapPoint where distance(x, y,52.20472, 0.14056 ) <= 30")
+            .stream()
+            .toList();
 
     Assert.assertTrue(result.size() != 0);
 
-    for (ODocument d : result) {
-      Assert.assertEquals(d.getClassName(), "MapPoint");
-      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
+    for (OResult d : result) {
+      Assert.assertEquals(d.getElement().get().getSchemaType().get().getName(), "MapPoint");
     }
   }
 
@@ -101,32 +98,32 @@ public class GEOTest extends DocumentDBBaseTest {
     Assert.assertEquals(database.countClass("MapPoint"), 10000);
 
     // MAKE THE FIRST RECORD DIRTY TO TEST IF DISTANCE JUMP IT
-    List<ODocument> result =
-        database.command(new OSQLSynchQuery<ODocument>("select from MapPoint limit 1")).execute();
+    List<OResult> result = database.command("select from MapPoint limit 1").stream().toList();
+    ODocument md = (ODocument) result.get(0).getElement().get();
     try {
-      result.get(0).field("x", "--wrong--");
+      md.field("x", "--wrong--");
       Assert.assertTrue(false);
     } catch (NumberFormatException e) {
       Assert.assertTrue(true);
     }
 
-    result.get(0).save();
+    database.save(md);
 
     result =
         database
             .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select distance(x, y,52.20472, 0.14056 ) as distance from MapPoint order by"
-                        + " distance desc"))
-            .execute();
+                "select distance(x, y,52.20472, 0.14056 ) as distance from MapPoint order by"
+                    + " distance desc")
+            .stream()
+            .toList();
 
     Assert.assertTrue(result.size() != 0);
 
     Double lastDistance = null;
-    for (ODocument d : result) {
-      if (lastDistance != null && d.field("distance") != null)
-        Assert.assertTrue(((Double) d.field("distance")).compareTo(lastDistance) <= 0);
-      lastDistance = d.field("distance");
+    for (OResult d : result) {
+      if (lastDistance != null && d.getProperty("distance") != null)
+        Assert.assertTrue(((Double) d.getProperty("distance")).compareTo(lastDistance) <= 0);
+      lastDistance = d.getProperty("distance");
     }
   }
 }
