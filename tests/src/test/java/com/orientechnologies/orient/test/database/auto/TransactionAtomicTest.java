@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import java.io.IOException;
 import org.testng.Assert;
@@ -48,21 +47,22 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
     ODatabaseDocument db2 = openSession("admin", "admin");
 
     ODocument record1 = new ODocument();
-    record1
-        .field("value", "This is the first version")
-        .save(db2.getClusterNameById(db2.getDefaultClusterId()));
+    record1.field("value", "This is the first version");
+    db2.save(record1, db2.getClusterNameById(db2.getDefaultClusterId()));
 
     // RE-READ THE RECORD
-    record1.reload();
+    db2.reload(record1);
 
     db2.activateOnCurrentThread();
     ODocument record2 = db2.load(record1.getIdentity());
 
-    record2.field("value", "This is the second version").save();
-    record2.field("value", "This is the third version").save();
+    record2.field("value", "This is the second version");
+    db2.save(record2);
+    record2.field("value", "This is the third version");
+    db2.save(record2);
 
     db1.activateOnCurrentThread();
-    record1.reload(null, true);
+    db1.reload(record1, null, true);
 
     Assert.assertEquals(record1.field("value"), "This is the third version");
 
@@ -79,13 +79,13 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
     ODocument doc = new ODocument("Account");
     doc.field("version", 0);
-    doc.save();
+    database.save(doc);
 
     doc.setDirty();
     doc.field("testmvcc", true);
     ORecordInternal.setVersion(doc, doc.getVersion() + 1);
     try {
-      doc.save();
+      database.save(doc);
       Assert.assertTrue(false);
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
@@ -95,9 +95,9 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
   @Test
   public void testTransactionPreListenerRollback() throws IOException {
     ODocument record1 = new ODocument();
-    record1
-        .field("value", "This is the first version")
-        .save(database.getClusterNameById(database.getDefaultClusterId()));
+    record1.field("value", "This is the first version");
+
+    database.save(record1, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODatabaseListener listener =
         new ODatabaseListener() {
@@ -186,10 +186,10 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
       ODocument banana = new ODocument("Fruit").field("name", "Banana").field("color", "Yellow");
       ODocument kumquat = new ODocument("Fruit").field("name", "Kumquat").field("color", "Orange");
 
-      apple.save();
-      orange.save();
-      banana.save();
-      kumquat.save();
+      database.save(apple);
+      database.save(orange);
+      database.save(banana);
+      database.save(kumquat);
 
       database.commit();
 
@@ -206,36 +206,5 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
     }
 
     Assert.assertEquals(database.countClusterElements("Fruit"), 0);
-  }
-
-  @Test
-  public void testTransactionalSQL() {
-    long prev = database.countClass("Account");
-
-    database
-        .command(new OCommandSQL("transactional insert into Account set name = 'txTest1'"))
-        .execute();
-
-    Assert.assertEquals(database.countClass("Account"), prev + 1);
-  }
-
-  @Test
-  public void testTransactionalSQLJoinTx() {
-    long prev = database.countClass("Account");
-
-    database.begin();
-
-    database
-        .command(new OCommandSQL("transactional insert into Account set name = 'txTest2'"))
-        .execute();
-
-    Assert.assertTrue(database.getTransaction().isActive());
-
-    if (!url.startsWith("remote")) Assert.assertEquals(database.countClass("Account"), prev + 1);
-
-    database.commit();
-
-    Assert.assertFalse(database.getTransaction().isActive());
-    Assert.assertEquals(database.countClass("Account"), prev + 1);
   }
 }

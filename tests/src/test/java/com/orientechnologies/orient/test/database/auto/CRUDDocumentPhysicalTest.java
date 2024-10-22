@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -466,38 +465,6 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     List<OResult> result = database.query(query, params).stream().toList();
 
     Assert.assertTrue(result.size() != 0);
-  }
-
-  public void testJSONLinkd() {
-    ODocument jaimeDoc = new ODocument("PersonTest");
-    jaimeDoc.field("name", "jaime");
-    jaimeDoc.save();
-
-    ODocument cerseiDoc = new ODocument("PersonTest");
-    cerseiDoc.fromJSON(
-        "{\"@type\":\"d\",\"name\":\"cersei\",\"valonqar\":" + jaimeDoc.toJSON() + "}");
-    cerseiDoc.save();
-
-    // The link between jamie and tyrion is not saved properly
-    ODocument tyrionDoc = new ODocument("PersonTest");
-    tyrionDoc.fromJSON(
-        "{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"relationship\":\"brother\",\"contact\":"
-            + jaimeDoc.toJSON()
-            + "}}");
-    tyrionDoc.save();
-
-    // System.out.println("The saved documents are:");
-    for (ODocument o : database.browseClass("PersonTest")) {
-      // System.out.println("my id is " + o.getIdentity().toString());
-      // System.out.println("my name is: " + o.field("name"));
-      // System.out.println("my ODocument representation is " + o);
-      // System.out.println("my JSON representation is " + o.toJSON());
-      // System.out.println("my traversable links are: ");
-      for (OIdentifiable id :
-          new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
-        database.load(id.getIdentity()).toJSON();
-      }
-    }
   }
 
   @Test

@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -281,16 +280,6 @@ public class TraverseTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void traverseSQLIterating() {
-    int cycles = 0;
-    for (OIdentifiable id :
-        new OSQLSynchQuery<ODocument>("traverse * from Movie while $depth < 2")) {
-      cycles++;
-    }
-    Assert.assertTrue(cycles > 0);
-  }
-
-  @Test
   public void traverseAPIIterating() {
     int cycles = 0;
     for (OIdentifiable id :
@@ -316,16 +305,6 @@ public class TraverseTest extends DocumentDBBaseTest {
         new OTraverse()
             .target(database.browseClass("Movie").iterator())
             .predicate(new OSQLPredicate("$depth <= 2"))) {
-      cycles++;
-    }
-    Assert.assertTrue(cycles > 0);
-  }
-
-  @Test
-  public void traverseSelectIterable() {
-    int cycles = 0;
-    for (OIdentifiable id :
-        new OSQLSynchQuery<ODocument>("select from ( traverse * from Movie while $depth < 2 )")) {
       cycles++;
     }
     Assert.assertTrue(cycles > 0);

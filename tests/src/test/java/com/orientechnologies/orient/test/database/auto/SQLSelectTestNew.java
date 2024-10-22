@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -891,179 +890,6 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   }
 
   @Test
-  public void queryWithAutomaticPagination() {
-    final OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
-    ORID last = new ORecordId();
-
-    List<ODocument> resultset = database.query(query);
-
-    int iterationCount = 0;
-    while (!resultset.isEmpty()) {
-      Assert.assertTrue(resultset.size() <= 3);
-
-      for (ODocument d : resultset) {
-        Assert.assertTrue(
-            d.getIdentity().getClusterId() >= last.getClusterId()
-                && d.getIdentity().getClusterPosition() > last.getClusterPosition());
-      }
-
-      last = resultset.get(resultset.size() - 1).getIdentity();
-
-      iterationCount++;
-      resultset = database.query(query);
-    }
-
-    Assert.assertTrue(iterationCount > 1);
-  }
-
-  @Test
-  public void queryWithAutomaticPaginationAndRidInWhere() {
-    int clusterId = database.getClusterIdByName("profile");
-
-    long[] range = database.getStorage().getClusterDataRange(clusterId);
-
-    final OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>(
-            "select from Profile where @rid between #"
-                + clusterId
-                + ":"
-                + range[0]
-                + " and #"
-                + clusterId
-                + ":"
-                + range[1]
-                + " LIMIT 3");
-
-    ORID last = new ORecordId();
-
-    List<ODocument> resultset = database.query(query);
-
-    Assert.assertEquals(resultset.get(0).getIdentity(), new ORecordId(clusterId, range[0]));
-
-    int iterationCount = 0;
-    while (!resultset.isEmpty()) {
-      Assert.assertTrue(resultset.size() <= 3);
-
-      for (ODocument d : resultset) {
-        Assert.assertTrue(
-            d.getIdentity().getClusterId() >= last.getClusterId()
-                && d.getIdentity().getClusterPosition() > last.getClusterPosition());
-      }
-
-      last = resultset.get(resultset.size() - 1).getIdentity();
-
-      iterationCount++;
-      resultset = database.query(query);
-    }
-
-    Assert.assertEquals(last, new ORecordId(clusterId, range[1]));
-    Assert.assertTrue(iterationCount > 1);
-  }
-
-  @Test
-  public void queryWithAutomaticPaginationWithWhere() {
-    final OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>("select from Profile where followers.length() > 0 LIMIT 3");
-    ORID last = new ORecordId();
-
-    List<ODocument> resultset = database.query(query);
-
-    int iterationCount = 0;
-
-    while (!resultset.isEmpty()) {
-      Assert.assertTrue(resultset.size() <= 3);
-
-      for (ODocument d : resultset) {
-        Assert.assertTrue(
-            d.getIdentity().getClusterId() >= last.getClusterId()
-                && d.getIdentity().getClusterPosition() > last.getClusterPosition());
-      }
-
-      last = resultset.get(resultset.size() - 1).getIdentity();
-
-      // System.out.printf("\nIterating page %d, last record is %s", iterationCount, last);
-
-      iterationCount++;
-      resultset = database.query(query);
-    }
-
-    Assert.assertTrue(iterationCount > 1);
-  }
-
-  @Test
-  public void queryWithAutomaticPaginationWithWhereAndBindingVar() {
-    final OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>("select from Profile where followers.length() > ? LIMIT 3");
-    ORID last = new ORecordId();
-
-    List<ODocument> resultset = database.query(query, 0);
-
-    int iterationCount = 0;
-
-    while (!resultset.isEmpty()) {
-      Assert.assertTrue(resultset.size() <= 3);
-
-      for (ODocument d : resultset) {
-        Assert.assertTrue(
-            d.getIdentity().getClusterId() >= last.getClusterId()
-                && d.getIdentity().getClusterPosition() > last.getClusterPosition());
-      }
-
-      last = resultset.get(resultset.size() - 1).getIdentity();
-
-      iterationCount++;
-      resultset = database.query(query, 0);
-    }
-
-    Assert.assertTrue(iterationCount > 1);
-  }
-
-  @Test
-  public void queryWithAutomaticPaginationWithWhereAndBindingVarAtTheFirstQueryCall() {
-    final OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>("select from Profile where followers.length() > ? LIMIT 3");
-    ORID last = new ORecordId();
-
-    List<ODocument> resultset = database.query(query, 0);
-
-    int iterationCount = 0;
-
-    while (!resultset.isEmpty()) {
-      Assert.assertTrue(resultset.size() <= 3);
-
-      for (ODocument d : resultset) {
-        Assert.assertTrue(
-            d.getIdentity().getClusterId() >= last.getClusterId()
-                && d.getIdentity().getClusterPosition() > last.getClusterPosition());
-      }
-
-      last = resultset.get(resultset.size() - 1).getIdentity();
-
-      iterationCount++;
-      resultset = database.query(query, 0);
-    }
-
-    Assert.assertTrue(iterationCount > 1);
-  }
-
-  @Test
-  public void queryWithAbsenceOfAutomaticPaginationBecauseOfBindingVarReset() {
-    final OSQLSynchQuery<ODocument> query =
-        new OSQLSynchQuery<ODocument>("select from Profile where followers.length() > ? LIMIT 3");
-
-    List<ODocument> resultset = database.query(query, -1);
-
-    final ORID firstRidFirstQuery = resultset.get(0).getIdentity();
-
-    resultset = database.query(query, -2);
-
-    final ORID firstRidSecondQueryQuery = resultset.get(0).getIdentity();
-
-    Assert.assertEquals(firstRidFirstQuery, firstRidSecondQueryQuery);
-  }
-
-  @Test
   public void includeFields() {
     final OSQLSynchQuery<ODocument> query =
         new OSQLSynchQuery<ODocument>("select expand( roles.include('name') ) from OUser");
@@ -1556,10 +1382,6 @@ public class SQLSelectTestNew extends AbstractSelectTest {
       if (lastRid != null) Assert.assertTrue(rid.compareTo(lastRid) < 0);
       lastRid = rid;
     }
-
-    ODocument res =
-        database.command(new OCommandSQL("explain select from OUser order by @rid desc")).execute();
-    Assert.assertNull(res.field("orderByElapsed"));
   }
 
   @Test

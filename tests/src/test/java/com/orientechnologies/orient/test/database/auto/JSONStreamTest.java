@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.ByteArrayInputStream;
@@ -1062,9 +1063,9 @@ public class JSONStreamTest extends DocumentDBBaseTest {
 
     for (final ODocument o : database.browseClass("InnerDocCreation")) {
       final List<ORID> traverse = traverseMap.remove(o.getIdentity());
-      for (final OIdentifiable id :
-          new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
-        Assert.assertTrue(traverse.remove(id.getIdentity()));
+      OResultSet result = database.query("traverse * from " + o.getIdentity().toString());
+      while (result.hasNext()) {
+        Assert.assertTrue(traverse.remove(result.next().getIdentity().get()));
       }
       Assert.assertTrue(traverse.isEmpty());
     }
