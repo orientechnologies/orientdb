@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
@@ -304,14 +303,14 @@ public class SecurityTest extends DocumentDBBaseTest {
 
     reopendb("admin", "admin");
     try {
-      database.command(new OCommandGremlin("g.V")).execute();
+      database.execute("gremlin-groovy", "g.V").close();
     } finally {
       database.close();
     }
 
     reopendb("reader", "reader");
     try {
-      database.command(new OCommandGremlin("g.V")).execute();
+      database.execute("gremlin-groovy", "g.V").close();
       Assert.fail("Security breach: Gremlin can be executed by reader user!");
     } catch (OSecurityException e) {
     } finally {
@@ -320,7 +319,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
     reopendb("writer", "writer");
     try {
-      database.command(new OCommandGremlin("g.V")).execute();
+      database.execute("gremlin-groovy", "g.V").close();
       Assert.fail("Security breach: Gremlin can be executed by writer user!");
     } catch (OSecurityException e) {
     } finally {

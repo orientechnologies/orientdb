@@ -32,7 +32,7 @@
 			class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
 			<parameters>
 				<parameter value="true" name="enabled" />
-				<parameter value="SQL" name="allowedLanguages" />
+				<parameter value="SQL,gremlin-groovy" name="allowedLanguages" />
 			</parameters>
 		</handler>
 		<handler class="com.orientechnologies.orient.server.plugin.livequery.OLiveQueryPlugin">

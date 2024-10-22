@@ -40,9 +40,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -2299,31 +2296,5 @@ public class IndexTest extends ObjectDBBaseTest {
       }
     }
     Assert.assertEquals(index.getInternal().size(), 2);
-  }
-
-  @Test
-  public void testParamsOrder() {
-
-    OrientBaseGraph graph =
-        new OrientGraphNoTx("memory:IndexTest_testParamsOrder", "admin", "admin");
-    ODatabaseDocument database = graph.getRawGraph();
-
-    database.command("CREATE CLASS Task extends V").close();
-    database
-        .command("CREATE PROPERTY Task.projectId STRING (MANDATORY TRUE, NOTNULL, MAX 20)")
-        .close();
-    database.command("CREATE PROPERTY Task.seq SHORT ( MANDATORY TRUE, NOTNULL, MIN 0)").close();
-    database.command("CREATE INDEX TaskPK ON Task (projectId, seq) UNIQUE").close();
-
-    database.command("INSERT INTO Task (projectId, seq) values ( 'foo', 2)").close();
-    database.command("INSERT INTO Task (projectId, seq) values ( 'bar', 3)").close();
-    Iterable<Vertex> x =
-        graph.getVertices(
-            "Task", new String[] {"seq", "projectId"}, new Object[] {(short) 2, "foo"});
-    Iterator<Vertex> iter = x.iterator();
-    Assert.assertTrue(iter.hasNext());
-    iter.next();
-    Assert.assertFalse(iter.hasNext());
-    graph.drop();
   }
 }
