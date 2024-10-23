@@ -2967,11 +2967,6 @@ public class ODocument extends ORecordAbstract
       for (OProperty prop : clazz.properties()) {
         OType type = prop.getType();
         OType linkedType = prop.getLinkedType();
-        OClass linkedClass = prop.getLinkedClass();
-        if (type == OType.EMBEDDED && linkedClass != null) {
-          convertToEmbeddedType(prop);
-          continue;
-        }
         final ODocumentEntry entry = fields.get(prop.getName());
         if (entry == null) {
           continue;
@@ -2983,6 +2978,12 @@ public class ODocument extends ORecordAbstract
         if (value == null) {
           continue;
         }
+
+        if (type == OType.EMBEDDED) {
+          convertToEmbeddedType(prop);
+          continue;
+        }
+
         try {
           if (type == OType.LINKBAG
               && entry.value != null
@@ -3062,18 +3063,9 @@ public class ODocument extends ORecordAbstract
   private void convertToEmbeddedType(OProperty prop) {
     final ODocumentEntry entry = fields.get(prop.getName());
     OClass linkedClass = prop.getLinkedClass();
-    if (entry == null || linkedClass == null) {
-      return;
-    }
-    if (!entry.isCreated() && !entry.isChanged()) {
-      return;
-    }
     Object value = entry.value;
-    if (value == null) {
-      return;
-    }
     try {
-      if (value instanceof ODocument) {
+      if (value instanceof ODocument && linkedClass != null) {
         OClass docClass = ((ODocument) value).getImmutableSchemaClass();
         if (docClass == null) {
           ((ODocument) value).setClass(linkedClass);
@@ -3086,11 +3078,16 @@ public class ODocument extends ORecordAbstract
         }
       } else if (value instanceof Map) {
         entry.disableTracking(this, value);
-        ODocument newValue = new ODocument(linkedClass);
+        ODocument newValue;
+        if (linkedClass != null) {
+          newValue = new ODocument(linkedClass);
+        } else {
+          newValue = new ODocument();
+        }
         newValue.fromMap((Map) value);
         entry.value = newValue;
         newValue.addOwner(this);
-      } else {
+      } else if (!(value instanceof ODocument)) {
         throw new OValidationException(
             "impossible to convert value of field \"" + prop.getName() + "\"");
       }
