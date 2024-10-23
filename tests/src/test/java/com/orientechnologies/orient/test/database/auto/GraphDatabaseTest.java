@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.IOException;
@@ -366,7 +365,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
   public void testInsertOfEdgeWithInsertCommand() {
     try {
-      database.command(new OCommandSQL("insert into E set a = 33")).execute();
+      database.command("insert into E set a = 33").close();
       Assert.assertTrue(false);
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(true);

@@ -327,12 +327,13 @@ public class SQLInsertTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "insertOperator")
   public void insertCluster() {
     ODocument doc =
-        database
-            .command(
-                new OCommandSQL(
+        (ODocument)
+            database
+                .command(
                     "insert into Account cluster anotherdefault (id, title) values (10, 'NoSQL"
-                        + " movement')"))
-            .execute();
+                        + " movement')")
+                .next()
+                .toElement();
 
     Assert.assertTrue(doc != null);
     Assert.assertEquals(
@@ -628,12 +629,13 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     c.createProperty("embeddedNoLinkedClass", OType.EMBEDDED);
 
     ODocument doc =
-        database
-            .command(
-                new OCommandSQL(
+        (ODocument)
+            database
+                .command(
                     "INSERT INTO TestConvert SET name = 'embeddedNoLinkedClass',"
-                        + " embeddedNoLinkedClass = {'line1':'123 Fake Street'}"))
-            .execute();
+                        + " embeddedNoLinkedClass = {'line1':'123 Fake Street'}")
+                .next()
+                .toElement();
 
     Assert.assertTrue(doc.field("embeddedNoLinkedClass") instanceof ODocument);
   }

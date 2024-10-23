@@ -184,23 +184,23 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
   public void updateMapsWithSetOperator() {
 
-    ODocument doc =
+    OElement doc =
         database
             .command(
-                new OCommandSQL(
-                    "insert into cluster:default (equaledges, name, properties) values ('no',"
-                        + " 'circleUpdate', {'round':'eeee', 'blaaa':'zigzag'} )"))
-            .execute();
+                "insert into cluster:default (equaledges, name, properties) values ('no',"
+                    + " 'circleUpdate', {'round':'eeee', 'blaaa':'zigzag'} )")
+            .next()
+            .toElement();
 
-    Integer records =
+    Long records =
         database
             .command(
-                new OCommandSQL(
-                    "update "
-                        + doc.getIdentity()
-                        + " set properties = {'roundOne':'ffff',"
-                        + " 'bla':'zagzig','testTestTEST':'okOkOK'}"))
-            .execute();
+                "update "
+                    + doc.getIdentity()
+                    + " set properties = {'roundOne':'ffff',"
+                    + " 'bla':'zagzig','testTestTEST':'okOkOK'}")
+            .next()
+            .getProperty("count");
 
     Assert.assertEquals(records.intValue(), 1);
 
@@ -223,23 +223,23 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
   public void updateMapsWithPutOperatorAndWhere() {
 
-    ODocument doc =
+    OElement doc =
         database
             .command(
-                new OCommandSQL(
-                    "insert into cluster:default (equaledges, name, properties) values ('no',"
-                        + " 'updateMapsWithPutOperatorAndWhere', {} )"))
-            .execute();
+                "insert into cluster:default (equaledges, name, properties) values ('no',"
+                    + " 'updateMapsWithPutOperatorAndWhere', {} )")
+            .next()
+            .toElement();
 
-    Integer records =
+    Long records =
         database
             .command(
-                new OCommandSQL(
-                    "update "
-                        + doc.getIdentity()
-                        + " put properties = 'one', 'two' where name ="
-                        + " 'updateMapsWithPutOperatorAndWhere'"))
-            .execute();
+                "update "
+                    + doc.getIdentity()
+                    + " set properties['one']= 'two' where name ="
+                    + " 'updateMapsWithPutOperatorAndWhere'")
+            .next()
+            .getProperty("count");
 
     Assert.assertEquals(records.intValue(), 1);
 
@@ -286,7 +286,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     doc.field("name", "Raf");
     doc.field("city", "Torino");
     doc.field("gender", "fmale");
-    doc.save();
+    database.save(doc);
     checkUpdatedDoc(database, "Raf", "Torino", "fmale");
 
     /* THESE COMMANDS ARE OK */
@@ -468,7 +468,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     schema.createClass("FormatEscapingTest");
 
     final ODocument document = new ODocument("FormatEscapingTest");
-    document.save();
+    database.save(document);
 
     database
         .command(
@@ -476,7 +476,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                 + document.getIdentity())
         .close();
 
-    document.reload();
+    database.reload(document);
 
     Assert.assertEquals(document.field("test"), "aaa ' bbb");
 
@@ -487,7 +487,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                 + document.getIdentity())
         .close();
 
-    document.reload();
+    database.reload(document);
     Assert.assertEquals(document.field("test"), "ccc ' eee");
     Assert.assertEquals(document.field("test2"), "aaa ' bbb");
 
@@ -497,7 +497,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                 + document.getIdentity())
         .close();
 
-    document.reload();
+    database.reload(document);
     Assert.assertEquals(document.field("test"), "aaa \n bbb");
 
     database
@@ -506,7 +506,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                 + document.getIdentity())
         .close();
 
-    document.reload();
+    database.reload(document);
     Assert.assertEquals(document.field("test"), "aaa \r bbb");
 
     database
@@ -516,7 +516,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                     + document.getIdentity()))
         .execute();
 
-    document.reload();
+    database.reload(document);
     Assert.assertEquals(document.field("test"), "aaa \b bbb");
 
     database
@@ -525,7 +525,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                 + document.getIdentity())
         .close();
 
-    document.reload();
+    database.reload(document);
     Assert.assertEquals(document.field("test"), "aaa \t bbb");
 
     database
@@ -535,7 +535,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                     + document.getIdentity()))
         .execute();
 
-    document.reload();
+    database.reload(document);
     Assert.assertEquals(document.field("test"), "aaa \f bbb");
   }
 
@@ -664,7 +664,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
   }
 
   public void testMultiplePut() {
-    final ODocument v = database.<ODocument>newInstance("V").save();
+    final ODocument v = database.<ODocument>newInstance("V");
+    database.save(v);
 
     Long records =
         database
@@ -677,7 +678,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(records.intValue(), 1);
 
-    v.reload();
+    database.reload(v);
 
     Assert.assertTrue(v.field("embmap") instanceof Map);
     Assert.assertEquals(((Map) v.field("embmap")).size(), 2);
@@ -721,7 +722,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
                 + " [{'line1':'123 Fake Street'}]")
         .close();
 
-    doc.reload();
+    database.reload(doc);
 
     Assert.assertTrue(doc.getProperty("embeddedListWithLinkedClass") instanceof List);
     Assert.assertEquals(((Collection) doc.getProperty("embeddedListWithLinkedClass")).size(), 3);
