@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -31,6 +32,7 @@ public class OInsertExecutionPlanner {
   protected OInsertBody insertBody;
   protected OProjection returnStatement;
   protected OSelectStatement selectStatement;
+  private boolean unsafe;
 
   public OInsertExecutionPlanner() {}
 
@@ -48,6 +50,7 @@ public class OInsertExecutionPlanner {
         statement.getReturnStatement() == null ? null : statement.getReturnStatement().copy();
     this.selectStatement =
         statement.getSelectStatement() == null ? null : statement.getSelectStatement().copy();
+    this.unsafe = statement.isUnsafe();
   }
 
   public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
@@ -144,9 +147,13 @@ public class OInsertExecutionPlanner {
 
   protected Optional<String> resolveTargetClass(ODatabaseSession database) {
     OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
-    OIdentifier tc = null;
+    String tc = null;
     if (targetClass != null) {
-      tc = targetClass;
+      tc = targetClass.getStringValue();
+      OClass targetClass = schema.getClass(tc);
+      if (targetClass != null) {
+        checkClassNotEdge(targetClass);
+      }
     } else if (targetCluster != null) {
       String name = targetCluster.getClusterName();
       if (name == null) {
@@ -154,7 +161,8 @@ public class OInsertExecutionPlanner {
       }
       OClass targetClass = schema.getClassByClusterId(database.getClusterIdByName(name));
       if (targetClass != null) {
-        tc = new OIdentifier(targetClass.getName());
+        checkClassNotEdge(targetClass);
+        tc = targetClass.getName();
       }
     } else if (this.targetClass == null) {
 
@@ -162,13 +170,21 @@ public class OInsertExecutionPlanner {
           schema.getClassByClusterId(
               database.getClusterIdByName(targetClusterName.getStringValue()));
       if (targetClass != null) {
-        tc = new OIdentifier(targetClass.getName());
+        checkClassNotEdge(targetClass);
+        tc = targetClass.getName();
       }
     }
     if (tc != null) {
-      return Optional.of(tc.getStringValue());
+      return Optional.of(tc);
     } else {
       return Optional.empty();
+    }
+  }
+
+  private void checkClassNotEdge(OClass targetClass) {
+    if (targetClass.isEdgeType() && !unsafe) {
+      throw new OCommandExecutionException(
+          "Cannot use insert for create an edge, use instead 'create edge' command");
     }
   }
 
