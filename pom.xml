@@ -96,6 +96,7 @@
         <module>jdbc</module>
         <module>etl</module>
         <module>distribution</module>
+        <module>gremlin</module>
         <module>tests</module>
     </modules>
 
@@ -713,7 +714,6 @@
 		<profile>
 			<id>all</id>
             <modules>
-                <module>gremlin</module>
                 <module>studio</module>
             </modules>
         </profile>
