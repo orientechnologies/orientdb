@@ -8,7 +8,7 @@
 			</parameters>
 		</handler>
 		<handler
-			class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">
+			class="com.orientechnologies.tinkerpop.handler.OGraphServerHandler">
 			<parameters>
 				<parameter value="true" name="enabled" />
 				<parameter value="50" name="graph.pool.max" />
@@ -32,7 +32,7 @@
 			class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
 			<parameters>
 				<parameter value="true" name="enabled" />
-				<parameter value="SQL,gremlin-groovy" name="allowedLanguages" />
+				<parameter value="SQL,gremlin-groovy,gremlin" name="allowedLanguages" />
 			</parameters>
 		</handler>
 		<handler class="com.orientechnologies.orient.server.plugin.livequery.OLiveQueryPlugin">

@@ -303,14 +303,14 @@ public class SecurityTest extends DocumentDBBaseTest {
 
     reopendb("admin", "admin");
     try {
-      database.execute("gremlin-groovy", "g.V").close();
+      database.execute("gremlin-groovy", "g.V()").close();
     } finally {
       database.close();
     }
 
     reopendb("reader", "reader");
     try {
-      database.execute("gremlin-groovy", "g.V").close();
+      database.execute("gremlin-groovy", "g.V()").close();
       Assert.fail("Security breach: Gremlin can be executed by reader user!");
     } catch (OSecurityException e) {
     } finally {
@@ -319,7 +319,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
     reopendb("writer", "writer");
     try {
-      database.execute("gremlin-groovy", "g.V").close();
+      database.execute("gremlin-groovy", "g.V()").close();
       Assert.fail("Security breach: Gremlin can be executed by writer user!");
     } catch (OSecurityException e) {
     } finally {

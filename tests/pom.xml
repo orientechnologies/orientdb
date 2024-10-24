@@ -39,11 +39,6 @@
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-graphdb</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-object</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -95,9 +90,16 @@
         </dependency>
 
         <dependency>
-            <groupId>com.tinkerpop.gremlin</groupId>
-            <artifactId>gremlin-groovy</artifactId>
-            <version>${blueprints.version}</version>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-gremlin</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-gremlin-server</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 
