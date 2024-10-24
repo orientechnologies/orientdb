@@ -90,7 +90,6 @@
         <module>security</module>
         <module>tools</module>
         <module>distributed</module>
-        <module>graphdb</module>
         <module>lucene</module>
         <module>agent</module>
         <module>jdbc</module>
