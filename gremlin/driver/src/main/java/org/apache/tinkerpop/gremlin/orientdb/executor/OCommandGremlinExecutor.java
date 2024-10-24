@@ -51,8 +51,13 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import org.apache.commons.configuration2.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
+import org.apache.tinkerpop.gremlin.groovy.jsr223.GroovyCompilerGremlinPlugin;
 import org.apache.tinkerpop.gremlin.jsr223.CachedGremlinScriptEngineManager;
-import org.apache.tinkerpop.gremlin.orientdb.*;
+import org.apache.tinkerpop.gremlin.orientdb.OrientEdge;
+import org.apache.tinkerpop.gremlin.orientdb.OrientElement;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
+import org.apache.tinkerpop.gremlin.orientdb.OrientVertexProperty;
 import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OElementTransformer;
 import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OGremlinTransformer;
 import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OTraversalMetricTransformer;
@@ -79,7 +84,14 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
   public OCommandGremlinExecutor(OScriptManager scriptManager, OScriptTransformer transformer) {
     super("gremlin");
     factory = new GremlinGroovyScriptEngineFactory();
-    factory.setCustomizerManager(new CachedGremlinScriptEngineManager());
+    CachedGremlinScriptEngineManager customizationManager = new CachedGremlinScriptEngineManager();
+    Map<String, Object> compilerConfigs = new HashMap<>();
+    Map<String, Object> optimizationConfigs = new HashMap<>();
+    optimizationConfigs.put("asmResolving", false);
+    compilerConfigs.put("OptimizationOptions", optimizationConfigs);
+    customizationManager.addPlugin(
+        GroovyCompilerGremlinPlugin.build().compilerConfigurationOptions(compilerConfigs).create());
+    factory.setCustomizerManager(customizationManager);
     this.scriptManager = scriptManager;
     this.transformer = new OGremlinTransformer(transformer);
 

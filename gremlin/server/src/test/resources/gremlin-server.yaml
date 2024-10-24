@@ -26,7 +26,11 @@ scriptEngines: {
     plugins: { org.apache.tinkerpop.gremlin.server.jsr223.GremlinServerGremlinPlugin: {},
                org.apache.tinkerpop.gremlin.orientdb.jsr223.OrientDBGremlinPlugin: {},
                org.apache.tinkerpop.gremlin.jsr223.ImportGremlinPlugin: {classImports: [java.lang.Math], methodImports: [java.lang.Math#*]},
-               org.apache.tinkerpop.gremlin.jsr223.ScriptFileGremlinPlugin: {files: []}}}}
+               org.apache.tinkerpop.gremlin.jsr223.ScriptFileGremlinPlugin: {files: []},
+               org.apache.tinkerpop.gremlin.groovy.jsr223.GroovyCompilerGremlinPlugin: {compilerConfigurationOptions: { OptimizationOptions: { asmResolving: false}}}
+   }
+ }
+}
 serializers:
   - { className: org.apache.tinkerpop.gremlin.util.ser.GraphSONMessageSerializerV3, config: { ioRegistries: [org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry] }}         # application/json
 processors:
