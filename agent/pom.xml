@@ -187,7 +187,13 @@
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-graphdb</artifactId>
+            <artifactId>orientdb-gremlin</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-gremlin-server</artifactId>
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>

@@ -21,7 +21,7 @@
 
 <orient-server>
     <handlers>
-        <handler class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">
+        <handler class="com.orientechnologies.tinkerpop.handler.OGraphServerHandler">
             <parameters>
                 <parameter name="enabled" value="true"/>
                 <parameter name="graph.pool.max" value="50"/>
@@ -134,8 +134,6 @@
                             <entry name="http.cache:default" value="Cache-Control: max-age=120"/>
                         </parameters>
                     </command>
-                    <command pattern="GET|gephi/*"
-                             implementation="com.orientechnologies.orient.graph.server.command.OServerCommandGetGephi"/>
                 </commands>
             </listener>
         </listeners>

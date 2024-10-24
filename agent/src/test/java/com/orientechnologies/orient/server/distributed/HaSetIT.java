@@ -3,7 +3,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -96,9 +96,9 @@ public class HaSetIT extends AbstractServerClusterTest {
   }
 
   @Override
-  protected void onAfterDatabaseCreation(OrientBaseGraph db) {
-    db.sqlCommand("CREATE CLASS Person extends V").close();
-    db.sqlCommand("CREATE PROPERTY Person.name STRING").close();
+  protected void onAfterDatabaseCreation(OrientGraph db) {
+    db.executeSql("CREATE CLASS Person extends V").close();
+    db.executeSql("CREATE PROPERTY Person.name STRING").close();
   }
 
   @Override

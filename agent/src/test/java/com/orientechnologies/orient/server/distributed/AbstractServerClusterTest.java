@@ -28,14 +28,14 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraphFactory;
 import org.junit.Assert;
 
 /**
@@ -252,7 +252,7 @@ public abstract class AbstractServerClusterTest {
    *
    * @param db Current database
    */
-  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {}
+  protected void onAfterDatabaseCreation(final OrientGraph db) {}
 
   protected abstract void executeTest() throws Exception;
 
@@ -285,11 +285,11 @@ public abstract class AbstractServerClusterTest {
     final ServerRun master = it.next();
 
     if (iCreateDatabase) {
-      final OrientBaseGraph graph = master.createDatabase(getDatabaseName(), iCfgCallback);
+      final OrientGraph graph = master.createDatabase(getDatabaseName(), iCfgCallback);
       try {
         onAfterDatabaseCreation(graph);
       } finally {
-        graph.shutdown();
+        graph.close();
         ODatabaseDocumentTx.closeAll();
       }
     }

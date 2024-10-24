@@ -3,9 +3,9 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import java.util.Collections;
 import java.util.List;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -27,10 +27,10 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
   }
 
   @Override
-  protected void onAfterDatabaseCreation(OrientBaseGraph db) {
-    db.sqlCommand("CREATE CLASS Item extends V").close();
-    db.sqlCommand("CREATE PROPERTY Item.name STRING").close();
-    db.sqlCommand("CREATE PROPERTY Item.map EMBEDDEDMAP").close();
+  protected void onAfterDatabaseCreation(OrientGraph db) {
+    db.executeSql("CREATE CLASS Item extends V").close();
+    db.executeSql("CREATE PROPERTY Item.name STRING").close();
+    db.executeSql("CREATE PROPERTY Item.map EMBEDDEDMAP").close();
   }
 
   @Override

@@ -21,20 +21,18 @@ package com.orientechnologies.orient.incrementalbackup;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import java.io.File;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.junit.Before;
 
 /** It test the behaviour of a LocalBackupUploader. */
 public abstract class AbstractUploaderTest extends AbstractBackupTest {
   private static final OLogger logger = OLogManager.instance().logger(AbstractUploaderTest.class);
 
-  protected OrientBaseGraph graph;
+  protected OrientGraph graph;
   //  protected final String dbPath =  "target/db_upload";
   protected final String dbURL = "plocal:target/" + this.getDatabaseName();
   protected final String backupPath = "target/backup/";
@@ -50,20 +48,21 @@ public abstract class AbstractUploaderTest extends AbstractBackupTest {
 
     try {
 
-      this.graph = new OrientGraphNoTx(this.dbURL);
+      this.graph = OrientGraph.open(this.dbURL);
 
       // initial schema
-      OrientVertexType userType = this.graph.createVertexType("User");
+      ODatabaseDocument raw = this.graph.getRawDatabase();
+      OClass userType = raw.createVertexClass("User");
       userType.createProperty("name", OType.STRING);
       userType.createProperty("updated", OType.BOOLEAN);
       userType.createIndex("User.index", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "name");
 
-      OrientVertexType productType = this.graph.createVertexType("Product");
+      OClass productType = raw.createVertexClass("Product");
       productType.createProperty("name", OType.STRING);
       productType.createProperty("updated", OType.BOOLEAN);
       productType.createIndex("Product.index", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "name");
 
-      OrientEdgeType edgeType = this.graph.createEdgeType("bought");
+      OClass edgeType = raw.createVertexClass("bought");
       edgeType.createProperty("purchaseDate", OType.DATE);
       edgeType.createProperty("updated", OType.BOOLEAN);
 
@@ -76,7 +75,7 @@ public abstract class AbstractUploaderTest extends AbstractBackupTest {
       // cleaning all the directories
       this.cleanDirectories();
     } finally {
-      this.graph.shutdown();
+      this.graph.close();
     }
   }
 

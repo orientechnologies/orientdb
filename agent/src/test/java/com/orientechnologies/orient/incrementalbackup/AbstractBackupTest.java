@@ -26,10 +26,6 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -37,6 +33,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraphFactory;
+import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 /** Abstract class for all test cases about the incremental backup. */
 public abstract class AbstractBackupTest {
@@ -71,7 +72,7 @@ public abstract class AbstractBackupTest {
 
         String name = Integer.toString(threadId);
         OrientGraphFactory graphFactory = new OrientGraphFactory(databaseUrl);
-        OrientBaseGraph graph = graphFactory.getNoTx();
+        OrientGraph graph = graphFactory.getNoTx();
 
         for (int i = 1; i <= count; i++) {
 
@@ -87,7 +88,7 @@ public abstract class AbstractBackupTest {
                     "\nWriter (threadId="
                         + this.threadId
                         + ") "
-                        + graph.getRawGraph().getURL()
+                        + graph.getRawDatabase().getURL()
                         + " managed "
                         + i
                         + "/"
@@ -104,7 +105,7 @@ public abstract class AbstractBackupTest {
                   "Writer (threadId="
                       + this.threadId
                       + ") received interrupt (db="
-                      + graph.getRawGraph().getURL()
+                      + graph.getRawDatabase().getURL()
                       + ")");
               Thread.currentThread().interrupt();
               break;
@@ -115,7 +116,7 @@ public abstract class AbstractBackupTest {
                   "Writer (threadId="
                       + this.threadId
                       + ") received exception (db="
-                      + graph.getRawGraph().getURL()
+                      + graph.getRawDatabase().getURL()
                       + ")");
 
               if (retry >= maxRetries) logger.error("max retries reached", e);
@@ -131,14 +132,14 @@ public abstract class AbstractBackupTest {
                   "Writer (threadId="
                       + this.threadId
                       + ") received exception (db="
-                      + graph.getRawGraph().getURL()
+                      + graph.getRawDatabase().getURL()
                       + ")");
               return null;
             }
           }
         }
 
-        graph.getRawGraph().close();
+        graph.getRawDatabase().close();
 
         System.out.println("\nWriter " + name + " END");
       } catch (Exception e) {
@@ -149,39 +150,39 @@ public abstract class AbstractBackupTest {
   }
 
   // Atomic operations on the primaryGraph database
-  protected OrientVertex createVerticesWithEdge(OrientBaseGraph graph, int threadId) {
+  protected Vertex createVerticesWithEdge(OrientGraph graph, int threadId) {
 
     final String accountUniqueId =
         "User-t" + threadId + "-v" + incrementalVerticesIdForThread[threadId];
     final String productUniqueId =
         "Product-t" + threadId + "-v" + incrementalVerticesIdForThread[threadId];
 
-    OrientVertex account = graph.addVertex("class:User");
-    account.setProperties("name", accountUniqueId, "updated", false);
-    account.save();
+    Vertex account = graph.addVertex("class:User");
+    account.property("name", accountUniqueId);
+    account.property("updated", false);
 
-    OrientVertex product = graph.addVertex("class:Product");
-    product.setProperties("name", productUniqueId, "updated", false);
-    product.save();
+    Vertex product = graph.addVertex("class:Product");
+    product.property("name", productUniqueId);
+    product.property("updated", false);
 
     this.incrementThreadCount(threadId);
 
-    OrientEdge edge = graph.addEdge(null, account, product, "bought");
+    Edge edge = account.addEdge("bought", product);
     Date creationDate = new Date();
-    edge.setProperties("purchaseDate", creationDate, "updated", true);
-    edge.save();
+    edge.property("purchaseDate", creationDate);
+    edge.property("updated", true);
 
     return account;
   }
 
-  protected void updateVertex(OrientBaseGraph graph, OrientVertex vertex) {
-    vertex.setProperty("updated", true);
+  protected void updateVertex(OrientGraph graph, OrientVertex vertex) {
+    vertex.property("updated", true);
     vertex.save();
   }
 
-  protected void checkRecordIsDeleted(OrientBaseGraph graph, OrientVertex vertex) {
+  protected void checkRecordIsDeleted(OrientGraph graph, OrientVertex vertex) {
     try {
-      vertex.reload();
+      graph.vertices(vertex.getIdentity());
       fail("Record found while it should be deleted");
     } catch (ORecordNotFoundException e) {
     }

@@ -30,11 +30,11 @@ import com.orientechnologies.backup.uploader.OLocalBackupUploader;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 
 /**
  * It test the behaviour of the SFTP Uploader with the following scenario: - inserting 1000 triples
@@ -59,14 +59,14 @@ public class SFTPUploaderTest extends AbstractUploaderTest {
 
     try {
 
-      graph = new OrientGraphNoTx(this.dbURL);
+      graph = OrientGraph.open(this.dbURL);
       // insert
       this.banner("2nd op. - Inserting 5000 triples (10000 vertices, 5000 edges)");
       executeWrites(this.dbURL, 1000);
 
       // first backup
       this.banner("1st local backup");
-      graph.getRawGraph().incrementalBackup(this.backupPath);
+      graph.getRawDatabase().incrementalBackup(this.backupPath);
       System.out.println("Done.");
 
       // insert
@@ -75,7 +75,7 @@ public class SFTPUploaderTest extends AbstractUploaderTest {
 
       // second backup
       this.banner("2nd local backup");
-      graph.getRawGraph().incrementalBackup(this.backupPath);
+      graph.getRawDatabase().incrementalBackup(this.backupPath);
       System.out.println("Done.");
 
       // upload backup on AWS S3
@@ -115,7 +115,7 @@ public class SFTPUploaderTest extends AbstractUploaderTest {
 
       // third backup
       this.banner("3rd local backup");
-      graph.getRawGraph().incrementalBackup(this.backupPath);
+      graph.getRawDatabase().incrementalBackup(this.backupPath);
       System.out.println("Done.");
 
       // upload backup on AWS S3
@@ -136,7 +136,7 @@ public class SFTPUploaderTest extends AbstractUploaderTest {
       System.out.println("Done.");
 
     } finally {
-      this.graph.shutdown();
+      this.graph.close();
       ODatabaseRecordThreadLocal.instance().set(null);
       // cleaning all the directories
       this.cleanDirectories();

@@ -59,8 +59,6 @@
                             <entry name="http.cache:default" value="Cache-Control: max-age=120"/>
                         </parameters>
                     </command>
-                    <command pattern="GET|gephi/*"
-                             implementation="com.orientechnologies.orient.graph.server.command.OServerCommandGetGephi"/>
                 </commands>
             </listener>
         </listeners>

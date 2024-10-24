@@ -23,10 +23,10 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import java.io.File;
 import java.io.IOException;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraphFactory;
 
 /**
  * Running server instance.
@@ -83,25 +83,21 @@ public class ServerRun {
     }
   }
 
-  protected OrientBaseGraph createDatabase(final String iName) {
+  protected OrientGraph createDatabase(final String iName) {
     return createDatabase(iName, null);
   }
 
-  public OrientBaseGraph createDatabase(
+  public OrientGraph createDatabase(
       final String iName, final OCallable<Object, OrientGraphFactory> iCfgCallback) {
     String dbPath = getDatabasePath(iName);
 
-    new File(dbPath).mkdirs();
+    File folder = new File(dbPath);
+    if (folder.exists()) {
+      OFileUtils.deleteRecursively(new File(dbPath));
+    }
+    folder.mkdirs();
 
     OrientGraphFactory factory = new OrientGraphFactory("plocal:" + dbPath);
-    if (factory.exists()) {
-      System.out.println("Dropping previous database '" + iName + "' under: " + dbPath + "...");
-      new ODatabaseDocumentTx("plocal:" + dbPath).open("admin", "admin").drop();
-      OFileUtils.deleteRecursively(new File(dbPath));
-
-      factory.drop();
-      factory = new OrientGraphFactory("plocal:" + dbPath);
-    }
 
     if (iCfgCallback != null) iCfgCallback.call(factory);
 
