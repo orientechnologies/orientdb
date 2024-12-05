@@ -12,18 +12,18 @@ import com.orientechnologies.orient.core.sql.parser.OStatement;
  *     <p>This step represents the execution plan of an instruciton instide a batch script
  */
 public class ScriptLineStep extends AbstractExecutionStep {
-  protected final OInternalExecutionPlan plan;
+  protected final OStatement statement;
 
   private boolean executed = false;
 
-  public ScriptLineStep(
-      OInternalExecutionPlan nextPlan, OCommandContext ctx, boolean profilingEnabled) {
+  public ScriptLineStep(OStatement statement, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
-    this.plan = nextPlan;
+    this.statement = statement;
   }
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    OInternalExecutionPlan plan = statement.createExecutionPlan(ctx);
     if (!executed) {
       if (plan instanceof OInsertExecutionPlan) {
         ((OInsertExecutionPlan) plan).executeInternal();
@@ -42,6 +42,7 @@ public class ScriptLineStep extends AbstractExecutionStep {
   }
 
   public boolean containsReturn() {
+    OInternalExecutionPlan plan = statement.createExecutionPlan(ctx);
     if (plan instanceof OScriptExecutionPlan) {
       return ((OScriptExecutionPlan) plan).containsReturn();
     }
@@ -86,6 +87,7 @@ public class ScriptLineStep extends AbstractExecutionStep {
   }
 
   public OExecutionStepInternal executeUntilReturn(OCommandContext ctx) {
+    OInternalExecutionPlan plan = statement.createExecutionPlan(ctx);
     if (plan instanceof OScriptExecutionPlan) {
       return ((OScriptExecutionPlan) plan).executeUntilReturn();
     }
@@ -102,9 +104,9 @@ public class ScriptLineStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    if (plan == null) {
+    if (statement == null) {
       return "Script Line";
     }
-    return plan.prettyPrint(depth, indent);
+    return statement.getOriginalStatement();
   }
 }

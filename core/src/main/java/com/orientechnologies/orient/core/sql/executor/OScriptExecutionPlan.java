@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 /** Created by luigidellaquila on 08/08/16. */
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.resultset.OLimitedResultSet;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -13,7 +15,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   private String location;
   private final OCommandContext ctx;
   private boolean executed = false;
-  protected List<ScriptLineStep> steps = new ArrayList<>();
+  protected List<OExecutionStepInternal> steps = new ArrayList<>();
   private OExecutionStepInternal lastStep = null;
   private OResultSet finalResult = null;
   private String statement;
@@ -52,9 +54,6 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
         }
         partial = lastStep.syncPull(ctx, n);
       }
-      if (lastStep instanceof ScriptLineStep) {
-        ((OInternalResultSet) finalResult).setPlan(((ScriptLineStep) lastStep).plan);
-      }
     }
   }
 
@@ -71,13 +70,43 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     return result.toString();
   }
 
-  public void chain(OInternalExecutionPlan nextPlan, boolean profilingEnabled) {
-    ScriptLineStep lastStep = steps.size() == 0 ? null : steps.get(steps.size() - 1);
-    ScriptLineStep nextStep = new ScriptLineStep(nextPlan, ctx, profilingEnabled);
+  public void chain(OStatement nextStm, boolean profilingEnabled, OCommandContext ctx) {
+    OExecutionStepInternal lastStep = steps.size() == 0 ? null : steps.get(steps.size() - 1);
+    ScriptLineStep nextStep = new ScriptLineStep(nextStm, ctx, profilingEnabled);
     if (lastStep != null) {
       lastStep.setNext(nextStep);
       nextStep.setPrevious(lastStep);
     }
+    steps.add(nextStep);
+    this.lastStep = nextStep;
+  }
+
+  public void chain(ORetryExecutionPlan retryStep, boolean profilingEnabled, OCommandContext ctx) {
+    OExecutionStepInternal lastStep = steps.size() == 0 ? null : steps.get(steps.size() - 1);
+    OExecutionStepInternal nextStep =
+        new OExecutionStepInternal() {
+
+          boolean executed = false;
+
+          @Override
+          public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+            if (!executed) {
+              retryStep.executeInternal();
+            }
+            return retryStep.fetchNext(nRecords);
+          }
+
+          public void setPrevious(OExecutionStepInternal step) {}
+
+          @Override
+          public void setNext(OExecutionStepInternal step) {}
+
+          @Override
+          public void sendTimeout() {}
+
+          @Override
+          public void close() {}
+        };
     steps.add(nextStep);
     this.lastStep = nextStep;
   }
@@ -139,12 +168,14 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
       lastStep = steps.get(steps.size() - 1);
     }
     for (int i = 0; i < steps.size() - 1; i++) {
-      ScriptLineStep step = steps.get(i);
-      if (step.containsReturn()) {
-        OExecutionStepInternal returnStep = step.executeUntilReturn(ctx);
-        if (returnStep != null) {
-          lastStep = returnStep;
-          return lastStep;
+      OExecutionStepInternal step = steps.get(i);
+      if (step instanceof ScriptLineStep) {
+        if (((ScriptLineStep) step).containsReturn()) {
+          OExecutionStepInternal returnStep = ((ScriptLineStep) step).executeUntilReturn(ctx);
+          if (returnStep != null) {
+            lastStep = returnStep;
+            return lastStep;
+          }
         }
       }
       OResultSet lastResult = step.syncPull(ctx, 100);
@@ -168,11 +199,13 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
    */
   public OExecutionStepInternal executeFull() {
     for (int i = 0; i < steps.size(); i++) {
-      ScriptLineStep step = steps.get(i);
-      if (step.containsReturn()) {
-        OExecutionStepInternal returnStep = step.executeUntilReturn(ctx);
-        if (returnStep != null) {
-          return returnStep;
+      OExecutionStepInternal step = steps.get(i);
+      if (step instanceof ScriptLineStep) {
+        if (((ScriptLineStep) step).containsReturn()) {
+          OExecutionStepInternal returnStep = ((ScriptLineStep) step).executeUntilReturn(ctx);
+          if (returnStep != null) {
+            return returnStep;
+          }
         }
       }
       OResultSet lastResult = step.syncPull(ctx, 100);

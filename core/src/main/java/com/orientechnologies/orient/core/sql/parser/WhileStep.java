@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.sql.executor.AbstractExecutionStep;
 import com.orientechnologies.orient.core.sql.executor.EmptyStep;
 import com.orientechnologies.orient.core.sql.executor.OExecutionStepInternal;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OScriptExecutionPlan;
@@ -60,14 +59,7 @@ public class WhileStep extends AbstractExecutionStep {
       if (stm.originalStatement == null) {
         stm.originalStatement = stm.toString();
       }
-      OInternalExecutionPlan subPlan;
-      if (stm.originalStatement.contains("?")) {
-        // cannot cache execution plans with positional parameters inside scripts
-        subPlan = stm.createExecutionPlanNoCache(subCtx1, profilingEnabled);
-      } else {
-        subPlan = stm.createExecutionPlan(subCtx1, profilingEnabled);
-      }
-      plan.chain(subPlan, profilingEnabled);
+      plan.chain(stm, profilingEnabled, subCtx1);
     }
     return plan;
   }

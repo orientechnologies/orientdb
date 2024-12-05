@@ -86,7 +86,7 @@ public class RetryStep extends AbstractExecutionStep {
     subCtx1.setParent(ctx);
     OScriptExecutionPlan plan = new OScriptExecutionPlan(subCtx1);
     for (OStatement stm : body) {
-      plan.chain(stm.createExecutionPlan(subCtx1, profilingEnabled), profilingEnabled);
+      plan.chain(stm, profilingEnabled, subCtx1);
     }
     return plan;
   }

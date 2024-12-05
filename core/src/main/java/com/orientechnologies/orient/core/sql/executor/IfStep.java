@@ -48,7 +48,7 @@ public class IfStep extends AbstractExecutionStep {
       subCtx1.setParent(ctx);
       OScriptExecutionPlan positivePlan = new OScriptExecutionPlan(subCtx1);
       for (OStatement stm : positiveStatements) {
-        positivePlan.chain(stm.createExecutionPlan(subCtx1, profilingEnabled), profilingEnabled);
+        positivePlan.chain(stm, profilingEnabled, subCtx1);
       }
       setPositivePlan(positivePlan);
     }
@@ -61,7 +61,7 @@ public class IfStep extends AbstractExecutionStep {
         subCtx2.setParent(ctx);
         OScriptExecutionPlan negativePlan = new OScriptExecutionPlan(subCtx2);
         for (OStatement stm : negativeStatements) {
-          negativePlan.chain(stm.createExecutionPlan(subCtx2, profilingEnabled), profilingEnabled);
+          negativePlan.chain(stm, profilingEnabled, subCtx2);
         }
         setNegativePlan(negativePlan);
       }
