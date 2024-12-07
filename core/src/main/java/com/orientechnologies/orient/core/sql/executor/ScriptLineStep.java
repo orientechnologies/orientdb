@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.sql.parser.OStatement;
  */
 public class ScriptLineStep extends AbstractExecutionStep {
   protected final OStatement statement;
+  private OInternalExecutionPlan plan;
 
   private boolean executed = false;
 
@@ -21,9 +22,15 @@ public class ScriptLineStep extends AbstractExecutionStep {
     this.statement = statement;
   }
 
+  private void initPlan(OCommandContext ctx) {
+    if (plan == null) {
+      plan = statement.createExecutionPlan(ctx);
+    }
+  }
+
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OInternalExecutionPlan plan = statement.createExecutionPlan(ctx);
+    initPlan(ctx);
     if (!executed) {
       if (plan instanceof OInsertExecutionPlan) {
         ((OInsertExecutionPlan) plan).executeInternal();
@@ -41,10 +48,10 @@ public class ScriptLineStep extends AbstractExecutionStep {
     return plan.fetchNext(nRecords);
   }
 
-  public boolean containsReturn() {
-    OInternalExecutionPlan plan = statement.createExecutionPlan(ctx);
+  public boolean containsReturn(OCommandContext ctx) {
+    initPlan(ctx);
     if (plan instanceof OScriptExecutionPlan) {
-      return ((OScriptExecutionPlan) plan).containsReturn();
+      return ((OScriptExecutionPlan) plan).containsReturn(ctx);
     }
     if (plan instanceof OSingleOpExecutionPlan) {
       if (((OSingleOpExecutionPlan) plan).statement instanceof OReturnStatement) {
@@ -53,7 +60,7 @@ public class ScriptLineStep extends AbstractExecutionStep {
     }
     if (plan instanceof OIfExecutionPlan) {
       IfStep step = (IfStep) plan.getSteps().get(0);
-      if (step.positivePlan != null && step.positivePlan.containsReturn()) {
+      if (step.positivePlan != null && step.positivePlan.containsReturn(ctx)) {
         return true;
       } else if (step.positiveStatements != null) {
         for (OStatement stm : step.positiveStatements) {
@@ -87,7 +94,7 @@ public class ScriptLineStep extends AbstractExecutionStep {
   }
 
   public OExecutionStepInternal executeUntilReturn(OCommandContext ctx) {
-    OInternalExecutionPlan plan = statement.createExecutionPlan(ctx);
+    initPlan(ctx);
     if (plan instanceof OScriptExecutionPlan) {
       return ((OScriptExecutionPlan) plan).executeUntilReturn();
     }

@@ -76,10 +76,10 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
     return false;
   }
 
-  public boolean containsReturn() {
+  public boolean containsReturn(OCommandContext ctx) {
     step.init(ctx);
-    return step.getPositivePlan().containsReturn()
-        || step.getNegativePlan() != null && step.getPositivePlan().containsReturn();
+    return step.getPositivePlan().containsReturn(ctx)
+        || step.getNegativePlan() != null && step.getPositivePlan().containsReturn(ctx);
   }
 
   public OExecutionStepInternal executeUntilReturn() {
