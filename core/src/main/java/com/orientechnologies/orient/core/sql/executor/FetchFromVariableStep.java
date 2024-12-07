@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
@@ -79,7 +80,12 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
   }
 
   private Object getValue() {
-    return ctx.getVariable(variableName.toString());
+    String name = variableName.getIdentifier().getStringValue();
+    Object value = ctx.getVariable(name);
+    if (variableName.getModifier() != null) {
+      value = variableName.getModifier().execute((OIdentifiable) null, value, ctx);
+    }
+    return value;
   }
 
   private void init() {
