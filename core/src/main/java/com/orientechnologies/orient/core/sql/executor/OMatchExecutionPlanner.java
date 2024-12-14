@@ -462,9 +462,7 @@ public class OMatchExecutionPlanner {
       edges.put(outEdge, true);
     }
     for (PatternEdge inEdge : startNode.in) {
-      if (inEdge.item.isBidirectional()) {
-        edges.put(inEdge, false);
-      }
+      edges.put(inEdge, false);
     }
 
     for (Map.Entry<PatternEdge, Boolean> edgeData : edges.entrySet()) {
