@@ -28,6 +28,15 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.37 - (Jennuary, 15 2026)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3237---16-Jennaury-2025
+
+# Core
+- Make sure to interpret sql script line by line
+- Improvement query with target a variable
+- Increased cases where pattern matching with loops can be executed correctly
+- Deprecated legacy pool implementations
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.36 - (November, 28 2024)
