@@ -1139,10 +1139,10 @@ OStatement StatementInternal():
                 LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
                 result = CreateVertexStatementEmptyNoTarget()
                 |
-                LOOKAHEAD(CreateEdgeStatement())
+                LOOKAHEAD(2)
                 result = CreateEdgeStatement()
                 |
-                LOOKAHEAD(UpdateEdgeStatement())
+                LOOKAHEAD(2)
                 result = UpdateEdgeStatement()
                 |
                 LOOKAHEAD(UpdateStatement())
@@ -1150,37 +1150,37 @@ OStatement StatementInternal():
                 |
                 result = MoveVertexStatement()
                 |
-                LOOKAHEAD(ProfileStorageStatement())
+                LOOKAHEAD(2)
                 result = ProfileStorageStatement()
                 |
-                LOOKAHEAD(TruncateClassStatement())
+                LOOKAHEAD(2)
                 result = TruncateClassStatement()
                 |
-                LOOKAHEAD(TruncateClusterStatement())
+                LOOKAHEAD(2)
                 result = TruncateClusterStatement()
                 |
-                LOOKAHEAD(TruncateRecordStatement())
+                LOOKAHEAD(2)
                 result = TruncateRecordStatement()
                 |
                 LOOKAHEAD(2)
                 result = AlterSequenceStatement()
                 |
-                LOOKAHEAD(AlterClassStatement())
+                LOOKAHEAD(2)
                 result = AlterClassStatement()
                 |
                 LOOKAHEAD(2)
                 result = DropSequenceStatement()
                 |
-                LOOKAHEAD(DropClassStatement())
+                LOOKAHEAD(2)
                 result = DropClassStatement()
                 |
-                LOOKAHEAD(DropViewStatement())
+                LOOKAHEAD(2)
                 result = DropViewStatement()
                 |
-                LOOKAHEAD(AlterPropertyStatement())
+                LOOKAHEAD(2)
                 result = AlterPropertyStatement()
                 |
-                LOOKAHEAD(DropPropertyStatement())
+                LOOKAHEAD(2)
                 result = DropPropertyStatement()
                 |
                 result = RebuildIndexStatement()
@@ -1188,7 +1188,7 @@ OStatement StatementInternal():
                 LOOKAHEAD(2)
                 result = DropIndexStatement()
                 |
-                LOOKAHEAD(AlterClusterStatement())
+                LOOKAHEAD(2)
                 result = AlterClusterStatement()
                 |
                 LOOKAHEAD(2)
@@ -1217,19 +1217,19 @@ OStatement StatementInternal():
                 |
                 result = IfStatement()
                 |
-                LOOKAHEAD(HaRemoveServerStatement())
+                LOOKAHEAD(3)
                 result = HaRemoveServerStatement()
                 |
-                LOOKAHEAD(HaStatusStatement())
+                LOOKAHEAD(2)
                 result = HaStatusStatement()
                 |
-                LOOKAHEAD(HaSyncDatabaseStatement())
+                LOOKAHEAD(3)
                 result = HaSyncDatabaseStatement()
                 |
-                LOOKAHEAD(HaSyncClusterStatement())
+                LOOKAHEAD(3)
                 result = HaSyncClusterStatement()
                 |
-                LOOKAHEAD(HaSetStatement())
+                LOOKAHEAD(2)
                 result = HaSetStatement()
             )
         )
