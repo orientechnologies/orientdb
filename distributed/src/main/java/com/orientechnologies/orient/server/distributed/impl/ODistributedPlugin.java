@@ -1240,6 +1240,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
     }
   }
 
+  public boolean isSyncronizing(String databaseName) {
+    return this.installingDatabases.contains(databaseName);
+  }
+
   public Boolean internalInstallDatabase(
       final boolean iStartup,
       final String databaseName,
