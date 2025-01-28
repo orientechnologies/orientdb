@@ -381,14 +381,11 @@ public class OModifier extends SimpleNode {
       if (arrayRange != null) {
         arrayRange.applyRemove(currentValue, originalRecord, ctx);
       } else if (condition != null) {
-        // TODO
-        throw new UnsupportedOperationException(
-            "Remove on conditional filtering will be supported soon");
+        condition.applyRemove(currentValue, originalRecord, ctx);
       } else if (arraySingleValues != null) {
         arraySingleValues.applyRemove(currentValue, originalRecord, ctx);
       } else if (rightBinaryCondition != null) {
-        throw new UnsupportedOperationException(
-            "Remove on conditional filtering will be supported soon");
+        rightBinaryCondition.applyRemove(currentValue, originalRecord, ctx);
       } else if (suffix != null) {
         suffix.applyRemove(currentValue, ctx);
       } else {

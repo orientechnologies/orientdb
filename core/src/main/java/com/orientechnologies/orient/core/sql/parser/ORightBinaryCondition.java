@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -215,6 +216,29 @@ public class ORightBinaryCondition extends SimpleNode {
     }
     right = new OExpression(-1);
     right.deserialize(fromResult.getProperty("right"));
+  }
+
+  public void applyRemove(
+      Object currentValue, OResultInternal originalRecord, OCommandContext ctx) {
+    if (currentValue == null) {
+      return;
+    }
+    if (currentValue instanceof Collection) {
+      Iterator it = ((Collection) currentValue).iterator();
+      while (it.hasNext()) {
+        Object cv = it.next();
+        if (this.matchesFilters(originalRecord, cv, ctx)) {
+          it.remove();
+        }
+      }
+    } else {
+      throw new OCommandExecutionException(
+          "Trying to remove elements from "
+              + currentValue
+              + " ("
+              + currentValue.getClass().getSimpleName()
+              + ")");
+    }
   }
 }
 /* JavaCC - OriginalChecksum=29d59ae04778eb611547292a27863da4 (do not edit this line) */
