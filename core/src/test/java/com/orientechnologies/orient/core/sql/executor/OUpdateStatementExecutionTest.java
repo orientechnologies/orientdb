@@ -57,6 +57,12 @@ public class OUpdateStatementExecutionTest {
       tagsList.add("bar");
       tagsList.add("baz");
       doc.setProperty("tagsList", tagsList);
+      List<Integer> valueList = new ArrayList<>();
+      valueList.add(1);
+      valueList.add(2);
+      valueList.add(3);
+      valueList.add(4);
+      doc.setProperty("valueList", valueList);
 
       Map<String, String> tagsMap = new HashMap<>();
       tagsMap.put("foo", "foo");
@@ -64,7 +70,20 @@ public class OUpdateStatementExecutionTest {
       tagsMap.put("baz", "baz");
       doc.setProperty("tagsMap", tagsMap);
 
-      doc.save();
+      List<ODocument> embedded = new ArrayList<>();
+      ODocument doc1 = new ODocument();
+      doc1.setProperty("field", "val");
+      doc1.setProperty("other", "ov");
+      doc1.setProperty("number", 1);
+      embedded.add(doc1);
+      ODocument doc2 = new ODocument();
+      doc2.setProperty("field", "xyz");
+      doc2.setProperty("other", "bla");
+      doc2.setProperty("number", 2);
+      embedded.add(doc2);
+      doc.setProperty("emb", embedded);
+
+      db.save(doc);
     }
   }
 
@@ -669,6 +688,124 @@ public class OUpdateStatementExecutionTest {
       Assert.assertNotNull(item);
       Assert.assertEquals(2, ((Map) item.getProperty("tagsMap")).size());
       Assert.assertFalse(((Map) item.getProperty("tagsMap")).containsKey("bar"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testRemoveCondition() {
+
+    db.command("UPDATE " + className + " REMOVE emb[number=1] ").close();
+
+    OResultSet result = db.query("SELECT FROM " + className);
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      List<ODocument> list = item.getProperty("emb");
+      for (ODocument doc : list) {
+        Assert.assertNotEquals((int) doc.getProperty("number"), 1);
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testRemoveConditionAnd() {
+
+    db.command("UPDATE " + className + " REMOVE emb[number=1 and field='val'] ").close();
+
+    OResultSet result = db.query("SELECT FROM " + className);
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      List<ODocument> list = item.getProperty("emb");
+      for (ODocument doc : list) {
+
+        Assert.assertNotEquals((int) doc.getProperty("number"), 1);
+        Assert.assertNotEquals((String) doc.getProperty("field"), "val");
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testRemoveAssignCondition() {
+
+    db.command("UPDATE " + className + " REMOVE emb = emb[number=1] ").close();
+
+    OResultSet result = db.query("SELECT FROM " + className);
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      List<ODocument> list = item.getProperty("emb");
+      for (ODocument doc : list) {
+        Assert.assertNotEquals((int) doc.getProperty("number"), 1);
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testRemoveAssingConditionAnd() {
+
+    db.command("UPDATE " + className + " REMOVE emb = emb[number=1 and field='val'] ").close();
+
+    OResultSet result = db.query("SELECT FROM " + className);
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      List<ODocument> list = item.getProperty("emb");
+      for (ODocument doc : list) {
+
+        Assert.assertNotEquals((int) doc.getProperty("number"), 1);
+        Assert.assertNotEquals((String) doc.getProperty("field"), "val");
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testRemoveDataCheck() {
+
+    db.command("UPDATE " + className + " REMOVE valueList[>2] ").close();
+
+    OResultSet result = db.query("SELECT FROM " + className);
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      List<Integer> list = item.getProperty("valueList");
+      for (Integer value : list) {
+        Assert.assertTrue(value <= 2);
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testRemoveDataCheckAssign() {
+
+    db.command("UPDATE " + className + " REMOVE valueList = valueList[>2] ").close();
+
+    OResultSet result = db.query("SELECT FROM " + className);
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      List<Integer> list = item.getProperty("valueList");
+      for (Integer value : list) {
+        Assert.assertTrue(value <= 2);
+      }
     }
     Assert.assertFalse(result.hasNext());
     result.close();
