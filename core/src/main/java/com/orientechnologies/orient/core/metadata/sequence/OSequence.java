@@ -428,7 +428,8 @@ public abstract class OSequence {
   }
 
   public synchronized boolean getRecyclable() {
-    return tlDocument.get().field(FIELD_RECYCLABLE, OType.BOOLEAN);
+    Boolean value = tlDocument.get().field(FIELD_RECYCLABLE, OType.BOOLEAN);
+    return Boolean.TRUE.equals(value);
   }
 
   public synchronized void setRecyclable(final boolean recyclable) {
