@@ -5,18 +5,25 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
+import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 public class OInCondition extends OBooleanExpression {
@@ -510,6 +517,44 @@ public class OInCondition extends OBooleanExpression {
     base.rightMathExpression = right.copy();
 
     return result;
+  }
+
+  public List<OIndexStream> createIndexStreams(
+      OIndexInternal index, boolean orderAsc, OCommandContext ctx) {
+    List<OIndexStream> acquiredStreams = new ArrayList<>();
+    OExpression left = getLeft();
+    if (!left.toString().equalsIgnoreCase("key")) {
+      throw new OCommandExecutionException(
+          "search for index for " + this + " is not supported yet");
+    }
+    Object rightValue = evaluateRight((OResult) null, ctx);
+    if (OMultiValue.isMultiValue(rightValue)) {
+      Set<Object> itemsSet;
+      if (orderAsc) {
+        itemsSet = new TreeSet<>();
+      } else {
+        itemsSet = new TreeSet<>((Comparator<Object>) Collections.reverseOrder());
+      }
+      for (Object item : OMultiValue.getMultiValueIterable(rightValue)) {
+        if (item instanceof OResult) {
+          if (((OResult) item).isElement()) {
+            item = ((OResult) item).getElement().orElseThrow(IllegalStateException::new);
+          } else if (((OResult) item).getPropertyNames().size() == 1) {
+            item =
+                ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
+          }
+        }
+        itemsSet.add(item);
+      }
+      for (Object item : itemsSet) {
+        OIndexStream localCursor = new OExactIndexStream(index, item, orderAsc);
+        acquiredStreams.add(localCursor);
+      }
+    } else {
+      OIndexStream stream = new OExactIndexStream(index, rightValue, orderAsc);
+      acquiredStreams.add(stream);
+    }
+    return acquiredStreams;
   }
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */

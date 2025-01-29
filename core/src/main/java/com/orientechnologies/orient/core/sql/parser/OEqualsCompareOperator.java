@@ -5,9 +5,12 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
+import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.Arrays;
@@ -43,6 +46,12 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
   @Override
   public String toString() {
     return doubleEquals ? "==" : "=";
+  }
+
+  @Override
+  public OIndexStream createStreamForIndex(
+      OIndexInternal index, Object rightValue, boolean orderAsc, OCommandContext ctx) {
+    return new OExactIndexStream(index, rightValue, orderAsc);
   }
 
   @Override

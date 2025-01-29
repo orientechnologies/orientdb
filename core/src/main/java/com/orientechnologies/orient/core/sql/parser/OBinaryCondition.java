@@ -8,8 +8,10 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
+import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
@@ -636,6 +638,26 @@ public class OBinaryCondition extends OBooleanExpression {
         return true;
       }
     }
+  }
+
+  @Override
+  public Optional<Map<Object, Object>> createIndexValueMap(Object object) {
+    return getOperator().createIndexValueMap(object);
+  }
+
+  public List<OIndexStream> createIndexStreams(
+      OIndexInternal index, boolean isOrderAsc, OCommandContext ctx) {
+    List<OIndexStream> acquiredStreams = new ArrayList<>();
+    OExpression left = getLeft();
+    if (!left.toString().equalsIgnoreCase("key")) {
+      throw new OCommandExecutionException(
+          "search for index for " + this + " is not supported yet");
+    }
+    OBinaryCompareOperator operator = getOperator();
+    Object rightValue = getRight().execute((OResult) null, ctx);
+    OIndexStream stream = operator.createStreamForIndex(index, rightValue, isOrderAsc, ctx);
+    acquiredStreams.add(stream);
+    return acquiredStreams;
   }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

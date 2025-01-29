@@ -3,8 +3,13 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
+import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class OContainsKeyOperator extends SimpleNode implements OBinaryCompareOperator {
   public OContainsKeyOperator(int id) {
@@ -25,6 +30,19 @@ public class OContainsKeyOperator extends SimpleNode implements OBinaryCompareOp
       return map.containsKey(right);
     }
     return false;
+  }
+
+  @Override
+  public Optional<Map<Object, Object>> createIndexValueMap(Object object) {
+    Map<Object, Object> newValue = new HashMap<>();
+    newValue.put(object, "");
+    return Optional.of(newValue);
+  }
+
+  @Override
+  public OIndexStream createStreamForIndex(
+      OIndexInternal index, Object rightValue, boolean orderAsc, OCommandContext ctx) {
+    return new OExactIndexStream(index, rightValue, orderAsc);
   }
 
   @Override

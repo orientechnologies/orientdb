@@ -6,7 +6,10 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.executor.OIndexStream;
+import com.orientechnologies.orient.core.sql.executor.OMajorIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.Map;
 
@@ -50,6 +53,12 @@ public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
       return false;
     }
     return ((Comparable<Object>) iLeft).compareTo(iRight) > 0;
+  }
+
+  @Override
+  public OIndexStream createStreamForIndex(
+      OIndexInternal index, Object rightValue, boolean orderAsc, OCommandContext ctx) {
+    return new OMajorIndexStream(index, rightValue, false, orderAsc);
   }
 
   @Override

@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -341,6 +342,13 @@ public class OContainsValueCondition extends OBooleanExpression {
         return true;
       }
     }
+  }
+
+  @Override
+  public Optional<Map<Object, Object>> createIndexValueMap(Object object) {
+    Map<Object, Object> newValue = new HashMap<>();
+    newValue.put("", object);
+    return Optional.of(newValue);
   }
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */

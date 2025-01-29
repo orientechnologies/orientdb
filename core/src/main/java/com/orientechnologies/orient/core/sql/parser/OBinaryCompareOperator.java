@@ -1,7 +1,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
+import java.util.Map;
+import java.util.Optional;
 
 /** Created by luigidellaquila on 12/11/14. */
 public interface OBinaryCompareOperator {
@@ -17,19 +22,28 @@ public interface OBinaryCompareOperator {
     return false;
   }
 
-  public OIndexFinder.Operation getOperation();
+  OIndexFinder.Operation getOperation();
 
-  public boolean isInclude();
+  boolean isInclude();
 
-  public boolean isLess();
+  boolean isLess();
 
-  public boolean isGreater();
+  boolean isGreater();
 
-  public default boolean isGreaterInclude() {
+  default boolean isGreaterInclude() {
     return isGreater() && isInclude();
   }
 
-  public default boolean isLessInclude() {
+  default boolean isLessInclude() {
     return isLess() && isInclude();
+  }
+
+  default OIndexStream createStreamForIndex(
+      OIndexInternal index, Object rightValue, boolean orderAsc, OCommandContext ctx) {
+    throw new OCommandExecutionException("search for index for " + this + " is not supported yet");
+  }
+
+  default Optional<Map<Object, Object>> createIndexValueMap(Object object) {
+    return Optional.empty();
   }
 }

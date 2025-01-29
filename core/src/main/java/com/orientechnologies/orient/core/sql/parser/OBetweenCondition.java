@@ -3,9 +3,14 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.executor.IndexSearchDescriptor;
+import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
+import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -337,6 +342,28 @@ public class OBetweenCondition extends OBooleanExpression {
   @Override
   public boolean isKeyToIncluded(OBinaryCondition additional) {
     return true;
+  }
+
+  public List<OIndexStream> createIndexStreams(
+      OIndexInternal index, boolean isOrderAsc, OCommandContext ctx) {
+
+    List<OIndexStream> acquiredStreams = new ArrayList<>();
+    OExpression key = getFirst();
+    if (!key.toString().equalsIgnoreCase("key")) {
+      throw new OCommandExecutionException(
+          "search for index for " + this + " is not supported yet");
+    }
+    OExpression second = getSecond();
+    OExpression third = getThird();
+
+    Object secondValue = second.execute((OResult) null, ctx);
+    secondValue = IndexSearchDescriptor.unboxOResult(secondValue);
+    Object thirdValue = third.execute((OResult) null, ctx);
+    thirdValue = IndexSearchDescriptor.unboxOResult(thirdValue);
+    OIndexStream stream =
+        new OBetweenIndexStream(index, secondValue, true, thirdValue, true, isOrderAsc);
+    acquiredStreams.add(stream);
+    return acquiredStreams;
   }
 }
 /* JavaCC - OriginalChecksum=f94f4779c4a6c6d09539446045ceca89 (do not edit this line) */

@@ -286,6 +286,32 @@ public class OAndBlock extends OBooleanExpression {
     return result;
   }
 
+  public boolean allEqualities() {
+    for (OBooleanExpression exp : getSubBlocks()) {
+      if (exp instanceof OBinaryCondition) {
+        if (!(((OBinaryCondition) exp).getOperator() instanceof OEqualsCompareOperator)
+            && !(((OBinaryCondition) exp).getOperator() instanceof OContainsKeyOperator)
+            && !(((OBinaryCondition) exp).getOperator() instanceof OContainsValueOperator)) {
+          return false;
+        }
+      } else if (!(exp instanceof OInCondition)
+          && !(exp instanceof OContainsValueCondition)
+          && !(exp instanceof OContainsCondition)) {
+        return false;
+      } // OK
+    }
+    return true;
+  }
+
+  public boolean allNullCheck() {
+    for (OBooleanExpression exp : getSubBlocks()) {
+      if (!(exp instanceof OIsNullCondition)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Override
   public boolean isAlwaysTrue() {
     if (subBlocks.isEmpty()) {
@@ -297,6 +323,50 @@ public class OAndBlock extends OBooleanExpression {
       }
     }
     return true;
+  }
+
+  public OCollection indexKeyFrom(OBinaryCondition additional) {
+    OCollection result = new OCollection(-1);
+    for (OBooleanExpression exp : getSubBlocks()) {
+      OExpression res = exp.resolveKeyFrom(additional);
+      if (res != null) {
+        result.add(res);
+      }
+    }
+    return result;
+  }
+
+  public OCollection indexKeyTo(OBinaryCondition additional) {
+    OCollection result = new OCollection(-1);
+    for (OBooleanExpression exp : getSubBlocks()) {
+      OExpression res = exp.resolveKeyTo(additional);
+      if (res != null) {
+        result.add(res);
+      }
+    }
+    return result;
+  }
+
+  public boolean indexKeyFromIncluded(OBinaryCondition additional) {
+    OBooleanExpression exp = getSubBlocks().get(getSubBlocks().size() - 1);
+    return exp.isKeyFromIncluded(additional);
+  }
+
+  public boolean indexKeyToIncluded(OBinaryCondition additional) {
+    OBooleanExpression exp = getSubBlocks().get(getSubBlocks().size() - 1);
+    return exp.isKeyToIncluded(additional);
+  }
+
+  public void matchTypesToCondition(List<Object> result) {
+    if (getSubBlocks().size() == result.size()) {
+      for (int j = 0; j < getSubBlocks().size(); j++) {
+        OBooleanExpression subExp = getSubBlocks().get(j);
+        Optional<Map<Object, Object>> newValue = subExp.createIndexValueMap(result.get(j));
+        if (newValue.isPresent()) {
+          result.set(j, newValue.get());
+        }
+      }
+    }
   }
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

@@ -320,4 +320,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   public boolean isKeyToIncluded(OBinaryCondition additional) {
     throw new UnsupportedOperationException("Cannot execute index query with " + this);
   }
+
+  public Optional<Map<Object, Object>> createIndexValueMap(Object object) {
+    return Optional.empty();
+  }
 }
