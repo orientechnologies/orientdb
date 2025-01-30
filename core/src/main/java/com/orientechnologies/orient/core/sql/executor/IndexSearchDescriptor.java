@@ -289,7 +289,49 @@ public class IndexSearchDescriptor {
     OBooleanExpression condition = getKeyCondition();
     OBinaryCondition additionalRangeCondition = getAdditionalRangeCondition();
 
-    return multipleRange(index, condition, isOrderAsc, additionalRangeCondition, ctx);
+    if (index.supportsOrderedIterations()) {
+      return multipleRange(index, condition, isOrderAsc, additionalRangeCondition, ctx);
+    } else if ((additionalRangeCondition == null
+            && condition != null
+            && ((OAndBlock) condition).allEqualities())
+        || isFullTextIndex(index)) {
+      List<OIndexStream> acquiredStreams = new ArrayList<>();
+      OCollection fromKey = ((OAndBlock) condition).indexKeyFrom(additionalRangeCondition);
+      OIndexDefinition indexDef = index.getDefinition();
+      Object secondValue = fromKey.execute((OResult) null, ctx);
+      if (secondValue instanceof List
+          && ((List) secondValue).size() == 1
+          && indexDef.getFields().size() == 1
+          && !(indexDef instanceof OIndexDefinitionMultiValue)) {
+        secondValue = ((List) secondValue).get(0);
+      }
+      secondValue = unboxOResult(secondValue);
+      if (OMultiValue.isMultiValue(secondValue)
+          && OMultiValue.getSize(secondValue) > indexDef.getTypes().length) {
+        if (secondValue instanceof Collection) {
+          ((Collection) secondValue)
+              .forEach(
+                  item -> {
+                    Object itemVal =
+                        convertToIndexDefinitionTypes(condition, item, indexDef.getTypes());
+                    acquiredStreams.add(new OExactIndexStream(index, itemVal, isOrderAsc));
+                  });
+        }
+      } else {
+        secondValue = convertToIndexDefinitionTypes(condition, secondValue, indexDef.getTypes());
+        acquiredStreams.add(new OExactIndexStream(index, secondValue, isOrderAsc));
+      }
+      return acquiredStreams;
+    } else if (condition != null && ((OAndBlock) condition).allNullCheck()) {
+      List<OIndexStream> acquiredStreams = new ArrayList<>();
+      if (!index.getDefinition().isNullValuesIgnored()) {
+        acquiredStreams.add(new ONullIndexStream(index));
+      }
+      return acquiredStreams;
+    } else {
+      throw new UnsupportedOperationException(
+          "Cannot evaluate " + condition + " on index " + index);
+    }
   }
 
   private static List<OIndexStream> multipleRange(
@@ -343,7 +385,6 @@ public class IndexSearchDescriptor {
                         isOrderAsc,
                         additionalRangeCondition,
                         acquiredStreams,
-                        indexDef,
                         itemVal,
                         itemVal);
                   });
@@ -362,7 +403,6 @@ public class IndexSearchDescriptor {
           isOrderAsc,
           additionalRangeCondition,
           acquiredStreams,
-          indexDef,
           secondValue,
           thirdValue);
     }
@@ -375,29 +415,12 @@ public class IndexSearchDescriptor {
       boolean isOrderAsc,
       OBinaryCondition additionalRangeCondition,
       List<OIndexStream> acquiredStreams,
-      OIndexDefinition indexDef,
       Object fromVal,
       Object toVal) {
-
-    if (index.supportsOrderedIterations()) {
-      boolean fromKeyIncluded = condition.indexKeyFromIncluded(additionalRangeCondition);
-      boolean toKeyIncluded = condition.indexKeyToIncluded(additionalRangeCondition);
-      acquiredStreams.add(
-          new OBetweenIndexStream(
-              index, fromVal, fromKeyIncluded, toVal, toKeyIncluded, isOrderAsc));
-
-    } else if (additionalRangeCondition == null && condition != null && condition.allEqualities()) {
-      acquiredStreams.add(new OExactIndexStream(index, fromVal, isOrderAsc));
-    } else if (isFullTextIndex(index)) {
-      acquiredStreams.add(new OExactIndexStream(index, fromVal, isOrderAsc));
-    } else if (condition != null && condition.allNullCheck()) {
-      if (!index.getDefinition().isNullValuesIgnored()) {
-        acquiredStreams.add(new ONullIndexStream(index));
-      }
-    } else {
-      throw new UnsupportedOperationException(
-          "Cannot evaluate " + condition + " on index " + index);
-    }
+    boolean fromKeyIncluded = condition.indexKeyFromIncluded(additionalRangeCondition);
+    boolean toKeyIncluded = condition.indexKeyToIncluded(additionalRangeCondition);
+    acquiredStreams.add(
+        new OBetweenIndexStream(index, fromVal, fromKeyIncluded, toVal, toKeyIncluded, isOrderAsc));
   }
 
   private static boolean isFullTextIndex(OIndex index) {
