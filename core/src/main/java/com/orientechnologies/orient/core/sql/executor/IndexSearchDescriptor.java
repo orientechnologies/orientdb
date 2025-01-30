@@ -265,17 +265,6 @@ public class IndexSearchDescriptor {
     }
   }
 
-  private static boolean isNullKey(OIndexDefinition definition, Object rightValue) {
-    if (definition.getFields().size() == 1 && rightValue instanceof Collection) {
-      if (((Collection) rightValue).size() > 0) {
-        rightValue = ((Collection) rightValue).iterator().next();
-      } else {
-        return true;
-      }
-    }
-    return rightValue == null;
-  }
-
   public static Object unboxOResult(Object value) {
     if (value instanceof List) {
       try (Stream stream = ((List) value).stream()) {
@@ -391,21 +380,11 @@ public class IndexSearchDescriptor {
       Object toVal) {
 
     if (index.supportsOrderedIterations()) {
-
-      if (isNullKey(indexDef, fromVal) && isNullKey(indexDef, toVal)) {
-        // manage null value explicitly, as the index API does not seem to work
-        // correctly in this
-        // case
-        if (!index.getDefinition().isNullValuesIgnored()) {
-          acquiredStreams.add(new ONullIndexStream(index));
-        }
-      } else {
-        boolean fromKeyIncluded = condition.indexKeyFromIncluded(additionalRangeCondition);
-        boolean toKeyIncluded = condition.indexKeyToIncluded(additionalRangeCondition);
-        acquiredStreams.add(
-            new OBetweenIndexStream(
-                index, fromVal, fromKeyIncluded, toVal, toKeyIncluded, isOrderAsc));
-      }
+      boolean fromKeyIncluded = condition.indexKeyFromIncluded(additionalRangeCondition);
+      boolean toKeyIncluded = condition.indexKeyToIncluded(additionalRangeCondition);
+      acquiredStreams.add(
+          new OBetweenIndexStream(
+              index, fromVal, fromKeyIncluded, toVal, toKeyIncluded, isOrderAsc));
 
     } else if (additionalRangeCondition == null && condition != null && condition.allEqualities()) {
       acquiredStreams.add(new OExactIndexStream(index, fromVal, isOrderAsc));

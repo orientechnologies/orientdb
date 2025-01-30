@@ -52,16 +52,25 @@ public class OBetweenIndexStream implements OIndexStream {
   }
 
   public Stream<ORawPair<Object, ORID>> start(OCommandContext ctx) {
-    return index.streamEntriesBetween(startKey, includeStart, endKey, includeEnd, asc);
+    if (startKey == null && endKey == null) {
+      final Stream<ORID> stream = index.getRids(null);
+      return stream.map((rid) -> new ORawPair<>(null, rid));
+    } else {
+      return index.streamEntriesBetween(startKey, includeStart, endKey, includeEnd, asc);
+    }
   }
 
   public OIndexStreamStat indexStats() {
-    int keySize;
-    if (this.startKey instanceof OCompositeKey) {
-      keySize = ((OCompositeKey) this.startKey).getKeys().size();
+    if (startKey == null && endKey == null) {
+      return new OIndexStreamStat(index.getName(), index.getDefinition().getParamCount(), 2);
     } else {
-      keySize = 1;
+      int keySize;
+      if (this.startKey instanceof OCompositeKey) {
+        keySize = ((OCompositeKey) this.startKey).getKeys().size();
+      } else {
+        keySize = 1;
+      }
+      return new OIndexStreamStat(index.getName(), index.getDefinition().getParamCount(), keySize);
     }
-    return new OIndexStreamStat(index.getName(), index.getDefinition().getParamCount(), keySize);
   }
 }
