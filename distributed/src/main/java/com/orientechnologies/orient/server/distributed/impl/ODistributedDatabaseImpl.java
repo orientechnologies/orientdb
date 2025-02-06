@@ -602,7 +602,22 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void initFirstOpen(ODatabaseDocumentInternal session) {
     ODistributedConfiguration cfg = this.context.getOrInitDistributedConfiguration(session);
     manager.checkNodeInConfiguration(databaseName, cfg);
-    setOnline();
+    fillStatus();
+
+    // SET THE NODE.DB AS ONLINE
+    OAbstractPaginatedStorage storage = context.getStorage(databaseName);
+    if (storage != null && !manager.isSyncronizing(databaseName)) {
+      ODistributedServerLog.info(
+          this,
+          localNodeName,
+          null,
+          DIRECTION.NONE,
+          "Publishing ONLINE status for database %s.%s...",
+          localNodeName,
+          databaseName);
+      manager.setDatabaseStatus(localNodeName, databaseName, DB_STATUS.ONLINE);
+    }
+    resume();
   }
 
   protected String getLocalNodeName() {
