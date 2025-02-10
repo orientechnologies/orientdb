@@ -10,14 +10,16 @@ import java.util.Optional;
 
 public class OIndexCandidateImpl implements OIndexCandidate {
 
-  private String name;
+  private final String name;
+  private final OProperty property;
+  private final Object value;
   private Operation operation;
-  private OProperty property;
 
-  public OIndexCandidateImpl(String name, Operation operation, OProperty prop) {
+  public OIndexCandidateImpl(String name, Operation operation, OProperty prop, Object value) {
     this.name = name;
     this.operation = operation;
     this.property = prop;
+    this.value = value;
   }
 
   public String getName() {
@@ -40,6 +42,10 @@ public class OIndexCandidateImpl implements OIndexCandidate {
 
   public Operation getOperation() {
     return operation;
+  }
+
+  public Object getValue() {
+    return value;
   }
 
   @Override

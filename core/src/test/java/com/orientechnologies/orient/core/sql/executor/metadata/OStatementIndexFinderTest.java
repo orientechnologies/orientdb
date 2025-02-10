@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.util.Optional;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class OStatementIndexFinderTest {
@@ -40,7 +41,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void simpleMatchTest() {
+  public void simpleMatch() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
     prop.createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -54,7 +55,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void simpleRangeTest() {
+  public void simpleRange() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
     prop.createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -75,7 +76,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void multipleSimpleAndMatchTest() {
+  public void multipleSimpleAndMatch() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
     prop.createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -93,7 +94,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void requiredRangeOrMatchTest() {
+  public void requiredRangeOrMatch() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
     prop.createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -111,7 +112,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void multipleRangeAndTest() {
+  public void multipleRangeAnd() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
     prop.createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -130,7 +131,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void requiredRangeOrTest() {
+  public void requiredRangeOr() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
     prop.createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -149,7 +150,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void simpleRangeNotTest() {
+  public void simpleRangeNot() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
     prop.createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -164,7 +165,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void simpleChainTest() {
+  public void simpleChain() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
     prop.createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -181,7 +182,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void simpleNestedAndOrMatchTest() {
+  public void simpleNestedAndOrMatch() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
     prop.createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -214,7 +215,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void simpleNestedAndOrPartialMatchTest() {
+  public void simpleNestedAndOrPartialMatch() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
     prop.createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -240,7 +241,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void simpleNestedOrNotMatchTest() {
+  public void simpleNestedOrNotMatch() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
     prop.createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -260,7 +261,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void multivalueMatchTest() {
+  public void multivalueMatch() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("name", OType.STRING);
     cl.createProperty("surname", OType.STRING);
@@ -278,7 +279,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void multivalueMatchOneTest() {
+  public void multivalueMatchOne() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("name", OType.STRING);
     cl.createProperty("surname", OType.STRING);
@@ -296,7 +297,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void multivalueNotMatchSecondPropertyTest() {
+  public void multivalueNotMatchSecondProperty() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("name", OType.STRING);
     cl.createProperty("surname", OType.STRING);
@@ -314,7 +315,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void multivalueNotMatchSecondPropertySingleConditionTest() {
+  public void multivalueNotMatchSecondPropertySingleCondition() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("name", OType.STRING);
     cl.createProperty("surname", OType.STRING);
@@ -331,7 +332,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void multivalueMatchPropertyORTest() {
+  public void multivalueMatchPropertyOR() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("name", OType.STRING);
     cl.createProperty("surname", OType.STRING);
@@ -357,7 +358,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void multivalueNotMatchPropertyORTest() {
+  public void multivalueNotMatchPropertyOR() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("name", OType.STRING);
     cl.createProperty("surname", OType.STRING);
@@ -376,7 +377,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void testMutipleConditionBetween() {
+  public void mutipleConditionBetween() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("name", OType.STRING);
     cl.createIndex("cl.name", INDEX_TYPE.NOTUNIQUE, "name");
@@ -390,6 +391,94 @@ public class OStatementIndexFinderTest {
     assertTrue((result.get() instanceof ORangeIndexCanditate));
     assertEquals("cl.name", result.get().getName());
     assertEquals(Operation.Range, result.get().getOperation());
+  }
+
+  @Test
+  public void inCondition() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createIndex("cl.name", INDEX_TYPE.NOTUNIQUE, "name");
+
+    OSelectStatement stat = parseQuery("select from cl where name in ['a','b','c']");
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertTrue(result.isPresent());
+    OIndexCandidate value = result.get();
+    assertEquals("cl.name", value.getName());
+    assertEquals(Operation.Eq, value.getOperation());
+  }
+
+  @Test
+  @Ignore
+  public void likePrefix() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createIndex("cl.name", INDEX_TYPE.NOTUNIQUE, "name");
+
+    OSelectStatement stat = parseQuery("select from cl where name like 'a%' ");
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertEquals("cl.name", result.get().getName());
+    assertEquals(Operation.Eq, result.get().getOperation());
+  }
+
+  @Test
+  @Ignore
+  public void listContains() {
+    // TODO: this should be supported in future
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("names", OType.EMBEDDEDLIST, OType.STRING);
+    cl.createIndex("cl.names", INDEX_TYPE.NOTUNIQUE, "names");
+
+    OSelectStatement stat = parseQuery("select from cl where names contains 'a' ");
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertEquals("cl.names", result.get().getName());
+    assertEquals(Operation.Eq, result.get().getOperation());
+  }
+
+  @Test
+  public void listContainsAny() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("names", OType.EMBEDDEDLIST, OType.STRING);
+    cl.createIndex("cl.names", INDEX_TYPE.NOTUNIQUE, "names");
+
+    OSelectStatement stat = parseQuery("select from cl where names containsany ['a', 'b'] ");
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertEquals("cl.names", result.get().getName());
+    assertEquals(Operation.Eq, result.get().getOperation());
+  }
+
+  @Test
+  @Ignore
+  public void listContainsAll() {
+    // TODO: maybe we can support this
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("names", OType.EMBEDDEDLIST, OType.STRING);
+    cl.createIndex("cl.names", INDEX_TYPE.NOTUNIQUE, "names");
+
+    OSelectStatement stat = parseQuery("select from cl where names containsall ['a', 'b'] ");
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertEquals("cl.names", result.get().getName());
+    assertEquals(Operation.Eq, result.get().getOperation());
   }
 
   private OSelectStatement parseQuery(String query) {

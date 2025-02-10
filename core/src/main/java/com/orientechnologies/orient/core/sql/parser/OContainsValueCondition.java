@@ -285,7 +285,7 @@ public class OContainsValueCondition extends OBooleanExpression {
     if (path.isPresent()) {
       if (expression != null && expression.isEarlyCalculated(ctx)) {
         Object value = expression.execute((OResult) null, ctx);
-        return info.findByValueIndex(path.get(), value, ctx);
+        return info.findByValueIndex(path.get(), createIndexValueMap(value), ctx);
       }
     }
 

@@ -524,7 +524,7 @@ public class OBinaryCondition extends OBooleanExpression {
         if (operator instanceof OEqualsCompareOperator) {
           return info.findExactIndex(p, value, ctx);
         } else if (operator instanceof OContainsKeyOperator) {
-          return info.findByKeyIndex(p, value, ctx);
+          return info.findByKeyIndex(p, operator.createIndexValueMap(value), ctx);
         } else if (operator.isRange()) {
           return info.findAllowRangeIndex(p, operator.getOperation(), value, ctx);
         }
