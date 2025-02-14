@@ -40,12 +40,12 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * It represents an abstract scenario test.
@@ -122,7 +122,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     final ExecutorService writerExecutors = Executors.newCachedThreadPool();
     final ExecutorService readerExecutors = Executors.newCachedThreadPool();
 
-    runningWriters = new CountDownLatch(executeOnServers.size() * writerCount);
+    runningWriters = new AtomicInteger(executeOnServers.size() * writerCount);
 
     int serverId = 0;
     int threadId = 0;

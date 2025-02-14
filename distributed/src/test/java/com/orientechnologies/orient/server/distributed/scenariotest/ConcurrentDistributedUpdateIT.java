@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -81,93 +82,97 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
         final String id = serverId + "." + threadId;
 
         boolean isRunning = true;
-
-        if (!server.getServerInstance().existsDatabase(getDatabaseName())) {
-          server
-              .getServerInstance()
-              .getContext()
-              .execute(
-                  "create database ? plocal users(admin identified by 'admin' role admin)",
-                  getDatabaseName());
-        }
-        ODatabaseDocument graph =
-            server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
-        graph.begin();
-
-        try {
-          String query = "select from Test where prop2='v2-1'";
-          for (int i = 0; i < 100 && isRunning; i++) {
-            if ((i % 25) == 0) {
-              log("[" + id + "] Records Processed: [" + i + "]");
+        while (true) {
+          try {
+            log("[" + id + "] Writer Starting ");
+            if (!server.getServerInstance().existsDatabase(getDatabaseName())) {
+              server
+                  .getServerInstance()
+                  .getContext()
+                  .execute(
+                      "create database ? plocal users(admin identified by 'admin' role admin)",
+                      getDatabaseName());
             }
-            Iterable<OElement> vtxs = graph.command(new OCommandSQL(query)).execute();
-            boolean update = true;
-            for (OElement vtx : vtxs) {
-              if (update) {
-                update = true;
-                for (int k = 0; k < 10 && update; k++) {
-                  OElement vtx1 = vtx;
-                  try {
-                    vtx1.setProperty("prop5", "prop55");
-                    vtx1.save();
-                    graph.commit();
-                    graph.begin();
-                    // log("[" + id + "/" + i + "/" + k + "] OK!\n");
-                    break;
-                  } catch (OConcurrentModificationException ex) {
-                    vtx1.reload();
-                  } catch (ODistributedRecordLockedException ex) {
-                    log(
-                        "["
-                            + id
-                            + "/"
-                            + i
-                            + "/"
-                            + k
-                            + "] Distributed lock Exception "
-                            + ex
-                            + " for vertex "
-                            + vtx1
-                            + " \n");
-                    //                    ex.printStackTrace();
-                    update = false;
-                    //                    isRunning = false;
-                    break;
-                  } catch (Exception ex) {
-                    log(
-                        "["
-                            + id
-                            + "/"
-                            + i
-                            + "/"
-                            + k
-                            + "] Exception "
-                            + ex
-                            + " for vertex "
-                            + vtx1
-                            + "\n\n");
-                    ex.printStackTrace();
-                    isRunning = false;
-                    break;
-                  }
-                }
+            ODatabaseDocument graph =
+                server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+            graph.begin();
 
-                if (!isRunning) break;
+            String query = "select from Test where prop2='v2-1'";
+            for (int i = 0; i < 100 && isRunning; i++) {
+              if ((i % 25) == 0) {
+                log("[" + id + "] Records Processed: [" + i + "]");
+              }
+              Iterable<OElement> vtxs = graph.command(new OCommandSQL(query)).execute();
+              boolean update = true;
+              for (OElement vtx : vtxs) {
+                if (update) {
+                  update = true;
+                  for (int k = 0; k < 10 && update; k++) {
+                    OElement vtx1 = vtx;
+                    try {
+                      vtx1.setProperty("prop5", "prop55");
+                      vtx1.save();
+                      graph.commit();
+                      graph.begin();
+                      // log("[" + id + "/" + i + "/" + k + "] OK!\n");
+                      break;
+                    } catch (OConcurrentModificationException ex) {
+                      vtx1.reload();
+                    } catch (ODistributedRecordLockedException ex) {
+                      log(
+                          "["
+                              + id
+                              + "/"
+                              + i
+                              + "/"
+                              + k
+                              + "] Distributed lock Exception "
+                              + ex
+                              + " for vertex "
+                              + vtx1
+                              + " \n");
+                      //                    ex.printStackTrace();
+                      update = false;
+                      //                    isRunning = false;
+                      break;
+                    } catch (Exception ex) {
+                      log(
+                          "["
+                              + id
+                              + "/"
+                              + i
+                              + "/"
+                              + k
+                              + "] Exception "
+                              + ex
+                              + " for vertex "
+                              + vtx1
+                              + "\n\n");
+                      ex.printStackTrace();
+                      isRunning = false;
+                      break;
+                    }
+                  }
+
+                  if (!isRunning) break;
+                }
               }
             }
+            graph.close();
+            log("[" + id + "] Writer Finished ");
+            return null;
+          } catch (OOfflineNodeException ex) {
+            System.out.println("ID: [" + id + "]********** Offline \n\n");
+            Thread.sleep(1000);
+          } catch (Exception ex) {
+            System.out.println("ID: [" + id + "]********** Exception " + ex + " \n\n");
+            ex.printStackTrace();
+          } finally {
+            log("[" + id + "] Done................>>>>>>>>>>>>>>>>>>");
+            runningWriters.decrementAndGet();
           }
-        } catch (Exception ex) {
-          System.out.println("ID: [" + id + "]********** Exception " + ex + " \n\n");
-          ex.printStackTrace();
-        } finally {
-          log("[" + id + "] Done................>>>>>>>>>>>>>>>>>>");
-          graph.close();
-          runningWriters.countDown();
+          Assert.assertTrue(isRunning);
         }
-
-        Assert.assertTrue(isRunning);
-
-        return null;
       }
     };
   }

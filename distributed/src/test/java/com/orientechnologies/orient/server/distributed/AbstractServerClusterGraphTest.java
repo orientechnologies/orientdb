@@ -118,7 +118,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
       } catch (Exception e) {
         e.printStackTrace();
       } finally {
-        runningWriters.countDown();
+        runningWriters.decrementAndGet();
         graph.close();
       }
 

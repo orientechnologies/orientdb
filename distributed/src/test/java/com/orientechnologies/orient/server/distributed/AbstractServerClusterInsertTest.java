@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -41,11 +42,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Assert;
@@ -142,7 +143,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
             }
           }
         } finally {
-          runningWriters.countDown();
+          runningWriters.decrementAndGet();
           database.activateOnCurrentThread();
           database.close();
         }
@@ -290,19 +291,23 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     @Override
     public Void call() throws Exception {
       try {
-        while (runningWriters.getCount() > 0) {
+        while (runningWriters.get() > 0) {
           try {
             printStats(serverRun);
 
             if (delayReader > 0) Thread.sleep(delayReader);
-
+          } catch (OOfflineNodeException e) {
+            if (delayReader > 0) Thread.sleep(delayReader);
           } catch (Exception e) {
             break;
           }
         }
 
       } finally {
-        printStats(serverRun);
+        try {
+          printStats(serverRun);
+        } catch (OOfflineNodeException e) {
+        }
       }
       return null;
     }
@@ -357,7 +362,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     final ExecutorService executors = Executors.newCachedThreadPool();
 
-    runningWriters = new CountDownLatch(executeTestsOnServers.size() * writerCount);
+    runningWriters = new AtomicInteger(executeTestsOnServers.size() * writerCount);
 
     int serverId = 0;
     int threadId = 0;

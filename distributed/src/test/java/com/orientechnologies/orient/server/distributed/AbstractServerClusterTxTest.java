@@ -153,7 +153,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
             }
           }
         } finally {
-          runningWriters.countDown();
+          runningWriters.decrementAndGet();
           database.activateOnCurrentThread();
           database.close();
         }

@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Assert;
@@ -39,7 +40,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
   protected final int delayWriter = 0;
   protected int writerCount = 5;
   protected volatile int count = 100;
-  protected CountDownLatch runningWriters;
+  protected AtomicInteger runningWriters;
   //  protected final OPartitionedDatabasePoolFactory poolFactory = new
   // OPartitionedDatabasePoolFactory();
 
@@ -88,7 +89,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
           break;
         } finally {
           database.close();
-          runningWriters.countDown();
+          runningWriters.decrementAndGet();
         }
       }
 
@@ -170,7 +171,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
 
     final ExecutorService writerExecutors = Executors.newCachedThreadPool();
 
-    runningWriters = new CountDownLatch(serverInstance.size() * writerCount);
+    runningWriters = new AtomicInteger(serverInstance.size() * writerCount);
 
     int serverId = 0;
     int threadId = 0;

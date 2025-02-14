@@ -40,12 +40,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 
 /**
@@ -102,7 +102,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
     final ExecutorService writerExecutors = Executors.newCachedThreadPool();
 
-    runningWriters = new CountDownLatch(executeOnServers.size() * writerCount);
+    runningWriters = new AtomicInteger(executeOnServers.size() * writerCount);
 
     String shardName = "client_";
     int serverId = 0;
@@ -419,7 +419,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
               }
             }
           } finally {
-            runningWriters.countDown();
+            runningWriters.decrementAndGet();
           }
         }
 
