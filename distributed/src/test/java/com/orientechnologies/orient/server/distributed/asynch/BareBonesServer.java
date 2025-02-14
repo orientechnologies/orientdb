@@ -20,6 +20,12 @@ public class BareBonesServer {
               "create database ? plocal users(admin identified by 'admin' role admin)",
               databaseName);
     }
+    try {
+      Thread.sleep(10000);
+    } catch (InterruptedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     ODatabaseSession graph = server.getContext().open(databaseName, "admin", "admin");
 
     OSchema schema = graph.getMetadata().getSchema();

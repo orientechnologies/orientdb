@@ -95,7 +95,7 @@ public class AsyncReplMode2ServersIT extends BareBoneBase2ServerTest {
   }
 
   protected void dbClient2(BareBonesServer[] servers) {
-    sleep(1000);
+    sleep(2000);
 
     synchronized (LOCK) {
       OrientDB orientDB = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig());
