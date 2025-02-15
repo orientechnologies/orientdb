@@ -1604,6 +1604,13 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       1000,
       false),
 
+  DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD(
+      "distributed.databaseOnlineGracePeriod",
+      "Millisecond to wait for a database to become online before to send the offline exception",
+      Long.class,
+      10000,
+      false),
+
   DB_DOCUMENT_SERIALIZER(
       "db.document.serializer",
       "The default record serializer used by the document database",

@@ -9,6 +9,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentEmbeddedPooled;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -315,9 +316,34 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return dbStatus == DB_STATUS.ONLINE || dbStatus == DB_STATUS.BACKUP;
   }
 
+  private boolean checkDbAvailableOpen(String name) {
+    if (!checkDbAvailable(name)) {
+      long waitTime =
+          getConfigurations()
+              .getConfigurations()
+              .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+      if (waitTime != 0) {
+        long retry = waitTime / 500;
+        // TODO: when there will be proper node online event this should attach to that with a
+        // notification instead of sleep
+        for (long i = 0; i < retry; i++) {
+          try {
+            Thread.sleep(500);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+          if (checkDbAvailable(name)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   @Override
   public ODatabaseDocumentInternal open(String name, String user, String password) {
-    if (checkDbAvailable(name)) {
+    if (checkDbAvailableOpen(name)) {
       return super.open(name, user, password);
     } else {
       if (exists(name, user, password)) {
@@ -332,7 +358,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public ODatabaseDocumentInternal open(
       String name, String user, String password, OrientDBConfig config) {
 
-    if (checkDbAvailable(name)) {
+    if (checkDbAvailableOpen(name)) {
       return super.open(name, user, password, config);
     } else {
       if (exists(name, user, password)) {
