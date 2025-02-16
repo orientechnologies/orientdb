@@ -71,6 +71,9 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     execute();
   }
 
+  @Override
+  protected void onServerStarted(ServerRun server) {}
+
   public void executeTest() throws Exception { //  TO-CHANGE
 
     // wait for db deploy completion
