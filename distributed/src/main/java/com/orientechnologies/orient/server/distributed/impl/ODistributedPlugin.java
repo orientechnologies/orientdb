@@ -2708,15 +2708,17 @@ public class ODistributedPlugin extends OServerPluginAbstract
       }
 
       // WAIT UNTIL THE DATABASE HAS BEEN PROPAGATED TO ALL THE SERVERS
-      final Set<String> servers = cfg.getAllConfiguredServers();
+      final Set<String> servers = getActiveServers();
       if (servers.size() > 1) {
         int retry = 0;
         for (; retry < 100; ++retry) {
           boolean allServersAreOnline = true;
           for (String server : servers) {
-            if (!isNodeOnline(server, dbName)) {
-              allServersAreOnline = false;
-              break;
+            if (cfg.isAutoDeploy() || cfg.getRegisteredServers().contains(server)) {
+              if (!isNodeOnline(server, dbName)) {
+                allServersAreOnline = false;
+                break;
+              }
             }
           }
 
