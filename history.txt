@@ -29,6 +29,26 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.38 - (February, 20 2026)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3238---20-February-2025
+
+# Core
+- Re-implemented update remove with condition, issue #10385
+- Make sure to skip null key on index rebuild if are ignored by the index type, issue #10367
+- Make sure to return a valid value also for missing property in sequences recyclable flag, issue #10375
+- Deprecated long legacy async mode
+- Minor optimization in the parser logic
+
+# Distributed 
+- Add grace period for distributed database open
+- Removed cluster check in distributed configuration not needed anymore
+- Minor fix in distributed error message
+- Make sure to check all available servers for database online on create
+- Make sure to set the database online only when present and active, issue #10386
+- Skip the health check if the database is on sync, issues #10383, #10386
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.37 - (Jennuary, 15 2026)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3237---16-Jennaury-2025
 
