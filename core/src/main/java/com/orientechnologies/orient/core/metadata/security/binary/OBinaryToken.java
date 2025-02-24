@@ -107,13 +107,13 @@ public class OBinaryToken implements OToken {
 
   @Override
   public boolean isNowValid() {
-    long now = System.currentTimeMillis();
+    long now = OToken.timeMillis();
     return getExpiry() > now;
   }
 
   @Override
   public boolean isCloseToExpire() {
-    long now = System.currentTimeMillis();
+    long now = OToken.timeMillis();
     return getExpiry() - 120000 <= now;
   }
 
