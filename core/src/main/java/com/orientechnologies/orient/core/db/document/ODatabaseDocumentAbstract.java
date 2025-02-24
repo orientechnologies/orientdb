@@ -1143,7 +1143,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         final OClass edgeType = schema.getClass(iClassName);
         if (edgeType == null)
           // AUTO CREATE CLASS
-          schema.createClass(iClassName);
+          getMetadata().getSchema().createClass(iClassName);
         else
           // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
           iClassName = edgeType.getName();
