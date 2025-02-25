@@ -1,7 +1,11 @@
 package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
+import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.Collections;
 import java.util.List;
@@ -11,10 +15,41 @@ public class ORangeIndexCanditate implements OIndexCandidate {
 
   private String name;
   private OProperty property;
+  private Operation startOperation;
+  private Object startValue;
+  private Operation endOperation;
+  private Object endValue;
 
-  public ORangeIndexCanditate(String name, OProperty property) {
+  public ORangeIndexCanditate(
+      String name,
+      OProperty property,
+      Operation startOperation,
+      Object startValue,
+      Operation endOperation,
+      Object endValue) {
     this.name = name;
     this.property = property;
+    this.startOperation = startOperation;
+    this.startValue = startValue;
+    this.endOperation = endOperation;
+    this.endValue = endValue;
+  }
+
+  public ORangeIndexCanditate(
+      String name, OProperty property, OIndexCandidateImpl one, OIndexCandidateImpl two) {
+    this.name = name;
+    this.property = property;
+    if (one.getOperation().isL()) {
+      this.startOperation = one.getOperation();
+      this.startValue = one.getValue();
+      this.endOperation = two.getOperation();
+      this.endValue = two.getValue();
+    } else {
+      this.startOperation = two.getOperation();
+      this.startValue = two.getValue();
+      this.endOperation = one.getOperation();
+      this.endValue = one.getValue();
+    }
   }
 
   @Override
@@ -35,6 +70,22 @@ public class ORangeIndexCanditate implements OIndexCandidate {
   @Override
   public Optional<OIndexCandidate> normalize(OCommandContext ctx) {
     return Optional.of(this);
+  }
+
+  @Override
+  public List<OIndexStream> getStreams(OCommandContext ctx, boolean isOrderAsc) {
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+    OIndexInternal index =
+        database.getMetadata().getIndexManagerInternal().getIndex(database, name).getInternal();
+
+    return Collections.singletonList(
+        new OBetweenIndexStream(
+            index,
+            startValue,
+            startOperation.isInclude(),
+            endValue,
+            endOperation.isInclude(),
+            isOrderAsc));
   }
 
   @Override

@@ -10,9 +10,8 @@ import java.util.Optional;
 public class ORequiredIndexCanditate implements OIndexCandidate {
 
   public final List<OIndexCandidate> canditates = new ArrayList<OIndexCandidate>();
-  
-  public ORequiredIndexCanditate() {
-  }
+
+  public ORequiredIndexCanditate() {}
 
   public void addCanditate(OIndexCandidate canditate) {
     this.canditates.add(canditate);

@@ -394,6 +394,22 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
+  public void mutipleConditionNotBetween() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createIndex("cl.name", INDEX_TYPE.NOTUNIQUE, "name");
+
+    OSelectStatement stat = parseQuery("select from cl where name > 'a' and name > 'b'");
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertEquals("cl.name", result.get().getName());
+    assertEquals(Operation.Gt, result.get().getOperation());
+  }
+
+  @Test
   public void inCondition() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("name", OType.STRING);
@@ -465,7 +481,7 @@ public class OStatementIndexFinderTest {
   @Ignore
   public void listContainsAll() {
     // TODO: maybe we can support this
-    // For do this we may do multiple lookups in the index, and then 
+    // For do this we may do multiple lookups in the index, and then
     // intersect the result, this should be possible and efficient
     // on not unique indexes that store rids in a sorted way.
     OClass cl = this.session.createClass("cl");

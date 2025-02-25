@@ -1,9 +1,5 @@
 package com.orientechnologies.orient.core.sql.executor.metadata;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -12,6 +8,9 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 public class OIndexCandidateImpl implements OIndexCandidate {
 
@@ -65,11 +64,12 @@ public class OIndexCandidateImpl implements OIndexCandidate {
 
   @Override
   public List<OIndexStream> getStreams(OCommandContext ctx, boolean isOrderAsc) {
-    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal)ctx.getDatabase();
-    OIndexInternal index = database.getMetadata().getIndexManagerInternal().getIndex(database,name).getInternal();
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+    OIndexInternal index =
+        database.getMetadata().getIndexManagerInternal().getIndex(database, name).getInternal();
     return Collections.singletonList(new OExactIndexStream(index, value, isOrderAsc));
   }
-  
+
   @Override
   public List<OProperty> properties() {
     return Collections.singletonList(this.property);

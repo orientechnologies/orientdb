@@ -17,6 +17,30 @@ public interface OIndexFinder {
     public boolean isRange() {
       return this == Gt || this == Lt || this == Ge || this == Le;
     }
+
+    boolean isInclude() {
+      return this == Ge || this == Le;
+    }
+
+    boolean isL() {
+      return this == Lt || this == Le;
+    }
+
+    boolean isG() {
+      return this == Gt || this == Ge;
+    }
+
+    boolean canRangeWith(Operation other) {
+      if (this.isRange() && other.isRange()) {
+        if (this.isL()) {
+          return other.isG();
+        } else {
+          return other.isL();
+        }
+      } else {
+        return false;
+      }
+    }
   }
 
   Optional<OIndexCandidate> findExactIndex(OPath fieldName, Object value, OCommandContext ctx);

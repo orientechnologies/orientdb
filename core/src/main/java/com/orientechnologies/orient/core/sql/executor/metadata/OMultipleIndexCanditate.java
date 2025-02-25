@@ -72,13 +72,21 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
         if (properties.size() == 1
             && lastProperties.size() == 1
             && properties.get(0).getName() == lastProperties.get(0).getName()) {
-          if (canditate.getOperation().isRange() || lastCandidate.getOperation().isRange()) {
-            newCanditates.add(new ORangeIndexCanditate(canditate.getName(), properties.get(0)));
-            canditates.remove(z);
-            if (z != canditates.size()) {
-              z++; // Increase so it does not decrease next iteration
+          if (canditate.getOperation().canRangeWith(lastCandidate.getOperation())) {
+            if (canditate instanceof OIndexCandidateImpl
+                && lastCandidate instanceof OIndexCandidateImpl) {
+              newCanditates.add(
+                  new ORangeIndexCanditate(
+                      canditate.getName(),
+                      properties.get(0),
+                      (OIndexCandidateImpl) canditate,
+                      (OIndexCandidateImpl) lastCandidate));
+              canditates.remove(z);
+              if (z != canditates.size()) {
+                z++; // Increase so it does not decrease next iteration
+              }
+              matched = true;
             }
-            matched = true;
           }
         }
       }
@@ -125,12 +133,12 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
   @Override
   public List<OIndexStream> getStreams(OCommandContext ctx, boolean isOrderAsc) {
     List<OIndexStream> streams = new ArrayList<>();
-    for (OIndexCandidate c: canditates) {
+    for (OIndexCandidate c : canditates) {
       streams.addAll(c.getStreams(ctx, isOrderAsc));
     }
     return streams;
   }
-  
+
   @Override
   public List<OProperty> properties() {
     List<OProperty> props = new ArrayList<>();
