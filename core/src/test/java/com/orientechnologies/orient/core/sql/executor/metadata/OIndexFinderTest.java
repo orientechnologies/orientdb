@@ -172,7 +172,7 @@ public class OIndexFinderTest {
     path.addPre("friend");
     path.addPre("friend");
     Optional<OIndexCandidate> result = finder.findExactIndex(path, null, ctx);
-    assertEquals("cl.friend->cl.friend->cl.name->", result.get().getName());
+    assertEquals("cl.friend->cl.friend->cl.name", result.get().getName());
   }
 
   @Test
@@ -189,7 +189,7 @@ public class OIndexFinderTest {
     path.addPre("friend");
     path.addPre("friend");
     Optional<OIndexCandidate> result = finder.findAllowRangeIndex(path, Operation.Ge, null, ctx);
-    assertEquals("cl.friend->cl.friend->cl.name->", result.get().getName());
+    assertEquals("cl.friend->cl.friend->cl.name", result.get().getName());
   }
 
   @Test
@@ -206,7 +206,7 @@ public class OIndexFinderTest {
     path.addPre("friend");
     path.addPre("friend");
     Optional<OIndexCandidate> result = finder.findByKeyIndex(path, null, ctx);
-    assertEquals("cl.friend->cl.friend->cl.map->", result.get().getName());
+    assertEquals("cl.friend->cl.friend->cl.map", result.get().getName());
   }
 
   @Test
@@ -223,7 +223,7 @@ public class OIndexFinderTest {
     path.addPre("friend");
     path.addPre("friend");
     Optional<OIndexCandidate> result = finder.findByValueIndex(path, null, ctx);
-    assertEquals("cl.friend->cl.friend->cl.map->", result.get().getName());
+    assertEquals("cl.friend->cl.friend->cl.map", result.get().getName());
   }
 
   @Test
@@ -241,7 +241,7 @@ public class OIndexFinderTest {
     path.addPre("friend");
 
     Optional<OIndexCandidate> result = finder.findFullTextIndex(path, null, ctx);
-    assertEquals("cl.friend->cl.friend->cl.name->", result.get().getName());
+    assertEquals("cl.friend->cl.friend->cl.name", result.get().getName());
   }
 
   @Test
