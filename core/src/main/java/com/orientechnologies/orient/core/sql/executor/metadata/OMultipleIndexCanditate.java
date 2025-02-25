@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor.metadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -121,6 +122,15 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
     return newCanditates.values();
   }
 
+  @Override
+  public List<OIndexStream> getStreams(OCommandContext ctx, boolean isOrderAsc) {
+    List<OIndexStream> streams = new ArrayList<>();
+    for (OIndexCandidate c: canditates) {
+      streams.addAll(c.getStreams(ctx, isOrderAsc));
+    }
+    return streams;
+  }
+  
   @Override
   public List<OProperty> properties() {
     List<OProperty> props = new ArrayList<>();
