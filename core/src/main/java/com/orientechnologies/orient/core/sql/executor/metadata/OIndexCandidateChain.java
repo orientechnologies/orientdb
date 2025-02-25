@@ -19,11 +19,7 @@ public class OIndexCandidateChain implements OIndexCandidate {
 
   @Override
   public String getName() {
-    String name = "";
-    for (String index : indexes) {
-      name += index + "->";
-    }
-    return name;
+    return String.join("->", indexes);
   }
 
   @Override

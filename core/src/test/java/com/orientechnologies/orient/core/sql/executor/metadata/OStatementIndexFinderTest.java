@@ -177,7 +177,7 @@ public class OStatementIndexFinderTest {
 
     OSelectStatement stat = parseQuery("select from cl where friend.friend.name = 'a' ");
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
-    assertEquals("cl.friend->cl.friend->cl.name->", result.get().getName());
+    assertEquals("cl.friend->cl.friend->cl.name", result.get().getName());
     assertEquals(Operation.Eq, result.get().getOperation());
   }
 
@@ -202,13 +202,13 @@ public class OStatementIndexFinderTest {
     ORequiredIndexCanditate required = (ORequiredIndexCanditate) result.get();
     assertTrue((required.getCanditates().get(0) instanceof OMultipleIndexCanditate));
     OMultipleIndexCanditate first = (OMultipleIndexCanditate) required.getCanditates().get(0);
-    assertEquals("cl.friend->cl.name->", first.getCanditates().get(0).getName());
+    assertEquals("cl.friend->cl.name", first.getCanditates().get(0).getName());
     assertEquals(Operation.Eq, first.getCanditates().get(0).getOperation());
     assertEquals("cl.name", first.getCanditates().get(1).getName());
     assertEquals(Operation.Eq, first.getCanditates().get(1).getOperation());
 
     OMultipleIndexCanditate second = (OMultipleIndexCanditate) required.getCanditates().get(1);
-    assertEquals("cl.friend->cl.name->", second.getCanditates().get(0).getName());
+    assertEquals("cl.friend->cl.name", second.getCanditates().get(0).getName());
     assertEquals(Operation.Eq, second.getCanditates().get(0).getOperation());
     assertEquals("cl.name", second.getCanditates().get(1).getName());
     assertEquals(Operation.Eq, second.getCanditates().get(1).getOperation());
@@ -430,9 +430,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  @Ignore
   public void listContains() {
-    // TODO: this should be supported in future
     OClass cl = this.session.createClass("cl");
     cl.createProperty("names", OType.EMBEDDEDLIST, OType.STRING);
     cl.createIndex("cl.names", INDEX_TYPE.NOTUNIQUE, "names");
@@ -467,6 +465,9 @@ public class OStatementIndexFinderTest {
   @Ignore
   public void listContainsAll() {
     // TODO: maybe we can support this
+    // For do this we may do multiple lookups in the index, and then 
+    // intersect the result, this should be possible and efficient
+    // on not unique indexes that store rids in a sorted way.
     OClass cl = this.session.createClass("cl");
     cl.createProperty("names", OType.EMBEDDEDLIST, OType.STRING);
     cl.createIndex("cl.names", INDEX_TYPE.NOTUNIQUE, "names");

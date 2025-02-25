@@ -31,11 +31,7 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
 
   @Override
   public String getName() {
-    String name = "";
-    for (OIndexCandidate oIndexCandidate : canditates) {
-      name = oIndexCandidate.getName() + "|";
-    }
-    return name;
+    return String.join("&", canditates.stream().map(OIndexCandidate::getName).toList());
   }
 
   @Override

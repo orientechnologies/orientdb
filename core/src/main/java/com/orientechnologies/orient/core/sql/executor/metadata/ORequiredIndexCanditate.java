@@ -10,6 +10,9 @@ import java.util.Optional;
 public class ORequiredIndexCanditate implements OIndexCandidate {
 
   public final List<OIndexCandidate> canditates = new ArrayList<OIndexCandidate>();
+  
+  public ORequiredIndexCanditate() {
+  }
 
   public void addCanditate(OIndexCandidate canditate) {
     this.canditates.add(canditate);
@@ -21,11 +24,7 @@ public class ORequiredIndexCanditate implements OIndexCandidate {
 
   @Override
   public String getName() {
-    String name = "";
-    for (OIndexCandidate oIndexCandidate : canditates) {
-      name = oIndexCandidate.getName() + "|";
-    }
-    return name;
+    return String.join("|", canditates.stream().map(OIndexCandidate::getName).toList());
   }
 
   @Override
