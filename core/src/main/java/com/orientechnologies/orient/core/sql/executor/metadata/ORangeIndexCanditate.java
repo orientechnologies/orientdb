@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -110,5 +111,13 @@ public class ORangeIndexCanditate implements OIndexCandidate {
   @Override
   public List<OProperty> properties() {
     return Collections.singletonList(this.property);
+  }
+
+  @Override
+  public List<OIndexKeySource> values() {
+    List<OIndexKeySource> sources = new ArrayList<>();
+    sources.add(startValue);
+    sources.add(endValue);
+    return sources;
   }
 }

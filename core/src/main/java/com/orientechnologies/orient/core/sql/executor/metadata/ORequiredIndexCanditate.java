@@ -61,6 +61,15 @@ public class ORequiredIndexCanditate implements OIndexCandidate {
   }
 
   @Override
+  public List<OIndexKeySource> values() {
+    List<OIndexKeySource> vals = new ArrayList<>();
+    for (OIndexCandidate cand : this.canditates) {
+      vals.addAll(cand.values());
+    }
+    return vals;
+  }
+
+  @Override
   public boolean requiresDistinctStep(OCommandContext ctx) {
     return true;
   }

@@ -112,6 +112,11 @@ public class OIndexCandidateImpl implements OIndexCandidate {
   }
 
   @Override
+  public List<OIndexKeySource> values() {
+    return Collections.singletonList(value);
+  }
+
+  @Override
   public List<OProperty> properties() {
     return Collections.singletonList(this.property);
   }

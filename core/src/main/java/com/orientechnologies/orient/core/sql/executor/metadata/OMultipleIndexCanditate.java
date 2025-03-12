@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
@@ -125,11 +126,21 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
         } else if (!foundProps.isEmpty()) {
           newCanditates.put(
               index.getName(),
-              new OIndexCandidateComposite(index.getName(), cand.getOperation(), foundProps));
+              new OIndexCandidateComposite(
+                  index.getName(), cand.getOperation(), foundProps, this::allKeys));
         }
       }
     }
     return newCanditates.values();
+  }
+
+  public Object allKeys(OCommandContext ctx) {
+    List<OIndexKeySource> values = values();
+    OCompositeKey keys = new OCompositeKey();
+    for (OIndexKeySource source : values) {
+      keys.addKey(source.key(ctx));
+    }
+    return keys;
   }
 
   @Override
@@ -161,6 +172,15 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
     List<OProperty> props = new ArrayList<>();
     for (OIndexCandidate cand : this.canditates) {
       props.addAll(cand.properties());
+    }
+    return props;
+  }
+
+  @Override
+  public List<OIndexKeySource> values() {
+    List<OIndexKeySource> props = new ArrayList<>();
+    for (OIndexCandidate cand : this.canditates) {
+      props.addAll(cand.values());
     }
     return props;
   }

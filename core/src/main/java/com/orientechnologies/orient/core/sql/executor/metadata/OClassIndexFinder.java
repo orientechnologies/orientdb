@@ -91,12 +91,18 @@ public class OClassIndexFinder implements OIndexFinder {
       Collection<OIndex> indexes = prop.getAllIndexes();
       for (OIndex index : indexes) {
         if (index.getInternal().canBeUsedInEqualityOperators()) {
+          OIndexCandidate candidate;
+          if (index.getDefinition().getFields().size() > 1) {
+            candidate = new OIndexCandidateComposite(index.getName(), Operation.Eq, prop, value);
+          } else {
+            candidate = new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, value);
+          }
           if (cand.isPresent()) {
             ((OIndexCandidateChain) cand.get()).add(index.getName());
             ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
             return cand;
           } else {
-            return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, value));
+            return Optional.of(candidate);
           }
         }
       }

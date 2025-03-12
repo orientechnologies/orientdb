@@ -58,6 +58,11 @@ public class OIndexCandidateChain implements OIndexCandidate {
     return Collections.emptyList();
   }
 
+  @Override
+  public List<OIndexKeySource> values() {
+    return Collections.emptyList();
+  }
+
   public boolean requiresDistinctStep(OCommandContext ctx) {
     // TODO: this should check all the chain of index for duplicate multi values,
     return true;
