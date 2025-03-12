@@ -294,7 +294,9 @@ public class OContainsValueCondition extends OBooleanExpression {
 
   private Object expressionMapValue(OCommandContext ctx) {
     Object value = expression.execute((OResult) null, ctx);
-    return createIndexValueMap(value);
+    Map<Object, Object> newValue = new HashMap<>();
+    newValue.put("", value);
+    return newValue;
   }
 
   public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {

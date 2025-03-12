@@ -91,12 +91,7 @@ public class OClassIndexFinder implements OIndexFinder {
       Collection<OIndex> indexes = prop.getAllIndexes();
       for (OIndex index : indexes) {
         if (index.getInternal().canBeUsedInEqualityOperators()) {
-          OIndexCandidate candidate;
-          if (index.getDefinition().getFields().size() > 1) {
-            candidate = new OIndexCandidateComposite(index.getName(), Operation.Eq, prop, value);
-          } else {
-            candidate = new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, value);
-          }
+          OIndexCandidate candidate = newCandidate(value, prop, Operation.Eq, index);
           if (cand.isPresent()) {
             ((OIndexCandidateChain) cand.get()).add(index.getName());
             ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
@@ -108,6 +103,17 @@ public class OClassIndexFinder implements OIndexFinder {
       }
     }
     return Optional.empty();
+  }
+
+  protected OIndexCandidate newCandidate(
+      OIndexKeySource value, OProperty prop, Operation operation, OIndex index) {
+    OIndexCandidate candidate;
+    if (index.getDefinition().getFields().size() > 1) {
+      candidate = new OIndexCandidateComposite(index.getName(), operation, prop, value);
+    } else {
+      candidate = new OIndexCandidateImpl(index.getName(), operation, prop, value);
+    }
+    return candidate;
   }
 
   @Override
@@ -125,12 +131,20 @@ public class OClassIndexFinder implements OIndexFinder {
       Collection<OIndex> indexes = prop.getAllIndexes();
       for (OIndex index : indexes) {
         if (!index.getDefinition().isNullValuesIgnored()) {
+          OIndexCandidate candidate =
+              newCandidate(
+                  (c) -> {
+                    return null;
+                  },
+                  prop,
+                  Operation.Eq,
+                  index);
           if (cand.isPresent()) {
             ((OIndexCandidateChain) cand.get()).add(index.getName());
             ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
             return cand;
           } else {
-            return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, null));
+            return Optional.of(candidate);
           }
         }
       }
@@ -192,12 +206,13 @@ public class OClassIndexFinder implements OIndexFinder {
       for (OIndex index : indexes) {
         if (index.getInternal().canBeUsedInEqualityOperators()
             && index.supportsOrderedIterations()) {
+          OIndexCandidate candidate = newCandidate(value, prop, op, index);
           if (cand.isPresent()) {
             ((OIndexCandidateChain) cand.get()).add(index.getName());
             ((OIndexCandidateChain) cand.get()).setOperation(op);
             return cand;
           } else {
-            return Optional.of(new OIndexCandidateImpl(index.getName(), op, prop, value));
+            return Optional.of(candidate);
           }
         }
       }

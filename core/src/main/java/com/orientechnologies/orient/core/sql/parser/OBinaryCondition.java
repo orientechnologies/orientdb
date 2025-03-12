@@ -521,6 +521,11 @@ public class OBinaryCondition extends OBooleanExpression {
       OPath p = path.get();
       if (right.isEarlyCalculated(ctx)) {
         if (operator instanceof OEqualsCompareOperator) {
+          Object vl = this.right.execute((OResult) null, ctx);
+          if (vl instanceof Collection<?>) {
+            // TODO: find a better way to check this.
+            return Optional.empty();
+          }
           return info.findExact(p, this::rightValue, ctx);
         } else if (operator instanceof OContainsKeyOperator) {
           return info.findByKey(p, this::rightValueMap, ctx);
