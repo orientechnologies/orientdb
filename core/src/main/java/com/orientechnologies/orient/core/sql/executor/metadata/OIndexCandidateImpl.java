@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
+import com.orientechnologies.orient.core.sql.executor.ONullIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +69,11 @@ public class OIndexCandidateImpl implements OIndexCandidate {
     ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     OIndexInternal index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, name).getInternal();
-    return Collections.singletonList(new OExactIndexStream(index, value, isOrderAsc));
+    if (value == null) {
+      return Collections.singletonList(new ONullIndexStream(index));
+    } else {
+      return Collections.singletonList(new OExactIndexStream(index, value, isOrderAsc));
+    }
   }
 
   public boolean requiresDistinctStep(OCommandContext ctx) {
