@@ -8,6 +8,8 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
+import com.orientechnologies.orient.core.sql.executor.OMajorIndexStream;
+import com.orientechnologies.orient.core.sql.executor.OMinorIndexStream;
 import com.orientechnologies.orient.core.sql.executor.ONullIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.Collections;
@@ -71,10 +73,24 @@ public class OIndexCandidateImpl implements OIndexCandidate {
     OIndexInternal index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, name).getInternal();
     Object val = value.key(ctx);
-    if (val == null) {
-      return Collections.singletonList(new ONullIndexStream(index));
-    } else {
-      return Collections.singletonList(new OExactIndexStream(index, val, isOrderAsc));
+    switch (operation) {
+      case Ge:
+        return Collections.singletonList(new OMajorIndexStream(index, val, true, isOrderAsc));
+      case Gt:
+        return Collections.singletonList(new OMajorIndexStream(index, val, false, isOrderAsc));
+      case Le:
+        return Collections.singletonList(new OMinorIndexStream(index, val, true, isOrderAsc));
+      case Lt:
+        return Collections.singletonList(new OMinorIndexStream(index, val, false, isOrderAsc));
+      case Eq:
+        if (val == null) {
+          return Collections.singletonList(new ONullIndexStream(index));
+        } else {
+          return Collections.singletonList(new OExactIndexStream(index, val, isOrderAsc));
+        }
+
+      default:
+        throw new UnsupportedOperationException("unsupported operation " + operation);
     }
   }
 
