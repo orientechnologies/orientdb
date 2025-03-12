@@ -262,6 +262,19 @@ public class OIndexFinderTest {
     assertEquals("cl.name_surname", result1.get().getName());
   }
 
+  @Test
+  public void testFindRangeIndex() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.NOTUNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    Optional<OIndexCandidate> result = finder.findRangeIndex(new OPath("name"), null, null, ctx);
+
+    assertEquals("cl.name", result.get().getName());
+  }
+
   @After
   public void after() {
     this.session.close();

@@ -12,10 +12,14 @@ import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
+import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OBetweenCondition extends OBooleanExpression {
@@ -270,6 +274,20 @@ public class OBetweenCondition extends OBooleanExpression {
       return false;
     }
     return true;
+  }
+
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    Optional<OPath> path = first.getPath();
+    if (path.isPresent()) {
+      OPath p = path.get();
+      if (second.isEarlyCalculated(ctx) && third.isEarlyCalculated(ctx)) {
+        Object first = second.execute((OResult) null, ctx);
+        Object second = third.execute((OResult) null, ctx);
+        return info.findRangeIndex(p, first, second, ctx);
+      }
+    }
+
+    return Optional.empty();
   }
 
   @Override

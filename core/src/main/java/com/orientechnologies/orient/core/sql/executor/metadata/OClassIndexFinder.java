@@ -170,6 +170,38 @@ public class OClassIndexFinder implements OIndexFinder {
   }
 
   @Override
+  public Optional<OIndexCandidate> findRangeIndex(
+      OPath path, Object first, Object second, OCommandContext ctx) {
+    PrePath pre = findPrePath(path, ctx);
+    if (!pre.valid) {
+      return Optional.empty();
+    }
+    OClass cl = pre.cl;
+    Optional<OIndexCandidate> cand = pre.chain;
+    String last = pre.last;
+
+    OProperty prop = cl.getProperty(last);
+    if (prop != null) {
+      Collection<OIndex> indexes = prop.getAllIndexes();
+      for (OIndex index : indexes) {
+        if (index.getInternal().canBeUsedInEqualityOperators()
+            && index.supportsOrderedIterations()) {
+          if (cand.isPresent()) {
+            ((OIndexCandidateChain) cand.get()).add(index.getName());
+            ((OIndexCandidateChain) cand.get()).setOperation(Operation.Range);
+            return cand;
+          } else {
+            return Optional.of(
+                new ORangeIndexCanditate(
+                    index.getName(), prop, Operation.Le, first, Operation.Ge, second));
+          }
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
+  @Override
   public Optional<OIndexCandidate> findByValueIndex(OPath path, Object value, OCommandContext ctx) {
     PrePath pre = findPrePath(path, ctx);
     if (!pre.valid) {

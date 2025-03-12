@@ -50,6 +50,9 @@ public interface OIndexFinder {
   Optional<OIndexCandidate> findAllowRangeIndex(
       OPath fieldName, Operation operation, Object value, OCommandContext ctx);
 
+  Optional<OIndexCandidate> findRangeIndex(
+      OPath fieldName, Object first, Object second, OCommandContext ctx);
+
   Optional<OIndexCandidate> findByValueIndex(OPath fieldName, Object value, OCommandContext ctx);
 
   Optional<OIndexCandidate> findFullTextIndex(OPath fieldName, Object value, OCommandContext ctx);

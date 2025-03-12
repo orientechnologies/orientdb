@@ -377,7 +377,24 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void mutipleConditionBetween() {
+  public void betweenCondition() {
+    OClass cl = this.session.createClass("cl");
+    cl.createProperty("name", OType.STRING);
+    cl.createIndex("cl.name", INDEX_TYPE.NOTUNIQUE, "name");
+
+    OSelectStatement stat = parseQuery("select from cl where name between 'a' and 'b'");
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+
+    Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
+    result = result.get().normalize(ctx);
+    assertTrue((result.get() instanceof ORangeIndexCanditate));
+    assertEquals("cl.name", result.get().getName());
+    assertEquals(Operation.Range, result.get().getOperation());
+  }
+
+  @Test
+  public void rangeConditionAsBetween() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("name", OType.STRING);
     cl.createIndex("cl.name", INDEX_TYPE.NOTUNIQUE, "name");
@@ -394,7 +411,7 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  public void mutipleConditionNotBetween() {
+  public void rangeConditionNotAsBetween() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("name", OType.STRING);
     cl.createIndex("cl.name", INDEX_TYPE.NOTUNIQUE, "name");
