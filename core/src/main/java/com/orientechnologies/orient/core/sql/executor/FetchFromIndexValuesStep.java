@@ -15,11 +15,11 @@ public class FetchFromIndexValuesStep extends FetchFromIndexStep {
     if (isOrderAsc()) {
       return OExecutionStepInternal.getIndent(ctx)
           + "+ FETCH FROM INDEX VAUES ASC "
-          + desc.getIndex().getName();
+          + getIndexName();
     } else {
       return OExecutionStepInternal.getIndent(ctx)
           + "+ FETCH FROM INDEX VAUES DESC "
-          + desc.getIndex().getName();
+          + getIndexName();
     }
   }
 

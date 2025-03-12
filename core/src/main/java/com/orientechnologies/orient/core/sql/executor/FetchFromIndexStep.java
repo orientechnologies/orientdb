@@ -43,7 +43,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this.orderAsc = orderAsc;
 
     ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    database.queryStartUsingViewIndex(desc.getIndex().getName());
+    database.queryStartUsingViewIndex(getIndexName());
   }
 
   public FetchFromIndexStep(OIndexCandidate candidate, boolean orderAsc, OCommandContext ctx) {
@@ -52,7 +52,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this.orderAsc = orderAsc;
 
     ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    database.queryStartUsingViewIndex(desc.getIndex().getName());
+    database.queryStartUsingViewIndex(candidate.getName());
   }
 
   @Override
@@ -124,9 +124,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       OCommandContext ctx, List<OIndexStreamStat> indexStats, AtomicLong count) {
     // stats
     OQueryStats stats = OQueryStats.get((ODatabaseDocumentInternal) ctx.getDatabase());
+    if (desc == null) {
+      return;
+    }
     OIndex index = desc.getIndex();
-    OBooleanExpression condition = desc.getKeyCondition();
-    OBinaryCondition additionalRangeCondition = desc.getAdditionalRangeCondition();
+    OBooleanExpression condition = getKeyCondition();
+    OBinaryCondition additionalRangeCondition = getAdditionalCondition();
     if (index == null) {
       return; // this could happen, if not inited yet
     }
@@ -162,48 +165,70 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(OPrintContext ctx) {
-    String result =
-        OExecutionStepInternal.getIndent(ctx) + "+ FETCH FROM INDEX " + desc.getIndex().getName();
+    String indexName;
+    String keyCondition;
+    if (desc != null) {
+      indexName = getIndexName();
+      if (getKeyCondition() != null) {
+        keyCondition = getKeyCondition().toString();
+        String additional =
+            Optional.ofNullable(getAdditionalCondition())
+                .map(rangeCondition -> " and " + rangeCondition)
+                .orElse("");
+        keyCondition += additional;
+      } else {
+        keyCondition = "";
+      }
+    } else {
+      indexName = this.candidate.getName();
+      keyCondition = "";
+    }
+    String result = OExecutionStepInternal.getIndent(ctx) + "+ FETCH FROM INDEX " + indexName;
     if (ctx.isProfilingEnabled()) {
       result += " (" + ctx.getCostFormatted(this) + ")";
     }
-    if (desc.getKeyCondition() != null) {
-      String additional =
-          Optional.ofNullable(desc.getAdditionalRangeCondition())
-              .map(rangeCondition -> " and " + rangeCondition)
-              .orElse("");
-      result +=
-          ("\n"
-              + OExecutionStepInternal.getIndent(ctx)
-              + "  "
-              + desc.getKeyCondition()
-              + additional);
-    }
+
+    result += ("\n" + OExecutionStepInternal.getIndent(ctx) + "  " + keyCondition);
 
     return result;
   }
 
   @Override
   public void serializeToResult(OResultInternal result, OToResultContext ctx) {
-    result.setProperty("index", desc.getIndex().getName());
-    if (desc.getKeyCondition() != null) {
-      result.setProperty("key", desc.getKeyCondition().toString());
-      if (desc.getAdditionalRangeCondition() != null) {
-        result.setProperty("toKey", desc.getAdditionalRangeCondition().toString());
+    result.setProperty("index", getIndexName());
+    if (getKeyCondition() != null) {
+      result.setProperty("key", getKeyCondition().toString());
+      if (getAdditionalCondition() != null) {
+        result.setProperty("toKey", getAdditionalCondition().toString());
       }
+    }
+  }
+
+  protected OBinaryCondition getAdditionalCondition() {
+    if (desc != null) {
+      return desc.getAdditionalRangeCondition();
+    } else {
+      return null;
+    }
+  }
+
+  protected OBooleanExpression getKeyCondition() {
+    if (desc != null) {
+      return desc.getKeyCondition();
+    } else {
+      return null;
     }
   }
 
   @Override
   public OResult serialize() {
     OResultInternal result = OExecutionStepInternal.basicSerialize(this);
-    result.setProperty("indexName", desc.getIndex().getName());
-    if (desc.getKeyCondition() != null) {
-      result.setProperty("condition", desc.getKeyCondition().serialize());
+    result.setProperty("indexName", getIndexName());
+    if (getKeyCondition() != null) {
+      result.setProperty("condition", getKeyCondition().serialize());
     }
-    if (desc.getAdditionalRangeCondition() != null) {
-      result.setProperty(
-          "additionalRangeCondition", desc.getAdditionalRangeCondition().serialize());
+    if (getAdditionalCondition() != null) {
+      result.setProperty("additionalRangeCondition", getAdditionalCondition().serialize());
     }
     result.setProperty("orderAsc", orderAsc);
     return result;
@@ -234,15 +259,23 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public boolean canBeCached() {
-    return true;
+    return this.candidate == null;
   }
 
   @Override
   public OExecutionStepInternal copy(OCommandContext ctx) {
-    return new FetchFromIndexStep(desc, this.orderAsc, ctx);
+    if (this.candidate != null) {
+      return new FetchFromIndexStep(candidate, this.orderAsc, ctx);
+    } else {
+      return new FetchFromIndexStep(desc, this.orderAsc, ctx);
+    }
   }
 
   public String getIndexName() {
-    return desc.getIndex().getName();
+    if (desc != null) {
+      return desc.getIndex().getName();
+    } else {
+      return candidate.getName();
+    }
   }
 }
