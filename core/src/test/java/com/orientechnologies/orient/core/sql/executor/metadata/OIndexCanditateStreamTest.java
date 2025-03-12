@@ -24,7 +24,8 @@ public class OIndexCanditateStreamTest extends BaseMemoryDatabase {
     OProperty prop = cl.createProperty("name", OType.STRING);
     OIndex index = prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    OIndexCandidate candidate = new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, "a");
+    OIndexCandidate candidate =
+        new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, (ctx) -> "a");
 
     List<OIndexStream> streams = candidate.getStreams(new OBasicCommandContext(db), false);
     assertEquals(streams.size(), 1);
@@ -37,8 +38,10 @@ public class OIndexCanditateStreamTest extends BaseMemoryDatabase {
     OProperty prop = cl.createProperty("name", OType.STRING);
     OIndex index = prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    OIndexCandidate first = new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, "a");
-    OIndexCandidate second = new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, "a");
+    OIndexCandidate first =
+        new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, (ctx) -> "a");
+    OIndexCandidate second =
+        new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, (ctx) -> "a");
 
     OMultipleIndexCanditate candidate = new OMultipleIndexCanditate();
     candidate.addCanditate(first);
@@ -55,8 +58,10 @@ public class OIndexCanditateStreamTest extends BaseMemoryDatabase {
     OProperty prop = cl.createProperty("name", OType.STRING);
     OIndex index = prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    OIndexCandidate first = new OIndexCandidateImpl(index.getName(), Operation.Le, prop, "a");
-    OIndexCandidate second = new OIndexCandidateImpl(index.getName(), Operation.Ge, prop, "a");
+    OIndexCandidate first =
+        new OIndexCandidateImpl(index.getName(), Operation.Le, prop, (ctx) -> "a");
+    OIndexCandidate second =
+        new OIndexCandidateImpl(index.getName(), Operation.Ge, prop, (ctx) -> "a");
 
     OMultipleIndexCanditate candidate = new OMultipleIndexCanditate();
     candidate.addCanditate(first);

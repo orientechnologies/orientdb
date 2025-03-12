@@ -284,12 +284,17 @@ public class OContainsValueCondition extends OBooleanExpression {
     Optional<OPath> path = left.getPath();
     if (path.isPresent()) {
       if (expression != null && expression.isEarlyCalculated(ctx)) {
-        Object value = expression.execute((OResult) null, ctx);
-        return info.findByValue(path.get(), createIndexValueMap(value), ctx);
+
+        return info.findByValue(path.get(), this::expressionMapValue, ctx);
       }
     }
 
     return Optional.empty();
+  }
+
+  private Object expressionMapValue(OCommandContext ctx) {
+    Object value = expression.execute((OResult) null, ctx);
+    return createIndexValueMap(value);
   }
 
   public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {

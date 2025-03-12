@@ -259,7 +259,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public boolean canBeCached() {
-    return this.candidate == null;
+    return true;
   }
 
   @Override

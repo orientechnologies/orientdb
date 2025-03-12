@@ -365,11 +365,14 @@ public class OContainsAnyCondition extends OBooleanExpression {
     Optional<OPath> path = left.getPath();
     if (path.isPresent()) {
       if (right.isEarlyCalculated(ctx)) {
-        Object value = right.execute((OResult) null, ctx);
-        return info.findExact(path.get(), value, ctx);
+        return info.findExact(path.get(), this::rightValue, ctx);
       }
     }
     return Optional.empty();
+  }
+
+  private Object rightValue(OCommandContext ctx) {
+    return right.execute((OResult) null, ctx);
   }
 
   @Override

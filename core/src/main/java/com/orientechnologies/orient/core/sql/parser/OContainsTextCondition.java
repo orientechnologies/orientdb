@@ -223,12 +223,15 @@ public class OContainsTextCondition extends OBooleanExpression {
     Optional<OPath> path = left.getPath();
     if (path.isPresent()) {
       if (right != null && right.isEarlyCalculated(ctx)) {
-        Object value = right.execute((OResult) null, ctx);
-        return info.findFullText(path.get(), value, ctx);
+        return info.findFullText(path.get(), this::rightValue, ctx);
       }
     }
 
     return Optional.empty();
+  }
+
+  public Object rightValue(OCommandContext ctx) {
+    return right.execute((OResult) null, ctx);
   }
 
   @Override

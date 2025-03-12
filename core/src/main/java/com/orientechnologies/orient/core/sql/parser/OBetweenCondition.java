@@ -281,13 +281,19 @@ public class OBetweenCondition extends OBooleanExpression {
     if (path.isPresent()) {
       OPath p = path.get();
       if (second.isEarlyCalculated(ctx) && third.isEarlyCalculated(ctx)) {
-        Object first = second.execute((OResult) null, ctx);
-        Object second = third.execute((OResult) null, ctx);
-        return info.findRange(p, first, second, ctx);
+        return info.findRange(p, this::secondValue, this::thirdValue, ctx);
       }
     }
 
     return Optional.empty();
+  }
+
+  public Object secondValue(OCommandContext ctx) {
+    return second.execute((OResult) null, ctx);
+  }
+
+  public Object thirdValue(OCommandContext ctx) {
+    return third.execute((OResult) null, ctx);
   }
 
   @Override

@@ -520,18 +520,25 @@ public class OBinaryCondition extends OBooleanExpression {
     if (path.isPresent()) {
       OPath p = path.get();
       if (right.isEarlyCalculated(ctx)) {
-        Object value = right.execute((OResult) null, ctx);
         if (operator instanceof OEqualsCompareOperator) {
-          return info.findExact(p, value, ctx);
+          return info.findExact(p, this::rightValue, ctx);
         } else if (operator instanceof OContainsKeyOperator) {
-          return info.findByKey(p, operator.createIndexValueMap(value), ctx);
+          return info.findByKey(p, this::rightValueMap, ctx);
         } else if (operator.isRange()) {
-          return info.findAllowRange(p, operator.getOperation(), value, ctx);
+          return info.findAllowRange(p, operator.getOperation(), this::rightValue, ctx);
         }
       }
     }
 
     return Optional.empty();
+  }
+
+  private Object rightValue(OCommandContext ctx) {
+    return right.execute((OResult) null, ctx);
+  }
+
+  private Object rightValueMap(OCommandContext ctx) {
+    return operator.createIndexValueMap(right.execute((OResult) null, ctx));
   }
 
   public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {

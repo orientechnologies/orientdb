@@ -18,17 +18,17 @@ public class ORangeIndexCanditate implements OIndexCandidate {
   private String name;
   private OProperty property;
   private Operation startOperation;
-  private Object startValue;
+  private OIndexKeySource startValue;
   private Operation endOperation;
-  private Object endValue;
+  private OIndexKeySource endValue;
 
   public ORangeIndexCanditate(
       String name,
       OProperty property,
       Operation startOperation,
-      Object startValue,
+      OIndexKeySource startValue,
       Operation endOperation,
-      Object endValue) {
+      OIndexKeySource endValue) {
     this.name = name;
     this.property = property;
     this.startOperation = startOperation;
@@ -83,9 +83,9 @@ public class ORangeIndexCanditate implements OIndexCandidate {
     return Collections.singletonList(
         new OBetweenIndexStream(
             index,
-            startValue,
+            startValue.key(ctx),
             startOperation.isInclude(),
-            endValue,
+            endValue.key(ctx),
             endOperation.isInclude(),
             isOrderAsc));
   }

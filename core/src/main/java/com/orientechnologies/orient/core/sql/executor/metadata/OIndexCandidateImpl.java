@@ -18,10 +18,11 @@ public class OIndexCandidateImpl implements OIndexCandidate {
 
   private final String name;
   private final OProperty property;
-  private final Object value;
+  private final OIndexKeySource value;
   private Operation operation;
 
-  public OIndexCandidateImpl(String name, Operation operation, OProperty prop, Object value) {
+  public OIndexCandidateImpl(
+      String name, Operation operation, OProperty prop, OIndexKeySource value) {
     this.name = name;
     this.operation = operation;
     this.property = prop;
@@ -50,7 +51,7 @@ public class OIndexCandidateImpl implements OIndexCandidate {
     return operation;
   }
 
-  public Object getValue() {
+  public OIndexKeySource getValue() {
     return value;
   }
 
@@ -69,10 +70,11 @@ public class OIndexCandidateImpl implements OIndexCandidate {
     ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     OIndexInternal index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, name).getInternal();
-    if (value == null) {
+    Object val = value.key(ctx);
+    if (val == null) {
       return Collections.singletonList(new ONullIndexStream(index));
     } else {
-      return Collections.singletonList(new OExactIndexStream(index, value, isOrderAsc));
+      return Collections.singletonList(new OExactIndexStream(index, val, isOrderAsc));
     }
   }
 
