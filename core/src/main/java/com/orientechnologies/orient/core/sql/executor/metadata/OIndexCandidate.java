@@ -21,4 +21,8 @@ public interface OIndexCandidate {
   default List<OIndexStream> getStreams(OCommandContext ctx, boolean isOrderAsc) {
     throw new UnsupportedOperationException();
   }
+
+  boolean requiresDistinctStep(OCommandContext ctx);
+
+  boolean fullySorted(List<String> properties);
 }

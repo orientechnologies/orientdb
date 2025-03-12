@@ -57,4 +57,15 @@ public class OIndexCandidateChain implements OIndexCandidate {
   public List<OProperty> properties() {
     return Collections.emptyList();
   }
+
+  public boolean requiresDistinctStep(OCommandContext ctx) {
+    // TODO: this should check all the chain of index for duplicate multi values,
+    return true;
+  }
+
+  @Override
+  public boolean fullySorted(List<String> properties) {
+    // TODO  this should check all the chain of index for duplicate multi values,
+    return false;
+  }
 }

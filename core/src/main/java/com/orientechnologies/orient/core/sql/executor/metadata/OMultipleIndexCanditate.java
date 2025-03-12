@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OMultipleIndexCanditate implements OIndexCandidate {
 
@@ -137,6 +139,21 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
       streams.addAll(c.getStreams(ctx, isOrderAsc));
     }
     return streams;
+  }
+
+  public boolean requiresDistinctStep(OCommandContext ctx) {
+    return true;
+  }
+
+  public boolean fullySorted(List<String> orderItems) {
+    // TODO: check  if properties are unique
+    List<OProperty> properties = this.properties();
+    if (orderItems.size() == properties.size()) {
+      Set<String> set = properties.stream().map((x) -> x.getName()).collect(Collectors.toSet());
+      return set.containsAll(orderItems);
+    } else {
+      return false;
+    }
   }
 
   @Override

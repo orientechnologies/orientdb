@@ -59,4 +59,14 @@ public class ORequiredIndexCanditate implements OIndexCandidate {
     }
     return props;
   }
+
+  @Override
+  public boolean requiresDistinctStep(OCommandContext ctx) {
+    return true;
+  }
+
+  @Override
+  public boolean fullySorted(List<String> properties) {
+    return false;
+  }
 }

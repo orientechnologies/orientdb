@@ -22,6 +22,8 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.sql.executor.metadata.OClassIndexFinder;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.parser.AggregateProjectionSplit;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBaseExpression;
@@ -71,6 +73,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -2300,6 +2303,72 @@ public class OSelectExecutionPlanner {
     return result.size() == 0 ? null : result;
   }
 
+  private List<OExecutionStepInternal> handleClassAsTargetWithIndexNew(
+      String targetClass, Set<String> filterClusters, QueryPlanningInfo info, OCommandContext ctx) {
+    if (info.flattenedWhereClause == null || info.flattenedWhereClause.size() == 0) {
+      return null;
+    }
+
+    OSchema schema = getSchemaFromContext(ctx);
+    OClass clazz = schema.getClass(targetClass);
+    if (clazz == null) {
+      clazz = schema.getView(targetClass);
+    }
+    if (clazz == null) {
+      throw new OCommandExecutionException("Cannot find class " + targetClass);
+    }
+
+    OClassIndexFinder finder = new OClassIndexFinder(targetClass);
+    Optional<OIndexCandidate> found = info.whereClause.findIndex(finder, ctx);
+    if (found.isEmpty()) {
+      return null; // Nothing found
+    }
+    found = found.get().normalize(ctx);
+    if (found.isEmpty()) {
+      return null; // some blocks could not be managed with an index
+    }
+    OIndexCandidate candidate = found.get();
+
+    List<OExecutionStepInternal> result = null;
+    result = executionStepFromIndexesNew(filterClusters, clazz, info, ctx, candidate);
+    return result;
+  }
+
+  private List<OExecutionStepInternal> executionStepFromIndexesNew(
+      Set<String> filterClusters,
+      OClass clazz,
+      QueryPlanningInfo info,
+      OCommandContext ctx,
+      OIndexCandidate candidate) {
+    List<OExecutionStepInternal> result;
+    result = new ArrayList<>();
+    Boolean orderAsc = getOrderDirection(info);
+    result.add(new FetchFromIndexStep(candidate, !Boolean.FALSE.equals(orderAsc), ctx));
+    int[] filterClusterIds = null;
+    if (filterClusters != null) {
+      filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
+    } else {
+      filterClusterIds = clazz.getPolymorphicClusterIds();
+    }
+    result.add(new GetValueFromIndexEntryStep(filterClusterIds));
+    if (candidate.requiresDistinctStep(ctx)) {
+      result.add(new DistinctExecutionStep(ctx));
+    }
+    if (orderAsc != null
+        && info.orderBy != null
+        && fullySorted(info.orderBy, candidate)
+        && info.serverToClusters.size() == 1) {
+      info.orderApplied = true;
+    }
+
+    result.add(
+        new FilterStep(
+            info.whereClause,
+            this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1,
+            this.info.isExclusiveLock()));
+    return result;
+  }
+
   private List<OExecutionStepInternal> handleClassAsTargetWithIndex(
       String targetClass, Set<String> filterClusters, QueryPlanningInfo info, OCommandContext ctx) {
     if (info.flattenedWhereClause == null || info.flattenedWhereClause.size() == 0) {
@@ -2393,6 +2462,13 @@ public class OSelectExecutionPlanner {
 
   private static OSchema getSchemaFromContext(OCommandContext ctx) {
     return ((OMetadataInternal) ctx.getDatabase().getMetadata()).getImmutableSchemaSnapshot();
+  }
+
+  private boolean fullySorted(OOrderBy orderBy, OIndexCandidate desc) {
+    if (orderBy.ordersWithCollate() || !orderBy.ordersSameDirection()) {
+      return false;
+    }
+    return desc.fullySorted(orderBy.getProperties());
   }
 
   private boolean fullySorted(OOrderBy orderBy, IndexSearchDescriptor desc) {

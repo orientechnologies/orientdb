@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
@@ -86,6 +88,23 @@ public class ORangeIndexCanditate implements OIndexCandidate {
             endValue,
             endOperation.isInclude(),
             isOrderAsc));
+  }
+
+  public boolean requiresDistinctStep(OCommandContext ctx) {
+    OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(name);
+    if (index instanceof OCompositeIndexDefinition
+        && ((OCompositeIndexDefinition) index.getDefinition()).getMultiValueDefinition() != null) {
+      return true;
+    }
+    return false;
+  }
+
+  public boolean fullySorted(List<String> orderItems) {
+    if (orderItems.size() == 1 && orderItems.get(0).equals(property.getName())) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   @Override

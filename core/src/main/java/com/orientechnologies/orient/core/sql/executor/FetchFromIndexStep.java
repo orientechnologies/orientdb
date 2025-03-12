@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStreamProducer;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
@@ -32,6 +33,7 @@ import java.util.stream.Stream;
 /** Created by luigidellaquila on 23/07/16. */
 public class FetchFromIndexStep extends AbstractExecutionStep {
   protected IndexSearchDescriptor desc;
+  protected OIndexCandidate candidate;
 
   private boolean orderAsc;
 
@@ -44,10 +46,25 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     database.queryStartUsingViewIndex(desc.getIndex().getName());
   }
 
+  public FetchFromIndexStep(OIndexCandidate candidate, boolean orderAsc, OCommandContext ctx) {
+    super();
+    this.candidate = candidate;
+    this.orderAsc = orderAsc;
+
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+    database.queryStartUsingViewIndex(desc.getIndex().getName());
+  }
+
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    List<OIndexStream> streams = desc.getStreams(ctx, isOrderAsc());
+    // Double impl for now ... will remove one when the old is not needed anymore
+    List<OIndexStream> streams;
+    if (desc != null) {
+      streams = desc.getStreams(ctx, isOrderAsc());
+    } else {
+      streams = candidate.getStreams(ctx, orderAsc);
+    }
 
     OExecutionStreamProducer res =
         new OExecutionStreamProducer() {
