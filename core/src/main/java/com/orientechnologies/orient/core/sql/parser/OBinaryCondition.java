@@ -522,11 +522,11 @@ public class OBinaryCondition extends OBooleanExpression {
       if (right.isEarlyCalculated(ctx)) {
         Object value = right.execute((OResult) null, ctx);
         if (operator instanceof OEqualsCompareOperator) {
-          return info.findExactIndex(p, value, ctx);
+          return info.findExact(p, value, ctx);
         } else if (operator instanceof OContainsKeyOperator) {
-          return info.findByKeyIndex(p, operator.createIndexValueMap(value), ctx);
+          return info.findByKey(p, operator.createIndexValueMap(value), ctx);
         } else if (operator.isRange()) {
-          return info.findAllowRangeIndex(p, operator.getOperation(), value, ctx);
+          return info.findAllowRange(p, operator.getOperation(), value, ctx);
         }
       }
     }

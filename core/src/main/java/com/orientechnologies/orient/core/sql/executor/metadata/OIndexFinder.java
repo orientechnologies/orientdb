@@ -43,17 +43,19 @@ public interface OIndexFinder {
     }
   }
 
-  Optional<OIndexCandidate> findExactIndex(OPath fieldName, Object value, OCommandContext ctx);
+  Optional<OIndexCandidate> findExact(OPath fieldName, Object value, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findByKeyIndex(OPath fieldName, Object value, OCommandContext ctx);
+  Optional<OIndexCandidate> findNull(OPath fieldName, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findAllowRangeIndex(
+  Optional<OIndexCandidate> findByKey(OPath fieldName, Object value, OCommandContext ctx);
+
+  Optional<OIndexCandidate> findAllowRange(
       OPath fieldName, Operation operation, Object value, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findRangeIndex(
+  Optional<OIndexCandidate> findRange(
       OPath fieldName, Object first, Object second, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findByValueIndex(OPath fieldName, Object value, OCommandContext ctx);
+  Optional<OIndexCandidate> findByValue(OPath fieldName, Object value, OCommandContext ctx);
 
-  Optional<OIndexCandidate> findFullTextIndex(OPath fieldName, Object value, OCommandContext ctx);
+  Optional<OIndexCandidate> findFullText(OPath fieldName, Object value, OCommandContext ctx);
 }

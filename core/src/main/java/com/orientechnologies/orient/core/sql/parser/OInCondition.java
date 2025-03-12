@@ -402,7 +402,7 @@ public class OInCondition extends OBooleanExpression {
     if (path.isPresent()) {
       if (rightMathExpression != null && rightMathExpression.isEarlyCalculated(ctx)) {
         Object value = rightMathExpression.execute((OResult) null, ctx);
-        return info.findExactIndex(path.get(), value, ctx);
+        return info.findExact(path.get(), value, ctx);
       }
     }
 

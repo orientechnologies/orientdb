@@ -283,7 +283,7 @@ public class OBetweenCondition extends OBooleanExpression {
       if (second.isEarlyCalculated(ctx) && third.isEarlyCalculated(ctx)) {
         Object first = second.execute((OResult) null, ctx);
         Object second = third.execute((OResult) null, ctx);
-        return info.findRangeIndex(p, first, second, ctx);
+        return info.findRange(p, first, second, ctx);
       }
     }
 

@@ -76,7 +76,7 @@ public class OClassIndexFinder implements OIndexFinder {
   }
 
   @Override
-  public Optional<OIndexCandidate> findExactIndex(OPath path, Object value, OCommandContext ctx) {
+  public Optional<OIndexCandidate> findExact(OPath path, Object value, OCommandContext ctx) {
     PrePath pre = findPrePath(path, ctx);
     if (!pre.valid) {
       return Optional.empty();
@@ -104,7 +104,35 @@ public class OClassIndexFinder implements OIndexFinder {
   }
 
   @Override
-  public Optional<OIndexCandidate> findByKeyIndex(OPath path, Object value, OCommandContext ctx) {
+  public Optional<OIndexCandidate> findNull(OPath path, OCommandContext ctx) {
+    PrePath pre = findPrePath(path, ctx);
+    if (!pre.valid) {
+      return Optional.empty();
+    }
+    OClass cl = pre.cl;
+    Optional<OIndexCandidate> cand = pre.chain;
+    String last = pre.last;
+
+    OProperty prop = cl.getProperty(last);
+    if (prop != null) {
+      Collection<OIndex> indexes = prop.getAllIndexes();
+      for (OIndex index : indexes) {
+        if (!index.getDefinition().isNullValuesIgnored()) {
+          if (cand.isPresent()) {
+            ((OIndexCandidateChain) cand.get()).add(index.getName());
+            ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
+            return cand;
+          } else {
+            return Optional.of(new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, null));
+          }
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<OIndexCandidate> findByKey(OPath path, Object value, OCommandContext ctx) {
     PrePath pre = findPrePath(path, ctx);
     if (!pre.valid) {
       return Optional.empty();
@@ -140,7 +168,7 @@ public class OClassIndexFinder implements OIndexFinder {
   }
 
   @Override
-  public Optional<OIndexCandidate> findAllowRangeIndex(
+  public Optional<OIndexCandidate> findAllowRange(
       OPath path, Operation op, Object value, OCommandContext ctx) {
     PrePath pre = findPrePath(path, ctx);
     if (!pre.valid) {
@@ -170,7 +198,7 @@ public class OClassIndexFinder implements OIndexFinder {
   }
 
   @Override
-  public Optional<OIndexCandidate> findRangeIndex(
+  public Optional<OIndexCandidate> findRange(
       OPath path, Object first, Object second, OCommandContext ctx) {
     PrePath pre = findPrePath(path, ctx);
     if (!pre.valid) {
@@ -202,7 +230,7 @@ public class OClassIndexFinder implements OIndexFinder {
   }
 
   @Override
-  public Optional<OIndexCandidate> findByValueIndex(OPath path, Object value, OCommandContext ctx) {
+  public Optional<OIndexCandidate> findByValue(OPath path, Object value, OCommandContext ctx) {
     PrePath pre = findPrePath(path, ctx);
     if (!pre.valid) {
       return Optional.empty();
@@ -238,8 +266,7 @@ public class OClassIndexFinder implements OIndexFinder {
   }
 
   @Override
-  public Optional<OIndexCandidate> findFullTextIndex(
-      OPath path, Object value, OCommandContext ctx) {
+  public Optional<OIndexCandidate> findFullText(OPath path, Object value, OCommandContext ctx) {
     PrePath pre = findPrePath(path, ctx);
     if (!pre.valid) {
       return Optional.empty();

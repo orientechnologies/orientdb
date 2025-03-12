@@ -5,9 +5,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
+import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OIsNullCondition extends OBooleanExpression {
@@ -126,6 +130,17 @@ public class OIsNullCondition extends OBooleanExpression {
       }
     }
     return false;
+  }
+
+  @Override
+  public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
+    if (expression.isBaseIdentifier()) {
+      Optional<OPath> path = expression.getPath();
+      if (path.isPresent()) {
+        return info.findNull(path.get(), ctx);
+      }
+    }
+    return Optional.empty();
   }
 
   @Override
