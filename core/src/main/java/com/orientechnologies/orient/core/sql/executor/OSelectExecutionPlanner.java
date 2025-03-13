@@ -2327,6 +2327,10 @@ public class OSelectExecutionPlanner {
     if (found.isEmpty()) {
       return null; // some blocks could not be managed with an index
     }
+    found = found.get().finalize(ctx);
+    if (found.isEmpty()) {
+      return null; // some blocks could not be managed with an index
+    }
     OIndexCandidate candidate = found.get();
 
     List<OExecutionStepInternal> result = null;

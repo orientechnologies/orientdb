@@ -16,6 +16,10 @@ public interface OIndexCandidate {
 
   Optional<OIndexCandidate> normalize(OCommandContext ctx);
 
+  default Optional<OIndexCandidate> finalize(OCommandContext ctx) {
+    return Optional.of(this);
+  }
+
   List<OProperty> properties();
 
   List<OIndexKeySource> values();

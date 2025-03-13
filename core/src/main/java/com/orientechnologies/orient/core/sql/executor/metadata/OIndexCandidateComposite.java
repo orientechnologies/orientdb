@@ -116,6 +116,21 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     }
   }
 
+  @Override
+  public Optional<OIndexCandidate> finalize(OCommandContext ctx) {
+    OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.index);
+    List<String> fields = index.getDefinition().getFields();
+    if (properties.size() <= fields.size()) {
+      for (int i = 0; i < properties.size(); i++) {
+        if (!fields.get(i).equals(properties.get(i).getName())) {
+          return Optional.empty();
+        }
+      }
+      return Optional.of(this);
+    }
+    return Optional.empty();
+  }
+
   public boolean fullySorted(List<String> orderItems) {
     // TODO: check  if properties are unique
     List<OProperty> properties = this.properties();
