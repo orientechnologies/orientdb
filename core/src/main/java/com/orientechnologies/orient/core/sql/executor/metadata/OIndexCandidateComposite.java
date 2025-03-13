@@ -18,8 +18,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class OIndexCandidateComposite implements OIndexCandidate {
   private String index;
@@ -150,12 +148,12 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     return Optional.empty();
   }
 
-  public boolean fullySorted(List<String> orderItems) {
+  public boolean fullySorted(List<String> orderItems, OCommandContext ctx) {
     // TODO: check  if properties are unique
-    List<OProperty> properties = this.properties();
-    if (orderItems.size() == properties.size()) {
-      Set<String> set = properties.stream().map((x) -> x.getName()).collect(Collectors.toSet());
-      return set.containsAll(orderItems);
+    OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.index);
+    List<String> fields = index.getDefinition().getFields();
+    if (orderItems.size() <= fields.size()) {
+      return fields.containsAll(orderItems);
     } else {
       return false;
     }

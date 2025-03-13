@@ -30,7 +30,7 @@ public interface OIndexCandidate {
 
   boolean requiresDistinctStep(OCommandContext ctx);
 
-  boolean fullySorted(List<String> properties);
+  boolean fullySorted(List<String> properties, OCommandContext ctx);
 
   default boolean isChain() {
     return false;

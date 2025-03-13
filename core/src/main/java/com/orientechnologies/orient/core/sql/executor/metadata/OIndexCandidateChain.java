@@ -69,7 +69,7 @@ public class OIndexCandidateChain implements OIndexCandidate {
   }
 
   @Override
-  public boolean fullySorted(List<String> properties) {
+  public boolean fullySorted(List<String> properties, OCommandContext ctx) {
     // TODO  this should check all the chain of index for duplicate multi values,
     return false;
   }

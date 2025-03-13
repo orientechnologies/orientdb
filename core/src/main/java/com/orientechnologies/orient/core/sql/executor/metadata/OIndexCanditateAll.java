@@ -85,7 +85,7 @@ public class OIndexCanditateAll implements OIndexCandidate {
   }
 
   @Override
-  public boolean fullySorted(List<String> properties) {
+  public boolean fullySorted(List<String> properties, OCommandContext ctx) {
     return false;
   }
 }

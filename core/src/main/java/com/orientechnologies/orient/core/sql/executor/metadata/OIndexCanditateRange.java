@@ -100,7 +100,7 @@ public class OIndexCanditateRange implements OIndexCandidate {
     return false;
   }
 
-  public boolean fullySorted(List<String> orderItems) {
+  public boolean fullySorted(List<String> orderItems, OCommandContext ctx) {
     if (orderItems.size() == 1 && orderItems.get(0).equals(property.getName())) {
       return true;
     } else {

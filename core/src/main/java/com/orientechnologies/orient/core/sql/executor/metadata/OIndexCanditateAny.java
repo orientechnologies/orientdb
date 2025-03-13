@@ -155,7 +155,7 @@ public class OIndexCanditateAny implements OIndexCandidate {
     return true;
   }
 
-  public boolean fullySorted(List<String> orderItems) {
+  public boolean fullySorted(List<String> orderItems, OCommandContext ctx) {
     // TODO: check  if properties are unique
     List<OProperty> properties = this.properties();
     if (orderItems.size() == properties.size()) {
