@@ -545,7 +545,7 @@ public class OBinaryCondition extends OBooleanExpression {
   private Collection<Object> rightValueMap(OCommandContext ctx) {
     List<Object> keys = new ArrayList<>();
     for (Object key : right.getIndexKey(ctx)) {
-      keys.add(operator.createIndexValueMap(key));
+      keys.add(operator.createIndexValueMap(key).get());
     }
     return keys;
   }

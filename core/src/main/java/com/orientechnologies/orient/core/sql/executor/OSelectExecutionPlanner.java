@@ -2360,7 +2360,7 @@ public class OSelectExecutionPlanner {
     }
     if (orderAsc != null
         && info.orderBy != null
-        && fullySorted(info.orderBy, candidate)
+        && fullySorted(info.orderBy, candidate, ctx)
         && info.serverToClusters.size() == 1) {
       info.orderApplied = true;
     }
@@ -2468,11 +2468,11 @@ public class OSelectExecutionPlanner {
     return ((OMetadataInternal) ctx.getDatabase().getMetadata()).getImmutableSchemaSnapshot();
   }
 
-  private boolean fullySorted(OOrderBy orderBy, OIndexCandidate desc) {
+  private boolean fullySorted(OOrderBy orderBy, OIndexCandidate desc, OCommandContext ctx) {
     if (orderBy.ordersWithCollate() || !orderBy.ordersSameDirection()) {
       return false;
     }
-    return desc.fullySorted(orderBy.getProperties());
+    return desc.fullySorted(orderBy.getProperties(), ctx);
   }
 
   private boolean fullySorted(OOrderBy orderBy, IndexSearchDescriptor desc) {
