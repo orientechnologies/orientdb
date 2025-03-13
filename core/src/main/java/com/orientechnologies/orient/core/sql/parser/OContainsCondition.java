@@ -460,8 +460,8 @@ public class OContainsCondition extends OBooleanExpression {
     return Optional.empty();
   }
 
-  private Object rightValue(OCommandContext ctx) {
-    return right.execute((OResult) null, ctx);
+  private Collection<Object> rightValue(OCommandContext ctx) {
+    return right.getIndexKey(ctx);
   }
 
   @Override

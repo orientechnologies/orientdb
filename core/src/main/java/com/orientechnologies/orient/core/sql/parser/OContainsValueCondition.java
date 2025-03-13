@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -292,11 +293,14 @@ public class OContainsValueCondition extends OBooleanExpression {
     return Optional.empty();
   }
 
-  private Object expressionMapValue(OCommandContext ctx) {
-    Object value = expression.execute((OResult) null, ctx);
-    Map<Object, Object> newValue = new HashMap<>();
-    newValue.put("", value);
-    return newValue;
+  private Collection<Object> expressionMapValue(OCommandContext ctx) {
+    List<Object> keys = new ArrayList<>();
+    for (Object key : expression.getIndexKey(ctx)) {
+      Map<Object, Object> newValue = new HashMap<>();
+      newValue.put("", key);
+      keys.add(newValue);
+    }
+    return keys;
   }
 
   public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {

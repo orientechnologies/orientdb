@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -402,14 +403,24 @@ public class OInCondition extends OBooleanExpression {
     if (path.isPresent()) {
       if (rightMathExpression != null && rightMathExpression.isEarlyCalculated(ctx)) {
         return info.findExact(path.get(), this::rightValue, ctx);
+      } else if (rightParam != null) {
+        return info.findExact(path.get(), this::rightParam, ctx);
       }
     }
 
     return Optional.empty();
   }
 
-  private Object rightValue(OCommandContext ctx) {
-    return rightMathExpression.execute((OResult) null, ctx);
+  private Collection<Object> rightValue(OCommandContext ctx) {
+    return rightMathExpression.getIndexKey(ctx);
+  }
+
+  private Collection<Object> rightParam(OCommandContext ctx) {
+    Object val = rightParam.getValue(ctx.getInputParameters());
+    if (val instanceof Collection) {
+      return (Collection<Object>) val;
+    }
+    return Collections.singleton(val);
   }
 
   @Override

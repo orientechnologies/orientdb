@@ -111,7 +111,7 @@ public class OClassIndexFinder implements OIndexFinder {
     if (index.getDefinition().getFields().size() > 1) {
       candidate = new OIndexCandidateComposite(index.getName(), operation, prop, value);
     } else {
-      candidate = new OIndexCandidateImpl(index.getName(), operation, prop, value);
+      candidate = new OIndexCandidateOne(index.getName(), operation, prop, value);
     }
     return candidate;
   }
@@ -178,7 +178,7 @@ public class OClassIndexFinder implements OIndexFinder {
                   return cand;
                 } else {
                   return Optional.of(
-                      new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, value));
+                      new OIndexCandidateOne(index.getName(), Operation.Eq, prop, value));
                 }
               }
             }
@@ -243,7 +243,7 @@ public class OClassIndexFinder implements OIndexFinder {
             return cand;
           } else {
             return Optional.of(
-                new ORangeIndexCanditate(
+                new OIndexCanditateRange(
                     index.getName(), prop, Operation.Le, first, Operation.Ge, second));
           }
         }
@@ -278,7 +278,7 @@ public class OClassIndexFinder implements OIndexFinder {
                   return cand;
                 } else {
                   return Optional.of(
-                      new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, value));
+                      new OIndexCandidateOne(index.getName(), Operation.Eq, prop, value));
                 }
               }
             }
@@ -312,7 +312,7 @@ public class OClassIndexFinder implements OIndexFinder {
             return cand;
           } else {
             return Optional.of(
-                new OIndexCandidateImpl(index.getName(), Operation.FuzzyEq, prop, value));
+                new OIndexCandidateOne(index.getName(), Operation.FuzzyEq, prop, value));
           }
         }
       }

@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
@@ -15,13 +14,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class OMultipleIndexCanditate implements OIndexCandidate {
+public class OIndexCanditateAny implements OIndexCandidate {
 
   public final List<OIndexCandidate> canditates = new ArrayList<OIndexCandidate>();
 
-  public OMultipleIndexCanditate() {}
+  public OIndexCanditateAny() {}
 
-  private OMultipleIndexCanditate(Collection<OIndexCandidate> canditates) {
+  private OIndexCanditateAny(Collection<OIndexCandidate> canditates) {
     this.canditates.addAll(canditates);
   }
 
@@ -58,7 +57,7 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
     } else if (newCanditates.size() == 1) {
       return Optional.of(newCanditates.iterator().next());
     } else {
-      return Optional.of(new OMultipleIndexCanditate(newCanditates));
+      return Optional.of(new OIndexCanditateAny(newCanditates));
     }
   }
 
@@ -76,14 +75,14 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
             && lastProperties.size() == 1
             && properties.get(0).getName() == lastProperties.get(0).getName()) {
           if (canditate.getOperation().canRangeWith(lastCandidate.getOperation())) {
-            if (canditate instanceof OIndexCandidateImpl
-                && lastCandidate instanceof OIndexCandidateImpl) {
+            if (canditate instanceof OIndexCandidateOne
+                && lastCandidate instanceof OIndexCandidateOne) {
               newCanditates.add(
-                  new ORangeIndexCanditate(
+                  new OIndexCanditateRange(
                       canditate.getName(),
                       properties.get(0),
-                      (OIndexCandidateImpl) canditate,
-                      (OIndexCandidateImpl) lastCandidate));
+                      (OIndexCandidateOne) canditate,
+                      (OIndexCandidateOne) lastCandidate));
               canditates.remove(z);
               if (z != canditates.size()) {
                 z++; // Increase so it does not decrease next iteration
@@ -105,7 +104,7 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
     List<OProperty> propeties = properties();
     Map<String, OIndexCandidate> newCanditates = new HashMap<>();
     for (OIndexCandidate cand : canditates) {
-      if (!newCanditates.containsKey(cand.getName())) {
+      if (!newCanditates.containsKey(cand.getName()) && !cand.isChain()) {
         OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(cand.getName());
         List<OProperty> foundProps = new ArrayList<>();
         for (String field : index.getDefinition().getFields()) {
@@ -134,11 +133,11 @@ public class OMultipleIndexCanditate implements OIndexCandidate {
     return newCanditates.values();
   }
 
-  public Object allKeys(OCommandContext ctx) {
+  public Collection<Object> allKeys(OCommandContext ctx) {
     List<OIndexKeySource> values = values();
-    OCompositeKey keys = new OCompositeKey();
+    List<Object> keys = new ArrayList<>();
     for (OIndexKeySource source : values) {
-      keys.addKey(source.key(ctx));
+      keys.addAll(source.key(ctx));
     }
     return keys;
   }

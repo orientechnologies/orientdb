@@ -13,6 +13,8 @@ import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -91,6 +93,29 @@ public class OExpression extends SimpleNode {
     }
 
     return value;
+  }
+
+  public Collection<Object> getIndexKey(OCommandContext ctx) {
+    if (isNull) {
+      return null;
+    }
+    if (rid != null) {
+      return Collections.singletonList(rid.toRecordId(null, ctx));
+    }
+    if (mathExpression != null) {
+      return mathExpression.getIndexKey(ctx);
+    }
+    if (arrayConcatExpression != null) {
+      return arrayConcatExpression.getIndexKey(ctx);
+    }
+    if (json != null) {
+      return Collections.singletonList(json.toObjectDetermineType(null, ctx));
+    }
+    if (booleanValue != null) {
+      return Collections.singletonList(booleanValue);
+    }
+
+    return Collections.singletonList(value);
   }
 
   public boolean isBaseIdentifier() {

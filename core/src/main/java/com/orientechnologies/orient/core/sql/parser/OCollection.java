@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,6 +59,14 @@ public class OCollection extends SimpleNode {
     List<Object> result = new ArrayList<Object>();
     for (OExpression exp : expressions) {
       result.add(convert(exp.execute(iCurrentRecord, ctx)));
+    }
+    return result;
+  }
+
+  public Collection<Object> getIndexKey(OCommandContext ctx) {
+    List<Object> result = new ArrayList<Object>();
+    for (OExpression exp : expressions) {
+      result.addAll(exp.getIndexKey(ctx));
     }
     return result;
   }

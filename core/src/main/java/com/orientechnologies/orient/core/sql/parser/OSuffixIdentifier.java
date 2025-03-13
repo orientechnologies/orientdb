@@ -20,6 +20,8 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OUpdatableResult;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +67,51 @@ public class OSuffixIdentifier extends SimpleNode {
     } else if (star) {
       builder.append("*");
     }
+  }
+
+  public Collection<Object> getIndexKey(OCommandContext ctx) {
+    if (star) {
+      return Collections.EMPTY_LIST;
+    }
+    if (identifier != null) {
+      String varName = identifier.getStringValue();
+      if (ctx != null && varName.equalsIgnoreCase("$parent")) {
+        return Collections.singleton(ctx.getParent());
+      }
+      if (ctx != null && varName.startsWith("$") && ctx.getVariable(varName) != null) {
+        Object result = ctx.getVariable(varName);
+        if (result instanceof OResettable) {
+          ((OResettable) result).reset();
+        }
+        if (result instanceof Collection) {
+          List<Object> newResult = new ArrayList<>();
+          for (Object obj : (Collection) result) {
+            if (obj instanceof OResult) {
+              if (((OResult) obj).isElement()) {
+                obj = ((OResult) obj).getIdentity().orElse(null);
+              } else {
+                Set<String> props = ((OResult) obj).getPropertyNames();
+                if (props.size() == 1) {
+                  obj = ((OResult) obj).getProperty(props.iterator().next());
+                }
+              }
+              if (obj instanceof Collection) {
+                newResult.addAll((Collection<? extends Object>) obj);
+              } else {
+                newResult.add(obj);
+              }
+
+            } else {
+              newResult.add(obj);
+            }
+          }
+          return (Collection) newResult;
+        }
+        return Collections.singleton(result);
+      }
+    }
+
+    return Collections.EMPTY_LIST;
   }
 
   public Object execute(OResult iCurrentRecord, OCommandContext ctx) {

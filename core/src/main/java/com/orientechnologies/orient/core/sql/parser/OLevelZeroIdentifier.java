@@ -8,6 +8,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -53,6 +55,19 @@ public class OLevelZeroIdentifier extends SimpleNode {
     }
     if (Boolean.TRUE.equals(self)) {
       return iCurrentRecord;
+    }
+    throw new UnsupportedOperationException();
+  }
+
+  public Collection<Object> getIndexKey(OCommandContext ctx) {
+    if (functionCall != null) {
+      return functionCall.getIndexKey(ctx);
+    }
+    if (collection != null) {
+      return collection.getIndexKey(ctx);
+    }
+    if (Boolean.TRUE.equals(self)) {
+      return Collections.singleton(null);
     }
     throw new UnsupportedOperationException();
   }

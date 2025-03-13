@@ -1,8 +1,9 @@
 package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import java.util.Collection;
 
 public interface OIndexKeySource {
 
-  Object key(OCommandContext ctx);
+  Collection<Object> key(OCommandContext ctx);
 }

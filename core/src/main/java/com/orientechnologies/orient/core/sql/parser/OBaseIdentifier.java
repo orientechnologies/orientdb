@@ -65,6 +65,16 @@ public class OBaseIdentifier extends SimpleNode {
     return null;
   }
 
+  public Collection<Object> getIndexKey(OCommandContext ctx) {
+    if (levelZero != null) {
+      return levelZero.getIndexKey(ctx);
+    }
+    if (suffix != null) {
+      return suffix.getIndexKey(ctx);
+    }
+    return null;
+  }
+
   public boolean isFunctionAny() {
     if (levelZero != null) {
       return levelZero.isFunctionAny();

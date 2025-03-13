@@ -12,18 +12,20 @@ import com.orientechnologies.orient.core.sql.executor.OMajorIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OMinorIndexStream;
 import com.orientechnologies.orient.core.sql.executor.ONullIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public class OIndexCandidateImpl implements OIndexCandidate {
+public class OIndexCandidateOne implements OIndexCandidate {
 
   private final String name;
   private final OProperty property;
   private final OIndexKeySource value;
   private Operation operation;
 
-  public OIndexCandidateImpl(
+  public OIndexCandidateOne(
       String name, Operation operation, OProperty prop, OIndexKeySource value) {
     this.name = name;
     this.operation = operation;
@@ -72,26 +74,38 @@ public class OIndexCandidateImpl implements OIndexCandidate {
     ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     OIndexInternal index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, name).getInternal();
-    Object val = value.key(ctx);
-    switch (operation) {
-      case Ge:
-        return Collections.singletonList(new OMajorIndexStream(index, val, true, isOrderAsc));
-      case Gt:
-        return Collections.singletonList(new OMajorIndexStream(index, val, false, isOrderAsc));
-      case Le:
-        return Collections.singletonList(new OMinorIndexStream(index, val, true, isOrderAsc));
-      case Lt:
-        return Collections.singletonList(new OMinorIndexStream(index, val, false, isOrderAsc));
-      case Eq:
-        if (val == null) {
-          return Collections.singletonList(new ONullIndexStream(index));
-        } else {
-          return Collections.singletonList(new OExactIndexStream(index, val, isOrderAsc));
+    Collection<Object> val = value.key(ctx);
+    List<OIndexStream> streams = new ArrayList<>();
+    if (val == null) {
+      streams.add(new ONullIndexStream(index));
+    } else {
+      for (Object singleVal : val) {
+        switch (operation) {
+          case Ge:
+            streams.add(new OMajorIndexStream(index, singleVal, true, isOrderAsc));
+            break;
+          case Gt:
+            streams.add(new OMajorIndexStream(index, singleVal, false, isOrderAsc));
+            break;
+          case Le:
+            streams.add(new OMinorIndexStream(index, singleVal, true, isOrderAsc));
+            break;
+          case Lt:
+            streams.add(new OMinorIndexStream(index, singleVal, false, isOrderAsc));
+            break;
+          case Eq:
+            if (singleVal == null) {
+              streams.add(new ONullIndexStream(index));
+            } else {
+              streams.add(new OExactIndexStream(index, singleVal, isOrderAsc));
+            }
+            break;
+          default:
+            throw new UnsupportedOperationException("unsupported operation " + operation);
         }
-
-      default:
-        throw new UnsupportedOperationException("unsupported operation " + operation);
+      }
     }
+    return streams;
   }
 
   public boolean requiresDistinctStep(OCommandContext ctx) {

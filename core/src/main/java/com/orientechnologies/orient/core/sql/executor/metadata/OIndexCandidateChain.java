@@ -73,4 +73,9 @@ public class OIndexCandidateChain implements OIndexCandidate {
     // TODO  this should check all the chain of index for duplicate multi values,
     return false;
   }
+
+  @Override
+  public boolean isChain() {
+    return true;
+  }
 }

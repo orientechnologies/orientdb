@@ -10,8 +10,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCanditateAll;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
-import com.orientechnologies.orient.core.sql.executor.metadata.ORequiredIndexCanditate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -264,10 +264,10 @@ public class OOrBlock extends OBooleanExpression {
           result = singleResult;
 
         } else if (result.isPresent()) {
-          if (result.get() instanceof ORequiredIndexCanditate) {
-            ((ORequiredIndexCanditate) result.get()).addCanditate(singleResult.get());
+          if (result.get() instanceof OIndexCanditateAll) {
+            ((OIndexCanditateAll) result.get()).addCanditate(singleResult.get());
           } else {
-            ORequiredIndexCanditate req = new ORequiredIndexCanditate();
+            OIndexCanditateAll req = new OIndexCanditateAll();
             req.addCanditate(result.get());
             req.addCanditate(singleResult.get());
             result = Optional.of(req);

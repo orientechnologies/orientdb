@@ -538,12 +538,16 @@ public class OBinaryCondition extends OBooleanExpression {
     return Optional.empty();
   }
 
-  private Object rightValue(OCommandContext ctx) {
-    return right.execute((OResult) null, ctx);
+  private Collection<Object> rightValue(OCommandContext ctx) {
+    return right.getIndexKey(ctx);
   }
 
-  private Object rightValueMap(OCommandContext ctx) {
-    return operator.createIndexValueMap(right.execute((OResult) null, ctx));
+  private Collection<Object> rightValueMap(OCommandContext ctx) {
+    List<Object> keys = new ArrayList<>();
+    for (Object key : right.getIndexKey(ctx)) {
+      keys.add(operator.createIndexValueMap(key));
+    }
+    return keys;
   }
 
   public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {

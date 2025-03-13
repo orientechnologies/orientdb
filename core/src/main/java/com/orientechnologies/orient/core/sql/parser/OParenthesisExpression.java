@@ -3,12 +3,14 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,6 +60,30 @@ public class OParenthesisExpression extends OMathExpression {
       return result;
     }
     return super.execute(iCurrentRecord, ctx);
+  }
+
+  public Collection<Object> getIndexKey(OCommandContext ctx) {
+    if (expression != null) {
+      return expression.getIndexKey(ctx);
+    }
+    if (statement != null) {
+      OInternalExecutionPlan execPlan;
+      if (statement.originalStatement == null || statement.originalStatement.contains("?")) {
+        // cannot cache statements with positional params, especially when it's in a
+        // subquery/expression.
+        execPlan = statement.createExecutionPlan(ctx);
+      } else {
+        execPlan = statement.resolvePlan(true, ctx);
+      }
+      OExecutionStream rs = execPlan.start(ctx);
+      List<OIdentifiable> result = new ArrayList<>();
+      while (rs.hasNext(ctx)) {
+        result.add(rs.next(ctx).getIdentity().get());
+      }
+      rs.close(ctx);
+      return (Collection) result;
+    }
+    return super.getIndexKey(ctx);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

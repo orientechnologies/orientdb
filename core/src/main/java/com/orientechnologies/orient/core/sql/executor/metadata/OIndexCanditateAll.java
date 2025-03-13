@@ -2,16 +2,17 @@ package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class ORequiredIndexCanditate implements OIndexCandidate {
+public class OIndexCanditateAll implements OIndexCandidate {
 
   public final List<OIndexCandidate> canditates = new ArrayList<OIndexCandidate>();
 
-  public ORequiredIndexCanditate() {}
+  public OIndexCanditateAll() {}
 
   public void addCanditate(OIndexCandidate canditate) {
     this.canditates.add(canditate);
@@ -39,7 +40,7 @@ public class ORequiredIndexCanditate implements OIndexCandidate {
 
   @Override
   public Optional<OIndexCandidate> normalize(OCommandContext ctx) {
-    ORequiredIndexCanditate newCanditates = new ORequiredIndexCanditate();
+    OIndexCanditateAll newCanditates = new OIndexCanditateAll();
     for (OIndexCandidate candidate : canditates) {
       Optional<OIndexCandidate> result = candidate.normalize(ctx);
       if (result.isPresent()) {
@@ -67,6 +68,15 @@ public class ORequiredIndexCanditate implements OIndexCandidate {
       vals.addAll(cand.values());
     }
     return vals;
+  }
+
+  @Override
+  public List<OIndexStream> getStreams(OCommandContext ctx, boolean isOrderAsc) {
+    List<OIndexStream> streams = new ArrayList<>();
+    for (OIndexCandidate c : canditates) {
+      streams.addAll(c.getStreams(ctx, isOrderAsc));
+    }
+    return streams;
   }
 
   @Override

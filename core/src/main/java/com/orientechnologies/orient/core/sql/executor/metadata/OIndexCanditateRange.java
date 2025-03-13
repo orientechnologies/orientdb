@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public class ORangeIndexCanditate implements OIndexCandidate {
+public class OIndexCanditateRange implements OIndexCandidate {
 
   private String name;
   private OProperty property;
@@ -23,7 +23,7 @@ public class ORangeIndexCanditate implements OIndexCandidate {
   private Operation endOperation;
   private OIndexKeySource endValue;
 
-  public ORangeIndexCanditate(
+  public OIndexCanditateRange(
       String name,
       OProperty property,
       Operation startOperation,
@@ -38,8 +38,8 @@ public class ORangeIndexCanditate implements OIndexCandidate {
     this.endValue = endValue;
   }
 
-  public ORangeIndexCanditate(
-      String name, OProperty property, OIndexCandidateImpl one, OIndexCandidateImpl two) {
+  public OIndexCanditateRange(
+      String name, OProperty property, OIndexCandidateOne one, OIndexCandidateOne two) {
     this.name = name;
     this.property = property;
     if (one.getOperation().isL()) {
@@ -84,9 +84,9 @@ public class ORangeIndexCanditate implements OIndexCandidate {
     return Collections.singletonList(
         new OBetweenIndexStream(
             index,
-            startValue.key(ctx),
+            startValue.key(ctx).iterator().next(),
             startOperation.isInclude(),
-            endValue.key(ctx),
+            endValue.key(ctx).iterator().next(),
             endOperation.isInclude(),
             isOrderAsc));
   }

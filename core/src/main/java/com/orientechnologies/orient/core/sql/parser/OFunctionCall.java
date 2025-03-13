@@ -14,6 +14,8 @@ import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionMove;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,6 +94,14 @@ public class OFunctionCall extends SimpleNode {
 
   public Object execute(OResult targetObjects, OCommandContext ctx) {
     return execute(targetObjects, ctx, name.getStringValue());
+  }
+
+  public Collection<Object> getIndexKey(OCommandContext ctx) {
+    Object result = execute(null, ctx, name.getStringValue());
+    if (result instanceof Collection) {
+      return (Collection) result;
+    }
+    return Collections.singleton(result);
   }
 
   private Object execute(OResult targetObjects, OCommandContext ctx, String name) {

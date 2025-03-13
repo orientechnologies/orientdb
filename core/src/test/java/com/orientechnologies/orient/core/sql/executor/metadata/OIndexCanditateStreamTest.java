@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
+import java.util.Collections;
 import java.util.List;
 import org.junit.Test;
 
@@ -25,7 +26,8 @@ public class OIndexCanditateStreamTest extends BaseMemoryDatabase {
     OIndex index = prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
     OIndexCandidate candidate =
-        new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, (ctx) -> "a");
+        new OIndexCandidateOne(
+            index.getName(), Operation.Eq, prop, (ctx) -> Collections.singleton("a"));
 
     List<OIndexStream> streams = candidate.getStreams(new OBasicCommandContext(db), false);
     assertEquals(streams.size(), 1);
@@ -39,11 +41,13 @@ public class OIndexCanditateStreamTest extends BaseMemoryDatabase {
     OIndex index = prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
     OIndexCandidate first =
-        new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, (ctx) -> "a");
+        new OIndexCandidateOne(
+            index.getName(), Operation.Eq, prop, (ctx) -> Collections.singleton("a"));
     OIndexCandidate second =
-        new OIndexCandidateImpl(index.getName(), Operation.Eq, prop, (ctx) -> "a");
+        new OIndexCandidateOne(
+            index.getName(), Operation.Eq, prop, (ctx) -> Collections.singleton("a"));
 
-    OMultipleIndexCanditate candidate = new OMultipleIndexCanditate();
+    OIndexCanditateAny candidate = new OIndexCanditateAny();
     candidate.addCanditate(first);
     candidate.addCanditate(second);
     List<OIndexStream> streams = candidate.getStreams(new OBasicCommandContext(db), false);
@@ -59,11 +63,13 @@ public class OIndexCanditateStreamTest extends BaseMemoryDatabase {
     OIndex index = prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
     OIndexCandidate first =
-        new OIndexCandidateImpl(index.getName(), Operation.Le, prop, (ctx) -> "a");
+        new OIndexCandidateOne(
+            index.getName(), Operation.Le, prop, (ctx) -> Collections.singleton("a"));
     OIndexCandidate second =
-        new OIndexCandidateImpl(index.getName(), Operation.Ge, prop, (ctx) -> "a");
+        new OIndexCandidateOne(
+            index.getName(), Operation.Ge, prop, (ctx) -> Collections.singleton("a"));
 
-    OMultipleIndexCanditate candidate = new OMultipleIndexCanditate();
+    OIndexCanditateAny candidate = new OIndexCanditateAny();
     candidate.addCanditate(first);
     candidate.addCanditate(second);
     OBasicCommandContext ctx = new OBasicCommandContext(db);

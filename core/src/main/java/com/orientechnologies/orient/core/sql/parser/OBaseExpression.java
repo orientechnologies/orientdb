@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -116,6 +117,25 @@ public class OBaseExpression extends OMathExpression {
       result = modifier.execute(iCurrentRecord, result, ctx);
     }
     return result;
+  }
+
+  public Collection<Object> getIndexKey(OCommandContext ctx) {
+    Object result = null;
+    if (number != null) {
+      result = Collections.singleton(number.getValue());
+    } else if (identifier != null) {
+      result = identifier.getIndexKey(ctx);
+    } else if (string != null && string.length() > 1) {
+      result =
+          Collections.singleton(
+              OStringSerializerHelper.decode(string.substring(1, string.length() - 1)));
+    } else if (inputParam != null) {
+      result = Collections.singleton(inputParam.getValue(ctx.getInputParameters()));
+    }
+    if (modifier != null) {
+      result = modifier.execute(null, result, ctx);
+    }
+    return (Collection<Object>) result;
   }
 
   @Override

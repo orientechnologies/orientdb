@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -90,6 +91,14 @@ public class OArrayConcatExpression extends SimpleNode {
       result = apply(result, childExpressions.get(i).execute(iCurrentRecord, ctx));
     }
     return result;
+  }
+
+  public Collection<Object> getIndexKey(OCommandContext ctx) {
+    Object value = execute(null, ctx);
+    if (value instanceof Collection) {
+      return (Collection<Object>) value;
+    }
+    return Collections.singleton(value);
   }
 
   public boolean isEarlyCalculated(OCommandContext ctx) {

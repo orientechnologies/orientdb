@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
 import com.orientechnologies.orient.core.sql.executor.metadata.OPath;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -230,8 +231,8 @@ public class OContainsTextCondition extends OBooleanExpression {
     return Optional.empty();
   }
 
-  public Object rightValue(OCommandContext ctx) {
-    return right.execute((OResult) null, ctx);
+  public Collection<Object> rightValue(OCommandContext ctx) {
+    return right.getIndexKey(ctx);
   }
 
   @Override
