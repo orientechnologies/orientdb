@@ -41,6 +41,9 @@ public class OBetweenIndexStream implements OIndexStream {
         rightValue = null;
       }
     }
+    if (rightValue instanceof OCompositeKey) {
+      return rightValue;
+    }
 
     if (rightValue instanceof Collection) {
       rightValue = definition.createValue(((Collection) rightValue).toArray());

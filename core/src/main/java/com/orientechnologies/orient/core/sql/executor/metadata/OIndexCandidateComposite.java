@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OMajorIndexStream;
@@ -120,6 +121,9 @@ public class OIndexCandidateComposite implements OIndexCandidate {
           case Eq:
             if (singleVal == null) {
               streams.add(new ONullIndexStream(index));
+            } else if (index.supportsOrderedIterations()) {
+              streams.add(
+                  new OBetweenIndexStream(index, singleVal, true, singleVal, true, isOrderAsc));
             } else {
               streams.add(new OExactIndexStream(index, singleVal, isOrderAsc));
             }
