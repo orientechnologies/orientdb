@@ -7,8 +7,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class OClassIndexFinder implements OIndexFinder {
 
@@ -86,19 +88,17 @@ public class OClassIndexFinder implements OIndexFinder {
     Optional<OIndexCandidate> cand = pre.chain;
     String last = pre.last;
 
-    OProperty prop = cl.getProperty(last);
-    if (prop != null) {
-      Collection<OIndex> indexes = prop.getAllIndexes();
-      for (OIndex index : indexes) {
-        if (index.getInternal().canBeUsedInEqualityOperators()) {
-          OIndexCandidate candidate = newCandidate(value, prop, Operation.Eq, index);
-          if (cand.isPresent()) {
-            ((OIndexCandidateChain) cand.get()).add(index.getName());
-            ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
-            return cand;
-          } else {
-            return Optional.of(candidate);
-          }
+    Collection<OIndex> indexes = findIndexes(cl, last);
+    for (OIndex index : indexes) {
+      if (index.getInternal().canBeUsedInEqualityOperators()) {
+        OProperty prop = cl.getProperty(last);
+        OIndexCandidate candidate = newCandidate(value, prop, Operation.Eq, index);
+        if (cand.isPresent()) {
+          ((OIndexCandidateChain) cand.get()).add(index.getName());
+          ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
+          return cand;
+        } else {
+          return Optional.of(candidate);
         }
       }
     }
@@ -126,26 +126,24 @@ public class OClassIndexFinder implements OIndexFinder {
     Optional<OIndexCandidate> cand = pre.chain;
     String last = pre.last;
 
-    OProperty prop = cl.getProperty(last);
-    if (prop != null) {
-      Collection<OIndex> indexes = prop.getAllIndexes();
-      for (OIndex index : indexes) {
-        if (!index.getDefinition().isNullValuesIgnored()) {
-          OIndexCandidate candidate =
-              newCandidate(
-                  (c) -> {
-                    return null;
-                  },
-                  prop,
-                  Operation.Eq,
-                  index);
-          if (cand.isPresent()) {
-            ((OIndexCandidateChain) cand.get()).add(index.getName());
-            ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
-            return cand;
-          } else {
-            return Optional.of(candidate);
-          }
+    Collection<OIndex> indexes = findIndexes(cl, last);
+    for (OIndex index : indexes) {
+      if (!index.getDefinition().isNullValuesIgnored()) {
+        OProperty prop = cl.getProperty(last);
+        OIndexCandidate candidate =
+            newCandidate(
+                (c) -> {
+                  return null;
+                },
+                prop,
+                Operation.Eq,
+                index);
+        if (cand.isPresent()) {
+          ((OIndexCandidateChain) cand.get()).add(index.getName());
+          ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
+          return cand;
+        } else {
+          return Optional.of(candidate);
         }
       }
     }
@@ -166,7 +164,7 @@ public class OClassIndexFinder implements OIndexFinder {
     OProperty prop = cl.getProperty(last);
     if (prop != null) {
       if (prop.getType() == OType.EMBEDDEDMAP) {
-        Collection<OIndex> indexes = prop.getAllIndexes();
+        Collection<OIndex> indexes = cl.getClassInvolvedIndexes(last);
         for (OIndex index : indexes) {
           if (index.getInternal().canBeUsedInEqualityOperators()) {
             OIndexDefinition def = index.getDefinition();
@@ -200,20 +198,17 @@ public class OClassIndexFinder implements OIndexFinder {
     Optional<OIndexCandidate> cand = pre.chain;
     String last = pre.last;
 
-    OProperty prop = cl.getProperty(last);
-    if (prop != null) {
-      Collection<OIndex> indexes = prop.getAllIndexes();
-      for (OIndex index : indexes) {
-        if (index.getInternal().canBeUsedInEqualityOperators()
-            && index.supportsOrderedIterations()) {
-          OIndexCandidate candidate = newCandidate(value, prop, op, index);
-          if (cand.isPresent()) {
-            ((OIndexCandidateChain) cand.get()).add(index.getName());
-            ((OIndexCandidateChain) cand.get()).setOperation(op);
-            return cand;
-          } else {
-            return Optional.of(candidate);
-          }
+    Collection<OIndex> indexes = findIndexes(cl, last);
+    for (OIndex index : indexes) {
+      if (index.getInternal().canBeUsedInEqualityOperators() && index.supportsOrderedIterations()) {
+        OProperty prop = cl.getProperty(last);
+        OIndexCandidate candidate = newCandidate(value, prop, op, index);
+        if (cand.isPresent()) {
+          ((OIndexCandidateChain) cand.get()).add(index.getName());
+          ((OIndexCandidateChain) cand.get()).setOperation(op);
+          return cand;
+        } else {
+          return Optional.of(candidate);
         }
       }
     }
@@ -230,22 +225,18 @@ public class OClassIndexFinder implements OIndexFinder {
     OClass cl = pre.cl;
     Optional<OIndexCandidate> cand = pre.chain;
     String last = pre.last;
-
-    OProperty prop = cl.getProperty(last);
-    if (prop != null) {
-      Collection<OIndex> indexes = prop.getAllIndexes();
-      for (OIndex index : indexes) {
-        if (index.getInternal().canBeUsedInEqualityOperators()
-            && index.supportsOrderedIterations()) {
-          if (cand.isPresent()) {
-            ((OIndexCandidateChain) cand.get()).add(index.getName());
-            ((OIndexCandidateChain) cand.get()).setOperation(Operation.Range);
-            return cand;
-          } else {
-            return Optional.of(
-                new OIndexCanditateRange(
-                    index.getName(), prop, Operation.Le, first, Operation.Ge, second));
-          }
+    Collection<OIndex> indexes = findIndexes(cl, last);
+    for (OIndex index : indexes) {
+      if (index.getInternal().canBeUsedInEqualityOperators() && index.supportsOrderedIterations()) {
+        OProperty prop = cl.getProperty(last);
+        if (cand.isPresent()) {
+          ((OIndexCandidateChain) cand.get()).add(index.getName());
+          ((OIndexCandidateChain) cand.get()).setOperation(Operation.Range);
+          return cand;
+        } else {
+          return Optional.of(
+              new OIndexCanditateRange(
+                  index.getName(), prop, Operation.Le, first, Operation.Ge, second));
         }
       }
     }
@@ -266,7 +257,7 @@ public class OClassIndexFinder implements OIndexFinder {
     OProperty prop = cl.getProperty(last);
     if (prop != null) {
       if (prop.getType() == OType.EMBEDDEDMAP) {
-        Collection<OIndex> indexes = prop.getAllIndexes();
+        Collection<OIndex> indexes = cl.getClassInvolvedIndexes(last);
         for (OIndex index : indexes) {
           OIndexDefinition def = index.getDefinition();
           if (index.getInternal().canBeUsedInEqualityOperators()) {
@@ -300,23 +291,33 @@ public class OClassIndexFinder implements OIndexFinder {
     Optional<OIndexCandidate> cand = pre.chain;
     String last = pre.last;
 
-    OProperty prop = cl.getProperty(last);
-    if (prop != null) {
-      Collection<OIndex> indexes = prop.getAllIndexes();
-      for (OIndex index : indexes) {
-        if (OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(index.getType())
-            && !index.getAlgorithm().equalsIgnoreCase("LUCENE")) {
-          if (cand.isPresent()) {
-            ((OIndexCandidateChain) cand.get()).add(index.getName());
-            ((OIndexCandidateChain) cand.get()).setOperation(Operation.FuzzyEq);
-            return cand;
-          } else {
-            return Optional.of(
-                new OIndexCandidateOne(index.getName(), Operation.FuzzyEq, prop, value));
-          }
+    Collection<OIndex> indexes = findIndexes(cl, last);
+    for (OIndex index : indexes) {
+      if (OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(index.getType())
+          && !index.getAlgorithm().equalsIgnoreCase("LUCENE")) {
+        OProperty prop = cl.getProperty(last);
+        if (cand.isPresent()) {
+          ((OIndexCandidateChain) cand.get()).add(index.getName());
+          ((OIndexCandidateChain) cand.get()).setOperation(Operation.FuzzyEq);
+          return cand;
+        } else {
+          return Optional.of(
+              new OIndexCandidateOne(index.getName(), Operation.FuzzyEq, prop, value));
         }
       }
     }
     return Optional.empty();
+  }
+
+  protected Collection<OIndex> findIndexes(OClass cl, String field) {
+    // Move this logic to a custom method of the schema snapshot, computed at snapshot
+    Collection<OIndex> indexes = cl.getIndexes();
+    Set<OIndex> selected = new HashSet<OIndex>();
+    for (OIndex index : indexes) {
+      if (index.getDefinition().getFields().contains(field)) {
+        selected.add(index);
+      }
+    }
+    return selected;
   }
 }
