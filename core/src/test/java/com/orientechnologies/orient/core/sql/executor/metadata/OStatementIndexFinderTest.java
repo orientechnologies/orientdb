@@ -359,7 +359,6 @@ public class OStatementIndexFinderTest {
   }
 
   @Test
-  @Ignore
   public void multivalueNotMatchPropertyOR() {
     OClass cl = this.session.createClass("cl");
     cl.createProperty("name", OType.STRING);
@@ -375,7 +374,6 @@ public class OStatementIndexFinderTest {
 
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
     result = result.get().normalize(ctx);
-    result = result.get().finalize(ctx);
     assertFalse(result.isPresent());
   }
 

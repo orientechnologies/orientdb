@@ -44,6 +44,9 @@ public class OIndexCanditateAll implements OIndexCandidate {
     for (OIndexCandidate candidate : canditates) {
       Optional<OIndexCandidate> result = candidate.normalize(ctx);
       if (result.isPresent()) {
+        result = result.get().finalize(ctx);
+      }
+      if (result.isPresent()) {
         newCanditates.addCanditate(result.get());
       } else {
         return Optional.empty();
