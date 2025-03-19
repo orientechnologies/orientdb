@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.executor.metadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -17,21 +16,24 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Oper
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class OIndexCandidateComposite implements OIndexCandidate {
   private String index;
   private Operation operation;
   private List<OProperty> properties;
-  private OIndexKeySource value;
+  private List<OIndexKeySource> values;
 
   public OIndexCandidateComposite(
-      String index, Operation operation, List<OProperty> properties, OIndexKeySource value) {
+      String index, Operation operation, List<OProperty> properties, List<OIndexKeySource> value) {
     this.index = index;
     this.operation = operation;
     this.properties = properties;
-    this.value = value;
+    this.values = value;
   }
 
   public OIndexCandidateComposite(
@@ -39,16 +41,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     this.index = index;
     this.operation = operation;
     this.properties = Collections.singletonList(property);
-    this.value =
-        (ctx) -> {
-          return (Collection)
-              value.key(ctx).stream()
-                  .map(
-                      (v) -> {
-                        return new OCompositeKey(v);
-                      })
-                  .toList();
-        };
+    this.values = Collections.singletonList(value);
   }
 
   @Override
@@ -76,11 +69,6 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     return properties;
   }
 
-  @Override
-  public List<OIndexKeySource> values() {
-    return Collections.singletonList(value);
-  }
-
   public boolean requiresDistinctStep(OCommandContext ctx) {
     OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.index);
     if (index instanceof OCompositeIndexDefinition
@@ -99,7 +87,8 @@ public class OIndexCandidateComposite implements OIndexCandidate {
             .getIndexManagerInternal()
             .getIndex(database, this.index)
             .getInternal();
-    Collection<Object> val = value.key(ctx);
+
+    Collection<Object> val = computeValues(ctx);
     List<OIndexStream> streams = new ArrayList<>();
     if (val == null) {
       streams.add(new ONullIndexStream(index));
@@ -137,10 +126,41 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     return streams;
   }
 
+  private Collection<Object> computeValues(OCommandContext ctx) {
+    List<List<Object>> fields = new ArrayList<>();
+    for (OIndexKeySource source : values) {
+      fields.add(new ArrayList<Object>(source.key(ctx)));
+    }
+    LinkedList<Object> stack = new LinkedList<>();
+    List<List<Object>> keys = new ArrayList<>();
+    cartesianProduct(0, 0, fields, stack, keys);
+    return (Collection) keys;
+  }
+
+  public void cartesianProduct(
+      int i,
+      int pos,
+      List<List<Object>> fields,
+      LinkedList<Object> stack,
+      List<List<Object>> keys) {
+    if (i >= fields.size()) {
+      keys.add(new ArrayList<Object>(stack));
+    } else if (pos < fields.get(i).size()) {
+      stack.addLast(fields.get(i).get(pos));
+      cartesianProduct(i + 1, pos, fields, stack, keys);
+      cartesianProduct(i, pos + 1, fields, stack, keys);
+      stack.removeLast();
+    }
+  }
+
   @Override
   public Optional<OIndexCandidate> finalize(OCommandContext ctx) {
-    OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.index);
+    OIndexInternal index =
+        ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.index).getInternal();
     List<String> fields = index.getDefinition().getFields();
+    if (!index.supportsOrderedIterations() && properties.size() != fields.size()) {
+      return Optional.empty();
+    }
     if (properties.size() <= fields.size()) {
       for (int i = 0; i < properties.size(); i++) {
         if (!fields.get(i).equals(properties.get(i).getName())) {
@@ -156,10 +176,40 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     // TODO: check  if properties are unique
     OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.index);
     List<String> fields = index.getDefinition().getFields();
+    int foundOrd = 0;
     if (orderItems.size() <= fields.size()) {
-      return fields.containsAll(orderItems);
+      for (String field : fields) {
+        if (orderItems.contains(field)) {
+          foundOrd++;
+        } else if (foundOrd == 0) {
+          boolean foundProperty = false;
+          for (OProperty prop : properties) {
+            if (prop.getName().equals(field)) {
+              foundProperty = true;
+              break;
+            }
+          }
+          if (!foundProperty) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+        if (foundOrd == orderItems.size()) {
+          break;
+        }
+      }
+      return foundOrd == orderItems.size();
     } else {
       return false;
     }
+  }
+
+  public Map<String, OIndexKeySource> mappedValues() {
+    Map<String, OIndexKeySource> sources = new HashMap<>();
+    for (int i = 0; i < values.size(); i++) {
+      sources.put(this.properties.get(i).getName(), this.values.get(i));
+    }
+    return sources;
   }
 }

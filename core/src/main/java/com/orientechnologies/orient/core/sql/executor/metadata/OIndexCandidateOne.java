@@ -15,7 +15,9 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Oper
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class OIndexCandidateOne implements OIndexCandidate {
@@ -126,12 +128,13 @@ public class OIndexCandidateOne implements OIndexCandidate {
   }
 
   @Override
-  public List<OIndexKeySource> values() {
-    return Collections.singletonList(value);
-  }
-
-  @Override
   public List<OProperty> properties() {
     return Collections.singletonList(this.property);
+  }
+
+  public Map<String, OIndexKeySource> mappedValues() {
+    Map<String, OIndexKeySource> sources = new HashMap<>();
+    sources.put(this.property.getName(), value);
+    return sources;
   }
 }

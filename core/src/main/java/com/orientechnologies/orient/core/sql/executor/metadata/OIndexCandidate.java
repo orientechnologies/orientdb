@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface OIndexCandidate {
@@ -22,7 +23,7 @@ public interface OIndexCandidate {
 
   List<OProperty> properties();
 
-  List<OIndexKeySource> values();
+  Map<String, OIndexKeySource> mappedValues();
 
   default List<OIndexStream> getStreams(OCommandContext ctx, boolean isOrderAsc) {
     throw new UnsupportedOperationException();

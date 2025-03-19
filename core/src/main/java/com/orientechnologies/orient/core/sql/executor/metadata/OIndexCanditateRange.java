@@ -9,9 +9,9 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class OIndexCanditateRange implements OIndexCandidate {
@@ -114,10 +114,7 @@ public class OIndexCanditateRange implements OIndexCandidate {
   }
 
   @Override
-  public List<OIndexKeySource> values() {
-    List<OIndexKeySource> sources = new ArrayList<>();
-    sources.add(startValue);
-    sources.add(endValue);
-    return sources;
+  public Map<String, OIndexKeySource> mappedValues() {
+    throw new UnsupportedOperationException();
   }
 }

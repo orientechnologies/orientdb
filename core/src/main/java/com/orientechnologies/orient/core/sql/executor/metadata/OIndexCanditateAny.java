@@ -101,45 +101,76 @@ public class OIndexCanditateAny implements OIndexCandidate {
 
   private Collection<OIndexCandidate> normalizeComposite(
       Collection<OIndexCandidate> canditates, OCommandContext ctx) {
-    List<OProperty> propeties = properties();
-    Map<String, OIndexCandidate> newCanditates = new HashMap<>();
+    List<String> indexes = new ArrayList<>();
     for (OIndexCandidate cand : canditates) {
-      if (!newCanditates.containsKey(cand.getName()) && !cand.isChain()) {
-        OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(cand.getName());
-        List<OProperty> foundProps = new ArrayList<>();
-        for (String field : index.getDefinition().getFields()) {
-          boolean found = false;
-          for (OProperty property : propeties) {
-            if (property.getName().equals(field)) {
-              found = true;
-              foundProps.add(property);
-              break;
-            }
-          }
-          if (!found) {
-            break;
-          }
-        }
-        if (foundProps.size() == 1) {
-          newCanditates.put(index.getName(), cand);
-        } else if (!foundProps.isEmpty()) {
-          newCanditates.put(
-              index.getName(),
-              new OIndexCandidateComposite(
-                  index.getName(), cand.getOperation(), foundProps, this::allKeys));
+      if (!cand.isChain()) {
+        indexes.add(cand.getName());
+      }
+    }
+    Map<String, OIndexCandidate> propCandidate = new HashMap<>();
+    for (OIndexCandidate cand : canditates) {
+      if (!cand.isChain()) {
+        for (OProperty prop : cand.properties()) {
+          propCandidate.put(prop.getName(), cand);
         }
       }
     }
+    Map<String, OIndexCandidate> newCanditates = new HashMap<>();
+    for (String indexName : indexes) {
+      OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+      List<OIndexCandidate> indexCandidates = new ArrayList<>();
+      List<OProperty> propeties = new ArrayList<>();
+      List<String> fields = index.getDefinition().getFields();
+      for (String field : fields) {
+        OIndexCandidate fieldCand = propCandidate.get(field);
+        if (fieldCand != null) {
+          indexCandidates.add(fieldCand);
+          for (OProperty prop : fieldCand.properties()) {
+            if (prop.getName().equals(field)) {
+              propeties.add(prop);
+            }
+          }
+          if (fieldCand.getOperation() != Operation.Eq) {
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+      if (indexCandidates.size() == 1) {
+        Optional<OIndexCandidate> finalCand = indexCandidates.get(0).finalize(ctx);
+        if (finalCand.isPresent()) {
+          newCanditates.put(index.getName(), finalCand.get());
+        }
+      } else if (!indexCandidates.isEmpty()) {
+        if (index.supportsOrderedIterations() || fields.size() == indexCandidates.size()) {
+
+          Operation operation = indexCandidates.get(indexCandidates.size() - 1).getOperation();
+          OIndexCandidateComposite candidate =
+              new OIndexCandidateComposite(
+                  index.getName(), operation, propeties, this.computeKeys(index, indexCandidates));
+          Optional<OIndexCandidate> finalCand = candidate.finalize(ctx);
+
+          if (finalCand.isPresent()) {
+            newCanditates.put(index.getName(), finalCand.get());
+          }
+        }
+      }
+    }
+
     return newCanditates.values();
   }
 
-  public Collection<Object> allKeys(OCommandContext ctx) {
-    List<OIndexKeySource> values = values();
-    List<Object> keys = new ArrayList<>();
-    for (OIndexKeySource source : values) {
-      keys.addAll(source.key(ctx));
+  private List<OIndexKeySource> computeKeys(OIndex index, List<OIndexCandidate> candidates) {
+    Map<String, OIndexKeySource> values = new HashMap<>();
+    for (OIndexCandidate candidate : candidates) {
+      values.putAll(candidate.mappedValues());
     }
-    return keys;
+    List<OIndexKeySource> sources = new ArrayList<>();
+    for (String field : index.getDefinition().getFields()) {
+      sources.add(values.get(field));
+    }
+    return sources;
   }
 
   @Override
@@ -167,19 +198,19 @@ public class OIndexCanditateAny implements OIndexCandidate {
   }
 
   @Override
+  public Map<String, OIndexKeySource> mappedValues() {
+    Map<String, OIndexKeySource> vals = new HashMap<>();
+    for (OIndexCandidate cand : this.canditates) {
+      vals.putAll(cand.mappedValues());
+    }
+    return vals;
+  }
+
+  @Override
   public List<OProperty> properties() {
     List<OProperty> props = new ArrayList<>();
     for (OIndexCandidate cand : this.canditates) {
       props.addAll(cand.properties());
-    }
-    return props;
-  }
-
-  @Override
-  public List<OIndexKeySource> values() {
-    List<OIndexKeySource> props = new ArrayList<>();
-    for (OIndexCandidate cand : this.canditates) {
-      props.addAll(cand.values());
     }
     return props;
   }

@@ -5,7 +5,9 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class OIndexCanditateAll implements OIndexCandidate {
@@ -65,10 +67,10 @@ public class OIndexCanditateAll implements OIndexCandidate {
   }
 
   @Override
-  public List<OIndexKeySource> values() {
-    List<OIndexKeySource> vals = new ArrayList<>();
+  public Map<String, OIndexKeySource> mappedValues() {
+    Map<String, OIndexKeySource> vals = new HashMap<>();
     for (OIndexCandidate cand : this.canditates) {
-      vals.addAll(cand.values());
+      vals.putAll(cand.mappedValues());
     }
     return vals;
   }

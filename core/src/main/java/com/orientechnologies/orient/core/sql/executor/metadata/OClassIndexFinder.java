@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -133,7 +134,7 @@ public class OClassIndexFinder implements OIndexFinder {
         OIndexCandidate candidate =
             newCandidate(
                 (c) -> {
-                  return null;
+                  return Collections.singleton(null);
                 },
                 prop,
                 Operation.Eq,
@@ -175,8 +176,8 @@ public class OClassIndexFinder implements OIndexFinder {
                   ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
                   return cand;
                 } else {
-                  return Optional.of(
-                      new OIndexCandidateOne(index.getName(), Operation.Eq, prop, value));
+                  OIndexCandidate candidate = newCandidate(value, prop, Operation.Eq, index);
+                  return Optional.of(candidate);
                 }
               }
             }
@@ -268,8 +269,8 @@ public class OClassIndexFinder implements OIndexFinder {
                   ((OIndexCandidateChain) cand.get()).setOperation(Operation.Eq);
                   return cand;
                 } else {
-                  return Optional.of(
-                      new OIndexCandidateOne(index.getName(), Operation.Eq, prop, value));
+                  OIndexCandidate candidate = newCandidate(value, prop, Operation.Eq, index);
+                  return Optional.of(candidate);
                 }
               }
             }
