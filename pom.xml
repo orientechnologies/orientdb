@@ -161,6 +161,7 @@
         <!-- | shared build/report plugins version -->
         <surefire.version>3.5.2</surefire.version>
         <failsafe.version>3.5.2</failsafe.version>
+        <jacoco.version>0.8.12</jacoco.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
 
@@ -718,15 +719,67 @@
             </build>
         </profile>
 
-		<profile>
-			<id>all</id>
+        <profile>
+            <id>coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>${jacoco.version}</version>
+                        <configuration>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>prepare-unit</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                                <configuration>
+                                </configuration>
+                            </execution>
+                            <!-- prepare agent before integration tests -->
+                            <execution>
+                                <id>prepare-it</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                                <phase>pre-integration-test</phase>
+                                <configuration>
+                                    <destFile>${project.build.directory}/jacoco-it.exec</destFile>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>report-it</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>report-integration</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+            <modules>
+                <module>coverage</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>all</id>
             <modules>
                 <module>studio</module>
                 <module>benchmarks</module>
             </modules>
         </profile>
-		<profile>
-			<id>perf</id>
+        <profile>
+            <id>perf</id>
             <modules>
                 <module>benchmarks</module>
             </modules>
