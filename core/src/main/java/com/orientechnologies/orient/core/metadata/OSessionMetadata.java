@@ -25,31 +25,31 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.index.OSessionIndexManager;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
-import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryProxy;
+import com.orientechnologies.orient.core.metadata.function.OSessionFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OSessionSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
+import com.orientechnologies.orient.core.metadata.security.OSessionSecurity;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
+import com.orientechnologies.orient.core.metadata.sequence.OSessionSequenceLibrary;
 import com.orientechnologies.orient.core.schedule.OScheduler;
-import com.orientechnologies.orient.core.schedule.OSchedulerProxy;
+import com.orientechnologies.orient.core.schedule.OSessionScheduler;
 
-public class OMetadataDefault implements OMetadataInternal {
+public class OSessionMetadata implements OMetadataInternal {
   public static final String CLUSTER_INTERNAL_NAME = "internal";
   public static final String CLUSTER_INDEX_NAME = "index";
   public static final String CLUSTER_MANUAL_INDEX_NAME = "manindex";
 
   protected int schemaClusterId;
 
-  protected OSchemaProxy schema;
+  protected OSessionSchema schema;
   protected OSecurity security;
-  protected OIndexManagerProxy indexManager;
-  protected OFunctionLibraryProxy functionLibrary;
-  protected OSchedulerProxy scheduler;
-  protected OSequenceLibraryProxy sequenceLibrary;
+  protected OSessionIndexManager indexManager;
+  protected OSessionFunctionLibrary functionLibrary;
+  protected OSessionScheduler scheduler;
+  protected OSessionSequenceLibrary sequenceLibrary;
 
   protected static final OProfiler PROFILER = Orient.instance().getProfiler();
 
@@ -57,13 +57,13 @@ public class OMetadataDefault implements OMetadataInternal {
   private int immutableCount = 0;
   private ODatabaseDocumentInternal database;
 
-  public OMetadataDefault() {}
+  public OSessionMetadata() {}
 
-  public OMetadataDefault(ODatabaseDocumentInternal databaseDocument) {
+  public OSessionMetadata(ODatabaseDocumentInternal databaseDocument) {
     this.database = databaseDocument;
   }
 
-  public OSchemaProxy getSchema() {
+  public OSessionSchema getSchema() {
     return schema;
   }
 
@@ -114,12 +114,12 @@ public class OMetadataDefault implements OMetadataInternal {
   public OSharedContext init(OSharedContext shared) {
     schemaClusterId = database.getClusterIdByName(CLUSTER_INTERNAL_NAME);
 
-    schema = new OSchemaProxy(shared.getSchema(), database);
-    indexManager = new OIndexManagerProxy(shared.getIndexManager(), database);
-    security = new OSecurityProxy(shared.getSecurity(), database);
-    functionLibrary = new OFunctionLibraryProxy(shared.getFunctionLibrary(), database);
-    sequenceLibrary = new OSequenceLibraryProxy(shared.getSequenceLibrary(), database);
-    scheduler = new OSchedulerProxy(shared.getScheduler(), database);
+    schema = new OSessionSchema(shared.getSchema(), database);
+    indexManager = new OSessionIndexManager(shared.getIndexManager(), database);
+    security = new OSessionSecurity(shared.getSecurity(), database);
+    functionLibrary = new OSessionFunctionLibrary(shared.getFunctionLibrary(), database);
+    sequenceLibrary = new OSessionSequenceLibrary(shared.getSequenceLibrary(), database);
+    scheduler = new OSessionScheduler(shared.getScheduler(), database);
     return shared;
   }
 

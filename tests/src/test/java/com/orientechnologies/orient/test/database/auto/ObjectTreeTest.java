@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializer;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
-import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
+import com.orientechnologies.orient.object.metadata.schema.OSessionSchemaObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerContext;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 import com.orientechnologies.orient.test.domain.base.Animal;
@@ -1274,7 +1274,7 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
 
     ODatabaseObject db = openpool("admin", "admin");
     try {
-      OSchemaProxyObject schema = db.getMetadata().getSchema();
+      OSessionSchemaObject schema = db.getMetadata().getSchema();
       db.getEntityManager().registerEntityClass(RefParent.class);
       db.getEntityManager().registerEntityClass(RefChild.class);
       db.getEntityManager().registerEntityClass(OtherThing.class);

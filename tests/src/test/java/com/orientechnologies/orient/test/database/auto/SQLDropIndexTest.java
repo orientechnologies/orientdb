@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -97,7 +97,7 @@ public class SQLDropIndexTest {
   public void testOldSyntax() throws Exception {
     database.command("CREATE INDEX SQLDropIndexTestClass.prop1 UNIQUE").close();
 
-    ((OMetadataDefault) database.getMetadata())
+    ((OSessionMetadata) database.getMetadata())
         .getIndexManagerInternal()
         .reload((ODatabaseDocumentInternal) database);
 
@@ -110,7 +110,7 @@ public class SQLDropIndexTest {
     Assert.assertNotNull(index);
 
     database.command("DROP INDEX SQLDropIndexTestClass.prop1").close();
-    ((OMetadataDefault) database.getMetadata())
+    ((OSessionMetadata) database.getMetadata())
         .getIndexManagerInternal()
         .reload((ODatabaseDocumentInternal) database);
 
@@ -130,7 +130,7 @@ public class SQLDropIndexTest {
             "CREATE INDEX SQLDropIndexCompositeIndex ON SQLDropIndexTestClass (prop1, prop2)"
                 + " UNIQUE")
         .close();
-    ((OMetadataDefault) database.getMetadata())
+    ((OSessionMetadata) database.getMetadata())
         .getIndexManagerInternal()
         .reload((ODatabaseDocumentInternal) database);
 
@@ -143,7 +143,7 @@ public class SQLDropIndexTest {
     Assert.assertNotNull(index);
 
     database.command("DROP INDEX SQLDropIndexCompositeIndex").close();
-    ((OMetadataDefault) database.getMetadata())
+    ((OSessionMetadata) database.getMetadata())
         .getIndexManagerInternal()
         .reload((ODatabaseDocumentInternal) database);
 

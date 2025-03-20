@@ -49,7 +49,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
@@ -412,7 +412,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     // In v4 new cluster for manual indexes has been implemented. To keep database consistent we
     // should shift back all clusters and recreate cluster for manual indexes in the end.
-    database.dropCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+    database.dropCluster(OSessionMetadata.CLUSTER_MANUAL_INDEX_NAME);
 
     final OSchema schema = database.getMetadata().getSchema();
     if (schema.existsClass(OUser.CLASS_NAME)) schema.dropClass(OUser.CLASS_NAME);
@@ -1132,7 +1132,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nDone " + indexesToRebuild.size() + " indexes were rebuilt.");
 
     if (recreateManualIndex) {
-      database.addCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+      database.addCluster(OSessionMetadata.CLUSTER_MANUAL_INDEX_NAME);
       database.getMetadata().getIndexManagerInternal().create();
 
       listener.onMessage("\nManual index cluster was recreated.");
@@ -1143,7 +1143,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId()))
         == null) {
       ODocument indexDocument = new ODocument();
-      database.save(indexDocument, OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      database.save(indexDocument, OSessionMetadata.CLUSTER_INTERNAL_NAME);
 
       database.getStorage().setIndexMgrRecordId(indexDocument.getIdentity().toString());
     }
@@ -1260,7 +1260,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       if (exporterVersion >= 3) {
         int oridsId = database.getClusterIdByName("ORIDs");
-        int indexId = database.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
+        int indexId = database.getClusterIdByName(OSessionMetadata.CLUSTER_INDEX_NAME);
 
         if (record.getIdentity().getClusterId() == indexId
             || record.getIdentity().getClusterId() == oridsId) {
@@ -1271,10 +1271,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
       final int manualIndexCluster =
-          database.getClusterIdByName(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+          database.getClusterIdByName(OSessionMetadata.CLUSTER_MANUAL_INDEX_NAME);
       final int internalCluster =
-          database.getClusterIdByName(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      final int indexCluster = database.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
+          database.getClusterIdByName(OSessionMetadata.CLUSTER_INTERNAL_NAME);
+      final int indexCluster = database.getClusterIdByName(OSessionMetadata.CLUSTER_INDEX_NAME);
 
       if (exporterVersion >= 4) {
         if (record.getIdentity().getClusterId() == manualIndexCluster) {
@@ -1731,9 +1731,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     long totalDocuments = 0;
     Collection<String> clusterNames = database.getClusterNames();
     for (String clusterName : clusterNames) {
-      if (OMetadataDefault.CLUSTER_INDEX_NAME.equals(clusterName)
-          || OMetadataDefault.CLUSTER_INTERNAL_NAME.equals(clusterName)
-          || OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME.equals(clusterName)) continue;
+      if (OSessionMetadata.CLUSTER_INDEX_NAME.equals(clusterName)
+          || OSessionMetadata.CLUSTER_INTERNAL_NAME.equals(clusterName)
+          || OSessionMetadata.CLUSTER_MANUAL_INDEX_NAME.equals(clusterName)) continue;
 
       long documents = 0;
       String prefix = "";

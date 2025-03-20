@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -81,8 +81,8 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   protected final Map<String, Map<OMultiKey, Set<OIndex>>> classPropertyIndex =
       new ConcurrentHashMap<>();
   protected Map<String, OIndex> indexes = new ConcurrentHashMap<>();
-  protected String defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
-  protected String manualClusterName = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
+  protected String defaultClusterName = OSessionMetadata.CLUSTER_INDEX_NAME;
+  protected String manualClusterName = OSessionMetadata.CLUSTER_MANUAL_INDEX_NAME;
   protected final AtomicInteger writeLockNesting = new AtomicInteger();
   protected final ReadWriteLock lock = new ReentrantReadWriteLock();
   protected ORID identity;
@@ -195,7 +195,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   public void create(ODatabaseDocumentInternal database) {
     acquireExclusiveLock();
     try {
-      ODocument document = database.save(new ODocument(), OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      ODocument document = database.save(new ODocument(), OSessionMetadata.CLUSTER_INTERNAL_NAME);
       identity = document.getIdentity();
       database.getStorage().setIndexMgrRecordId(document.getIdentity().toString());
     } finally {

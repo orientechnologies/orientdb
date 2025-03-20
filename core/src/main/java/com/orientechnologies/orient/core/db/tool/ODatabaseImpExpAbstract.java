@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.db.tool;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -74,8 +74,8 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
 
     listener = iListener;
     excludeClusters = new LinkedHashSet<>();
-    excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
-    excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+    excludeClusters.add(OSessionMetadata.CLUSTER_INDEX_NAME);
+    excludeClusters.add(OSessionMetadata.CLUSTER_MANUAL_INDEX_NAME);
   }
 
   public Set<String> getIncludeClusters() {

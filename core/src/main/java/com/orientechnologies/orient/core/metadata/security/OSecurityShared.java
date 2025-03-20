@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -654,7 +654,7 @@ public class OSecurityShared implements OSecurityInternal {
         ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
     writerRole.addRule(
         ORule.ResourceGeneric.CLUSTER,
-        OMetadataDefault.CLUSTER_INTERNAL_NAME,
+        OSessionMetadata.CLUSTER_INTERNAL_NAME,
         ORole.PERMISSION_READ);
     writerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
     writerRole.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_READ);
@@ -690,7 +690,7 @@ public class OSecurityShared implements OSecurityInternal {
         writerRole,
         ORule.ResourceGeneric.CLUSTER.getLegacyName()
             + "."
-            + OMetadataDefault.CLUSTER_INTERNAL_NAME,
+            + OSessionMetadata.CLUSTER_INTERNAL_NAME,
         ORole.PERMISSION_READ);
     setSecurityPolicyWithBitmask(
         session,
@@ -765,7 +765,7 @@ public class OSecurityShared implements OSecurityInternal {
     readerRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ);
     readerRole.addRule(
         ORule.ResourceGeneric.CLUSTER,
-        OMetadataDefault.CLUSTER_INTERNAL_NAME,
+        OSessionMetadata.CLUSTER_INTERNAL_NAME,
         ORole.PERMISSION_READ);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
@@ -788,7 +788,7 @@ public class OSecurityShared implements OSecurityInternal {
         readerRole,
         ORule.ResourceGeneric.CLUSTER.getLegacyName()
             + "."
-            + OMetadataDefault.CLUSTER_INTERNAL_NAME,
+            + OSessionMetadata.CLUSTER_INTERNAL_NAME,
         ORole.PERMISSION_READ);
     setSecurityPolicyWithBitmask(
         session,

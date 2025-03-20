@@ -27,8 +27,8 @@ import java.util.Map;
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
-public class OSchedulerProxy extends OProxedResource<OSchedulerImpl> implements OScheduler {
-  public OSchedulerProxy(
+public class OSessionScheduler extends OProxedResource<OSchedulerImpl> implements OScheduler {
+  public OSessionScheduler(
       final OSchedulerImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }

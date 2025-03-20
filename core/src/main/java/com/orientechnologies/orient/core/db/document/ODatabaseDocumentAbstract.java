@@ -57,7 +57,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableView;
@@ -129,7 +129,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   protected String url;
   protected STATUS status;
   protected ODatabaseInternal<?> databaseOwner;
-  protected OMetadataDefault metadata;
+  protected OSessionMetadata metadata;
   protected OImmutableUser user;
   protected final byte recordType = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks =
@@ -296,7 +296,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   /** {@inheritDoc} */
-  public OMetadataDefault getMetadata() {
+  public OSessionMetadata getMetadata() {
     checkOpenness();
     return metadata;
   }

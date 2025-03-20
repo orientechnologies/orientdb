@@ -48,12 +48,12 @@ import java.util.Set;
 import javassist.util.proxy.Proxy;
 
 /** @author Luca Molino (molino.luca--at--gmail.com) */
-public class OSchemaProxyObject implements OSchemaObject {
-  private static final OLogger logger = OLogManager.instance().logger(OSchemaProxyObject.class);
+public class OSessionSchemaObject implements OSchemaObject {
+  private static final OLogger logger = OLogManager.instance().logger(OSessionSchemaObject.class);
 
   protected OSchema underlying;
 
-  public OSchemaProxyObject(OSchema iUnderlying) {
+  public OSessionSchemaObject(OSchema iUnderlying) {
     underlying = iUnderlying;
   }
 
@@ -429,7 +429,7 @@ public class OSchemaProxyObject implements OSchemaObject {
         if (automaticSchemaGeneration
             && !currentClass.equals(Object.class)
             && !currentClass.equals(ODocument.class)) {
-          ((OSchemaProxyObject) database.getMetadata().getSchema())
+          ((OSessionSchemaObject) database.getMetadata().getSchema())
               .generateSchema(currentClass, database.getUnderlying());
         }
         String iClassName = currentClass.getSimpleName();

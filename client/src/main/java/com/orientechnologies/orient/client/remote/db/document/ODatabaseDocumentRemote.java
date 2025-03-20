@@ -60,10 +60,10 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OSessionSchema;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -259,7 +259,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   protected void loadMetadata() {
-    metadata = new OMetadataDefault(this);
+    metadata = new OSessionMetadata(this);
     metadata.init(sharedContext);
     sharedContext.load(this);
   }
@@ -876,7 +876,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public boolean dropCluster(final String iClusterName) {
     checkIfActive();
     final int clusterId = getClusterIdByName(iClusterName);
-    OSchemaProxy schema = metadata.getSchema();
+    OSessionSchema schema = metadata.getSchema();
     OClass clazz = schema.getClassByClusterId(clusterId);
     if (clazz != null) clazz.removeClusterId(clusterId);
     if (schema.getBlobClusters().contains(clusterId)) schema.removeBlobCluster(iClusterName);
@@ -889,7 +889,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public boolean dropCluster(final int clusterId) {
     checkIfActive();
 
-    OSchemaProxy schema = metadata.getSchema();
+    OSessionSchema schema = metadata.getSchema();
     final OClass clazz = schema.getClassByClusterId(clusterId);
     if (clazz != null) clazz.removeClusterId(clusterId);
     getLocalCache().freeCluster(clusterId);

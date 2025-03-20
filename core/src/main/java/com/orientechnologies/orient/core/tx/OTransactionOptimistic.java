@@ -42,7 +42,7 @@ import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
+import com.orientechnologies.orient.core.metadata.sequence.OSessionSequenceLibrary;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -690,7 +690,7 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
               database.getSharedContext().getFunctionLibrary().createdFunction(doc);
             }
             if (clazz.isSequence()) {
-              ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary())
+              ((OSessionSequenceLibrary) database.getMetadata().getSequenceLibrary())
                   .getDelegate()
                   .onSequenceCreated(database, doc);
             }
@@ -714,7 +714,7 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
                 database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
               }
               if (clazz.isSequence()) {
-                ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary())
+                ((OSessionSequenceLibrary) database.getMetadata().getSequenceLibrary())
                     .getDelegate()
                     .onSequenceUpdated(database, updateDoc);
               }
@@ -737,7 +737,7 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
                   .close(database.getName());
             }
             if (clazz.isSequence()) {
-              ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary())
+              ((OSessionSequenceLibrary) database.getMetadata().getSequenceLibrary())
                   .getDelegate()
                   .onSequenceDropped(database, doc);
             }

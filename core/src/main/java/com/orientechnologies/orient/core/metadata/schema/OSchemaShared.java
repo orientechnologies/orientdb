@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSchemaNotCreatedException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -820,7 +820,7 @@ public abstract class OSchemaShared implements OCloseable {
   public void create(final ODatabaseDocumentInternal database) {
     lock.writeLock().lock();
     try {
-      ODocument document = database.save(new ODocument(), OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      ODocument document = database.save(new ODocument(), OSessionMetadata.CLUSTER_INTERNAL_NAME);
       this.identity = document.getIdentity();
       database.getStorage().setSchemaRecordId(document.getIdentity().toString());
       snapshot = new OImmutableSchema(this, database);
@@ -898,7 +898,7 @@ public abstract class OSchemaShared implements OCloseable {
           @Override
           public Object call() {
             ODocument document = toStream();
-            database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
+            database.save(document, OSessionMetadata.CLUSTER_INTERNAL_NAME);
             return null;
           }
         });

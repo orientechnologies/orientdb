@@ -39,9 +39,9 @@ import java.util.Set;
  * @author Luca
  */
 @SuppressWarnings("unchecked")
-public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSchema {
+public class OSessionSchema extends OProxedResource<OSchemaShared> implements OSchema {
 
-  public OSchemaProxy(final OSchemaShared iDelegate, final ODatabaseDocumentInternal iDatabase) {
+  public OSessionSchema(final OSchemaShared iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 

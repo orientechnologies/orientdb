@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.index.OIndexes;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
@@ -178,7 +178,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     this.close();
     this.storage = storage;
     this.init(storage);
-    ((OMetadataDefault) database.getMetadata()).init(this);
+    ((OSessionMetadata) database.getMetadata()).init(this);
     this.load(database);
   }
 

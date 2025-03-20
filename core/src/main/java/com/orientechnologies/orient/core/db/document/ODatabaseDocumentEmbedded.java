@@ -63,12 +63,12 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OSessionSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
@@ -83,7 +83,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
+import com.orientechnologies.orient.core.metadata.sequence.OSessionSequenceLibrary;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
@@ -305,7 +305,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     // THIS IF SHOULDN'T BE NEEDED, CREATE HAPPEN ONLY IN EMBEDDED
     applyAttributes(config);
     applyListeners(config);
-    metadata = new OMetadataDefault(this);
+    metadata = new OSessionMetadata(this);
     installHooksEmbedded();
     createMetadata(ctx);
   }
@@ -330,7 +330,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   @Override
   protected void loadMetadata() {
-    metadata = new OMetadataDefault(this);
+    metadata = new OSessionMetadata(this);
     metadata.init(sharedContext);
     sharedContext.load(this);
   }
@@ -1167,7 +1167,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
-          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary())
+          ((OSessionSequenceLibrary) getMetadata().getSequenceLibrary())
               .getDelegate()
               .onSequenceCreated(this, doc);
         }
@@ -1198,7 +1198,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
-          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary())
+          ((OSessionSequenceLibrary) getMetadata().getSequenceLibrary())
               .getDelegate()
               .onSequenceUpdated(this, doc);
         }
@@ -1224,7 +1224,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           this.getSharedContext().getFunctionLibrary().droppedFunction(doc);
         }
         if (clazz.isSequence()) {
-          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary())
+          ((OSessionSequenceLibrary) getMetadata().getSequenceLibrary())
               .getDelegate()
               .onSequenceDropped(this, doc);
         }
@@ -1691,7 +1691,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   public boolean dropCluster(final String iClusterName) {
     checkIfActive();
     final int clusterId = getClusterIdByName(iClusterName);
-    OSchemaProxy schema = metadata.getSchema();
+    OSessionSchema schema = metadata.getSchema();
     OClass clazz = schema.getClassByClusterId(clusterId);
     if (clazz != null) clazz.removeClusterId(clusterId);
     if (schema.getBlobClusters().contains(clusterId)) schema.removeBlobCluster(iClusterName);
@@ -1711,7 +1711,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkSecurity(
         ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(clusterId));
 
-    OSchemaProxy schema = metadata.getSchema();
+    OSessionSchema schema = metadata.getSchema();
     final OClass clazz = schema.getClassByClusterId(clusterId);
     if (clazz != null) clazz.removeClusterId(clusterId);
     getLocalCache().freeCluster(clusterId);

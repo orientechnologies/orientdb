@@ -102,7 +102,7 @@ import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OV1IndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeSingleValueIndexEngine;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -899,7 +899,7 @@ public abstract class OAbstractPaginatedStorage
           sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
 
           // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-          doAddCluster(atomicOperation, OMetadataDefault.CLUSTER_INTERNAL_NAME);
+          doAddCluster(atomicOperation, OSessionMetadata.CLUSTER_INTERNAL_NAME);
 
           ((OClusterBasedStorageConfiguration) configuration)
               .setCreationVersion(atomicOperation, OConstants.getVersion());
@@ -915,11 +915,11 @@ public abstract class OAbstractPaginatedStorage
 
           // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
           // INDEXING
-          doAddCluster(atomicOperation, OMetadataDefault.CLUSTER_INDEX_NAME);
+          doAddCluster(atomicOperation, OSessionMetadata.CLUSTER_INDEX_NAME);
 
           // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
           // INDEXING
-          doAddCluster(atomicOperation, OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+          doAddCluster(atomicOperation, OSessionMetadata.CLUSTER_MANUAL_INDEX_NAME);
 
           // ADD THE DEFAULT CLUSTER
           defaultClusterId = doAddCluster(atomicOperation, CLUSTER_DEFAULT_NAME);
@@ -4687,8 +4687,8 @@ public abstract class OAbstractPaginatedStorage
     try {
       final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
 
-      if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME)
-          || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
+      if (cluster.getName().equals(OSessionMetadata.CLUSTER_INDEX_NAME)
+          || cluster.getName().equals(OSessionMetadata.CLUSTER_MANUAL_INDEX_NAME))
       // AVOID TO COMMIT INDEX STUFF
       {
         return;

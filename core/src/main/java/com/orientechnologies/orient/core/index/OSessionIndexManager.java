@@ -28,10 +28,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Collection;
 import java.util.Set;
 
-public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract>
+public class OSessionIndexManager extends OProxedResource<OIndexManagerAbstract>
     implements OIndexManager {
 
-  public OIndexManagerProxy(
+  public OSessionIndexManager(
       final OIndexManagerAbstract iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
@@ -39,7 +39,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract>
   public void load() {}
 
   /** Force reloading of indexes. */
-  public OIndexManagerProxy reload() {
+  public OSessionIndexManager reload() {
     delegate.load(database);
     return this;
   }

@@ -28,9 +28,9 @@ import java.util.Set;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OFunctionLibraryProxy extends OProxedResource<OFunctionLibraryImpl>
+public class OSessionFunctionLibrary extends OProxedResource<OFunctionLibraryImpl>
     implements OFunctionLibrary {
-  public OFunctionLibraryProxy(
+  public OSessionFunctionLibrary(
       final OFunctionLibraryImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }

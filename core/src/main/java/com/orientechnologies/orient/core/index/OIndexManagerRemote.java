@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -62,7 +62,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
   protected final Map<String, Map<OMultiKey, Set<OIndex>>> classPropertyIndex =
       new ConcurrentHashMap<>();
   protected Map<String, OIndex> indexes = new ConcurrentHashMap<>();
-  protected String defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
+  protected String defaultClusterName = OSessionMetadata.CLUSTER_INDEX_NAME;
   protected final AtomicInteger writeLockNesting = new AtomicInteger();
   protected final ReadWriteLock lock = new ReentrantReadWriteLock();
 
