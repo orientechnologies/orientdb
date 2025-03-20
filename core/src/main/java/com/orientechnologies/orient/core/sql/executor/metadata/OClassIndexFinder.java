@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +32,21 @@ public class OClassIndexFinder implements OIndexFinder {
     String last;
   }
 
+  protected OClass findClass(OCommandContext ctx) {
+
+    OSchema schema =
+        ((OMetadataInternal) ctx.getDatabase().getMetadata()).getImmutableSchemaSnapshot();
+
+    OClass clazz = schema.getClass(this.clazz);
+    if (clazz == null) {
+      clazz = schema.getView(this.clazz);
+    }
+    if (clazz == null) {
+      throw new OCommandExecutionException("Cannot find class " + clazz);
+    }
+    return clazz;
+  }
+
   private PrePath findPrePath(OPath path, OCommandContext ctx) {
     List<String> rawPath = path.getPath();
     String lastP = rawPath.remove(rawPath.size() - 1);
@@ -36,7 +54,7 @@ public class OClassIndexFinder implements OIndexFinder {
         new PrePath() {
           {
             chain = Optional.empty();
-            this.cl = ctx.getDatabase().getClass(OClassIndexFinder.this.clazz);
+            this.cl = OClassIndexFinder.this.findClass(ctx);
             valid = true;
             last = lastP;
           }
