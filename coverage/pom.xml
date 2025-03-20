@@ -96,6 +96,18 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-gremlin</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-gremlin-server</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
     <profiles>
         <profile>
