@@ -131,26 +131,42 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     for (OIndexKeySource source : values) {
       fields.add(new ArrayList<Object>(source.key(ctx)));
     }
-    LinkedList<Object> stack = new LinkedList<>();
-    List<List<Object>> keys = new ArrayList<>();
-    cartesianProduct(0, 0, fields, stack, keys);
+    List<List<Object>> keys = cartesianProduct(fields);
     return (Collection) keys;
   }
 
-  public void cartesianProduct(
-      int i,
-      int pos,
-      List<List<Object>> fields,
-      LinkedList<Object> stack,
-      List<List<Object>> keys) {
-    if (i >= fields.size()) {
-      keys.add(new ArrayList<Object>(stack));
-    } else if (pos < fields.get(i).size()) {
-      stack.addLast(fields.get(i).get(pos));
-      cartesianProduct(i + 1, pos, fields, stack, keys);
-      cartesianProduct(i, pos + 1, fields, stack, keys);
-      stack.removeLast();
+  public static List<List<Object>> cartesianProduct(List<List<Object>> fields) {
+    List<List<Object>> product = new ArrayList<>();
+    LinkedList<Object> stack = new LinkedList<>();
+    LinkedList<Integer> ycursor = new LinkedList<>();
+    int x = 0;
+    int y = 0;
+    while (true) {
+      ycursor.addLast(y);
+      stack.addLast(fields.get(y).get(x));
+      if (fields.get(y).size() - 1 == x) {
+        product.add(new ArrayList<>(stack));
+        stack.removeLast();
+        Integer lasty = ycursor.removeLast();
+        assert y == lasty;
+        y++;
+        if (y == fields.size()) {
+          while (y == fields.size() && !ycursor.isEmpty()) {
+            y = ycursor.removeLast();
+            y++;
+            x -= 1;
+            stack.removeLast();
+          }
+          if (ycursor.isEmpty() && y == fields.size()) {
+            break;
+          }
+        }
+      } else {
+        x++;
+        y = 0;
+      }
     }
+    return product;
   }
 
   @Override
