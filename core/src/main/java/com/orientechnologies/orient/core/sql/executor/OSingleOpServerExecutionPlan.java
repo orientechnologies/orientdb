@@ -4,7 +4,7 @@ import com.orientechnologies.orient.core.command.OBasicServerCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import com.orientechnologies.orient.core.sql.parser.OSimpleExecServerStatement;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */

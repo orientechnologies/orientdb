@@ -1,20 +1,29 @@
-package com.orientechnologies.orient.core.sql.executor.resultset;
+package com.orientechnologies.orient.core.sql.executor.stream;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-public class OEmptyExecutionStream implements OExecutionStream {
+public class OSingletonExecutionStream implements OExecutionStream {
 
-  protected static final OExecutionStream EMPTY = new OEmptyExecutionStream();
+  private boolean executed = false;
+  private OResult result;
+
+  public OSingletonExecutionStream(OResult result) {
+    this.result = result;
+  }
 
   @Override
   public boolean hasNext(OCommandContext ctx) {
-    return false;
+    return !executed;
   }
 
   @Override
   public OResult next(OCommandContext ctx) {
-    throw new IllegalStateException();
+    if (executed) {
+      throw new IllegalStateException();
+    }
+    executed = true;
+    return result;
   }
 
   @Override

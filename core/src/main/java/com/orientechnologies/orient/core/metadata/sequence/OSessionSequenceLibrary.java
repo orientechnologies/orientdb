@@ -33,7 +33,8 @@ import java.util.concurrent.ExecutionException;
  * @since 3/2/2015
  */
 public class OSessionSequenceLibrary extends OSequenceLibraryAbstract {
-  private static final OLogger logger = OLogManager.instance().logger(OSessionSequenceLibrary.class);
+  private static final OLogger logger =
+      OLogManager.instance().logger(OSessionSequenceLibrary.class);
   private static final int replicationProtocolVersion =
       OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
 

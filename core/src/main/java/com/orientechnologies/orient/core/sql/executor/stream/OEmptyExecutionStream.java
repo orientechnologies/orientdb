@@ -1,26 +1,20 @@
-package com.orientechnologies.orient.core.sql.executor.resultset;
+package com.orientechnologies.orient.core.sql.executor.stream;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-public class OProduceExecutionStream implements OExecutionStream {
-  private OProduceResult producer;
+public class OEmptyExecutionStream implements OExecutionStream {
 
-  public OProduceExecutionStream(OProduceResult producer) {
-    if (producer == null) {
-      throw new NullPointerException();
-    }
-    this.producer = producer;
-  }
+  protected static final OExecutionStream EMPTY = new OEmptyExecutionStream();
 
   @Override
   public boolean hasNext(OCommandContext ctx) {
-    return true;
+    return false;
   }
 
   @Override
   public OResult next(OCommandContext ctx) {
-    return producer.produce(ctx);
+    throw new IllegalStateException();
   }
 
   @Override
@@ -29,5 +23,10 @@ public class OProduceExecutionStream implements OExecutionStream {
   @Override
   public boolean isTermination(OCommandContext ctx) {
     return false;
+  }
+
+  @Override
+  public boolean isFullInMemory(OCommandContext ctx) {
+    return true;
   }
 }

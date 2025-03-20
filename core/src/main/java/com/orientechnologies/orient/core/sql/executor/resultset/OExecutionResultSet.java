@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.sql.executor.OQueryMetrics;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSetInternal;
 import com.orientechnologies.orient.core.sql.executor.OToResultContextImpl;
+import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;

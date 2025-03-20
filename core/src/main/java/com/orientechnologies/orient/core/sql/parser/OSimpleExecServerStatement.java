@@ -6,8 +6,8 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OServerExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OSingleOpServerExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.resultset.OServerResultSet;
+import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import java.util.HashMap;
 import java.util.Map;
 

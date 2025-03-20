@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.sql.executor.resultset;
+package com.orientechnologies.orient.core.sql.executor.stream;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 

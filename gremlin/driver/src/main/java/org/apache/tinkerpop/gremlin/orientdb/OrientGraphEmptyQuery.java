@@ -2,7 +2,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionResultSet;
-import com.orientechnologies.orient.core.sql.executor.resultset.OExecutionStream;
+import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import java.util.Optional;
 import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResultSet;
 

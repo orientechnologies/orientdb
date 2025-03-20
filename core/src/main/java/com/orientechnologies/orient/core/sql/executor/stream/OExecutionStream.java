@@ -1,10 +1,10 @@
-package com.orientechnologies.orient.core.sql.executor.resultset;
+package com.orientechnologies.orient.core.sql.executor.stream;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OExecutionStepInternal;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.resultset.OTimeoutExecutionStream.TimedOut;
+import com.orientechnologies.orient.core.sql.executor.stream.OTimeoutExecutionStream.TimedOut;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
