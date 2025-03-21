@@ -133,6 +133,11 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
       }
       return false;
     }
+
+    if (iValue instanceof OResult && ((OResult) iValue).getIdentity().isPresent()) {
+      return other.equals(((OResult) iValue).getIdentity().get());
+    }
+
     return other.equals(iValue);
   }
 
