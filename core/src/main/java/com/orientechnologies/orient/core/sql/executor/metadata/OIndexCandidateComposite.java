@@ -147,32 +147,32 @@ public class OIndexCandidateComposite implements OIndexCandidate {
   public static List<List<Object>> cartesianProduct(List<List<Object>> fields) {
     List<List<Object>> product = new ArrayList<>();
     LinkedList<Object> stack = new LinkedList<>();
-    LinkedList<Integer> ycursor = new LinkedList<>();
+    LinkedList<Integer> xcursor = new LinkedList<>();
     int x = 0;
     int y = 0;
     while (true) {
-      ycursor.addLast(y);
+      xcursor.addLast(x);
       stack.addLast(fields.get(y).get(x));
-      if (fields.get(y).size() - 1 == x) {
+      if (fields.size() - 1 == y) {
         product.add(new ArrayList<>(stack));
         stack.removeLast();
-        Integer lasty = ycursor.removeLast();
-        assert y == lasty;
-        y++;
-        if (y == fields.size()) {
-          while (y == fields.size() && !ycursor.isEmpty()) {
-            y = ycursor.removeLast();
-            y++;
-            x -= 1;
+        Integer lastx = xcursor.removeLast();
+        assert x == lastx;
+        x++;
+        if (x == fields.get(y).size()) {
+          while (x == fields.get(y).size() && !xcursor.isEmpty()) {
+            x = xcursor.removeLast();
+            x++;
+            y -= 1;
             stack.removeLast();
           }
-          if (ycursor.isEmpty() && y == fields.size()) {
+          if (xcursor.isEmpty() && x == fields.get(y).size()) {
             break;
           }
         }
       } else {
-        x++;
-        y = 0;
+        y++;
+        x = 0;
       }
     }
     return product;

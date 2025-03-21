@@ -23,12 +23,27 @@ public class CanditateCartesianProductTest {
 
   @Test
   public void two() {
-
     List<List<Object>> base = new ArrayList<>();
     List<Object> two = new ArrayList<>();
     two.add("a");
     two.add("b");
     base.add(two);
+    List<List<Object>> result = OIndexCandidateComposite.cartesianProduct(base);
+    assertEquals(2, result.size());
+    assertEquals(1, result.get(0).size());
+    assertEquals("a", result.get(0).get(0));
+    assertEquals("b", result.get(1).get(0));
+  }
+
+  @Test
+  public void twoOne() {
+    List<List<Object>> base = new ArrayList<>();
+    List<Object> one = new ArrayList<>();
+    one.add("a");
+    base.add(one);
+    List<Object> twoOne = new ArrayList<>();
+    twoOne.add("b");
+    base.add(twoOne);
     List<List<Object>> result = OIndexCandidateComposite.cartesianProduct(base);
     assertEquals(1, result.size());
     assertEquals(2, result.get(0).size());
@@ -52,15 +67,15 @@ public class CanditateCartesianProductTest {
     assertEquals(4, result.size());
     assertEquals(2, result.get(0).size());
     assertEquals("a", result.get(0).get(0));
-    assertEquals("b", result.get(0).get(1));
+    assertEquals("c", result.get(0).get(1));
     assertEquals(2, result.get(1).size());
     assertEquals("a", result.get(1).get(0));
     assertEquals("d", result.get(1).get(1));
     assertEquals(2, result.get(2).size());
-    assertEquals("c", result.get(2).get(0));
-    assertEquals("b", result.get(2).get(1));
+    assertEquals("b", result.get(2).get(0));
+    assertEquals("c", result.get(2).get(1));
     assertEquals(2, result.get(3).size());
-    assertEquals("c", result.get(3).get(0));
+    assertEquals("b", result.get(3).get(0));
     assertEquals("d", result.get(3).get(1));
   }
 
@@ -89,52 +104,52 @@ public class CanditateCartesianProductTest {
       assertEquals(3, ele.size());
     }
     assertEquals("a", result.get(0).get(0));
-    assertEquals("b", result.get(0).get(1));
-    assertEquals("c", result.get(0).get(2));
+    assertEquals("d", result.get(0).get(1));
+    assertEquals("g", result.get(0).get(2));
 
     assertEquals("a", result.get(1).get(0));
-    assertEquals("b", result.get(1).get(1));
-    assertEquals("f", result.get(1).get(2));
+    assertEquals("d", result.get(1).get(1));
+    assertEquals("h", result.get(1).get(2));
 
-    assertEquals(result.get(2).get(0), "a");
-    assertEquals(result.get(2).get(1), "b");
-    assertEquals(result.get(2).get(2), "i");
+    assertEquals("a", result.get(2).get(0));
+    assertEquals("d", result.get(2).get(1));
+    assertEquals("i", result.get(2).get(2));
 
-    assertEquals(result.get(3).get(0), "a");
-    assertEquals(result.get(3).get(1), "e");
-    assertEquals(result.get(3).get(2), "c");
+    assertEquals("a", result.get(3).get(0));
+    assertEquals("e", result.get(3).get(1));
+    assertEquals("g", result.get(3).get(2));
 
-    assertEquals(result.get(4).get(0), "a");
-    assertEquals(result.get(4).get(1), "e");
-    assertEquals(result.get(4).get(2), "f");
+    assertEquals("a", result.get(4).get(0));
+    assertEquals("e", result.get(4).get(1));
+    assertEquals("h", result.get(4).get(2));
 
-    assertEquals(result.get(5).get(0), "a");
-    assertEquals(result.get(5).get(1), "e");
-    assertEquals(result.get(5).get(2), "i");
+    assertEquals("a", result.get(5).get(0));
+    assertEquals("e", result.get(5).get(1));
+    assertEquals("i", result.get(5).get(2));
 
-    assertEquals(result.get(6).get(0), "a");
-    assertEquals(result.get(6).get(1), "h");
-    assertEquals(result.get(6).get(2), "c");
+    assertEquals("a", result.get(6).get(0));
+    assertEquals("f", result.get(6).get(1));
+    assertEquals("g", result.get(6).get(2));
 
-    assertEquals(result.get(7).get(0), "a");
-    assertEquals(result.get(7).get(1), "h");
-    assertEquals(result.get(7).get(2), "f");
+    assertEquals("a", result.get(7).get(0));
+    assertEquals("f", result.get(7).get(1));
+    assertEquals("h", result.get(7).get(2));
 
-    assertEquals(result.get(8).get(0), "a");
-    assertEquals(result.get(8).get(1), "h");
-    assertEquals(result.get(8).get(2), "i");
+    assertEquals("a", result.get(8).get(0));
+    assertEquals("f", result.get(8).get(1));
+    assertEquals("i", result.get(8).get(2));
 
-    assertEquals(result.get(13).get(0), "d");
-    assertEquals(result.get(13).get(1), "e");
-    assertEquals(result.get(13).get(2), "f");
+    assertEquals("b", result.get(13).get(0));
+    assertEquals("e", result.get(13).get(1));
+    assertEquals("h", result.get(13).get(2));
 
-    assertEquals(result.get(14).get(0), "d");
-    assertEquals(result.get(14).get(1), "e");
-    assertEquals(result.get(14).get(2), "i");
+    assertEquals("b", result.get(14).get(0));
+    assertEquals("e", result.get(14).get(1));
+    assertEquals("i", result.get(14).get(2));
 
-    assertEquals(result.get(26).get(0), "g");
-    assertEquals(result.get(26).get(1), "h");
-    assertEquals(result.get(26).get(2), "i");
+    assertEquals("c", result.get(26).get(0));
+    assertEquals("f", result.get(26).get(1));
+    assertEquals("i", result.get(26).get(2));
   }
 
   @Test
@@ -157,19 +172,22 @@ public class CanditateCartesianProductTest {
     List<List<Object>> result = OIndexCandidateComposite.cartesianProduct(base);
 
     assertEquals(16, result.size());
+    for (List<Object> ele : result) {
+      assertEquals(2, ele.size());
+    }
     assertEquals("a", result.get(0).get(0));
-    assertEquals("b", result.get(0).get(1));
-    assertEquals("c", result.get(0).get(2));
-    assertEquals("d", result.get(0).get(3));
+    assertEquals("e", result.get(0).get(1));
 
-    assertEquals("a", result.get(7).get(0));
-    assertEquals("f", result.get(7).get(1));
-    assertEquals("g", result.get(7).get(2));
-    assertEquals("h", result.get(7).get(3));
+    assertEquals("a", result.get(1).get(0));
+    assertEquals("f", result.get(1).get(1));
 
-    assertEquals("e", result.get(15).get(0));
-    assertEquals("f", result.get(15).get(1));
-    assertEquals("g", result.get(15).get(2));
-    assertEquals("h", result.get(15).get(3));
+    assertEquals("a", result.get(3).get(0));
+    assertEquals("h", result.get(3).get(1));
+
+    assertEquals("b", result.get(7).get(0));
+    assertEquals("h", result.get(7).get(1));
+
+    assertEquals("d", result.get(15).get(0));
+    assertEquals("h", result.get(15).get(1));
   }
 }
