@@ -27,6 +27,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
   private Operation operation;
   private List<OProperty> properties;
   private List<OIndexKeySource> values;
+  private boolean forceDistinct = false;
 
   public OIndexCandidateComposite(
       String index, Operation operation, List<OProperty> properties, List<OIndexKeySource> value) {
@@ -37,11 +38,16 @@ public class OIndexCandidateComposite implements OIndexCandidate {
   }
 
   public OIndexCandidateComposite(
-      String index, Operation operation, OProperty property, OIndexKeySource value) {
+      String index,
+      Operation operation,
+      OProperty property,
+      OIndexKeySource value,
+      boolean forceDistinct) {
     this.index = index;
     this.operation = operation;
     this.properties = Collections.singletonList(property);
     this.values = Collections.singletonList(value);
+    this.forceDistinct = forceDistinct;
   }
 
   @Override
@@ -70,6 +76,9 @@ public class OIndexCandidateComposite implements OIndexCandidate {
   }
 
   public boolean requiresDistinctStep(OCommandContext ctx) {
+    if (forceDistinct) {
+      return true;
+    }
     OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.index);
     if (index instanceof OCompositeIndexDefinition
         && ((OCompositeIndexDefinition) index.getDefinition()).getMultiValueDefinition() != null) {

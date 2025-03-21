@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -26,13 +25,19 @@ public class OIndexCandidateOne implements OIndexCandidate {
   private final OProperty property;
   private final OIndexKeySource value;
   private Operation operation;
+  private boolean forceDistinct;
 
   public OIndexCandidateOne(
-      String name, Operation operation, OProperty prop, OIndexKeySource value) {
+      String name,
+      Operation operation,
+      OProperty prop,
+      OIndexKeySource value,
+      boolean forceDistinct) {
     this.name = name;
     this.operation = operation;
     this.property = prop;
     this.value = value;
+    this.forceDistinct = forceDistinct;
   }
 
   public String getName() {
@@ -111,12 +116,7 @@ public class OIndexCandidateOne implements OIndexCandidate {
   }
 
   public boolean requiresDistinctStep(OCommandContext ctx) {
-    OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(name);
-    if (index instanceof OCompositeIndexDefinition
-        && ((OCompositeIndexDefinition) index.getDefinition()).getMultiValueDefinition() != null) {
-      return true;
-    }
-    return false;
+    return forceDistinct;
   }
 
   public boolean fullySorted(List<String> orderItems, OCommandContext ctx) {

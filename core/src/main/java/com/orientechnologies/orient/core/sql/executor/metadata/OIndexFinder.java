@@ -60,4 +60,6 @@ public interface OIndexFinder {
 
   Optional<OIndexCandidate> findFullText(
       OPath fieldName, OIndexKeySource value, OCommandContext ctx);
+
+  Optional<OIndexCandidate> findAny(OPath oPath, OIndexKeySource value, OCommandContext ctx);
 }

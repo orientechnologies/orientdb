@@ -54,6 +54,22 @@ public class OIndexFinderTest {
   }
 
   @Test
+  public void testFindAnyMatchIndex() {
+    OClass cl = this.session.createClass("cl");
+    OProperty prop = cl.createProperty("name", OType.STRING);
+    prop.createIndex(INDEX_TYPE.NOTUNIQUE);
+    OProperty prop1 = cl.createProperty("surname", OType.STRING);
+    prop1.createIndex(INDEX_TYPE.UNIQUE);
+
+    OIndexFinder finder = new OClassIndexFinder("cl");
+    OBasicCommandContext ctx = new OBasicCommandContext(session);
+    Optional<OIndexCandidate> result = finder.findAny(new OPath("name"), null, ctx);
+
+    assertEquals("cl.name", result.get().getName());
+    assertTrue(result.get().requiresDistinctStep(ctx));
+  }
+
+  @Test
   public void testFindSimpleMatchHashIndex() {
     OClass cl = this.session.createClass("cl");
     OProperty prop = cl.createProperty("name", OType.STRING);
