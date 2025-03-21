@@ -124,16 +124,17 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       OCommandContext ctx, List<OIndexStreamStat> indexStats, AtomicLong count) {
     // stats
     OQueryStats stats = OQueryStats.get((ODatabaseDocumentInternal) ctx.getDatabase());
-    if (desc == null) {
-      return;
+    String indexName = null;
+    if (this.candidate != null) {
+      indexName = candidate.getName();
+    } else if (desc.getIndex() != null) {
+      indexName = desc.getIndex().getName();
     }
-    OIndex index = desc.getIndex();
     OBooleanExpression condition = getKeyCondition();
     OBinaryCondition additionalRangeCondition = getAdditionalCondition();
-    if (index == null) {
+    if (indexName == null) {
       return; // this could happen, if not inited yet
     }
-    String indexName = index.getName();
     boolean range = false;
     int size = 0;
 
