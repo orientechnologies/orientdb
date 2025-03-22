@@ -168,7 +168,10 @@ public class OIndexCanditateAny implements OIndexCandidate {
     }
     List<OIndexKeySource> sources = new ArrayList<>();
     for (String field : index.getDefinition().getFields()) {
-      sources.add(values.get(field));
+      OIndexKeySource source = values.get(field);
+      if (source != null) {
+        sources.add(source);
+      }
     }
     return sources;
   }
