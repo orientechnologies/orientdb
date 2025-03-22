@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
@@ -80,8 +81,9 @@ public class OIndexCandidateComposite implements OIndexCandidate {
       return true;
     }
     OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.index);
-    if (index instanceof OCompositeIndexDefinition
-        && ((OCompositeIndexDefinition) index.getDefinition()).getMultiValueDefinition() != null) {
+    OIndexDefinition def = index.getDefinition();
+    if (def instanceof OCompositeIndexDefinition
+        && ((OCompositeIndexDefinition) def).getMultiValueDefinition() != null) {
       return true;
     }
     return false;
