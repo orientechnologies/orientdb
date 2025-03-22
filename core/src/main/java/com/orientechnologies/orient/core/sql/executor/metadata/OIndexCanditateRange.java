@@ -42,7 +42,7 @@ public class OIndexCanditateRange implements OIndexCandidate {
       String name, OProperty property, OIndexCandidateOne one, OIndexCandidateOne two) {
     this.name = name;
     this.property = property;
-    if (one.getOperation().isL()) {
+    if (one.getOperation().isG()) {
       this.startOperation = one.getOperation();
       this.startValue = one.getValue();
       this.endOperation = two.getOperation();
