@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
@@ -53,6 +54,11 @@ public class OInCondition extends OBooleanExpression {
     }
 
     Object leftVal = evaluateLeft(currentRecord, ctx);
+    OCollate collate = left.getCollate(currentRecord, ctx);
+    if (collate != null) {
+      leftVal = collate.transform(leftVal);
+      rightVal = collate.transform(rightVal);
+    }
     return evaluateExpression(leftVal, rightVal);
   }
 
