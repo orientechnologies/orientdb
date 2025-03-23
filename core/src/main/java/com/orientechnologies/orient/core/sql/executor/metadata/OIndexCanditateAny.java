@@ -143,7 +143,8 @@ public class OIndexCanditateAny implements OIndexCandidate {
           newCanditates.put(index.getName(), finalCand.get());
         }
       } else if (!indexCandidates.isEmpty()) {
-        if (index.supportsOrderedIterations() || fields.size() == indexCandidates.size()) {
+        if (index.supportsOrderedIterations() && !index.getDefinition().isNullValuesIgnored()
+            || fields.size() == indexCandidates.size()) {
 
           Operation operation = indexCandidates.get(indexCandidates.size() - 1).getOperation();
           OIndexCandidateComposite candidate =

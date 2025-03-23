@@ -119,7 +119,9 @@ public class OClassIndexFinder implements OIndexFinder {
 
     Collection<OIndex> indexes = findIndexes(cl, last);
     for (OIndex index : indexes) {
-      if (index.getInternal().canBeUsedInEqualityOperators()) {
+      if (index.getInternal().canBeUsedInEqualityOperators()
+              && index.getDefinition().getFields().size() == 1
+          || !index.getDefinition().isNullValuesIgnored()) {
         OProperty prop = cl.getProperty(last);
         OIndexCandidate candidate = newCandidate(value, prop, Operation.Eq, index, requireDistinct);
         if (cand.isPresent()) {
