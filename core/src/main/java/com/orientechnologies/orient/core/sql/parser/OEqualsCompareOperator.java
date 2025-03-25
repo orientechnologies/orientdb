@@ -164,6 +164,11 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
       return couple[0].equals(couple[1]);
     }
 
+    // COLLECTION CONTAINS
+    if (OMultiValue.isMultiValue(iLeft) && !OMultiValue.isMultiValue(iRight)) {
+      return OMultiValue.contains(iLeft, iRight);
+    }
+
     // ALL OTHER CASES
     try {
       final Object right = OType.convert(iRight, iLeft.getClass());
