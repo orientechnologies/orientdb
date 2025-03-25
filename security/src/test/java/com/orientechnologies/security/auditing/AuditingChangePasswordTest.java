@@ -35,6 +35,7 @@ public class AuditingChangePasswordTest extends BaseServerSecurityTest {
         .command("update OUser set password = ? where name = ?", new Object[] {"foo", "reader"})
         .close();
 
+    Thread.sleep(100);
     List<OResult> results =
         server
             .getSystemDatabase()
@@ -46,7 +47,6 @@ public class AuditingChangePasswordTest extends BaseServerSecurityTest {
                   }
                 });
 
-    Thread.sleep(100);
     Assert.assertEquals(1, results.size());
 
     OResult result = results.get(0);

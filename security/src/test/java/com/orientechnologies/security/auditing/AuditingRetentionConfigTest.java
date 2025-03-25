@@ -38,6 +38,7 @@ public class AuditingRetentionConfigTest extends BaseServerSecurityTest {
         .command("update OUser set password = ? where name = ?", new Object[] {"foo", "reader"})
         .close();
 
+    Thread.sleep(100);
     List<OResult> results =
         server
             .getSystemDatabase()
@@ -48,7 +49,6 @@ public class AuditingRetentionConfigTest extends BaseServerSecurityTest {
                   }
                 });
 
-    Thread.sleep(100);
     Assert.assertTrue(results.size() >= 1);
 
     ODefaultAuditing auditing = (ODefaultAuditing) server.getSecurity().getAuditing();
