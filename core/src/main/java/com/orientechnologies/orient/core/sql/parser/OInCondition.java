@@ -411,14 +411,32 @@ public class OInCondition extends OBooleanExpression {
     return Optional.empty();
   }
 
-  private Collection<Object> rightValue(OCommandContext ctx) {
+  private Collection<Object> rightValue(OCommandContext ctx, boolean asc) {
     return rightMathExpression.getIndexKey(ctx);
   }
 
-  private Collection<Object> rightParam(OCommandContext ctx) {
+  private Collection<Object> rightParam(OCommandContext ctx, boolean asc) {
     Object val = rightParam.getValue(ctx.getInputParameters());
-    if (val instanceof Collection) {
-      return (Collection<Object>) val;
+    if (OMultiValue.isMultiValue(val)) {
+      Set<Object> itemsSet;
+      if (true) {
+        itemsSet = new TreeSet<>();
+      } else {
+        itemsSet = new TreeSet<>((Comparator<Object>) Collections.reverseOrder());
+      }
+      for (Object item : OMultiValue.getMultiValueIterable(val)) {
+        if (item instanceof OResult) {
+          if (((OResult) item).isElement()) {
+            item = ((OResult) item).getElement().orElseThrow(IllegalStateException::new);
+          } else if (((OResult) item).getPropertyNames().size() == 1) {
+            item =
+                ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
+          }
+        }
+        itemsSet.add(item);
+      }
+
+      return itemsSet;
     }
     return Collections.singleton(val);
   }

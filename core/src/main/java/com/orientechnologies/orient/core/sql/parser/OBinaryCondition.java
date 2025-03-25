@@ -538,11 +538,11 @@ public class OBinaryCondition extends OBooleanExpression {
     return Optional.empty();
   }
 
-  private Collection<Object> rightValue(OCommandContext ctx) {
+  private Collection<Object> rightValue(OCommandContext ctx, boolean asc) {
     return right.getIndexKey(ctx);
   }
 
-  private Collection<Object> rightValueMap(OCommandContext ctx) {
+  private Collection<Object> rightValueMap(OCommandContext ctx, boolean asc) {
     List<Object> keys = new ArrayList<>();
     for (Object key : right.getIndexKey(ctx)) {
       keys.add(operator.createIndexValueMap(key).get());

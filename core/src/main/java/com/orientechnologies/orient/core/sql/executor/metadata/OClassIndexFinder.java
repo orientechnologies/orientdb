@@ -166,7 +166,7 @@ public class OClassIndexFinder implements OIndexFinder {
       if (!index.getDefinition().isNullValuesIgnored()) {
         OIndexCandidate candidate =
             newCandidate(
-                (c) -> {
+                (c, asc) -> {
                   return Collections.singleton(null);
                 },
                 last,

@@ -30,7 +30,7 @@ public class OIndexCanditateStreamTest extends BaseMemoryDatabase {
             index.getName(),
             Operation.Eq,
             prop.getName(),
-            (ctx) -> Collections.singleton("a"),
+            (ctx, asc) -> Collections.singleton("a"),
             false);
 
     List<OIndexStream> streams = candidate.getStreams(new OBasicCommandContext(db), false);
@@ -49,14 +49,14 @@ public class OIndexCanditateStreamTest extends BaseMemoryDatabase {
             index.getName(),
             Operation.Eq,
             prop.getName(),
-            (ctx) -> Collections.singleton("a"),
+            (ctx, asc) -> Collections.singleton("a"),
             false);
     OIndexCandidate second =
         new OIndexCandidateOne(
             index.getName(),
             Operation.Eq,
             prop.getName(),
-            (ctx) -> Collections.singleton("a"),
+            (ctx, asc) -> Collections.singleton("a"),
             false);
 
     OIndexCanditateAny candidate = new OIndexCanditateAny();
@@ -79,14 +79,14 @@ public class OIndexCanditateStreamTest extends BaseMemoryDatabase {
             index.getName(),
             Operation.Le,
             prop.getName(),
-            (ctx) -> Collections.singleton("a"),
+            (ctx, asc) -> Collections.singleton("a"),
             false);
     OIndexCandidate second =
         new OIndexCandidateOne(
             index.getName(),
             Operation.Ge,
             prop.getName(),
-            (ctx) -> Collections.singleton("a"),
+            (ctx, asc) -> Collections.singleton("a"),
             false);
 
     OIndexCanditateAny candidate = new OIndexCanditateAny();

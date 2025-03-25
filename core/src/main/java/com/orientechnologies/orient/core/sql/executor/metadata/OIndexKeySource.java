@@ -5,5 +5,5 @@ import java.util.Collection;
 
 public interface OIndexKeySource {
 
-  Collection<Object> key(OCommandContext ctx);
+  Collection<Object> key(OCommandContext ctx, boolean asc);
 }

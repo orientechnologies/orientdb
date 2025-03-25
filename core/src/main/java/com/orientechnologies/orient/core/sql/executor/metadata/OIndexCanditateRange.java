@@ -83,9 +83,9 @@ public class OIndexCanditateRange implements OIndexCandidate {
     return Collections.singletonList(
         new OBetweenIndexStream(
             index,
-            startValue.key(ctx).iterator().next(),
+            startValue.key(ctx, isOrderAsc).iterator().next(),
             startOperation.isInclude(),
-            endValue.key(ctx).iterator().next(),
+            endValue.key(ctx, isOrderAsc).iterator().next(),
             endOperation.isInclude(),
             isOrderAsc));
   }

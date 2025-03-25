@@ -98,7 +98,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
             .getIndex(database, this.index)
             .getInternal();
 
-    Collection<Object> val = computeValues(ctx);
+    Collection<Object> val = computeValues(ctx, isOrderAsc);
     List<OIndexStream> streams = new ArrayList<>();
     if (val == null) {
       streams.add(new ONullIndexStream(index));
@@ -136,10 +136,10 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     return streams;
   }
 
-  private Collection<Object> computeValues(OCommandContext ctx) {
+  private Collection<Object> computeValues(OCommandContext ctx, boolean isOrderAsc) {
     List<List<Object>> fields = new ArrayList<>();
     for (OIndexKeySource source : values) {
-      fields.add(new ArrayList<Object>(source.key(ctx)));
+      fields.add(new ArrayList<Object>(source.key(ctx, isOrderAsc)));
     }
     List<List<Object>> keys = cartesianProduct(fields);
     return (Collection) keys;

@@ -371,7 +371,7 @@ public class OContainsAnyCondition extends OBooleanExpression {
     return Optional.empty();
   }
 
-  private Collection<Object> rightValue(OCommandContext ctx) {
+  private Collection<Object> rightValue(OCommandContext ctx, boolean asc) {
     return right.getIndexKey(ctx);
   }
 

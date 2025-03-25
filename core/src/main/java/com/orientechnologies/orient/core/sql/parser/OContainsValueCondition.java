@@ -293,7 +293,7 @@ public class OContainsValueCondition extends OBooleanExpression {
     return Optional.empty();
   }
 
-  private Collection<Object> expressionMapValue(OCommandContext ctx) {
+  private Collection<Object> expressionMapValue(OCommandContext ctx, boolean asc) {
     List<Object> keys = new ArrayList<>();
     for (Object key : expression.getIndexKey(ctx)) {
       Map<Object, Object> newValue = new HashMap<>();

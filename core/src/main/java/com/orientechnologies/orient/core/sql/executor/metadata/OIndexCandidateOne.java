@@ -76,7 +76,7 @@ public class OIndexCandidateOne implements OIndexCandidate {
     ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     OIndexInternal index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, name).getInternal();
-    Collection<Object> val = value.key(ctx);
+    Collection<Object> val = value.key(ctx, isOrderAsc);
     List<OIndexStream> streams = new ArrayList<>();
     if (val == null) {
       streams.add(new ONullIndexStream(index));

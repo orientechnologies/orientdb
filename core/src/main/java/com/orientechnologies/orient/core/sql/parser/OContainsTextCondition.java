@@ -231,7 +231,7 @@ public class OContainsTextCondition extends OBooleanExpression {
     return Optional.empty();
   }
 
-  public Collection<Object> rightValue(OCommandContext ctx) {
+  public Collection<Object> rightValue(OCommandContext ctx, boolean asc) {
     return right.getIndexKey(ctx);
   }
 

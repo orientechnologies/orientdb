@@ -289,11 +289,11 @@ public class OBetweenCondition extends OBooleanExpression {
     return Optional.empty();
   }
 
-  public Collection<Object> secondValue(OCommandContext ctx) {
+  public Collection<Object> secondValue(OCommandContext ctx, boolean asc) {
     return second.getIndexKey(ctx);
   }
 
-  public Collection<Object> thirdValue(OCommandContext ctx) {
+  public Collection<Object> thirdValue(OCommandContext ctx, boolean asc) {
     return third.getIndexKey(ctx);
   }
 
