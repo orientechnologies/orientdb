@@ -168,32 +168,9 @@
             </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>java8</id>
-            <activation>
-                <jdk>1.8</jdk>
-            </activation>
-            <properties>
-                <argLine>-Xmx${heapSize} -Xms${heapSize} -Dstorage.diskCache.bufferSize=4096
-                </argLine>
-            </properties>
-        </profile>
-        <profile>
-            <id>java11</id>
-            <activation>
-                <jdk>[11,)</jdk>
-            </activation>
-            <properties>
-                <argLine>-Xmx${heapSize} -Xms${heapSize} -Dstorage.diskCache.bufferSize=4096
-                    --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens java.base/sun.security.x509=ALL-UNNAMED
-                </argLine>
-
-            </properties>
-        </profile>
-
-        <profile>
-            <id>qa</id>
+	<profiles>
+		<profile>
+			<id>qa</id>
 
             <build>
                 <plugins>
@@ -216,7 +193,7 @@
                                 <imageTag>${project.version}</imageTag>
                             </imageTags>
                             <dockerDirectory>${project.basedir}/docker</dockerDirectory>
-                            <!-- copy the service's jar file from target into the root directory of the image -->
+							<!-- copy the service's jar file from target into the root directory of the image -->
                             <resources>
                                 <resource>
                                     <targetPath>/</targetPath>

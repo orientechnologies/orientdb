@@ -6,7 +6,6 @@
         <version>4.0.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
-    <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-gremlin</artifactId>
 
     <name>Apache TinkerPop :: OrientDB Gremlin</name>
@@ -151,7 +150,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.2</version>
                 <configuration>
                     <forkedProcessTimeoutInSeconds>0</forkedProcessTimeoutInSeconds>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
