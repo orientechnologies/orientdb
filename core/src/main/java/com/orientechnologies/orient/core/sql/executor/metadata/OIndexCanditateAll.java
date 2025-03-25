@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.ArrayList;
@@ -58,8 +57,8 @@ public class OIndexCanditateAll implements OIndexCandidate {
   }
 
   @Override
-  public List<OProperty> properties() {
-    List<OProperty> props = new ArrayList<>();
+  public List<String> properties() {
+    List<String> props = new ArrayList<>();
     for (OIndexCandidate cand : this.canditates) {
       props.addAll(cand.properties());
     }

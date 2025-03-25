@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
@@ -17,7 +16,7 @@ import java.util.Optional;
 public class OIndexCanditateRange implements OIndexCandidate {
 
   private String name;
-  private OProperty property;
+  private String property;
   private Operation startOperation;
   private OIndexKeySource startValue;
   private Operation endOperation;
@@ -25,7 +24,7 @@ public class OIndexCanditateRange implements OIndexCandidate {
 
   public OIndexCanditateRange(
       String name,
-      OProperty property,
+      String property,
       Operation startOperation,
       OIndexKeySource startValue,
       Operation endOperation,
@@ -39,7 +38,7 @@ public class OIndexCanditateRange implements OIndexCandidate {
   }
 
   public OIndexCanditateRange(
-      String name, OProperty property, OIndexCandidateOne one, OIndexCandidateOne two) {
+      String name, String property, OIndexCandidateOne one, OIndexCandidateOne two) {
     this.name = name;
     this.property = property;
     if (one.getOperation().isG()) {
@@ -101,7 +100,7 @@ public class OIndexCanditateRange implements OIndexCandidate {
   }
 
   public boolean fullySorted(List<String> orderItems, OCommandContext ctx) {
-    if (orderItems.size() == 1 && orderItems.get(0).equals(property.getName())) {
+    if (orderItems.size() == 1 && orderItems.get(0).equals(property)) {
       return true;
     } else {
       return false;
@@ -109,7 +108,7 @@ public class OIndexCanditateRange implements OIndexCandidate {
   }
 
   @Override
-  public List<OProperty> properties() {
+  public List<String> properties() {
     return Collections.singletonList(this.property);
   }
 

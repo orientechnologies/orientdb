@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OMajorIndexStream;
@@ -22,17 +21,13 @@ import java.util.Optional;
 public class OIndexCandidateOne implements OIndexCandidate {
 
   private final String name;
-  private final OProperty property;
+  private final String property;
   private final OIndexKeySource value;
   private Operation operation;
   private boolean forceDistinct;
 
   public OIndexCandidateOne(
-      String name,
-      Operation operation,
-      OProperty prop,
-      OIndexKeySource value,
-      boolean forceDistinct) {
+      String name, Operation operation, String prop, OIndexKeySource value, boolean forceDistinct) {
     this.name = name;
     this.operation = operation;
     this.property = prop;
@@ -69,7 +64,7 @@ public class OIndexCandidateOne implements OIndexCandidate {
   @Override
   public Optional<OIndexCandidate> normalize(OCommandContext ctx) {
     OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(name);
-    if (property.getName().equals(index.getDefinition().getFields().get(0))) {
+    if (property.equals(index.getDefinition().getFields().get(0))) {
       return Optional.of(this);
     } else {
       return Optional.empty();
@@ -120,7 +115,7 @@ public class OIndexCandidateOne implements OIndexCandidate {
   }
 
   public boolean fullySorted(List<String> orderItems, OCommandContext ctx) {
-    if (orderItems.size() == 1 && orderItems.get(0).equals(property.getName())) {
+    if (orderItems.size() == 1 && orderItems.get(0).equals(property)) {
       return true;
     } else {
       return false;
@@ -128,13 +123,13 @@ public class OIndexCandidateOne implements OIndexCandidate {
   }
 
   @Override
-  public List<OProperty> properties() {
+  public List<String> properties() {
     return Collections.singletonList(this.property);
   }
 
   public Map<String, OIndexKeySource> mappedValues() {
     Map<String, OIndexKeySource> sources = new HashMap<>();
-    sources.put(this.property.getName(), value);
+    sources.put(this.property, value);
     return sources;
   }
 }

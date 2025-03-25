@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.ArrayList;
@@ -11,8 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class OIndexCanditateAny implements OIndexCandidate {
 
@@ -67,13 +64,13 @@ public class OIndexCanditateAny implements OIndexCandidate {
     for (int i = 0; i < canditates.size(); i++) {
       boolean matched = false;
       OIndexCandidate canditate = canditates.get(i);
-      List<OProperty> properties = canditate.properties();
+      List<String> properties = canditate.properties();
       for (int z = canditates.size() - 1; z > i; z--) {
         OIndexCandidate lastCandidate = canditates.get(z);
-        List<OProperty> lastProperties = lastCandidate.properties();
+        List<String> lastProperties = lastCandidate.properties();
         if (properties.size() == 1
             && lastProperties.size() == 1
-            && properties.get(0).getName() == lastProperties.get(0).getName()) {
+            && properties.get(0).equals(lastProperties.get(0))) {
           if (canditate.getOperation().canRangeWith(lastCandidate.getOperation())) {
             if (canditate instanceof OIndexCandidateOne
                 && lastCandidate instanceof OIndexCandidateOne) {
@@ -110,8 +107,8 @@ public class OIndexCanditateAny implements OIndexCandidate {
     Map<String, OIndexCandidate> propCandidate = new HashMap<>();
     for (OIndexCandidate cand : canditates) {
       if (!cand.isChain()) {
-        for (OProperty prop : cand.properties()) {
-          propCandidate.put(prop.getName(), cand);
+        for (String prop : cand.properties()) {
+          propCandidate.put(prop, cand);
         }
       }
     }
@@ -119,14 +116,14 @@ public class OIndexCanditateAny implements OIndexCandidate {
     for (String indexName : indexes) {
       OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
       List<OIndexCandidate> indexCandidates = new ArrayList<>();
-      List<OProperty> propeties = new ArrayList<>();
+      List<String> propeties = new ArrayList<>();
       List<String> fields = index.getDefinition().getFields();
       for (String field : fields) {
         OIndexCandidate fieldCand = propCandidate.get(field);
         if (fieldCand != null) {
           indexCandidates.add(fieldCand);
-          for (OProperty prop : fieldCand.properties()) {
-            if (prop.getName().equals(field)) {
+          for (String prop : fieldCand.properties()) {
+            if (prop.equals(field)) {
               propeties.add(prop);
             }
           }
@@ -192,10 +189,9 @@ public class OIndexCanditateAny implements OIndexCandidate {
 
   public boolean fullySorted(List<String> orderItems, OCommandContext ctx) {
     // TODO: check  if properties are unique
-    List<OProperty> properties = this.properties();
+    List<String> properties = this.properties();
     if (orderItems.size() == properties.size()) {
-      Set<String> set = properties.stream().map((x) -> x.getName()).collect(Collectors.toSet());
-      return set.containsAll(orderItems);
+      return properties.containsAll(orderItems);
     } else {
       return false;
     }
@@ -211,8 +207,8 @@ public class OIndexCanditateAny implements OIndexCandidate {
   }
 
   @Override
-  public List<OProperty> properties() {
-    List<OProperty> props = new ArrayList<>();
+  public List<String> properties() {
+    List<String> props = new ArrayList<>();
     for (OIndexCandidate cand : this.canditates) {
       props.addAll(cand.properties());
     }

@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
@@ -26,12 +25,12 @@ import java.util.Optional;
 public class OIndexCandidateComposite implements OIndexCandidate {
   private String index;
   private Operation operation;
-  private List<OProperty> properties;
+  private List<String> properties;
   private List<OIndexKeySource> values;
   private boolean forceDistinct = false;
 
   public OIndexCandidateComposite(
-      String index, Operation operation, List<OProperty> properties, List<OIndexKeySource> value) {
+      String index, Operation operation, List<String> properties, List<OIndexKeySource> value) {
     this.index = index;
     this.operation = operation;
     this.properties = properties;
@@ -41,7 +40,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
   public OIndexCandidateComposite(
       String index,
       Operation operation,
-      OProperty property,
+      String property,
       OIndexKeySource value,
       boolean forceDistinct) {
     this.index = index;
@@ -72,7 +71,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
   }
 
   @Override
-  public List<OProperty> properties() {
+  public List<String> properties() {
     return properties;
   }
 
@@ -190,7 +189,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     }
     if (properties.size() <= fields.size()) {
       for (int i = 0; i < properties.size(); i++) {
-        if (!fields.get(i).equals(properties.get(i).getName())) {
+        if (!fields.get(i).equals(properties.get(i))) {
           return Optional.empty();
         }
       }
@@ -210,8 +209,8 @@ public class OIndexCandidateComposite implements OIndexCandidate {
           foundOrd++;
         } else if (foundOrd == 0) {
           boolean foundProperty = false;
-          for (OProperty prop : properties) {
-            if (prop.getName().equals(field)) {
+          for (String prop : properties) {
+            if (prop.equals(field)) {
               foundProperty = true;
               break;
             }
@@ -235,7 +234,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
   public Map<String, OIndexKeySource> mappedValues() {
     Map<String, OIndexKeySource> sources = new HashMap<>();
     for (int i = 0; i < values.size(); i++) {
-      sources.put(this.properties.get(i).getName(), this.values.get(i));
+      sources.put(this.properties.get(i), this.values.get(i));
     }
     return sources;
   }

@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.List;
@@ -21,7 +20,7 @@ public interface OIndexCandidate {
     return Optional.of(this);
   }
 
-  List<OProperty> properties();
+  List<String> properties();
 
   Map<String, OIndexKeySource> mappedValues();
 
