@@ -412,14 +412,19 @@ public class OInCondition extends OBooleanExpression {
   }
 
   private Collection<Object> rightValue(OCommandContext ctx, boolean asc) {
-    return rightMathExpression.getIndexKey(ctx);
+    Collection<Object> val = rightMathExpression.getIndexKey(ctx);
+    return sortValues(val, asc);
   }
 
   private Collection<Object> rightParam(OCommandContext ctx, boolean asc) {
     Object val = rightParam.getValue(ctx.getInputParameters());
+    return sortValues(val, asc);
+  }
+
+  protected Collection<Object> sortValues(Object val, boolean asc) {
     if (OMultiValue.isMultiValue(val)) {
       Set<Object> itemsSet;
-      if (true) {
+      if (asc) {
         itemsSet = new TreeSet<>();
       } else {
         itemsSet = new TreeSet<>((Comparator<Object>) Collections.reverseOrder());

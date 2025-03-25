@@ -130,7 +130,12 @@ public class OBaseExpression extends OMathExpression {
           Collections.singleton(
               OStringSerializerHelper.decode(string.substring(1, string.length() - 1)));
     } else if (inputParam != null) {
-      result = Collections.singleton(inputParam.getValue(ctx.getInputParameters()));
+      Object parVal = inputParam.getValue(ctx.getInputParameters());
+      if (parVal instanceof Collection) {
+        return (Collection<Object>) parVal;
+      } else {
+        result = Collections.singleton(parVal);
+      }
     }
     if (modifier != null) {
       result = modifier.execute(null, result, ctx);
