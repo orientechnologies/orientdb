@@ -47,7 +47,14 @@ public class OIndexCanditateAny implements OIndexCandidate {
 
   @Override
   public Optional<OIndexCandidate> normalize(OCommandContext ctx) {
-    Collection<OIndexCandidate> newCanditates = normalizeBetween(this.canditates, ctx);
+    List<OIndexCandidate> cleanCandidates = new ArrayList<>();
+    for (OIndexCandidate candidate : canditates) {
+      Optional<OIndexCandidate> result = candidate.normalize(ctx);
+      if (result.isPresent()) {
+        cleanCandidates.add(result.get());
+      }
+    }
+    Collection<OIndexCandidate> newCanditates = normalizeBetween(cleanCandidates, ctx);
     newCanditates = normalizeComposite(newCanditates, ctx);
     if (newCanditates.isEmpty()) {
       return Optional.empty();
