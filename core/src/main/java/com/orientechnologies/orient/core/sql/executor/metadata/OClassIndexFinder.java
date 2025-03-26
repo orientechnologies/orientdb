@@ -269,8 +269,14 @@ public class OClassIndexFinder implements OIndexFinder {
           return cand;
         } else {
           return Optional.of(
-              new OIndexCanditateRange(
-                  index.getName(), prop.getName(), Operation.Le, first, Operation.Ge, second));
+              new OIndexCandidateOne(
+                  index.getName(),
+                  prop.getName(),
+                  Operation.Le,
+                  first,
+                  Operation.Ge,
+                  second,
+                  false));
         }
       }
     }

@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OMajorIndexStream;
@@ -21,8 +22,8 @@ public class OIndexCandidateOne implements OIndexCandidate {
   private final String name;
   private final String property;
   private final PropertyValue start;
-  private final OIndexKeySource value;
   private final boolean forceDistinct;
+  private final Optional<PropertyValue> end;
   private Operation operation;
 
   public OIndexCandidateOne(
@@ -30,9 +31,42 @@ public class OIndexCandidateOne implements OIndexCandidate {
     this.name = name;
     this.operation = operation;
     this.property = prop;
-    this.value = value;
     this.forceDistinct = forceDistinct;
     this.start = new PropertyValue(prop, value, operation);
+    this.end = Optional.empty();
+  }
+
+  public OIndexCandidateOne(
+      String name,
+      String prop,
+      Operation firstOp,
+      OIndexKeySource firstSource,
+      Operation secondOp,
+      OIndexKeySource secondSource,
+      boolean forceDistinct) {
+
+    if (firstOp.isG()) {
+      this.start = new PropertyValue(prop, firstSource, firstOp);
+      this.end = Optional.of(new PropertyValue(prop, secondSource, secondOp));
+    } else {
+      this.start = new PropertyValue(prop, secondSource, secondOp);
+      this.end = Optional.of(new PropertyValue(prop, firstSource, firstOp));
+    }
+    this.name = name;
+    this.operation = Operation.Range;
+    this.property = prop;
+    this.forceDistinct = forceDistinct;
+  }
+
+  public OIndexCandidateOne(OIndexCandidateOne fist, OIndexCandidateOne second) {
+    this(
+        fist.name,
+        fist.property,
+        fist.start.operation(),
+        fist.start.source(),
+        second.start.operation(),
+        second.start.source(),
+        false);
   }
 
   public String getName() {
@@ -58,7 +92,7 @@ public class OIndexCandidateOne implements OIndexCandidate {
   }
 
   public OIndexKeySource getValue() {
-    return value;
+    return start.source();
   }
 
   @Override
@@ -76,34 +110,45 @@ public class OIndexCandidateOne implements OIndexCandidate {
     ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     OIndexInternal index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, name).getInternal();
-    Collection<Object> val = value.key(ctx, isOrderAsc);
     List<OIndexStream> streams = new ArrayList<>();
-    if (val == null) {
-      streams.add(new ONullIndexStream(index));
+    if (this.end.isPresent()) {
+      streams.add(
+          new OBetweenIndexStream(
+              index,
+              start.source().key(ctx, isOrderAsc).iterator().next(),
+              start.operation().isInclude(),
+              end.get().source().key(ctx, isOrderAsc).iterator().next(),
+              end.get().operation().isInclude(),
+              isOrderAsc));
     } else {
-      for (Object singleVal : val) {
-        switch (operation) {
-          case Ge:
-            streams.add(new OMajorIndexStream(index, singleVal, true, isOrderAsc));
-            break;
-          case Gt:
-            streams.add(new OMajorIndexStream(index, singleVal, false, isOrderAsc));
-            break;
-          case Le:
-            streams.add(new OMinorIndexStream(index, singleVal, true, isOrderAsc));
-            break;
-          case Lt:
-            streams.add(new OMinorIndexStream(index, singleVal, false, isOrderAsc));
-            break;
-          case Eq:
-            if (singleVal == null) {
-              streams.add(new ONullIndexStream(index));
-            } else {
-              streams.add(new OExactIndexStream(index, singleVal, isOrderAsc));
-            }
-            break;
-          default:
-            throw new UnsupportedOperationException("unsupported operation " + operation);
+      Collection<Object> val = start.source().key(ctx, isOrderAsc);
+      if (val == null) {
+        streams.add(new ONullIndexStream(index));
+      } else {
+        for (Object singleVal : val) {
+          switch (start.operation()) {
+            case Ge:
+              streams.add(new OMajorIndexStream(index, singleVal, true, isOrderAsc));
+              break;
+            case Gt:
+              streams.add(new OMajorIndexStream(index, singleVal, false, isOrderAsc));
+              break;
+            case Le:
+              streams.add(new OMinorIndexStream(index, singleVal, true, isOrderAsc));
+              break;
+            case Lt:
+              streams.add(new OMinorIndexStream(index, singleVal, false, isOrderAsc));
+              break;
+            case Eq:
+              if (singleVal == null) {
+                streams.add(new ONullIndexStream(index));
+              } else {
+                streams.add(new OExactIndexStream(index, singleVal, isOrderAsc));
+              }
+              break;
+            default:
+              throw new UnsupportedOperationException("unsupported operation " + operation);
+          }
         }
       }
     }

@@ -389,7 +389,7 @@ public class OStatementIndexFinderTest {
 
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
     result = result.get().normalize(ctx);
-    assertTrue((result.get() instanceof OIndexCanditateRange));
+    assertTrue((result.get() instanceof OIndexCandidateOne));
     assertEquals("cl.name", result.get().getName());
     assertEquals(Operation.Range, result.get().getOperation());
   }
@@ -406,7 +406,7 @@ public class OStatementIndexFinderTest {
 
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
     result = result.get().normalize(ctx);
-    assertTrue((result.get() instanceof OIndexCanditateRange));
+    assertTrue((result.get() instanceof OIndexCandidateOne));
     assertEquals("cl.name", result.get().getName());
     assertEquals(Operation.Range, result.get().getOperation());
   }

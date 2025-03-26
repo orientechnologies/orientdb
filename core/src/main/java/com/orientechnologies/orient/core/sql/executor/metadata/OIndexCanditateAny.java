@@ -82,11 +82,8 @@ public class OIndexCanditateAny implements OIndexCandidate {
             if (canditate instanceof OIndexCandidateOne
                 && lastCandidate instanceof OIndexCandidateOne) {
               newCanditates.add(
-                  new OIndexCanditateRange(
-                      canditate.getName(),
-                      properties.get(0),
-                      (OIndexCandidateOne) canditate,
-                      (OIndexCandidateOne) lastCandidate));
+                  new OIndexCandidateOne(
+                      (OIndexCandidateOne) canditate, (OIndexCandidateOne) lastCandidate));
               canditates.remove(z);
               if (z != canditates.size()) {
                 z++; // Increase so it does not decrease next iteration
