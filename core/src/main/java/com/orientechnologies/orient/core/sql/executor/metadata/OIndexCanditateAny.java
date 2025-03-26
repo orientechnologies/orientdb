@@ -150,7 +150,7 @@ public class OIndexCanditateAny implements OIndexCandidate {
           Operation operation = indexCandidates.get(indexCandidates.size() - 1).getOperation();
           OIndexCandidateComposite candidate =
               new OIndexCandidateComposite(
-                  index.getName(), operation, propeties, this.computeKeys(index, indexCandidates));
+                  index.getName(), operation, this.computeKeys(index, indexCandidates));
           Optional<OIndexCandidate> finalCand = candidate.finalize(ctx);
 
           if (finalCand.isPresent()) {
@@ -163,18 +163,18 @@ public class OIndexCanditateAny implements OIndexCandidate {
     return newCanditates.values();
   }
 
-  private List<OIndexKeySource> computeKeys(OIndex index, List<OIndexCandidate> candidates) {
+  private List<PropertyValue> computeKeys(OIndex index, List<OIndexCandidate> candidates) {
     Map<String, PropertyValue> values = new HashMap<>();
     for (OIndexCandidate candidate : candidates) {
       for (PropertyValue v : candidate.values()) {
         values.put(v.name(), v);
       }
     }
-    List<OIndexKeySource> sources = new ArrayList<>();
+    List<PropertyValue> sources = new ArrayList<>();
     for (String field : index.getDefinition().getFields()) {
       PropertyValue source = values.get(field);
       if (source != null) {
-        sources.add(source.source());
+        sources.add(source);
       }
     }
     return sources;

@@ -141,14 +141,7 @@ public class OClassIndexFinder implements OIndexFinder {
       Operation operation,
       OIndex index,
       boolean requireDistinct) {
-    OIndexCandidate candidate;
-    if (index.getDefinition().getFields().size() > 1) {
-      candidate =
-          new OIndexCandidateComposite(index.getName(), operation, prop, value, requireDistinct);
-    } else {
-      candidate = new OIndexCandidateOne(index.getName(), operation, prop, value, requireDistinct);
-    }
-    return candidate;
+    return new OIndexCandidateOne(index.getName(), operation, prop, value, requireDistinct);
   }
 
   @Override

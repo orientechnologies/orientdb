@@ -23,23 +23,12 @@ import java.util.Optional;
 public class OIndexCandidateComposite implements OIndexCandidate {
   private String index;
   private Operation operation;
-  private List<String> properties;
-  private List<OIndexKeySource> values;
   private boolean forceDistinct = false;
   private final List<PropertyValue> propValues;
 
-  public OIndexCandidateComposite(
-      String index, Operation operation, List<String> properties, List<OIndexKeySource> value) {
+  public OIndexCandidateComposite(String index, Operation operation, List<PropertyValue> pv) {
     this.index = index;
     this.operation = operation;
-    this.properties = properties;
-    this.values = value;
-    List<PropertyValue> pv = new ArrayList<>();
-    for (int i = 0; i < properties.size(); i++) {
-      String prop = properties.get(i);
-      OIndexKeySource val = value.get(i);
-      pv.add(new PropertyValue(prop, val, operation));
-    }
     this.propValues = pv;
   }
 
@@ -51,8 +40,6 @@ public class OIndexCandidateComposite implements OIndexCandidate {
       boolean forceDistinct) {
     this.index = index;
     this.operation = operation;
-    this.properties = Collections.singletonList(property);
-    this.values = Collections.singletonList(value);
     this.forceDistinct = forceDistinct;
     this.propValues = Collections.singletonList(new PropertyValue(property, value, operation));
   }
@@ -79,7 +66,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
 
   @Override
   public List<String> properties() {
-    return properties;
+    return propValues.stream().map(PropertyValue::name).toList();
   }
 
   public boolean requiresDistinctStep(OCommandContext ctx) {
@@ -134,6 +121,10 @@ public class OIndexCandidateComposite implements OIndexCandidate {
               streams.add(new OExactIndexStream(index, singleVal, isOrderAsc));
             }
             break;
+          case Range:
+            streams.add(
+                new OBetweenIndexStream(index, singleVal, true, singleVal, true, isOrderAsc));
+            break;
 
           default:
             throw new UnsupportedOperationException("unsupported operation " + operation);
@@ -145,8 +136,8 @@ public class OIndexCandidateComposite implements OIndexCandidate {
 
   private Collection<Object> computeValues(OCommandContext ctx, boolean isOrderAsc) {
     List<List<Object>> fields = new ArrayList<>();
-    for (OIndexKeySource source : values) {
-      fields.add(new ArrayList<Object>(source.key(ctx, isOrderAsc)));
+    for (PropertyValue source : propValues) {
+      fields.add(new ArrayList<Object>(source.source().key(ctx, isOrderAsc)));
     }
     List<List<Object>> keys = cartesianProduct(fields);
     return (Collection) keys;
@@ -191,12 +182,12 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     OIndexInternal index =
         ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.index).getInternal();
     List<String> fields = index.getDefinition().getFields();
-    if (!index.supportsOrderedIterations() && properties.size() != fields.size()) {
+    if (!index.supportsOrderedIterations() && propValues.size() != fields.size()) {
       return Optional.empty();
     }
-    if (properties.size() <= fields.size()) {
-      for (int i = 0; i < properties.size(); i++) {
-        if (!fields.get(i).equals(properties.get(i))) {
+    if (propValues.size() <= fields.size()) {
+      for (int i = 0; i < propValues.size(); i++) {
+        if (!fields.get(i).equals(propValues.get(i).name())) {
           return Optional.empty();
         }
       }
@@ -216,8 +207,8 @@ public class OIndexCandidateComposite implements OIndexCandidate {
           foundOrd++;
         } else if (foundOrd == 0) {
           boolean foundProperty = false;
-          for (String prop : properties) {
-            if (prop.equals(field)) {
+          for (PropertyValue prop : propValues) {
+            if (prop.name().equals(field)) {
               foundProperty = true;
               break;
             }

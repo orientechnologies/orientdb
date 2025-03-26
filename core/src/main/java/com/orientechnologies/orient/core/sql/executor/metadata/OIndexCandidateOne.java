@@ -2,7 +2,9 @@ package com.orientechnologies.orient.core.sql.executor.metadata;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
@@ -58,12 +60,12 @@ public class OIndexCandidateOne implements OIndexCandidate {
     this.forceDistinct = forceDistinct;
   }
 
-  public OIndexCandidateOne(OIndexCandidateOne fist, OIndexCandidateOne second) {
+  public OIndexCandidateOne(OIndexCandidateOne first, OIndexCandidateOne second) {
     this(
-        fist.name,
-        fist.property,
-        fist.start.operation(),
-        fist.start.source(),
+        first.name,
+        first.property,
+        first.start.operation(),
+        first.start.source(),
         second.start.operation(),
         second.start.source(),
         false);
@@ -95,9 +97,18 @@ public class OIndexCandidateOne implements OIndexCandidate {
     return start.source();
   }
 
-  @Override
   public Optional<OIndexCandidate> normalize(OCommandContext ctx) {
-    OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(name);
+    return Optional.of(this);
+  }
+
+  @Override
+  public Optional<OIndexCandidate> finalize(OCommandContext ctx) {
+    OIndexInternal index =
+        ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.name).getInternal();
+    List<String> fields = index.getDefinition().getFields();
+    if (!index.supportsOrderedIterations() && fields.size() != 1) {
+      return Optional.empty();
+    }
     if (property.equals(index.getDefinition().getFields().get(0))) {
       return Optional.of(this);
     } else {
@@ -142,6 +153,10 @@ public class OIndexCandidateOne implements OIndexCandidate {
             case Eq:
               if (singleVal == null) {
                 streams.add(new ONullIndexStream(index));
+              } else if (index.supportsOrderedIterations()
+                  && index.getDefinition().getFields().size() > 1) {
+                streams.add(
+                    new OBetweenIndexStream(index, singleVal, true, singleVal, true, isOrderAsc));
               } else {
                 streams.add(new OExactIndexStream(index, singleVal, isOrderAsc));
               }
@@ -156,12 +171,39 @@ public class OIndexCandidateOne implements OIndexCandidate {
   }
 
   public boolean requiresDistinctStep(OCommandContext ctx) {
-    return forceDistinct;
+    if (forceDistinct) {
+      return true;
+    }
+    OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.name);
+    OIndexDefinition def = index.getDefinition();
+    if (def instanceof OCompositeIndexDefinition
+        && ((OCompositeIndexDefinition) def).getMultiValueDefinition() != null) {
+      return true;
+    }
+    return false;
   }
 
   public boolean fullySorted(List<String> orderItems, OCommandContext ctx) {
-    if (orderItems.size() == 1 && orderItems.get(0).equals(property)) {
-      return true;
+    // TODO: check  if properties are unique
+    OIndex index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.name);
+    List<String> fields = index.getDefinition().getFields();
+    int foundOrd = 0;
+    if (orderItems.size() <= fields.size()) {
+      for (String field : fields) {
+        if (orderItems.contains(field)) {
+          foundOrd++;
+        } else if (foundOrd == 0) {
+          if (!property.equals(field)) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+        if (foundOrd == orderItems.size()) {
+          break;
+        }
+      }
+      return foundOrd == orderItems.size();
     } else {
       return false;
     }
