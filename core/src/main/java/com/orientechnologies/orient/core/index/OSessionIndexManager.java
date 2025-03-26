@@ -169,12 +169,12 @@ public class OSessionIndexManager extends OProxedResource<OIndexManagerAbstract>
 
   @Override
   public void addClusterToIndex(String clusterName, String indexName) {
-    delegate.addClusterToIndex(clusterName, indexName);
+    delegate.addClusterToIndex(database, clusterName, indexName);
   }
 
   @Override
   public void removeClusterFromIndex(String clusterName, String indexName) {
-    delegate.removeClusterFromIndex(clusterName, indexName);
+    delegate.removeClusterFromIndex(database, clusterName, indexName);
   }
 
   public void removeClassPropertyIndex(final OIndex idx) {

@@ -220,7 +220,7 @@ public class OSchemaEmbedded extends OSchemaShared {
               if (clusterName != null)
                 database
                     .getMetadata()
-                    .getIndexManagerInternal()
+                    .getIndexManager()
                     .addClusterToIndex(clusterName, index.getName());
         }
       }

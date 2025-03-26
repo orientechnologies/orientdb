@@ -109,11 +109,13 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
     throw new UnsupportedOperationException();
   }
 
-  public void addClusterToIndex(final String clusterName, final String indexName) {
+  public void addClusterToIndex(
+      ODatabaseDocumentInternal database, final String clusterName, final String indexName) {
     throw new UnsupportedOperationException();
   }
 
-  public void removeClusterFromIndex(final String clusterName, final String indexName) {
+  public void removeClusterFromIndex(
+      ODatabaseDocumentInternal database, final String clusterName, final String indexName) {
     throw new UnsupportedOperationException();
   }
 

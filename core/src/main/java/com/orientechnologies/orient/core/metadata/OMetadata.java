@@ -30,8 +30,6 @@ public interface OMetadata {
 
   OSecurity getSecurity();
 
-  /** @deprecated Manual indexes are deprecated and will be removed */
-  @Deprecated
   OIndexManager getIndexManager();
 
   /** Reloads the internal objects. */

@@ -142,8 +142,8 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         });
   }
 
-  public void addClusterToIndex(final String clusterName, final String indexName) {
-    ODatabaseDocumentInternal database = getDatabaseIfDefined();
+  public void addClusterToIndex(
+      ODatabaseDocumentInternal database, final String clusterName, final String indexName) {
     acquireSharedLock();
     try {
       final OIndex index = indexes.get(indexName);
@@ -170,8 +170,8 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     }
   }
 
-  public void removeClusterFromIndex(final String clusterName, final String indexName) {
-    ODatabaseDocumentInternal database = getDatabaseIfDefined();
+  public void removeClusterFromIndex(
+      ODatabaseDocumentInternal database, final String clusterName, final String indexName) {
     acquireSharedLock();
     try {
       final OIndex index = indexes.get(indexName);
@@ -452,10 +452,6 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     } finally {
       releaseExclusiveLock();
     }
-  }
-
-  protected static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   private static ODatabaseDocumentInternal getDatabaseIfDefined() {

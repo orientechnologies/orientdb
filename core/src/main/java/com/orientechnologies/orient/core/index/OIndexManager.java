@@ -31,9 +31,7 @@ import java.util.Set;
  * Manager of indexes.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * @deprecated Manual indexes are deprecated and will be removed
  */
-@Deprecated
 public interface OIndexManager {
   /**
    * Drops all indexes and creates them from scratch.
@@ -57,9 +55,7 @@ public interface OIndexManager {
    *
    * @param iName name of index
    * @return index if one registered in database or null otherwise.
-   * @deprecated Manual indexes are deprecated and will be removed
    */
-  @Deprecated
   OIndex getIndex(final String iName);
 
   /**
@@ -294,8 +290,6 @@ public interface OIndexManager {
    * @param clusterName cluster to add.
    * @param indexName name of index.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
   void addClusterToIndex(String clusterName, String indexName);
 
   /**
@@ -306,8 +300,6 @@ public interface OIndexManager {
    * @param clusterName cluster to remove.
    * @param indexName name of index.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
   void removeClusterFromIndex(String clusterName, String indexName);
 
   /**

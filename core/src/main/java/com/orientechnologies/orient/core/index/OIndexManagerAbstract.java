@@ -72,11 +72,12 @@ public interface OIndexManagerAbstract extends OCloseable {
 
   void reload(ODatabaseDocumentInternal database);
 
-  void addClusterToIndex(String clusterName, String indexName);
+  void addClusterToIndex(ODatabaseDocumentInternal database, String clusterName, String indexName);
 
   void load(ODatabaseDocumentInternal database);
 
-  void removeClusterFromIndex(String clusterName, String indexName);
+  void removeClusterFromIndex(
+      ODatabaseDocumentInternal database, String clusterName, String indexName);
 
   void save(ODatabaseDocumentInternal database);
 
