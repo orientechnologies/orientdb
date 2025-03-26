@@ -28,6 +28,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
   private List<String> properties;
   private List<OIndexKeySource> values;
   private boolean forceDistinct = false;
+  private final List<PropertyValue> propValues;
 
   public OIndexCandidateComposite(
       String index, Operation operation, List<String> properties, List<OIndexKeySource> value) {
@@ -35,6 +36,13 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     this.operation = operation;
     this.properties = properties;
     this.values = value;
+    List<PropertyValue> pv = new ArrayList<>();
+    for (int i = 0; i < properties.size(); i++) {
+      String prop = properties.get(i);
+      OIndexKeySource val = value.get(i);
+      pv.add(new PropertyValue(prop, val));
+    }
+    this.propValues = pv;
   }
 
   public OIndexCandidateComposite(
@@ -48,6 +56,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     this.properties = Collections.singletonList(property);
     this.values = Collections.singletonList(value);
     this.forceDistinct = forceDistinct;
+    this.propValues = Collections.singletonList(new PropertyValue(property, value));
   }
 
   @Override
@@ -237,5 +246,10 @@ public class OIndexCandidateComposite implements OIndexCandidate {
       sources.put(this.properties.get(i), this.values.get(i));
     }
     return sources;
+  }
+
+  @Override
+  public List<PropertyValue> values() {
+    return propValues;
   }
 }

@@ -214,6 +214,15 @@ public class OIndexCanditateAny implements OIndexCandidate {
   }
 
   @Override
+  public List<PropertyValue> values() {
+    List<PropertyValue> values = new ArrayList<>();
+    for (OIndexCandidate c : canditates) {
+      values.addAll(c.values());
+    }
+    return values;
+  }
+
+  @Override
   public List<String> properties() {
     List<String> props = new ArrayList<>();
     for (OIndexCandidate cand : this.canditates) {

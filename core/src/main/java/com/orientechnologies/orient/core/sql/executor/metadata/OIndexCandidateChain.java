@@ -75,6 +75,11 @@ public class OIndexCandidateChain implements OIndexCandidate {
   }
 
   @Override
+  public List<PropertyValue> values() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean isChain() {
     return true;
   }

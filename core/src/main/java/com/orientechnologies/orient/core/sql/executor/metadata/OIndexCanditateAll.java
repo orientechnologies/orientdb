@@ -84,6 +84,15 @@ public class OIndexCanditateAll implements OIndexCandidate {
   }
 
   @Override
+  public List<PropertyValue> values() {
+    List<PropertyValue> values = new ArrayList<>();
+    for (OIndexCandidate c : canditates) {
+      values.addAll(c.values());
+    }
+    return values;
+  }
+
+  @Override
   public boolean requiresDistinctStep(OCommandContext ctx) {
     return true;
   }

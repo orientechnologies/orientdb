@@ -22,6 +22,7 @@ public class OIndexCandidateOne implements OIndexCandidate {
 
   private final String name;
   private final String property;
+  private final PropertyValue propVal;
   private final OIndexKeySource value;
   private Operation operation;
   private boolean forceDistinct;
@@ -33,6 +34,7 @@ public class OIndexCandidateOne implements OIndexCandidate {
     this.property = prop;
     this.value = value;
     this.forceDistinct = forceDistinct;
+    this.propVal = new PropertyValue(prop, value);
   }
 
   public String getName() {
@@ -131,5 +133,10 @@ public class OIndexCandidateOne implements OIndexCandidate {
     Map<String, OIndexKeySource> sources = new HashMap<>();
     sources.put(this.property, value);
     return sources;
+  }
+
+  @Override
+  public List<PropertyValue> values() {
+    return Collections.singletonList(propVal);
   }
 }

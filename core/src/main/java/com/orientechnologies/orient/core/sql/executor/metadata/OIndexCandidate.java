@@ -8,6 +8,10 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface OIndexCandidate {
+
+  record PropertyValue(String name, OIndexKeySource source) {}
+  ;
+
   String getName();
 
   Optional<OIndexCandidate> invert();
@@ -23,6 +27,8 @@ public interface OIndexCandidate {
   List<String> properties();
 
   Map<String, OIndexKeySource> mappedValues();
+
+  List<PropertyValue> values();
 
   default List<OIndexStream> getStreams(OCommandContext ctx, boolean isOrderAsc) {
     throw new UnsupportedOperationException();

@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,8 @@ public class OIndexCanditateRange implements OIndexCandidate {
   private OIndexKeySource startValue;
   private Operation endOperation;
   private OIndexKeySource endValue;
+  private final PropertyValue start;
+  private final PropertyValue end;
 
   public OIndexCanditateRange(
       String name,
@@ -35,6 +38,8 @@ public class OIndexCanditateRange implements OIndexCandidate {
     this.startValue = startValue;
     this.endOperation = endOperation;
     this.endValue = endValue;
+    this.start = new PropertyValue(property, startValue);
+    this.end = new PropertyValue(property, endValue);
   }
 
   public OIndexCanditateRange(
@@ -46,11 +51,15 @@ public class OIndexCanditateRange implements OIndexCandidate {
       this.startValue = one.getValue();
       this.endOperation = two.getOperation();
       this.endValue = two.getValue();
+      this.start = new PropertyValue(property, one.getValue());
+      this.end = new PropertyValue(property, two.getValue());
     } else {
       this.startOperation = two.getOperation();
       this.startValue = two.getValue();
       this.endOperation = one.getOperation();
       this.endValue = one.getValue();
+      this.start = new PropertyValue(property, two.getValue());
+      this.end = new PropertyValue(property, one.getValue());
     }
   }
 
@@ -110,6 +119,14 @@ public class OIndexCanditateRange implements OIndexCandidate {
   @Override
   public List<String> properties() {
     return Collections.singletonList(this.property);
+  }
+
+  @Override
+  public List<PropertyValue> values() {
+    List<PropertyValue> values = new ArrayList<>();
+    values.add(start);
+    values.add(end);
+    return values;
   }
 
   @Override
