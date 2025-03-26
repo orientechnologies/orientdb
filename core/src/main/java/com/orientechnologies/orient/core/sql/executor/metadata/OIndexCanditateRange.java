@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Oper
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class OIndexCanditateRange implements OIndexCandidate {
@@ -38,8 +37,8 @@ public class OIndexCanditateRange implements OIndexCandidate {
     this.startValue = startValue;
     this.endOperation = endOperation;
     this.endValue = endValue;
-    this.start = new PropertyValue(property, startValue);
-    this.end = new PropertyValue(property, endValue);
+    this.start = new PropertyValue(property, startValue, startOperation);
+    this.end = new PropertyValue(property, endValue, endOperation);
   }
 
   public OIndexCanditateRange(
@@ -51,15 +50,15 @@ public class OIndexCanditateRange implements OIndexCandidate {
       this.startValue = one.getValue();
       this.endOperation = two.getOperation();
       this.endValue = two.getValue();
-      this.start = new PropertyValue(property, one.getValue());
-      this.end = new PropertyValue(property, two.getValue());
+      this.start = new PropertyValue(property, one.getValue(), one.getOperation());
+      this.end = new PropertyValue(property, two.getValue(), two.getOperation());
     } else {
       this.startOperation = two.getOperation();
       this.startValue = two.getValue();
       this.endOperation = one.getOperation();
       this.endValue = one.getValue();
-      this.start = new PropertyValue(property, two.getValue());
-      this.end = new PropertyValue(property, one.getValue());
+      this.start = new PropertyValue(property, two.getValue(), two.getOperation());
+      this.end = new PropertyValue(property, one.getValue(), one.getOperation());
     }
   }
 
@@ -127,10 +126,5 @@ public class OIndexCanditateRange implements OIndexCandidate {
     values.add(start);
     values.add(end);
     return values;
-  }
-
-  @Override
-  public Map<String, OIndexKeySource> mappedValues() {
-    throw new UnsupportedOperationException();
   }
 }

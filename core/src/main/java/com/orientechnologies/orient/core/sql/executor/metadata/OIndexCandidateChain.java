@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Oper
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class OIndexCandidateChain implements OIndexCandidate {
@@ -56,11 +55,6 @@ public class OIndexCandidateChain implements OIndexCandidate {
   @Override
   public List<String> properties() {
     return Collections.emptyList();
-  }
-
-  @Override
-  public Map<String, OIndexKeySource> mappedValues() {
-    return Collections.emptyMap();
   }
 
   public boolean requiresDistinctStep(OCommandContext ctx) {

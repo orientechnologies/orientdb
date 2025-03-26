@@ -13,19 +13,17 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Oper
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class OIndexCandidateOne implements OIndexCandidate {
 
   private final String name;
   private final String property;
-  private final PropertyValue propVal;
+  private final PropertyValue start;
   private final OIndexKeySource value;
+  private final boolean forceDistinct;
   private Operation operation;
-  private boolean forceDistinct;
 
   public OIndexCandidateOne(
       String name, Operation operation, String prop, OIndexKeySource value, boolean forceDistinct) {
@@ -34,7 +32,7 @@ public class OIndexCandidateOne implements OIndexCandidate {
     this.property = prop;
     this.value = value;
     this.forceDistinct = forceDistinct;
-    this.propVal = new PropertyValue(prop, value);
+    this.start = new PropertyValue(prop, value, operation);
   }
 
   public String getName() {
@@ -129,14 +127,8 @@ public class OIndexCandidateOne implements OIndexCandidate {
     return Collections.singletonList(this.property);
   }
 
-  public Map<String, OIndexKeySource> mappedValues() {
-    Map<String, OIndexKeySource> sources = new HashMap<>();
-    sources.put(this.property, value);
-    return sources;
-  }
-
   @Override
   public List<PropertyValue> values() {
-    return Collections.singletonList(propVal);
+    return Collections.singletonList(start);
   }
 }

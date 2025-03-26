@@ -16,10 +16,8 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Oper
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class OIndexCandidateComposite implements OIndexCandidate {
@@ -40,7 +38,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     for (int i = 0; i < properties.size(); i++) {
       String prop = properties.get(i);
       OIndexKeySource val = value.get(i);
-      pv.add(new PropertyValue(prop, val));
+      pv.add(new PropertyValue(prop, val, operation));
     }
     this.propValues = pv;
   }
@@ -56,7 +54,7 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     this.properties = Collections.singletonList(property);
     this.values = Collections.singletonList(value);
     this.forceDistinct = forceDistinct;
-    this.propValues = Collections.singletonList(new PropertyValue(property, value));
+    this.propValues = Collections.singletonList(new PropertyValue(property, value, operation));
   }
 
   @Override
@@ -238,14 +236,6 @@ public class OIndexCandidateComposite implements OIndexCandidate {
     } else {
       return false;
     }
-  }
-
-  public Map<String, OIndexKeySource> mappedValues() {
-    Map<String, OIndexKeySource> sources = new HashMap<>();
-    for (int i = 0; i < values.size(); i++) {
-      sources.put(this.properties.get(i), this.values.get(i));
-    }
-    return sources;
   }
 
   @Override

@@ -167,15 +167,17 @@ public class OIndexCanditateAny implements OIndexCandidate {
   }
 
   private List<OIndexKeySource> computeKeys(OIndex index, List<OIndexCandidate> candidates) {
-    Map<String, OIndexKeySource> values = new HashMap<>();
+    Map<String, PropertyValue> values = new HashMap<>();
     for (OIndexCandidate candidate : candidates) {
-      values.putAll(candidate.mappedValues());
+      for (PropertyValue v : candidate.values()) {
+        values.put(v.name(), v);
+      }
     }
     List<OIndexKeySource> sources = new ArrayList<>();
     for (String field : index.getDefinition().getFields()) {
-      OIndexKeySource source = values.get(field);
+      PropertyValue source = values.get(field);
       if (source != null) {
-        sources.add(source);
+        sources.add(source.source());
       }
     }
     return sources;
@@ -202,15 +204,6 @@ public class OIndexCanditateAny implements OIndexCandidate {
     } else {
       return false;
     }
-  }
-
-  @Override
-  public Map<String, OIndexKeySource> mappedValues() {
-    Map<String, OIndexKeySource> vals = new HashMap<>();
-    for (OIndexCandidate cand : this.canditates) {
-      vals.putAll(cand.mappedValues());
-    }
-    return vals;
   }
 
   @Override
