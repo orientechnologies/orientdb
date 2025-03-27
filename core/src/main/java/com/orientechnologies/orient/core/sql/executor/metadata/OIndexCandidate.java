@@ -26,6 +26,8 @@ public interface OIndexCandidate {
 
   List<PropertyValue> values();
 
+  List<PropertyValue> toValues();
+
   default List<OIndexStream> getStreams(OCommandContext ctx, boolean isOrderAsc) {
     throw new UnsupportedOperationException();
   }

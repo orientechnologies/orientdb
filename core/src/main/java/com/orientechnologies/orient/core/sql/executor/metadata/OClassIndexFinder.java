@@ -265,9 +265,9 @@ public class OClassIndexFinder implements OIndexFinder {
               new OIndexCandidateOne(
                   index.getName(),
                   prop.getName(),
-                  Operation.Le,
-                  first,
                   Operation.Ge,
+                  first,
+                  Operation.Le,
                   second,
                   false));
         }

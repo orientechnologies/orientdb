@@ -71,11 +71,21 @@ public class OIndexCandidateOne implements OIndexCandidate {
         false);
   }
 
-  public OIndexCandidateOne(String index, List<PropertyValue> pv) {
+  public OIndexCandidateOne(String index, List<PropertyValue> pv, List<PropertyValue> to) {
     this.name = index;
-    this.start = pv;
     this.forceDistinct = false;
-    this.end = Optional.empty();
+    if (to.isEmpty()) {
+      this.start = pv;
+      this.end = Optional.empty();
+    } else {
+      if (pv.get(pv.size() - 1).operation().isG()) {
+        this.start = pv;
+        this.end = Optional.of(to);
+      } else {
+        this.start = to;
+        this.end = Optional.of(pv);
+      }
+    }
   }
 
   public String getName() {
@@ -133,16 +143,15 @@ public class OIndexCandidateOne implements OIndexCandidate {
         database.getMetadata().getIndexManagerInternal().getIndex(database, name).getInternal();
     List<OIndexStream> streams = new ArrayList<>();
     if (this.end.isPresent()) {
-      streams.add(
-          new OBetweenIndexStream(
-              index,
-              start.get(0).source().key(ctx, isOrderAsc).iterator().next(),
-              start.get(0).operation().isInclude(),
-              end.get().get(0).source().key(ctx, isOrderAsc).iterator().next(),
-              end.get().get(0).operation().isInclude(),
-              isOrderAsc));
+      List<PropertyValue> endProps = this.end.get();
+      boolean startInclude = this.start.get(this.start.size() - 1).operation().isInclude();
+      boolean endInclude = endProps.get(endProps.size() - 1).operation().isInclude();
+      Collection<Object> start = computeValues(this.start, ctx, isOrderAsc);
+      Collection<Object> end = computeValues(endProps, ctx, isOrderAsc);
+      end.toString();
+      streams.add(new OBetweenIndexStream(index, start, startInclude, end, endInclude, isOrderAsc));
     } else {
-      Collection<Object> val = computeValues(ctx, isOrderAsc);
+      Collection<Object> val = computeValues(this.start, ctx, isOrderAsc);
       if (val == null) {
         streams.add(new ONullIndexStream(index));
       } else {
@@ -180,9 +189,10 @@ public class OIndexCandidateOne implements OIndexCandidate {
     return streams;
   }
 
-  private Collection<Object> computeValues(OCommandContext ctx, boolean isOrderAsc) {
+  private Collection<Object> computeValues(
+      List<PropertyValue> values, OCommandContext ctx, boolean isOrderAsc) {
     List<List<Object>> fields = new ArrayList<>();
-    for (PropertyValue source : start) {
+    for (PropertyValue source : values) {
       fields.add(new ArrayList<Object>(source.source().key(ctx, isOrderAsc)));
     }
     List<List<Object>> keys = cartesianProduct(fields);
@@ -277,5 +287,10 @@ public class OIndexCandidateOne implements OIndexCandidate {
   @Override
   public List<PropertyValue> values() {
     return start;
+  }
+
+  @Override
+  public List<PropertyValue> toValues() {
+    return end.orElseGet(Collections::emptyList);
   }
 }

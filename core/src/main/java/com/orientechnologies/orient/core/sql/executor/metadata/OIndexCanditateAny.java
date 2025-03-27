@@ -7,9 +7,11 @@ import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Oper
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public class OIndexCanditateAny implements OIndexCandidate {
 
@@ -102,7 +104,7 @@ public class OIndexCanditateAny implements OIndexCandidate {
 
   private Collection<OIndexCandidate> normalizeComposite(
       Collection<OIndexCandidate> canditates, OCommandContext ctx) {
-    List<String> indexes = new ArrayList<>();
+    Set<String> indexes = new HashSet<>();
     for (OIndexCandidate cand : canditates) {
       if (!cand.isChain()) {
         indexes.add(cand.getName());
@@ -148,7 +150,10 @@ public class OIndexCanditateAny implements OIndexCandidate {
             || fields.size() == indexCandidates.size()) {
 
           OIndexCandidateOne candidate =
-              new OIndexCandidateOne(index.getName(), this.computeKeys(index, indexCandidates));
+              new OIndexCandidateOne(
+                  index.getName(),
+                  this.computeKeys(index, indexCandidates),
+                  this.computeToKeys(index, indexCandidates));
           Optional<OIndexCandidate> finalCand = candidate.finalize(ctx);
 
           if (finalCand.isPresent()) {
@@ -159,6 +164,38 @@ public class OIndexCanditateAny implements OIndexCandidate {
     }
 
     return newCanditates.values();
+  }
+
+  private List<PropertyValue> computeToKeys(OIndex index, List<OIndexCandidate> candidates) {
+    Map<String, PropertyValue> toValues = new HashMap<>();
+    for (OIndexCandidate candidate : candidates) {
+      for (PropertyValue v : candidate.toValues()) {
+        toValues.put(v.name(), v);
+      }
+    }
+    Map<String, PropertyValue> fromValues = new HashMap<>();
+    for (OIndexCandidate candidate : candidates) {
+      for (PropertyValue v : candidate.values()) {
+        fromValues.put(v.name(), v);
+      }
+    }
+    List<PropertyValue> sources = new ArrayList<>();
+    if (!toValues.isEmpty()) {
+      for (String field : index.getDefinition().getFields()) {
+        PropertyValue source = toValues.get(field);
+        if (source != null) {
+          sources.add(source);
+        } else {
+          // the range may be only in the last field of the composite, so in that
+          // case use the from value for the previous fields
+          PropertyValue fromSource = fromValues.get(field);
+          if (fromSource != null) {
+            sources.add(fromSource);
+          }
+        }
+      }
+    }
+    return sources;
   }
 
   private List<PropertyValue> computeKeys(OIndex index, List<OIndexCandidate> candidates) {
@@ -206,6 +243,15 @@ public class OIndexCanditateAny implements OIndexCandidate {
     List<PropertyValue> values = new ArrayList<>();
     for (OIndexCandidate c : canditates) {
       values.addAll(c.values());
+    }
+    return values;
+  }
+
+  @Override
+  public List<PropertyValue> toValues() {
+    List<PropertyValue> values = new ArrayList<>();
+    for (OIndexCandidate c : canditates) {
+      values.addAll(c.toValues());
     }
     return values;
   }
