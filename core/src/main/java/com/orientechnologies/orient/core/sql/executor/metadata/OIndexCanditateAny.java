@@ -147,10 +147,8 @@ public class OIndexCanditateAny implements OIndexCandidate {
         if (index.supportsOrderedIterations() && !index.getDefinition().isNullValuesIgnored()
             || fields.size() == indexCandidates.size()) {
 
-          Operation operation = indexCandidates.get(indexCandidates.size() - 1).getOperation();
-          OIndexCandidateComposite candidate =
-              new OIndexCandidateComposite(
-                  index.getName(), operation, this.computeKeys(index, indexCandidates));
+          OIndexCandidateOne candidate =
+              new OIndexCandidateOne(index.getName(), this.computeKeys(index, indexCandidates));
           Optional<OIndexCandidate> finalCand = candidate.finalize(ctx);
 
           if (finalCand.isPresent()) {

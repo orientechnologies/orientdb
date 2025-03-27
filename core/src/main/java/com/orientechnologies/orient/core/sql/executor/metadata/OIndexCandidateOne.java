@@ -12,29 +12,29 @@ import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OMajorIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OMinorIndexStream;
 import com.orientechnologies.orient.core.sql.executor.ONullIndexStream;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate.PropertyValue;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
 public class OIndexCandidateOne implements OIndexCandidate {
 
   private final String name;
-  private final String property;
-  private final PropertyValue start;
+  private final List<PropertyValue> start;
   private final boolean forceDistinct;
-  private final Optional<PropertyValue> end;
+  private final Optional<List<PropertyValue>> end;
   private Operation operation;
 
   public OIndexCandidateOne(
       String name, Operation operation, String prop, OIndexKeySource value, boolean forceDistinct) {
     this.name = name;
     this.operation = operation;
-    this.property = prop;
     this.forceDistinct = forceDistinct;
-    this.start = new PropertyValue(prop, value, operation);
+    this.start = Collections.singletonList(new PropertyValue(prop, value, operation));
     this.end = Optional.empty();
   }
 
@@ -46,29 +46,36 @@ public class OIndexCandidateOne implements OIndexCandidate {
       Operation secondOp,
       OIndexKeySource secondSource,
       boolean forceDistinct) {
-
     if (firstOp.isG()) {
-      this.start = new PropertyValue(prop, firstSource, firstOp);
-      this.end = Optional.of(new PropertyValue(prop, secondSource, secondOp));
+      this.start = Collections.singletonList(new PropertyValue(prop, firstSource, firstOp));
+      this.end =
+          Optional.of(Collections.singletonList(new PropertyValue(prop, secondSource, secondOp)));
     } else {
-      this.start = new PropertyValue(prop, secondSource, secondOp);
-      this.end = Optional.of(new PropertyValue(prop, firstSource, firstOp));
+      this.start = Collections.singletonList(new PropertyValue(prop, secondSource, secondOp));
+      this.end =
+          Optional.of(Collections.singletonList(new PropertyValue(prop, firstSource, firstOp)));
     }
     this.name = name;
     this.operation = Operation.Range;
-    this.property = prop;
     this.forceDistinct = forceDistinct;
   }
 
   public OIndexCandidateOne(OIndexCandidateOne first, OIndexCandidateOne second) {
     this(
         first.name,
-        first.property,
-        first.start.operation(),
-        first.start.source(),
-        second.start.operation(),
-        second.start.source(),
+        first.start.iterator().next().name(),
+        first.start.iterator().next().operation(),
+        first.start.iterator().next().source(),
+        second.start.iterator().next().operation(),
+        second.start.iterator().next().source(),
         false);
+  }
+
+  public OIndexCandidateOne(String index, List<PropertyValue> pv) {
+    this.name = index;
+    this.start = pv;
+    this.forceDistinct = false;
+    this.end = Optional.empty();
   }
 
   public String getName() {
@@ -90,11 +97,10 @@ public class OIndexCandidateOne implements OIndexCandidate {
   }
 
   public Operation getOperation() {
-    return operation;
-  }
-
-  public OIndexKeySource getValue() {
-    return start.source();
+    if (end.isPresent()) {
+      return Operation.Range;
+    }
+    return start.get(start.size() - 1).operation();
   }
 
   public Optional<OIndexCandidate> normalize(OCommandContext ctx) {
@@ -106,14 +112,18 @@ public class OIndexCandidateOne implements OIndexCandidate {
     OIndexInternal index =
         ctx.getDatabase().getMetadata().getIndexManager().getIndex(this.name).getInternal();
     List<String> fields = index.getDefinition().getFields();
-    if (!index.supportsOrderedIterations() && fields.size() != 1) {
+    if (!index.supportsOrderedIterations() && start.size() != fields.size()) {
       return Optional.empty();
     }
-    if (property.equals(index.getDefinition().getFields().get(0))) {
+    if (start.size() <= fields.size()) {
+      for (int i = 0; i < start.size(); i++) {
+        if (!fields.get(i).equals(start.get(i).name())) {
+          return Optional.empty();
+        }
+      }
       return Optional.of(this);
-    } else {
-      return Optional.empty();
     }
+    return Optional.empty();
   }
 
   @Override
@@ -126,18 +136,18 @@ public class OIndexCandidateOne implements OIndexCandidate {
       streams.add(
           new OBetweenIndexStream(
               index,
-              start.source().key(ctx, isOrderAsc).iterator().next(),
-              start.operation().isInclude(),
-              end.get().source().key(ctx, isOrderAsc).iterator().next(),
-              end.get().operation().isInclude(),
+              start.get(0).source().key(ctx, isOrderAsc).iterator().next(),
+              start.get(0).operation().isInclude(),
+              end.get().get(0).source().key(ctx, isOrderAsc).iterator().next(),
+              end.get().get(0).operation().isInclude(),
               isOrderAsc));
     } else {
-      Collection<Object> val = start.source().key(ctx, isOrderAsc);
+      Collection<Object> val = computeValues(ctx, isOrderAsc);
       if (val == null) {
         streams.add(new ONullIndexStream(index));
       } else {
         for (Object singleVal : val) {
-          switch (start.operation()) {
+          switch (getOperation()) {
             case Ge:
               streams.add(new OMajorIndexStream(index, singleVal, true, isOrderAsc));
               break;
@@ -170,6 +180,49 @@ public class OIndexCandidateOne implements OIndexCandidate {
     return streams;
   }
 
+  private Collection<Object> computeValues(OCommandContext ctx, boolean isOrderAsc) {
+    List<List<Object>> fields = new ArrayList<>();
+    for (PropertyValue source : start) {
+      fields.add(new ArrayList<Object>(source.source().key(ctx, isOrderAsc)));
+    }
+    List<List<Object>> keys = cartesianProduct(fields);
+    return (Collection) keys;
+  }
+
+  public static List<List<Object>> cartesianProduct(List<List<Object>> fields) {
+    List<List<Object>> product = new ArrayList<>();
+    LinkedList<Object> stack = new LinkedList<>();
+    LinkedList<Integer> xcursor = new LinkedList<>();
+    int x = 0;
+    int y = 0;
+    while (fields.size() > y && fields.get(y).size() > x) {
+      xcursor.addLast(x);
+      stack.addLast(fields.get(y).get(x));
+      if (fields.size() - 1 == y) {
+        product.add(new ArrayList<>(stack));
+        stack.removeLast();
+        Integer lastx = xcursor.removeLast();
+        assert x == lastx;
+        x++;
+        if (x == fields.get(y).size()) {
+          while (x == fields.get(y).size() && !xcursor.isEmpty()) {
+            x = xcursor.removeLast();
+            x++;
+            y -= 1;
+            stack.removeLast();
+          }
+          if (xcursor.isEmpty() && x == fields.get(y).size()) {
+            break;
+          }
+        }
+      } else {
+        y++;
+        x = 0;
+      }
+    }
+    return product;
+  }
+
   public boolean requiresDistinctStep(OCommandContext ctx) {
     if (forceDistinct) {
       return true;
@@ -193,7 +246,14 @@ public class OIndexCandidateOne implements OIndexCandidate {
         if (orderItems.contains(field)) {
           foundOrd++;
         } else if (foundOrd == 0) {
-          if (!property.equals(field)) {
+          boolean foundProperty = false;
+          for (PropertyValue prop : start) {
+            if (prop.name().equals(field)) {
+              foundProperty = true;
+              break;
+            }
+          }
+          if (!foundProperty) {
             return false;
           }
         } else {
@@ -211,11 +271,11 @@ public class OIndexCandidateOne implements OIndexCandidate {
 
   @Override
   public List<String> properties() {
-    return Collections.singletonList(this.property);
+    return this.start.stream().map(PropertyValue::name).toList();
   }
 
   @Override
   public List<PropertyValue> values() {
-    return Collections.singletonList(start);
+    return start;
   }
 }

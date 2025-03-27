@@ -161,7 +161,7 @@ public class OStatementIndexFinderTest {
     OSelectStatement stat = parseQuery("select from cl where not name < 'a' ");
     Optional<OIndexCandidate> result = stat.getWhereClause().findIndex(finder, ctx);
     assertEquals("cl.name", result.get().getName());
-    assertEquals(Operation.Ge, result.get().getOperation());
+    assertEquals(Operation.Lt, result.get().getOperation());
   }
 
   @Test

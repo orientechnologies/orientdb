@@ -15,7 +15,7 @@ public class CanditateCartesianProductTest {
     List<Object> one = new ArrayList<>();
     one.add("a");
     base.add(one);
-    List<List<Object>> result = OIndexCandidateComposite.cartesianProduct(base);
+    List<List<Object>> result = OIndexCandidateOne.cartesianProduct(base);
     assertEquals(1, result.size());
     assertEquals(1, result.get(0).size());
     assertEquals("a", result.get(0).get(0));
@@ -28,7 +28,7 @@ public class CanditateCartesianProductTest {
     two.add("a");
     two.add("b");
     base.add(two);
-    List<List<Object>> result = OIndexCandidateComposite.cartesianProduct(base);
+    List<List<Object>> result = OIndexCandidateOne.cartesianProduct(base);
     assertEquals(2, result.size());
     assertEquals(1, result.get(0).size());
     assertEquals("a", result.get(0).get(0));
@@ -44,7 +44,7 @@ public class CanditateCartesianProductTest {
     List<Object> twoOne = new ArrayList<>();
     twoOne.add("b");
     base.add(twoOne);
-    List<List<Object>> result = OIndexCandidateComposite.cartesianProduct(base);
+    List<List<Object>> result = OIndexCandidateOne.cartesianProduct(base);
     assertEquals(1, result.size());
     assertEquals(2, result.get(0).size());
     assertEquals("a", result.get(0).get(0));
@@ -63,7 +63,7 @@ public class CanditateCartesianProductTest {
     twotwo.add("c");
     twotwo.add("d");
     base.add(twotwo);
-    List<List<Object>> result = OIndexCandidateComposite.cartesianProduct(base);
+    List<List<Object>> result = OIndexCandidateOne.cartesianProduct(base);
     assertEquals(4, result.size());
     assertEquals(2, result.get(0).size());
     assertEquals("a", result.get(0).get(0));
@@ -98,7 +98,7 @@ public class CanditateCartesianProductTest {
     threethree.add("h");
     threethree.add("i");
     base.add(threethree);
-    List<List<Object>> result = OIndexCandidateComposite.cartesianProduct(base);
+    List<List<Object>> result = OIndexCandidateOne.cartesianProduct(base);
     assertEquals(result.size(), 27);
     for (List<Object> ele : result) {
       assertEquals(3, ele.size());
@@ -169,7 +169,7 @@ public class CanditateCartesianProductTest {
     fourtwo.add("h");
     base.add(fourtwo);
 
-    List<List<Object>> result = OIndexCandidateComposite.cartesianProduct(base);
+    List<List<Object>> result = OIndexCandidateOne.cartesianProduct(base);
 
     assertEquals(16, result.size());
     for (List<Object> ele : result) {
