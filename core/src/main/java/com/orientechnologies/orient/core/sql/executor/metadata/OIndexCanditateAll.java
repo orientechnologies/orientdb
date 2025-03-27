@@ -99,4 +99,9 @@ public class OIndexCanditateAll implements OIndexCandidate {
   public boolean fullySorted(List<String> properties, OCommandContext ctx) {
     return false;
   }
+
+  @Override
+  public boolean isDirectIndex() {
+    return false;
+  }
 }

@@ -79,7 +79,7 @@ public class OIndexCandidateChain implements OIndexCandidate {
   }
 
   @Override
-  public boolean isChain() {
-    return true;
+  public boolean isDirectIndex() {
+    return false;
   }
 }

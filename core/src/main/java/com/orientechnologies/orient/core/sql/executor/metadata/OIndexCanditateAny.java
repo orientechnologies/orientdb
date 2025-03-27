@@ -19,12 +19,20 @@ public class OIndexCanditateAny implements OIndexCandidate {
 
   public OIndexCanditateAny() {}
 
-  private OIndexCanditateAny(Collection<OIndexCandidate> canditates) {
-    this.canditates.addAll(canditates);
+  public OIndexCanditateAny(Collection<OIndexCandidate> canditates) {
+    for (OIndexCandidate cand : canditates) {
+      addCanditate(cand);
+    }
   }
 
-  public void addCanditate(OIndexCandidate canditate) {
-    this.canditates.add(canditate);
+  public void addCanditate(OIndexCandidate candidate) {
+    if (candidate instanceof OIndexCanditateAny) {
+      for (OIndexCandidate cand : ((OIndexCanditateAny) candidate).canditates) {
+        addCanditate(cand);
+      }
+    } else {
+      this.canditates.add(candidate);
+    }
   }
 
   public List<OIndexCandidate> getCanditates() {
@@ -105,16 +113,17 @@ public class OIndexCanditateAny implements OIndexCandidate {
   private Collection<OIndexCandidate> normalizeComposite(
       Collection<OIndexCandidate> canditates, OCommandContext ctx) {
     Set<String> indexes = new HashSet<>();
+    Map<String, Map<String, OIndexCandidate>> propCandidate = new HashMap<>();
     for (OIndexCandidate cand : canditates) {
-      if (!cand.isChain()) {
+      if (cand.isDirectIndex()) {
         indexes.add(cand.getName());
-      }
-    }
-    Map<String, OIndexCandidate> propCandidate = new HashMap<>();
-    for (OIndexCandidate cand : canditates) {
-      if (!cand.isChain()) {
         for (String prop : cand.properties()) {
-          propCandidate.put(prop, cand);
+          Map<String, OIndexCandidate> ic = propCandidate.get(prop);
+          if (ic == null) {
+            ic = new HashMap<>();
+            propCandidate.put(prop, ic);
+          }
+          ic.put(cand.getName(), cand);
         }
       }
     }
@@ -125,7 +134,11 @@ public class OIndexCanditateAny implements OIndexCandidate {
       List<String> propeties = new ArrayList<>();
       List<String> fields = index.getDefinition().getFields();
       for (String field : fields) {
-        OIndexCandidate fieldCand = propCandidate.get(field);
+        Map<String, OIndexCandidate> ic = propCandidate.get(field);
+        if (ic == null) {
+          break;
+        }
+        OIndexCandidate fieldCand = ic.get(indexName);
         if (fieldCand != null) {
           indexCandidates.add(fieldCand);
           for (String prop : fieldCand.properties()) {
@@ -239,6 +252,12 @@ public class OIndexCanditateAny implements OIndexCandidate {
   }
 
   @Override
+  public Optional<OIndexCandidate> finalize(OCommandContext ctx) {
+    // TODO: do scoring and select the index based on the score
+    return Optional.of(this.canditates.iterator().next());
+  }
+
+  @Override
   public List<PropertyValue> values() {
     List<PropertyValue> values = new ArrayList<>();
     for (OIndexCandidate c : canditates) {
@@ -263,5 +282,10 @@ public class OIndexCanditateAny implements OIndexCandidate {
       props.addAll(cand.properties());
     }
     return props;
+  }
+
+  @Override
+  public boolean isDirectIndex() {
+    return false;
   }
 }

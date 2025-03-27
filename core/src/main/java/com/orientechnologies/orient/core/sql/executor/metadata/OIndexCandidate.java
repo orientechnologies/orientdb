@@ -36,7 +36,7 @@ public interface OIndexCandidate {
 
   boolean fullySorted(List<String> properties, OCommandContext ctx);
 
-  default boolean isChain() {
-    return false;
+  default boolean isDirectIndex() {
+    return true;
   }
 }
