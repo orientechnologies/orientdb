@@ -1,11 +1,15 @@
 package com.orientechnologies.orient.core.sql.executor.metadata;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
+import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -253,8 +257,43 @@ public class OIndexCanditateAny implements OIndexCandidate {
 
   @Override
   public Optional<OIndexCandidate> finalize(OCommandContext ctx) {
-    // TODO: do scoring and select the index based on the score
-    return Optional.of(this.canditates.iterator().next());
+    if (this.canditates.size() > 1) {
+      Comparator<OIndexCandidate> comparator =
+          Comparator.comparingInt((x) -> x.properties().size());
+      comparator = comparator.reversed();
+      List<OIndexCandidate> candidates = this.canditates.stream().sorted(comparator).toList();
+      long firstSize = candidates.get(0).properties().size();
+      List<OIndexCandidate> newCandidate =
+          candidates.stream().filter((c) -> c.properties().size() == firstSize).toList();
+      if (newCandidate.size() > 1) {
+        return newCandidate.stream()
+            .map(x -> (OPair<Long, OIndexCandidate>) new OPair(this.cost(x, ctx), x))
+            .sorted()
+            .map((x) -> x.getValue())
+            .findFirst();
+      } else {
+        return Optional.of(newCandidate.iterator().next());
+      }
+    } else {
+      return Optional.of(this.canditates.iterator().next());
+    }
+  }
+
+  public long cost(OIndexCandidate candidate, OCommandContext ctx) {
+    OQueryStats stats = OQueryStats.get((ODatabaseDocumentInternal) ctx.getDatabase());
+
+    long val =
+        stats.getIndexStats(
+            candidate.getName(),
+            candidate.properties().size(),
+            candidate.getOperation() == Operation.Range,
+            false,
+            ctx.getDatabase());
+    if (val >= 0) {
+      return val;
+    } else {
+      return Long.MAX_VALUE;
+    }
   }
 
   @Override
