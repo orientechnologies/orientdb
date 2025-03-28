@@ -7,6 +7,10 @@ import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -411,13 +415,22 @@ public class OSuffixIdentifier extends SimpleNode {
 
   public OCollate getCollate(OResult currentRecord, OCommandContext ctx) {
     if (identifier != null && currentRecord != null) {
-      return currentRecord
-          .getRecord()
-          .map(x -> (OElement) x)
-          .flatMap(elem -> elem.getSchemaType())
-          .map(clazz -> clazz.getProperty(identifier.getStringValue()))
-          .map(prop -> prop.getCollate())
-          .orElse(null);
+      String clazz = currentRecord.getProperty("@class");
+      if (clazz != null && ctx.getDatabase() != null) {
+        OImmutableSchema schema =
+            ((OMetadataInternal) ctx.getDatabase().getMetadata()).getImmutableSchemaSnapshot();
+        OClass cl = schema.getClass(clazz);
+        if (cl == null) {
+          cl = schema.getView(clazz);
+        }
+        if (cl == null) {
+          return null;
+        }
+        OProperty prop = cl.getProperty(identifier.getStringValue());
+        if (prop != null) {
+          return prop.getCollate();
+        }
+      }
     }
     return null;
   }
