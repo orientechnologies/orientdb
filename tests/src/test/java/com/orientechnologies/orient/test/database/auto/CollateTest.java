@@ -311,7 +311,7 @@ public class CollateTest extends DocumentDBBaseTest {
     OClass clazz = schema.createClass("collateTestViaSQL");
 
     clazz.createProperty("csp", OType.STRING);
-    clazz.createProperty("cip", OType.STRING);
+    clazz.createProperty("cip", OType.STRING).setCollate(OCaseInsensitiveCollate.NAME);
 
     database
         .command(
