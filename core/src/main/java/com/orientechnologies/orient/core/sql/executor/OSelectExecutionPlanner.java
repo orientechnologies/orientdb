@@ -1937,32 +1937,12 @@ public class OSelectExecutionPlanner {
           filterIndexedFunctionsWithoutIndex(indexedFunctionConditions, info.target, ctx);
 
       if (indexedFunctionConditions == null || indexedFunctionConditions.size() == 0) {
-        IndexSearchDescriptor bestIndex = findBestIndexFor(ctx, clazz.getIndexes(), block, clazz);
-        if (bestIndex != null) {
-
-          FetchFromIndexStep step = new FetchFromIndexStep(bestIndex, true, ctx);
-
+        List<OExecutionStepInternal> result =
+            handleClassAsTargetWithIndex(clazz.getName(), filterClusters, info, ctx);
+        if (result != null) {
           OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
-          subPlan.chain(step);
-          int[] filterClusterIds = null;
-          if (filterClusters != null) {
-            filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
-          } else {
-            filterClusterIds = clazz.getPolymorphicClusterIds();
-          }
-          subPlan.chain(new GetValueFromIndexEntryStep(filterClusterIds));
-          if (bestIndex.requiresDistinctStep()) {
-            subPlan.chain(new DistinctExecutionStep(ctx));
-          }
-          if (!block.getSubBlocks().isEmpty()) {
-            if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
-              handleLet(subPlan, info);
-            }
-            subPlan.chain(
-                new FilterStep(
-                    createWhereFrom(block),
-                    this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1,
-                    this.info.isExclusiveLock()));
+          for (OExecutionStepInternal step : result) {
+            subPlan.chain(step);
           }
           resultSubPlans.add(subPlan);
         } else {
@@ -2305,9 +2285,6 @@ public class OSelectExecutionPlanner {
 
   private List<OExecutionStepInternal> handleClassAsTargetWithIndexNew(
       String targetClass, Set<String> filterClusters, QueryPlanningInfo info, OCommandContext ctx) {
-    if (info.flattenedWhereClause == null || info.flattenedWhereClause.size() == 0) {
-      return null;
-    }
 
     OSchema schema = getSchemaFromContext(ctx);
     OClass clazz = schema.getClass(targetClass);
