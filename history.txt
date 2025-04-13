@@ -27,9 +27,20 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.39 - (April, 15  2025)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3239---15-April-2025
+
+# Studio
+
+- Used new source for download demo databases
+
+# Core
+- Correct wrong usage of snapshot schema in query engine
+- Used monotonic time for token validation
 
 -----------------------------------------------------------------------------------------------------------------------------------
-VERSION 3.2.38 - (February, 20 2026)
+VERSION 3.2.38 - (February, 20 2025)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3238---20-February-2025
 
 # Core
