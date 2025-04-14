@@ -20,14 +20,12 @@
 
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -50,12 +48,12 @@ public class OClassIndexManager {
 
   public static void checkIndexesAfterCreate(
       ODocument document, ODatabaseDocumentInternal database) {
-    document = checkForLoading(document);
+    document = checkForLoading(database, document);
     processIndexOnCreate(database, document);
   }
 
   public static void reIndex(ODocument document, ODatabaseDocumentInternal database, OIndex index) {
-    document = checkForLoading(document);
+    document = checkForLoading(database, document);
     addIndexEntry(document, document.getIdentity(), index);
   }
 
@@ -69,7 +67,7 @@ public class OClassIndexManager {
 
   public static void checkIndexesAfterUpdate(
       ODocument iDocument, ODatabaseDocumentInternal database) {
-    iDocument = checkForLoading(iDocument);
+    iDocument = checkForLoading(database, iDocument);
     processIndexOnUpdate(database, iDocument);
   }
 
@@ -92,14 +90,6 @@ public class OClassIndexManager {
   public static void checkIndexesAfterDelete(
       ODocument iDocument, ODatabaseDocumentInternal database) {
     processIndexOnDelete(database, iDocument);
-  }
-
-  protected static void putInIndex(OIndex index, Object key, OIdentifiable value) {
-    index.put(key, value);
-  }
-
-  protected static void removeFromIndex(OIndex index, Object key, OIdentifiable value) {
-    index.remove(key, value);
   }
 
   private static void processCompositeIndexUpdate(
@@ -347,14 +337,12 @@ public class OClassIndexManager {
     return false;
   }
 
-  private static ODocument checkForLoading(final ODocument iRecord) {
+  private static ODocument checkForLoading(
+      ODatabaseDocumentInternal database, final ODocument iRecord) {
     if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-      try {
-        return (ODocument) iRecord.load();
-      } catch (final ORecordNotFoundException e) {
-        throw OException.wrapException(
-            new OIndexException("Error during loading of record with id " + iRecord.getIdentity()),
-            e);
+      ODocument loaded = database.load(iRecord);
+      if (loaded != null) {
+        return loaded;
       }
     }
     return iRecord;
