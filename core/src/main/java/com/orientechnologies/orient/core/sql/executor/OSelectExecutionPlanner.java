@@ -749,7 +749,6 @@ public class OSelectExecutionPlanner {
         && info.globalLetClause == null
         && info.perRecordLetClause == null
         && info.whereClause == null
-        && info.flattenedWhereClause == null
         && info.groupBy == null
         && info.orderBy == null
         && info.unwind == null
@@ -844,11 +843,6 @@ public class OSelectExecutionPlanner {
       info.expand = true;
       info.projection = info.projection.getExpandContent();
     }
-    if (info.whereClause != null) {
-      info.flattenedWhereClause = info.whereClause.flatten();
-      // this helps index optimization
-      info.flattenedWhereClause = moveFlattededEqualitiesLeft(info.flattenedWhereClause);
-    }
 
     splitProjectionsForGroupBy(info, ctx);
     addOrderByProjections(info);
@@ -914,42 +908,6 @@ public class OSelectExecutionPlanner {
       }
     }
     return false;
-  }
-
-  /**
-   * re-writes a list of flat AND conditions, moving left all the equality operations
-   *
-   * @param flattenedWhereClause
-   * @return
-   */
-  private static List<OAndBlock> moveFlattededEqualitiesLeft(List<OAndBlock> flattenedWhereClause) {
-    if (flattenedWhereClause == null) {
-      return null;
-    }
-
-    List<OAndBlock> result = new ArrayList<>();
-    for (OAndBlock block : flattenedWhereClause) {
-      List<OBooleanExpression> equalityExpressions = new ArrayList<>();
-      List<OBooleanExpression> nonEqualityExpressions = new ArrayList<>();
-      OAndBlock newBlock = block.copy();
-      for (OBooleanExpression exp : newBlock.getSubBlocks()) {
-        if (exp instanceof OBinaryCondition) {
-          if (((OBinaryCondition) exp).getOperator() instanceof OEqualsCompareOperator) {
-            equalityExpressions.add(exp);
-          } else {
-            nonEqualityExpressions.add(exp);
-          }
-        } else {
-          nonEqualityExpressions.add(exp);
-        }
-      }
-      OAndBlock newAnd = new OAndBlock(-1);
-      newAnd.getSubBlocks().addAll(equalityExpressions);
-      newAnd.getSubBlocks().addAll(nonEqualityExpressions);
-      result.add(newAnd);
-    }
-
-    return result;
   }
 
   /** creates additional projections for ORDER BY */
@@ -1936,7 +1894,6 @@ public class OSelectExecutionPlanner {
       }
       // WHERE condition already applied
       info.whereClause = null;
-      info.flattenedWhereClause = null;
       return true;
     } else {
       return false;
@@ -2060,7 +2017,6 @@ public class OSelectExecutionPlanner {
     if (result != null) {
       result.stream().forEach(x -> plan.chain(x));
       info.whereClause = null;
-      info.flattenedWhereClause = null;
       return true;
     }
     OSchema schema = getSchemaFromContext(ctx);

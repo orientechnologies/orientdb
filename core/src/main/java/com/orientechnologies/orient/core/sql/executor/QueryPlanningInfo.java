@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.orient.core.storage.OStorage;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,7 +37,6 @@ public class QueryPlanningInfo {
 
   protected OFromClause target;
   protected OWhereClause whereClause;
-  protected List<OAndBlock> flattenedWhereClause;
   protected OGroupBy groupBy;
   protected OOrderBy orderBy;
   protected OUnwind unwind;
@@ -70,7 +68,6 @@ public class QueryPlanningInfo {
     result.distributedPlanCreated = this.distributedPlanCreated;
     result.target = this.target;
     result.whereClause = this.whereClause;
-    result.flattenedWhereClause = this.flattenedWhereClause;
     result.groupBy = this.groupBy;
     result.orderBy = this.orderBy;
     result.unwind = this.unwind;

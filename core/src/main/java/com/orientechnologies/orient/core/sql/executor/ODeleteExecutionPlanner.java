@@ -71,10 +71,10 @@ public class ODeleteExecutionPlanner {
     if (index == null) {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }
-    List<OAndBlock> flattenedWhereClause = whereClause == null ? null : whereClause.flatten();
 
     switch (indexIdentifier.getType()) {
       case INDEX:
+        List<OAndBlock> flattenedWhereClause = whereClause == null ? null : whereClause.flatten();
         OIndexAbstract.manualIndexesWarning();
 
         OBooleanExpression keyCondition = null;
