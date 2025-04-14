@@ -102,7 +102,7 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
 
     $.ajax({
       type: "GET",
-      url: "https://www.orientdb.com/public-databases/3.0.x/config.json",
+      url: "https://orientdb.dev/public-databases/4.0.x/config.json",
       crossDomain: true
     }).done(handleResponse).fail(function () {
       var noti = "An error occurred when trying to reach public databases repository. Please check your connection.";
