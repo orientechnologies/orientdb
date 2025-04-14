@@ -3,7 +3,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
@@ -119,15 +118,6 @@ public class OIsNullCondition extends OBooleanExpression {
   public boolean refersToParent() {
     if (expression != null && expression.refersToParent()) {
       return true;
-    }
-    return false;
-  }
-
-  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
-    if (expression.isBaseIdentifier()) {
-      if (info.getField().equals(expression.getDefaultAlias().getStringValue())) {
-        return info.isSupportNull();
-      }
     }
     return false;
   }

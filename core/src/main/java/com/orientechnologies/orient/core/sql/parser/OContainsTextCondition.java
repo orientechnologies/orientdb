@@ -236,17 +236,6 @@ public class OContainsTextCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean isFullTextIndexAware(String indexField) {
-    if (left.isBaseIdentifier()) {
-      String fieldName = left.getDefaultAlias().getStringValue();
-      if (indexField.equals(fieldName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
   public OExpression resolveKeyFrom(OBinaryCondition additional) {
     if (getRight() != null) {
       return getRight();

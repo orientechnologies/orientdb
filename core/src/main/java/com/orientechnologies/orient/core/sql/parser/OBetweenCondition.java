@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.IndexSearchDescriptor;
 import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
-import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
@@ -146,21 +145,6 @@ public class OBetweenCondition extends OBooleanExpression {
   @Override
   public boolean supportsBasicCalculation() {
     return true;
-  }
-
-  @Override
-  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
-    if (info.allowsRange()) {
-      if (first.isBaseIdentifier()) {
-        if (info.getField().equals(first.getDefaultAlias().getStringValue())) {
-          if (second != null && third != null) {
-            return second.isEarlyCalculated(info.getCtx())
-                && third.isEarlyCalculated(info.getCtx());
-          }
-        }
-      }
-    }
-    return false;
   }
 
   public OExpression resolveKeyFrom(OBinaryCondition additional) {

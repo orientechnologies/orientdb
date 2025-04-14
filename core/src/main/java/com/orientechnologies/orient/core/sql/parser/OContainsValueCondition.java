@@ -3,7 +3,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
@@ -301,20 +300,6 @@ public class OContainsValueCondition extends OBooleanExpression {
       keys.add(newValue);
     }
     return keys;
-  }
-
-  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
-    if (left.isBaseIdentifier()) {
-      if (info.getField().equals(left.getDefaultAlias().getStringValue())) {
-        if (expression != null
-            && expression.isEarlyCalculated(info.getCtx())
-            && info.isMap()
-            && info.isIndexByValue()) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @Override

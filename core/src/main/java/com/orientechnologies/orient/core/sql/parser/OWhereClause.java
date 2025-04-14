@@ -2,7 +2,6 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -171,80 +170,6 @@ public class OWhereClause extends SimpleNode {
       }
     }
     return Long.MAX_VALUE;
-  }
-
-  public Iterable fetchFromIndexes(OClass oClass, OCommandContext ctx) {
-
-    List<OAndBlock> flattenedConditions = flatten();
-    if (flattenedConditions == null || flattenedConditions.size() == 0) {
-      return null;
-    }
-    Set<OIndex> indexes = oClass.getIndexes();
-    List<OIndex> bestIndexes = new ArrayList<>();
-    List<Map<String, Object>> indexConditions = new ArrayList<>();
-    for (OAndBlock condition : flattenedConditions) {
-      Map<String, Object> conditions = getEqualityOperations(condition, ctx);
-      long conditionEstimation = Long.MAX_VALUE;
-      OIndex bestIndex = null;
-      Map<String, Object> bestCondition = null;
-
-      for (OIndex index : indexes) {
-        List<String> indexedFields = index.getDefinition().getFields();
-        int nMatchingKeys = 0;
-        for (String indexedField : indexedFields) {
-          if (conditions.containsKey(indexedField)) {
-            nMatchingKeys++;
-          } else {
-            break;
-          }
-        }
-        if (nMatchingKeys > 0) {
-          long newCount = estimateFromIndex(index, conditions, nMatchingKeys);
-          if (newCount >= 0 && newCount <= conditionEstimation) {
-            conditionEstimation = newCount;
-            bestIndex = index;
-            bestCondition = conditions;
-          }
-        }
-      }
-      if (bestIndex == null) {
-        return null;
-      }
-      bestIndexes.add(bestIndex);
-      indexConditions.add(bestCondition);
-    }
-    OMultiCollectionIterator result = new OMultiCollectionIterator();
-
-    for (int i = 0; i < bestIndexes.size(); i++) {
-      OIndex index = bestIndexes.get(i);
-      Map<String, Object> condition = indexConditions.get(i);
-      result.add(fetchFromIndex(index, indexConditions.get(i)));
-    }
-    return result;
-  }
-
-  private static Iterable fetchFromIndex(OIndex index, Map<String, Object> conditions) {
-    OIndexDefinition definition = index.getDefinition();
-    List<String> definitionFields = definition.getFields();
-    Object key = null;
-    if (definition instanceof OPropertyIndexDefinition) {
-      key = convert(conditions.get(definitionFields.get(0)), definition.getTypes()[0]);
-    } else if (definition instanceof OCompositeIndexDefinition) {
-      key = new OCompositeKey();
-      for (int i = 0; i < definitionFields.size(); i++) {
-        String keyName = definitionFields.get(i);
-        if (!conditions.containsKey(keyName)) {
-          break;
-        }
-        Object keyValue = convert(conditions.get(keyName), definition.getTypes()[i]);
-        ((OCompositeKey) key).addKey(conditions.get(keyName));
-      }
-    }
-    if (key != null) {
-      final Object iteratorKey = key;
-      return () -> index.getInternal().getRids(iteratorKey).iterator();
-    }
-    return null;
   }
 
   private static Object convert(Object o, OType oType) {

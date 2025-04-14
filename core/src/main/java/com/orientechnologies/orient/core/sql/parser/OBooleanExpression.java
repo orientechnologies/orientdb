@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
@@ -289,20 +288,8 @@ public abstract class OBooleanExpression extends SimpleNode {
     return false;
   }
 
-  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
-    return false;
-  }
-
   public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
     return Optional.empty();
-  }
-
-  public boolean createRangeWith(OBooleanExpression match) {
-    return false;
-  }
-
-  public boolean isFullTextIndexAware(String indexField) {
-    return false;
   }
 
   public OExpression resolveKeyFrom(OBinaryCondition additional) {

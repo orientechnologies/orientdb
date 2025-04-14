@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
-import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -383,19 +382,6 @@ public class OInCondition extends OBooleanExpression {
 
   public void setRightMathExpression(OMathExpression rightMathExpression) {
     this.rightMathExpression = rightMathExpression;
-  }
-
-  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
-    if (left.isBaseIdentifier()) {
-      if (info.getField().equals(left.getDefaultAlias().getStringValue())) {
-        if (rightMathExpression != null) {
-          return rightMathExpression.isEarlyCalculated(info.getCtx());
-        } else if (rightParam != null) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {

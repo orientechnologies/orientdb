@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -548,50 +547,6 @@ public class OBinaryCondition extends OBooleanExpression {
       keys.add(operator.createIndexValueMap(key).get());
     }
     return keys;
-  }
-
-  public boolean isIndexAware(OIndexSearchInfo info, OCommandContext ctx) {
-    if (left.isBaseIdentifier()) {
-      if (info.getField().equals(left.getDefaultAlias().getStringValue())) {
-        if (right.isEarlyCalculated(info.getCtx())) {
-          if (operator instanceof OEqualsCompareOperator) {
-            Object vl = this.right.execute((OResult) null, ctx);
-            if (vl instanceof Collection<?>) {
-              return !((Collection) vl).isEmpty();
-            }
-            return true;
-          } else if (operator instanceof OContainsKeyOperator
-              && info.isMap()
-              && info.isIndexByKey()) {
-            return true;
-          } else if (info.allowsRange() && operator.isRange()) {
-            return true;
-          }
-          return false;
-        }
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public boolean createRangeWith(OBooleanExpression match) {
-    if (!(match instanceof OBinaryCondition)) {
-      return false;
-    }
-    OBinaryCondition metchingCondition = (OBinaryCondition) match;
-    if (!metchingCondition.getLeft().equals(this.getLeft())) {
-      return false;
-    }
-    OBinaryCompareOperator leftOperator = metchingCondition.getOperator();
-    OBinaryCompareOperator rightOperator = this.getOperator();
-    if (leftOperator instanceof OGeOperator || leftOperator instanceof OGtOperator) {
-      return rightOperator instanceof OLeOperator || rightOperator instanceof OLtOperator;
-    }
-    if (leftOperator instanceof OLeOperator || leftOperator instanceof OLtOperator) {
-      return rightOperator instanceof OGeOperator || rightOperator instanceof OGtOperator;
-    }
-    return false;
   }
 
   @Override
