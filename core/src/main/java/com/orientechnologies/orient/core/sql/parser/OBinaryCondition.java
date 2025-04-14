@@ -675,5 +675,23 @@ public class OBinaryCondition extends OBooleanExpression {
     acquiredStreams.add(stream);
     return acquiredStreams;
   }
+
+  @Override
+  public OBooleanExpression getIndexKeyCondition() {
+    if ("key".equals(getLeft().toString())) {
+      return this;
+    } else {
+      return null;
+    }
+  }
+
+  @Override
+  public OBooleanExpression getIndexRidCondition() {
+    if ("rid".equals(getLeft().toString())) {
+      return this;
+    } else {
+      return null;
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

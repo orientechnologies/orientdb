@@ -332,4 +332,12 @@ public abstract class OBooleanExpression extends SimpleNode {
   public int conditionsCount() {
     return 1;
   }
+
+  public OBooleanExpression getIndexKeyCondition() {
+    return null;
+  }
+
+  public OBooleanExpression getIndexRidCondition() {
+    return null;
+  }
 }

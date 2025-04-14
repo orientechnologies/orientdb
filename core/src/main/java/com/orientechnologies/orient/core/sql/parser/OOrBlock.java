@@ -335,5 +335,25 @@ public class OOrBlock extends OBooleanExpression {
     }
     return count;
   }
+
+  @Override
+  public OBooleanExpression getIndexKeyCondition() {
+    if (getSubBlocks().size() == 1) {
+      for (OBooleanExpression exp : getSubBlocks()) {
+        return exp.getIndexKeyCondition();
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public OBooleanExpression getIndexRidCondition() {
+    if (getSubBlocks().size() == 1) {
+      for (OBooleanExpression exp : getSubBlocks()) {
+        return exp.getIndexRidCondition();
+      }
+    }
+    return null;
+  }
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

@@ -411,5 +411,25 @@ public class OAndBlock extends OBooleanExpression {
     }
     return count;
   }
+
+  @Override
+  public OBooleanExpression getIndexKeyCondition() {
+    if (getSubBlocks().size() == 1) {
+      for (OBooleanExpression exp : getSubBlocks()) {
+        return exp.getIndexKeyCondition();
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public OBooleanExpression getIndexRidCondition() {
+    if (getSubBlocks().size() == 1) {
+      for (OBooleanExpression exp : getSubBlocks()) {
+        return exp.getIndexRidCondition();
+      }
+    }
+    return null;
+  }
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

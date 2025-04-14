@@ -1538,35 +1538,10 @@ public class OSelectExecutionPlanner {
             throw new OCommandExecutionException(
                 "Index " + indexName + " does not allow iteration without a condition");
           }
-        } else if (info.whereClause.conditionsCount() > 2) {
-          throw new OCommandExecutionException(
-              "Index queries with this kind of condition are not supported yet: "
-                  + info.whereClause);
         } else {
-          OAndBlock andBlock = info.flattenedWhereClause.get(0);
-          if (andBlock.getSubBlocks().size() == 1) {
-
-            info.whereClause =
-                null; // The WHERE clause won't be used anymore, the index does all the filtering
-            info.flattenedWhereClause = null;
-            keyCondition = getKeyCondition(andBlock);
-            if (keyCondition == null) {
-              throw new OCommandExecutionException(
-                  "Index queries with this kind of condition are not supported yet: "
-                      + info.whereClause);
-            }
-          } else if (andBlock.getSubBlocks().size() == 2) {
-            info.whereClause =
-                null; // The WHERE clause won't be used anymore, the index does all the filtering
-            info.flattenedWhereClause = null;
-            keyCondition = getKeyCondition(andBlock);
-            ridCondition = getRidCondition(andBlock);
-            if (keyCondition == null || ridCondition == null) {
-              throw new OCommandExecutionException(
-                  "Index queries with this kind of condition are not supported yet: "
-                      + info.whereClause);
-            }
-          } else {
+          keyCondition = info.whereClause.getIndexKeyCondition();
+          ridCondition = info.whereClause.getIndexRidCondition();
+          if (keyCondition == null) {
             throw new OCommandExecutionException(
                 "Index queries with this kind of condition are not supported yet: "
                     + info.whereClause);
@@ -2298,7 +2273,7 @@ public class OSelectExecutionPlanner {
 
   private List<OExecutionStepInternal> handleClassAsTargetWithIndex(
       String targetClass, Set<String> filterClusters, QueryPlanningInfo info, OCommandContext ctx) {
-    if (info.flattenedWhereClause == null || info.flattenedWhereClause.size() == 0) {
+    if (info.whereClause == null || info.whereClause.isEmpty()) {
       return null;
     }
 
