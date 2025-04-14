@@ -1292,15 +1292,17 @@ public class OSelectExecutionPlanner {
           handleVariableAsTarget(shardedPlan.getValue(), info);
         } else {
           Set<String> filterClusters = info.serverToClusters.get(shardedPlan.getKey());
-
-          OAndBlock ridRangeConditions = extractRidRanges(info.flattenedWhereClause, ctx);
-          if (ridRangeConditions != null && !ridRangeConditions.isEmpty()) {
-            info.ridRangeConditions = ridRangeConditions;
-            filterClusters =
-                filterClusters.stream()
-                    .filter(
-                        x -> clusterMatchesRidRange(x, ridRangeConditions, ctx.getDatabase(), ctx))
-                    .collect(Collectors.toSet());
+          if (info.whereClause != null) {
+            OAndBlock ridRangeConditions = info.whereClause.extractRidRanges(ctx);
+            if (ridRangeConditions != null && !ridRangeConditions.isEmpty()) {
+              info.ridRangeConditions = ridRangeConditions;
+              filterClusters =
+                  filterClusters.stream()
+                      .filter(
+                          x ->
+                              clusterMatchesRidRange(x, ridRangeConditions, ctx.getDatabase(), ctx))
+                      .collect(Collectors.toSet());
+            }
           }
 
           handleClassAsTarget(shardedPlan.getValue(), filterClusters, info, ctx);
@@ -1415,40 +1417,6 @@ public class OSelectExecutionPlanner {
       }
     }
     return true;
-  }
-
-  private OAndBlock extractRidRanges(List<OAndBlock> flattenedWhereClause, OCommandContext ctx) {
-    OAndBlock result = new OAndBlock(-1);
-
-    if (flattenedWhereClause == null || flattenedWhereClause.size() != 1) {
-      return result;
-    }
-    // TODO optimization: merge multiple conditions
-
-    for (OBooleanExpression booleanExpression : flattenedWhereClause.get(0).getSubBlocks()) {
-      if (isRidRange(booleanExpression, ctx)) {
-        result.getSubBlocks().add(booleanExpression.copy());
-      }
-    }
-
-    return result;
-  }
-
-  private boolean isRidRange(OBooleanExpression booleanExpression, OCommandContext ctx) {
-    if (booleanExpression instanceof OBinaryCondition) {
-      OBinaryCondition cond = ((OBinaryCondition) booleanExpression);
-      OBinaryCompareOperator operator = cond.getOperator();
-      if (operator.isRange() && cond.getLeft().toString().equalsIgnoreCase("@rid")) {
-        Object obj;
-        if (cond.getRight().getRid() != null) {
-          obj = cond.getRight().getRid().toRecordId((OResult) null, ctx);
-        } else {
-          obj = cond.getRight().execute((OResult) null, ctx);
-        }
-        return obj instanceof OIdentifiable;
-      }
-    }
-    return false;
   }
 
   private void handleInputParamAsTarget(
@@ -2013,7 +1981,7 @@ public class OSelectExecutionPlanner {
               this.info.whereClause,
               this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1,
               this.info.isExclusiveLock()));
-    
+
       indexedFunctionsFound = true;
     }
 

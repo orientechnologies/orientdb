@@ -387,5 +387,9 @@ public class OWhereClause extends SimpleNode {
   public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
     return this.baseExpression.findIndex(info, ctx);
   }
+
+  public OAndBlock extractRidRanges(OCommandContext ctx) {
+    return this.baseExpression.extractRidRanges(ctx);
+  }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

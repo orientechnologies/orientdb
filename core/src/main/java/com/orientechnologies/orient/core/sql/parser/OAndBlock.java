@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
@@ -367,6 +368,39 @@ public class OAndBlock extends OBooleanExpression {
         }
       }
     }
+  }
+
+  @Override
+  public OAndBlock extractRidRanges(OCommandContext ctx) {
+    OAndBlock result = new OAndBlock(-1);
+
+    for (OBooleanExpression booleanExpression : getSubBlocks()) {
+      if (booleanExpression instanceof ONotBlock) {
+        booleanExpression = ((ONotBlock) booleanExpression).getSub();
+      }
+      if (isRidRange(booleanExpression, ctx)) {
+        result.getSubBlocks().add(booleanExpression.copy());
+      }
+    }
+
+    return result;
+  }
+
+  private boolean isRidRange(OBooleanExpression booleanExpression, OCommandContext ctx) {
+    if (booleanExpression instanceof OBinaryCondition) {
+      OBinaryCondition cond = ((OBinaryCondition) booleanExpression);
+      OBinaryCompareOperator operator = cond.getOperator();
+      if (operator.isRange() && cond.getLeft().toString().equalsIgnoreCase("@rid")) {
+        Object obj;
+        if (cond.getRight().getRid() != null) {
+          obj = cond.getRight().getRid().toRecordId((OResult) null, ctx);
+        } else {
+          obj = cond.getRight().execute((OResult) null, ctx);
+        }
+        return obj instanceof OIdentifiable;
+      }
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

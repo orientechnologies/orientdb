@@ -318,5 +318,13 @@ public class OOrBlock extends OBooleanExpression {
               + ")");
     }
   }
+
+  @Override
+  public OAndBlock extractRidRanges(OCommandContext ctx) {
+    if (getSubBlocks().size() == 1) {
+      return getSubBlocks().get(0).extractRidRanges(ctx);
+    }
+    return super.extractRidRanges(ctx);
+  }
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

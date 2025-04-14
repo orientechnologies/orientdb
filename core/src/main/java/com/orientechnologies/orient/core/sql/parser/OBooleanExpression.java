@@ -324,4 +324,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   public Optional<Map<Object, Object>> createIndexValueMap(Object object) {
     return Optional.empty();
   }
+
+  public OAndBlock extractRidRanges(OCommandContext ctx) {
+    return new OAndBlock(-1);
+  }
 }
