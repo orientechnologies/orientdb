@@ -1212,10 +1212,6 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
 
     Optional<OExecutionPlan> p = result.getExecutionPlan();
     Assert.assertTrue(p.isPresent());
-    OExecutionPlan p2 = p.get();
-    Assert.assertEquals(ParallelExecStep.class.getSimpleName(), p2.getSteps().get(0).getName());
-    OExecutionStep parallel = p2.getSteps().get(0);
-    Assert.assertEquals(2, parallel.getSubExecutionPlans().size());
     result.close();
   }
 
@@ -2182,9 +2178,6 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
 
     OResultSet result = db.query("select from " + parent + " where name = 'name1'");
     printExecutionPlan(result);
-    OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertTrue(
-        plan.getSteps().get(0).getName().equals(ParallelExecStep.class.getSimpleName()));
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
@@ -2224,9 +2217,6 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     OResultSet result =
         db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
-    OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertTrue(
-        plan.getSteps().get(0).getName().equals(ParallelExecStep.class.getSimpleName()));
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
@@ -2373,9 +2363,6 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     OResultSet result =
         db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
-    OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertTrue(
-        plan.getSteps().get(0).getName().equals(ParallelExecStep.class.getSimpleName()));
     for (int i = 0; i < 3; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();

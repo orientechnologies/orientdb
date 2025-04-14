@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -13,13 +12,10 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.sql.executor.metadata.OClassIndexFinder;
@@ -49,7 +45,6 @@ import com.orientechnologies.orient.core.sql.parser.OLetClause;
 import com.orientechnologies.orient.core.sql.parser.OLetItem;
 import com.orientechnologies.orient.core.sql.parser.OLtOperator;
 import com.orientechnologies.orient.core.sql.parser.OMetadataIdentifier;
-import com.orientechnologies.orient.core.sql.parser.OOrBlock;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.parser.OProjection;
@@ -64,7 +59,6 @@ import com.orientechnologies.orient.core.sql.parser.SubQueryCollector;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -72,7 +66,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -1581,32 +1574,6 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  private OBooleanExpression getKeyCondition(OAndBlock andBlock) {
-    for (OBooleanExpression exp : andBlock.getSubBlocks()) {
-      String str = exp.toString();
-      if (str.length() < 5) {
-        continue;
-      }
-      if (str.substring(0, 4).equalsIgnoreCase("key ")) {
-        return exp;
-      }
-    }
-    return null;
-  }
-
-  private OBooleanExpression getRidCondition(OAndBlock andBlock) {
-    for (OBooleanExpression exp : andBlock.getSubBlocks()) {
-      String str = exp.toString();
-      if (str.length() < 5) {
-        continue;
-      }
-      if (str.substring(0, 4).equalsIgnoreCase("rid ")) {
-        return exp;
-      }
-    }
-    return null;
-  }
-
   private void handleMetadataAsTarget(
       OSelectExecutionPlan plan, OMetadataIdentifier metadata, OCommandContext ctx) {
     ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
@@ -1976,18 +1943,6 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  private boolean refersToLet(List<OBooleanExpression> subBlocks) {
-    if (subBlocks == null) {
-      return false;
-    }
-    for (OBooleanExpression exp : subBlocks) {
-      if (exp.toString().startsWith("$")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private List<OBinaryCondition> filterIndexedFunctionsWithoutIndex(
       List<OBinaryCondition> indexedFunctionConditions,
       OFromClause fromClause,
@@ -2204,9 +2159,11 @@ public class OSelectExecutionPlanner {
     return result.size() == 0 ? null : result;
   }
 
-  private List<OExecutionStepInternal> handleClassAsTargetWithIndexNew(
+  private List<OExecutionStepInternal> handleClassAsTargetWithIndex(
       String targetClass, Set<String> filterClusters, QueryPlanningInfo info, OCommandContext ctx) {
-
+    if (info.whereClause == null || info.whereClause.isEmpty()) {
+      return null;
+    }
     OSchema schema = getSchemaFromContext(ctx);
     OClass clazz = schema.getClass(targetClass);
     if (clazz == null) {
@@ -2232,11 +2189,11 @@ public class OSelectExecutionPlanner {
     OIndexCandidate candidate = found.get();
 
     List<OExecutionStepInternal> result = null;
-    result = executionStepFromIndexesNew(filterClusters, clazz, info, ctx, candidate);
+    result = executionStepFromIndexes(filterClusters, clazz, info, ctx, candidate);
     return result;
   }
 
-  private List<OExecutionStepInternal> executionStepFromIndexesNew(
+  private List<OExecutionStepInternal> executionStepFromIndexes(
       Set<String> filterClusters,
       OClass clazz,
       QueryPlanningInfo info,
@@ -2271,97 +2228,6 @@ public class OSelectExecutionPlanner {
     return result;
   }
 
-  private List<OExecutionStepInternal> handleClassAsTargetWithIndex(
-      String targetClass, Set<String> filterClusters, QueryPlanningInfo info, OCommandContext ctx) {
-    if (info.whereClause == null || info.whereClause.isEmpty()) {
-      return null;
-    }
-
-    OClass clazz = getSchemaFromContext(ctx).getClass(targetClass);
-    if (clazz == null) {
-      clazz = getSchemaFromContext(ctx).getView(targetClass);
-    }
-    if (clazz == null) {
-      throw new OCommandExecutionException("Cannot find class " + targetClass);
-    }
-
-    Set<OIndex> indexes = clazz.getIndexes();
-
-    final OClass c = clazz;
-    List<IndexSearchDescriptor> indexSearchDescriptors =
-        info.flattenedWhereClause.stream()
-            .map(x -> findBestIndexFor(ctx, indexes, x, c))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-    if (indexSearchDescriptors.size() != info.flattenedWhereClause.size()) {
-      return null; // some blocks could not be managed with an index
-    }
-
-    List<IndexSearchDescriptor> optimumIndexSearchDescriptors =
-        commonFactor(indexSearchDescriptors);
-
-    List<OExecutionStepInternal> result = null;
-    result =
-        executionStepFromIndexes(filterClusters, clazz, info, ctx, optimumIndexSearchDescriptors);
-    return result;
-  }
-
-  private List<OExecutionStepInternal> executionStepFromIndexes(
-      Set<String> filterClusters,
-      OClass clazz,
-      QueryPlanningInfo info,
-      OCommandContext ctx,
-      List<IndexSearchDescriptor> optimumIndexSearchDescriptors) {
-    List<OExecutionStepInternal> result;
-    if (optimumIndexSearchDescriptors.size() == 1) {
-      IndexSearchDescriptor desc = optimumIndexSearchDescriptors.get(0);
-      result = new ArrayList<>();
-      Boolean orderAsc = getOrderDirection(info);
-      result.add(new FetchFromIndexStep(desc, !Boolean.FALSE.equals(orderAsc), ctx));
-      int[] filterClusterIds = null;
-      if (filterClusters != null) {
-        filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);
-      } else {
-        filterClusterIds = clazz.getPolymorphicClusterIds();
-      }
-      result.add(new GetValueFromIndexEntryStep(filterClusterIds));
-      if (desc.requiresDistinctStep()) {
-        result.add(new DistinctExecutionStep(ctx));
-      }
-      if (orderAsc != null
-          && info.orderBy != null
-          && fullySorted(info.orderBy, desc)
-          && info.serverToClusters.size() == 1) {
-        info.orderApplied = true;
-      }
-      if (desc.getRemainingCondition() != null && !desc.getRemainingCondition().isEmpty()) {
-        if ((info.perRecordLetClause != null
-            && refersToLet(Collections.singletonList(desc.getRemainingCondition())))) {
-          OSelectExecutionPlan stubPlan = new OSelectExecutionPlan();
-          boolean prevCreatedDist = info.distributedPlanCreated;
-          info.distributedPlanCreated = true; // little hack, check this!!!
-          handleLet(stubPlan, info);
-          for (OExecutionStepInternal step : stubPlan.getSteps()) {
-            result.add((OExecutionStepInternal) step);
-          }
-          info.distributedPlanCreated = prevCreatedDist;
-        }
-        result.add(
-            new FilterStep(
-                createWhereFrom(desc.getRemainingCondition()),
-                this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1,
-                this.info.isExclusiveLock()));
-      }
-    } else {
-      result = new ArrayList<>();
-      result.add(createParallelIndexFetch(optimumIndexSearchDescriptors, filterClusters, ctx));
-      if (optimumIndexSearchDescriptors.size() > 1) {
-        result.add(new DistinctExecutionStep(ctx));
-      }
-    }
-    return result;
-  }
-
   private static OSchema getSchemaFromContext(OCommandContext ctx) {
     return ((OMetadataInternal) ctx.getDatabase().getMetadata()).getImmutableSchemaSnapshot();
   }
@@ -2371,13 +2237,6 @@ public class OSelectExecutionPlanner {
       return false;
     }
     return desc.fullySorted(orderBy.getProperties(), ctx);
-  }
-
-  private boolean fullySorted(OOrderBy orderBy, IndexSearchDescriptor desc) {
-    if (orderBy.ordersWithCollate() || !orderBy.ordersSameDirection()) {
-      return false;
-    }
-    return desc.fullySorted(orderBy.getProperties());
   }
 
   /**
@@ -2401,385 +2260,6 @@ public class OSelectExecutionPlanner {
       }
     }
     return result == null || result.equals(OOrderByItem.ASC);
-  }
-
-  private OExecutionStepInternal createParallelIndexFetch(
-      List<IndexSearchDescriptor> indexSearchDescriptors,
-      Set<String> filterClusters,
-      OCommandContext ctx) {
-    List<OInternalExecutionPlan> subPlans = new ArrayList<>();
-    for (IndexSearchDescriptor desc : indexSearchDescriptors) {
-      OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
-      subPlan.chain(new FetchFromIndexStep(desc, true, ctx));
-      int[] filterClusterIds = null;
-      if (filterClusters != null) {
-        filterClusterIds =
-            ((ODatabaseDocumentInternal) ctx.getDatabase()).getClustersIds(filterClusters);
-      }
-      subPlan.chain(new GetValueFromIndexEntryStep(filterClusterIds));
-      if (desc.requiresDistinctStep()) {
-        subPlan.chain(new DistinctExecutionStep(ctx));
-      }
-      if (desc.getRemainingCondition() != null && !desc.getRemainingCondition().isEmpty()) {
-        subPlan.chain(
-            new FilterStep(
-                createWhereFrom(desc.getRemainingCondition()),
-                this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1,
-                this.info.isExclusiveLock()));
-      }
-      subPlans.add(subPlan);
-    }
-    return new ParallelExecStep(subPlans);
-  }
-
-  private OWhereClause createWhereFrom(OBooleanExpression remainingCondition) {
-    OWhereClause result = new OWhereClause(-1);
-    result.setBaseExpression(remainingCondition);
-    return result;
-  }
-
-  /**
-   * given a flat AND block and a set of indexes, returns the best index to be used to process it,
-   * with the complete description on how to use it
-   *
-   * @param ctx
-   * @param indexes
-   * @param block
-   * @return
-   */
-  private IndexSearchDescriptor findBestIndexFor(
-      OCommandContext ctx, Set<OIndex> indexes, OAndBlock block, OClass clazz) {
-    // get all valid index descriptors
-    List<IndexSearchDescriptor> descriptors =
-        indexes.stream()
-            .filter(x -> x.getInternal().canBeUsedInEqualityOperators())
-            .map(index -> buildIndexSearchDescriptor(ctx, index, block, clazz))
-            .filter(Objects::nonNull)
-            .filter(x -> x.getKeyCondition() != null)
-            .filter(x -> x.blockCount() > 0)
-            .collect(Collectors.toList());
-
-    List<IndexSearchDescriptor> fullTextIndexDescriptors =
-        indexes.stream()
-            .filter(idx -> idx.getType().equalsIgnoreCase("FULLTEXT"))
-            .filter(idx -> !idx.getAlgorithm().equalsIgnoreCase("LUCENE"))
-            .map(idx -> buildIndexSearchDescriptorForFulltext(ctx, idx, block, clazz))
-            .filter(Objects::nonNull)
-            .filter(x -> x.getKeyCondition() != null)
-            .filter(x -> x.blockCount() > 0)
-            .collect(Collectors.toList());
-
-    descriptors.addAll(fullTextIndexDescriptors);
-
-    descriptors = removeGenericIndexes(descriptors, clazz);
-
-    // remove the redundant descriptors (eg. if I have one on [a] and one on [a, b], the first one
-    // is redundant, just discard it)
-    descriptors = removePrefixIndexes(descriptors);
-
-    // sort by cost
-    List<OPair<Integer, IndexSearchDescriptor>> sortedDescriptors =
-        descriptors.stream()
-            .map(x -> (OPair<Integer, IndexSearchDescriptor>) new OPair(x.cost(ctx), x))
-            .sorted()
-            .collect(Collectors.toList());
-
-    // get only the descriptors with the lowest cost
-    if (sortedDescriptors.isEmpty()) {
-      descriptors = Collections.emptyList();
-    } else {
-      descriptors =
-          sortedDescriptors.stream()
-              .filter(x -> x.key.equals(sortedDescriptors.get(0).key))
-              .map(x -> x.value)
-              .collect(Collectors.toList());
-    }
-
-    // sort remaining by the number of indexed fields
-    descriptors =
-        descriptors.stream()
-            .sorted(Comparator.comparingInt(x -> x.blockCount()))
-            .collect(Collectors.toList());
-
-    // get the one that has more indexed fields
-    return descriptors.isEmpty() ? null : descriptors.get(descriptors.size() - 1);
-  }
-
-  /**
-   * If between the index candidates there are for the same property target class index and super
-   * class index prefer the target class.
-   */
-  private List<IndexSearchDescriptor> removeGenericIndexes(
-      List<IndexSearchDescriptor> descriptors, OClass clazz) {
-    List<IndexSearchDescriptor> results = new ArrayList<>();
-    for (IndexSearchDescriptor desc : descriptors) {
-      IndexSearchDescriptor matching = null;
-      for (IndexSearchDescriptor result : results) {
-        if (desc.isSameCondition(result)) {
-          matching = result;
-          break;
-        }
-      }
-      if (matching != null) {
-        if (clazz.getName().equals(desc.getIndex().getDefinition().getClassName())) {
-          results.remove(matching);
-          results.add(desc);
-        }
-      } else {
-        results.add(desc);
-      }
-    }
-    return results;
-  }
-
-  private List<IndexSearchDescriptor> removePrefixIndexes(List<IndexSearchDescriptor> descriptors) {
-    List<IndexSearchDescriptor> result = new ArrayList<>();
-    for (IndexSearchDescriptor desc : descriptors) {
-      if (result.isEmpty()) {
-        result.add(desc);
-      } else {
-        List<IndexSearchDescriptor> prefixes = findPrefixes(desc, result);
-        if (prefixes.isEmpty()) {
-          if (!isPrefixOfAny(desc, result)) {
-            result.add(desc);
-          }
-        } else {
-          result.removeAll(prefixes);
-          result.add(desc);
-        }
-      }
-    }
-    return result;
-  }
-
-  private boolean isPrefixOfAny(IndexSearchDescriptor desc, List<IndexSearchDescriptor> result) {
-    for (IndexSearchDescriptor item : result) {
-      if (desc.isPrefixOf(item)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * finds prefix conditions for a given condition, eg. if the condition is on [a,b] and in the list
-   * there is another condition on [a] or on [a,b], then that condition is returned.
-   *
-   * @param desc
-   * @param descriptors
-   * @return
-   */
-  private List<IndexSearchDescriptor> findPrefixes(
-      IndexSearchDescriptor desc, List<IndexSearchDescriptor> descriptors) {
-    List<IndexSearchDescriptor> result = new ArrayList<>();
-    for (IndexSearchDescriptor item : descriptors) {
-      if (item.isPrefixOf(desc)) {
-        result.add(item);
-      }
-    }
-    return result;
-  }
-
-  /**
-   * given an index and a flat AND block, returns a descriptor on how to process it with an index
-   * (index, index key and additional filters to apply after index fetch
-   *
-   * @param ctx
-   * @param index
-   * @param block
-   * @param clazz
-   * @return
-   */
-  private IndexSearchDescriptor buildIndexSearchDescriptor(
-      OCommandContext ctx, OIndex index, OAndBlock block, OClass clazz) {
-    List<String> indexFields = index.getDefinition().getFields();
-    boolean found = false;
-
-    OAndBlock blockCopy = block.copy();
-    Iterator<OBooleanExpression> blockIterator;
-
-    OAndBlock indexKeyValue = new OAndBlock(-1);
-    OBinaryCondition additionalRangeCondition = null;
-
-    for (String indexField : indexFields) {
-      OIndexSearchInfo info =
-          new OIndexSearchInfo(
-              indexField,
-              allowsRangeQueries(index),
-              isMap(clazz, indexField),
-              isIndexByKey(index, indexField),
-              isIndexByValue(index, indexField),
-              !index.getDefinition().isNullValuesIgnored(),
-              ctx);
-      blockIterator = blockCopy.getSubBlocks().iterator();
-      boolean indexFieldFound = false;
-      boolean rangeOp = false;
-      while (blockIterator.hasNext()) {
-        OBooleanExpression singleExp = blockIterator.next();
-        if (singleExp.isIndexAware(info, ctx)) {
-          indexFieldFound = true;
-          indexKeyValue.getSubBlocks().add(singleExp.copy());
-          blockIterator.remove();
-          if (singleExp instanceof OBinaryCondition
-              && ((OBinaryCondition) singleExp).getOperator().isRange()) {
-            rangeOp = true;
-          }
-          if (rangeOp && info.allowsRange()) {
-            // look for the opposite condition, on the same field, for range queries (the other
-            // side of the range)
-            while (blockIterator.hasNext()) {
-              OBooleanExpression next = blockIterator.next();
-              if (next.createRangeWith(singleExp)) {
-                additionalRangeCondition = (OBinaryCondition) next;
-                blockIterator.remove();
-                break;
-              }
-            }
-          }
-          break;
-        }
-      }
-
-      if (indexFieldFound) {
-        found = true;
-      }
-      if (!indexFieldFound || rangeOp) {
-        break;
-      }
-    }
-
-    if (indexKeyValue.getSubBlocks().size() < index.getDefinition().getFields().size()) {
-      if (!index.supportsOrderedIterations() || index.getDefinition().isNullValuesIgnored()) {
-        return null;
-      }
-    }
-
-    if (found) {
-      return new IndexSearchDescriptor(index, indexKeyValue, additionalRangeCondition, blockCopy);
-    }
-    return null;
-  }
-
-  /**
-   * given a full text index and a flat AND block, returns a descriptor on how to process it with an
-   * index (index, index key and additional filters to apply after index fetch
-   *
-   * @param ctx
-   * @param index
-   * @param block
-   * @param clazz
-   * @return
-   */
-  private IndexSearchDescriptor buildIndexSearchDescriptorForFulltext(
-      OCommandContext ctx, OIndex index, OAndBlock block, OClass clazz) {
-    List<String> indexFields = index.getDefinition().getFields();
-    boolean found = false;
-
-    OAndBlock blockCopy = block.copy();
-    Iterator<OBooleanExpression> blockIterator;
-
-    OAndBlock indexKeyValue = new OAndBlock(-1);
-
-    for (String indexField : indexFields) {
-      blockIterator = blockCopy.getSubBlocks().iterator();
-      boolean indexFieldFound = false;
-      while (blockIterator.hasNext()) {
-        OBooleanExpression singleExp = blockIterator.next();
-        if (singleExp.isFullTextIndexAware(indexField)) {
-          found = true;
-          indexFieldFound = true;
-          indexKeyValue.getSubBlocks().add(singleExp.copy());
-          blockIterator.remove();
-          break;
-        }
-      }
-      if (!indexFieldFound) {
-        break;
-      }
-    }
-
-    if (indexKeyValue.getSubBlocks().size() < index.getDefinition().getFields().size()
-        && !index.supportsOrderedIterations()) {
-      // hash indexes do not support partial key match
-      return null;
-    }
-
-    if (found) {
-      return new IndexSearchDescriptor(index, indexKeyValue, null, blockCopy);
-    }
-    return null;
-  }
-
-  private boolean isIndexByKey(OIndex index, String field) {
-    OIndexDefinition def = index.getDefinition();
-    for (String o : def.getFieldsToIndex()) {
-      if (o.equalsIgnoreCase(field + " by key")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean isIndexByValue(OIndex index, String field) {
-    OIndexDefinition def = index.getDefinition();
-    for (String o : def.getFieldsToIndex()) {
-      if (o.equalsIgnoreCase(field + " by value")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean isMap(OClass clazz, String indexField) {
-    OProperty prop = clazz.getProperty(indexField);
-    if (prop == null) {
-      return false;
-    }
-    return prop.getType() == OType.EMBEDDEDMAP;
-  }
-
-  private boolean allowsRangeQueries(OIndex index) {
-    return index.supportsOrderedIterations();
-  }
-
-  /**
-   * aggregates multiple index conditions that refer to the same key search
-   *
-   * @param indexSearchDescriptors
-   * @return
-   */
-  private List<IndexSearchDescriptor> commonFactor(
-      List<IndexSearchDescriptor> indexSearchDescriptors) {
-    // index, key condition, additional filter (to aggregate in OR)
-    Map<OIndex, Map<IndexCondPair, OOrBlock>> aggregation = new HashMap<>();
-    for (IndexSearchDescriptor item : indexSearchDescriptors) {
-      Map<IndexCondPair, OOrBlock> filtersForIndex = aggregation.get(item.getIndex());
-      if (filtersForIndex == null) {
-        filtersForIndex = new HashMap<>();
-        aggregation.put(item.getIndex(), filtersForIndex);
-      }
-      IndexCondPair extendedCond =
-          new IndexCondPair(item.getKeyCondition(), item.getAdditionalRangeCondition());
-
-      OOrBlock existingAdditionalConditions = filtersForIndex.get(extendedCond);
-      if (existingAdditionalConditions == null) {
-        existingAdditionalConditions = new OOrBlock(-1);
-        filtersForIndex.put(extendedCond, existingAdditionalConditions);
-      }
-      existingAdditionalConditions.getSubBlocks().add(item.getRemainingCondition());
-    }
-    List<IndexSearchDescriptor> result = new ArrayList<>();
-    for (Map.Entry<OIndex, Map<IndexCondPair, OOrBlock>> item : aggregation.entrySet()) {
-      for (Map.Entry<IndexCondPair, OOrBlock> filters : item.getValue().entrySet()) {
-        result.add(
-            new IndexSearchDescriptor(
-                item.getKey(),
-                filters.getKey().mainCondition,
-                filters.getKey().additionalRange,
-                filters.getValue()));
-      }
-    }
-    return result;
   }
 
   private void handleClustersAsTarget(
