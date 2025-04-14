@@ -328,4 +328,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   public OAndBlock extractRidRanges(OCommandContext ctx) {
     return new OAndBlock(-1);
   }
+
+  public int conditionsCount() {
+    return 1;
+  }
 }

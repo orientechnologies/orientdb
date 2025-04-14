@@ -183,5 +183,14 @@ public class ONotBlock extends OBooleanExpression {
     }
     return sub.isAlwaysTrue();
   }
+
+  @Override
+  public int conditionsCount() {
+    if (getSub() != null) {
+      return getSub().conditionsCount();
+    } else {
+      return 0;
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

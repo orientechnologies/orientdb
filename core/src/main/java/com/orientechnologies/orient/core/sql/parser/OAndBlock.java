@@ -375,7 +375,7 @@ public class OAndBlock extends OBooleanExpression {
     OAndBlock result = new OAndBlock(-1);
 
     for (OBooleanExpression booleanExpression : getSubBlocks()) {
-      if (booleanExpression instanceof ONotBlock) {
+      if (booleanExpression instanceof ONotBlock && !((ONotBlock) booleanExpression).isNegate()) {
         booleanExpression = ((ONotBlock) booleanExpression).getSub();
       }
       if (isRidRange(booleanExpression, ctx)) {
@@ -401,6 +401,15 @@ public class OAndBlock extends OBooleanExpression {
       }
     }
     return false;
+  }
+
+  @Override
+  public int conditionsCount() {
+    int count = 0;
+    for (OBooleanExpression exp : getSubBlocks()) {
+      count += exp.conditionsCount();
+    }
+    return count;
   }
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

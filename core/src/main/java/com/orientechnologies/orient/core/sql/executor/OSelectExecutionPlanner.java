@@ -684,13 +684,13 @@ public class OSelectExecutionPlanner {
     if (clazz == null) {
       return false;
     }
-    if (info.flattenedWhereClause == null
-        || info.flattenedWhereClause.size() > 1
-        || info.flattenedWhereClause.get(0).getSubBlocks().size() > 1) {
+    if (info.whereClause == null
+        || info.whereClause.isEmpty()
+        || info.whereClause.conditionsCount() > 1) {
       // for now it only handles a single equality condition, it can be extended
       return false;
     }
-    OBooleanExpression condition = info.flattenedWhereClause.get(0).getSubBlocks().get(0);
+    OBooleanExpression condition = info.whereClause.getBaseExpression();
     if (!(condition instanceof OBinaryCondition)) {
       return false;
     }
@@ -1533,12 +1533,12 @@ public class OSelectExecutionPlanner {
       case INDEX:
         OBooleanExpression keyCondition = null;
         OBooleanExpression ridCondition = null;
-        if (info.flattenedWhereClause == null || info.flattenedWhereClause.size() == 0) {
+        if (info.whereClause == null || info.whereClause.isEmpty()) {
           if (!index.supportsOrderedIterations()) {
             throw new OCommandExecutionException(
                 "Index " + indexName + " does not allow iteration without a condition");
           }
-        } else if (info.flattenedWhereClause.size() > 1) {
+        } else if (info.whereClause.conditionsCount() > 2) {
           throw new OCommandExecutionException(
               "Index queries with this kind of condition are not supported yet: "
                   + info.whereClause);

@@ -326,5 +326,14 @@ public class OOrBlock extends OBooleanExpression {
     }
     return super.extractRidRanges(ctx);
   }
+
+  @Override
+  public int conditionsCount() {
+    int count = 0;
+    for (OBooleanExpression exp : getSubBlocks()) {
+      count += exp.conditionsCount();
+    }
+    return count;
+  }
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */
