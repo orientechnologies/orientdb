@@ -85,7 +85,7 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
             .map(s -> element.getProperty(s))
             .collect(Collectors.toList());
 
-    for (IndexableField field : index.buildDocument(key).getFields()) {
+    for (IndexableField field : index.buildDocument(key, iCurrentRecord).getFields()) {
       memoryIndex.addField(field, index.indexAnalyzer());
     }
 

@@ -1921,7 +1921,7 @@ public class OSelectExecutionPlanner {
         throw new OCommandExecutionException("Class not found: " + queryTarget);
       }
     }
-    if (info.flattenedWhereClause == null || info.flattenedWhereClause.size() == 0) {
+    if (info.whereClause == null) {
       return false;
     }
 
@@ -1929,119 +1929,97 @@ public class OSelectExecutionPlanner {
 
     boolean indexedFunctionsFound = false;
 
-    for (OAndBlock block : info.flattenedWhereClause) {
-      List<OBinaryCondition> indexedFunctionConditions =
-          block.getIndexedFunctionConditions(clazz, (ODatabaseDocumentInternal) ctx.getDatabase());
+    List<OBinaryCondition> indexedFunctionConditions =
+        info.whereClause.getIndexedFunctionConditions(
+            clazz, (ODatabaseDocumentInternal) ctx.getDatabase());
 
-      indexedFunctionConditions =
-          filterIndexedFunctionsWithoutIndex(indexedFunctionConditions, info.target, ctx);
+    indexedFunctionConditions =
+        filterIndexedFunctionsWithoutIndex(indexedFunctionConditions, info.target, ctx);
 
-      if (indexedFunctionConditions == null || indexedFunctionConditions.size() == 0) {
-        List<OExecutionStepInternal> result =
-            handleClassAsTargetWithIndex(clazz.getName(), filterClusters, info, ctx);
-        if (result != null) {
-          OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
-          for (OExecutionStepInternal step : result) {
-            subPlan.chain(step);
-          }
-          resultSubPlans.add(subPlan);
-        } else {
-          FetchFromClassExecutionStep step;
-          if (clazz instanceof OView) {
-            step = new FetchFromViewExecutionStep(clazz.getName(), filterClusters, info, ctx, true);
-          } else {
-            step = new FetchFromClassExecutionStep(clazz.getName(), filterClusters, ctx, true);
-          }
-          OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
+    if (indexedFunctionConditions == null || indexedFunctionConditions.size() == 0) {
+      List<OExecutionStepInternal> result =
+          handleClassAsTargetWithIndex(clazz.getName(), filterClusters, info, ctx);
+      if (result != null) {
+        OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
+        for (OExecutionStepInternal step : result) {
           subPlan.chain(step);
-          if (!block.getSubBlocks().isEmpty()) {
-            if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
-              handleLet(subPlan, info);
-            }
-            subPlan.chain(
-                new FilterStep(
-                    createWhereFrom(block),
-                    this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1,
-                    this.info.isExclusiveLock()));
-          }
-          resultSubPlans.add(subPlan);
         }
+        resultSubPlans.add(subPlan);
       } else {
-        OBinaryCondition blockCandidateFunction = null;
-        for (OBinaryCondition cond : indexedFunctionConditions) {
-          if (!cond.allowsIndexedFunctionExecutionOnTarget(info.target, ctx)) {
-            if (!cond.canExecuteIndexedFunctionWithoutIndex(info.target, ctx)) {
-              throw new OCommandExecutionException(
-                  "Cannot execute " + block + " on " + queryTarget);
-            }
+        FetchFromClassExecutionStep step;
+        if (clazz instanceof OView) {
+          step = new FetchFromViewExecutionStep(clazz.getName(), filterClusters, info, ctx, true);
+        } else {
+          step = new FetchFromClassExecutionStep(clazz.getName(), filterClusters, ctx, true);
+        }
+        OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
+        subPlan.chain(step);
+        if ((info.perRecordLetClause != null /*&& refersToLet(block.getSubBlocks())*/)) {
+          handleLet(subPlan, info);
+        }
+        subPlan.chain(
+            new FilterStep(
+                info.whereClause,
+                this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1,
+                this.info.isExclusiveLock()));
+        resultSubPlans.add(subPlan);
+      }
+    } else {
+      OBinaryCondition blockCandidateFunction = null;
+      for (OBinaryCondition cond : indexedFunctionConditions) {
+        if (!cond.allowsIndexedFunctionExecutionOnTarget(info.target, ctx)) {
+          if (!cond.canExecuteIndexedFunctionWithoutIndex(info.target, ctx)) {
+            throw new OCommandExecutionException(
+                "Cannot execute " + info.whereClause + " on " + queryTarget);
           }
-          if (blockCandidateFunction == null) {
-            blockCandidateFunction = cond;
-          } else {
-            boolean thisAllowsNoIndex =
-                cond.canExecuteIndexedFunctionWithoutIndex(info.target, ctx);
-            boolean prevAllowsNoIndex =
-                blockCandidateFunction.canExecuteIndexedFunctionWithoutIndex(info.target, ctx);
-            if (!thisAllowsNoIndex && !prevAllowsNoIndex) {
-              // none of the functions allow execution without index, so cannot choose one
-              throw new OCommandExecutionException(
-                  "Cannot choose indexed function between "
-                      + cond
-                      + " and "
-                      + blockCandidateFunction
-                      + ". Both require indexed execution");
-            } else if (thisAllowsNoIndex && prevAllowsNoIndex) {
-              // both can be calculated without index, choose the best one for index execution
-              long thisEstimate = cond.estimateIndexed(info.target, ctx);
-              long lastEstimate = blockCandidateFunction.estimateIndexed(info.target, ctx);
-              if (thisEstimate > -1 && thisEstimate < lastEstimate) {
-                blockCandidateFunction = cond;
-              }
-            } else if (prevAllowsNoIndex) {
-              // choose current condition, because the other one can be calculated without index
+        }
+        if (blockCandidateFunction == null) {
+          blockCandidateFunction = cond;
+        } else {
+          boolean thisAllowsNoIndex = cond.canExecuteIndexedFunctionWithoutIndex(info.target, ctx);
+          boolean prevAllowsNoIndex =
+              blockCandidateFunction.canExecuteIndexedFunctionWithoutIndex(info.target, ctx);
+          if (!thisAllowsNoIndex && !prevAllowsNoIndex) {
+            // none of the functions allow execution without index, so cannot choose one
+            throw new OCommandExecutionException(
+                "Cannot choose indexed function between "
+                    + cond
+                    + " and "
+                    + blockCandidateFunction
+                    + ". Both require indexed execution");
+          } else if (thisAllowsNoIndex && prevAllowsNoIndex) {
+            // both can be calculated without index, choose the best one for index execution
+            long thisEstimate = cond.estimateIndexed(info.target, ctx);
+            long lastEstimate = blockCandidateFunction.estimateIndexed(info.target, ctx);
+            if (thisEstimate > -1 && thisEstimate < lastEstimate) {
               blockCandidateFunction = cond;
             }
+          } else if (prevAllowsNoIndex) {
+            // choose current condition, because the other one can be calculated without index
+            blockCandidateFunction = cond;
           }
         }
-
-        FetchFromIndexedFunctionStep step =
-            new FetchFromIndexedFunctionStep(blockCandidateFunction, info.target);
-        if (!blockCandidateFunction.executeIndexedFunctionAfterIndexSearch(info.target, ctx)) {
-          block = block.copy();
-          block.getSubBlocks().remove(blockCandidateFunction);
-        }
-        if (info.flattenedWhereClause.size() == 1) {
-          plan.chain(step);
-          plan.chain(new FilterByClustersStep(filterClusters));
-          if (!block.getSubBlocks().isEmpty()) {
-            if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
-              handleLet(plan, info);
-            }
-            plan.chain(
-                new FilterStep(
-                    createWhereFrom(block),
-                    this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1,
-                    this.info.isExclusiveLock()));
-          }
-        } else {
-          OSelectExecutionPlan subPlan = new OSelectExecutionPlan();
-          subPlan.chain(step);
-          if (!block.getSubBlocks().isEmpty()) {
-            subPlan.chain(
-                new FilterStep(
-                    createWhereFrom(block),
-                    this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1,
-                    this.info.isExclusiveLock()));
-          }
-          resultSubPlans.add(subPlan);
-        }
-        indexedFunctionsFound = true;
       }
+
+      FetchFromIndexedFunctionStep step =
+          new FetchFromIndexedFunctionStep(blockCandidateFunction, info.target);
+      plan.chain(step);
+      plan.chain(new FilterByClustersStep(filterClusters));
+      if ((info.perRecordLetClause != null /*&& refersToLet(block.getSubBlocks())*/)) {
+        handleLet(plan, info);
+      }
+      plan.chain(
+          new FilterStep(
+              this.info.whereClause,
+              this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1,
+              this.info.isExclusiveLock()));
+    
+      indexedFunctionsFound = true;
     }
 
     if (indexedFunctionsFound) {
       if (resultSubPlans.size()
-          > 1) { // if resultSubPlans.size() == 1 the step was already chained (see above)
+          > 0) { // if resultSubPlans.size() == 1 the step was already chained (see above)
         plan.chain(new ParallelExecStep(resultSubPlans));
         plan.chain(new FilterByClustersStep(filterClusters));
         plan.chain(new DistinctExecutionStep(ctx));

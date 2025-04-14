@@ -18,6 +18,7 @@ package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.lucene.OLuceneCrossClassIndexFactory;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -31,7 +32,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
     super(im, storage);
   }
 
-  public Document buildDocument(final Object key) {
+  public Document buildDocument(final Object key, OIdentifiable identifieable) {
 
     while (true)
       try {
@@ -40,7 +41,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
             indexId,
             engine -> {
               OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-              return indexEngine.buildDocument(key, null);
+              return indexEngine.buildDocument(key, identifieable);
             });
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();

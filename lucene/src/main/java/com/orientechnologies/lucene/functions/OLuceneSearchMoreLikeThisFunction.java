@@ -5,10 +5,10 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
-import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -69,7 +70,56 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
       Object[] params,
       OCommandContext ctx) {
 
-    throw new OLuceneIndexException("SEARCH_MORE can't be executed by document");
+    // TODO: slow implementation can be made faster
+    if (!(iCurrentRecord instanceof ODocument)) {
+      return false;
+    }
+    String className = ((ODocument) iCurrentRecord).getClassName();
+    OLuceneFullTextIndex index = this.searchForIndex(ctx, className);
+
+    if (index == null) return Collections.emptySet();
+
+    IndexSearcher searcher = index.searcher();
+
+    ODocument metadata = new ODocument((Map) params[1]);
+
+    List<String> ridsAsString = parseRidsObj(ctx, params[0]);
+
+    List<ORecord> others =
+        ridsAsString.stream()
+            .map(
+                rid -> {
+                  ORecordId recordId = new ORecordId();
+
+                  recordId.fromString(rid);
+                  return recordId;
+                })
+            .map(id -> id.<ORecord>getRecord())
+            .collect(Collectors.toList());
+
+    MoreLikeThis mlt = buildMoreLikeThis(index, searcher, metadata);
+
+    Builder queryBuilder = new Builder();
+
+    excludeOtherFromResults(ridsAsString, queryBuilder);
+
+    ODatabaseSession contest = ctx.getDatabase();
+    addLikeQueries(others, mlt, queryBuilder, contest);
+
+    Query mltQuery = queryBuilder.build();
+
+    Set<OIdentifiable> luceneResultSet;
+    try (Stream<ORID> rids =
+        index
+            .getInternal()
+            .getRids(
+                new OLuceneKeyAndMetadata(
+                    new OLuceneCompositeKey(Arrays.asList(mltQuery.toString())).setContext(ctx),
+                    metadata))) {
+      luceneResultSet = rids.collect(Collectors.toSet());
+    }
+
+    return luceneResultSet.contains(iCurrentRecord);
   }
 
   @Override
@@ -115,7 +165,8 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
 
     excludeOtherFromResults(ridsAsString, queryBuilder);
 
-    addLikeQueries(others, mlt, queryBuilder);
+    ODatabaseSession contest = ctx.getDatabase();
+    addLikeQueries(others, mlt, queryBuilder, contest);
 
     Query mltQuery = queryBuilder.build();
 
@@ -136,7 +187,10 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
   private List<String> parseRids(OCommandContext ctx, OExpression expression) {
 
     Object expResult = expression.execute((OResult) null, ctx);
+    return parseRidsObj(ctx, expResult);
+  }
 
+  private List<String> parseRidsObj(OCommandContext ctx, Object expResult) {
     // single rind
     if (expResult instanceof OIdentifiable) {
       return Collections.singletonList(((OIdentifiable) expResult).getIdentity().toString());
@@ -240,9 +294,10 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
     }
   }
 
-  private void addLikeQueries(List<ORecord> others, MoreLikeThis mlt, Builder queryBuilder) {
+  private void addLikeQueries(
+      List<ORecord> others, MoreLikeThis mlt, Builder queryBuilder, ODatabaseSession contest) {
     others.stream()
-        .map(or -> or.<OElement>load())
+        .map(or -> contest.<OElement>load(or))
         .forEach(
             element ->
                 Arrays.stream(mlt.getFieldNames())

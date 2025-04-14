@@ -68,7 +68,12 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
 
     if (index == null) return false;
 
-    String query = (String) params[1];
+    String query;
+    if (params[1] == null) {
+      query = null;
+    } else {
+      query = (String) params[1].toString();
+    }
 
     MemoryIndex memoryIndex = getOrCreateMemoryIndex(ctx);
 
@@ -77,7 +82,7 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
             .map(s -> element.getProperty(s))
             .collect(Collectors.toList());
 
-    for (IndexableField field : index.buildDocument(key).getFields()) {
+    for (IndexableField field : index.buildDocument(key, iCurrentRecord).getFields()) {
       memoryIndex.addField(field, index.indexAnalyzer());
     }
 
