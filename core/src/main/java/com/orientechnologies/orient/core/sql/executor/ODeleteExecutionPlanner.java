@@ -4,8 +4,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidateOne;
+import com.orientechnologies.orient.core.sql.executor.metadata.OSpecificIndexFinder;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 import com.orientechnologies.orient.core.sql.parser.ODeleteStatement;
@@ -14,7 +15,7 @@ import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OLimit;
 import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
-import java.util.List;
+import java.util.Optional;
 
 /** Created by luigidellaquila on 08/08/16. */
 public class ODeleteExecutionPlanner {
@@ -75,49 +76,26 @@ public class ODeleteExecutionPlanner {
 
     switch (indexIdentifier.getType()) {
       case INDEX:
-        List<OAndBlock> flattenedWhereClause = whereClause == null ? null : whereClause.flatten();
-        OIndexAbstract.manualIndexesWarning();
-
-        OBooleanExpression keyCondition = null;
         OBooleanExpression ridCondition = null;
-        if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
+        Optional<OIndexCandidate> found;
+        if (whereClause == null || whereClause.isEmpty()) {
           if (!index.supportsOrderedIterations()) {
             throw new OCommandExecutionException(
                 "Index " + indexName + " does not allow iteration without a condition");
           }
-        } else if (flattenedWhereClause.size() > 1) {
-          throw new OCommandExecutionException(
-              "Index queries with this kind of condition are not supported yet: " + whereClause);
+          found = Optional.empty();
         } else {
-          OAndBlock andBlock = flattenedWhereClause.get(0);
-          if (andBlock.getSubBlocks().size() == 1) {
-
-            whereClause =
-                null; // The WHERE clause won't be used anymore, the index does all the filtering
-            flattenedWhereClause = null;
-            keyCondition = getKeyCondition(andBlock);
-            if (keyCondition == null) {
-              throw new OCommandExecutionException(
-                  "Index queries with this kind of condition are not supported yet: "
-                      + whereClause);
-            }
-          } else if (andBlock.getSubBlocks().size() == 2) {
-            whereClause =
-                null; // The WHERE clause won't be used anymore, the index does all the filtering
-            flattenedWhereClause = null;
-            keyCondition = getKeyCondition(andBlock);
-            ridCondition = getRidCondition(andBlock);
-            if (keyCondition == null || ridCondition == null) {
-              throw new OCommandExecutionException(
-                  "Index queries with this kind of condition are not supported yet: "
-                      + whereClause);
-            }
-          } else {
+          ridCondition = whereClause.getIndexRidCondition();
+          found = whereClause.findIndex(new OSpecificIndexFinder(index), ctx);
+          found = found.flatMap((x) -> x.normalize(ctx)).flatMap((x) -> x.finalize(ctx));
+          if (found.isEmpty()) {
             throw new OCommandExecutionException(
                 "Index queries with this kind of condition are not supported yet: " + whereClause);
           }
         }
-        result.chain(new DeleteFromIndexStep(index, keyCondition, null, ridCondition));
+
+        OIndexCandidate candidate = found.orElseGet(() -> new OIndexCandidateOne(index.getName()));
+        result.chain(new DeleteFromIndexStep(index, candidate, ridCondition));
         if (ridCondition != null) {
           OWhereClause where = new OWhereClause(-1);
           where.setBaseExpression(ridCondition);
