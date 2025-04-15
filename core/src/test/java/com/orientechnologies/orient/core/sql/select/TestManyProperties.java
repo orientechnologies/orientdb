@@ -8,13 +8,11 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestManyProperties {
 
   @Test
-  @Ignore
   public void test() {
     try (OrientDB orientdb = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
       orientdb
