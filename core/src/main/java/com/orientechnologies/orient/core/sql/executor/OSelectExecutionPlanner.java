@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.sql.executor.metadata.OClassIndexFinder;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OSpecificIndexFinder;
 import com.orientechnologies.orient.core.sql.parser.AggregateProjectionSplit;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBaseExpression;
@@ -1482,7 +1483,6 @@ public class OSelectExecutionPlanner {
 
     switch (indexIdentifier.getType()) {
       case INDEX:
-        OBooleanExpression keyCondition = null;
         OBooleanExpression ridCondition = null;
         if (info.whereClause == null || info.whereClause.isEmpty()) {
           if (!index.supportsOrderedIterations()) {
@@ -1490,16 +1490,19 @@ public class OSelectExecutionPlanner {
                 "Index " + indexName + " does not allow iteration without a condition");
           }
         } else {
-          keyCondition = info.whereClause.getIndexKeyCondition();
           ridCondition = info.whereClause.getIndexRidCondition();
-          if (keyCondition == null) {
-            throw new OCommandExecutionException(
-                "Index queries with this kind of condition are not supported yet: "
-                    + info.whereClause);
-          }
         }
-        IndexSearchDescriptor desc = new IndexSearchDescriptor(index, keyCondition);
-        result.chain(new FetchFromIndexStep(desc, true, ctx));
+        Optional<OIndexCandidate> found =
+            info.whereClause.findIndex(new OSpecificIndexFinder(index), ctx);
+        found = found.flatMap((x) -> x.normalize(ctx)).flatMap((x) -> x.finalize(ctx));
+        if (found.isEmpty()) {
+          throw new OCommandExecutionException(
+              "Index queries with this kind of condition are not supported yet: "
+                  + info.whereClause);
+        }
+
+        OIndexCandidate candidate = found.get();
+        result.chain(new FetchFromIndexStep(candidate, true, ctx));
         if (ridCondition != null) {
           OWhereClause where = new OWhereClause(-1);
           where.setBaseExpression(ridCondition);
