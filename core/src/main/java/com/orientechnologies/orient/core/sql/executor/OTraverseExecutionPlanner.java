@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidateOne;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
 import com.orientechnologies.orient.core.sql.parser.OFromItem;
@@ -211,7 +212,7 @@ public class OTraverseExecutionPlanner {
               "Index " + indexName + " does not allow iteration without a condition");
         }
 
-        result.chain(new FetchFromIndexStep(new IndexSearchDescriptor(index), true, ctx));
+        result.chain(new FetchFromIndexStep(new OIndexCandidateOne(index.getName()), true, ctx));
         result.chain(new GetValueFromIndexEntryStep(null));
         break;
       case VALUES:
@@ -220,7 +221,8 @@ public class OTraverseExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(new IndexSearchDescriptor(index), true, ctx));
+        result.chain(
+            new FetchFromIndexValuesStep(new OIndexCandidateOne(index.getName()), true, ctx));
         result.chain(new GetValueFromIndexEntryStep(null));
         break;
       case VALUESDESC:
@@ -228,7 +230,8 @@ public class OTraverseExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(new IndexSearchDescriptor(index), false, ctx));
+        result.chain(
+            new FetchFromIndexValuesStep(new OIndexCandidateOne(index.getName()), false, ctx));
         result.chain(new GetValueFromIndexEntryStep(null));
         break;
     }

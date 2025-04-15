@@ -1,12 +1,17 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 
 /** Created by luigidellaquila on 02/08/16. */
 public class FetchFromIndexValuesStep extends FetchFromIndexStep {
 
   public FetchFromIndexValuesStep(
       IndexSearchDescriptor desc, boolean orderAsc, OCommandContext ctx) {
+    super(desc, orderAsc, ctx);
+  }
+
+  public FetchFromIndexValuesStep(OIndexCandidate desc, boolean orderAsc, OCommandContext ctx) {
     super(desc, orderAsc, ctx);
   }
 

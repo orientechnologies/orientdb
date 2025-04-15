@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.sql.executor.metadata.OClassIndexFinder;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidateOne;
 import com.orientechnologies.orient.core.sql.executor.metadata.OSpecificIndexFinder;
 import com.orientechnologies.orient.core.sql.parser.AggregateProjectionSplit;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
@@ -1484,24 +1485,25 @@ public class OSelectExecutionPlanner {
     switch (indexIdentifier.getType()) {
       case INDEX:
         OBooleanExpression ridCondition = null;
+        Optional<OIndexCandidate> found;
         if (info.whereClause == null || info.whereClause.isEmpty()) {
           if (!index.supportsOrderedIterations()) {
             throw new OCommandExecutionException(
                 "Index " + indexName + " does not allow iteration without a condition");
           }
+          found = Optional.empty();
         } else {
           ridCondition = info.whereClause.getIndexRidCondition();
-        }
-        Optional<OIndexCandidate> found =
-            info.whereClause.findIndex(new OSpecificIndexFinder(index), ctx);
-        found = found.flatMap((x) -> x.normalize(ctx)).flatMap((x) -> x.finalize(ctx));
-        if (found.isEmpty()) {
-          throw new OCommandExecutionException(
-              "Index queries with this kind of condition are not supported yet: "
-                  + info.whereClause);
+          found = info.whereClause.findIndex(new OSpecificIndexFinder(index), ctx);
+          found = found.flatMap((x) -> x.normalize(ctx)).flatMap((x) -> x.finalize(ctx));
+          if (found.isEmpty()) {
+            throw new OCommandExecutionException(
+                "Index queries with this kind of condition are not supported yet: "
+                    + info.whereClause);
+          }
         }
 
-        OIndexCandidate candidate = found.get();
+        OIndexCandidate candidate = found.orElseGet(() -> new OIndexCandidateOne(index.getName()));
         result.chain(new FetchFromIndexStep(candidate, true, ctx));
         if (ridCondition != null) {
           OWhereClause where = new OWhereClause(-1);
@@ -1520,7 +1522,7 @@ public class OSelectExecutionPlanner {
               "Index " + indexName + " does not allow iteration on values");
         }
         result.chain(
-            new FetchFromIndexValuesStep(new IndexSearchDescriptor(index, null), true, ctx));
+            new FetchFromIndexValuesStep(new OIndexCandidateOne(index.getName()), true, ctx));
         result.chain(new GetValueFromIndexEntryStep(filterClusterIds));
         break;
       case VALUESDESC:
@@ -1529,7 +1531,7 @@ public class OSelectExecutionPlanner {
               "Index " + indexName + " does not allow iteration on values");
         }
         result.chain(
-            new FetchFromIndexValuesStep(new IndexSearchDescriptor(index, null), false, ctx));
+            new FetchFromIndexValuesStep(new OIndexCandidateOne(index.getName()), false, ctx));
         result.chain(new GetValueFromIndexEntryStep(filterClusterIds));
         break;
     }
@@ -1978,7 +1980,7 @@ public class OSelectExecutionPlanner {
       if (indexFound && orderType != null) {
         plan.chain(
             new FetchFromIndexValuesStep(
-                new IndexSearchDescriptor(idx), orderType.equals(OOrderByItem.ASC), ctx));
+                new OIndexCandidateOne(idx.getName()), orderType.equals(OOrderByItem.ASC), ctx));
         int[] filterClusterIds = null;
         if (filterClusters != null) {
           filterClusterIds = classClustersFiltered(ctx.getDatabase(), clazz, filterClusters);

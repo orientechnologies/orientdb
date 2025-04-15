@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import java.util.stream.Stream;
 
-class OAllIndexStream implements OIndexStream {
+public class OAllIndexStream implements OIndexStream {
   private OIndexInternal index;
   private boolean asc;
 

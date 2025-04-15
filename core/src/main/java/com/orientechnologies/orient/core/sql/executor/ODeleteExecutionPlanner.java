@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidateOne;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 import com.orientechnologies.orient.core.sql.parser.ODeleteStatement;
@@ -129,7 +130,8 @@ public class ODeleteExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(new IndexSearchDescriptor(index), true, ctx));
+        result.chain(
+            new FetchFromIndexValuesStep(new OIndexCandidateOne(index.getName()), true, ctx));
         result.chain(new GetValueFromIndexEntryStep(null));
         break;
       case VALUESDESC:
@@ -137,7 +139,8 @@ public class ODeleteExecutionPlanner {
           throw new OCommandExecutionException(
               "Index " + indexName + " does not allow iteration on values");
         }
-        result.chain(new FetchFromIndexValuesStep(new IndexSearchDescriptor(index), false, ctx));
+        result.chain(
+            new FetchFromIndexValuesStep(new OIndexCandidateOne(index.getName()), false, ctx));
         result.chain(new GetValueFromIndexEntryStep(null));
         break;
     }
