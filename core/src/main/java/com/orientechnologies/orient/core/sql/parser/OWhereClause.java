@@ -18,7 +18,6 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,13 +26,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OWhereClause extends SimpleNode {
   protected OBooleanExpression baseExpression;
-
-  private List<OAndBlock> flattened;
 
   public OWhereClause(int id) {
     super(id);
@@ -196,11 +192,7 @@ public class OWhereClause extends SimpleNode {
     if (this.baseExpression == null) {
       return Collections.emptyList();
     }
-    if (flattened == null) {
-      flattened = this.baseExpression.flatten();
-    }
-    // TODO remove false conditions (contraddictions)
-    return flattened;
+    return this.baseExpression.flatten();
   }
 
   public List<OBinaryCondition> getIndexedFunctionConditions(
@@ -222,15 +214,6 @@ public class OWhereClause extends SimpleNode {
   public OWhereClause copy() {
     OWhereClause result = new OWhereClause(-1);
     result.baseExpression = baseExpression.copy();
-    result.flattened =
-        Optional.ofNullable(flattened)
-            .map(
-                oAndBlocks -> {
-                  try (Stream<OAndBlock> stream = oAndBlocks.stream()) {
-                    return stream.map(OAndBlock::copy).collect(Collectors.toList());
-                  }
-                })
-            .orElse(null);
     return result;
   }
 
@@ -241,14 +224,12 @@ public class OWhereClause extends SimpleNode {
 
     OWhereClause that = (OWhereClause) o;
 
-    if (!Objects.equals(baseExpression, that.baseExpression)) return false;
-    return Objects.equals(flattened, that.flattened);
+    return Objects.equals(baseExpression, that.baseExpression);
   }
 
   @Override
   public int hashCode() {
     int result = Optional.ofNullable(baseExpression).map(Object::hashCode).orElse(0);
-    result = 31 * result + (Optional.ofNullable(flattened).map(List::hashCode).orElse(0));
     return result;
   }
 
@@ -256,7 +237,6 @@ public class OWhereClause extends SimpleNode {
     if (baseExpression != null) {
       baseExpression.extractSubQueries(collector);
     }
-    flattened = null;
   }
 
   public boolean refersToParent() {
@@ -267,24 +247,10 @@ public class OWhereClause extends SimpleNode {
     return baseExpression;
   }
 
-  public List<OAndBlock> getFlattened() {
-    return flattened;
-  }
-
-  public void setFlattened(List<OAndBlock> flattened) {
-    this.flattened = flattened;
-  }
-
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     if (baseExpression != null) {
       result.setProperty("baseExpression", baseExpression.serialize());
-    }
-    if (flattened != null) {
-      try (Stream<OAndBlock> stream = flattened.stream()) {
-        result.setProperty(
-            "flattened", stream.map(OBooleanExpression::serialize).collect(Collectors.toList()));
-      }
     }
     return result;
   }
@@ -293,15 +259,6 @@ public class OWhereClause extends SimpleNode {
     if (fromResult.getProperty("baseExpression") != null) {
       baseExpression =
           OBooleanExpression.deserializeFromOResult(fromResult.getProperty("baseExpression"));
-    }
-    if (fromResult.getProperty("flattened") != null) {
-      List<OResult> ser = fromResult.getProperty("flattened");
-      flattened = new ArrayList<>();
-      for (OResult r : ser) {
-        OAndBlock block = new OAndBlock(-1);
-        block.deserialize(r);
-        flattened.add(block);
-      }
     }
   }
 
