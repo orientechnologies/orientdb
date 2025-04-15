@@ -8,9 +8,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
@@ -547,88 +545,6 @@ public class OBinaryCondition extends OBooleanExpression {
       keys.add(operator.createIndexValueMap(key).get());
     }
     return keys;
-  }
-
-  @Override
-  public OExpression resolveKeyFrom(OBinaryCondition additional) {
-    OBinaryCompareOperator operator = getOperator();
-    if ((operator instanceof OEqualsCompareOperator)
-        || (operator instanceof OGtOperator)
-        || (operator instanceof OGeOperator)
-        || (operator instanceof OContainsKeyOperator)
-        || (operator instanceof OContainsValueOperator)) {
-      return getRight();
-    } else if (additional != null) {
-      return additional.getRight();
-    } else {
-      return null;
-      //      throw new UnsupportedOperationException("Cannot execute index query with " + this);
-    }
-  }
-
-  @Override
-  public OExpression resolveKeyTo(OBinaryCondition additional) {
-    OBinaryCompareOperator operator = this.getOperator();
-    if ((operator instanceof OEqualsCompareOperator)
-        || (operator instanceof OLtOperator)
-        || (operator instanceof OLeOperator)
-        || (operator instanceof OContainsKeyOperator)
-        || (operator instanceof OContainsValueOperator)) {
-      return getRight();
-    } else if (additional != null) {
-      return additional.getRight();
-    } else {
-      return null;
-      //      throw new UnsupportedOperationException("Cannot execute index query with " + this);
-    }
-  }
-
-  @Override
-  public boolean isKeyFromIncluded(OBinaryCondition additional) {
-    OBinaryCompareOperator operator = getOperator();
-    if (operator.isGreater()) {
-      return operator.isInclude();
-    } else {
-      if (additional != null && additional.getOperator() != null) {
-        return additional.getOperator().isGreaterInclude();
-      } else {
-        return true;
-      }
-    }
-  }
-
-  @Override
-  public boolean isKeyToIncluded(OBinaryCondition additional) {
-    OBinaryCompareOperator operator = getOperator();
-    if (operator.isLess()) {
-      return operator.isInclude();
-    } else {
-      if (additional != null && additional.getOperator() != null) {
-        return additional.getOperator().isLessInclude();
-      } else {
-        return true;
-      }
-    }
-  }
-
-  @Override
-  public Optional<Map<Object, Object>> createIndexValueMap(Object object) {
-    return getOperator().createIndexValueMap(object);
-  }
-
-  public List<OIndexStream> createIndexStreams(
-      OIndexInternal index, boolean isOrderAsc, OCommandContext ctx) {
-    List<OIndexStream> acquiredStreams = new ArrayList<>();
-    OExpression left = getLeft();
-    if (!left.toString().equalsIgnoreCase("key")) {
-      throw new OCommandExecutionException(
-          "search for index for " + this + " is not supported yet");
-    }
-    OBinaryCompareOperator operator = getOperator();
-    Object rightValue = getRight().execute((OResult) null, ctx);
-    OIndexStream stream = operator.createStreamForIndex(index, rightValue, isOrderAsc, ctx);
-    acquiredStreams.add(stream);
-    return acquiredStreams;
   }
 
   @Override

@@ -204,7 +204,6 @@ public abstract class OBooleanExpression extends SimpleNode {
   }
 
   public List<OAndBlock> flatten() {
-
     return Collections.singletonList(encapsulateInAndBlock(this));
   }
 
@@ -289,26 +288,6 @@ public abstract class OBooleanExpression extends SimpleNode {
   }
 
   public Optional<OIndexCandidate> findIndex(OIndexFinder info, OCommandContext ctx) {
-    return Optional.empty();
-  }
-
-  public OExpression resolveKeyFrom(OBinaryCondition additional) {
-    throw new UnsupportedOperationException("Cannot execute index query with " + this);
-  }
-
-  public OExpression resolveKeyTo(OBinaryCondition additional) {
-    throw new UnsupportedOperationException("Cannot execute index query with " + this);
-  }
-
-  public boolean isKeyFromIncluded(OBinaryCondition additional) {
-    throw new UnsupportedOperationException("Cannot execute index query with " + this);
-  }
-
-  public boolean isKeyToIncluded(OBinaryCondition additional) {
-    throw new UnsupportedOperationException("Cannot execute index query with " + this);
-  }
-
-  public Optional<Map<Object, Object>> createIndexValueMap(Object object) {
     return Optional.empty();
   }
 

@@ -450,41 +450,5 @@ public class OContainsCondition extends OBooleanExpression {
   private Collection<Object> rightValue(OCommandContext ctx, boolean asc) {
     return right.getIndexKey(ctx);
   }
-
-  @Override
-  public OExpression resolveKeyFrom(OBinaryCondition additional) {
-    if (right != null) {
-      return right;
-    } else {
-      throw new UnsupportedOperationException("Cannot execute index query with " + this);
-    }
-  }
-
-  @Override
-  public OExpression resolveKeyTo(OBinaryCondition additional) {
-    if (right != null) {
-      return right;
-    } else {
-      throw new UnsupportedOperationException("Cannot execute index query with " + this);
-    }
-  }
-
-  @Override
-  public boolean isKeyFromIncluded(OBinaryCondition additional) {
-    if (additional != null && additional.getOperator() != null) {
-      return additional.getOperator().isGreaterInclude();
-    } else {
-      return true;
-    }
-  }
-
-  @Override
-  public boolean isKeyToIncluded(OBinaryCondition additional) {
-    if (additional != null && additional.getOperator() != null) {
-      return additional.getOperator().isLessInclude();
-    } else {
-      return true;
-    }
-  }
 }
 /* JavaCC - OriginalChecksum=bad1118296ea74860e88d66bfe9fa222 (do not edit this line) */

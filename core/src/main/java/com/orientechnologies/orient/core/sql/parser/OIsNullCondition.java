@@ -134,30 +134,6 @@ public class OIsNullCondition extends OBooleanExpression {
   }
 
   @Override
-  public OExpression resolveKeyFrom(OBinaryCondition additional) {
-    OExpression exp = new OExpression(-1);
-    exp.setNull(true);
-    return exp;
-  }
-
-  @Override
-  public boolean isKeyFromIncluded(OBinaryCondition additional) {
-    return true;
-  }
-
-  @Override
-  public OExpression resolveKeyTo(OBinaryCondition additional) {
-    OExpression exp = new OExpression(-1);
-    exp.setNull(true);
-    return exp;
-  }
-
-  @Override
-  public boolean isKeyToIncluded(OBinaryCondition additional) {
-    return true;
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

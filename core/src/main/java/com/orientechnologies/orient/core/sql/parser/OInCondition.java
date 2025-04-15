@@ -5,11 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
-import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
@@ -433,56 +429,6 @@ public class OInCondition extends OBooleanExpression {
   }
 
   @Override
-  public OExpression resolveKeyFrom(OBinaryCondition additional) {
-    OExpression item = new OExpression(-1);
-    if (getRightMathExpression() != null) {
-      item.setMathExpression(getRightMathExpression());
-      return item;
-    } else if (getRightParam() != null) {
-      OBaseExpression e = new OBaseExpression(-1);
-      e.setInputParam(getRightParam().copy());
-      item.setMathExpression(e);
-      return item;
-    } else {
-      throw new UnsupportedOperationException("Cannot execute index query with " + this);
-    }
-  }
-
-  @Override
-  public OExpression resolveKeyTo(OBinaryCondition additional) {
-    OExpression item = new OExpression(-1);
-    if (getRightMathExpression() != null) {
-      item.setMathExpression(getRightMathExpression());
-      return item;
-    } else if (getRightParam() != null) {
-      OBaseExpression e = new OBaseExpression(-1);
-      e.setInputParam(getRightParam().copy());
-      item.setMathExpression(e);
-      return item;
-    } else {
-      throw new UnsupportedOperationException("Cannot execute index query with " + this);
-    }
-  }
-
-  @Override
-  public boolean isKeyFromIncluded(OBinaryCondition additional) {
-    if (additional != null && additional.getOperator() != null) {
-      return additional.getOperator().isGreaterInclude();
-    } else {
-      return true;
-    }
-  }
-
-  @Override
-  public boolean isKeyToIncluded(OBinaryCondition additional) {
-    if (additional != null && additional.getOperator() != null) {
-      return additional.getOperator().isLessInclude();
-    } else {
-      return true;
-    }
-  }
-
-  @Override
   public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
     if (rightMathExpression != null
         && rightMathExpression.isEarlyCalculated(ctx)
@@ -540,44 +486,6 @@ public class OInCondition extends OBooleanExpression {
     base.rightMathExpression = right.copy();
 
     return result;
-  }
-
-  public List<OIndexStream> createIndexStreams(
-      OIndexInternal index, boolean orderAsc, OCommandContext ctx) {
-    List<OIndexStream> acquiredStreams = new ArrayList<>();
-    OExpression left = getLeft();
-    if (!left.toString().equalsIgnoreCase("key")) {
-      throw new OCommandExecutionException(
-          "search for index for " + this + " is not supported yet");
-    }
-    Object rightValue = evaluateRight((OResult) null, ctx);
-    if (OMultiValue.isMultiValue(rightValue)) {
-      Set<Object> itemsSet;
-      if (orderAsc) {
-        itemsSet = new TreeSet<>();
-      } else {
-        itemsSet = new TreeSet<>((Comparator<Object>) Collections.reverseOrder());
-      }
-      for (Object item : OMultiValue.getMultiValueIterable(rightValue)) {
-        if (item instanceof OResult) {
-          if (((OResult) item).isElement()) {
-            item = ((OResult) item).getElement().orElseThrow(IllegalStateException::new);
-          } else if (((OResult) item).getPropertyNames().size() == 1) {
-            item =
-                ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
-          }
-        }
-        itemsSet.add(item);
-      }
-      for (Object item : itemsSet) {
-        OIndexStream localCursor = new OExactIndexStream(index, item, orderAsc);
-        acquiredStreams.add(localCursor);
-      }
-    } else {
-      OIndexStream stream = new OExactIndexStream(index, rightValue, orderAsc);
-      acquiredStreams.add(stream);
-    }
-    return acquiredStreams;
   }
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */

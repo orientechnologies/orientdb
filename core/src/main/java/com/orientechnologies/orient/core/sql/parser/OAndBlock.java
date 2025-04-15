@@ -326,50 +326,6 @@ public class OAndBlock extends OBooleanExpression {
     return true;
   }
 
-  public OCollection indexKeyFrom(OBinaryCondition additional) {
-    OCollection result = new OCollection(-1);
-    for (OBooleanExpression exp : getSubBlocks()) {
-      OExpression res = exp.resolveKeyFrom(additional);
-      if (res != null) {
-        result.add(res);
-      }
-    }
-    return result;
-  }
-
-  public OCollection indexKeyTo(OBinaryCondition additional) {
-    OCollection result = new OCollection(-1);
-    for (OBooleanExpression exp : getSubBlocks()) {
-      OExpression res = exp.resolveKeyTo(additional);
-      if (res != null) {
-        result.add(res);
-      }
-    }
-    return result;
-  }
-
-  public boolean indexKeyFromIncluded(OBinaryCondition additional) {
-    OBooleanExpression exp = getSubBlocks().get(getSubBlocks().size() - 1);
-    return exp.isKeyFromIncluded(additional);
-  }
-
-  public boolean indexKeyToIncluded(OBinaryCondition additional) {
-    OBooleanExpression exp = getSubBlocks().get(getSubBlocks().size() - 1);
-    return exp.isKeyToIncluded(additional);
-  }
-
-  public void matchTypesToCondition(List<Object> result) {
-    if (getSubBlocks().size() == result.size()) {
-      for (int j = 0; j < getSubBlocks().size(); j++) {
-        OBooleanExpression subExp = getSubBlocks().get(j);
-        Optional<Map<Object, Object>> newValue = subExp.createIndexValueMap(result.get(j));
-        if (newValue.isPresent()) {
-          result.set(j, newValue.get());
-        }
-      }
-    }
-  }
-
   @Override
   public OAndBlock extractRidRanges(OCommandContext ctx) {
     OAndBlock result = new OAndBlock(-1);

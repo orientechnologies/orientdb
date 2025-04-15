@@ -301,50 +301,5 @@ public class OContainsValueCondition extends OBooleanExpression {
     }
     return keys;
   }
-
-  @Override
-  public OExpression resolveKeyFrom(OBinaryCondition additional) {
-    return getExpression();
-  }
-
-  @Override
-  public OExpression resolveKeyTo(OBinaryCondition additional) {
-    return getExpression();
-  }
-
-  @Override
-  public boolean isKeyFromIncluded(OBinaryCondition additional) {
-    OBinaryCompareOperator operator = getOperator();
-    if (operator.isGreater()) {
-      return operator.isInclude();
-    } else {
-      if (additional != null && additional.getOperator() != null) {
-        return additional.getOperator().isGreaterInclude();
-      } else {
-        return true;
-      }
-    }
-  }
-
-  @Override
-  public boolean isKeyToIncluded(OBinaryCondition additional) {
-    OBinaryCompareOperator operator = getOperator();
-    if (operator.isLess()) {
-      return operator.isInclude();
-    } else {
-      if (additional != null && additional.getOperator() != null) {
-        return additional.getOperator().isLessInclude();
-      } else {
-        return true;
-      }
-    }
-  }
-
-  @Override
-  public Optional<Map<Object, Object>> createIndexValueMap(Object object) {
-    Map<Object, Object> newValue = new HashMap<>();
-    newValue.put("", object);
-    return Optional.of(newValue);
-  }
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */

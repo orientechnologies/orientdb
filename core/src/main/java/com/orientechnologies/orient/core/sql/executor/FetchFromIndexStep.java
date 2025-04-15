@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
+import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidateOne;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStreamProducer;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
@@ -26,25 +27,14 @@ import com.orientechnologies.orient.core.sql.parser.OInCondition;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 /** Created by luigidellaquila on 23/07/16. */
 public class FetchFromIndexStep extends AbstractExecutionStep {
-  protected IndexSearchDescriptor desc;
+
   protected OIndexCandidate candidate;
-
   private boolean orderAsc;
-
-  public FetchFromIndexStep(IndexSearchDescriptor desc, boolean orderAsc, OCommandContext ctx) {
-    super();
-    this.desc = desc;
-    this.orderAsc = orderAsc;
-
-    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    database.queryStartUsingViewIndex(getIndexName());
-  }
 
   public FetchFromIndexStep(OIndexCandidate candidate, boolean orderAsc, OCommandContext ctx) {
     super();
@@ -58,13 +48,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   @Override
   public OExecutionStream internalStart(OCommandContext ctx) throws OTimeoutException {
     getPrev().ifPresent(x -> x.start(ctx).close(ctx));
-    // Double impl for now ... will remove one when the old is not needed anymore
-    List<OIndexStream> streams;
-    if (desc != null) {
-      streams = desc.getStreams(ctx, isOrderAsc());
-    } else {
-      streams = candidate.getStreams(ctx, orderAsc);
-    }
+    List<OIndexStream> streams = candidate.getStreams(ctx, orderAsc);
 
     OExecutionStreamProducer res =
         new OExecutionStreamProducer() {
@@ -124,12 +108,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       OCommandContext ctx, List<OIndexStreamStat> indexStats, AtomicLong count) {
     // stats
     OQueryStats stats = OQueryStats.get((ODatabaseDocumentInternal) ctx.getDatabase());
-    String indexName = null;
-    if (this.candidate != null) {
-      indexName = candidate.getName();
-    } else if (desc.getIndex() != null) {
-      indexName = desc.getIndex().getName();
-    }
+    String indexName = candidate.getName();
     OBooleanExpression condition = getKeyCondition();
     OBinaryCondition additionalRangeCondition = getAdditionalCondition();
     if (indexName == null) {
@@ -166,24 +145,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(OPrintContext ctx) {
-    String indexName;
-    String keyCondition;
-    if (desc != null) {
-      indexName = getIndexName();
-      if (getKeyCondition() != null) {
-        keyCondition = getKeyCondition().toString();
-        String additional =
-            Optional.ofNullable(getAdditionalCondition())
-                .map(rangeCondition -> " and " + rangeCondition)
-                .orElse("");
-        keyCondition += additional;
-      } else {
-        keyCondition = "";
-      }
-    } else {
-      indexName = this.candidate.getName();
-      keyCondition = "";
-    }
+    String indexName = this.candidate.getName();
+    // TODO: resolve source condition from candidate
+    String keyCondition = "";
     String result = OExecutionStepInternal.getIndent(ctx) + "+ FETCH FROM INDEX " + indexName;
     if (ctx.isProfilingEnabled()) {
       result += " (" + ctx.getCostFormatted(this) + ")";
@@ -206,19 +170,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   protected OBinaryCondition getAdditionalCondition() {
-    if (desc != null) {
-      return desc.getAdditionalRangeCondition();
-    } else {
-      return null;
-    }
+    // TODO: refactor with candidate in the references of this
+    return null;
   }
 
   protected OBooleanExpression getKeyCondition() {
-    if (desc != null) {
-      return desc.getKeyCondition();
-    } else {
-      return null;
-    }
+    // TODO: refactor with candidate in the references of this
+    return null;
   }
 
   @Override
@@ -240,6 +198,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     try {
       OExecutionStepInternal.basicDeserialize(fromResult, this);
       String indexName = fromResult.getProperty("indexName");
+
       OBooleanExpression condition = null;
       if (fromResult.getProperty("condition") != null) {
         condition = OBooleanExpression.deserializeFromOResult(fromResult.getProperty("condition"));
@@ -251,7 +210,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       }
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
       OIndex index = db.getMetadata().getIndexManager().getIndex(indexName);
-      desc = new IndexSearchDescriptor(index, condition, additionalRangeCondition, null);
+      // TODO: not used now, but need to serialize correctly the sources
+      candidate = new OIndexCandidateOne(index.getName());
       orderAsc = fromResult.getProperty("orderAsc");
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
@@ -265,18 +225,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStepInternal copy(OCommandContext ctx) {
-    if (this.candidate != null) {
-      return new FetchFromIndexStep(candidate, this.orderAsc, ctx);
-    } else {
-      return new FetchFromIndexStep(desc, this.orderAsc, ctx);
-    }
+    return new FetchFromIndexStep(candidate, this.orderAsc, ctx);
   }
 
   public String getIndexName() {
-    if (desc != null) {
-      return desc.getIndex().getName();
-    } else {
-      return candidate.getName();
-    }
+    return candidate.getName();
   }
 }
