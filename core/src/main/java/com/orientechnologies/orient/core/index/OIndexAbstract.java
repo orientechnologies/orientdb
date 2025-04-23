@@ -233,7 +233,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
       if (rebuild) fillIndex(progressListener, false);
 
-      updateConfiguration();
     } catch (Exception e) {
       logger.error("Exception during index '%s' creation", e, im.getName());
       // index is created inside of storage
@@ -689,8 +688,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     acquireExclusiveLock();
     try {
       if (clustersToIndex.add(clusterName)) {
-        updateConfiguration();
-
         // INDEX SINGLE CLUSTER
         indexCluster(clusterName, null, 0, 0, 0);
       }
@@ -705,7 +702,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     acquireExclusiveLock();
     try {
       if (clustersToIndex.remove(iClusterName)) {
-        updateConfiguration();
         rebuild();
       }
 
