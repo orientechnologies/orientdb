@@ -120,7 +120,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   public OIndexAbstract removeCluster(String iClusterName) {
     acquireExclusiveLock();
     try {
-      if (clustersToIndex.remove(iClusterName)) {
+      if (im.removeCluster(iClusterName)) {
         remove("_CLUSTER:" + storage.getClusterIdByName(iClusterName));
       }
 

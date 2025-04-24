@@ -169,4 +169,12 @@ public class OIndexMetadata {
   public void setMetadata(ODocument metadata) {
     this.metadata = metadata;
   }
+
+  public boolean addCluster(String name) {
+    return this.clustersToIndex.add(name);
+  }
+
+  public boolean removeCluster(String name) {
+    return this.clustersToIndex.remove(name);
+  }
 }

@@ -82,7 +82,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
   protected volatile int indexId = -1;
   protected volatile int apiVersion = -1;
 
-  protected Set<String> clustersToIndex = new HashSet<>();
   protected OIndexMetadata im;
 
   public OIndexAbstract(OIndexMetadata im, final OStorage storage) {
@@ -204,9 +203,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     try {
       Set<String> clustersToIndex = indexMetadata.getClustersToIndex();
 
-      if (clustersToIndex != null) this.clustersToIndex = new HashSet<>(clustersToIndex);
-      else this.clustersToIndex = new HashSet<>();
-
       // do not remove this, it is needed to remove index garbage if such one exists
       try {
         if (apiVersion == 0) {
@@ -258,11 +254,9 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public boolean loadFromConfiguration(final ODocument config) {
     acquireExclusiveLock();
     try {
-      clustersToIndex.clear();
 
       final OIndexMetadata indexMetadata = loadMetadata(config);
       this.im = indexMetadata;
-      clustersToIndex.addAll(indexMetadata.getClustersToIndex());
 
       try {
         indexId = storage.loadIndexEngine(im);
@@ -454,7 +448,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
       if (im.getMetadata() != null && im.getMetadata().containsField("partitions")) {
         engineProperties.put("partitions", im.getMetadata().field("partitions"));
       } else {
-        engineProperties.put("partitions", Integer.toString(clustersToIndex.size()));
+        engineProperties.put("partitions", Integer.toString(im.getClustersToIndex().size()));
       }
       indexId = storage.addIndexEngine(indexMetadata, engineProperties);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
@@ -469,7 +463,9 @@ public abstract class OIndexAbstract implements OIndexInternal {
       }
 
       throw OException.wrapException(
-          new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex), e);
+          new OIndexException(
+              "Error on rebuilding the index for clusters: " + im.getClustersToIndex()),
+          e);
     } finally {
       releaseExclusiveLock();
     }
@@ -488,7 +484,9 @@ public abstract class OIndexAbstract implements OIndexInternal {
       }
 
       throw OException.wrapException(
-          new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex), e);
+          new OIndexException(
+              "Error on rebuilding the index for clusters: " + im.getClustersToIndex()),
+          e);
     } finally {
       releaseSharedLock();
     }
@@ -502,13 +500,13 @@ public abstract class OIndexAbstract implements OIndexInternal {
       long documentNum = 0;
       long documentTotal = 0;
 
-      for (final String cluster : clustersToIndex)
+      for (final String cluster : im.getClustersToIndex())
         documentTotal += storage.count(storage.getClusterIdByName(cluster));
 
       if (iProgressListener != null) iProgressListener.onBegin(this, documentTotal, rebuild);
 
       // INDEX ALL CLUSTERS
-      for (final String clusterName : clustersToIndex) {
+      for (final String clusterName : im.getClustersToIndex()) {
         final long[] metrics =
             indexCluster(
                 clusterName, iProgressListener, documentNum, documentIndexed, documentTotal);
@@ -673,7 +671,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public Set<String> getClusters() {
     acquireSharedLock();
     try {
-      return Collections.unmodifiableSet(clustersToIndex);
+      return Collections.unmodifiableSet(im.getClustersToIndex());
     } finally {
       releaseSharedLock();
     }
@@ -682,7 +680,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public OIndexAbstract addCluster(final String clusterName) {
     acquireExclusiveLock();
     try {
-      if (clustersToIndex.add(clusterName)) {
+      if (this.im.addCluster(clusterName)) {
         // INDEX SINGLE CLUSTER
         indexCluster(clusterName, null, 0, 0, 0);
       }
@@ -696,7 +694,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public OIndexAbstract removeCluster(String iClusterName) {
     acquireExclusiveLock();
     try {
-      if (clustersToIndex.remove(iClusterName)) {
+      if (this.im.removeCluster(iClusterName)) {
         rebuild();
       }
 
@@ -730,7 +728,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
       document.removeField(OIndexInternal.INDEX_DEFINITION_CLASS);
     }
 
-    document.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
+    document.field(CONFIG_CLUSTERS, im.getClustersToIndex(), OType.EMBEDDEDSET);
     document.field(ALGORITHM, im.getAlgorithm());
     document.field(VALUE_CONTAINER_ALGORITHM, im.getValueContainerAlgorithm());
     if (im.getMetadata() != null)
