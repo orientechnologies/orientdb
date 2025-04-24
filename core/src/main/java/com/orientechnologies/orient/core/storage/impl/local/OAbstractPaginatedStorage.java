@@ -2279,17 +2279,18 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  public int loadIndexEngine(final String name) {
+  public int loadIndexEngine(final OIndexMetadata indexMetadata) {
     try {
       stateLock.readLock().lock();
       try {
 
         checkOpennessAndMigration();
 
-        final OBaseIndexEngine engine = indexEngineNameMap.get(name);
+        final OBaseIndexEngine engine = indexEngineNameMap.get(indexMetadata.getName());
         if (engine == null) {
           return -1;
         }
+        engine.init(indexMetadata);
         final int indexId = indexEngines.indexOf(engine);
         assert indexId == engine.getId();
         return generateIndexId(indexId, engine);
@@ -2389,6 +2390,7 @@ public abstract class OAbstractPaginatedStorage
                         this);
                 tree.createComponent(atomicOperation);
               }
+              engine.init(indexMetadata);
               return generateIndexId(engineData.getIndexId(), engine);
             });
       } catch (final IOException e) {

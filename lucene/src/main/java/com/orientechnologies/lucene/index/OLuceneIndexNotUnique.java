@@ -163,24 +163,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     } else put(fieldValue, doc);
   }
 
-  @Override
-  protected void onIndexEngineChange(int indexId) {
-    while (true)
-      try {
-        storage.callIndexEngine(
-            false,
-            indexId,
-            engine -> {
-              OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
-              oIndexEngine.init(im);
-              return null;
-            });
-        break;
-      } catch (OInvalidIndexEngineIdException e) {
-        doReloadIndexEngine();
-      }
-  }
-
   protected Object encodeKey(Object key) {
     return key;
   }

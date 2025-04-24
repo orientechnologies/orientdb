@@ -318,7 +318,7 @@ public interface OStorage extends OBackupable, OStorageInfo {
   int addIndexEngine(
       final OIndexMetadata indexMetadata, final Map<String, String> engineProperties);
 
-  int loadIndexEngine(final String name);
+  int loadIndexEngine(final OIndexMetadata indexMetadata);
 
   void clearIndex(final int indexId) throws OInvalidIndexEngineIdException;
 

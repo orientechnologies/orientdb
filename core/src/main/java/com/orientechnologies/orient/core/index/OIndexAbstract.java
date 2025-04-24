@@ -229,8 +229,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
       assert indexId >= 0;
       assert apiVersion >= 0;
 
-      onIndexEngineChange(indexId);
-
       if (rebuild) fillIndex(progressListener, false);
 
     } catch (Exception e) {
@@ -249,7 +247,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   protected void doReloadIndexEngine() {
-    indexId = storage.loadIndexEngine(im.getName());
+    indexId = storage.loadIndexEngine(im);
     apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
     if (indexId < 0) {
@@ -267,13 +265,11 @@ public abstract class OIndexAbstract implements OIndexInternal {
       clustersToIndex.addAll(indexMetadata.getClustersToIndex());
 
       try {
-        indexId = storage.loadIndexEngine(im.getName());
+        indexId = storage.loadIndexEngine(im);
         apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         if (indexId == -1) {
           return false;
         }
-
-        onIndexEngineChange(indexId);
 
       } catch (Exception e) {
         logger.error(
@@ -463,7 +459,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
       indexId = storage.addIndexEngine(indexMetadata, engineProperties);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
-      onIndexEngineChange(indexId);
     } catch (Exception e) {
       try {
         if (indexId >= 0) storage.clearIndex(indexId);
@@ -956,22 +951,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   private void removeValuesContainer() {
     storage.removeIndexValuesContainer(im);
-  }
-
-  protected void onIndexEngineChange(final int indexId) {
-    while (true)
-      try {
-        storage.callIndexEngine(
-            false,
-            indexId,
-            engine -> {
-              engine.init(im);
-              return null;
-            });
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
   }
 
   public static void manualIndexesWarning() {
