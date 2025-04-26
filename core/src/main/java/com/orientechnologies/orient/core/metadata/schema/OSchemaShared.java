@@ -195,10 +195,15 @@ public abstract class OSchemaShared implements OCloseable {
 
   /** Callback invoked when the schema is loaded, after all the initializations. */
   public void onPostIndexManagement() {
-    for (OClass c : classes.values()) {
-      if (c instanceof OClassImpl) ((OClassImpl) c).onPostIndexManagement();
+    List<OClass> checkClassesAndViews;
+    try {
+      acquireSchemaReadLock();
+      checkClassesAndViews = new ArrayList(classes.values());
+      checkClassesAndViews.addAll(views.values());
+    } finally {
+      releaseSchemaReadLock();
     }
-    for (OClass c : views.values()) {
+    for (OClass c : checkClassesAndViews) {
       if (c instanceof OClassImpl) ((OClassImpl) c).onPostIndexManagement();
     }
   }
