@@ -37,12 +37,24 @@ import java.util.List;
  */
 public class OAutoShardingClusterSelectionStrategy implements OClusterSelectionStrategy {
   public static final String NAME = "auto-sharding";
-  private final OIndex index;
-  private final OIndexEngine indexEngine;
-  private final List<String> indexedFields;
-  private final int[] clusters;
+  private OIndex index;
+  private OIndexEngine indexEngine;
+  private List<String> indexedFields;
+  private int[] clusters;
+
+  public OAutoShardingClusterSelectionStrategy() {}
 
   public OAutoShardingClusterSelectionStrategy(final OClass clazz, final OIndex autoShardingIndex) {
+    init(clazz, autoShardingIndex);
+  }
+
+  private synchronized void init(final OClass clazz) {
+    if (indexedFields == null) {
+      init(clazz, clazz.getAutoShardingIndex());
+    }
+  }
+
+  private void init(final OClass clazz, final OIndex autoShardingIndex) {
     index = autoShardingIndex;
     if (index == null)
       throw new OConfigurationException(
@@ -87,6 +99,10 @@ public class OAutoShardingClusterSelectionStrategy implements OClusterSelectionS
   }
 
   public int getCluster(final OClass clazz, final ODocument doc) {
+    if (indexedFields == null) {
+      init(clazz);
+    }
+
     final Object fieldValue = doc.field(indexedFields.get(0));
 
     return clusters[
