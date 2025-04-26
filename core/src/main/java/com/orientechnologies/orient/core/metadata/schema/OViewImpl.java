@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -108,12 +109,12 @@ public abstract class OViewImpl extends OClassImpl implements OView {
 
     List<Map<String, Object>> indexes = new ArrayList<>();
     for (OViewIndexConfig idx : cfg.indexes) {
-      Map<String, Object> indexDescriptor = new HashMap<>();
+      Map<String, Object> indexDescriptor = new LinkedHashMap<>();
       indexDescriptor.put("type", idx.type);
       indexDescriptor.put("engine", idx.engine);
-      Map<String, Object> properties = new HashMap<>();
+      Map<String, Object> properties = new LinkedHashMap<>();
       for (OIndexConfigProperty s : idx.props) {
-        HashMap<String, Object> entry = new HashMap<>();
+        HashMap<String, Object> entry = new LinkedHashMap<>();
         entry.put("type", s.getType().toString());
         if (s.getLinkedType() != null) {
           entry.put("linkedType", s.getLinkedType().toString());
