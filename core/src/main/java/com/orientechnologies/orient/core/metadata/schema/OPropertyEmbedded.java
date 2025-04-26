@@ -289,6 +289,11 @@ public class OPropertyEmbedded extends OPropertyImpl {
       checkEmbedded();
 
       this.linkedClass = iLinkedClass;
+      if (iLinkedClass != null) {
+        this.linkedClassName = iLinkedClass.getName();
+      } else {
+        this.linkedClassName = null;
+      }
 
     } finally {
       releaseSchemaWriteLock();
