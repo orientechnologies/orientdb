@@ -966,7 +966,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       if (clazz != null) {
         checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_CREATE, clazz.getName());
         if (clazz.isScheduler()) {
-          getSharedContext().getScheduler().initScheduleRecord(doc);
+          getSharedContext().getScheduler().initScheduleRecord(this, doc);
           changed = true;
         }
         if (clazz.isOuser()) {
@@ -1015,7 +1015,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         if (clazz.isScheduler()) {
-          getSharedContext().getScheduler().handleUpdateSchedule(doc);
+          getSharedContext().getScheduler().handleUpdateSchedule(this, doc);
           changed = true;
         }
         if (clazz.isOuser()) {

@@ -75,7 +75,7 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
             new OHttpMultipartContentBaseParser(),
             new OHttpMultipartFileToRecordContentParser(),
             database);
-        boolean ok = saveRecord(iRequest, iResponse);
+        boolean ok = saveRecord(database, iRequest, iResponse);
         writer.endObject();
         writer.flush();
         if (ok) {
@@ -144,7 +144,8 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
     }
   }
 
-  public boolean saveRecord(OHttpRequest iRequest, final OHttpResponse iResponse)
+  public boolean saveRecord(
+      ODatabaseDocumentInternal database, OHttpRequest iRequest, final OHttpResponse iResponse)
       throws InterruptedException, IOException {
     if (fileDocument != null) {
       if (fileRID != null) {
@@ -162,7 +163,7 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
         }
         ODocument doc = new ODocument();
         doc.fromJSON(fileDocument);
-        doc.save();
+        database.save(doc);
         writer.beginObject("updatedDocument");
         writer.writeAttribute(1, true, "rid", doc.getIdentity().toString());
         writer.endObject();

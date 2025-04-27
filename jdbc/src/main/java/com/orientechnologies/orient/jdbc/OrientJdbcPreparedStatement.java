@@ -344,7 +344,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
     try {
       ORecordBytes record = new ORecordBytes();
       record.fromInputStream(x);
-      record.save();
+      database.save(record);
       params.put(parameterIndex, record);
     } catch (IOException e) {
       throw new SQLException("unable to store inputStream", e);

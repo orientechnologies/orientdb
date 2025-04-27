@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -380,8 +381,14 @@ public class ORole extends OIdentity implements OSecurityRole {
     return this;
   }
 
+  @Deprecated
   public ORole save() {
     document.save(ORole.class.getSimpleName());
+    return this;
+  }
+
+  public ORole save(ODatabaseSession database) {
+    database.save(document, ORole.class.getSimpleName());
     return this;
   }
 

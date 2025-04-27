@@ -261,18 +261,18 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   @Override
   public OLuceneIndexNotUnique put(final Object key, final OIdentifiable value) {
     final ORID rid = value.getIdentity();
-
+    ODatabaseDocumentInternal db = getDatabase();
     if (!rid.isValid()) {
       if (value instanceof ORecord) {
         // EARLY SAVE IT
-        ((ORecord) value).save();
+        db.save((ORecord) value);
       } else {
         throw new IllegalArgumentException(
             "Cannot store non persistent RID as index value for key '" + key + "'");
       }
     }
     if (key != null) {
-      ODatabaseDocumentInternal db = getDatabase();
+
       OTransaction transaction = db.getTransaction();
 
       if (transaction.isActive()) {

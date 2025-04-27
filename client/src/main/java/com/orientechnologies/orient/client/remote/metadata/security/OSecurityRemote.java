@@ -146,7 +146,7 @@ public class OSecurityRemote implements OSecurityInternal {
         user.addRole(r);
       }
 
-    return user.save();
+    return user.save(session);
   }
 
   @Override
@@ -162,7 +162,7 @@ public class OSecurityRemote implements OSecurityInternal {
         user.addRole(r);
       }
 
-    return user.save();
+    return user.save(session);
   }
 
   @Override
@@ -183,7 +183,7 @@ public class OSecurityRemote implements OSecurityInternal {
       final ORole iParent,
       final ORole.ALLOW_MODES iAllowMode) {
     final ORole role = new ORole(iRoleName, iParent, iAllowMode);
-    return role.save();
+    return role.save(session);
   }
 
   @Override

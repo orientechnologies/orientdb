@@ -526,11 +526,11 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   @Override
   public OIndexOneValue put(Object key, final OIdentifiable value) {
     final ORID rid = value.getIdentity();
-
+    ODatabaseDocumentInternal database = getDatabase();
     if (!rid.isValid()) {
       if (value instanceof ORecord) {
         // EARLY SAVE IT
-        ((ORecord) value).save();
+        database.save((ORecord) value);
       } else {
         throw new IllegalArgumentException(
             "Cannot store non persistent RID as index value for key '" + key + "'");
@@ -538,7 +538,6 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     }
     key = getCollatingValue(key);
 
-    ODatabaseDocumentInternal database = getDatabase();
     if (database.getTransaction().isActive()) {
       OTransaction singleTx = database.getTransaction();
       singleTx.addIndexEntry(

@@ -37,7 +37,7 @@ public class ORevokeStatement extends OSimpleExecStatement {
     String resourcePath = securityResource.toString();
     if (permission != null) {
       role.revoke(resourcePath, toPrivilege(permission.permission));
-      role.save();
+      role.save(db);
     } else {
       OSecurityInternal security = db.getSharedContext().getSecurity();
       security.removeSecurityPolicy(db, role, resourcePath);

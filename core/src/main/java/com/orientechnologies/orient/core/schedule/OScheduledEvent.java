@@ -171,8 +171,8 @@ public class OScheduledEvent {
     return function;
   }
 
-  public void reload() {
-    document.reload();
+  public void reload(ODatabaseSession db) {
+    db.reload(document, null, true);
   }
 
   private static class ScheduledTimerTask extends TimerTask {
@@ -212,7 +212,7 @@ public class OScheduledEvent {
     }
 
     private void runTask(ODatabaseSession db) {
-      event.reload();
+      event.reload(db);
 
       if (event.running.get()) {
         logger.error("Error: The scheduled event '%s' is already running", null, event.getName());
@@ -232,12 +232,12 @@ public class OScheduledEvent {
             "Checking for the execution of the scheduled event '%s' executionId=%d...",
             event.getName(), event.nextExecutionId.get());
         try {
-          boolean executeEvent = executeEvent();
+          boolean executeEvent = executeEvent(db);
           if (executeEvent) {
             logger.info(
                 "Executing scheduled event '%s' executionId=%d...",
                 event.getName(), event.nextExecutionId.get());
-            executeEventFunction();
+            executeEventFunction(db);
           }
 
         } finally {
@@ -253,23 +253,23 @@ public class OScheduledEvent {
       }
     }
 
-    private boolean executeEvent() {
+    private boolean executeEvent(ODatabaseSession db) {
       for (int retry = 0; retry < 10; ++retry) {
         try {
-          if (isEventAlreadyExecuted()) break;
+          if (isEventAlreadyExecuted(db)) break;
 
           event.document.field(PROP_STATUS, STATUS.RUNNING);
           event.document.field(PROP_STARTTIME, System.currentTimeMillis());
           event.document.field(PROP_EXEC_ID, event.nextExecutionId.get());
 
-          event.document.save();
+          db.save(event.document);
 
           // OK
           return true;
         } catch (ONeedRetryException e) {
-          event.document.reload(null, true);
+          db.reload(event.document, null, true);
           // CONCURRENT UPDATE, PROBABLY EXECUTED BY ANOTHER SERVER
-          if (isEventAlreadyExecuted()) break;
+          if (isEventAlreadyExecuted(db)) break;
 
           logger.info(
               "Cannot change the status of the scheduled event '%s' executionId=%d, retry %d",
@@ -294,7 +294,7 @@ public class OScheduledEvent {
       return false;
     }
 
-    private void executeEventFunction() {
+    private void executeEventFunction(ODatabaseSession db) {
       Object result = null;
       try {
         result = event.function.execute(event.getArguments());
@@ -305,9 +305,9 @@ public class OScheduledEvent {
         for (int retry = 0; retry < 10; ++retry) {
           try {
             event.document.field(PROP_STATUS, STATUS.WAITING);
-            event.document.save();
+            db.save(event.document);
           } catch (ONeedRetryException e) {
-            event.document.reload(null, true);
+            db.reload(event.document, null, true, true);
           } catch (Exception e) {
             logger.error("Error on saving status for event '%s'", e, event.getName());
           }
@@ -315,13 +315,13 @@ public class OScheduledEvent {
       }
     }
 
-    private boolean isEventAlreadyExecuted() {
+    private boolean isEventAlreadyExecuted(ODatabaseSession db) {
       final ORecord rec = event.document.getIdentity().getRecord();
       if (rec == null)
         // SKIP EXECUTION BECAUSE THE EVENT WAS DELETED
         return true;
 
-      final ODocument updated = rec.reload();
+      final ODocument updated = db.reload(rec, null, true, true);
 
       final Long currentExecutionId = updated.field(PROP_EXEC_ID);
       if (currentExecutionId == null) return false;

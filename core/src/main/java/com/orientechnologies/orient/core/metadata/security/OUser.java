@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -339,8 +340,14 @@ public class OUser extends OIdentity implements OSecurityUser {
     return false;
   }
 
+  @Deprecated
   public OUser save() {
     document.save(OUser.class.getSimpleName());
+    return this;
+  }
+
+  public OUser save(ODatabaseSession database) {
+    database.save(document, OUser.class.getSimpleName());
     return this;
   }
 

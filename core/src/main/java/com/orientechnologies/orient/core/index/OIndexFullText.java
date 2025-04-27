@@ -83,11 +83,11 @@ public class OIndexFullText extends OIndexMultiValues {
       return this;
     }
     final ORID rid = value.getIdentity();
-
+    ODatabaseDocumentInternal database = getDatabase();
     if (!rid.isValid()) {
       if (value instanceof ORecord) {
         // EARLY SAVE IT
-        ((ORecord) value).save();
+        database.save((ORecord) value);
       } else {
         throw new IllegalArgumentException(
             "Cannot store non persistent RID as index value for key '" + key + "'");
@@ -98,7 +98,6 @@ public class OIndexFullText extends OIndexMultiValues {
 
     final Set<String> words = splitIntoWords(key.toString());
 
-    ODatabaseDocumentInternal database = getDatabase();
     if (database.getTransaction().isActive()) {
       OTransaction singleTx = database.getTransaction();
       for (String word : words) {

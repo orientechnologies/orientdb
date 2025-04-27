@@ -136,11 +136,11 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
 
   public OIndexMultiValues put(Object key, final OIdentifiable singleValue) {
     final ORID rid = singleValue.getIdentity();
-
+    ODatabaseDocumentInternal database = getDatabase();
     if (!rid.isValid()) {
       if (singleValue instanceof ORecord) {
         // EARLY SAVE IT
-        ((ORecord) singleValue).save();
+        database.save((ORecord) singleValue);
       } else {
         throw new IllegalArgumentException(
             "Cannot store non persistent RID as index value for key '" + key + "'");
@@ -149,7 +149,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
 
     key = getCollatingValue(key);
 
-    ODatabaseDocumentInternal database = getDatabase();
     if (database.getTransaction().isActive()) {
       OTransaction singleTx = database.getTransaction();
       singleTx.addIndexEntry(

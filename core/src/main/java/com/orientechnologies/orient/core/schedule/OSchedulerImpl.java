@@ -22,6 +22,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -54,10 +55,10 @@ public class OSchedulerImpl {
     this.orientDB = orientDB;
   }
 
-  public void scheduleEvent(final OScheduledEvent event) {
+  public void scheduleEvent(ODatabaseDocumentInternal session, final OScheduledEvent event) {
     if (event.getDocument().getIdentity().isNew())
       // FIST TIME: SAVE IT
-      event.getDocument().save();
+      session.save(event.getDocument());
 
     if (events.putIfAbsent(event.getName(), event) == null) {
       String database = event.getDocument().getDatabase().getName();
@@ -74,7 +75,7 @@ public class OSchedulerImpl {
     return event;
   }
 
-  public void removeEvent(final String eventName) {
+  public void removeEvent(ODatabaseDocumentInternal session, final String eventName) {
     logger.debug("Removing scheduled event '%s'...", eventName);
 
     final OScheduledEvent event = removeEventInternal(eventName);
@@ -82,7 +83,7 @@ public class OSchedulerImpl {
     if (event != null) {
 
       try {
-        event.getDocument().reload();
+        session.reload(event.getDocument());
       } catch (ORecordNotFoundException ignore) {
         // ALREADY DELETED, JUST RETURN
         return;
@@ -96,7 +97,7 @@ public class OSchedulerImpl {
               logger.debug(
                   "Deleting scheduled event '%s' rid=%s...",
                   event, event.getDocument().getIdentity());
-              event.getDocument().delete();
+              session.delete(event.getDocument());
               return null;
             }
           },
@@ -106,19 +107,19 @@ public class OSchedulerImpl {
     }
   }
 
-  public void updateEvent(final OScheduledEvent event) {
+  public void updateEvent(ODatabaseDocumentInternal session, final OScheduledEvent event) {
     final OScheduledEvent oldEvent = events.remove(event.getName());
     if (oldEvent != null) oldEvent.interrupt();
-    scheduleEvent(event);
+    scheduleEvent(session, event);
     logger.debug(
         "Updated scheduled event '%s' rid=%s...", event, event.getDocument().getIdentity());
   }
 
-  public Map<String, OScheduledEvent> getEvents() {
+  public Map<String, OScheduledEvent> getEvents(ODatabaseDocumentInternal session) {
     return events;
   }
 
-  public OScheduledEvent getEvent(final String name) {
+  public OScheduledEvent getEvent(ODatabaseDocumentInternal session, final String name) {
     return events.get(name);
   }
 
@@ -131,7 +132,7 @@ public class OSchedulerImpl {
     if (database.getMetadata().getSchema().existsClass(OScheduledEvent.CLASS_NAME)) {
       final Iterable<ODocument> result = database.browseClass(OScheduledEvent.CLASS_NAME);
       for (ODocument d : result) {
-        scheduleEvent(new OScheduledEvent(d));
+        scheduleEvent(database, new OScheduledEvent(d));
       }
     }
   }
@@ -165,9 +166,9 @@ public class OSchedulerImpl {
     f.createProperty(OScheduledEvent.PROP_STARTTIME, OType.DATETIME, (OType) null, true);
   }
 
-  public void initScheduleRecord(ODocument doc) {
+  public void initScheduleRecord(ODatabaseDocumentEmbedded session, ODocument doc) {
     String name = doc.field(OScheduledEvent.PROP_NAME);
-    final OScheduledEvent event = getEvent(name);
+    final OScheduledEvent event = getEvent(session, name);
     if (event != null && event.getDocument() != doc) {
       throw new ODatabaseException(
           "Scheduled event with name '" + name + "' already exists in database");
@@ -175,10 +176,10 @@ public class OSchedulerImpl {
     doc.field(OScheduledEvent.PROP_STATUS, OScheduler.STATUS.STOPPED.name());
   }
 
-  public void handleUpdateSchedule(ODocument doc) {
+  public void handleUpdateSchedule(ODatabaseDocumentEmbedded session, ODocument doc) {
     try {
       final String schedulerName = doc.field(OScheduledEvent.PROP_NAME);
-      OScheduledEvent event = getEvent(schedulerName);
+      OScheduledEvent event = getEvent(session, schedulerName);
 
       if (event != null) {
         // UPDATED EVENT
@@ -189,7 +190,7 @@ public class OSchedulerImpl {
 
         if (dirtyFields.contains(OScheduledEvent.PROP_RULE)) {
           // RULE CHANGED, STOP CURRENT EVENT AND RESCHEDULE IT
-          updateEvent(new OScheduledEvent(doc));
+          updateEvent(session, new OScheduledEvent(doc));
         } else {
           doc.field(OScheduledEvent.PROP_STATUS, OScheduler.STATUS.STOPPED.name());
           event.fromStream(doc);

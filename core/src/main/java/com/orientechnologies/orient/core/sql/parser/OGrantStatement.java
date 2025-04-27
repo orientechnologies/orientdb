@@ -37,7 +37,7 @@ public class OGrantStatement extends OSimpleExecStatement {
     String resourcePath = securityResource.toString();
     if (permission != null) {
       role.grant(resourcePath, toPrivilege(permission.permission));
-      role.save();
+      role.save(db);
     } else {
       OSecurityInternal security = db.getSharedContext().getSecurity();
       OSecurityPolicyImpl policy = security.getSecurityPolicy(db, policyName.getStringValue());

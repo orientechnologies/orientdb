@@ -188,12 +188,12 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
 
                 target.setProperty(linkName, value);
               }
-              target.save();
+              database.save(target);
 
             } else {
               // SET THE REFERENCE
               doc.setProperty(linkName, value);
-              doc.save();
+              database.save(doc);
             }
 
             total++;

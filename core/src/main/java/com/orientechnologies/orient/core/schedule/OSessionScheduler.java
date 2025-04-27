@@ -35,26 +35,26 @@ public class OSessionScheduler extends OProxedResource<OSchedulerImpl> implement
 
   @Override
   public void scheduleEvent(final OScheduledEvent scheduler) {
-    delegate.scheduleEvent(scheduler);
+    delegate.scheduleEvent(this.database, scheduler);
   }
 
   @Override
   public void removeEvent(final String eventName) {
-    delegate.removeEvent(eventName);
+    delegate.removeEvent(this.database, eventName);
   }
 
   @Override
   public void updateEvent(final OScheduledEvent event) {
-    delegate.updateEvent(event);
+    delegate.updateEvent(this.database, event);
   }
 
   @Override
   public Map<String, OScheduledEvent> getEvents() {
-    return delegate.getEvents();
+    return delegate.getEvents(this.database);
   }
 
   @Override
   public OScheduledEvent getEvent(final String name) {
-    return delegate.getEvent(name);
+    return delegate.getEvent(this.database, name);
   }
 }

@@ -342,7 +342,7 @@ public class OSecurityShared implements OSecurityInternal {
         user.addRole(r);
       }
 
-    return user.save();
+    return user.save(session);
   }
 
   public OUser createUser(
@@ -357,7 +357,7 @@ public class OSecurityShared implements OSecurityInternal {
         user.addRole(r);
       }
 
-    return user.save();
+    return user.save(session);
   }
 
   public boolean dropUser(final ODatabaseSession session, final String iUserName) {
@@ -415,7 +415,7 @@ public class OSecurityShared implements OSecurityInternal {
       final ORole iParent,
       final ORole.ALLOW_MODES iAllowMode) {
     final ORole role = new ORole(iRoleName, iParent, iAllowMode);
-    return role.save();
+    return role.save(session);
   }
 
   public boolean dropRole(final ODatabaseSession session, final String iRoleName) {
@@ -676,7 +676,7 @@ public class OSecurityShared implements OSecurityInternal {
         OSecurityResource.class.getSimpleName(),
         ORole.PERMISSION_READ);
     writerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
-    writerRole.save();
+    writerRole.save(session);
 
     setSecurityPolicyWithBitmask(
         session, writerRole, ORule.ResourceGeneric.DATABASE.getLegacyName(), ORole.PERMISSION_READ);
@@ -777,7 +777,7 @@ public class OSecurityShared implements OSecurityInternal {
     readerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
     readerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
 
-    readerRole.save();
+    readerRole.save(session);
 
     setSecurityPolicyWithBitmask(
         session, readerRole, ORule.ResourceGeneric.DATABASE.getLegacyName(), ORole.PERMISSION_READ);
@@ -843,22 +843,28 @@ public class OSecurityShared implements OSecurityInternal {
 
   private void setDefaultAdminPermissions(final ODatabaseSession session, ORole adminRole) {
     setSecurityPolicyWithBitmask(session, adminRole, "*", ORole.PERMISSION_ALL);
-    adminRole.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL).save();
-    adminRole.addRule(ORule.ResourceGeneric.ALL, null, ORole.PERMISSION_ALL).save();
+    adminRole
+        .addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL)
+        .save(session);
+    adminRole.addRule(ORule.ResourceGeneric.ALL, null, ORole.PERMISSION_ALL).save(session);
     //      adminRole.addRule(ORule.ResourceGeneric.ALL_CLASSES, null,
     // ORole.PERMISSION_ALL).save();
-    adminRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL).save();
+    adminRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL).save(session);
     //      adminRole.addRule(ORule.ResourceGeneric.ALL_CLUSTERS, null,
     // ORole.PERMISSION_ALL).save();
-    adminRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL).save();
-    adminRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_ALL).save();
-    adminRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_ALL).save();
-    adminRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_ALL).save();
-    adminRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL).save();
-    adminRole.addRule(ORule.ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL).save();
-    adminRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL).save();
+    adminRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL).save(session);
+    adminRole
+        .addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_ALL)
+        .save(session);
+    adminRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_ALL).save(session);
+    adminRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_ALL).save(session);
+    adminRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL).save(session);
+    adminRole
+        .addRule(ORule.ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL)
+        .save(session);
+    adminRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL).save(session);
 
-    adminRole.save();
+    adminRole.save(session);
   }
 
   private void createOrUpdateORestrictedClass(final ODatabaseDocument database) {

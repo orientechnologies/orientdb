@@ -118,12 +118,12 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       // Do not allow root to have access to audit log class by default.
       root.addRule(ORule.ResourceGeneric.CLASS, "OAuditingLog", ORole.PERMISSION_NONE);
       root.addRule(ORule.ResourceGeneric.CLUSTER, "oauditinglog", ORole.PERMISSION_NONE);
-      root.save();
+      root.save(session);
     }
     if (security.getRole("guest") == null) {
       ORole guest = security.createRole("guest", ORole.ALLOW_MODES.DENY_ALL_BUT);
       guest.addRule(ResourceGeneric.SERVER, "listDatabases", ORole.PERMISSION_ALL);
-      guest.save();
+      guest.save(session);
     }
     // for monitoring/logging purposes, intended to connect from external monitoring systems
     if (security.getRole("monitor") == null) {
@@ -137,7 +137,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       guest.addRule(ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL);
       guest.addRule(ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
       guest.addRule(ResourceGeneric.SERVER, null, ORole.PERMISSION_READ);
-      guest.save();
+      guest.save(session);
     }
     // a separate role for accessing the auditing logs
     if (security.getRole("auditor") == null) {
@@ -159,7 +159,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
           ORule.ResourceGeneric.CLUSTER,
           "oauditinglog",
           ORole.PERMISSION_CREATE + ORole.PERMISSION_READ + ORole.PERMISSION_UPDATE);
-      auditor.save();
+      auditor.save(session);
     }
   }
 
