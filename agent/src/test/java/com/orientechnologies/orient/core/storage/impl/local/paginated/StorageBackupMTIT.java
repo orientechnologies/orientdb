@@ -109,7 +109,6 @@ public class StorageBackupMTIT {
           null,
           backupDir.getAbsolutePath(),
           OrientDBConfig.defaultConfig());
-      embedded.close();
 
       final ODatabaseCompare compare =
           new ODatabaseCompare(
@@ -120,6 +119,7 @@ public class StorageBackupMTIT {
 
       boolean areSame = compare.compare();
       Assert.assertTrue(areSame);
+      embedded.close();
 
     } finally {
 
@@ -211,7 +211,6 @@ public class StorageBackupMTIT {
       OrientDBEmbedded embedded =
           (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, config);
       embedded.restore(backupDbName, null, null, null, backupDir.getAbsolutePath(), config);
-      embedded.close();
 
       OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue("T1JJRU5UREJfSVNfQ09PTA==");
       final ODatabaseCompare compare =
@@ -223,6 +222,7 @@ public class StorageBackupMTIT {
 
       boolean areSame = compare.compare();
       Assert.assertTrue(areSame);
+      embedded.close();
 
     } finally {
       try {
