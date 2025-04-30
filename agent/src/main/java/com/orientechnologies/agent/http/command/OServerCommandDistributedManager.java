@@ -241,7 +241,12 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     } else {
       throw new IllegalArgumentException("Command '" + command + "' not supported");
     }
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
+    if (doc == null) {
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "{}", null);
+    } else {
+      iResponse.send(
+          OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
+    }
   }
 
   private ODocument singleNodeStats(final ODistributedServerManager manager, final String id) {
@@ -337,7 +342,11 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
   public ODocument doGetDatabaseInfo(final OServer server, final String id) {
     final ODistributedConfiguration cfg =
         server.getDistributedManager().getDatabaseConfiguration(id);
-    return cfg.getDocument();
+    if (cfg != null) {
+      return cfg.getDocument();
+    } else {
+      return null;
+    }
   }
 
   public ODocument doGetNodeConfig(final ODistributedServerManager manager) {
