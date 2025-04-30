@@ -366,7 +366,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     OSignalHandler signalHandler = Orient.instance().getSignalHandler();
     if (signalHandler != null) signalHandler.unregisterListener(signalListener);
 
-    logger.warnNode("Shutting down node '%s'...", nodeName);
+    logger.warnNode(nodeName, "Shutting down node '%s'...", nodeName);
     setNodeStatus(NODE_STATUS.SHUTTINGDOWN);
 
     clusterManager.prepareHazelcastPluginShutdown();

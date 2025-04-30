@@ -42,7 +42,7 @@ public interface OLogger {
   }
 
   default void warn(String message, Throwable exception, Object... additionalArgs) {
-    log(Level.WARN, message, exception, true, null, additionalArgs);
+    log(Level.WARN, message, exception, true, additionalArgs);
   }
 
   default void error(String message, Throwable exception, Object... additionalArgs) {

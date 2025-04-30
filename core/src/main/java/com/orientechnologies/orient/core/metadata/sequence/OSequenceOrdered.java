@@ -100,7 +100,7 @@ public class OSequenceOrdered extends OSequence {
                     String warningMessage =
                         "Non-recyclable sequence: %s reaching limt, current value: %d limit value:"
                             + " %d with step: %d";
-                    logger.warn(warningMessage, getName(), newValue, limitValue);
+                    logger.warn(warningMessage, getName(), newValue, limitValue, increment);
                   }
                 }
 
