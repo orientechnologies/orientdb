@@ -22,10 +22,13 @@ import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import java.util.HashMap;
 
 /** Created by tglman on 22/06/17. */
 public class OSharedContextDistributed extends OSharedContextEmbedded {
+
+  private ODistributedDatabaseImpl distributedContext;
 
   public OSharedContextDistributed(OStorage storage, OrientDBDistributed orientDB) {
     super(storage, orientDB);
@@ -71,6 +74,11 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
         });
 
     this.viewManager = new ViewManager(orientDB, storage.getName());
+    this.distributedContext =
+        new ODistributedDatabaseImpl(
+            (OrientDBDistributed) orientDB,
+            ((OrientDBDistributed) orientDB).getPlugin(),
+            storage.getName());
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {
@@ -91,6 +99,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
               sequenceLibrary.load(database);
               schema.onPostIndexManagement();
               viewManager.load();
+              distributedContext.initFirstOpen(database);
               loaded = true;
             }
           } finally {
@@ -119,6 +128,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     liveQueryOps.close();
     liveQueryOpsV2.close();
     activeDistributedQueries.values().forEach(x -> x.close());
+    distributedContext.shutdown();
     loaded = false;
   }
 
@@ -165,6 +175,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
           }
 
           viewManager.create();
+          distributedContext.initFirstOpen(database);
           schema.forceSnapshot(database);
           loaded = true;
           return null;
@@ -173,5 +184,9 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
 
   public ViewManager getViewManager() {
     return viewManager;
+  }
+
+  public ODistributedDatabaseImpl getDistributedContext() {
+    return distributedContext;
   }
 }

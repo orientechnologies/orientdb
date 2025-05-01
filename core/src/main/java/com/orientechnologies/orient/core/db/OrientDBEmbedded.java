@@ -418,7 +418,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         checkOpen();
         OStorage storage = getAndOpenStorage(name, config);
-        embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
+        embedded = newSessionInstance(storage, config);
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(user, "nopwd", false);
@@ -430,17 +430,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  protected ODatabaseDocumentEmbedded newSessionInstance(
-      OStorage storage, OrientDBConfig config, OSharedContext sharedContext) {
+  protected ODatabaseDocumentEmbedded newSessionInstance(OStorage storage, OrientDBConfig config) {
     ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
     embedded.init(config, getOrCreateSharedContext(storage));
     return embedded;
   }
 
   protected ODatabaseDocumentEmbedded newCreateSessionInstance(
-      OStorage storage, OrientDBConfig config, OSharedContext sharedContext) {
+      OStorage storage, OrientDBConfig config) {
     ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-    embedded.internalCreate(config, sharedContext);
+    embedded.internalCreate(config, getOrCreateSharedContext(storage));
     return embedded;
   }
 
@@ -452,7 +451,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         checkOpen();
         OStorage storage = getAndOpenStorage(name, config);
-        embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
+        embedded = newSessionInstance(storage, config);
       }
       embedded.rebuildIndexes();
       embedded.callOnOpenListeners();
@@ -475,7 +474,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         config = solveConfig(config);
         OStorage storage = getAndOpenStorage(name, config);
 
-        embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
+        embedded = newSessionInstance(storage, config);
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(user, password);
@@ -500,7 +499,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         }
         String database = authenticationInfo.getDatabase().get();
         OStorage storage = getAndOpenStorage(database, config);
-        embedded = newSessionInstance(storage, config, getOrCreateSharedContext(storage));
+        embedded = newSessionInstance(storage, config);
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(authenticationInfo);
@@ -801,7 +800,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   protected ODatabaseDocumentEmbedded internalCreate(OrientDBConfig config, OStorage storage) {
     storage.create(config.getConfigurations());
-    return newCreateSessionInstance(storage, config, getOrCreateSharedContext(storage));
+    return newCreateSessionInstance(storage, config);
   }
 
   protected synchronized OSharedContext getOrCreateSharedContext(OStorage storage) {

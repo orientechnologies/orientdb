@@ -595,8 +595,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void initFirstOpen(ODatabaseDocumentInternal session) {
     ODistributedConfiguration cfg = this.context.getOrInitDistributedConfiguration(session);
     manager.checkNodeInConfiguration(databaseName, cfg);
-    fillStatus();
 
+    fillStatus();
     // SET THE NODE.DB AS ONLINE
     OStorage storage = context.getStorage(databaseName);
     if (storage != null && !manager.isSyncronizing(databaseName)) {

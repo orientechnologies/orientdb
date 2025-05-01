@@ -115,11 +115,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private final ODistributedPlugin distributedManager;
 
-  public ODatabaseDocumentDistributed(
-      OStorage storage, ODistributedPlugin distributedPlugin, OSharedContext context) {
+  public ODatabaseDocumentDistributed(OStorage storage, ODistributedPlugin distributedPlugin) {
     super(storage);
     this.distributedManager = distributedPlugin;
-    this.sharedContext = context;
   }
 
   /**
@@ -179,7 +177,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentDistributed database =
-        new ODatabaseDocumentDistributed(getStorage(), distributedManager, this.sharedContext);
+        new ODatabaseDocumentDistributed(getStorage(), distributedManager);
     database.init(getConfig(), getSharedContext());
     String user;
     if (getUser() != null) {
@@ -277,9 +275,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   protected void createMetadata(OSharedContext ctx) {
     // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
-    OSharedContext shared = ctx;
-    metadata.init(shared);
-    ((OSharedContextDistributed) shared).create(this);
+    metadata.init(ctx);
+    ((OSharedContextDistributed) ctx).create(this);
   }
 
   public int assignAndCheckCluster(ORecord record, String iClusterName) {
