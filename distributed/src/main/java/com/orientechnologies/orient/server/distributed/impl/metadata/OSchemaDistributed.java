@@ -29,23 +29,15 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   }
 
   public void acquireSchemaWriteLock(ODatabaseDocumentInternal database) {
-    if (executeThroughDistributedStorage(database)) {
-      ((ODatabaseDocumentDistributed) database).acquireDistributedExclusiveLock(0);
-    } else {
+    if (!executeThroughDistributedStorage(database)) {
       super.acquireSchemaWriteLock(database);
     }
   }
 
   @Override
   public void releaseSchemaWriteLock(ODatabaseDocumentInternal database, final boolean iSave) {
-    try {
-      if (!executeThroughDistributedStorage(database)) {
-        super.releaseSchemaWriteLock(database, iSave);
-      }
-    } finally {
-      if (executeThroughDistributedStorage(database)) {
-        ((ODatabaseDocumentDistributed) database).releaseDistributedExclusiveLock();
-      }
+    if (!executeThroughDistributedStorage(database)) {
+      super.releaseSchemaWriteLock(database, iSave);
     }
   }
 

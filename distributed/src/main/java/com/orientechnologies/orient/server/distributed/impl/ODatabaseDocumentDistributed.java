@@ -1190,18 +1190,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 
-  public void acquireDistributedExclusiveLock(int timeout) {
-    distributedManager
-        .getLockManagerRequester()
-        .acquireExclusiveLock(getName(), distributedManager.getLocalNodeName(), timeout);
-  }
-
-  public void releaseDistributedExclusiveLock() {
-    distributedManager
-        .getLockManagerRequester()
-        .releaseExclusiveLock(getName(), distributedManager.getLocalNodeName());
-  }
-
   /** {@inheritDoc} */
   @Override
   public void freeze(final boolean throwException) {
