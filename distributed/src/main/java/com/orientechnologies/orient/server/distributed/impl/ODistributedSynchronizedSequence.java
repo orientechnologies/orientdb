@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
@@ -13,7 +14,7 @@ import java.util.concurrent.CountDownLatch;
 
 public class ODistributedSynchronizedSequence {
   private final OTransactionSequenceManager sequenceManager;
-  private CountDownLatch request;
+  private volatile CountDownLatch request;
 
   public ODistributedSynchronizedSequence(String node, int size) {
     sequenceManager = new OTransactionSequenceManager(node, size);
@@ -31,6 +32,10 @@ public class ODistributedSynchronizedSequence {
 
   public Optional<OTransactionId> next() {
     return sequenceManager.next();
+  }
+
+  public Optional<ORawPair<OTransactionId, OTransactionId>> nextDDL() {
+    return sequenceManager.nextDDL();
   }
 
   public synchronized OTxMetadataHolderImpl notifySuccess(OTransactionId id) {

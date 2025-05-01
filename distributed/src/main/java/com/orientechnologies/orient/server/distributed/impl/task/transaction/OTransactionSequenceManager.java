@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
+import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.ValidationResult;
@@ -17,11 +19,14 @@ public class OTransactionSequenceManager {
   private final int sequenceSize;
 
   public OTransactionSequenceManager(String node, int size) {
-    // TODO: make size configurable
+    if (size < 2) {
+      throw new OConfigurationException("Sequence size need to be at least of size 3");
+    }
     this.sequentials = new long[size];
     this.promisedSequential = new OTransactionId[size];
     this.node = node;
-    this.sequenceSize = size;
+    // Reserve position 0,1 for DDLs, so the random range is one less
+    this.sequenceSize = size - 2;
   }
 
   public synchronized void fill(OTransactionSequenceStatus data) {
@@ -33,13 +38,27 @@ public class OTransactionSequenceManager {
     int pos;
     int retry = 0;
     do {
-      pos = new Random().nextInt(sequenceSize);
+      // Position 0,2 are for DDLs so add 2 to generate number
+      pos = new Random().nextInt(sequenceSize) + 2;
       if (retry > sequenceSize) {
         return Optional.empty();
       }
       retry++;
     } while (this.promisedSequential[pos] != null);
     return Optional.of(nextAt(pos));
+  }
+
+  /** As today DDLs are not atomic, so we used two sequential for pre-operation and
+   * post operation to assert that the DDL was completed, as soon as DDLs will be
+   * atomic we can revert to a single sequential
+   *
+   * @return
+   */
+  public synchronized Optional<ORawPair<OTransactionId, OTransactionId>> nextDDL() {
+    if (this.promisedSequential[0] != null || this.promisedSequential[1] != null) {
+      return Optional.empty();
+    }
+    return Optional.of(new ORawPair(nextAt(0), nextAt(1)));
   }
 
   /**

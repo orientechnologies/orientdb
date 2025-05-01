@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -473,6 +474,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public Optional<OTransactionId> nextId() {
     return sequenceManager.next();
+  }
+
+  public Optional<ORawPair<OTransactionId, OTransactionId>> startDDLId() {
+    return sequenceManager.nextDDL();
   }
 
   @Override
