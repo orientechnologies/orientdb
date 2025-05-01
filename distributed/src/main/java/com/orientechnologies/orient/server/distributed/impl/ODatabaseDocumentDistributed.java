@@ -1478,6 +1478,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   });
         }
       }
+    } else if (context != null) {
+      localDistributedDatabase.rollback(context.getPreChangeId());
+      localDistributedDatabase.rollback(context.getAfterChangeId());
     }
   }
 }
