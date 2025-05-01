@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
@@ -86,6 +87,8 @@ public interface ODistributedDatabase {
   long getProcessedRequests();
 
   Optional<OTransactionId> nextId();
+
+  Optional<ORawPair<OTransactionId, OTransactionId>> startDDLId();
 
   List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState);
 

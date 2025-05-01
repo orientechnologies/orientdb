@@ -17,6 +17,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -995,14 +996,26 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         getConfiguration()
                 .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)
             + 1;
+    int retryDelay =
+        this.getConfiguration()
+            .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
 
     retry:
     for (int i = 0; i < nretry; i++) {
-      Optional<OTransactionId> beforeId = local.nextId();
-      Optional<OTransactionId> afterId = local.nextId();
+      Optional<ORawPair<OTransactionId, OTransactionId>> ids;
+      do {
+        ids = local.startDDLId();
+        if (ids.isEmpty()) {
+          try {
+            Thread.sleep(new Random().nextInt(retryDelay));
+          } catch (InterruptedException e) {
+            OException.wrapException(new OInterruptedException(e.getMessage()), e);
+          }
+        }
+      } while (ids.isEmpty());
 
       OSQLCommandTaskFirstPhase task =
-          new OSQLCommandTaskFirstPhase(command, beforeId.get(), afterId.get());
+          new OSQLCommandTaskFirstPhase(command, ids.get().getFirst(), ids.get().getSecond());
       ODistributedServerManager dManager = getDistributedManager();
       Set<String> nodes = dManager.getAvailableNodeNames(getName());
       long next = dManager.getNextMessageIdCounter();
