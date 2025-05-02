@@ -98,7 +98,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private AtomicLong totalReceivedRequests = new AtomicLong();
   private TimerTask txTimeoutTask = null;
   private volatile boolean running = true;
-  private volatile boolean parsing = true;
+  private volatile boolean parsing = false;
   private AtomicLong operationsRunnig = new AtomicLong(0);
   private ODistributedSynchronizedSequence sequenceManager;
   private ExecutorService requestExecutor;
@@ -476,7 +476,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return sequenceManager.next();
   }
 
-  public Optional<ORawPair<OTransactionId, OTransactionId>> startDDLId() {
+  public Optional<ORawPair<OTransactionId, OTransactionId>> nextDDLId() {
     return sequenceManager.nextDDL();
   }
 
