@@ -112,6 +112,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private final OSystemDatabase systemDatabase;
   private final ODefaultSecuritySystem securitySystem;
   private final OCommandTimeoutChecker timeoutChecker;
+  protected final AtomicInteger dbCount = new AtomicInteger(0);
 
   protected final long maxWALSegmentSize;
   protected final long doubleWriteLogMaxSegSize;
@@ -714,6 +715,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         sharedContexts.remove(name);
         storages.remove(name);
+        dbCount.decrementAndGet();
       }
 
       OContextConfiguration configs = getConfigurations().getConfigurations();
@@ -775,6 +777,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     try {
       OStorage storage;
       synchronized (this) {
+        dbCount.decrementAndGet();
         OSharedContext context = sharedContexts.remove(name);
         if (context != null) {
           context.close();
@@ -807,6 +810,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OSharedContext result = sharedContexts.get(storage.getName());
     if (result == null) {
       result = createSharedContext(storage);
+      dbCount.incrementAndGet();
       sharedContexts.put(storage.getName(), result);
     }
     return result;
@@ -863,6 +867,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
           storage.delete();
           storages.remove(name);
           currentStorageIds.remove(storageId);
+          dbCount.decrementAndGet();
           sharedContexts.remove(name);
         }
       }
@@ -1001,6 +1006,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         throw e;
       }
     }
+    dbCount.set(0);
     this.sharedContexts.clear();
     storages.clear();
     orient.onEmbeddedFactoryClose(this);
@@ -1076,6 +1082,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OStorage storage = storages.remove(iDatabaseName);
     if (storage != null) {
       OSharedContext ctx = sharedContexts.remove(iDatabaseName);
+      dbCount.decrementAndGet();
       ctx.getViewManager().close();
       if (ctx != null) {
         ctx.close();

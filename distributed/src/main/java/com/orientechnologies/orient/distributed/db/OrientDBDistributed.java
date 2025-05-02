@@ -88,9 +88,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  public synchronized ODistributedPlugin getPlugin() {
+  public ODistributedPlugin getPlugin() {
     if (plugin == null) {
-      if (server != null && server.isActive()) plugin = server.getPlugin("cluster");
+      synchronized (this) {
+        if (plugin == null) {
+          if (server != null && server.isActive()) plugin = server.getPlugin("cluster");
+        }
+      }
     }
     return plugin;
   }
@@ -174,6 +178,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           // The underlying storage instance will be closed so no need to closed it
           ODatabaseDocumentEmbedded deleteInstance = newSessionInstance(storage, config);
           OSharedContext context = sharedContexts.remove(dbName);
+          dbCount.decrementAndGet();
           context.close();
           dropStorageFiles((OLocalPaginatedStorage) storage);
 
@@ -588,5 +593,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     if (!isOpen()) return;
     offlineOnShutdown();
     super.close();
+  }
+
+  public int getActiveDatabaseCount() {
+    return this.dbCount.get();
   }
 }

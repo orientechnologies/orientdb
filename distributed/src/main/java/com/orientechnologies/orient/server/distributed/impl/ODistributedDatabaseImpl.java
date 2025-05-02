@@ -128,9 +128,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     initProfilerHooks();
 
     int sequenceSize =
-        manager
-            .getServerInstance()
-            .getContextConfiguration()
+        context
+            .getConfigurations()
+            .getConfigurations()
             .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
     recordPromiseManager = new OTxPromiseManager<>();
     indexKeyPromiseManager = new OTxPromiseManager<>();
@@ -596,9 +596,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     ODistributedConfiguration cfg = this.context.getOrInitDistributedConfiguration(session);
     manager.checkNodeInConfiguration(databaseName, cfg);
 
-    fillStatus();
+    OStorage storage = session.getStorage();
+    if (storage != null) {
+      sequenceManager.fill(storage.getLastMetadata());
+    }
     // SET THE NODE.DB AS ONLINE
-    OStorage storage = context.getStorage(databaseName);
     if (storage != null && !manager.isSyncronizing(databaseName)) {
       logger.infoNode(
           localNodeName,
@@ -617,12 +619,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private void initExecutor() {
     // START ALL THE WORKER THREADS (CONFIGURABLE)
     int totalWorkers = OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getValueAsInteger();
-    if (totalWorkers < 0)
+    if (totalWorkers < 0) {
       throw new ODistributedException(
           "Cannot create configured distributed workers (" + totalWorkers + ")");
-    else if (totalWorkers == 0) {
+    } else if (totalWorkers == 0) {
       // AUTOMATIC
-      final int totalDatabases = context.getActiveDatabases().size() + 1;
+      final int totalDatabases = context.getActiveDatabaseCount() + 1;
 
       final int cpus = Runtime.getRuntime().availableProcessors();
 
