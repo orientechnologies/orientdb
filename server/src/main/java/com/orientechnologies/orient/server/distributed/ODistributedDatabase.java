@@ -88,7 +88,7 @@ public interface ODistributedDatabase {
 
   Optional<OTransactionId> nextId();
 
-  Optional<ORawPair<OTransactionId, OTransactionId>> startDDLId();
+  Optional<ORawPair<OTransactionId, OTransactionId>> nextDDLId();
 
   List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState);
 

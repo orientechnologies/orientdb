@@ -14,8 +14,6 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -74,6 +72,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
 import com.orientechnologies.orient.server.distributed.exception.ODistributedTxPromiseRequestIsOldException;
 import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
@@ -111,8 +110,8 @@ import java.util.stream.Stream;
 
 /** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
-  private static final OLogger logger =
-      OLogManager.instance().logger(ODatabaseDocumentDistributed.class);
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ODatabaseDocumentDistributed.class);
 
   private final ODistributedPlugin distributedManager;
 
@@ -1004,7 +1003,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     for (int i = 0; i < nretry; i++) {
       Optional<ORawPair<OTransactionId, OTransactionId>> ids;
       do {
-        ids = local.startDDLId();
+        ids = local.nextDDLId();
         if (ids.isEmpty()) {
           try {
             Thread.sleep(new Random().nextInt(retryDelay));
@@ -1298,10 +1297,20 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODDLContextImpl ddlContext = new ODDLContextImpl(query, preChangeId, afterChangeId, requestId);
     ValidationResult first = localDistributedDatabase.validate(preChangeId);
     ValidationResult second = localDistributedDatabase.validate(afterChangeId);
-    if ((first == ValidationResult.ALREADY_PROMISED || first == ValidationResult.MISSING_PREVIOUS)
-        && (second == ValidationResult.ALREADY_PROMISED
-            || second == ValidationResult.MISSING_PREVIOUS)) {
+    if (first == ValidationResult.ALREADY_PROMISED || second == ValidationResult.ALREADY_PROMISED) {
       ddlContext.setStatus(TIMEDOUT);
+      return new OTxInvalidSequential();
+    } else if (first == ValidationResult.MISSING_PREVIOUS
+        || second == ValidationResult.MISSING_PREVIOUS) {
+      ddlContext.setStatus(TIMEDOUT);
+      this.sharedContext
+          .getOrientDB()
+          .execute(
+              () -> {
+                logger.warnNode(
+                    getLocalNodeName(), "Missing DDL operation, forcing database re-install");
+                forceRsync();
+              });
       return new OTxInvalidSequential();
     } else if (first == ValidationResult.ALREADY_PRESENT
         || second == ValidationResult.ALREADY_PRESENT) {
