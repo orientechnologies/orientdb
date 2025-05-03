@@ -963,13 +963,13 @@ OStatement StatementInternal():
                 LOOKAHEAD(2)
                 result = CreateSequenceStatement()
                 |
-                LOOKAHEAD(CreateVertexStatementNoTarget())
+                LOOKAHEAD(3)
                 result = CreateVertexStatementNoTarget()
                 |
-                LOOKAHEAD(CreateVertexStatement())
+                LOOKAHEAD(3)
                 result = CreateVertexStatement()
                 |
-                LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
+                LOOKAHEAD(3)
                 result = CreateVertexStatementEmptyNoTarget()
                 |
                 LOOKAHEAD(2)
@@ -978,7 +978,7 @@ OStatement StatementInternal():
                 LOOKAHEAD(2)
                 result = UpdateEdgeStatement()
                 |
-                LOOKAHEAD(UpdateStatement())
+                LOOKAHEAD(3)
                 result = UpdateStatement()
                 |
                 result = MoveVertexStatement()
@@ -1069,7 +1069,7 @@ OStatement StatementInternal():
         |
         result = ExplainStatement()
         |
-        LOOKAHEAD(ProfileStatement())
+        LOOKAHEAD(2)
         result = ProfileStatement()
         |
         result = LetStatement()
@@ -1104,7 +1104,7 @@ OStatement QueryStatement():
         |
         result = MatchStatement()
         |
-        LOOKAHEAD( FindReferencesStatement() )
+        LOOKAHEAD( 2 )
         result = FindReferencesStatement()
     ){ return result; }
 }
@@ -1309,19 +1309,19 @@ ODeleteEdgeStatement DeleteEdgeStatement():
 { ODeleteEdgeStatement result; }
 {
     (
-        LOOKAHEAD(DeleteEdgeByRidStatement())
+        LOOKAHEAD(3)
         result = DeleteEdgeByRidStatement()
         |
-        LOOKAHEAD(DeleteEdgeFromToStatement())
+        LOOKAHEAD(4)
         result = DeleteEdgeFromToStatement()
         |
-        LOOKAHEAD(DeleteEdgeVToStatement())
+        LOOKAHEAD(4)
         result = DeleteEdgeVToStatement()
         |
-        LOOKAHEAD(DeleteEdgeToStatement())
+        LOOKAHEAD(4)
         result = DeleteEdgeToStatement()
         |
-        LOOKAHEAD(DeleteEdgeWhereStatement())
+        LOOKAHEAD(4)
         result = DeleteEdgeWhereStatement()
     )
     {return result;}
@@ -2002,10 +2002,10 @@ OArraySelector ArraySelector():
 {}
 {
     (
-    	LOOKAHEAD( Rid() )
+    	LOOKAHEAD( 2 )
     	jjtThis.rid = Rid()
     	|
-    	LOOKAHEAD( InputParameter() )
+    	LOOKAHEAD( 2 )
         jjtThis.inputParam = InputParameter()
         |
         LOOKAHEAD( Expression() )
@@ -2141,7 +2141,7 @@ OLevelZeroIdentifier LevelZeroIdentifier():
 {}
 {
     (
-        LOOKAHEAD( FunctionCall() )
+        LOOKAHEAD( 2 )
         jjtThis.functionCall = FunctionCall()
         |
         <THIS> { jjtThis.self = true; }
