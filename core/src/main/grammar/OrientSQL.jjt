@@ -1098,8 +1098,6 @@ OStatement QueryStatement():
         LOOKAHEAD( SelectStatement() )
         result = SelectStatement()
         |
-        result = SelectWithoutTargetStatement()
-        |
         result = TraverseStatement()
         |
         result = MatchStatement()
@@ -1109,56 +1107,20 @@ OStatement QueryStatement():
     ){ return result; }
 }
 
-OSelectWithoutTargetStatement SelectWithoutTargetStatement():
-{}
-{
-    (
-    	<SELECT>
-        jjtThis.projection = Projection()
-    	[ jjtThis.letClause = LetClause() ]
-    	[ jjtThis.unwind = Unwind() ]
-    	(
-			[
-				jjtThis.skip = Skip() [ jjtThis.limit = Limit() ]
-				|
-				jjtThis.limit = Limit() [ jjtThis.skip = Skip() ]
-			]
-		)
-    	[ jjtThis.fetchPlan = FetchPlan() ]
-    	[ jjtThis.timeout = Timeout() ]
-        [ <LOCK>
-            (
-                <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
-                |
-                <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
-                |
-                <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
-                |
-                <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
-            )
-        ]
-        [ <PARALLEL> { jjtThis.parallel = true; } ]
-        [ <NOCACHE> { jjtThis.noCache = true; } ]
-    )
-    {
-        jjtThis.validate();
-        return jjtThis;
-    }
-}
-
 OSelectStatement SelectStatement():
 {}
 {
     (
    	    <SELECT>
         [ jjtThis.projection = Projection() ]
-        <FROM>
+        ((<FROM>
         jjtThis.target = FromClause()
         [ jjtThis.letClause = LetClause() ]
         [ <WHERE> jjtThis.whereClause = WhereClause() ]
         [ jjtThis.groupBy = GroupBy() ]
         [ jjtThis.orderBy = OrderBy() ]
-        [ jjtThis.unwind = Unwind() ]
+        [ jjtThis.unwind = Unwind() ])
+        |[ jjtThis.letClause = LetClause() ])
         (
             [
                 jjtThis.skip = Skip() [ jjtThis.limit = Limit() ]
@@ -1651,23 +1613,12 @@ OInsertStatement InsertStatement():
     [ <RETURN> jjtThis.returnStatement = Projection() ]
     [
         [ <FROM> { jjtThis.selectWithFrom = true; } ]
-        (
-             (
-                 LOOKAHEAD( SelectStatement() )
-                 jjtThis.selectStatement = SelectStatement()
-                 |
-                 jjtThis.selectStatement = SelectWithoutTargetStatement()
-             )
+        ( jjtThis.selectStatement = SelectStatement()
              |
              LOOKAHEAD(2)
             (
                 <LPAREN>
-                (
-                    LOOKAHEAD( SelectStatement() )
-                    jjtThis.selectStatement = SelectStatement()
-                    |
-                    jjtThis.selectStatement = SelectWithoutTargetStatement()
-                )
+                jjtThis.selectStatement = SelectStatement()
                 { jjtThis.selectInParentheses = true; }
                 <RPAREN>
             )
@@ -3005,14 +2956,7 @@ OBooleanExpression InCondition():
 	jjtThis.operator = InOperator()
 	(
 	    LOOKAHEAD(2)
-	    ( <LPAREN>
-	      (
-	         LOOKAHEAD(SelectStatement())(jjtThis.rightStatement = SelectStatement())
-	         |
-	         jjtThis.rightStatement = SelectWithoutTargetStatement()
-	      )
-	      <RPAREN>
-	    )
+	    ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN> )
 	    |
 	    LOOKAHEAD(2)
 	    ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
@@ -3031,14 +2975,7 @@ OBooleanExpression NotInCondition():
     	jjtThis.left = Expression() <NOT> InOperator()
     	(
             LOOKAHEAD(2)
-            ( <LPAREN>
-              (
-                 LOOKAHEAD(SelectStatement())(jjtThis.rightStatement = SelectStatement())
-                 |
-                 jjtThis.rightStatement = SelectWithoutTargetStatement()
-              )
-              <RPAREN>
-            )
+            ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN> )
             |
             LOOKAHEAD(2)
             ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)

@@ -205,8 +205,8 @@ public class OSelectStatementTest {
   public void testFetchPlan2() {
     SimpleNode result = checkRightSyntax("" + "select 'Ay' as a , 'bEE' as b fetchplan *:1");
 
-    assertTrue(result instanceof OSelectWithoutTargetStatement);
-    OSelectWithoutTargetStatement select = (OSelectWithoutTargetStatement) result;
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
   }
 
   @Test
@@ -286,8 +286,8 @@ public class OSelectStatementTest {
   public void testSelectFunction() {
     SimpleNode result = checkRightSyntax("select max(1,2,7,0,-2,3), 'pluto'");
     // result.dump("    ");
-    assertTrue(result instanceof OSelectWithoutTargetStatement);
-    OSelectWithoutTargetStatement select = (OSelectWithoutTargetStatement) result;
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
   }
 
   @Test
