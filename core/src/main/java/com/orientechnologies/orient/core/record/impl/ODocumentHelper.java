@@ -778,8 +778,7 @@ public class ODocumentHelper {
               .getRecordFactoryManager()
               .getRecordTypeName(ORecordInternal.getRecordType(iCurrent.getRecord()));
         else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
-          final byte[] stream = iCurrent.getRecord().toStream();
-          return stream != null ? stream.length : 0;
+          return iCurrent.getRecord().getSize();
         } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
           return ((ODocument) iCurrent.getRecord()).fieldNames();
         else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
