@@ -1112,7 +1112,10 @@ OSelectStatement SelectStatement():
 {
     (
    	    <SELECT>
-        [ jjtThis.projection = Projection() ]
+        [ 
+        LOOKAHEAD(2)
+        jjtThis.projection = Projection() 
+        ]
         ((<FROM>
         jjtThis.target = FromClause()
         [ jjtThis.letClause = LetClause() ]
@@ -1332,19 +1335,9 @@ ODeleteEdgeStatement DeleteEdgeFromToStatement():
 (
 	<DELETE>
 	<EDGE>
-
 	[ jjtThis.className = Identifier() ]
-
-
-        <FROM>
-        jjtThis.leftExpression = Expression()
-        [
-            <TO>
-            jjtThis.rightExpression = Expression()
-        ]
-
-
-
+    <FROM> jjtThis.leftExpression = Expression()
+    [ <TO> jjtThis.rightExpression = Expression() ]
     [ <WHERE> jjtThis.whereClause = WhereClause() ]
     [ jjtThis.limit = Limit() ]
     [ jjtThis.batch = Batch() ]
@@ -1969,7 +1962,7 @@ OArrayNumberSelector ArrayNumberSelector():
 { Token tokenVal; }
 {
     (
-    	LOOKAHEAD( InputParameter() )
+    	LOOKAHEAD(2)
         jjtThis.inputValue = InputParameter()
         |
         LOOKAHEAD( Integer() )
@@ -2110,7 +2103,7 @@ OSuffixIdentifier SuffixIdentifier():
         LOOKAHEAD( Identifier() )
         identifier =Identifier() { jjtThis.setIdentifier(identifier); }
         |
-        LOOKAHEAD( RecordAttribute() )
+        LOOKAHEAD(2)
         jjtThis.recordAttribute = RecordAttribute()
         |
         ( <STAR> { jjtThis.star = true; } )
