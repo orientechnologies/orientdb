@@ -41,75 +41,76 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         jjmatchedKind = 1;
         return jjMoveNfa_0(3, 0);
       case 33:
-        jjmatchedKind = 209;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x800000L, 0x0L);
+        jjmatchedKind = 210;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x1000000L, 0x0L);
       case 34:
         return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x20000000000L, 0x0L, 0x0L);
       case 35:
-        jjmatchedKind = 272;
+        jjmatchedKind = 273;
         return jjMoveNfa_0(3, 0);
       case 36:
-        jjmatchedKind = 203;
+        jjmatchedKind = 204;
         return jjMoveNfa_0(3, 0);
       case 37:
-        jjmatchedKind = 229;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x400000000000L, 0x0L);
+        jjmatchedKind = 230;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x800000000000L, 0x0L);
       case 38:
-        jjmatchedKind = 225;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x80004000000L, 0x0L);
+        jjmatchedKind = 226;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x100008000000L, 0x0L);
       case 40:
-        jjmatchedKind = 193;
-        return jjMoveNfa_0(3, 0);
-      case 41:
         jjmatchedKind = 194;
         return jjMoveNfa_0(3, 0);
+      case 41:
+        jjmatchedKind = 195;
+        return jjMoveNfa_0(3, 0);
       case 42:
-        jjmatchedKind = 223;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x20000000000L, 0x0L);
+        jjmatchedKind = 224;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x40000000000L, 0x0L);
       case 43:
-        jjmatchedKind = 221;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x8008000000L, 0x0L);
+        jjmatchedKind = 222;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x10010000000L, 0x0L);
       case 44:
-        jjmatchedKind = 200;
+        jjmatchedKind = 201;
         return jjMoveNfa_0(3, 0);
       case 45:
-        jjmatchedKind = 222;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x10010000000L, 0x3ff80000L);
+        jjmatchedKind = 223;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x20020000000L, 0x7ff00000L);
       case 46:
-        jjmatchedKind = 201;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x30000000000000L, 0x0L);
+        jjmatchedKind = 202;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x60000000000000L, 0x0L);
       case 47:
-        jjmatchedKind = 224;
-        return jjMoveStringLiteralDfa1_0(0x100L, 0x0L, 0x0L, 0x40000000000L, 0x0L);
+        jjmatchedKind = 225;
+        return jjMoveStringLiteralDfa1_0(0x100L, 0x0L, 0x0L, 0x80000000000L, 0x0L);
       case 58:
-        jjmatchedKind = 212;
+        jjmatchedKind = 213;
         return jjMoveNfa_0(3, 0);
       case 59:
-        jjmatchedKind = 199;
+        jjmatchedKind = 200;
         return jjMoveNfa_0(3, 0);
       case 60:
-        jjmatchedKind = 207;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x804001200000L, 0x0L);
-      case 61:
-        jjmatchedKind = 205;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x4000L, 0x0L);
-      case 62:
         jjmatchedKind = 208;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0xf000000400000L, 0x0L);
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x1008002400000L, 0x0L);
+      case 61:
+        jjmatchedKind = 206;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x8000L, 0x0L);
+      case 62:
+        jjmatchedKind = 209;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x1e000000800000L, 0x0L);
       case 63:
-        jjmatchedKind = 211;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x400000000L, 0x0L);
+        jjmatchedKind = 212;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x800000000L, 0x0L);
       case 64:
-        jjmatchedKind = 202;
+        jjmatchedKind = 203;
         return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x14000000000L, 0x0L, 0x0L);
       case 65:
-        return jjMoveStringLiteralDfa1_0(0x43001040000000L, 0x1000000860000000L, 0x0L, 0x0L, 0x0L);
+        return jjMoveStringLiteralDfa1_0(
+            0x43001040000000L, 0x1000000860000000L, 0x10000000000000L, 0x0L, 0x0L);
       case 66:
         return jjMoveStringLiteralDfa1_0(
-            0x20240000000000L, 0x20L, 0x1004L, 0x400000000000000L, 0x0L);
+            0x20240000000000L, 0x20L, 0x1004L, 0x800000000000000L, 0x0L);
       case 67:
         return jjMoveStringLiteralDfa1_0(
-            0x3000000200010000L, 0x406010005000L, 0x40888L, 0xf800000000000000L, 0x11L);
+            0x3000000200010000L, 0x406010005000L, 0x40888L, 0xf000000000000000L, 0x23L);
       case 68:
         return jjMoveStringLiteralDfa1_0(
             0x4008000020000L, 0x4028000000010L, 0x1008084000L, 0x0L, 0x0L);
@@ -124,17 +125,17 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x100000L, 0x0L, 0x0L);
       case 73:
         return jjMoveStringLiteralDfa1_0(
-            0x804008000L, 0x42200000000000L, 0x20000221L, 0x280000000000000L, 0x8L);
+            0x804008000L, 0x42200000000000L, 0x20000221L, 0x500000000000000L, 0x10L);
       case 75:
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x0L, 0x4L);
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x0L, 0x8L);
       case 76:
         return jjMoveStringLiteralDfa1_0(
-            0x880080000000000L, 0x10000000000040L, 0x2L, 0x100000000000000L, 0x0L);
+            0x880080000000000L, 0x10000000000040L, 0x2L, 0x200000000000000L, 0x0L);
       case 77:
-        return jjMoveStringLiteralDfa1_0(0x100004000L, 0x100000000c00L, 0x4000000L, 0x0L, 0x2L);
+        return jjMoveStringLiteralDfa1_0(0x100004000L, 0x100000000c00L, 0x4000000L, 0x0L, 0x4L);
       case 78:
         return jjMoveStringLiteralDfa1_0(
-            0xc000004000000000L, 0x2000000080000081L, 0x0L, 0x40000000000000L, 0x0L);
+            0xc000004000000000L, 0x2000000080000081L, 0x0L, 0x80000000000000L, 0x0L);
       case 79:
         return jjMoveStringLiteralDfa1_0(0x412000000000L, 0x8000200600000L, 0x20000L, 0x0L, 0x0L);
       case 80:
@@ -155,27 +156,28 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
       case 87:
         return jjMoveStringLiteralDfa1_0(0x200000003000000L, 0x100L, 0x0L, 0x0L, 0x0L);
       case 91:
-        jjmatchedKind = 197;
-        return jjMoveNfa_0(3, 0);
-      case 93:
         jjmatchedKind = 198;
         return jjMoveNfa_0(3, 0);
+      case 93:
+        jjmatchedKind = 199;
+        return jjMoveNfa_0(3, 0);
       case 94:
-        jjmatchedKind = 228;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x200000000000L, 0x0L);
+        jjmatchedKind = 229;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x400000000000L, 0x0L);
       case 95:
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x0L, 0x20000L);
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x0L, 0x40000L);
       case 96:
-        jjmatchedKind = 204;
+        jjmatchedKind = 205;
         return jjMoveNfa_0(3, 0);
       case 97:
-        return jjMoveStringLiteralDfa1_0(0x43001040000000L, 0x1000000860000000L, 0x0L, 0x0L, 0x0L);
+        return jjMoveStringLiteralDfa1_0(
+            0x43001040000000L, 0x1000000860000000L, 0x10000000000000L, 0x0L, 0x0L);
       case 98:
         return jjMoveStringLiteralDfa1_0(
-            0x20240000000000L, 0x20L, 0x1004L, 0x400000000000000L, 0x0L);
+            0x20240000000000L, 0x20L, 0x1004L, 0x800000000000000L, 0x0L);
       case 99:
         return jjMoveStringLiteralDfa1_0(
-            0x3000000200010000L, 0x406010005000L, 0x40888L, 0xf800000000000000L, 0x11L);
+            0x3000000200010000L, 0x406010005000L, 0x40888L, 0xf000000000000000L, 0x23L);
       case 100:
         return jjMoveStringLiteralDfa1_0(
             0x4008000020000L, 0x4028000000010L, 0x1008084000L, 0x0L, 0x0L);
@@ -190,17 +192,17 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x100000L, 0x0L, 0x0L);
       case 105:
         return jjMoveStringLiteralDfa1_0(
-            0x804008000L, 0x42200000000000L, 0x20000221L, 0x280000000000000L, 0x8L);
+            0x804008000L, 0x42200000000000L, 0x20000221L, 0x500000000000000L, 0x10L);
       case 107:
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x0L, 0x4L);
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x0L, 0x8L);
       case 108:
         return jjMoveStringLiteralDfa1_0(
-            0x880080000000000L, 0x10000000000040L, 0x2L, 0x100000000000000L, 0x0L);
+            0x880080000000000L, 0x10000000000040L, 0x2L, 0x200000000000000L, 0x0L);
       case 109:
-        return jjMoveStringLiteralDfa1_0(0x100004000L, 0x100000000c00L, 0x4000000L, 0x0L, 0x2L);
+        return jjMoveStringLiteralDfa1_0(0x100004000L, 0x100000000c00L, 0x4000000L, 0x0L, 0x4L);
       case 110:
         return jjMoveStringLiteralDfa1_0(
-            0xc000004000000000L, 0x2000000080000081L, 0x0L, 0x40000000000000L, 0x0L);
+            0xc000004000000000L, 0x2000000080000081L, 0x0L, 0x80000000000000L, 0x0L);
       case 111:
         return jjMoveStringLiteralDfa1_0(0x412000000000L, 0x8000200600000L, 0x20000L, 0x0L, 0x0L);
       case 112:
@@ -208,7 +210,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             0x80000000L, 0x8000040001080004L, 0x810000000L, 0x0L, 0x0L);
       case 114:
         return jjMoveStringLiteralDfa1_0(
-            0x510000400000000L, 0x601001004000000L, 0x240000010L, 0x0L, 0x40000L);
+            0x510000400000000L, 0x601001004000000L, 0x240000010L, 0x0L, 0x80000L);
       case 115:
         return jjMoveStringLiteralDfa1_0(0x100020001000L, 0x50010a008L, 0x2400e1a400L, 0x0L, 0x0L);
       case 116:
@@ -221,16 +223,16 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
       case 119:
         return jjMoveStringLiteralDfa1_0(0x200000003000000L, 0x100L, 0x0L, 0x0L, 0x0L);
       case 123:
-        jjmatchedKind = 195;
-        return jjMoveNfa_0(3, 0);
-      case 124:
-        jjmatchedKind = 227;
-        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x100002000000L, 0x0L);
-      case 125:
         jjmatchedKind = 196;
         return jjMoveNfa_0(3, 0);
+      case 124:
+        jjmatchedKind = 228;
+        return jjMoveStringLiteralDfa1_0(0x0L, 0x0L, 0x0L, 0x200004000000L, 0x0L);
+      case 125:
+        jjmatchedKind = 197;
+        return jjMoveNfa_0(3, 0);
       case 126:
-        jjmatchedKind = 210;
+        jjmatchedKind = 211;
         return jjMoveNfa_0(3, 0);
       default:
         return jjMoveNfa_0(3, 0);
@@ -246,8 +248,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
     }
     switch (curChar) {
       case 38:
-        if ((active3 & 0x4000000L) != 0L) {
-          jjmatchedKind = 218;
+        if ((active3 & 0x8000000L) != 0L) {
+          jjmatchedKind = 219;
           jjmatchedPos = 1;
         }
         break;
@@ -258,37 +260,34 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         }
         break;
       case 43:
-        if ((active3 & 0x8000000L) != 0L) {
-          jjmatchedKind = 219;
-          jjmatchedPos = 1;
-        }
-        break;
-      case 45:
         if ((active3 & 0x10000000L) != 0L) {
           jjmatchedKind = 220;
           jjmatchedPos = 1;
         }
         break;
+      case 45:
+        if ((active3 & 0x20000000L) != 0L) {
+          jjmatchedKind = 221;
+          jjmatchedPos = 1;
+        }
+        break;
       case 46:
-        if ((active3 & 0x20000000000000L) != 0L) {
-          jjmatchedKind = 245;
+        if ((active3 & 0x40000000000000L) != 0L) {
+          jjmatchedKind = 246;
           jjmatchedPos = 1;
         }
         return jjMoveStringLiteralDfa2_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0x10000000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0x20000000000000L, active4, 0L);
       case 60:
-        if ((active3 & 0x4000000000L) != 0L) {
-          jjmatchedKind = 230;
+        if ((active3 & 0x8000000000L) != 0L) {
+          jjmatchedKind = 231;
           jjmatchedPos = 1;
         }
         return jjMoveStringLiteralDfa2_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0x800000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0x1000000000000L, active4, 0L);
       case 61:
-        if ((active3 & 0x4000L) != 0L) {
-          jjmatchedKind = 206;
-          jjmatchedPos = 1;
-        } else if ((active3 & 0x200000L) != 0L) {
-          jjmatchedKind = 213;
+        if ((active3 & 0x8000L) != 0L) {
+          jjmatchedKind = 207;
           jjmatchedPos = 1;
         } else if ((active3 & 0x400000L) != 0L) {
           jjmatchedKind = 214;
@@ -296,8 +295,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active3 & 0x800000L) != 0L) {
           jjmatchedKind = 215;
           jjmatchedPos = 1;
-        } else if ((active3 & 0x8000000000L) != 0L) {
-          jjmatchedKind = 231;
+        } else if ((active3 & 0x1000000L) != 0L) {
+          jjmatchedKind = 216;
           jjmatchedPos = 1;
         } else if ((active3 & 0x10000000000L) != 0L) {
           jjmatchedKind = 232;
@@ -320,21 +319,24 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active3 & 0x400000000000L) != 0L) {
           jjmatchedKind = 238;
           jjmatchedPos = 1;
+        } else if ((active3 & 0x800000000000L) != 0L) {
+          jjmatchedKind = 239;
+          jjmatchedPos = 1;
         }
         break;
       case 62:
-        if ((active3 & 0x1000000L) != 0L) {
-          jjmatchedKind = 216;
+        if ((active3 & 0x2000000L) != 0L) {
+          jjmatchedKind = 217;
           jjmatchedPos = 1;
-        } else if ((active3 & 0x4000000000000L) != 0L) {
-          jjmatchedKind = 242;
+        } else if ((active3 & 0x8000000000000L) != 0L) {
+          jjmatchedKind = 243;
           jjmatchedPos = 1;
         }
         return jjMoveStringLiteralDfa2_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0xb000000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0x16000000000000L, active4, 0L);
       case 63:
-        if ((active3 & 0x400000000L) != 0L) {
-          jjmatchedKind = 226;
+        if ((active3 & 0x800000000L) != 0L) {
+          jjmatchedKind = 227;
           jjmatchedPos = 1;
         }
         break;
@@ -356,7 +358,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x2L);
+            0x4L);
       case 66:
         return jjMoveStringLiteralDfa2_0(
             active0, 0L, active1, 0x20000000L, active2, 0L, active3, 0L, active4, 0L);
@@ -385,9 +387,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x140840c004L,
             active3,
-            0x400000000000000L,
+            0x800000000000000L,
             active4,
-            0x4L);
+            0x8L);
       case 70:
         if ((active2 & 0x20L) != 0L) {
           jjmatchedKind = 133;
@@ -407,7 +409,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x200080000L,
             active3,
-            0x100000000000000L,
+            0x200000000000000L,
             active4,
             0L);
       case 75:
@@ -420,17 +422,17 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1,
             0x1000004050005000L,
             active2,
-            0x1440L,
+            0x10000000001440L,
             active3,
             0L,
             active4,
-            0x10L);
+            0x20L);
       case 78:
         if ((active1 & 0x200000L) != 0L) {
           jjmatchedKind = 85;
           jjmatchedPos = 1;
-        } else if ((active3 & 0x80000000000000L) != 0L) {
-          jjmatchedKind = 247;
+        } else if ((active3 & 0x100000000000000L) != 0L) {
+          jjmatchedKind = 248;
           jjmatchedPos = 1;
         }
         return jjMoveStringLiteralDfa2_0(
@@ -443,7 +445,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x8L);
+            0x10L);
       case 79:
         if ((active0 & 0x800000L) != 0L) {
           jjmatchedKind = 23;
@@ -457,9 +459,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x846040898L,
             active3,
-            0xf840000000000000L,
+            0xf080000000000000L,
             active4,
-            0x1L);
+            0x3L);
       case 80:
         return jjMoveStringLiteralDfa2_0(
             active0,
@@ -492,8 +494,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         if ((active0 & 0x2000000000000L) != 0L) {
           jjmatchedKind = 49;
           jjmatchedPos = 1;
-        } else if ((active3 & 0x200000000000000L) != 0L) {
-          jjmatchedKind = 249;
+        } else if ((active3 & 0x400000000000000L) != 0L) {
+          jjmatchedKind = 250;
           jjmatchedPos = 1;
         }
         return jjMoveStringLiteralDfa2_0(
@@ -555,7 +557,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             0L);
       case 95:
         return jjMoveStringLiteralDfa2_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x20000L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x40000L);
       case 97:
         if ((active2 & 0x100000L) != 0L) {
           jjmatchedKind = 148;
@@ -571,7 +573,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x1000002L);
+            0x2000004L);
       case 98:
         return jjMoveStringLiteralDfa2_0(
             active0, 0L, active1, 0x20000000L, active2, 0L, active3, 0L, active4, 0L);
@@ -590,7 +592,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x100000L);
+            0x200000L);
       case 101:
         return jjMoveStringLiteralDfa2_0(
             active0,
@@ -600,9 +602,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x140840c004L,
             active3,
-            0x400000000000000L,
+            0x800000000000000L,
             active4,
-            0x4L);
+            0x8L);
       case 102:
         if ((active2 & 0x20L) != 0L) {
           jjmatchedKind = 133;
@@ -618,7 +620,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x1c000000L);
+            0x38000000L);
       case 104:
         return jjMoveStringLiteralDfa2_0(
             active0, 0x3000000L, active1, 0x100000000L, active2, 0x2000L, active3, 0L, active4, 0L);
@@ -631,7 +633,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x200080000L,
             active3,
-            0x100000000000000L,
+            0x200000000000000L,
             active4,
             0L);
       case 107:
@@ -644,20 +646,20 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1,
             0x1000004050005000L,
             active2,
-            0x1440L,
+            0x10000000001440L,
             active3,
             0L,
             active4,
-            0xa00010L);
+            0x1400020L);
       case 109:
         return jjMoveStringLiteralDfa2_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x20400000L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x40800000L);
       case 110:
         if ((active1 & 0x200000L) != 0L) {
           jjmatchedKind = 85;
           jjmatchedPos = 1;
-        } else if ((active3 & 0x80000000000000L) != 0L) {
-          jjmatchedKind = 247;
+        } else if ((active3 & 0x100000000000000L) != 0L) {
+          jjmatchedKind = 248;
           jjmatchedPos = 1;
         }
         return jjMoveStringLiteralDfa2_0(
@@ -670,7 +672,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x8L);
+            0x10L);
       case 111:
         if ((active0 & 0x800000L) != 0L) {
           jjmatchedKind = 23;
@@ -684,9 +686,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x846040898L,
             active3,
-            0xf840000000000000L,
+            0xf080000000000000L,
             active4,
-            0x2040001L);
+            0x4080003L);
       case 112:
         return jjMoveStringLiteralDfa2_0(
             active0,
@@ -719,8 +721,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         if ((active0 & 0x2000000000000L) != 0L) {
           jjmatchedKind = 49;
           jjmatchedPos = 1;
-        } else if ((active3 & 0x200000000000000L) != 0L) {
-          jjmatchedKind = 249;
+        } else if ((active3 & 0x400000000000000L) != 0L) {
+          jjmatchedKind = 250;
           jjmatchedPos = 1;
         }
         return jjMoveStringLiteralDfa2_0(
@@ -733,7 +735,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x80000L);
+            0x100000L);
       case 116:
         return jjMoveStringLiteralDfa2_0(
             active0, 0L, active1, 0x400100008L, active2, 0x4000210000L, active3, 0L, active4, 0L);
@@ -781,8 +783,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active4,
             0L);
       case 124:
-        if ((active3 & 0x2000000L) != 0L) {
-          jjmatchedKind = 217;
+        if ((active3 & 0x4000000L) != 0L) {
+          jjmatchedKind = 218;
           jjmatchedPos = 1;
         }
         break;
@@ -816,30 +818,30 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
     }
     switch (curChar) {
       case 46:
-        if ((active3 & 0x10000000000000L) != 0L) {
-          jjmatchedKind = 244;
+        if ((active3 & 0x20000000000000L) != 0L) {
+          jjmatchedKind = 245;
           jjmatchedPos = 2;
         }
         break;
       case 61:
-        if ((active3 & 0x800000000000L) != 0L) {
-          jjmatchedKind = 239;
-          jjmatchedPos = 2;
-        } else if ((active3 & 0x1000000000000L) != 0L) {
+        if ((active3 & 0x1000000000000L) != 0L) {
           jjmatchedKind = 240;
+          jjmatchedPos = 2;
+        } else if ((active3 & 0x2000000000000L) != 0L) {
+          jjmatchedKind = 241;
           jjmatchedPos = 2;
         }
         break;
       case 62:
-        if ((active3 & 0x8000000000000L) != 0L) {
-          jjmatchedKind = 243;
+        if ((active3 & 0x10000000000000L) != 0L) {
+          jjmatchedKind = 244;
           jjmatchedPos = 2;
         }
         return jjMoveStringLiteralDfa3_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0x2000000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0x4000000000000L, active4, 0L);
       case 64:
         return jjMoveStringLiteralDfa3_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x20000L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x40000L);
       case 65:
         return jjMoveStringLiteralDfa3_0(
             active0,
@@ -941,7 +943,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             0L);
       case 75:
         return jjMoveStringLiteralDfa3_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0x100000000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0x200000000000000L, active4, 0L);
       case 76:
         if ((active1 & 0x1000000000000000L) != 0L) {
           jjmatchedKind = 124;
@@ -953,7 +955,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1,
             0x400001000000L,
             active2,
-            0x8000840000010L,
+            0x18000840000010L,
             active3,
             0L,
             active4,
@@ -979,9 +981,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x800882L,
             active3,
-            0xf800000000000000L,
+            0xf000000000000000L,
             active4,
-            0x1L);
+            0x3L);
       case 79:
         return jjMoveStringLiteralDfa3_0(
             active0,
@@ -1023,7 +1025,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x8L);
+            0x10L);
       case 84:
         if ((active0 & 0x20000000L) != 0L) {
           jjmatchedKind = 29;
@@ -1034,8 +1036,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active0 & 0x800000000000000L) != 0L) {
           jjmatchedKind = 59;
           jjmatchedPos = 2;
-        } else if ((active3 & 0x40000000000000L) != 0L) {
-          jjmatchedKind = 246;
+        } else if ((active3 & 0x80000000000000L) != 0L) {
+          jjmatchedKind = 247;
           jjmatchedPos = 2;
         }
         return jjMoveStringLiteralDfa3_0(
@@ -1046,9 +1048,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x10020000L,
             active3,
-            0x400000000000000L,
+            0x800000000000000L,
             active4,
-            0x2L);
+            0x4L);
       case 85:
         return jjMoveStringLiteralDfa3_0(
             active0,
@@ -1060,7 +1062,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x10L);
+            0x20L);
       case 86:
         return jjMoveStringLiteralDfa3_0(
             active0,
@@ -1080,8 +1082,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         return jjMoveStringLiteralDfa3_0(
             active0, 0L, active1, 0x400L, active2, 0L, active3, 0L, active4, 0L);
       case 89:
-        if ((active4 & 0x4L) != 0L) {
-          jjmatchedKind = 258;
+        if ((active4 & 0x8L) != 0L) {
+          jjmatchedKind = 259;
           jjmatchedPos = 2;
         }
         break;
@@ -1096,10 +1098,10 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x200000L);
+            0x400000L);
       case 98:
-        if ((active4 & 0x100000L) != 0L) {
-          jjmatchedKind = 276;
+        if ((active4 & 0x200000L) != 0L) {
+          jjmatchedKind = 277;
           jjmatchedPos = 2;
         }
         return jjMoveStringLiteralDfa3_0(
@@ -1153,7 +1155,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x20480000L);
+            0x40900000L);
       case 102:
         if ((active1 & 0x400000L) != 0L) {
           jjmatchedKind = 86;
@@ -1190,7 +1192,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             0L);
       case 107:
         return jjMoveStringLiteralDfa3_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0x100000000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0x200000000000000L, active4, 0L);
       case 108:
         if ((active1 & 0x1000000000000000L) != 0L) {
           jjmatchedKind = 124;
@@ -1202,11 +1204,11 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1,
             0x400001000000L,
             active2,
-            0x8000840000010L,
+            0x18000840000010L,
             active3,
             0L,
             active4,
-            0x1000000L);
+            0x2000000L);
       case 109:
         return jjMoveStringLiteralDfa3_0(
             active0,
@@ -1228,9 +1230,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x800882L,
             active3,
-            0xf800000000000000L,
+            0xf000000000000000L,
             active4,
-            0x1L);
+            0x3L);
       case 111:
         return jjMoveStringLiteralDfa3_0(
             active0,
@@ -1242,7 +1244,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x4800000L);
+            0x9000000L);
       case 112:
         return jjMoveStringLiteralDfa3_0(
             active0, 0L, active1, 0xa000000000a010L, active2, 0x8000000L, active3, 0L, active4, 0L);
@@ -1272,7 +1274,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x8L);
+            0x10L);
       case 116:
         if ((active0 & 0x20000000L) != 0L) {
           jjmatchedKind = 29;
@@ -1283,8 +1285,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active0 & 0x800000000000000L) != 0L) {
           jjmatchedKind = 59;
           jjmatchedPos = 2;
-        } else if ((active3 & 0x40000000000000L) != 0L) {
-          jjmatchedKind = 246;
+        } else if ((active3 & 0x80000000000000L) != 0L) {
+          jjmatchedKind = 247;
           jjmatchedPos = 2;
         }
         return jjMoveStringLiteralDfa3_0(
@@ -1295,9 +1297,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x10020000L,
             active3,
-            0x400000000000000L,
+            0x800000000000000L,
             active4,
-            0x2L);
+            0x4L);
       case 117:
         return jjMoveStringLiteralDfa3_0(
             active0,
@@ -1309,7 +1311,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x1a040010L);
+            0x34080020L);
       case 118:
         return jjMoveStringLiteralDfa3_0(
             active0,
@@ -1329,8 +1331,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         return jjMoveStringLiteralDfa3_0(
             active0, 0L, active1, 0x400L, active2, 0L, active3, 0L, active4, 0L);
       case 121:
-        if ((active4 & 0x4L) != 0L) {
-          jjmatchedKind = 258;
+        if ((active4 & 0x8L) != 0L) {
+          jjmatchedKind = 259;
           jjmatchedPos = 2;
         }
         break;
@@ -1364,8 +1366,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
     }
     switch (curChar) {
       case 61:
-        if ((active3 & 0x2000000000000L) != 0L) {
-          jjmatchedKind = 241;
+        if ((active3 & 0x4000000000000L) != 0L) {
+          jjmatchedKind = 242;
           jjmatchedPos = 3;
         }
         break;
@@ -1405,7 +1407,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x2L);
+            0x4L);
       case 68:
         if ((active1 & 0x2000000L) != 0L) {
           jjmatchedKind = 89;
@@ -1444,8 +1446,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active2 & 0x4000000000000L) != 0L) {
           jjmatchedKind = 178;
           jjmatchedPos = 3;
-        } else if ((active3 & 0x100000000000000L) != 0L) {
-          jjmatchedKind = 248;
+        } else if ((active3 & 0x200000000000000L) != 0L) {
+          jjmatchedKind = 249;
           jjmatchedPos = 3;
         }
         return jjMoveStringLiteralDfa4_0(
@@ -1547,7 +1549,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1,
             0x200001000000000L,
             active2,
-            0L,
+            0x10000000000000L,
             active3,
             0L,
             active4,
@@ -1592,7 +1594,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x10L);
+            0x20L);
       case 84:
         if ((active0 & 0x200000000000000L) != 0L) {
           jjmatchedKind = 57;
@@ -1606,9 +1608,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x2008280080L,
             active3,
-            0xf800000000000000L,
+            0xf000000000000000L,
             active4,
-            0x9L);
+            0x13L);
       case 85:
         return jjMoveStringLiteralDfa4_0(
             active0,
@@ -1630,7 +1632,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           jjmatchedPos = 3;
         }
         return jjMoveStringLiteralDfa4_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0x400000000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0x800000000000000L, active4, 0L);
       case 89:
         return jjMoveStringLiteralDfa4_0(
             active0, 0L, active1, 0x1000001L, active2, 0L, active3, 0L, active4, 0L);
@@ -1670,7 +1672,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x800002L);
+            0x1000004L);
       case 100:
         if ((active1 & 0x2000000L) != 0L) {
           jjmatchedKind = 89;
@@ -1709,8 +1711,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active2 & 0x4000000000000L) != 0L) {
           jjmatchedKind = 178;
           jjmatchedPos = 3;
-        } else if ((active3 & 0x100000000000000L) != 0L) {
-          jjmatchedKind = 248;
+        } else if ((active3 & 0x200000000000000L) != 0L) {
+          jjmatchedKind = 249;
           jjmatchedPos = 3;
         }
         return jjMoveStringLiteralDfa4_0(
@@ -1770,8 +1772,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active2 & 0x100L) != 0L) {
           jjmatchedKind = 136;
           jjmatchedPos = 3;
-        } else if ((active4 & 0x1000000L) != 0L) {
-          jjmatchedKind = 280;
+        } else if ((active4 & 0x2000000L) != 0L) {
+          jjmatchedKind = 281;
           jjmatchedPos = 3;
         }
         return jjMoveStringLiteralDfa4_0(
@@ -1784,7 +1786,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x18000000L);
+            0x30000000L);
       case 109:
         if ((active0 & 0x400000L) != 0L) {
           jjmatchedKind = 22;
@@ -1803,7 +1805,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x40000L);
+            0x80000L);
       case 111:
         if ((active0 & 0x4000000L) != 0L) {
           jjmatchedKind = 26;
@@ -1815,7 +1817,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1,
             0x200001000000000L,
             active2,
-            0L,
+            0x10000000000000L,
             active3,
             0L,
             active4,
@@ -1848,7 +1850,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x240a0000L);
+            0x48140000L);
       case 115:
         return jjMoveStringLiteralDfa4_0(
             active0,
@@ -1860,7 +1862,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x400010L);
+            0x800020L);
       case 116:
         if ((active0 & 0x200000000000000L) != 0L) {
           jjmatchedKind = 57;
@@ -1874,9 +1876,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x2008280080L,
             active3,
-            0xf800000000000000L,
+            0xf000000000000000L,
             active4,
-            0x2200009L);
+            0x4400013L);
       case 117:
         return jjMoveStringLiteralDfa4_0(
             active0,
@@ -1898,7 +1900,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           jjmatchedPos = 3;
         }
         return jjMoveStringLiteralDfa4_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0x400000000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0x800000000000000L, active4, 0L);
       case 121:
         return jjMoveStringLiteralDfa4_0(
             active0, 0L, active1, 0x1000001L, active2, 0L, active3, 0L, active4, 0L);
@@ -1940,9 +1942,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x12000200L,
             active3,
-            0xf800000000000000L,
+            0xf000000000000000L,
             active4,
-            0x9L);
+            0x13L);
       case 66:
         return jjMoveStringLiteralDfa5_0(
             active0, 0L, active1, 0x4000000000000L, active2, 0x10L, active3, 0L, active4, 0L);
@@ -1953,7 +1955,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1,
             0x400800001L,
             active2,
-            0x800000000L,
+            0x10000800000000L,
             active3,
             0L,
             active4,
@@ -2004,7 +2006,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x200040a000L,
             active3,
-            0x400000000000000L,
+            0x800000000000000L,
             active4,
             0L);
       case 70:
@@ -2028,7 +2030,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x2L);
+            0x4L);
       case 73:
         return jjMoveStringLiteralDfa5_0(
             active0, 0L, active1, 0x1000000080100L, active2, 0x80088L, active3, 0L, active4, 0L);
@@ -2147,7 +2149,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x10L);
+            0x20L);
       case 85:
         return jjMoveStringLiteralDfa5_0(
             active0,
@@ -2185,9 +2187,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x12000200L,
             active3,
-            0xf800000000000000L,
+            0xf000000000000000L,
             active4,
-            0x9L);
+            0x13L);
       case 98:
         return jjMoveStringLiteralDfa5_0(
             active0, 0L, active1, 0x4000000000000L, active2, 0x10L, active3, 0L, active4, 0L);
@@ -2198,11 +2200,11 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1,
             0x400800001L,
             active2,
-            0x800000000L,
+            0x10000800000000L,
             active3,
             0L,
             active4,
-            0x4000000L);
+            0x8000000L);
       case 100:
         return jjMoveStringLiteralDfa5_0(
             active0,
@@ -2214,7 +2216,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x40000L);
+            0x80000L);
       case 101:
         if ((active0 & 0x1000000L) != 0L) {
           jjmatchedKind = 24;
@@ -2249,15 +2251,15 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x200040a000L,
             active3,
-            0x400000000000000L,
+            0x800000000000000L,
             active4,
-            0x220000L);
+            0x440000L);
       case 102:
         return jjMoveStringLiteralDfa5_0(
             active0, 0L, active1, 0x2L, active2, 0L, active3, 0L, active4, 0L);
       case 103:
         return jjMoveStringLiteralDfa5_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x20000000L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x40000000L);
       case 104:
         if ((active0 & 0x4000L) != 0L) {
           jjmatchedKind = 14;
@@ -2276,20 +2278,29 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x2L);
+            0x4L);
       case 105:
         return jjMoveStringLiteralDfa5_0(
             active0, 0L, active1, 0x1000000080100L, active2, 0x80088L, active3, 0L, active4, 0L);
       case 107:
         return jjMoveStringLiteralDfa5_0(
-            active0, 0L, active1, 0x200000000000000L, active2, 0L, active3, 0L, active4, 0x800000L);
+            active0,
+            0L,
+            active1,
+            0x200000000000000L,
+            active2,
+            0L,
+            active3,
+            0L,
+            active4,
+            0x1000000L);
       case 108:
-        if ((active4 & 0x8000000L) != 0L) {
-          jjmatchedKind = 283;
+        if ((active4 & 0x10000000L) != 0L) {
+          jjmatchedKind = 284;
           jjmatchedPos = 4;
         }
         return jjMoveStringLiteralDfa5_0(
-            active0, 0L, active1, 0x800000004L, active2, 0L, active3, 0L, active4, 0x10000000L);
+            active0, 0L, active1, 0x800000004L, active2, 0L, active3, 0L, active4, 0x20000000L);
       case 109:
         return jjMoveStringLiteralDfa5_0(
             active0,
@@ -2339,7 +2350,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           jjmatchedPos = 4;
         }
         return jjMoveStringLiteralDfa5_0(
-            active0, 0L, active1, 0x40000L, active2, 0x1L, active3, 0L, active4, 0x2000000L);
+            active0, 0L, active1, 0x40000L, active2, 0x1L, active3, 0L, active4, 0x4000000L);
       case 114:
         if ((active0 & 0x10000000000L) != 0L) {
           jjmatchedKind = 40;
@@ -2374,7 +2385,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           jjmatchedPos = 4;
         }
         return jjMoveStringLiteralDfa5_0(
-            active0, 0L, active1, 0x200004000L, active2, 0L, active3, 0L, active4, 0x400000L);
+            active0, 0L, active1, 0x200004000L, active2, 0L, active3, 0L, active4, 0x800000L);
       case 116:
         if ((active0 & 0x80000000000L) != 0L) {
           jjmatchedKind = 43;
@@ -2399,7 +2410,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x10L);
+            0x20L);
       case 117:
         return jjMoveStringLiteralDfa5_0(
             active0,
@@ -2423,7 +2434,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x80000L);
+            0x100000L);
       case 120:
         if ((active1 & 0x200000000000L) != 0L) {
           jjmatchedKind = 109;
@@ -2474,10 +2485,19 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         break;
       case 45:
         return jjMoveStringLiteralDfa6_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x40000L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x80000L);
       case 65:
         return jjMoveStringLiteralDfa6_0(
-            active0, 0L, active1, 0x4100020820000L, active2, 0x8000012L, active3, 0L, active4, 0L);
+            active0,
+            0L,
+            active1,
+            0x4100020820000L,
+            active2,
+            0x10000008000012L,
+            active3,
+            0L,
+            active4,
+            0L);
       case 67:
         return jjMoveStringLiteralDfa6_0(
             active0, 0L, active1, 0xa000L, active2, 0x2000000L, active3, 0L, active4, 0L);
@@ -2531,9 +2551,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0L,
             active3,
-            0x400000000000000L,
+            0x800000000000000L,
             active4,
-            0x12L);
+            0x24L);
       case 71:
         return jjMoveStringLiteralDfa6_0(
             active0, 0L, active1, 0x100000L, active2, 0L, active3, 0L, active4, 0L);
@@ -2549,9 +2569,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x420000000L,
             active3,
-            0xf800000000000000L,
+            0xf000000000000000L,
             active4,
-            0x1L);
+            0x3L);
       case 76:
         return jjMoveStringLiteralDfa6_0(
             active0,
@@ -2592,7 +2612,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x8L);
+            0x10L);
       case 79:
         return jjMoveStringLiteralDfa6_0(
             active0, 0L, active1, 0x1000000L, active2, 0x1L, active3, 0L, active4, 0L);
@@ -2664,7 +2684,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         break;
       case 95:
         return jjMoveStringLiteralDfa6_0(
-            active0, 0L, active1, 0x10L, active2, 0L, active3, 0L, active4, 0x10000000L);
+            active0, 0L, active1, 0x10L, active2, 0L, active3, 0L, active4, 0x20000000L);
       case 97:
         return jjMoveStringLiteralDfa6_0(
             active0,
@@ -2672,14 +2692,14 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1,
             0x4100020820000L,
             active2,
-            0x8000012L,
+            0x10000008000012L,
             active3,
             0L,
             active4,
-            0x400000L);
+            0x800000L);
       case 99:
         return jjMoveStringLiteralDfa6_0(
-            active0, 0L, active1, 0xa000L, active2, 0x2000000L, active3, 0L, active4, 0x20000L);
+            active0, 0L, active1, 0xa000L, active2, 0x2000000L, active3, 0L, active4, 0x40000L);
       case 100:
         if ((active0 & 0x100000000000000L) != 0L) {
           jjmatchedKind = 56;
@@ -2721,11 +2741,11 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active1 & 0x200000000000000L) != 0L) {
           jjmatchedKind = 121;
           jjmatchedPos = 5;
-        } else if ((active4 & 0x4000000L) != 0L) {
-          jjmatchedKind = 282;
+        } else if ((active4 & 0x8000000L) != 0L) {
+          jjmatchedKind = 283;
           jjmatchedPos = 5;
-        } else if ((active4 & 0x20000000L) != 0L) {
-          jjmatchedKind = 285;
+        } else if ((active4 & 0x40000000L) != 0L) {
+          jjmatchedKind = 286;
           jjmatchedPos = 5;
         }
         return jjMoveStringLiteralDfa6_0(
@@ -2736,9 +2756,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0L,
             active3,
-            0x400000000000000L,
+            0x800000000000000L,
             active4,
-            0x80012L);
+            0x100024L);
       case 103:
         return jjMoveStringLiteralDfa6_0(
             active0, 0L, active1, 0x100000L, active2, 0L, active3, 0L, active4, 0L);
@@ -2754,9 +2774,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x420000000L,
             active3,
-            0xf800000000000000L,
+            0xf000000000000000L,
             active4,
-            0x1L);
+            0x3L);
       case 108:
         return jjMoveStringLiteralDfa6_0(
             active0,
@@ -2797,7 +2817,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x200008L);
+            0x400010L);
       case 111:
         return jjMoveStringLiteralDfa6_0(
             active0, 0L, active1, 0x1000000L, active2, 0x1L, active3, 0L, active4, 0L);
@@ -2830,8 +2850,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active2 & 0x1000000L) != 0L) {
           jjmatchedKind = 152;
           jjmatchedPos = 5;
-        } else if ((active4 & 0x800000L) != 0L) {
-          jjmatchedKind = 279;
+        } else if ((active4 & 0x1000000L) != 0L) {
+          jjmatchedKind = 280;
           jjmatchedPos = 5;
         }
         return jjMoveStringLiteralDfa6_0(
@@ -2866,7 +2886,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x2000000L);
+            0x4000000L);
       case 120:
         if ((active0 & 0x40000L) != 0L) {
           jjmatchedKind = 18;
@@ -2916,7 +2936,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active0, 0L, active1, 0x20000L, active2, 0L, active3, 0L, active4, 0L);
       case 67:
         return jjMoveStringLiteralDfa7_0(
-            active0, 0L, active1, 0x1020000000L, active2, 0x88010L, active3, 0L, active4, 0x8L);
+            active0, 0L, active1, 0x1020000000L, active2, 0x88010L, active3, 0L, active4, 0x10L);
       case 68:
         if ((active0 & 0x8000000000L) != 0L) {
           jjmatchedKind = 39;
@@ -2989,8 +3009,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         if ((active1 & 0x80000000000000L) != 0L) {
           jjmatchedKind = 119;
           jjmatchedPos = 6;
-        } else if ((active3 & 0x400000000000000L) != 0L) {
-          jjmatchedKind = 250;
+        } else if ((active3 & 0x800000000000000L) != 0L) {
+          jjmatchedKind = 251;
           jjmatchedPos = 6;
         }
         return jjMoveStringLiteralDfa7_0(
@@ -3001,9 +3021,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0L,
             active3,
-            0xf800000000000000L,
+            0xf000000000000000L,
             active4,
-            0x1L);
+            0x3L);
       case 79:
         return jjMoveStringLiteralDfa7_0(
             active0, 0L, active1, 0x4000000000000000L, active2, 0L, active3, 0L, active4, 0L);
@@ -3011,8 +3031,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         return jjMoveStringLiteralDfa7_0(
             active0, 0L, active1, 0x8000000000L, active2, 0L, active3, 0L, active4, 0L);
       case 82:
-        if ((active4 & 0x10L) != 0L) {
-          jjmatchedKind = 260;
+        if ((active4 & 0x20L) != 0L) {
+          jjmatchedKind = 261;
           jjmatchedPos = 6;
         }
         return jjMoveStringLiteralDfa7_0(
@@ -3024,8 +3044,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active1 & 0x8000000L) != 0L) {
           jjmatchedKind = 91;
           jjmatchedPos = 6;
-        } else if ((active4 & 0x2L) != 0L) {
-          jjmatchedKind = 257;
+        } else if ((active4 & 0x4L) != 0L) {
+          jjmatchedKind = 258;
           jjmatchedPos = 6;
         }
         return jjMoveStringLiteralDfa7_0(
@@ -3050,7 +3070,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1,
             0x8000150000800c00L,
             active2,
-            0x1400000001L,
+            0x10001400000001L,
             active3,
             0L,
             active4,
@@ -3078,7 +3098,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x200008L);
+            0x400010L);
       case 100:
         if ((active0 & 0x8000000000L) != 0L) {
           jjmatchedKind = 39;
@@ -3121,7 +3141,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active0, 0L, active1, 0x10L, active2, 0x20000000L, active3, 0L, active4, 0L);
       case 103:
         return jjMoveStringLiteralDfa7_0(
-            active0, 0L, active1, 0x8L, active2, 0x2L, active3, 0L, active4, 0x400000L);
+            active0, 0L, active1, 0x8L, active2, 0x2L, active3, 0L, active4, 0x800000L);
       case 104:
         if ((active2 & 0x2000000L) != 0L) {
           jjmatchedKind = 153;
@@ -3151,8 +3171,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         if ((active1 & 0x80000000000000L) != 0L) {
           jjmatchedKind = 119;
           jjmatchedPos = 6;
-        } else if ((active3 & 0x400000000000000L) != 0L) {
-          jjmatchedKind = 250;
+        } else if ((active3 & 0x800000000000000L) != 0L) {
+          jjmatchedKind = 251;
           jjmatchedPos = 6;
         }
         return jjMoveStringLiteralDfa7_0(
@@ -3163,22 +3183,22 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0L,
             active3,
-            0xf800000000000000L,
+            0xf000000000000000L,
             active4,
-            0x1L);
+            0x3L);
       case 111:
         return jjMoveStringLiteralDfa7_0(
-            active0, 0L, active1, 0x4000000000000000L, active2, 0L, active3, 0L, active4, 0x20000L);
+            active0, 0L, active1, 0x4000000000000000L, active2, 0L, active3, 0L, active4, 0x40000L);
       case 112:
         return jjMoveStringLiteralDfa7_0(
             active0, 0L, active1, 0x8000000000L, active2, 0L, active3, 0L, active4, 0L);
       case 114:
-        if ((active4 & 0x10L) != 0L) {
-          jjmatchedKind = 260;
+        if ((active4 & 0x20L) != 0L) {
+          jjmatchedKind = 261;
           jjmatchedPos = 6;
         }
         return jjMoveStringLiteralDfa7_0(
-            active0, 0L, active1, 0x4011000000L, active2, 0L, active3, 0L, active4, 0x100c0000L);
+            active0, 0L, active1, 0x4011000000L, active2, 0L, active3, 0L, active4, 0x20180000L);
       case 115:
         if ((active1 & 0x4000L) != 0L) {
           jjmatchedKind = 78;
@@ -3186,8 +3206,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active1 & 0x8000000L) != 0L) {
           jjmatchedKind = 91;
           jjmatchedPos = 6;
-        } else if ((active4 & 0x2L) != 0L) {
-          jjmatchedKind = 257;
+        } else if ((active4 & 0x4L) != 0L) {
+          jjmatchedKind = 258;
           jjmatchedPos = 6;
         }
         return jjMoveStringLiteralDfa7_0(
@@ -3212,11 +3232,11 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1,
             0x8000150000800c00L,
             active2,
-            0x1400000001L,
+            0x10001400000001L,
             active3,
             0L,
             active4,
-            0x2000000L);
+            0x4000000L);
       case 117:
         return jjMoveStringLiteralDfa7_0(
             active0, 0L, active1, 0L, active2, 0x80L, active3, 0L, active4, 0L);
@@ -3254,7 +3274,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
     switch (curChar) {
       case 61:
         return jjMoveStringLiteralDfa8_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x2000000L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x4000000L);
       case 65:
         if ((active1 & 0x100000000000L) != 0L) {
           jjmatchedKind = 108;
@@ -3301,7 +3321,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           jjmatchedPos = 7;
         }
         return jjMoveStringLiteralDfa8_0(
-            active0, 0L, active1, 0x8000000000000000L, active2, 0x1L, active3, 0L, active4, 0x8L);
+            active0, 0L, active1, 0x8000000000000000L, active2, 0x1L, active3, 0L, active4, 0x10L);
       case 72:
         if ((active1 & 0x400L) != 0L) {
           jjmatchedKind = 74;
@@ -3313,7 +3333,16 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         break;
       case 73:
         return jjMoveStringLiteralDfa8_0(
-            active0, 0L, active1, 0x10000000010L, active2, 0x28000000L, active3, 0L, active4, 0L);
+            active0,
+            0L,
+            active1,
+            0x10000000010L,
+            active2,
+            0x10000028000000L,
+            active3,
+            0L,
+            active4,
+            0L);
       case 75:
         if ((active2 & 0x10L) != 0L) {
           jjmatchedKind = 132;
@@ -3350,8 +3379,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         if ((active1 & 0x10000000L) != 0L) {
           jjmatchedKind = 92;
           jjmatchedPos = 7;
-        } else if ((active3 & 0x800000000000000L) != 0L) {
-          jjmatchedKind = 251;
+        } else if ((active3 & 0x1000000000000000L) != 0L) {
+          jjmatchedKind = 252;
           jjmatchedPos = 7;
         }
         return jjMoveStringLiteralDfa8_0(
@@ -3362,9 +3391,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0L,
             active3,
-            0xf000000000000000L,
+            0xe000000000000000L,
             active4,
-            0x1L);
+            0x3L);
       case 84:
         if ((active1 & 0x20000000L) != 0L) {
           jjmatchedKind = 93;
@@ -3445,7 +3474,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active3,
             0L,
             active4,
-            0x10400008L);
+            0x20800010L);
       case 104:
         if ((active1 & 0x400L) != 0L) {
           jjmatchedKind = 74;
@@ -3457,7 +3486,16 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         break;
       case 105:
         return jjMoveStringLiteralDfa8_0(
-            active0, 0L, active1, 0x10000000010L, active2, 0x28000000L, active3, 0L, active4, 0L);
+            active0,
+            0L,
+            active1,
+            0x10000000010L,
+            active2,
+            0x10000028000000L,
+            active3,
+            0L,
+            active4,
+            0L);
       case 107:
         if ((active2 & 0x10L) != 0L) {
           jjmatchedKind = 132;
@@ -3486,22 +3524,22 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active0, 0x800000000L, active1, 0L, active2, 0L, active3, 0L, active4, 0L);
       case 111:
         return jjMoveStringLiteralDfa8_0(
-            active0, 0L, active1, 0x400040000L, active2, 0x200L, active3, 0L, active4, 0x40000L);
+            active0, 0L, active1, 0x400040000L, active2, 0x200L, active3, 0L, active4, 0x80000L);
       case 112:
         return jjMoveStringLiteralDfa8_0(
             active0, 0L, active1, 0x1000000L, active2, 0L, active3, 0L, active4, 0L);
       case 114:
         return jjMoveStringLiteralDfa8_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x20000L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x40000L);
       case 115:
         if ((active1 & 0x10000000L) != 0L) {
           jjmatchedKind = 92;
           jjmatchedPos = 7;
-        } else if ((active3 & 0x800000000000000L) != 0L) {
-          jjmatchedKind = 251;
+        } else if ((active3 & 0x1000000000000000L) != 0L) {
+          jjmatchedKind = 252;
           jjmatchedPos = 7;
-        } else if ((active4 & 0x80000L) != 0L) {
-          jjmatchedKind = 275;
+        } else if ((active4 & 0x100000L) != 0L) {
+          jjmatchedKind = 276;
           jjmatchedPos = 7;
         }
         return jjMoveStringLiteralDfa8_0(
@@ -3512,9 +3550,9 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0L,
             active3,
-            0xf000000000000000L,
+            0xe000000000000000L,
             active4,
-            0x1L);
+            0x3L);
       case 116:
         if ((active1 & 0x20000000L) != 0L) {
           jjmatchedKind = 93;
@@ -3535,8 +3573,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         } else if ((active2 & 0x400000000L) != 0L) {
           jjmatchedKind = 162;
           jjmatchedPos = 7;
-        } else if ((active4 & 0x200000L) != 0L) {
-          jjmatchedKind = 277;
+        } else if ((active4 & 0x400000L) != 0L) {
+          jjmatchedKind = 278;
           jjmatchedPos = 7;
         }
         break;
@@ -3578,7 +3616,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x8000000L,
             active3,
-            0x3000000000000000L,
+            0x6000000000000000L,
             active4,
             0L);
       case 68:
@@ -3605,7 +3643,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active0, 0L, active1, 0x8000000000L, active2, 0L, active3, 0L, active4, 0L);
       case 75:
         return jjMoveStringLiteralDfa9_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0x4000000000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0L);
       case 76:
         return jjMoveStringLiteralDfa9_0(
             active0, 0L, active1, 0L, active2, 0x1000000000L, active3, 0L, active4, 0L);
@@ -3624,7 +3662,16 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active0, 0L, active1, 0L, active2, 0x1L, active3, 0L, active4, 0L);
       case 79:
         return jjMoveStringLiteralDfa9_0(
-            active0, 0L, active1, 0x10000000000L, active2, 0L, active3, 0L, active4, 0x8L);
+            active0,
+            0L,
+            active1,
+            0x10000000000L,
+            active2,
+            0x10000000000000L,
+            active3,
+            0L,
+            active4,
+            0x10L);
       case 82:
         return jjMoveStringLiteralDfa9_0(
             active0, 0L, active1, 0x8000000000000010L, active2, 0L, active3, 0L, active4, 0L);
@@ -3641,13 +3688,13 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           jjmatchedPos = 8;
         }
         return jjMoveStringLiteralDfa9_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x1L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x2L);
       case 85:
         return jjMoveStringLiteralDfa9_0(
             active0, 0L, active1, 0x1000000000L, active2, 0L, active3, 0L, active4, 0L);
       case 86:
         return jjMoveStringLiteralDfa9_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x1L);
       case 97:
         return jjMoveStringLiteralDfa9_0(
             active0,
@@ -3657,15 +3704,15 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0x8000000L,
             active3,
-            0x3000000000000000L,
+            0x6000000000000000L,
             active4,
             0L);
       case 98:
         return jjMoveStringLiteralDfa9_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x40000L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x80000L);
       case 100:
         return jjMoveStringLiteralDfa9_0(
-            active0, 0L, active1, 0x400000000L, active2, 0L, active3, 0L, active4, 0x20000L);
+            active0, 0L, active1, 0x400000000L, active2, 0L, active3, 0L, active4, 0x40000L);
       case 101:
         if ((active1 & 0x20000L) != 0L) {
           jjmatchedKind = 81;
@@ -3687,7 +3734,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active0, 0L, active1, 0x8000000000L, active2, 0L, active3, 0L, active4, 0L);
       case 107:
         return jjMoveStringLiteralDfa9_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0x4000000000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0L);
       case 108:
         return jjMoveStringLiteralDfa9_0(
             active0, 0L, active1, 0L, active2, 0x1000000000L, active3, 0L, active4, 0L);
@@ -3706,10 +3753,19 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active0, 0L, active1, 0L, active2, 0x1L, active3, 0L, active4, 0L);
       case 111:
         return jjMoveStringLiteralDfa9_0(
-            active0, 0L, active1, 0x10000000000L, active2, 0L, active3, 0L, active4, 0x8L);
+            active0,
+            0L,
+            active1,
+            0x10000000000L,
+            active2,
+            0x10000000000000L,
+            active3,
+            0L,
+            active4,
+            0x10L);
       case 112:
         return jjMoveStringLiteralDfa9_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x10000000L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x20000000L);
       case 114:
         return jjMoveStringLiteralDfa9_0(
             active0, 0L, active1, 0x8000000000000010L, active2, 0L, active3, 0L, active4, 0L);
@@ -3717,8 +3773,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         if ((active2 & 0x10000000L) != 0L) {
           jjmatchedKind = 156;
           jjmatchedPos = 8;
-        } else if ((active4 & 0x400000L) != 0L) {
-          jjmatchedKind = 278;
+        } else if ((active4 & 0x800000L) != 0L) {
+          jjmatchedKind = 279;
           jjmatchedPos = 8;
         }
         return jjMoveStringLiteralDfa9_0(
@@ -3729,13 +3785,13 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           jjmatchedPos = 8;
         }
         return jjMoveStringLiteralDfa9_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x2000001L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x4000002L);
       case 117:
         return jjMoveStringLiteralDfa9_0(
             active0, 0L, active1, 0x1000000000L, active2, 0L, active3, 0L, active4, 0L);
       case 118:
         return jjMoveStringLiteralDfa9_0(
-            active0, 0L, active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0L);
+            active0, 0L, active1, 0L, active2, 0L, active3, 0L, active4, 0x1L);
       default:
         break;
     }
@@ -3766,8 +3822,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
     }
     switch (curChar) {
       case 65:
-        return jjMoveStringLiteralDfa10_0(
-            active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0L);
+        return jjMoveStringLiteralDfa10_0(active1, 0L, active2, 0L, active3, 0L, active4, 0x1L);
       case 68:
         if ((active2 & 0x20000000L) != 0L) {
           jjmatchedKind = 157;
@@ -3780,10 +3835,10 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           jjmatchedPos = 9;
         }
         return jjMoveStringLiteralDfa10_0(
-            active1, 0L, active2, 0L, active3, 0x4000000000000000L, active4, 0x1L);
+            active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0x2L);
       case 70:
-        if ((active4 & 0x8L) != 0L) {
-          jjmatchedKind = 259;
+        if ((active4 & 0x10L) != 0L) {
+          jjmatchedKind = 260;
           jjmatchedPos = 9;
         }
         break;
@@ -3792,14 +3847,17 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1, 0x1000020L, active2, 0L, active3, 0L, active4, 0L);
       case 76:
         return jjMoveStringLiteralDfa10_0(
-            active1, 0x4000000000L, active2, 0L, active3, 0x1000000000000000L, active4, 0L);
+            active1, 0x4000000000L, active2, 0L, active3, 0x2000000000000000L, active4, 0L);
       case 78:
         if ((active1 & 0x10000000000L) != 0L) {
           jjmatchedKind = 104;
           jjmatchedPos = 9;
+        } else if ((active2 & 0x10000000000000L) != 0L) {
+          jjmatchedKind = 180;
+          jjmatchedPos = 9;
         }
         return jjMoveStringLiteralDfa10_0(
-            active1, 0L, active2, 0L, active3, 0x2000000000000000L, active4, 0L);
+            active1, 0L, active2, 0L, active3, 0x4000000000000000L, active4, 0L);
       case 79:
         return jjMoveStringLiteralDfa10_0(
             active1, 0x8000000000L, active2, 0L, active3, 0L, active4, 0L);
@@ -3835,8 +3893,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         return jjMoveStringLiteralDfa10_0(
             active1, 0L, active2, 0x1000000000L, active3, 0L, active4, 0L);
       case 97:
-        return jjMoveStringLiteralDfa10_0(
-            active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0L);
+        return jjMoveStringLiteralDfa10_0(active1, 0L, active2, 0L, active3, 0L, active4, 0x1L);
       case 100:
         if ((active2 & 0x20000000L) != 0L) {
           jjmatchedKind = 157;
@@ -3849,16 +3906,16 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           jjmatchedPos = 9;
         }
         return jjMoveStringLiteralDfa10_0(
-            active1, 0L, active2, 0L, active3, 0x4000000000000000L, active4, 0x2000001L);
+            active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0x4000002L);
       case 102:
-        if ((active4 & 0x8L) != 0L) {
-          jjmatchedKind = 259;
+        if ((active4 & 0x10L) != 0L) {
+          jjmatchedKind = 260;
           jjmatchedPos = 9;
         }
         break;
       case 105:
         return jjMoveStringLiteralDfa10_0(
-            active1, 0x1000020L, active2, 0L, active3, 0L, active4, 0x40000L);
+            active1, 0x1000020L, active2, 0L, active3, 0L, active4, 0x80000L);
       case 108:
         return jjMoveStringLiteralDfa10_0(
             active1,
@@ -3866,18 +3923,21 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active2,
             0L,
             active3,
-            0x1000000000000000L,
+            0x2000000000000000L,
             active4,
-            0x10000000L);
+            0x20000000L);
       case 109:
-        return jjMoveStringLiteralDfa10_0(active1, 0L, active2, 0L, active3, 0L, active4, 0x20000L);
+        return jjMoveStringLiteralDfa10_0(active1, 0L, active2, 0L, active3, 0L, active4, 0x40000L);
       case 110:
         if ((active1 & 0x10000000000L) != 0L) {
           jjmatchedKind = 104;
           jjmatchedPos = 9;
+        } else if ((active2 & 0x10000000000000L) != 0L) {
+          jjmatchedKind = 180;
+          jjmatchedPos = 9;
         }
         return jjMoveStringLiteralDfa10_0(
-            active1, 0L, active2, 0L, active3, 0x2000000000000000L, active4, 0L);
+            active1, 0L, active2, 0L, active3, 0x4000000000000000L, active4, 0L);
       case 111:
         return jjMoveStringLiteralDfa10_0(
             active1, 0x8000000000L, active2, 0L, active3, 0L, active4, 0L);
@@ -3945,12 +4005,11 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         return jjMoveStringLiteralDfa11_0(
             active1, 0x4000008000L, active2, 0L, active3, 0L, active4, 0L);
       case 76:
-        if ((active3 & 0x1000000000000000L) != 0L) {
-          jjmatchedKind = 252;
+        if ((active3 & 0x2000000000000000L) != 0L) {
+          jjmatchedKind = 253;
           jjmatchedPos = 10;
         }
-        return jjMoveStringLiteralDfa11_0(
-            active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0L);
+        return jjMoveStringLiteralDfa11_0(active1, 0L, active2, 0L, active3, 0L, active4, 0x1L);
       case 78:
         if ((active1 & 0x8000000000L) != 0L) {
           jjmatchedKind = 103;
@@ -3970,19 +4029,19 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         return jjMoveStringLiteralDfa11_0(
             active1, 0x1000000000L, active2, 0L, active3, 0L, active4, 0L);
       case 88:
-        return jjMoveStringLiteralDfa11_0(active1, 0L, active2, 0L, active3, 0L, active4, 0x1L);
+        return jjMoveStringLiteralDfa11_0(active1, 0L, active2, 0L, active3, 0L, active4, 0x2L);
       case 89:
-        if ((active3 & 0x2000000000000000L) != 0L) {
-          jjmatchedKind = 253;
-          jjmatchedPos = 10;
-        } else if ((active3 & 0x4000000000000000L) != 0L) {
+        if ((active3 & 0x4000000000000000L) != 0L) {
           jjmatchedKind = 254;
+          jjmatchedPos = 10;
+        } else if ((active3 & 0x8000000000000000L) != 0L) {
+          jjmatchedKind = 255;
           jjmatchedPos = 10;
         }
         break;
       case 97:
         return jjMoveStringLiteralDfa11_0(
-            active1, 0L, active2, 0L, active3, 0L, active4, 0x10020000L);
+            active1, 0L, active2, 0L, active3, 0L, active4, 0x20040000L);
       case 99:
         if ((active1 & 0x1000000L) != 0L) {
           jjmatchedKind = 88;
@@ -3993,18 +4052,17 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         return jjMoveStringLiteralDfa11_0(
             active1, 0x4000008000L, active2, 0L, active3, 0L, active4, 0L);
       case 108:
-        if ((active3 & 0x1000000000000000L) != 0L) {
-          jjmatchedKind = 252;
+        if ((active3 & 0x2000000000000000L) != 0L) {
+          jjmatchedKind = 253;
           jjmatchedPos = 10;
         }
-        return jjMoveStringLiteralDfa11_0(
-            active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0L);
+        return jjMoveStringLiteralDfa11_0(active1, 0L, active2, 0L, active3, 0L, active4, 0x1L);
       case 110:
         if ((active1 & 0x8000000000L) != 0L) {
           jjmatchedKind = 103;
           jjmatchedPos = 10;
-        } else if ((active4 & 0x40000L) != 0L) {
-          jjmatchedKind = 274;
+        } else if ((active4 & 0x80000L) != 0L) {
+          jjmatchedKind = 275;
           jjmatchedPos = 10;
         }
         break;
@@ -4022,13 +4080,13 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             active1, 0x1000000000L, active2, 0L, active3, 0L, active4, 0L);
       case 120:
         return jjMoveStringLiteralDfa11_0(
-            active1, 0L, active2, 0L, active3, 0L, active4, 0x2000001L);
+            active1, 0L, active2, 0L, active3, 0L, active4, 0x4000002L);
       case 121:
-        if ((active3 & 0x2000000000000000L) != 0L) {
-          jjmatchedKind = 253;
-          jjmatchedPos = 10;
-        } else if ((active3 & 0x4000000000000000L) != 0L) {
+        if ((active3 & 0x4000000000000000L) != 0L) {
           jjmatchedKind = 254;
+          jjmatchedPos = 10;
+        } else if ((active3 & 0x8000000000000000L) != 0L) {
+          jjmatchedKind = 255;
           jjmatchedPos = 10;
         }
         break;
@@ -4056,54 +4114,47 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
     }
     switch (curChar) {
       case 67:
-        return jjMoveStringLiteralDfa12_0(
-            active1, 0x4000000000L, active2, 0L, active3, 0L, active4, 0L);
+        return jjMoveStringLiteralDfa12_0(active1, 0x4000000000L, active2, 0L, active4, 0L);
       case 69:
-        return jjMoveStringLiteralDfa12_0(
-            active1, 0x1000000000L, active2, 0L, active3, 0L, active4, 0L);
+        return jjMoveStringLiteralDfa12_0(active1, 0x1000000000L, active2, 0L, active4, 0L);
       case 83:
         if ((active1 & 0x8000L) != 0L) {
           jjmatchedKind = 79;
           jjmatchedPos = 11;
         }
-        return jjMoveStringLiteralDfa12_0(active1, 0x20L, active2, 0L, active3, 0L, active4, 0L);
+        return jjMoveStringLiteralDfa12_0(active1, 0x20L, active2, 0L, active4, 0L);
       case 84:
-        if ((active4 & 0x1L) != 0L) {
-          jjmatchedKind = 256;
+        if ((active4 & 0x2L) != 0L) {
+          jjmatchedKind = 257;
           jjmatchedPos = 11;
         }
-        return jjMoveStringLiteralDfa12_0(
-            active1, 0L, active2, 0x1000000000L, active3, 0L, active4, 0L);
+        return jjMoveStringLiteralDfa12_0(active1, 0L, active2, 0x1000000000L, active4, 0L);
       case 85:
-        return jjMoveStringLiteralDfa12_0(
-            active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0L);
+        return jjMoveStringLiteralDfa12_0(active1, 0L, active2, 0L, active4, 0x1L);
       case 99:
         return jjMoveStringLiteralDfa12_0(
-            active1, 0x4000000000L, active2, 0L, active3, 0L, active4, 0x10000000L);
+            active1, 0x4000000000L, active2, 0L, active4, 0x20000000L);
       case 101:
-        return jjMoveStringLiteralDfa12_0(
-            active1, 0x1000000000L, active2, 0L, active3, 0L, active4, 0L);
+        return jjMoveStringLiteralDfa12_0(active1, 0x1000000000L, active2, 0L, active4, 0L);
       case 112:
-        return jjMoveStringLiteralDfa12_0(active1, 0L, active2, 0L, active3, 0L, active4, 0x20000L);
+        return jjMoveStringLiteralDfa12_0(active1, 0L, active2, 0L, active4, 0x40000L);
       case 115:
         if ((active1 & 0x8000L) != 0L) {
           jjmatchedKind = 79;
           jjmatchedPos = 11;
         }
-        return jjMoveStringLiteralDfa12_0(active1, 0x20L, active2, 0L, active3, 0L, active4, 0L);
+        return jjMoveStringLiteralDfa12_0(active1, 0x20L, active2, 0L, active4, 0L);
       case 116:
-        if ((active4 & 0x1L) != 0L) {
-          jjmatchedKind = 256;
+        if ((active4 & 0x2L) != 0L) {
+          jjmatchedKind = 257;
           jjmatchedPos = 11;
-        } else if ((active4 & 0x2000000L) != 0L) {
-          jjmatchedKind = 281;
+        } else if ((active4 & 0x4000000L) != 0L) {
+          jjmatchedKind = 282;
           jjmatchedPos = 11;
         }
-        return jjMoveStringLiteralDfa12_0(
-            active1, 0L, active2, 0x1000000000L, active3, 0L, active4, 0L);
+        return jjMoveStringLiteralDfa12_0(active1, 0L, active2, 0x1000000000L, active4, 0L);
       case 117:
-        return jjMoveStringLiteralDfa12_0(
-            active1, 0L, active2, 0L, active3, 0x8000000000000000L, active4, 0L);
+        return jjMoveStringLiteralDfa12_0(active1, 0L, active2, 0L, active4, 0x1L);
       default:
         break;
     }
@@ -4111,15 +4162,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
   }
 
   private int jjMoveStringLiteralDfa12_0(
-      long old1,
-      long active1,
-      long old2,
-      long active2,
-      long old3,
-      long active3,
-      long old4,
-      long active4) {
-    if (((active1 &= old1) | (active2 &= old2) | (active3 &= old3) | (active4 &= old4)) == 0L)
+      long old1, long active1, long old2, long active2, long old4, long active4) {
+    if (((active1 &= old1) | (active2 &= old2) | (active4 &= old4)) == 0L)
       return jjMoveNfa_0(3, 11);
     try {
       curChar = input_stream.readChar();
@@ -4128,14 +4172,13 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
     }
     switch (curChar) {
       case 64:
-        return jjMoveStringLiteralDfa13_0(active1, 0L, active2, 0L, active3, 0L, active4, 0x20000L);
+        return jjMoveStringLiteralDfa13_0(active1, 0L, active2, 0L, active4, 0x40000L);
       case 69:
-        if ((active3 & 0x8000000000000000L) != 0L) {
-          jjmatchedKind = 255;
+        if ((active4 & 0x1L) != 0L) {
+          jjmatchedKind = 256;
           jjmatchedPos = 12;
         }
-        return jjMoveStringLiteralDfa13_0(
-            active1, 0L, active2, 0x1000000000L, active3, 0L, active4, 0L);
+        return jjMoveStringLiteralDfa13_0(active1, 0L, active2, 0x1000000000L, active4, 0L);
       case 82:
         if ((active1 & 0x1000000000L) != 0L) {
           jjmatchedKind = 100;
@@ -4147,18 +4190,16 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           jjmatchedKind = 69;
           jjmatchedPos = 12;
         }
-        return jjMoveStringLiteralDfa13_0(
-            active1, 0x4000000000L, active2, 0L, active3, 0L, active4, 0L);
+        return jjMoveStringLiteralDfa13_0(active1, 0x4000000000L, active2, 0L, active4, 0L);
       case 101:
-        if ((active3 & 0x8000000000000000L) != 0L) {
-          jjmatchedKind = 255;
+        if ((active4 & 0x1L) != 0L) {
+          jjmatchedKind = 256;
           jjmatchedPos = 12;
-        } else if ((active4 & 0x10000000L) != 0L) {
-          jjmatchedKind = 284;
+        } else if ((active4 & 0x20000000L) != 0L) {
+          jjmatchedKind = 285;
           jjmatchedPos = 12;
         }
-        return jjMoveStringLiteralDfa13_0(
-            active1, 0L, active2, 0x1000000000L, active3, 0L, active4, 0L);
+        return jjMoveStringLiteralDfa13_0(active1, 0L, active2, 0x1000000000L, active4, 0L);
       case 114:
         if ((active1 & 0x1000000000L) != 0L) {
           jjmatchedKind = 100;
@@ -4170,8 +4211,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           jjmatchedKind = 69;
           jjmatchedPos = 12;
         }
-        return jjMoveStringLiteralDfa13_0(
-            active1, 0x4000000000L, active2, 0L, active3, 0L, active4, 0L);
+        return jjMoveStringLiteralDfa13_0(active1, 0x4000000000L, active2, 0L, active4, 0L);
       default:
         break;
     }
@@ -4179,15 +4219,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
   }
 
   private int jjMoveStringLiteralDfa13_0(
-      long old1,
-      long active1,
-      long old2,
-      long active2,
-      long old3,
-      long active3,
-      long old4,
-      long active4) {
-    if (((active1 &= old1) | (active2 &= old2) | (active3 &= old3) | (active4 &= old4)) == 0L)
+      long old1, long active1, long old2, long active2, long old4, long active4) {
+    if (((active1 &= old1) | (active2 &= old2) | (active4 &= old4)) == 0L)
       return jjMoveNfa_0(3, 12);
     try {
       curChar = input_stream.readChar();
@@ -4204,7 +4237,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         }
         break;
       case 95:
-        return jjMoveStringLiteralDfa14_0(active1, 0L, active2, 0L, active4, 0x20000L);
+        return jjMoveStringLiteralDfa14_0(active1, 0L, active2, 0L, active4, 0x40000L);
       case 105:
         return jjMoveStringLiteralDfa14_0(active1, 0x4000000000L, active2, 0L, active4, 0L);
       case 114:
@@ -4232,7 +4265,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
       case 79:
         return jjMoveStringLiteralDfa15_0(active1, 0x4000000000L, active4, 0L);
       case 95:
-        return jjMoveStringLiteralDfa15_0(active1, 0L, active4, 0x20000L);
+        return jjMoveStringLiteralDfa15_0(active1, 0L, active4, 0x40000L);
       case 111:
         return jjMoveStringLiteralDfa15_0(active1, 0x4000000000L, active4, 0L);
       default:
@@ -4256,8 +4289,8 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         }
         break;
       case 95:
-        if ((active4 & 0x20000L) != 0L) {
-          jjmatchedKind = 273;
+        if ((active4 & 0x40000L) != 0L) {
+          jjmatchedKind = 274;
           jjmatchedPos = 15;
         }
         break;
@@ -4308,7 +4341,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               } else if (curChar == 39) {
                 jjCheckNAddStates(11, 15);
               } else if (curChar == 36) {
-                if (kind > 261) kind = 261;
+                if (kind > 262) kind = 262;
                 {
                   jjCheckNAdd(20);
                 }
@@ -4318,12 +4351,12 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
                 jjCheckNAdd(5);
               } else if (curChar == 47) jjstateSet[jjnewStateCnt++] = 2;
               if ((0x3fe000000000000L & l) != 0L) {
-                if (kind > 180) kind = 180;
+                if (kind > 181) kind = 181;
                 {
                   jjCheckNAddStates(19, 26);
                 }
               } else if (curChar == 48) {
-                if (kind > 180) kind = 180;
+                if (kind > 181) kind = 181;
                 {
                   jjCheckNAddStates(27, 39);
                 }
@@ -4345,7 +4378,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 5:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 184) kind = 184;
+              if (kind > 185) kind = 185;
               {
                 jjCheckNAddStates(40, 42);
               }
@@ -4357,7 +4390,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 8:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 184) kind = 184;
+              if (kind > 185) kind = 185;
               {
                 jjCheckNAddTwoStates(8, 9);
               }
@@ -4378,7 +4411,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               }
               break;
             case 14:
-              if (curChar == 34 && kind > 190) kind = 190;
+              if (curChar == 34 && kind > 191) kind = 191;
               break;
             case 15:
               if ((0xff000000000000L & l) != 0L) {
@@ -4400,14 +4433,14 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 19:
               if (curChar != 36) break;
-              if (kind > 261) kind = 261;
+              if (kind > 262) kind = 262;
               {
                 jjCheckNAdd(20);
               }
               break;
             case 20:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 261) kind = 261;
+              if (kind > 262) kind = 262;
               {
                 jjCheckNAdd(20);
               }
@@ -4422,14 +4455,14 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 28:
               if (curChar != 36) break;
-              if (kind > 269) kind = 269;
+              if (kind > 270) kind = 270;
               {
                 jjCheckNAdd(29);
               }
               break;
             case 29:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 269) kind = 269;
+              if (kind > 270) kind = 270;
               {
                 jjCheckNAdd(29);
               }
@@ -4466,7 +4499,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 46:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 184) kind = 184;
+              if (kind > 185) kind = 185;
               {
                 jjCheckNAddTwoStates(46, 9);
               }
@@ -4478,14 +4511,14 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 48:
               if (curChar != 46) break;
-              if (kind > 184) kind = 184;
+              if (kind > 185) kind = 185;
               {
                 jjCheckNAddStates(53, 55);
               }
               break;
             case 49:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 184) kind = 184;
+              if (kind > 185) kind = 185;
               {
                 jjCheckNAddStates(53, 55);
               }
@@ -4497,21 +4530,21 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 52:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 184) kind = 184;
+              if (kind > 185) kind = 185;
               {
                 jjCheckNAddTwoStates(52, 9);
               }
               break;
             case 95:
               if ((0x3fe000000000000L & l) == 0L) break;
-              if (kind > 180) kind = 180;
+              if (kind > 181) kind = 181;
               {
                 jjCheckNAddStates(19, 26);
               }
               break;
             case 96:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 180) kind = 180;
+              if (kind > 181) kind = 181;
               {
                 jjCheckNAddTwoStates(96, 97);
               }
@@ -4533,35 +4566,35 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 102:
               if ((0x3fe000000000000L & l) == 0L) break;
-              if (kind > 191) kind = 191;
+              if (kind > 192) kind = 192;
               {
                 jjCheckNAddTwoStates(103, 104);
               }
               break;
             case 103:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 191) kind = 191;
+              if (kind > 192) kind = 192;
               {
                 jjCheckNAddTwoStates(103, 104);
               }
               break;
             case 105:
               if (curChar != 48) break;
-              if (kind > 191) kind = 191;
+              if (kind > 192) kind = 192;
               {
                 jjCheckNAddStates(62, 64);
               }
               break;
             case 107:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 191) kind = 191;
+              if (kind > 192) kind = 192;
               {
                 jjCheckNAddTwoStates(107, 104);
               }
               break;
             case 108:
               if ((0xff000000000000L & l) == 0L) break;
-              if (kind > 191) kind = 191;
+              if (kind > 192) kind = 192;
               {
                 jjCheckNAddTwoStates(108, 104);
               }
@@ -4586,35 +4619,35 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 114:
               if ((0x3fe000000000000L & l) == 0L) break;
-              if (kind > 192) kind = 192;
+              if (kind > 193) kind = 193;
               {
                 jjCheckNAddTwoStates(115, 116);
               }
               break;
             case 115:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 192) kind = 192;
+              if (kind > 193) kind = 193;
               {
                 jjCheckNAddTwoStates(115, 116);
               }
               break;
             case 117:
               if (curChar != 48) break;
-              if (kind > 192) kind = 192;
+              if (kind > 193) kind = 193;
               {
                 jjCheckNAddStates(71, 73);
               }
               break;
             case 119:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 192) kind = 192;
+              if (kind > 193) kind = 193;
               {
                 jjCheckNAddTwoStates(119, 116);
               }
               break;
             case 120:
               if ((0xff000000000000L & l) == 0L) break;
-              if (kind > 192) kind = 192;
+              if (kind > 193) kind = 193;
               {
                 jjCheckNAddTwoStates(120, 116);
               }
@@ -4636,7 +4669,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               }
               break;
             case 125:
-              if (curChar == 39 && kind > 189) kind = 189;
+              if (curChar == 39 && kind > 190) kind = 190;
               break;
             case 127:
               if ((0x808400000000L & l) != 0L) {
@@ -4672,7 +4705,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               }
               break;
             case 135:
-              if (curChar == 39 && kind > 190) kind = 190;
+              if (curChar == 39 && kind > 191) kind = 191;
               break;
             case 136:
               if ((0xff000000000000L & l) != 0L) {
@@ -4738,7 +4771,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               }
               break;
             case 153:
-              if (curChar == 58 && kind > 263) kind = 263;
+              if (curChar == 58 && kind > 264) kind = 264;
               break;
             case 157:
               if (curChar == 58) {
@@ -4747,14 +4780,14 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 159:
               if (curChar != 36) break;
-              if (kind > 264) kind = 264;
+              if (kind > 265) kind = 265;
               {
                 jjCheckNAddTwoStates(160, 161);
               }
               break;
             case 160:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 264) kind = 264;
+              if (kind > 265) kind = 265;
               {
                 jjCheckNAddTwoStates(160, 161);
               }
@@ -4764,14 +4797,14 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 162:
               if (curChar != 36) break;
-              if (kind > 264) kind = 264;
+              if (kind > 265) kind = 265;
               {
                 jjCheckNAddTwoStates(161, 163);
               }
               break;
             case 163:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 264) kind = 264;
+              if (kind > 265) kind = 265;
               {
                 jjCheckNAddTwoStates(161, 163);
               }
@@ -4783,14 +4816,14 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 191:
               if (curChar != 36) break;
-              if (kind > 265) kind = 265;
+              if (kind > 266) kind = 266;
               {
                 jjCheckNAddTwoStates(192, 193);
               }
               break;
             case 192:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 265) kind = 265;
+              if (kind > 266) kind = 266;
               {
                 jjCheckNAddTwoStates(192, 193);
               }
@@ -4800,14 +4833,14 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 194:
               if (curChar != 36) break;
-              if (kind > 265) kind = 265;
+              if (kind > 266) kind = 266;
               {
                 jjCheckNAddTwoStates(193, 195);
               }
               break;
             case 195:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 265) kind = 265;
+              if (kind > 266) kind = 266;
               {
                 jjCheckNAddTwoStates(193, 195);
               }
@@ -4819,14 +4852,14 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 226:
               if (curChar != 36) break;
-              if (kind > 266) kind = 266;
+              if (kind > 267) kind = 267;
               {
                 jjCheckNAddTwoStates(227, 228);
               }
               break;
             case 227:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 266) kind = 266;
+              if (kind > 267) kind = 267;
               {
                 jjCheckNAddTwoStates(227, 228);
               }
@@ -4836,14 +4869,14 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 229:
               if (curChar != 36) break;
-              if (kind > 266) kind = 266;
+              if (kind > 267) kind = 267;
               {
                 jjCheckNAddTwoStates(228, 230);
               }
               break;
             case 230:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 266) kind = 266;
+              if (kind > 267) kind = 267;
               {
                 jjCheckNAddTwoStates(228, 230);
               }
@@ -4853,14 +4886,14 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 263:
               if (curChar != 36) break;
-              if (kind > 267) kind = 267;
+              if (kind > 268) kind = 268;
               {
                 jjCheckNAdd(264);
               }
               break;
             case 264:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 267) kind = 267;
+              if (kind > 268) kind = 268;
               {
                 jjCheckNAdd(264);
               }
@@ -4872,56 +4905,56 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 272:
               if ((0x3fe000000000000L & l) == 0L) break;
-              if (kind > 268) kind = 268;
+              if (kind > 269) kind = 269;
               {
                 jjCheckNAddTwoStates(273, 274);
               }
               break;
             case 273:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 268) kind = 268;
+              if (kind > 269) kind = 269;
               {
                 jjCheckNAddTwoStates(273, 274);
               }
               break;
             case 275:
               if (curChar != 48) break;
-              if (kind > 268) kind = 268;
+              if (kind > 269) kind = 269;
               {
                 jjCheckNAddStates(109, 111);
               }
               break;
             case 277:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 268) kind = 268;
+              if (kind > 269) kind = 269;
               {
                 jjCheckNAddTwoStates(277, 274);
               }
               break;
             case 278:
               if ((0xff000000000000L & l) == 0L) break;
-              if (kind > 268) kind = 268;
+              if (kind > 269) kind = 269;
               {
                 jjCheckNAddTwoStates(278, 274);
               }
               break;
             case 284:
               if (curChar != 48) break;
-              if (kind > 180) kind = 180;
+              if (kind > 181) kind = 181;
               {
                 jjCheckNAddStates(27, 39);
               }
               break;
             case 286:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 180) kind = 180;
+              if (kind > 181) kind = 181;
               {
                 jjCheckNAddTwoStates(286, 97);
               }
               break;
             case 287:
               if ((0xff000000000000L & l) == 0L) break;
-              if (kind > 180) kind = 180;
+              if (kind > 181) kind = 181;
               {
                 jjCheckNAddTwoStates(287, 97);
               }
@@ -4948,7 +4981,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 294:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 184) kind = 184;
+              if (kind > 185) kind = 185;
               {
                 jjCheckNAddTwoStates(294, 9);
               }
@@ -4970,7 +5003,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 300:
               if ((0x3ff000000000000L & l) == 0L) break;
-              if (kind > 184) kind = 184;
+              if (kind > 185) kind = 185;
               {
                 jjCheckNAddTwoStates(300, 9);
               }
@@ -4985,7 +5018,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
           switch (jjstateSet[--i]) {
             case 3:
               if ((0x7fffffe87fffffeL & l) != 0L) {
-                if (kind > 261) kind = 261;
+                if (kind > 262) kind = 262;
                 {
                   jjCheckNAdd(20);
                 }
@@ -5009,7 +5042,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               }
               break;
             case 9:
-              if ((0x5000000050L & l) != 0L && kind > 184) kind = 184;
+              if ((0x5000000050L & l) != 0L && kind > 185) kind = 185;
               break;
             case 11:
               if ((0xffffffffefffffffL & l) != 0L) {
@@ -5029,7 +5062,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             case 19:
             case 20:
               if ((0x7fffffe87fffffeL & l) == 0L) break;
-              if (kind > 261) kind = 261;
+              if (kind > 262) kind = 262;
               {
                 jjCheckNAdd(20);
               }
@@ -5056,12 +5089,12 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               }
               break;
             case 25:
-              if (curChar == 96 && kind > 262) kind = 262;
+              if (curChar == 96 && kind > 263) kind = 263;
               break;
             case 28:
             case 29:
               if ((0x7fffffe87fffffeL & l) == 0L) break;
-              if (kind > 269) kind = 269;
+              if (kind > 270) kind = 270;
               {
                 jjCheckNAdd(29);
               }
@@ -5244,7 +5277,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               if ((0x4000000040L & l) != 0L) jjstateSet[jjnewStateCnt++] = 93;
               break;
             case 97:
-              if ((0x100000001000L & l) != 0L && kind > 180) kind = 180;
+              if ((0x100000001000L & l) != 0L && kind > 181) kind = 181;
               break;
             case 99:
               if ((0x100000001000L & l) != 0L) {
@@ -5252,7 +5285,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               }
               break;
             case 104:
-              if ((0x100000001000L & l) != 0L && kind > 191) kind = 191;
+              if ((0x100000001000L & l) != 0L && kind > 192) kind = 192;
               break;
             case 106:
               if ((0x100000001000000L & l) != 0L) {
@@ -5261,7 +5294,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 107:
               if ((0x7e0000007eL & l) == 0L) break;
-              if (kind > 191) kind = 191;
+              if (kind > 192) kind = 192;
               {
                 jjCheckNAddTwoStates(107, 104);
               }
@@ -5272,7 +5305,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               }
               break;
             case 116:
-              if ((0x100000001000L & l) != 0L && kind > 192) kind = 192;
+              if ((0x100000001000L & l) != 0L && kind > 193) kind = 193;
               break;
             case 118:
               if ((0x100000001000000L & l) != 0L) {
@@ -5281,7 +5314,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 119:
               if ((0x7e0000007eL & l) == 0L) break;
-              if (kind > 192) kind = 192;
+              if (kind > 193) kind = 193;
               {
                 jjCheckNAddTwoStates(119, 116);
               }
@@ -5359,7 +5392,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             case 159:
             case 160:
               if ((0x7fffffe87fffffeL & l) == 0L) break;
-              if (kind > 264) kind = 264;
+              if (kind > 265) kind = 265;
               {
                 jjCheckNAddTwoStates(160, 161);
               }
@@ -5367,7 +5400,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             case 162:
             case 163:
               if ((0x7fffffe87fffffeL & l) == 0L) break;
-              if (kind > 264) kind = 264;
+              if (kind > 265) kind = 265;
               {
                 jjCheckNAddTwoStates(161, 163);
               }
@@ -5453,7 +5486,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             case 191:
             case 192:
               if ((0x7fffffe87fffffeL & l) == 0L) break;
-              if (kind > 265) kind = 265;
+              if (kind > 266) kind = 266;
               {
                 jjCheckNAddTwoStates(192, 193);
               }
@@ -5461,7 +5494,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             case 194:
             case 195:
               if ((0x7fffffe87fffffeL & l) == 0L) break;
-              if (kind > 265) kind = 265;
+              if (kind > 266) kind = 266;
               {
                 jjCheckNAddTwoStates(193, 195);
               }
@@ -5556,7 +5589,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             case 226:
             case 227:
               if ((0x7fffffe87fffffeL & l) == 0L) break;
-              if (kind > 266) kind = 266;
+              if (kind > 267) kind = 267;
               {
                 jjCheckNAddTwoStates(227, 228);
               }
@@ -5564,7 +5597,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             case 229:
             case 230:
               if ((0x7fffffe87fffffeL & l) == 0L) break;
-              if (kind > 266) kind = 266;
+              if (kind > 267) kind = 267;
               {
                 jjCheckNAddTwoStates(228, 230);
               }
@@ -5667,7 +5700,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
             case 263:
             case 264:
               if ((0x7fffffe87fffffeL & l) == 0L) break;
-              if (kind > 267) kind = 267;
+              if (kind > 268) kind = 268;
               {
                 jjCheckNAdd(264);
               }
@@ -5691,7 +5724,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               if ((0x4000000040000L & l) != 0L) jjstateSet[jjnewStateCnt++] = 271;
               break;
             case 274:
-              if ((0x100000001000L & l) != 0L && kind > 268) kind = 268;
+              if ((0x100000001000L & l) != 0L && kind > 269) kind = 269;
               break;
             case 276:
               if ((0x100000001000000L & l) != 0L) {
@@ -5700,7 +5733,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 277:
               if ((0x7e0000007eL & l) == 0L) break;
-              if (kind > 268) kind = 268;
+              if (kind > 269) kind = 269;
               {
                 jjCheckNAddTwoStates(277, 274);
               }
@@ -5727,7 +5760,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
               break;
             case 286:
               if ((0x7e0000007eL & l) == 0L) break;
-              if (kind > 180) kind = 180;
+              if (kind > 181) kind = 181;
               {
                 jjCheckNAddTwoStates(286, 97);
               }
@@ -5892,6 +5925,7 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
   /** Token literal values. */
   public static final String[] jjstrLiteralImages = {
     "",
+    null,
     null,
     null,
     null,
@@ -6460,11 +6494,11 @@ public class OrientSqlTokenManager implements OrientSqlConstants {
         -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   };
 
   static final long[] jjtoToken = {
-    0xfffffffffffff001L, 0xffffffffffffffffL, 0xe11c03ffffffffffL, 0xffffffffffffffffL, 0x3fff3fffL,
+    0xfffffffffffff001L, 0xffffffffffffffffL, 0xc23c03ffffffffffL, 0xffffffffffffffffL, 0x7ffe7fffL,
   };
   static final long[] jjtoSkip = {
     0x67eL, 0x0L, 0x0L, 0x0L, 0x0L,

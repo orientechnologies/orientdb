@@ -39,7 +39,7 @@ public class OAlterClassStatement extends ODDLStatement {
 
   // only to manage 'round-robin' as a cluster selection strategy (not a valid identifier)
   protected String customString;
-
+  private OAllocation allocation;
   protected boolean unsafe;
 
   public OAlterClassStatement(int id) {
@@ -136,6 +136,8 @@ public class OAlterClassStatement extends ODDLStatement {
     } else if (defaultClusterName != null) {
       builder.append(" DEFAULTCLUSTER ");
       defaultClusterName.toString(params, builder);
+    } else if (allocation != null) {
+      allocation.toString(params, builder);
     }
     if (unsafe) {
       builder.append(" UNSAFE");
@@ -219,6 +221,8 @@ public class OAlterClassStatement extends ODDLStatement {
     } else if (defaultClusterName != null) {
       builder.append(" DEFAULTCLUSTER ");
       defaultClusterName.toGenericStatement(builder);
+    } else if (allocation != null) {
+      allocation.toGenericStatement(builder);
     }
     if (unsafe) {
       builder.append(" UNSAFE");
@@ -489,6 +493,14 @@ public class OAlterClassStatement extends ODDLStatement {
     } else {
       oClass.setSuperClasses(superclasses);
     }
+  }
+
+  public OAllocation getAllocation() {
+    return allocation;
+  }
+
+  public void setAllocation(OAllocation allocation) {
+    this.allocation = allocation;
   }
 }
 /* JavaCC - OriginalChecksum=4668bb1cd336844052df941f39bdb634 (do not edit this line) */

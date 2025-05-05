@@ -277,6 +277,7 @@ TOKEN [ IGNORE_CASE ] :
 | < #FIELDS_ATTR : "@fields" >
 | < TRUE: "true" >
 | < FALSE: "false" >
+| < ALLOCATION: "allocation" >
 }
 
 
@@ -3877,6 +3878,7 @@ OAlterClassStatement AlterClassStatement():
 	OIdentifier lastIdentifier;
 	OInteger lastInteger;
 	Token lastToken;
+	OAllocation allocation;
 }
 {
 	<ALTER> <CLASS>
@@ -4026,11 +4028,53 @@ OAlterClassStatement AlterClassStatement():
                 jjtThis.defaultClusterName = Identifier()
             )
         )
+        |
+        (
+            <ALLOCATION>
+            allocation = Allocation() 
+            {jjtThis.setAllocation(allocation);}
+            
+        )
 	)
 	[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	{ return jjtThis; }
 }
 
+OAllocation Allocation(): 
+{
+	OIdentifier node;
+	OIdentifier lastIdentifier;
+}
+{
+    (
+	( <ADD> 
+	  node = Identifier()
+	  <CLUSTERS>
+	  <LBRACKET>
+	  [
+	     lastIdentifier = Identifier() { jjtThis.addAdd(node, lastIdentifier);}
+	     (
+	        <COMMA> lastIdentifier = Identifier() { jjtThis.addAdd(node, lastIdentifier);}
+	     )*
+	   ]
+	   <RBRACKET>
+	)
+	|
+	( <REMOVE>
+	 node = Identifier()
+	  <CLUSTERS>
+	  <LBRACKET>
+	  [
+	     lastIdentifier = Identifier() { jjtThis.addRemove(node, lastIdentifier);}
+	     (
+	        <COMMA> lastIdentifier = Identifier() { jjtThis.addRemove(node, lastIdentifier);}
+	     )*
+	   ]
+	   <RBRACKET>
+	)
+	)
+	{ return jjtThis; }
+}
 
 ODropClassStatement DropClassStatement():
 {}
