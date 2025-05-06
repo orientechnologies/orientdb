@@ -34,7 +34,9 @@ public class OAllocation extends SimpleNode {
         }
         list.add(add);
       }
+      boolean isFirst = true;
       for (Map.Entry<String, List<NodeCluster>> e : hm.entrySet()) {
+        if (!isFirst) builder.append(" , ");
         builder.append("add ").append(e.getKey());
         builder.append(" clusters [");
         for (int i = 0; i < e.getValue().size(); i++) {
@@ -42,6 +44,7 @@ public class OAllocation extends SimpleNode {
           e.getValue().get(i).cluster.toGenericStatement(builder);
         }
         builder.append("]");
+        isFirst = false;
       }
     }
     if (!removes.isEmpty()) {
@@ -54,7 +57,9 @@ public class OAllocation extends SimpleNode {
         }
         list.add(add);
       }
+      boolean isFirst = true;
       for (Map.Entry<String, List<NodeCluster>> e : hm.entrySet()) {
+        if (!isFirst) builder.append(" , ");
         builder.append("remove ").append(e.getKey());
         builder.append(" clusters [");
         for (int i = 0; i < e.getValue().size(); i++) {
@@ -62,6 +67,7 @@ public class OAllocation extends SimpleNode {
           e.getValue().get(i).cluster.toGenericStatement(builder);
         }
         builder.append("]");
+        isFirst = false;
       }
     }
   }
@@ -79,7 +85,9 @@ public class OAllocation extends SimpleNode {
         }
         list.add(add);
       }
+      boolean isFirst = true;
       for (Map.Entry<String, List<NodeCluster>> e : hm.entrySet()) {
+        if (!isFirst) builder.append(" , ");
         builder.append("add ").append(e.getKey());
         builder.append(" clusters [");
         for (int i = 0; i < e.getValue().size(); i++) {
@@ -87,6 +95,7 @@ public class OAllocation extends SimpleNode {
           e.getValue().get(i).cluster.toString(params, builder);
         }
         builder.append("]");
+        isFirst = false;
       }
     }
     if (!removes.isEmpty()) {
@@ -99,7 +108,9 @@ public class OAllocation extends SimpleNode {
         }
         list.add(add);
       }
+      boolean isFirst = true;
       for (Map.Entry<String, List<NodeCluster>> e : hm.entrySet()) {
+        if (!isFirst) builder.append(" , ");
         builder.append("remove ").append(e.getKey());
         builder.append(" clusters [");
         for (int i = 0; i < e.getValue().size(); i++) {
@@ -107,6 +118,7 @@ public class OAllocation extends SimpleNode {
           e.getValue().get(i).cluster.toString(params, builder);
         }
         builder.append("]");
+        isFirst = false;
       }
     }
   }

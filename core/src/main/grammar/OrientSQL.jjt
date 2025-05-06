@@ -4073,6 +4073,33 @@ OAllocation Allocation():
 	   <RBRACKET>
 	)
 	)
+	( <COMMA>
+	(( <ADD> 
+	  node = Identifier()
+	  <CLUSTERS>
+	  <LBRACKET>
+	  [
+	     lastIdentifier = Identifier() { jjtThis.addAdd(node, lastIdentifier);}
+	     (
+	        <COMMA> lastIdentifier = Identifier() { jjtThis.addAdd(node, lastIdentifier);}
+	     )*
+	   ]
+	   <RBRACKET>
+	)
+	|
+	( <REMOVE>
+	 node = Identifier()
+	  <CLUSTERS>
+	  <LBRACKET>
+	  [
+	     lastIdentifier = Identifier() { jjtThis.addRemove(node, lastIdentifier);}
+	     (
+	        <COMMA> lastIdentifier = Identifier() { jjtThis.addRemove(node, lastIdentifier);}
+	     )*
+	   ]
+	   <RBRACKET>
+	))
+	)*
 	{ return jjtThis; }
 }
 
