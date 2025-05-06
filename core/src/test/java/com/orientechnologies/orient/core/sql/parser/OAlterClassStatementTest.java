@@ -78,6 +78,7 @@ public class OAlterClassStatementTest extends OParserTestAbstract {
     checkRightSyntax(
         "ALTER CLASS Person allocation add node1 clusters [test, test1], remove node2 clusters"
             + " [test, test1]");
+
     checkRightSyntax(
         "ALTER CLASS Person allocation add node1 clusters [test, test1], add node3 clusters [test4,"
             + " test5] ");

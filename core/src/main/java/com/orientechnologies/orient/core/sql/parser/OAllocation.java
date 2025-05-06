@@ -3,15 +3,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class OAllocation extends SimpleNode {
-  private record NodeCluster(OIdentifier node, OIdentifier cluster) {}
 
-  private List<NodeCluster> adds = new ArrayList<>();
-  private List<NodeCluster> removes = new ArrayList<>();
+  private List<ONodeAllocationData> changes = new ArrayList<>();
 
   public OAllocation(int id) {
     super(id);
@@ -24,50 +21,10 @@ public class OAllocation extends SimpleNode {
   @Override
   public void toGenericStatement(StringBuilder builder) {
     builder.append(" allocation ");
-    if (!adds.isEmpty()) {
-      Map<String, List<NodeCluster>> hm = new HashMap<>();
-      for (var add : adds) {
-        var list = hm.get(add.node.toString());
-        if (list == null) {
-          list = new ArrayList<>();
-          hm.put(add.node.toString(), list);
-        }
-        list.add(add);
-      }
-      boolean isFirst = true;
-      for (Map.Entry<String, List<NodeCluster>> e : hm.entrySet()) {
-        if (!isFirst) builder.append(" , ");
-        builder.append("add ").append(e.getKey());
-        builder.append(" clusters [");
-        for (int i = 0; i < e.getValue().size(); i++) {
-          if (i != 0) builder.append(",");
-          e.getValue().get(i).cluster.toGenericStatement(builder);
-        }
-        builder.append("]");
-        isFirst = false;
-      }
-    }
-    if (!removes.isEmpty()) {
-      Map<String, List<NodeCluster>> hm = new HashMap<>();
-      for (var add : removes) {
-        var list = hm.get(add.node.toString());
-        if (list == null) {
-          list = new ArrayList<>();
-          hm.put(add.node.toString(), list);
-        }
-        list.add(add);
-      }
-      boolean isFirst = true;
-      for (Map.Entry<String, List<NodeCluster>> e : hm.entrySet()) {
-        if (!isFirst) builder.append(" , ");
-        builder.append("remove ").append(e.getKey());
-        builder.append(" clusters [");
-        for (int i = 0; i < e.getValue().size(); i++) {
-          if (i != 0) builder.append(",");
-          e.getValue().get(i).cluster.toGenericStatement(builder);
-        }
-        builder.append("]");
-        isFirst = false;
+    if (!changes.isEmpty()) {
+      for (int i = 0; i < changes.size(); i++) {
+        if (i != 0) builder.append(" , ");
+        changes.get(i).toGenericStatement(builder);
       }
     }
   }
@@ -75,60 +32,16 @@ public class OAllocation extends SimpleNode {
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(" allocation ");
-    if (!adds.isEmpty()) {
-      Map<String, List<NodeCluster>> hm = new HashMap<>();
-      for (var add : adds) {
-        var list = hm.get(add.node.toString());
-        if (list == null) {
-          list = new ArrayList<>();
-          hm.put(add.node.toString(), list);
-        }
-        list.add(add);
-      }
-      boolean isFirst = true;
-      for (Map.Entry<String, List<NodeCluster>> e : hm.entrySet()) {
-        if (!isFirst) builder.append(" , ");
-        builder.append("add ").append(e.getKey());
-        builder.append(" clusters [");
-        for (int i = 0; i < e.getValue().size(); i++) {
-          if (i != 0) builder.append(",");
-          e.getValue().get(i).cluster.toString(params, builder);
-        }
-        builder.append("]");
-        isFirst = false;
-      }
-    }
-    if (!removes.isEmpty()) {
-      Map<String, List<NodeCluster>> hm = new HashMap<>();
-      for (var add : removes) {
-        var list = hm.get(add.node.toString());
-        if (list == null) {
-          list = new ArrayList<>();
-          hm.put(add.node.toString(), list);
-        }
-        list.add(add);
-      }
-      boolean isFirst = true;
-      for (Map.Entry<String, List<NodeCluster>> e : hm.entrySet()) {
-        if (!isFirst) builder.append(" , ");
-        builder.append("remove ").append(e.getKey());
-        builder.append(" clusters [");
-        for (int i = 0; i < e.getValue().size(); i++) {
-          if (i != 0) builder.append(",");
-          e.getValue().get(i).cluster.toString(params, builder);
-        }
-        builder.append("]");
-        isFirst = false;
+    if (!changes.isEmpty()) {
+      for (int i = 0; i < changes.size(); i++) {
+        if (i != 0) builder.append(" , ");
+        changes.get(i).toString(params, builder);
       }
     }
   }
 
-  public void addAdd(OIdentifier node, OIdentifier cluster) {
-    adds.add(new NodeCluster(node, cluster));
-  }
-
-  public void addRemove(OIdentifier node, OIdentifier cluster) {
-    removes.add(new NodeCluster(node, cluster));
+  public void add(ONodeAllocationData data) {
+    this.changes.add(data);
   }
 }
 /* JavaCC - OriginalChecksum=8e5d431f15f9a9893d57702d5a3d21b4 (do not edit this line) */
