@@ -38,6 +38,9 @@ import java.util.List;
 import java.util.ArrayList;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement;
 
 /** Orient Database Sql grammar. */
 public class OrientSql {
@@ -1135,13 +1138,13 @@ OSelectStatement SelectStatement():
         [ jjtThis.timeout = Timeout() ]
         [ <LOCK>
             (
-                <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
+                <RECORD> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
                 |
-                <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
+                <NONE> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.NONE;}
                 |
-                <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
+                <SHARED> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
                 |
-                <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
+                <DEFAULT_> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.DEFAULT;}
             )
         ]
         [ <PARALLEL> { jjtThis.parallel = true; } ]
@@ -1428,13 +1431,13 @@ OUpdateEdgeStatement UpdateEdgeStatement():
 	[ <WHERE> jjtThis.whereClause = WhereClause() ]
 	[ <LOCK>
         (
-            <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
+            <RECORD> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
             |
-            <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
+            <NONE> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.NONE;}
             |
-            <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
+            <SHARED> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
             |
-            <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
+            <DEFAULT_> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.DEFAULT;}
         )
     ]
 	[ jjtThis.limit = Limit() ]
@@ -1462,13 +1465,13 @@ OUpdateStatement UpdateStatement():
     	[ <WHERE> jjtThis.whereClause = WhereClause() ]
     	[ <LOCK>
             (
-                <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
+                <RECORD> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
                 |
-                <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
+                <NONE> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.NONE;}
                 |
-                <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
+                <SHARED> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
                 |
-                <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
+                <DEFAULT_> {jjtThis.lockRecord = OStorage.LOCKING_STRATEGY.DEFAULT;}
             )
         ]
     	[ jjtThis.limit = Limit() ]
@@ -3881,12 +3884,12 @@ OAlterClassStatement AlterClassStatement():
 	(
 
 		(
-			<NAME> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.NAME; }
+			<NAME> { jjtThis.property = OClass.ATTRIBUTES.NAME; }
 			jjtThis.identifierValue = Identifier()
 		)
 		|
 		(
-			<SHORTNAME> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.SHORTNAME; }
+			<SHORTNAME> { jjtThis.property = OClass.ATTRIBUTES.SHORTNAME; }
 			(
 				jjtThis.identifierValue = Identifier()
 				|
@@ -3895,7 +3898,7 @@ OAlterClassStatement AlterClassStatement():
 		)
 		|
 		(
-			<SUPERCLASS> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.SUPERCLASS; }
+			<SUPERCLASS> { jjtThis.property = OClass.ATTRIBUTES.SUPERCLASS; }
 			[
 				(
 					<PLUS> {jjtThis.add = true;}
@@ -3914,7 +3917,7 @@ OAlterClassStatement AlterClassStatement():
 		|
 		(
 			<SUPERCLASSES> {
-				jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.SUPERCLASSES;
+				jjtThis.property = OClass.ATTRIBUTES.SUPERCLASSES;
 				jjtThis.identifierListValue = new ArrayList<OIdentifier>();
 			}
 			(
@@ -3931,12 +3934,12 @@ OAlterClassStatement AlterClassStatement():
 		)
 		|
 		(
-			<OVERSIZE> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.OVERSIZE; }
+			<OVERSIZE> { jjtThis.property = OClass.ATTRIBUTES.OVERSIZE; }
 			jjtThis.numberValue = Number()
 		)
 		|
 		(
-			<STRICTMODE> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.STRICTMODE; }
+			<STRICTMODE> { jjtThis.property = OClass.ATTRIBUTES.STRICTMODE; }
 			(
 				(
 					<TRUE> { jjtThis.booleanValue = true; }
@@ -3949,7 +3952,7 @@ OAlterClassStatement AlterClassStatement():
 		)
 		|
 		(
-			<ADDCLUSTER> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.ADDCLUSTER; }
+			<ADDCLUSTER> { jjtThis.property = OClass.ATTRIBUTES.ADDCLUSTER; }
 			(
 				jjtThis.identifierValue = Identifier()
 				|
@@ -3958,7 +3961,7 @@ OAlterClassStatement AlterClassStatement():
 		)
 		|
 		(
-			<REMOVECLUSTER> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.REMOVECLUSTER; }
+			<REMOVECLUSTER> { jjtThis.property = OClass.ATTRIBUTES.REMOVECLUSTER; }
 			(
 				jjtThis.identifierValue = Identifier()
 				|
@@ -3967,14 +3970,14 @@ OAlterClassStatement AlterClassStatement():
 		)
 		|
 		(
-			<CUSTOM> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.CUSTOM; }
+			<CUSTOM> { jjtThis.property = OClass.ATTRIBUTES.CUSTOM; }
 			jjtThis.customKey = Identifier()
 			<EQ>
 			jjtThis.customValue = Expression()
 		)
 		|
 		(
-			<ABSTRACT> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.ABSTRACT; }
+			<ABSTRACT> { jjtThis.property = OClass.ATTRIBUTES.ABSTRACT; }
 			(
 				(
 					<TRUE> { jjtThis.booleanValue = true; }
@@ -3987,7 +3990,7 @@ OAlterClassStatement AlterClassStatement():
 		)
 		|
 		(
-			<CLUSTERSELECTION> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.CLUSTERSELECTION; }
+			<CLUSTERSELECTION> { jjtThis.property = OClass.ATTRIBUTES.CLUSTERSELECTION; }
 			(
 				jjtThis.identifierValue = Identifier()
 				|
@@ -3998,7 +4001,7 @@ OAlterClassStatement AlterClassStatement():
 		)
 		|
 		(
-			<DESCRIPTION> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.DESCRIPTION; }
+			<DESCRIPTION> { jjtThis.property = OClass.ATTRIBUTES.DESCRIPTION; }
 			(
 				jjtThis.identifierValue = Identifier()
 				|
@@ -4007,7 +4010,7 @@ OAlterClassStatement AlterClassStatement():
 		)
 		|
 		(
-			<ENCRYPTION> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.ENCRYPTION; }
+			<ENCRYPTION> { jjtThis.property = OClass.ATTRIBUTES.ENCRYPTION; }
 			(
 				jjtThis.identifierValue = Identifier()
 				|
@@ -4659,16 +4662,16 @@ OAlterRoleStatement AlterRoleStatement():
       ( <SET> <POLICY> lastPolicy = Identifier() <ON> lastSecurityResource = SecurityResourceSegment()
 
         {
-        jjtThis.addOperation(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
-          com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_ADD,
+        jjtThis.addOperation(new OAlterRoleStatement.Op(
+          OAlterRoleStatement.Op.TYPE_ADD,
           lastSecurityResource, lastPolicy));
         }
       )
       |
       ( <REMOVE> <POLICY> <ON> lastSecurityResource = SecurityResourceSegment()  )
         {
-          jjtThis.addOperation(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
-            com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_REMOVE,
+          jjtThis.addOperation(new OAlterRoleStatement.Op(
+            OAlterRoleStatement.Op.TYPE_REMOVE,
             lastSecurityResource, null));
         }
     )+
@@ -4688,16 +4691,16 @@ OAlterSystemRoleStatement AlterSystemRoleStatement():
       ( <SET> <POLICY> lastPolicy = Identifier() <ON> lastSecurityResource = SecurityResourceSegment()
 
         {
-        jjtThis.addOperation(new com.orientechnologies.orient.core.sql.parser.OAlterSystemRoleStatement.Op(
-          com.orientechnologies.orient.core.sql.parser.OAlterSystemRoleStatement.Op.TYPE_ADD,
+        jjtThis.addOperation(new OAlterSystemRoleStatement.Op(
+          OAlterSystemRoleStatement.Op.TYPE_ADD,
           lastSecurityResource, lastPolicy));
         }
       )
       |
       ( <REMOVE> <POLICY> <ON> lastSecurityResource = SecurityResourceSegment()  )
         {
-          jjtThis.addOperation(new com.orientechnologies.orient.core.sql.parser.OAlterSystemRoleStatement.Op(
-            com.orientechnologies.orient.core.sql.parser.OAlterSystemRoleStatement.Op.TYPE_REMOVE,
+          jjtThis.addOperation(new OAlterSystemRoleStatement.Op(
+            OAlterSystemRoleStatement.Op.TYPE_REMOVE,
             lastSecurityResource, null));
         }
     )+
