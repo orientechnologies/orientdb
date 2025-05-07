@@ -19,9 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import java.util.List;
 import java.util.Set;
 
@@ -33,8 +32,7 @@ import java.util.Set;
 public interface OClusterOwnershipAssignmentStrategy {
 
   List<String> assignClusterOwnershipOfClass(
-      ODatabaseInternal iDatabase,
-      OModifiableDistributedConfiguration cfg,
+      ODatabaseDocumentInternal iDatabase,
       OClass iClass,
       Set<String> availableNodes,
       boolean canCreateNewClusters);

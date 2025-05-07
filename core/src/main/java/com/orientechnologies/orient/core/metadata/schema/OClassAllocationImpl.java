@@ -28,7 +28,7 @@ public class OClassAllocationImpl implements OClassAllocation {
     }
   }
 
-  public void addNodeCluster(String node, List<String> clusters) {
+  public void addNodeClusters(String node, List<String> clusters) {
     List<String> cl = nodeClusters.get(node);
     if (cl == null) {
       nodeClusters.put(node, new ArrayList<>(clusters));
@@ -37,13 +37,19 @@ public class OClassAllocationImpl implements OClassAllocation {
     }
   }
 
-  public void removeNodeCluster(String node, List<String> clusters) {
+  public void removeNodeClusters(String node, List<String> clusters) {
     List<String> cl = nodeClusters.get(node);
     if (cl != null) {
       cl.removeAll(clusters);
       if (cl.isEmpty()) {
         nodeClusters.remove(node);
       }
+    }
+  }
+
+  public void removeClusters(List<String> clusters) {
+    for (Map.Entry<String, List<String>> e : nodeClusters.entrySet()) {
+      e.getValue().removeAll(clusters);
     }
   }
 

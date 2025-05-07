@@ -58,7 +58,6 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
@@ -87,6 +86,7 @@ import com.orientechnologies.orient.server.distributed.OModifiableDistributedCon
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
+import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ONewDeltaTaskResponse;
 import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
@@ -155,7 +155,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   // LOCAL MSG COUNTER
   protected AtomicLong localMessageIdCounter = new AtomicLong();
   protected OClusterOwnershipAssignmentStrategy clusterAssignmentStrategy =
-      new ODefaultClusterOwnershipAssignmentStrategy(this);
+      new ODefaultClusterOwnershipAssignmentStrategy();
 
   protected static final int DEPLOY_DB_MAX_RETRIES = 10;
   protected Set<String> installingDatabases =
@@ -972,25 +972,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public void onLocalNodeConfigurationRequest(final ODocument iConfiguration) {}
 
-  @Override
-  public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
-    if (((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) return;
-
-    if (isOffline() && getNodeStatus() != NODE_STATUS.STARTING) return;
-
-    // RUN ONLY IN NON-DISTRIBUTED MODE
-    if (!isRelatedToLocalServer(iDatabase)) return;
-
-    final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
-
-    installClustersOfClass(iDatabase, iClass, cfg.modify());
-  }
-
-  public void onCreateView(final ODatabaseInternal iDatabase, final OView view) {
-    // TODO implement this!
-    logger.error("Implement ODistributedAbstractPlugin.onCreateView()!!!", null);
-  }
-
   @SuppressWarnings("unchecked")
   public ODocument getStats() {
     final ODocument doc = new ODocument();
@@ -1675,94 +1656,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     return res;
   }
 
-  /** Guarantees that each class has own master cluster. */
-  public boolean installClustersOfClass(
-      final ODatabaseInternal iDatabase,
-      final OClass iClass,
-      OModifiableDistributedConfiguration cfg) {
-
-    final String databaseName = iDatabase.getName();
-    if (iClass.isAbstract()) return false;
-
-    return executeInDistributedDatabaseLock(
-        databaseName,
-        20000,
-        cfg,
-        lastCfg -> {
-          return internalRebalanceClusters(iDatabase, iClass, lastCfg);
-        });
-  }
-
-  public Boolean internalRebalanceClusters(
-      final ODatabaseInternal iDatabase,
-      final OClass iClass,
-      OModifiableDistributedConfiguration lastCfg) {
-    final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
-
-    final List<String> cluster2Create =
-        clusterAssignmentStrategy.assignClusterOwnershipOfClass(
-            iDatabase, lastCfg, iClass, availableNodes, true);
-
-    final Map<OClass, List<String>> cluster2CreateMap = new HashMap<OClass, List<String>>(1);
-    cluster2CreateMap.put(iClass, cluster2Create);
-
-    createClusters(iDatabase, cluster2CreateMap, lastCfg);
-    return true;
-  }
-
-  private void createClusters(
-      final ODatabaseInternal iDatabase,
-      final Map<OClass, List<String>> cluster2Create,
-      OModifiableDistributedConfiguration cfg) {
-    if (cluster2Create.isEmpty()) return;
-
-    // UPDATE LAST CFG BEFORE TO MODIFY THE CLUSTERS
-    updateCachedDatabaseConfiguration(iDatabase.getName(), cfg);
-
-    for (Map.Entry<OClass, List<String>> entry : cluster2Create.entrySet()) {
-      final OClass clazz = entry.getKey();
-
-      // SAVE CONFIGURATION LOCALLY TO ALLOW THE CREATION OF THE CLUSTERS IF ANY
-      // CHECK OWNER AFTER RE-BALANCE AND CREATE NEW CLUSTERS IF NEEDED
-      for (final String newClusterName : entry.getValue()) {
-
-        logger.infoNode(
-            getLocalNodeName(),
-            "Class '%s', creation of new local cluster '%s' (id=%d)",
-            clazz,
-            newClusterName,
-            iDatabase.getClusterIdByName(newClusterName));
-
-        OScenarioThreadLocal.executeAsDefault(
-            () -> {
-              internalAddCluster(iDatabase, clazz, newClusterName);
-              return null;
-            });
-      }
-    }
-  }
-
-  public void internalAddCluster(
-      final ODatabaseInternal iDatabase, final OClass clazz, final String newClusterName) {
-    try {
-      clazz.addCluster(newClusterName);
-    } catch (Exception e) {
-      if (!iDatabase.getClusterNames().contains(newClusterName)) {
-        // NOT CREATED
-        logger.errorNode(
-            getLocalNodeName(),
-            "Error on creating cluster '%s' in class '%s': ",
-            newClusterName,
-            clazz,
-            e);
-        throw OException.wrapException(
-            new ODistributedException(
-                "Error on creating cluster '" + newClusterName + "' in class '" + clazz + "'"),
-            e);
-      }
-    }
-  }
-
   public ODistributedStrategy getDistributedStrategy() {
     return responseManagerFactory;
   }
@@ -1789,7 +1682,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       if (memberConfig != null) {
         final String nodeStatus = memberConfig.field("status");
 
-        if (memberConfig != null && !"OFFLINE".equals(nodeStatus)) {
+        if (!"OFFLINE".equals(nodeStatus)) {
           final Collection<Map<String, Object>> listeners = memberConfig.field("listeners");
           if (listeners != null)
             for (Map<String, Object> listener : listeners) {
@@ -1841,25 +1734,24 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
 
+      // FILTER OUT NON MASTER SERVER
+      for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
+        final String node = it.next();
+        if (cfg.getServerRole(node) != ODistributedConfiguration.ROLES.MASTER) it.remove();
+      }
       iDatabase.activateOnCurrentThread();
       final OSchema schema = iDatabase.getDatabaseOwner().getMetadata().getSchema();
 
-      final Map<OClass, List<String>> cluster2CreateMap = new HashMap<OClass, List<String>>(1);
       for (final OClass clazz : schema.getClasses()) {
-        final List<String> cluster2Create =
-            clusterAssignmentStrategy.assignClusterOwnershipOfClass(
-                iDatabase, cfg, clazz, availableNodes, canCreateNewClusters);
-
-        cluster2CreateMap.put(clazz, cluster2Create);
+        ((OClassDistributed) clazz)
+            .assignClusterOwnershipOfClass(iDatabase, availableNodes, canCreateNewClusters);
       }
-
-      if (canCreateNewClusters) createClusters(iDatabase, cluster2CreateMap, cfg);
 
       logger.infoNode(
           nodeName,
           "Reassignment of clusters for database '%s' completed (classes=%d)",
           iDatabase.getName(),
-          cluster2CreateMap.size());
+          schema.getClasses().size());
     } finally {
       ODatabaseRecordThreadLocal.instance().set(current);
     }

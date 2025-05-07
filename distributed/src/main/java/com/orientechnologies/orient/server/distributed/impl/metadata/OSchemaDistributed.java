@@ -8,12 +8,19 @@ import com.orientechnologies.orient.core.metadata.schema.OIndexConfigProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.metadata.schema.OViewIndexConfig;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration.ROLES;
+import com.orientechnologies.orient.server.distributed.impl.OClusterOwnershipAssignmentStrategy;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
+import com.orientechnologies.orient.server.distributed.impl.ODefaultClusterOwnershipAssignmentStrategy;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Created by tglman on 22/06/17. */
 public class OSchemaDistributed extends OSchemaEmbedded {
+
+  protected OClusterOwnershipAssignmentStrategy clusterAssignmentStrategy =
+      new ODefaultClusterOwnershipAssignmentStrategy();
 
   public OSchemaDistributed(OSharedContext sharedContext) {
     super(sharedContext);
@@ -184,6 +191,20 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       }
       sendCommand(database, cmd.toString());
 
+      Set<String> nodes =
+          ((ODatabaseDocumentDistributed) database)
+              .getDistributedManager()
+              .getAvailableNodeNames(database.getName());
+
+      nodes.removeIf(
+          (x) -> {
+            return ((ODatabaseDocumentDistributed) database)
+                    .getDistributedConfiguration()
+                    .getServerRole(x)
+                != ROLES.MASTER;
+          });
+      assignClusterOwnershipOfClass(database, getClass(className), nodes, first);
+
     } else {
       createClassInternal(database, className, clusterIds, superClassesList);
     }
@@ -192,5 +213,14 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   @Override
   public void sendCommand(ODatabaseDocumentInternal database, String command) {
     ((ODatabaseDocumentDistributed) database).sendDDLCommand(command, false);
+  }
+
+  public void assignClusterOwnershipOfClass(
+      ODatabaseDocumentInternal database,
+      OClass cl,
+      Set<String> availableNodes,
+      boolean canCreateNewClusters) {
+    this.clusterAssignmentStrategy.assignClusterOwnershipOfClass(
+        database, cl, availableNodes, canCreateNewClusters);
   }
 }

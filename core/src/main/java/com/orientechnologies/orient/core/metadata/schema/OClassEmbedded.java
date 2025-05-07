@@ -826,7 +826,7 @@ public class OClassEmbedded extends OClassImpl {
       if (this.allocation == null) {
         this.allocation = new OClassAllocationImpl();
       }
-      this.allocation.addNodeCluster(node, clusters);
+      this.allocation.addNodeClusters(node, clusters);
     } finally {
       releaseSchemaWriteLock(database, true);
     }
@@ -839,7 +839,20 @@ public class OClassEmbedded extends OClassImpl {
     acquireSchemaWriteLock(database);
     try {
       if (this.allocation != null) {
-        this.allocation.removeNodeCluster(node, clusters);
+        this.allocation.removeNodeClusters(node, clusters);
+      }
+    } finally {
+      releaseSchemaWriteLock(database, true);
+    }
+  }
+
+  public void removeAllocations(ODatabaseDocumentInternal database, List<String> clusters) {
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock(database);
+    try {
+      if (this.allocation != null) {
+        this.allocation.removeClusters(clusters);
       }
     } finally {
       releaseSchemaWriteLock(database, true);
