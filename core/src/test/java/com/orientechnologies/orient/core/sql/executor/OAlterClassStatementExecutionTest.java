@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -254,5 +256,26 @@ public class OAlterClassStatementExecutionTest extends BaseMemoryDatabase {
 
     schema.reload();
     Assert.assertEquals(firstNonDefault, schema.getClass(className).getDefaultClusterId());
+  }
+
+  @Test
+  public void testAllocation() {
+    String className = "testAllocation";
+    OSchema schema = db.getMetadata().getSchema();
+    OClass clazz = schema.createClass(className);
+
+    db.command("alter class " + className + " allocation add node1 clusters [a, b, c] ").close();
+
+    assertTrue(clazz.getAllocation().getDefinedNodes().contains("node1"));
+    assertTrue(clazz.getAllocation().getAllocationClusters("node1").contains("a"));
+    assertTrue(clazz.getAllocation().getAllocationClusters("node1").contains("b"));
+    assertTrue(clazz.getAllocation().getAllocationClusters("node1").contains("c"));
+
+    schema.reload();
+    OClass loadCl = schema.getClass(className);
+    assertTrue(loadCl.getAllocation().getDefinedNodes().contains("node1"));
+    assertTrue(loadCl.getAllocation().getAllocationClusters("node1").contains("a"));
+    assertTrue(loadCl.getAllocation().getAllocationClusters("node1").contains("b"));
+    assertTrue(loadCl.getAllocation().getAllocationClusters("node1").contains("c"));
   }
 }

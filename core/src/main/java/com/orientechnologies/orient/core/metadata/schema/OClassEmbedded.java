@@ -816,4 +816,33 @@ public class OClassEmbedded extends OClassImpl {
     final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
     for (String indexName : indexesToAdd) indexManager.addClusterToIndex(clusterName, indexName);
   }
+
+  public void addAllocations(
+      ODatabaseDocumentInternal database, String node, List<String> clusters) {
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock(database);
+    try {
+      if (this.allocation == null) {
+        this.allocation = new OClassAllocationImpl();
+      }
+      this.allocation.addNodeCluster(node, clusters);
+    } finally {
+      releaseSchemaWriteLock(database, true);
+    }
+  }
+
+  public void removeAllocations(
+      ODatabaseDocumentInternal database, String node, List<String> clusters) {
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock(database);
+    try {
+      if (this.allocation != null) {
+        this.allocation.removeNodeCluster(node, clusters);
+      }
+    } finally {
+      releaseSchemaWriteLock(database, true);
+    }
+  }
 }

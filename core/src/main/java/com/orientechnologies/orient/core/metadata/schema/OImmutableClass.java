@@ -93,6 +93,7 @@ public class OImmutableClass implements OClass {
   private boolean securityPolicy;
   private OIndex autoShardingIndex;
   private HashSet<OIndex> indexes;
+  private OClassAllocation allocation;
 
   public OImmutableClass(final OClass oClass, final OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
@@ -125,6 +126,9 @@ public class OImmutableClass implements OClass {
 
     this.customFields = Collections.unmodifiableMap(customFields);
     this.description = oClass.getDescription();
+    if (oClass.getAllocation() != null) {
+      this.allocation = new OImmutableClassAllocation(oClass.getAllocation());
+    }
   }
 
   public void init() {
@@ -859,5 +863,10 @@ public class OImmutableClass implements OClass {
 
   public boolean isSequence() {
     return sequence;
+  }
+
+  @Override
+  public OClassAllocation getAllocation() {
+    return allocation;
   }
 }

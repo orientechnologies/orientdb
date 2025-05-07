@@ -247,6 +247,7 @@ public class OAlterClassStatement extends ODDLStatement {
     result.customString = customString;
     result.defaultClusterId = defaultClusterId == null ? null : defaultClusterId.copy();
     result.defaultClusterName = defaultClusterName == null ? null : defaultClusterName.copy();
+    result.allocation = allocation == null ? null : allocation.copy();
     result.unsafe = unsafe;
     return result;
   }
@@ -283,6 +284,8 @@ public class OAlterClassStatement extends ODDLStatement {
     if (defaultClusterName != null
         ? !defaultClusterName.equals(that.defaultClusterName)
         : that.defaultClusterName != null) return false;
+    if (allocation != null ? !allocation.equals(that.allocation) : that.allocation != null)
+      return false;
     return customString != null
         ? customString.equals(that.customString)
         : that.customString == null;
@@ -303,6 +306,7 @@ public class OAlterClassStatement extends ODDLStatement {
     result = 31 * result + (defaultClusterId != null ? defaultClusterId.hashCode() : 0);
     result = 31 * result + (defaultClusterName != null ? defaultClusterName.hashCode() : 0);
     result = 31 * result + (customString != null ? customString.hashCode() : 0);
+    result = 31 * result + (allocation != null ? allocation.hashCode() : 0);
     result = 31 * result + (unsafe ? 1 : 0);
     return result;
   }
@@ -421,6 +425,8 @@ public class OAlterClassStatement extends ODDLStatement {
     } else if (defaultClusterName != null) {
       int clusterId = ctx.getDatabase().getClusterIdByName(defaultClusterName.getStringValue());
       oClass.setDefaultClusterId(clusterId);
+    } else if (allocation != null) {
+      allocation.setOn(oClass, ctx);
     }
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "ALTER CLASS");

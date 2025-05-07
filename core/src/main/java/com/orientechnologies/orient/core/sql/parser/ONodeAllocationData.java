@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +69,21 @@ public class ONodeAllocationData extends SimpleNode {
 
   public void setNode(OIdentifier node) {
     this.node = node;
+  }
+
+  public void apply(OClassEmbedded ce, OCommandContext ctx) {
+    String nodeName = this.node.getStringValue();
+    List<String> cls = this.clusters.stream().map((x) -> x.getStringValue()).toList();
+    ce.addAllocations((ODatabaseDocumentInternal) ctx.getDatabase(), nodeName, cls);
+  }
+
+  @Override
+  public ONodeAllocationData copy() {
+    ONodeAllocationData nad = new ONodeAllocationData(0);
+    nad.node = this.node.copy();
+    nad.clusters = this.clusters.stream().map((x) -> x.copy()).toList();
+    nad.add = this.add;
+    return nad;
   }
 }
 /* JavaCC - OriginalChecksum=d2acb74c77326fea8a542e1d36d3287d (do not edit this line) */

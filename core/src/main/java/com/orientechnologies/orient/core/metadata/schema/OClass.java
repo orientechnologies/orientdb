@@ -466,4 +466,6 @@ public interface OClass extends Comparable<OClass> {
   boolean hasClusterId(int clusterId);
 
   boolean hasPolymorphicClusterId(int clusterId);
+
+  OClassAllocation getAllocation();
 }

@@ -86,6 +86,7 @@ public abstract class OClassImpl implements OClass {
   protected boolean abstractClass = false; // @SINCE v1.2.0
   protected Map<String, String> customFields;
   protected volatile OClusterSelectionStrategy clusterSelection; // @SINCE 1.7
+  protected OClassAllocationImpl allocation;
   protected volatile int hashCode;
 
   private static Set<String> reserved = new HashSet<String>();
@@ -518,6 +519,14 @@ public abstract class OClassImpl implements OClass {
     properties.clear();
     properties.putAll(newProperties);
     customFields = document.field("customFields", OType.EMBEDDEDMAP);
+
+    if (document.hasProperty("allocation")) {
+      if (this.allocation == null) {
+        this.allocation = new OClassAllocationImpl();
+        this.allocation.deserialize(getDatabase(), document.getProperty("allocation"));
+      }
+    }
+
     clusterSelection =
         owner.getClusterSelectionFactory().getStrategy((String) document.field("clusterSelection"));
   }
@@ -560,6 +569,11 @@ public abstract class OClassImpl implements OClass {
         "customFields",
         customFields != null && customFields.size() > 0 ? customFields : null,
         OType.EMBEDDEDMAP);
+
+    if (this.allocation != null) {
+      ODocument all = this.allocation.serialize(getDatabase());
+      document.setProperty("allocation", all);
+    }
 
     return document;
   }
@@ -1229,7 +1243,11 @@ public abstract class OClassImpl implements OClass {
   }
 
   public void acquireSchemaWriteLock() {
-    owner.acquireSchemaWriteLock(getDatabase());
+    acquireSchemaWriteLock(getDatabase());
+  }
+
+  public void acquireSchemaWriteLock(ODatabaseDocumentInternal database) {
+    owner.acquireSchemaWriteLock(database);
   }
 
   public void releaseSchemaWriteLock() {
@@ -1237,6 +1255,10 @@ public abstract class OClassImpl implements OClass {
   }
 
   public void releaseSchemaWriteLock(final boolean iSave) {
+    releaseSchemaWriteLock(getDatabase(), iSave);
+  }
+
+  public void releaseSchemaWriteLock(ODatabaseDocumentInternal database, final boolean iSave) {
     calculateHashCode();
     owner.releaseSchemaWriteLock(getDatabase(), iSave);
   }
@@ -1739,7 +1761,16 @@ public abstract class OClassImpl implements OClass {
         "customFields",
         customFields != null && customFields.size() > 0 ? customFields : null,
         OType.EMBEDDEDMAP);
+    if (this.allocation != null) {
+      ODocument all = this.allocation.toNeworkStream(getDatabase());
+      document.setProperty("allocation", all);
+    }
 
     return document;
+  }
+
+  @Override
+  public OClassAllocationImpl getAllocation() {
+    return allocation;
   }
 }
