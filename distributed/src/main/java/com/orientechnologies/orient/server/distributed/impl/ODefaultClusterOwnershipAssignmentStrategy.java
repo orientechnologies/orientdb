@@ -93,13 +93,11 @@ public class ODefaultClusterOwnershipAssignmentStrategy
     if (canCreateNewClusters && enabledCreateCluster) {
       final List<String> serversToCreateANewCluster = new ArrayList<String>();
       for (String server : availableNodes) {
-        final List<String> ownedClusters;
+        List<String> ownedClusters = null;
         if (iClass.getAllocation() != null) {
           ownedClusters = iClass.getAllocation().getAllocationClusters(server);
-        } else {
-          ownedClusters = Collections.emptyList();
         }
-        if (ownedClusters.isEmpty()) {
+        if (ownedClusters == null || ownedClusters.isEmpty()) {
           // CREATE A NEW CLUSTER WHERE THE LOCAL NODE IS THE MASTER
           String newClusterName;
           for (int i = 1; ; ++i) {
@@ -143,13 +141,18 @@ public class ODefaultClusterOwnershipAssignmentStrategy
     if (cl.getAllocation() != null) {
       allConfiguredNodes = new HashSet<>(cl.getAllocation().getDefinedNodes());
     } else {
-      allConfiguredNodes = Collections.emptySet();
+      allConfiguredNodes = availableNodes;
     }
 
     final List<OPair<String, List<String>>> nodeOwners =
         new ArrayList<OPair<String, List<String>>>(allConfiguredNodes.size());
     for (String server : allConfiguredNodes) {
-      final List<String> ownedClusters = cl.getAllocation().getAllocationClusters(server);
+      final List<String> ownedClusters;
+      if (cl.getAllocation() != null) {
+        ownedClusters = cl.getAllocation().getAllocationClusters(server);
+      } else {
+        ownedClusters = new ArrayList<>(clusterNames);
+      }
       nodeOwners.add(new OPair<String, List<String>>(server, ownedClusters));
     }
 

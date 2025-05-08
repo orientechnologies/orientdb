@@ -1028,20 +1028,42 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   @Override
   public void reassignClustersOwnership(
-      final String iNode,
-      final String databaseName,
-      final OModifiableDistributedConfiguration cfg,
-      final boolean canCreateNewClusters) {
+      final String iNode, final String databaseName, final boolean canCreateNewClusters) {
+    final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+    final ODistributedConfiguration.ROLES role = cfg.getServerRole(iNode);
+    if (role != ODistributedConfiguration.ROLES.MASTER)
+      // NO MASTER, DON'T CREATE LOCAL CLUSTERS
+      return;
 
-    // REASSIGN CLUSTERS WITHOUT AN OWNER, AVOIDING TO REBALANCE EXISTENT
-    executeInDistributedDatabaseLock(
-        databaseName,
-        20000,
-        cfg,
-        cfg1 -> {
-          rebalanceClusterOwnership(iNode, databaseName, cfg1, canCreateNewClusters);
-          return null;
-        });
+    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    try (ODatabaseDocumentInternal iDatabase = getServerInstance().openDatabase(databaseName)) {
+
+      logger.infoNode(
+          nodeName, "Reassigning ownership of clusters for database %s...", iDatabase.getName());
+
+      final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
+
+      // FILTER OUT NON MASTER SERVER
+      for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
+        final String node = it.next();
+        if (cfg.getServerRole(node) != ODistributedConfiguration.ROLES.MASTER) it.remove();
+      }
+      iDatabase.activateOnCurrentThread();
+      final OSchema schema = iDatabase.getDatabaseOwner().getMetadata().getSchema();
+
+      for (final OClass clazz : schema.getClasses()) {
+        ((OClassDistributed) clazz)
+            .assignClusterOwnershipOfClass(iDatabase, availableNodes, canCreateNewClusters);
+      }
+
+      logger.infoNode(
+          nodeName,
+          "Reassignment of clusters for database '%s' completed (classes=%d)",
+          iDatabase.getName(),
+          schema.getClasses().size());
+    } finally {
+      ODatabaseRecordThreadLocal.instance().set(current);
+    }
   }
 
   @Override
@@ -1381,7 +1403,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       if (databaseInstalledCorrectly) {
         try {
-          reassignClustersOwnership(nodeName, databaseName, null, false);
+          reassignClustersOwnership(nodeName, databaseName, true);
         } catch (Exception e) {
           // HANDLE IT AS WARNING
           logger.warnNode(
@@ -1630,7 +1652,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     receiver.close();
 
     try {
-      reassignClustersOwnership(nodeName, databaseName, null, false);
+      reassignClustersOwnership(nodeName, databaseName, false);
     } catch (Exception e) {
       // HANDLE IT AS WARNING
       logger.warnNode(
@@ -1713,47 +1735,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       } catch (Exception e) {
         // IGNORE IT
       }
-    }
-  }
-
-  protected void rebalanceClusterOwnership(
-      final String iNode,
-      String databaseName,
-      final OModifiableDistributedConfiguration cfg,
-      final boolean canCreateNewClusters) {
-    final ODistributedConfiguration.ROLES role = cfg.getServerRole(iNode);
-    if (role != ODistributedConfiguration.ROLES.MASTER)
-      // NO MASTER, DON'T CREATE LOCAL CLUSTERS
-      return;
-
-    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    try (ODatabaseDocumentInternal iDatabase = getServerInstance().openDatabase(databaseName)) {
-
-      logger.infoNode(
-          nodeName, "Reassigning ownership of clusters for database %s...", iDatabase.getName());
-
-      final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
-
-      // FILTER OUT NON MASTER SERVER
-      for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
-        final String node = it.next();
-        if (cfg.getServerRole(node) != ODistributedConfiguration.ROLES.MASTER) it.remove();
-      }
-      iDatabase.activateOnCurrentThread();
-      final OSchema schema = iDatabase.getDatabaseOwner().getMetadata().getSchema();
-
-      for (final OClass clazz : schema.getClasses()) {
-        ((OClassDistributed) clazz)
-            .assignClusterOwnershipOfClass(iDatabase, availableNodes, canCreateNewClusters);
-      }
-
-      logger.infoNode(
-          nodeName,
-          "Reassignment of clusters for database '%s' completed (classes=%d)",
-          iDatabase.getName(),
-          schema.getClasses().size());
-    } finally {
-      ODatabaseRecordThreadLocal.instance().set(current);
     }
   }
 
@@ -2304,7 +2285,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
         try {
           if (ctx.getDistributedConfiguration(databaseName).getServerRole(nodeName)
               == ODistributedConfiguration.ROLES.MASTER) {
-            reassignClustersOwnership(nodeName, databaseName, null, false);
+            reassignClustersOwnership(nodeName, databaseName, false);
           }
         } catch (Exception e) {
           // IGNORE IT

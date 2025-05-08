@@ -159,11 +159,7 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
-  void reassignClustersOwnership(
-      String iNode,
-      String databaseName,
-      OModifiableDistributedConfiguration cfg,
-      boolean canCreateNewClusters);
+  void reassignClustersOwnership(String iNode, String databaseName, boolean canCreateNewClusters);
 
   /** Available means not OFFLINE, so ONLINE or SYNCHRONIZING. */
   boolean isNodeAvailable(String iNodeName, String databaseName);

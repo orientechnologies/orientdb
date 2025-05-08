@@ -203,7 +203,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
                     .getServerRole(x)
                 != ROLES.MASTER;
           });
-      assignClusterOwnershipOfClass(database, getClass(className), nodes, first);
+      assignClusterOwnershipOfClass(database, getClass(className), nodes, false);
 
     } else {
       createClassInternal(database, className, clusterIds, superClassesList);

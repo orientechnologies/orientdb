@@ -22,7 +22,6 @@ import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -522,26 +521,16 @@ public class OClassDistributed extends OClassEmbedded {
   public int getClusterForNewInstance(ODatabaseDocumentDistributed db, ODocument doc) {
     ODistributedServerManager manager = db.getDistributedManager();
     if (bestClusterIds == null) {
-      if (this.allocation != null) {
-        bestClusterFromAllocation(db, manager);
-      } else {
-        readConfiguration(db, manager);
+      if (this.allocation == null) {
+        final Set<String> availableNodes = manager.getAvailableNodeNames(db.getName());
+        ODistributedConfiguration cfg = db.getDistributedConfiguration();
+        availableNodes.removeIf(
+            (node) -> cfg.getServerRole(node) != ODistributedConfiguration.ROLES.MASTER);
+        assignClusterOwnershipOfClass(db, availableNodes, true);
       }
-    } else {
-      ODistributedConfiguration cfg = manager.getDatabaseConfiguration(db.getName());
-      if (lastVersion != cfg.getVersion()) {
-        // DISTRIBUTED CFG IS CHANGED: GET BEST CLUSTER AGAIN
-        readConfiguration(db, manager);
-
-        logger.infoNode(
-            manager.getLocalNodeName(),
-            "New cluster list for class '%s': %s (dCfgVersion=%d)",
-            getName(),
-            Arrays.toString(bestClusterIds),
-            lastVersion);
-      }
+      bestClusterFromAllocation(db, manager);
     }
-
+    assert bestClusterIds.length > 0;
     final int size = bestClusterIds.length;
     if (size == 0) return -1;
 
@@ -592,8 +581,7 @@ public class OClassDistributed extends OClassEmbedded {
     if (bestClusters.isEmpty()) {
       // REBALANCE THE CLUSTERS
       final OModifiableDistributedConfiguration modifiableCfg = cfg.modify();
-      manager.reassignClustersOwnership(
-          manager.getLocalNodeName(), db.getName(), modifiableCfg, true);
+      manager.reassignClustersOwnership(manager.getLocalNodeName(), db.getName(), true);
 
       cfg = modifiableCfg;
 
