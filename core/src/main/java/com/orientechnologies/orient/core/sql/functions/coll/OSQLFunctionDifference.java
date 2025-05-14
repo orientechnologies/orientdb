@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -48,7 +48,7 @@ public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<O
     if (iParams[0] == null) return null;
 
     // IN-LINE MODE (STATELESS)
-    final Set<Object> result = new HashSet<Object>();
+    final Set<Object> result = new LinkedHashSet<Object>();
 
     boolean first = true;
     for (Object iParameter : iParams) {

@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSetInternal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /** Created by luigidellaquila on 05/12/16. */
@@ -45,7 +46,7 @@ public class OLocalResultSetLifecycleDecorator implements OResultSetInternal {
   @Override
   public OResult next() {
     if (!hasNext()) {
-      throw new IllegalStateException();
+      throw new NoSuchElementException();
     }
     OResult result = entity.next();
     return result;
