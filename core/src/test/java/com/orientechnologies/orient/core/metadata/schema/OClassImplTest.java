@@ -28,8 +28,7 @@ import org.junit.Test;
 public class OClassImplTest extends BaseMemoryInternalDatabase {
 
   /**
-   * If class was not abstract and we call {@code setAbstract(false)} clusters should not be
-   * changed.
+   * If class was not abstract and we call {@code setAbstract(false)} clusters should not be changed.
    *
    * @throws Exception
    */
@@ -46,8 +45,7 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
   }
 
   /**
-   * If class was abstract and we call {@code setAbstract(false)} a new non default cluster should
-   * be created.
+   * If class was abstract and we call {@code setAbstract(false)} a new non default cluster should be created.
    *
    * @throws Exception
    */
@@ -519,5 +517,62 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
 
     oClass.setCustom("custom.attribute", "value2");
     assertEquals("value2", oClass.getCustom("custom.attribute"));
+  }
+
+  @Test
+  public void assignClusterBalanced() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass cl = schema.createClass("AutoClusterAssign", 6);
+    Set<String> nodes = new HashSet<>();
+    nodes.add("node1");
+    nodes.add("node2");
+    nodes.add("node3");
+    ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, false);
+
+    assertEquals(cl.getAllocation().getDefinedNodes().size(), 3);
+    assertEquals(cl.getAllocation().getAllocationClusters("node1").size(), 2);
+    assertEquals(cl.getAllocation().getAllocationClusters("node2").size(), 2);
+    assertEquals(cl.getAllocation().getAllocationClusters("node3").size(), 2);
+  }
+
+  @Test
+  public void reassignClusterBalanced() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass cl = schema.createClass("AutoClusterAssign", 12);
+    Set<String> nodes = new HashSet<>();
+    nodes.add("node1");
+    nodes.add("node2");
+    nodes.add("node3");
+    ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, false);
+
+    assertEquals(cl.getAllocation().getDefinedNodes().size(), 3);
+    assertEquals(cl.getAllocation().getAllocationClusters("node1").size(), 4);
+    assertEquals(cl.getAllocation().getAllocationClusters("node2").size(), 4);
+    assertEquals(cl.getAllocation().getAllocationClusters("node3").size(), 4);
+
+    nodes.add("node4");
+    ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, false);
+
+    assertEquals(cl.getAllocation().getDefinedNodes().size(), 4);
+    assertEquals(cl.getAllocation().getAllocationClusters("node1").size(), 3);
+    assertEquals(cl.getAllocation().getAllocationClusters("node2").size(), 3);
+    assertEquals(cl.getAllocation().getAllocationClusters("node3").size(), 3);
+    assertEquals(cl.getAllocation().getAllocationClusters("node4").size(), 3);
+  }
+
+  @Test
+  public void assignClusterBalancedShort() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass cl = schema.createClass("AutoClusterAssign", 2);
+    Set<String> nodes = new HashSet<>();
+    nodes.add("node1");
+    nodes.add("node2");
+    nodes.add("node3");
+    ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, false);
+
+    assertEquals(cl.getAllocation().getDefinedNodes().size(), 2);
+    for (String node : cl.getAllocation().getDefinedNodes()) {
+      assertEquals(cl.getAllocation().getAllocationClusters(node).size(), 1);
+    }
   }
 }

@@ -526,7 +526,7 @@ public class OClassDistributed extends OClassEmbedded {
         ODistributedConfiguration cfg = db.getDistributedConfiguration();
         availableNodes.removeIf(
             (node) -> cfg.getServerRole(node) != ODistributedConfiguration.ROLES.MASTER);
-        assignClusterOwnershipOfClass(db, availableNodes, true);
+        autoAssignClusterOwnership(db, availableNodes, true);
       }
       bestClusterFromAllocation(db, manager);
     }
@@ -642,14 +642,6 @@ public class OClassDistributed extends OClassEmbedded {
 
   protected boolean isDistributedCommand(ODatabaseDocumentInternal database) {
     return !database.isLocalEnv();
-  }
-
-  public void assignClusterOwnershipOfClass(
-      ODatabaseDocumentInternal database,
-      Set<String> availableNodes,
-      boolean canCreateNewClusters) {
-    ((OSchemaDistributed) owner)
-        .assignClusterOwnershipOfClass(database, this, availableNodes, canCreateNewClusters);
   }
 
   @Override

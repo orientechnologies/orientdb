@@ -154,8 +154,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   // LOCAL MSG COUNTER
   protected AtomicLong localMessageIdCounter = new AtomicLong();
-  protected OClusterOwnershipAssignmentStrategy clusterAssignmentStrategy =
-      new ODefaultClusterOwnershipAssignmentStrategy();
 
   protected static final int DEPLOY_DB_MAX_RETRIES = 10;
   protected Set<String> installingDatabases =
@@ -1053,7 +1051,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       for (final OClass clazz : schema.getClasses()) {
         ((OClassDistributed) clazz)
-            .assignClusterOwnershipOfClass(iDatabase, availableNodes, canCreateNewClusters);
+            .autoAssignClusterOwnership(iDatabase, availableNodes, canCreateNewClusters);
       }
 
       logger.infoNode(
