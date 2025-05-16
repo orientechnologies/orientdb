@@ -50,6 +50,7 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
   protected boolean includeManualIndexes = true;
   protected boolean useLineFeedForRecords = false;
   protected boolean preserveRids = false;
+  protected boolean preserveVersions = false;
   protected OCommandOutputListener listener;
 
   public ODatabaseImpExpAbstract(
@@ -198,6 +199,14 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
     this.preserveRids = preserveRids;
   }
 
+  public void setPreserveVersions(boolean preserveVersions) {
+    this.preserveVersions = preserveVersions;
+  }
+
+  public boolean isPreserveVersions() {
+    return preserveVersions;
+  }
+
   protected void parseSetting(final String option, final List<String> items) {
     if (option.equalsIgnoreCase("-excludeAll")) {
       includeInfo = false;
@@ -254,6 +263,8 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
       useLineFeedForRecords = Boolean.parseBoolean(items.get(0));
     } else if (option.equalsIgnoreCase("-preserveRids")) {
       setPreserveRids(Boolean.parseBoolean(items.get(0)));
+    } else if (option.equalsIgnoreCase("-preserveVersions")) {
+      setPreserveVersions(Boolean.parseBoolean(items.get(0)));
     }
   }
 }

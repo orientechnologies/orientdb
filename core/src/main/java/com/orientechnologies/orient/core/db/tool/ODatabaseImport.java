@@ -1316,7 +1316,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           }
           ORecordInternal.setVersion(record, loadedRecord.getVersion());
         } else {
-          ORecordInternal.setVersion(record, 0);
+          if (preserveVersions) {
+            // Storage will increase by 1 anyway, so decrease it
+            ORecordInternal.setVersion(record, record.getVersion() - 1);
+          } else {
+            ORecordInternal.setVersion(record, 0);
+          }
           if (!preserveRids) {
             ORecordInternal.setIdentity(record, new ORecordId());
           }
