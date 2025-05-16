@@ -26,6 +26,7 @@ public class OTransactionDataChange {
     ORecord rec = operation.getRecord();
     this.recordType = ORecordInternal.getRecordType(rec);
     this.id = rec.getIdentity();
+    assert this.id.isPersistent();
     this.version = rec.getVersion();
     switch (operation.type) {
       case ORecordOperation.CREATED:

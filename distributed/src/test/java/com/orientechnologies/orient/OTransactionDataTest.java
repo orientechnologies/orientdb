@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -22,6 +23,7 @@ import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionDataChange;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -77,6 +79,9 @@ public class OTransactionDataTest {
         db.begin();
         ODocument doc = new ODocument("test");
         db.save(doc);
+        ((ODatabaseDocumentEmbedded) db)
+            .getStorage()
+            .preallocateRids((OTransactionOptimistic) db.getTransaction());
         ((OTransactionInternal) db.getTransaction()).prepareSerializedOperations();
         Iterator<byte[]> res =
             ((OTransactionInternal) db.getTransaction()).getSerializedOperations();
@@ -136,6 +141,8 @@ public class OTransactionDataTest {
                 (ODatabaseDocumentInternal) db,
                 new ByteArrayInputStream(backup.toByteArray()),
                 iText -> {});
+        imp.setPreserveRids(true);
+        imp.setPreserveVersions(true);
         imp.importDatabase();
         imp.close();
       }
@@ -149,6 +156,9 @@ public class OTransactionDataTest {
         db.command("update test set field='value3' where field='value1'").close();
         db.command("delete from test where field='value0'").close();
 
+        ((ODatabaseDocumentEmbedded) db)
+            .getStorage()
+            .preallocateRids((OTransactionOptimistic) db.getTransaction());
         ((OTransactionInternal) db.getTransaction()).prepareSerializedOperations();
         Iterator<byte[]> res =
             ((OTransactionInternal) db.getTransaction()).getSerializedOperations();
@@ -166,7 +176,6 @@ public class OTransactionDataTest {
       try (final ODatabaseSession db =
           orientDB.open("test1", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
         ((ODatabaseDocumentInternal) db).syncCommit(data);
-
         assertEquals(2, db.countClass("test"));
         try (OResultSet r = db.query("select count(*) as count from test where field='value3'")) {
           assertEquals((Long) 1L, r.next().getProperty("count"));
