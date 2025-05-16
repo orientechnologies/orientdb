@@ -830,6 +830,13 @@ public class OClassEmbedded extends OClassImpl {
 
     acquireSchemaWriteLock(database);
     try {
+      for (String cl : clusters) {
+        if (!hasClusterId(database.getClusterIdByName(cl))) {
+          throw new OSchemaException(
+              String.format("Cluster '%s' is not associated to the class", cl));
+        }
+      }
+
       if (this.allocation == null) {
         this.allocation = new OClassAllocationImpl();
       }
