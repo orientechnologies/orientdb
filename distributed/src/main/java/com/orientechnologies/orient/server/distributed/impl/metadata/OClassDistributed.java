@@ -530,9 +530,10 @@ public class OClassDistributed extends OClassEmbedded {
       }
       bestClusterFromAllocation(db, manager);
     }
-    assert bestClusterIds.length > 0;
     final int size = bestClusterIds.length;
-    if (size == 0) return -1;
+    if (size == 0) {
+      return super.getClusterSelection().getCluster(this, doc);
+    }
 
     if (size == 1)
       // ONLY ONE: RETURN IT
@@ -701,5 +702,11 @@ public class OClassDistributed extends OClassEmbedded {
     } finally {
       releaseSchemaWriteLock();
     }
+  }
+
+  @Override
+  public void releaseSchemaWriteLock(ODatabaseDocumentInternal database, boolean iSave) {
+    super.releaseSchemaWriteLock(database, iSave);
+    this.bestClusterIds = null;
   }
 }

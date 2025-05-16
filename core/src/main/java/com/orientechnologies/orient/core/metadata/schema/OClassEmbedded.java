@@ -877,7 +877,26 @@ public class OClassEmbedded extends OClassImpl {
 
     if (this.isAbstract()) return;
 
+    if (getClusterIds().length < availableNodes.size()) {
+      boolean enabledCreateCluster =
+          db.getConfiguration()
+              .getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_CREATE_CLUSTERS);
+      if (canCreateNewClusters && enabledCreateCluster) {
+        int toCreate = availableNodes.size() - getClusterIds().length;
+        // CREATE A NEW CLUSTER WHERE THE LOCAL NODE IS THE MASTER
+        String newClusterName;
+        for (int i = 1; toCreate > 0; ++i) {
+          newClusterName = getName().toLowerCase(Locale.ENGLISH) + "_" + i;
+          if (!db.existsCluster(newClusterName)) {
+            addCluster(newClusterName);
+            toCreate--;
+          }
+        }
+      }
+    }
+
     final int[] clusterIds = getClusterIds();
+
     final Set<String> clusterNames = new HashSet<>(clusterIds.length);
     for (int clusterId : clusterIds) {
       final String clusterName = db.getClusterNameById(clusterId);
@@ -888,34 +907,6 @@ public class OClassEmbedded extends OClassImpl {
     reassignClusters(db, availableNodes, clusterNames);
 
     Collection<String> allClusterNames = db.getClusterNames();
-
-    boolean enabledCreateCluster =
-        db.getConfiguration()
-            .getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_CREATE_CLUSTERS);
-    if (canCreateNewClusters && enabledCreateCluster) {
-      final List<String> serversToCreateANewCluster = new ArrayList<String>();
-      for (String server : availableNodes) {
-        List<String> ownedClusters = null;
-        if (getAllocation() != null) {
-          ownedClusters = getAllocation().getAllocationClusters(server);
-        }
-        if (ownedClusters == null || ownedClusters.isEmpty()) {
-          // CREATE A NEW CLUSTER WHERE THE LOCAL NODE IS THE MASTER
-          String newClusterName;
-          for (int i = 1; ; ++i) {
-            newClusterName = getName().toLowerCase(Locale.ENGLISH) + "_" + i;
-            if (!allClusterNames.contains(newClusterName)
-                && !serversToCreateANewCluster.contains(newClusterName)) break;
-          }
-
-          internalAddCluster(db, newClusterName);
-          assignClusterOwnership(db, newClusterName, server);
-        }
-      }
-      return;
-    } else {
-      return;
-    }
   }
 
   public void internalAddCluster(final ODatabaseInternal db, final String newClusterName) {
@@ -963,6 +954,7 @@ public class OClassEmbedded extends OClassImpl {
       if (size == 0) {
         return;
       }
+      List<String> unassigned = new ArrayList<>(clusterNames);
       List<String> definedNodes = new ArrayList<>(getAllocation().getDefinedNodes());
       List<String> toRemoveNodes = new ArrayList<>(definedNodes);
       toRemoveNodes.removeAll(availableNodes);
@@ -979,6 +971,7 @@ public class OClassEmbedded extends OClassImpl {
 
       for (String node : definedNodes) {
         List<String> assigned = getAllocation().getAllocationClusters(node);
+        unassigned.removeAll(assigned);
         if (assigned.size() > size) {
           List<String> toMove = assigned.subList(size, assigned.size());
           toReassing.addAll(toMove);
@@ -987,6 +980,7 @@ public class OClassEmbedded extends OClassImpl {
           toReceive.add(node);
         }
       }
+      toReassing.addAll(unassigned);
       int cursor = size;
       for (String node : toReceive) {
         if (cursor > toReassing.size()) {
