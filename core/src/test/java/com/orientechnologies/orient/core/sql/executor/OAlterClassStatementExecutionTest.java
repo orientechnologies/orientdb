@@ -263,6 +263,9 @@ public class OAlterClassStatementExecutionTest extends BaseMemoryDatabase {
     String className = "testAllocation";
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
+    clazz.addCluster("a");
+    clazz.addCluster("b");
+    clazz.addCluster("c");
 
     db.command("alter class " + className + " allocation add node1 clusters [a, b, c] ").close();
 

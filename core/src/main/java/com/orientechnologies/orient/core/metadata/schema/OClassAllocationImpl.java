@@ -11,7 +11,7 @@ public class OClassAllocationImpl implements OClassAllocation {
 
   private Map<String, List<String>> nodeClusters = new HashMap<>();
 
-  public ODocument serialize(ODatabaseDocumentInternal database) {
+  public ODocument serialize() {
     ODocument doc = new ODocument();
     for (Map.Entry<String, List<String>> entries : nodeClusters.entrySet()) {
       ODocument cd = new ODocument();
@@ -21,7 +21,7 @@ public class OClassAllocationImpl implements OClassAllocation {
     return doc;
   }
 
-  public void deserialize(ODatabaseDocumentInternal database, ODocument source) {
+  public void deserialize(ODocument source) {
     for (String node : source.getPropertyNames()) {
       ODocument cd = source.getProperty(node);
       this.nodeClusters.put(node, cd.getProperty("clusters"));

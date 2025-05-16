@@ -523,7 +523,7 @@ public abstract class OClassImpl implements OClass {
     if (document.hasProperty("allocation")) {
       if (this.allocation == null) {
         this.allocation = new OClassAllocationImpl();
-        this.allocation.deserialize(getDatabase(), document.getProperty("allocation"));
+        this.allocation.deserialize(document.getProperty("allocation"));
       }
     }
 
@@ -571,7 +571,7 @@ public abstract class OClassImpl implements OClass {
         OType.EMBEDDEDMAP);
 
     if (this.allocation != null) {
-      ODocument all = this.allocation.serialize(getDatabase());
+      ODocument all = this.allocation.serialize();
       document.setProperty("allocation", all);
     }
 
