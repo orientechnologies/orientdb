@@ -559,7 +559,6 @@
                             <target>${maven.compiler.target}</target>
                             <showDeprecation>false</showDeprecation>
                             <showWarnings>true</showWarnings>
-                            <optimize>true</optimize>
                         </configuration>
                     </plugin>
                 </plugins>
