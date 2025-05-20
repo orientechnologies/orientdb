@@ -40,8 +40,13 @@ public class OFloatingPoint extends ONumber {
     } else {
       try {
         double returnValue = Double.parseDouble(stringValue) * sign;
-        if (Math.abs(returnValue) < Float.MAX_VALUE) {
-          finalValue = (float) returnValue;
+        if (!Double.isInfinite(returnValue)) {
+          float floatValue = (float) returnValue;
+          if (String.valueOf(floatValue).equals(String.valueOf(returnValue))) {
+            finalValue = floatValue;
+          } else {
+            finalValue = returnValue;
+          }
         } else {
           finalValue = returnValue;
         }

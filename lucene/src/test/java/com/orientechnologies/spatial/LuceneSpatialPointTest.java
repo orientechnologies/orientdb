@@ -132,9 +132,7 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
 
     Assert.assertEquals(1, docs.size());
 
-    //    Assert.assertEquals(1.6229442709302933, docs.get(0).field("$distance"));
-
-    assertThat(docs.get(0).<Double>getProperty("$distance")).isEqualTo(1.6230287806012604);
+    assertThat(docs.get(0).<Double>getProperty("$distance")).isEqualTo(1.6229737407391762);
   }
 
   @Test

@@ -1644,7 +1644,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
     List<OResult> results = db.query("select 1e-2 as a").stream().collect(Collectors.toList());
     assertEquals(results.size(), 1);
-    assertEquals(results.get(0).getProperty("a"), (Object) 0.01f);
+    assertEquals(((Number) results.get(0).getProperty("a")).floatValue(), (Object) 0.01f);
   }
 
   @Test

@@ -10,7 +10,7 @@ public class TestSelectDetectType extends BaseMemoryDatabase {
 
   @Test
   public void testFloatDetection() {
-    OResultSet res = db.query("select ty.type() as ty from ( select 1.021484375 as ty)");
+    OResultSet res = db.query("select ty.type() as ty from ( select 1.021484 as ty)");
     assertEquals(res.next().getProperty("ty"), "FLOAT");
     res = db.query("select ty.type() as ty from ( select " + Float.MAX_VALUE + "0101 as ty)");
     assertEquals(res.next().getProperty("ty"), "DOUBLE");

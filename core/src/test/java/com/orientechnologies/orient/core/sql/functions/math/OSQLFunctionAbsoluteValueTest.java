@@ -166,7 +166,7 @@ public class OSQLFunctionAbsoluteValueTest {
       ctx.execute("create database test memory users(admin identified by 'adminpwd' role admin)");
       try (ODatabaseDocument db = ctx.open("test", "admin", "adminpwd")) {
         try (OResultSet result = db.query("select abs(-45.4) as abs")) {
-          assertThat(result.next().<Float>getProperty("abs")).isEqualTo(45.4f);
+          assertThat(result.next().<Number>getProperty("abs").floatValue()).isEqualTo(45.4f);
         }
       }
       ctx.drop("test");

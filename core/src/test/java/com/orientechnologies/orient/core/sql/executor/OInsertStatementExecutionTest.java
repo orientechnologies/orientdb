@@ -510,4 +510,17 @@ public class OInsertStatementExecutionTest extends BaseMemoryDatabase {
       assertFalse(result.hasNext());
     }
   }
+
+  @Test
+  public void insertEmbeddedFloatTest() {
+    db.command("CREATE CLASS floatTest");
+    db.command("INSERT INTO floatTest set data={\"@type\":\"d\",producedQuantity: 35.927675}")
+        .close();
+
+    try (OResultSet result = db.query("SELECT FROM floatTest ")) {
+      OResult item = result.next();
+      OResult data = item.getProperty("data");
+      assertEquals(35.927675D, ((Number) data.getProperty("producedQuantity")).doubleValue(), 0D);
+    }
+  }
 }
