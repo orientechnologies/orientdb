@@ -43,6 +43,18 @@ public class ODistributedConfigurationManager {
     return distributedConfiguration;
   }
 
+  public ODistributedConfiguration getDefaultConfiguration() {
+    ODocument doc = loadConfigurationFromFile(distributedManager.getDefaultDatabaseConfigFile());
+    if (doc == null) {
+      throw new OConfigurationException(
+          "Cannot load default distributed for database '"
+              + databaseName
+              + "' config file: "
+              + distributedManager.getDefaultDatabaseConfigFile());
+    }
+    return new ODistributedConfiguration(doc);
+  }
+
   private void loadDistributedConfiguration(ODatabaseSession session) {
     ODocument doc = distributedManager.getOnlineDatabaseConfiguration(databaseName);
     if (doc != null) {

@@ -1198,9 +1198,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final boolean forceDeployment,
       final boolean tryWithDeltaFirst) {
     OrientDBDistributed context = (OrientDBDistributed) getServerInstance().getDatabases();
-    OModifiableDistributedConfiguration cfg =
-        context.getOrInitDistributedConfiguration(databaseName).modify();
-    internalCheckNodeInConfig(databaseName, cfg);
+    ODistributedConfiguration cfg = context.getExistingDistributedConfiguration(databaseName);
+    if (cfg == null) {
+      cfg = context.getDefaultDistributedConfiguration(databaseName);
+    }
 
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = nodesOnlineNotSelf(databaseName);
@@ -1220,9 +1221,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     if (!forceDeployment && getDatabaseStatus(getLocalNodeName(), databaseName) == DB_STATUS.ONLINE)
       return false;
-
-    // INIT STORAGE + UPDATE LOCAL FILE ONLY
-    context.setDistributedConfiguration(databaseName, cfg);
 
     context.distributedPauseDatabase(databaseName);
 
@@ -1250,7 +1248,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
           try {
 
             // TRY WITH DELTA SYNC
-            databaseInstalled = requestNewDatabaseDelta(databaseName, cfg);
+            databaseInstalled = requestNewDatabaseDelta(databaseName);
 
           } catch (ODistributedDatabaseDeltaSyncException e) {
             if (deploy == null || !deploy) {
@@ -1343,8 +1341,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     return selectedNodes;
   }
 
-  private boolean requestNewDatabaseDelta(
-      String databaseName, OModifiableDistributedConfiguration cfg) {
+  private boolean requestNewDatabaseDelta(String databaseName) {
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = nodesOnlineNotSelf(databaseName);
     if (nodes.size() == 0) {
