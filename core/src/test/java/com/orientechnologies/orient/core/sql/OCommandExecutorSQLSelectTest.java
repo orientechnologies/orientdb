@@ -1794,7 +1794,7 @@ public class OCommandExecutorSQLSelectTest extends BaseMemoryDatabase {
 
     List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select 1e-2 as a"));
     assertEquals(results.size(), 1);
-    assertEquals(results.get(0).field("a"), (Object) 0.01d);
+    assertEquals(((Number) results.get(0).getProperty("a")).floatValue(), (Object) 0.01f);
   }
 
   @Test
