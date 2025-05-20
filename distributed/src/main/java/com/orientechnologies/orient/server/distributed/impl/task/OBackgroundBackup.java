@@ -63,14 +63,22 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
     startExpireTask();
     try {
       try {
-
-        logger.infoOut(
-            localNodeName,
-            syncTarget,
-            "Compressing database '%s' %d clusters %s...",
-            database.getName(),
-            database.getClusterNames().size(),
-            database.getClusterNames());
+        if (logger.isDebugEnabled()) {
+          logger.debugOut(
+              localNodeName,
+              syncTarget,
+              "Compressing database '%s' %d clusters %s...",
+              database.getName(),
+              database.getClusterNames().size());
+        } else {
+          logger.infoOut(
+              localNodeName,
+              syncTarget,
+              "Compressing database '%s' %d clusters ...",
+              database.getName(),
+              database.getClusterNames().size(),
+              database.getClusterNames());
+        }
 
         if (resultedBackupFile.exists()) resultedBackupFile.delete();
         else resultedBackupFile.getParentFile().mkdirs();
