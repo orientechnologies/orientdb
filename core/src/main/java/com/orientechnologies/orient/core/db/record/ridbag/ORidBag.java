@@ -39,6 +39,8 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
@@ -250,13 +252,13 @@ public class ORidBag
     return false;
   }
 
-  public int toStream(BytesContainer bytesContainer) throws OSerializationException {
+  public int toStream(BytesContainer bytesContainer, OSerializationContext ctx)
+      throws OSerializationException {
 
     checkAndConvert();
 
     final UUID oldUuid = uuid;
-    final OSBTreeCollectionManager sbTreeCollectionManager =
-        ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
+    final OSBTreeCollectionManager sbTreeCollectionManager = ctx.getCollectionManager();
     if (sbTreeCollectionManager != null) {
       uuid = sbTreeCollectionManager.listenForChanges(this);
     } else {
@@ -360,7 +362,7 @@ public class ORidBag
   @Override
   public OStringBuilderSerializable toStream(StringBuilder output) throws OSerializationException {
     final BytesContainer container = new BytesContainer();
-    toStream(container);
+    toStream(container, new OSerializationContextImpl());
     output.append(Base64.getEncoder().encodeToString(container.fitBytes()));
     return this;
   }

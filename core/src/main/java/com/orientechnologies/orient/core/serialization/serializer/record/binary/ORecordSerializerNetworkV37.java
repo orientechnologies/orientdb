@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
@@ -857,7 +858,8 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   }
 
   @Override
-  public ORecord fromStream(byte[] iSource, ORecord iRecord, String[] iFields) {
+  public ORecord fromStream(
+      byte[] iSource, ORecord iRecord, String[] iFields, OSerializationContext ctx) {
     if (iSource == null || iSource.length == 0) return iRecord;
     if (iRecord == null) {
       iRecord = new ODocument();
@@ -882,7 +884,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   }
 
   @Override
-  public byte[] toStream(ORecord iSource) {
+  public byte[] toStream(ORecord iSource, OSerializationContext ctx) {
     if (iSource instanceof OBlob) {
       return iSource.toStream();
     } else {

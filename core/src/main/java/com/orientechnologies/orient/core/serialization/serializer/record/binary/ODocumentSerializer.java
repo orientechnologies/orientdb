@@ -27,18 +27,19 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 
 public interface ODocumentSerializer {
 
-  void serialize(ODocument document, BytesContainer bytes);
+  void serialize(ODocument document, BytesContainer bytes, OSerializationContext ctx);
 
   int serializeValue(
       BytesContainer bytes,
       Object value,
       OType type,
       OType linkedType,
-      OImmutableSchema schema,
-      OPropertyEncryption encryption);
+      OPropertyEncryption encryption,
+      OSerializationContext ctx);
 
   void deserialize(ODocument document, BytesContainer bytes);
 

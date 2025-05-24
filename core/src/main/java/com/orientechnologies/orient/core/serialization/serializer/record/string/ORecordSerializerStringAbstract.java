@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.util.ODateHelper;
@@ -652,7 +653,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   @Override
-  public ORecord fromStream(final byte[] iSource, final ORecord iRecord, final String[] iFields) {
+  public ORecord fromStream(
+      final byte[] iSource,
+      final ORecord iRecord,
+      final String[] iFields,
+      OSerializationContext ctx) {
     final long timer = PROFILER.startChrono();
 
     try {
@@ -666,7 +671,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     }
   }
 
-  public byte[] toStream(final ORecord iRecord) {
+  public byte[] toStream(final ORecord iRecord, OSerializationContext ctx) {
     final long timer = PROFILER.startChrono();
 
     try {

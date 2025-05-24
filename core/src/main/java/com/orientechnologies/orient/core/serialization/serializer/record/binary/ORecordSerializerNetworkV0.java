@@ -55,6 +55,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -190,7 +191,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
 
   @SuppressWarnings("unchecked")
   @Override
-  public void serialize(final ODocument document, final BytesContainer bytes) {
+  public void serialize(
+      final ODocument document, final BytesContainer bytes, OSerializationContext ctx) {
     OImmutableSchema schema = ODocumentInternal.getImmutableSchema(document);
     OPropertyEncryption encryption = ODocumentInternal.getPropertyEncryption(document);
 
@@ -231,8 +233,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
                 value,
                 type,
                 getLinkedType(document, type, values[i].getKey()),
-                schema,
-                encryption);
+                encryption,
+                ctx);
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
@@ -494,15 +496,14 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     return null;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public int serializeValue(
       final BytesContainer bytes,
       Object value,
       final OType type,
       final OType linkedType,
-      OImmutableSchema schema,
-      OPropertyEncryption encryption) {
+      OPropertyEncryption encryption,
+      OSerializationContext ctx) {
     int pointer = 0;
     switch (type) {
       case INTEGER:
@@ -551,9 +552,9 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         if (value instanceof ODocumentSerializable) {
           ODocument cur = ((ODocumentSerializable) value).toDocument();
           cur.field(ODocumentSerializable.CLASS_NAME, value.getClass().getName());
-          serialize(cur, bytes);
+          serialize(cur, bytes, ctx);
         } else {
-          serialize((ODocument) value, bytes);
+          serialize((ODocument) value, bytes, ctx);
         }
         break;
       case EMBEDDEDSET:
@@ -561,10 +562,10 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         if (value.getClass().isArray())
           pointer =
               writeEmbeddedCollection(
-                  bytes, Arrays.asList(OMultiValue.array(value)), linkedType, schema, encryption);
+                  bytes, Arrays.asList(OMultiValue.array(value)), linkedType, encryption, ctx);
         else
           pointer =
-              writeEmbeddedCollection(bytes, (Collection<?>) value, linkedType, schema, encryption);
+              writeEmbeddedCollection(bytes, (Collection<?>) value, linkedType, encryption, ctx);
         break;
       case DECIMAL:
         BigDecimal decimalValue = (BigDecimal) value;
@@ -589,10 +590,10 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         pointer = writeLinkMap(bytes, (Map<Object, OIdentifiable>) value);
         break;
       case EMBEDDEDMAP:
-        pointer = writeEmbeddedMap(bytes, (Map<Object, Object>) value, schema, encryption);
+        pointer = writeEmbeddedMap(bytes, (Map<Object, Object>) value, encryption, ctx);
         break;
       case LINKBAG:
-        pointer = ((ORidBag) value).toStream(bytes);
+        pointer = ((ORidBag) value).toStream(bytes, ctx);
         break;
       case CUSTOM:
         if (!(value instanceof OSerializableStream))
@@ -646,8 +647,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   private int writeEmbeddedMap(
       BytesContainer bytes,
       Map<Object, Object> map,
-      OImmutableSchema schema,
-      OPropertyEncryption encryption) {
+      OPropertyEncryption encryption,
+      OSerializationContext ctx) {
     final int[] pos = new int[map.size()];
     int i = 0;
     Entry<Object, Object>[] values = new Entry[map.size()];
@@ -674,7 +675,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
                   + value.getClass()
                   + " with the ODocument binary serializer");
         }
-        pointer = serializeValue(bytes, value, type, null, schema, encryption);
+        pointer = serializeValue(bytes, value, type, null, encryption, ctx);
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
@@ -728,8 +729,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       final BytesContainer bytes,
       final Collection<?> value,
       final OType linkedType,
-      OImmutableSchema schema,
-      OPropertyEncryption encryption) {
+      OPropertyEncryption encryption,
+      OSerializationContext ctx) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
     // TODO manage embedded type from schema and auto-determined.
     writeOType(bytes, bytes.alloc(1), OType.ANY);
@@ -744,7 +745,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       else type = linkedType;
       if (type != null) {
         writeOType(bytes, bytes.alloc(1), type);
-        serializeValue(bytes, itemValue, type, null, schema, encryption);
+        serializeValue(bytes, itemValue, type, null, encryption, ctx);
       } else {
         throw new OSerializationException(
             "Impossible serialize value of type "

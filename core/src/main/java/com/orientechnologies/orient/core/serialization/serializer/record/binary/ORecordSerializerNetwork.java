@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import java.util.Base64;
 
 public class ORecordSerializerNetwork implements ORecordSerializer {
@@ -63,7 +64,8 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   }
 
   @Override
-  public ORecord fromStream(final byte[] iSource, ORecord iRecord, final String[] iFields) {
+  public ORecord fromStream(
+      final byte[] iSource, ORecord iRecord, final String[] iFields, OSerializationContext ctx) {
     if (iSource == null || iSource.length == 0) return iRecord;
     if (iRecord == null) iRecord = new ODocument();
     else if (iRecord instanceof OBlob) {
@@ -88,7 +90,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   }
 
   @Override
-  public byte[] toStream(ORecord iSource) {
+  public byte[] toStream(ORecord iSource, OSerializationContext ctx) {
     if (iSource instanceof OBlob) {
       return iSource.toStream();
     } else {
@@ -98,18 +100,18 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
       int pos = container.alloc(1);
       container.bytes[pos] = CURRENT_RECORD_VERSION;
       // SERIALIZE RECORD
-      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container);
+      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, ctx);
 
       return container.fitBytes();
     }
   }
 
-  public byte[] serializeValue(Object value, OType type) {
+  public byte[] serializeValue(Object value, OType type, OSerializationContext ctx) {
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     OImmutableSchema schema = null;
     if (db != null) schema = db.getMetadata().getImmutableSchemaSnapshot();
     BytesContainer bytes = new BytesContainer();
-    serializerByVersion[0].serializeValue(bytes, value, type, null, schema, null);
+    serializerByVersion[0].serializeValue(bytes, value, type, null, null, ctx);
     return bytes.fitBytes();
   }
 

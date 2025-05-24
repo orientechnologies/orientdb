@@ -57,7 +57,8 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   }
 
   @Override
-  public ORecord fromStream(final byte[] iSource, final ORecord iRecord, String[] iFields) {
+  public ORecord fromStream(
+      final byte[] iSource, final ORecord iRecord, String[] iFields, OSerializationContext ctx) {
     final OBlob record = (OBlob) iRecord;
     record.reset();
     record.fromStream(iSource);
@@ -66,7 +67,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   }
 
   @Override
-  public byte[] toStream(final ORecord iSource) {
+  public byte[] toStream(final ORecord iSource, OSerializationContext ctx) {
     try {
       return iSource.toStream();
     } catch (Exception e) {

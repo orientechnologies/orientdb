@@ -24,9 +24,17 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface ORecordSerializer {
-  ORecord fromStream(byte[] iSource, ORecord iRecord, String[] iFields);
+  default ORecord fromStream(byte[] iSource, ORecord iRecord, String[] iFields) {
+    return fromStream(iSource, iRecord, iFields, new OSerializationContextImpl());
+  }
 
-  byte[] toStream(ORecord iSource);
+  default byte[] toStream(ORecord iSource) {
+    return toStream(iSource, new OSerializationContextImpl());
+  }
+
+  ORecord fromStream(byte[] iSource, ORecord iRecord, String[] iFields, OSerializationContext ctx);
+
+  byte[] toStream(ORecord iSource, OSerializationContext ctx);
 
   int getCurrentVersion();
 

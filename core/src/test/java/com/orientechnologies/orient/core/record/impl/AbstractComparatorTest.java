@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryComparator;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
@@ -45,7 +46,8 @@ public abstract class AbstractComparatorTest {
 
   protected OBinaryField field(final OType type, final Object value, OCollate collate) {
     BytesContainer bytes = new BytesContainer();
-    bytes.offset = serializer.serializeValue(bytes, value, type, null, null, null);
+    bytes.offset =
+        serializer.serializeValue(bytes, value, type, null, null, new OSerializationContextImpl());
     return new OBinaryField(null, type, bytes, collate);
   }
 }

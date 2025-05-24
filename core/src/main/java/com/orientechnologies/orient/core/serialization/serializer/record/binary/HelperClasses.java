@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
@@ -344,14 +345,13 @@ public class HelperClasses {
     OByteSerializer.INSTANCE.serialize(val, bytes.bytes, pos);
   }
 
-  public static void writeRidBag(BytesContainer bytes, ORidBag ridbag) {
+  public static void writeRidBag(BytesContainer bytes, ORidBag ridbag, OSerializationContext ctx) {
     ridbag.checkAndConvert();
 
     UUID ownerUuid = ridbag.getTemporaryId();
 
     int positionOffset = bytes.offset;
-    final OSBTreeCollectionManager sbTreeCollectionManager =
-        ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
+    final OSBTreeCollectionManager sbTreeCollectionManager = ctx.getCollectionManager();
     UUID uuid = null;
     if (sbTreeCollectionManager != null) uuid = sbTreeCollectionManager.listenForChanges(ridbag);
 
