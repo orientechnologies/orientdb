@@ -308,7 +308,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       return true;
     }
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return true;
-    DB_STATUS dbStatus = plugin.getDatabaseStatus(plugin.getLocalNodeName(), name);
+    DB_STATUS dbStatus = plugin.getDatabaseStatus(getNodeName(), name);
     return dbStatus == DB_STATUS.ONLINE || dbStatus == DB_STATUS.BACKUP;
   }
 
@@ -345,8 +345,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       if (exists(name, user, password)) {
         return super.open(name, user, password);
       }
-      throw new OOfflineNodeException(
-          "database " + name + " not online on " + plugin.getLocalNodeName());
+      throw new OOfflineNodeException("database " + name + " not online on " + getNodeName());
     }
   }
 
@@ -360,8 +359,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       if (exists(name, user, password)) {
         return super.open(name, user, password, config);
       }
-      throw new OOfflineNodeException(
-          "database " + name + " not online on " + plugin.getLocalNodeName());
+      throw new OOfflineNodeException("database " + name + " not online on " + getNodeName());
     }
   }
 
@@ -409,8 +407,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public boolean deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
-    if (new ONewDeltaSyncImporter()
-        .importDelta(server, dbName, backupStream, plugin.getLocalNodeName())) {
+    if (new ONewDeltaSyncImporter().importDelta(this, dbName, backupStream, getNodeName())) {
       getDatabase(dbName).setOnline();
       return true;
     } else {
@@ -418,12 +415,16 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
+  protected String getNodeName() {
+    return plugin.getLocalNodeName();
+  }
+
   private void offlineOnShutdown() {
     // SET ALL DATABASES TO NOT_AVAILABLE
     for (String dbName : listLodadedDatabases()) {
 
       try {
-        plugin.setDatabaseStatus(plugin.getLocalNodeName(), dbName, DB_STATUS.NOT_AVAILABLE);
+        plugin.setDatabaseStatus(getNodeName(), dbName, DB_STATUS.NOT_AVAILABLE);
       } catch (Exception t) {
         // IGNORE IT
       }
@@ -441,9 +442,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
     try {
-      plugin.setDatabaseStatus(plugin.getLocalNodeName(), iDatabaseName, DB_STATUS.OFFLINE);
+      plugin.setDatabaseStatus(getNodeName(), iDatabaseName, DB_STATUS.OFFLINE);
     } catch (Exception t) {
-      logger.warnNode(plugin.getLocalNodeName(), "error un-registering database", t);
+      logger.warnNode(getNodeName(), "error un-registering database", t);
       // IGNORE IT
     }
 
